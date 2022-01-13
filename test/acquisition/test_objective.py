@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -18,7 +18,7 @@ from botorch.acquisition.objective import (
     ScalarizedObjective,
 )
 from botorch.utils import apply_constraints
-from botorch.utils.testing import BotorchTestCase, _get_test_posterior
+from botorch.utils.testing import _get_test_posterior, BotorchTestCase
 from torch import Tensor
 
 

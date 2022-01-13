@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -12,8 +12,8 @@ from botorch.acquisition.acquisition import OneShotAcquisitionFunction
 from botorch.optim.optimize import (
     optimize_acqf,
     optimize_acqf_cyclic,
-    optimize_acqf_list,
     optimize_acqf_discrete,
+    optimize_acqf_list,
     optimize_acqf_mixed,
 )
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction

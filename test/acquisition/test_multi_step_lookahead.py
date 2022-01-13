@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -7,9 +7,9 @@
 
 import torch
 from botorch.acquisition import (
-    qMultiStepLookahead,
-    qExpectedImprovement,
     ExpectedImprovement,
+    qExpectedImprovement,
+    qMultiStepLookahead,
 )
 from botorch.acquisition.multi_step_lookahead import make_best_f, warmstart_multistep
 from botorch.acquisition.objective import IdentityMCObjective, ScalarizedObjective

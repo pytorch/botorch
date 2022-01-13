@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -15,7 +15,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from botorch.exceptions.errors import UnsupportedError, CandidateGenerationError
+from botorch.exceptions.errors import CandidateGenerationError, UnsupportedError
 from scipy.optimize import Bounds
 from torch import Tensor
 

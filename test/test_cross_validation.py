@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -11,7 +11,7 @@ import torch
 from botorch.cross_validation import batch_cross_validation, gen_loo_cv_folds
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
-from botorch.utils.testing import BotorchTestCase, _get_random_data
+from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
 

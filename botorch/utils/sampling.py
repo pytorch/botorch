@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -354,7 +354,8 @@ def sample_polytope(
         # given x, the next point in the chain is x+alpha*r
         # it also satisfies A(x+alpha*r)<=b which implies A*alpha*r<=b-Ax
         # so alpha<=(b-Ax)/ar for ar>0, and alpha>=(b-Ax)/ar for ar<0.
-        w = (b - A @ x).squeeze() / ar  # b - A @ x is always >= 0
+        # b - A @ x is always >= 0, clamping for numerical tolerances
+        w = (b - A @ x).squeeze().clamp(min=0.0) / ar
         pos = w >= 0
         alpha_max = w[pos].min()
         # important to include equality here in cases x is at the boundary
@@ -426,8 +427,10 @@ def _convert_bounds_to_inequality_constraints(bounds: Tensor) -> Tuple[Tensor, T
     """
     d = bounds.shape[-1]
     eye = torch.eye(d, dtype=bounds.dtype, device=bounds.device)
-    A = torch.cat([-eye, eye], dim=0)
-    b = torch.cat([-bounds[0], bounds[1]], dim=0).unsqueeze(-1)
+    lower, upper = bounds
+    lower_finite, upper_finite = bounds.isfinite()
+    A = torch.cat([-eye[lower_finite], eye[upper_finite]], dim=0)
+    b = torch.cat([-lower[lower_finite], upper[upper_finite]], dim=0).unsqueeze(-1)
     return A, b
 
 
@@ -454,21 +457,37 @@ def find_interior_point(
         This function will raise a ValueError if there is no such point.
 
     This method solves the following Linear Program:
+
         min -s subject to A @ x <= b - 2 * s, s >= 0, A_eq @ x = b_eq
+
+    In case the polytope is unbounded, then it will also constrain the slack
+    variable `s` to `s<=1`.
     """
     # augment inequality constraints: A @ (x, s) <= b
+    d = A.shape[-1]
     ncon = A.shape[-2] + 1
-    dim = A.shape[-1] + 1
-    c = np.zeros(dim)
+    c = np.zeros(d + 1)
     c[-1] = -1
     b_ub = np.zeros(ncon)
-    b_ub[:-1] = b.squeeze(-1)
-    A_ub = np.zeros((ncon, dim))
+    b_ub[:-1] = b.reshape(-1)
+    A_ub = np.zeros((ncon, d + 1))
     A_ub[:-1, :-1] = A
-    A_ub[:, -1] = 2.0
+    A_ub[:-1, -1] = 2.0
     A_ub[-1, -1] = -1.0
 
-    result = scipy.optimize.linprog(c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq)
+    result = scipy.optimize.linprog(
+        c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=(None, None)
+    )
+
+    if result.status == 3:
+        # problem is unbounded - to find a bounded solution we constrain the
+        # slack variable `s` to `s <= 1.0`.
+        A_s = np.concatenate([np.zeros((1, d)), np.ones((1, 1))], axis=-1)
+        A_ub = np.concatenate([A_ub, A_s], axis=0)
+        b_ub = np.concatenate([b_ub, np.ones(1)], axis=-1)
+        result = scipy.optimize.linprog(
+            c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=(None, None)
+        )
 
     if result.status == 2:
         raise ValueError(
@@ -491,8 +510,8 @@ class PolytopeSampler(ABC):
         self,
         inequality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
         equality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
-        interior_point: Optional[Tensor] = None,
         bounds: Optional[Tensor] = None,
+        interior_point: Optional[Tensor] = None,
     ) -> None:
         r"""Initialize PolytopeSampler.
 
@@ -504,10 +523,11 @@ class PolytopeSampler(ABC):
             equality_constraints: Tensors `(C, d)` describing the equality constraints
                 `C @ x = d`, where `C` is a `n_eq_con x d`-dim Tensor and `d` is a
                 `n_eq_con x 1`-dim Tensor with `n_eq_con` the number of equalities.
-            interior_point: A `d_sample x 1`-dim Tensor presenting a point in the
+            bounds: A `2 x d`-dim tensor of box bounds, where `inf` (`-inf`) means
+                that the respective dimension is unbounded above (below).
+            interior_point: A `d x 1`-dim Tensor presenting a point in the
                 (relative) interior of the polytope. If omitted, determined
                 automatically by solving a Linear Program.
-            bounds: A `2 x d`-dim tensor of box bounds.
         """
         if inequality_constraints is None:
             if bounds is None:
@@ -604,7 +624,7 @@ class PolytopeSampler(ABC):
             seed: The random seed.
 
         Returns:
-            A `n x d_sample` Tensor of samples from the polytope.
+            A `n x d` Tensor of samples from the polytope.
         """
         pass  # pragma: no cover
 
@@ -616,8 +636,8 @@ class HitAndRunPolytopeSampler(PolytopeSampler):
         self,
         inequality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
         equality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
-        interior_point: Optional[Tensor] = None,
         bounds: Optional[Tensor] = None,
+        interior_point: Optional[Tensor] = None,
         n_burnin: int = 0,
     ) -> None:
         r"""A sampler for sampling from a polyope using a hit-and-run algorithm.
@@ -630,17 +650,18 @@ class HitAndRunPolytopeSampler(PolytopeSampler):
             equality_constraints: Tensors `(C, d)` describing the equality constraints
                 `C @ x = d`, where `C` is a `n_eq_con x d`-dim Tensor and `d` is a
                 `n_eq_con x 1`-dim Tensor with `n_eq_con` the number of equalities.
-            interior_point: A `d_sample x 1`-dim Tensor presenting a point in the
+            bounds: A `2 x d`-dim tensor of box bounds, where `inf` (`-inf`) means
+                that the respective dimension is unbounded from above (below).
+            interior_point: A `d x 1`-dim Tensor representing a point in the
                 (relative) interior of the polytope. If omitted, determined
                 automatically by solving a Linear Program.
-            bounds: A `2 x d`-dim tensor of box bounds.
             n_burnin: The number of burn in samples.
         """
         super().__init__(
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
-            interior_point=interior_point,
             bounds=bounds,
+            interior_point=interior_point,
         )
         self.n_burnin = n_burnin
 
@@ -652,7 +673,7 @@ class HitAndRunPolytopeSampler(PolytopeSampler):
             seed: The random seed.
 
         Returns:
-            A `n x d_sample` Tensor of samples from the polytope.
+            A `n x d` Tensor of samples from the polytope.
         """
         transformed_samples = sample_polytope(
             # run this on the cpu
@@ -697,8 +718,8 @@ class DelaunayPolytopeSampler(PolytopeSampler):
         self,
         inequality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
         equality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
-        interior_point: Optional[Tensor] = None,
         bounds: Optional[Tensor] = None,
+        interior_point: Optional[Tensor] = None,
     ) -> None:
         r"""Initialize DelaunayPolytopeSampler.
 
@@ -710,10 +731,11 @@ class DelaunayPolytopeSampler(PolytopeSampler):
             equality_constraints: Tensors `(C, d)` describing the equality constraints
                 `C @ x = d`, where `C` is a `n_eq_con x d`-dim Tensor and `d` is a
                 `n_eq_con x 1`-dim Tensor with `n_eq_con` the number of equalities.
-            interior_point: A `d_sample x 1`-dim Tensor presenting a point in the
+            bounds: A `2 x d`-dim tensor of box bounds, where `inf` (`-inf`) means
+                that the respective dimension is unbounded from above (below).
+            interior_point: A `d x 1`-dim Tensor representing a point in the
                 (relative) interior of the polytope. If omitted, determined
                 automatically by solving a Linear Program.
-            bounds: A `2 x d`-dim tensor of box bounds.
 
         Warning: The vertex enumeration performed in this algorithm can become
         extremely costly if there are a large number of inequalities. Similarly,
@@ -724,8 +746,8 @@ class DelaunayPolytopeSampler(PolytopeSampler):
         super().__init__(
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
-            interior_point=interior_point,
             bounds=bounds,
+            interior_point=interior_point,
         )
         # shift coordinate system to be anchored at x0
         new_b = self.b - self.A @ self.x0
@@ -764,7 +786,7 @@ class DelaunayPolytopeSampler(PolytopeSampler):
             seed: The random seed.
 
         Returns:
-            A `n x d_sample` Tensor of samples from the polytope.
+            A `n x d` Tensor of samples from the polytope.
         """
         if self.dim == 1:
             with manual_seed(seed):

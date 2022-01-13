@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -35,13 +35,13 @@ from botorch.optim.utils import (
     _handle_numerical_errors,
     columnwise_clamp,
     fix_features,
-    sample_all_priors,
     get_X_baseline,
+    sample_all_priors,
 )
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
 )
-from botorch.utils.testing import MockPosterior, MockModel, BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood

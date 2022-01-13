@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -11,25 +11,27 @@ import warnings
 from typing import Any, Dict, Type
 from unittest import mock
 
+import numpy as np
 import torch
 from botorch import settings
 from botorch.exceptions.errors import BotorchError
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.utils.sampling import (
-    DelaunayPolytopeSampler,
-    get_polytope_samples,
     _convert_bounds_to_inequality_constraints,
-    sparse_to_dense_constraints,
-    HitAndRunPolytopeSampler,
-    PolytopeSampler,
     batched_multinomial,
     construct_base_samples,
     construct_base_samples_from_posterior,
+    DelaunayPolytopeSampler,
     draw_sobol_samples,
+    find_interior_point,
+    get_polytope_samples,
+    HitAndRunPolytopeSampler,
     manual_seed,
+    PolytopeSampler,
     sample_hypersphere,
     sample_simplex,
+    sparse_to_dense_constraints,
 )
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
@@ -245,15 +247,28 @@ class TestSampleUtils(BotorchTestCase):
 
     def test_convert_bounds_to_inequality_constraints(self):
         for dtype in (torch.float, torch.double):
-            lower_bounds = torch.rand(3, dtype=dtype, device=self.device)
+            tkwargs = {"device": self.device, "dtype": dtype}
+            # test basic case with no indefinite bounds
+            lower_bounds = torch.rand(3, **tkwargs)
             upper_bounds = torch.rand_like(lower_bounds) + lower_bounds
             bounds = torch.stack([lower_bounds, upper_bounds], dim=0)
-            (A, b) = _convert_bounds_to_inequality_constraints(bounds=bounds)
-            identity = torch.eye(3, dtype=dtype, device=self.device)
+            A, b = _convert_bounds_to_inequality_constraints(bounds=bounds)
+            identity = torch.eye(3, **tkwargs)
             self.assertTrue(torch.equal(A[:3], -identity))
             self.assertTrue(torch.equal(A[3:], identity))
             self.assertTrue(torch.equal(b[:3], -bounds[:1].t()))
             self.assertTrue(torch.equal(b[3:], bounds[1:].t()))
+            # test filtering of indefinite bounds
+            inf = float("inf")
+            bounds = torch.tensor(
+                [[-3.0, -inf, -inf], [inf, 2.0, inf]],
+                **tkwargs,
+            )
+            A, b = _convert_bounds_to_inequality_constraints(bounds=bounds)
+            A_xpct = torch.tensor([[-1.0, -0.0, -0.0], [0.0, 1.0, 0.0]], **tkwargs)
+            b_xpct = torch.tensor([[3.0], [2.0]], **tkwargs)
+            self.assertTrue(torch.equal(A, A_xpct))
+            self.assertTrue(torch.equal(b, b_xpct))
 
     def test_sparse_to_dense_constraints(self):
         tkwargs = {"device": self.device}
@@ -273,6 +288,27 @@ class TestSampleUtils(BotorchTestCase):
             self.assertTrue(torch.equal(A, expected_A))
             expected_b = torch.tensor([[3.0]], **tkwargs)
             self.assertTrue(torch.equal(b, expected_b))
+
+    def test_find_interior_point(self):
+        # basic problem: 1 <= x_1 <= 2, 2 <= x_2 <= 3
+        A = np.concatenate([np.eye(2), -np.eye(2)], axis=0)
+        b = np.array([2.0, 3.0, -1.0, -2.0])
+        x = find_interior_point(A=A, b=b)
+        self.assertTrue(np.allclose(x, np.array([1.5, 2.5])))
+        # problem w/ negatives variables: -2 <= x_1 <= -1, -3 <= x_2 <= -2
+        b = np.array([-1.0, -2.0, 2.0, 3.0])
+        x = find_interior_point(A=A, b=b)
+        self.assertTrue(np.allclose(x, np.array([-1.5, -2.5])))
+        # problem with bound on a single variable: x_1 <= 0
+        A = np.array([[1.0, 0.0]])
+        b = np.zeros(1)
+        x = find_interior_point(A=A, b=b)
+        self.assertLessEqual(x[0].item(), 0.0)
+        # unbounded problem: x >= 3
+        A = np.array([[-1.0]])
+        b = np.array([-3.0])
+        x = find_interior_point(A=A, b=b)
+        self.assertAlmostEqual(x.item(), 6.201544, places=4)
 
     def test_get_polytope_samples(self):
         tkwargs = {"device": self.device}

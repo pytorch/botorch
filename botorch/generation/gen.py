@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -85,15 +85,17 @@ def gen_candidates_scipy(
     """
     options = options or {}
 
-    # REDUCED is used indicate if we are optimizing over a reduced domain dimension
-    # after considering fixed_features.
-    # REDUCED mode if fixed_features is not None except for when fixed_features.values()
-    # contains None and linear constraints are passed.
-    REDUCED = fixed_features is not None
-    if inequality_constraints or equality_constraints:
-        REDUCED = REDUCED and (None not in fixed_features.values())
+    # if there are fixed features we may optimize over a domain of lower dimension
+    reduced_domain = False
+    if fixed_features:
+        # if there are no constraints things are straightforward
+        if not (inequality_constraints or equality_constraints):
+            reduced_domain = True
+        # if there are we need to make sure features are fixed to specific values
+        else:
+            reduced_domain = None not in fixed_features.values()
 
-    if REDUCED:
+    if reduced_domain:
         _no_fixed_features = _remove_fixed_features_from_optimization(
             fixed_features=fixed_features,
             acquisition_function=acquisition_function,
@@ -103,7 +105,6 @@ def gen_candidates_scipy(
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
         )
-
         # call the routine with no fixed_features
         clamped_candidates, batch_acquisition = gen_candidates_scipy(
             initial_conditions=_no_fixed_features.initial_conditions,
@@ -239,11 +240,8 @@ def gen_candidates_torch(
     """
     options = options or {}
 
-    # REDUCED is used indicate if we are optimizing over a reduced domain dimension
-    # after considering fixed_features.
-    REDUCED = fixed_features is not None
-
-    if REDUCED:
+    # if there are fixed features we may optimize over a domain of lower dimension
+    if fixed_features:
         _no_fixed_features = _remove_fixed_features_from_optimization(
             fixed_features=fixed_features,
             acquisition_function=acquisition_function,

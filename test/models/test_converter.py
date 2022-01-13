@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -15,9 +15,9 @@ from botorch.models import (
     SingleTaskMultiFidelityGP,
 )
 from botorch.models.converter import (
+    batched_multi_output_to_single_output,
     batched_to_model_list,
     model_list_to_batched,
-    batched_multi_output_to_single_output,
 )
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize

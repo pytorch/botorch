@@ -17,7 +17,7 @@ observations.
 #### Using scipy Optimizers on Tensors
 
 The default method used by BoTorch to optimize acquisition functions is
-[`gen_candidates_scipy()`](../api/gen.html#botorch.gen.gen_candidates_scipy).
+[`gen_candidates_scipy()`](../api/generation.html#botorch.generation.gen.gen_candidates_scipy).
 Given a set of starting points (for multiple restarts) and an acquisition
 function, this optimizer makes use of `scipy.optimize.minimize()` for
 optimization, via either the L-BFGS-B or SLSQP routines.
@@ -32,7 +32,7 @@ used directly, without the need to perform `numpy` conversion. These first-order
 gradient-based optimizers are particularly useful for the case when the
 acquisition function is stochastic, where algorithms like L-BFGS or SLSQP that
 are designed for deterministic functions should not be applied. The function
-[`gen_candidates_torch()`](../api/gen.html#botorch.gen.gen_candidates_torch)
+[`gen_candidates_torch()`](../api/generation.html#botorch.generation.gen.gen_candidates_torch)
 provides an interface for `torch` optimizers and handles bounding.
 See the example notebooks
 [here](../tutorials/compare_mc_analytic_acquisition) and
@@ -59,7 +59,7 @@ defined as the sum of the $b$ individual q-batch acquisition values.
 The wrapper function
 [`optimize_acqf()`](../api/optim.html#botorch.optim.optimize.optimize_acqf)
 uses
-[`get_best_candidates()`](../api/gen.html#botorch.gen.get_best_candidates)
+[`get_best_candidates()`](../api/generation.html#botorch.generation.gen.get_best_candidates)
 to process the output of `gen_candidates_scipy()` and return the best point
 found over the random restarts. For reasonable values of $b$ and $q$, jointly
 optimizing over random restarts can significantly reduce wall time by exploiting

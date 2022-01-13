@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -28,7 +28,7 @@ from botorch.utils.rounding import approximate_round
 from gpytorch import Module as GPyTorchModule
 from gpytorch.constraints import GreaterThan
 from gpytorch.priors import Prior
-from torch import Tensor, nn
+from torch import nn, Tensor
 from torch.distributions import Kumaraswamy
 from torch.nn import Module, ModuleDict
 
@@ -311,6 +311,7 @@ class Normalize(ReversibleInputTransform, Module):
     def __init__(
         self,
         d: int,
+        indices: Optional[List[int]] = None,
         bounds: Optional[Tensor] = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
@@ -323,6 +324,8 @@ class Normalize(ReversibleInputTransform, Module):
 
         Args:
             d: The dimension of the input space.
+            indices: The indices of the inputs to normalize. If omitted,
+                take all dimensions of the inputs into account.
             bounds: If provided, use these bounds to normalize the inputs. If
                 omitted, learn the bounds in train mode.
             batch_shape: The batch shape of the inputs (asssuming input tensors
@@ -340,6 +343,17 @@ class Normalize(ReversibleInputTransform, Module):
                 zero errors.
         """
         super().__init__()
+        if (indices is not None) and (len(indices) == 0):
+            raise ValueError("`indices` list is empty!")
+        if (indices is not None) and (len(indices) > 0):
+            indices = torch.tensor(indices, dtype=torch.long)
+            if len(indices) > d:
+                raise ValueError("Can provide at most `d` indices!")
+            if (indices > d - 1).any():
+                raise ValueError("Elements of `indices` have to be smaller than `d`!")
+            if len(indices.unique()) != len(indices):
+                raise ValueError("Elements of `indices` tensor must be unique!")
+            self.indices = indices
         if bounds is not None:
             if bounds.size(-1) != d:
                 raise BotorchTensorDimensionError(
@@ -387,7 +401,12 @@ class Normalize(ReversibleInputTransform, Module):
             ranges = X.max(dim=-2, keepdim=True)[0] - self.mins
             ranges[torch.where(ranges <= self.min_range)] = self.min_range
             self.ranges = ranges
-
+        if hasattr(self, "indices"):
+            X_new = X.clone()
+            X_new[..., self.indices] = (
+                X_new[..., self.indices] - self.mins[..., self.indices]
+            ) / self.ranges[..., self.indices]
+            return X_new
         return (X - self.mins) / self.ranges
 
     def _untransform(self, X: Tensor) -> Tensor:
@@ -399,6 +418,13 @@ class Normalize(ReversibleInputTransform, Module):
         Returns:
             A `batch_shape x n x d`-dim tensor of un-normalized inputs.
         """
+        if hasattr(self, "indices"):
+            X_new = X.clone()
+            X_new[..., self.indices] = (
+                self.mins[..., self.indices]
+                + X_new[..., self.indices] * self.ranges[..., self.indices]
+            )
+            return X_new
         return self.mins + X * self.ranges
 
     @property
@@ -415,11 +441,151 @@ class Normalize(ReversibleInputTransform, Module):
         Returns:
             A boolean indicating if the other transform is equivalent.
         """
-        return (
-            super().equals(other=other)
-            and (self._d == other._d)
-            and (self.learn_bounds == other.learn_bounds)
-        )
+        if hasattr(self, "indices") == hasattr(other, "indices"):
+            if hasattr(self, "indices"):
+                return (
+                    super().equals(other=other)
+                    and (self._d == other._d)
+                    and (self.learn_bounds == other.learn_bounds)
+                    and (self.indices == other.indices).all()
+                )
+            else:
+                return (
+                    super().equals(other=other)
+                    and (self._d == other._d)
+                    and (self.learn_bounds == other.learn_bounds)
+                )
+        return False
+
+
+class InputStandardize(ReversibleInputTransform, Module):
+    r"""Standardize inputs (zero mean, unit variance).
+
+    In train mode, calling `forward` updates the module state
+    (i.e. the mean/std normalizing constants). If in eval mode, calling `forward`
+    simply applies the standardization using the current module state.
+    """
+
+    def __init__(
+        self,
+        d: int,
+        indices: Optional[List[int]] = None,
+        batch_shape: torch.Size = torch.Size(),  # noqa: B008
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
+        transform_on_fantasize: bool = True,
+        reverse: bool = False,
+        min_std: float = 1e-8,
+    ) -> None:
+        r"""Standardize inputs (zero mean, unit variance).
+
+        Args:
+            d: The dimension of the input space.
+            indices: The indices of the inputs to standardize. If omitted,
+                take all dimensions of the inputs into account.
+            batch_shape: The batch shape of the inputs (asssuming input tensors
+                of shape `batch_shape x n x d`). If provided, perform individual
+                normalization per batch, otherwise uses a single normalization.
+            transform_on_train: A boolean indicating whether to apply the
+                transforms in train() mode. Default: True
+            transform_on_eval: A boolean indicating whether to apply the
+                transform in eval() mode. Default: True
+            reverse: A boolean indicating whether the forward pass should untransform
+                the inputs.
+            min_std: Amount of noise to add to the standard deviation to ensure no
+                division by zero errors.
+        """
+        super().__init__()
+        if (indices is not None) and (len(indices) == 0):
+            raise ValueError("`indices` list is empty!")
+        if (indices is not None) and (len(indices) > 0):
+            indices = torch.tensor(indices, dtype=torch.long)
+            if len(indices) > d:
+                raise ValueError("Can provide at most `d` indices!")
+            if (indices > d - 1).any():
+                raise ValueError("Elements of `indices` have to be smaller than `d`!")
+            if len(indices.unique()) != len(indices):
+                raise ValueError("Elements of `indices` tensor must be unique!")
+            self.indices = indices
+        self.register_buffer("means", torch.zeros(*batch_shape, 1, d))
+        self.register_buffer("stds", torch.ones(*batch_shape, 1, d))
+        self._d = d
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
+        self.transform_on_fantasize = transform_on_fantasize
+        self.batch_shape = batch_shape
+        self.min_std = min_std
+        self.reverse = reverse
+
+    def _transform(self, X: Tensor) -> Tensor:
+        r"""Standardize the inputs.
+
+        In train mode, calling `forward` updates the module state
+        (i.e. the mean/std normalizing constants). If in eval mode, calling `forward`
+        simply applies the standardization using the current module state.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of inputs normalized to the
+            module's bounds.
+        """
+        if self.training:
+            if X.size(-1) != self.means.size(-1):
+                raise BotorchTensorDimensionError(
+                    f"Wrong input. dimension. Received {X.size(-1)}, "
+                    f"expected {self.means.size(-1)}"
+                )
+            self.means = X.mean(dim=-2, keepdim=True)
+            self.stds = X.std(dim=-2, keepdim=True)
+
+            self.stds = torch.clamp(self.stds, min=self.min_std)
+        if hasattr(self, "indices"):
+            X_new = X.clone()
+            X_new[..., self.indices] = (
+                X_new[..., self.indices] - self.means[..., self.indices]
+            ) / self.stds[..., self.indices]
+            return X_new
+        return (X - self.means) / self.stds
+
+    def _untransform(self, X: Tensor) -> Tensor:
+        r"""Un-standardize the inputs.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of normalized inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of un-normalized inputs.
+        """
+        if hasattr(self, "indices"):
+            X_new = X.clone()
+            X_new[..., self.indices] = (
+                self.means[..., self.indices]
+                + X_new[..., self.indices] * self.stds[..., self.indices]
+            )
+            return X_new
+        return self.means + self.stds * X
+
+    def equals(self, other: InputTransform) -> bool:
+        r"""Check if another input transform is equivalent.
+
+        Args:
+            other: Another input transform.
+
+        Returns:
+            A boolean indicating if the other transform is equivalent.
+        """
+        if hasattr(self, "indices") == hasattr(other, "indices"):
+            if hasattr(self, "indices"):
+                return (
+                    super().equals(other=other)
+                    and (self._d == other._d)
+                    and (self.indices == other.indices).all()
+                )
+            else:
+                return super().equals(other=other) and (self._d == other._d)
+        return False
 
 
 class Round(InputTransform, Module):
@@ -804,7 +970,7 @@ class AppendFeatures(InputTransform, Module):
         super().__init__()
         if feature_set.dim() != 2:
             raise ValueError("`feature_set` must be an `n_f x d_f`-dim tensor!")
-        self.feature_set = feature_set
+        self.register_buffer("feature_set", feature_set)
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
         self.transform_on_fantasize = transform_on_fantasize
@@ -834,6 +1000,78 @@ class AppendFeatures(InputTransform, Module):
         expanded_features = self.feature_set.expand(*expanded_X.shape[:-1], -1)
         appended_X = torch.cat([expanded_X, expanded_features], dim=-1)
         return appended_X.view(*X.shape[:-2], -1, appended_X.shape[-1])
+
+
+class FilterFeatures(InputTransform, Module):
+
+    r"""A transform that filters the input with a given set of features indices.
+
+    As an example, this can be used in a multiobjective optimization with `ModelListGP`
+    in which the specific models only share subsets of features (feature selection).
+    A reason could be that it is known that specific features do not have any impact on
+    a specific objective but they need to be included in the model for another one.
+    """
+
+    def __init__(
+        self,
+        feature_indices: Tensor,
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
+        transform_on_fantasize: bool = True,
+    ) -> None:
+        r"""Filter features from a model.
+
+        Args:
+            feature_set: An one-dim tensor denoting the indices of the features to be
+                kept and fed to the model.
+            transform_on_train: A boolean indicating whether to apply the
+                transforms in train() mode. Default: True.
+            transform_on_eval: A boolean indicating whether to apply the
+                transform in eval() mode. Default: True.
+            transform_on_fantasize: A boolean indicating whether to apply the
+                transform when called from within a `fantasize` call. Default: True.
+        """
+        super().__init__()
+        if feature_indices.dim() != 1:
+            raise ValueError("`feature_indices` must be a one-dimensional tensor!")
+        if feature_indices.dtype != torch.int64:
+            raise ValueError("`feature_indices` tensor must be int64/long!")
+        if (feature_indices < 0).any():
+            raise ValueError(
+                "Elements of `feature_indices` have to be larger/equal to zero!"
+            )
+        if len(feature_indices.unique()) != len(feature_indices):
+            raise ValueError("Elements of `feature_indices` tensor must be unique!")
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
+        self.transform_on_fantasize = transform_on_fantasize
+        self.register_buffer("feature_indices", feature_indices)
+
+    def transform(self, X: Tensor) -> Tensor:
+        r"""Transform the inputs by keeping only the in `feature_indices` specified
+        feature indices and filtering out the others.
+
+        Args:
+            X: A `batch_shape x q x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x q x e`-dim tensor of filtered inputs,
+                where `e` is the length of `feature_indices`.
+        """
+        return X[..., self.feature_indices]
+
+    def equals(self, other: InputTransform) -> bool:
+        r"""Check if another input transform is equivalent.
+
+        Args:
+            other: Another input transform
+
+        Returns:
+            A boolean indicating if the other transform is equivalent.
+        """
+        if len(self.feature_indices) != len(other.feature_indices):
+            return False
+        return super().equals(other=other)
 
 
 class InputPerturbation(InputTransform, Module):
@@ -877,14 +1115,17 @@ class InputPerturbation(InputTransform, Module):
         super().__init__()
         if perturbation_set.dim() != 2:
             raise ValueError("`perturbation_set` must be an `n_p x d`-dim tensor!")
-        self.perturbation_set = perturbation_set
-        if bounds is not None and bounds.shape[-1] != perturbation_set.shape[-1]:
-            raise ValueError(
-                "`bounds` must have the same number of columns (last dimension) as "
-                f"the `perturbation_set`! Got {bounds.shape[-1]} and "
-                f"{perturbation_set.shape[-1]}."
-            )
-        self.bounds = bounds
+        self.register_buffer("perturbation_set", perturbation_set)
+        if bounds is not None:
+            if bounds.shape[-1] != perturbation_set.shape[-1]:
+                raise ValueError(
+                    "`bounds` must have the same number of columns (last dimension) as "
+                    f"the `perturbation_set`! Got {bounds.shape[-1]} and "
+                    f"{perturbation_set.shape[-1]}."
+                )
+            self.register_buffer("bounds", bounds)
+        else:
+            self.bounds = None
         self.multiplicative = multiplicative
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval

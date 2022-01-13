@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -11,8 +11,8 @@ from unittest.mock import patch
 
 import torch
 from botorch.utils.multi_objective.pareto import (
-    is_non_dominated,
     _is_non_dominated_loop,
+    is_non_dominated,
 )
 from botorch.utils.testing import BotorchTestCase
 

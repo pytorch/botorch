@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -11,9 +11,11 @@ from botorch.test_functions.multi_fidelity import (
 )
 from botorch.test_functions.multi_objective import (
     BNH,
+    BraninCurrin,
     C2DTLZ2,
     CarSideImpact,
     CONSTR,
+    ConstrainedBraninCurrin,
     DTLZ1,
     DTLZ2,
     DTLZ3,
@@ -22,13 +24,11 @@ from botorch.test_functions.multi_objective import (
     DTLZ7,
     OSY,
     SRN,
+    VehicleSafety,
+    WeldedBeam,
     ZDT1,
     ZDT2,
     ZDT3,
-    BraninCurrin,
-    ConstrainedBraninCurrin,
-    WeldedBeam,
-    VehicleSafety,
 )
 from botorch.test_functions.synthetic import (
     Ackley,

@@ -31,6 +31,7 @@ Here is an incomplete selection of peer-reviewed Bayesian optimization papers th
 - [High-Dimensional Bayesian Optimization with Sparse Axis-Aligned Subspaces
 ](https://arxiv.org/abs/2103.00349). David Eriksson, Martin Jankowiak. UAI 2021.
 - [Bayesian Optimization over Permutation Spaces](https://arxiv.org/abs/2112.01049). Aryan Deshwal, Syrine Belakaria, Janardhan Rao Doppa, Dae Hyun Kim. AAAI 2021.
+- [GIBBON: General-purpose Information-Based Bayesian Optimisation](https://jmlr.org/papers/v22/21-0120.html). Henry B. Moss, David S. Leslie, Javier Gonzalez, Paul Rayson. JMLR, 2021.
 - [Bayesian Optimization with High-Dimensional Outputs](https://papers.nips.cc/paper/2021/hash/a0d3973ad100ad83a64c304bb58677dd-Abstract.html). Wesley J. Maddox, Maximilian Balandat, Andrew G. Wilson, Eytan Bakshy. NeurIPS 2021.
 - [Parallel Bayesian Optimization of Multiple Noisy Objectives with Expected Hypervolume Improvement](https://papers.nips.cc/paper/2021/hash/11704817e347269b7254e744b5e22dac-Abstract.html). Samuel Daulton, Maximilian Balandat, Eytan Bakshy. NeurIPS 2021.
 - [Combining Latent Space and Structured Kernels for Bayesian Optimization over Combinatorial Spaces](https://papers.nips.cc/paper/2021/hash/44e76e99b5e194377e955b13fb12f630-Abstract.html). Aryan Deshwal, Jana Doppa. NeurIPS 2021.

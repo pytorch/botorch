@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -1075,4 +1075,4 @@ class WeldedBeam(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         g2 = (1 / s_max) * (s - s_max)
         g3 = (1 / (5 - 0.125)) * (X[..., 0] - X[..., 3])
         g4 = (1 / P) * (P - P_c)
-        return torch.stack([g1, g2, g3, g4], dim=-1)
+        return -torch.stack([g1, g2, g3, g4], dim=-1)

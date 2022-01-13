@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -7,7 +7,7 @@
 
 import torch
 from botorch import fit_gpytorch_model
-from botorch.models.contextual_multioutput import LCEMGP, FixedNoiseLCEMGP
+from botorch.models.contextual_multioutput import FixedNoiseLCEMGP, LCEMGP
 from botorch.models.multitask import MultiTaskGP
 from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.testing import BotorchTestCase

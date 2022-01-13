@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -21,13 +21,13 @@ from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.containers import TrainingData
 from botorch.utils.sampling import manual_seed
-from botorch.utils.testing import BotorchTestCase, _get_random_data
+from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import (
+    _GaussianLikelihoodBase,
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
     HeteroskedasticNoise,
-    _GaussianLikelihoodBase,
 )
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood

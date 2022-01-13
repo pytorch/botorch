@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -27,16 +27,15 @@ from gpytorch.kernels import (
     IndexKernel,
     MaternKernel,
     MultitaskKernel,
-    ScaleKernel,
     RBFKernel,
+    ScaleKernel,
 )
 from gpytorch.likelihoods import (
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
     MultitaskGaussianLikelihood,
 )
-from gpytorch.means import ConstantMean
-from gpytorch.means import MultitaskMean
+from gpytorch.means import ConstantMean, MultitaskMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior, LogNormalPrior, SmoothedBoxPrior
 from gpytorch.priors.lkj_prior import LKJCovariancePrior
@@ -689,6 +688,10 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
                 rank=1,
                 batch_shape=batch_shape,
             )
+            data_covar_module = MaternKernel(
+                nu=1.5,
+                lengthscale_prior=GammaPrior(2.0, 4.0),
+            )
             task_covar_prior = LKJCovariancePrior(
                 n=2,
                 eta=0.5,
@@ -696,6 +699,7 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             )
             model_kwargs = {
                 "likelihood": likelihood,
+                "data_covar_module": data_covar_module,
                 "task_covar_prior": task_covar_prior,
                 "rank": 1,
             }
@@ -717,8 +721,8 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             self.assertEqual(task_covar_prior.correlation_prior.eta, 0.5)
             lengthscale_prior = base_kernel.data_covar_module.lengthscale_prior
             self.assertIsInstance(lengthscale_prior, GammaPrior)
-            self.assertEqual(lengthscale_prior.concentration, 3.0)
-            self.assertEqual(lengthscale_prior.rate, 6.0)
+            self.assertEqual(lengthscale_prior.concentration, 2.0)
+            self.assertEqual(lengthscale_prior.rate, 4.0)
             self.assertEqual(base_kernel.task_covar_module.covar_factor.shape[-1], 1)
 
             # test model fitting

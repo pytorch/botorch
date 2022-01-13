@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -28,6 +28,7 @@ References
 
 from __future__ import annotations
 
+import copy
 from typing import Optional, Type, Union
 
 import torch
@@ -48,13 +49,15 @@ from gpytorch.likelihoods import (
 )
 from gpytorch.means import ConstantMean, Mean
 from gpytorch.models import ApproximateGP
+from gpytorch.module import Module
 from gpytorch.priors import GammaPrior
+from gpytorch.utils.memoize import clear_cache_hook
 from gpytorch.variational import (
+    _VariationalDistribution,
+    _VariationalStrategy,
     CholeskyVariationalDistribution,
     IndependentMultitaskVariationalStrategy,
     VariationalStrategy,
-    _VariationalDistribution,
-    _VariationalStrategy,
 )
 from torch import Tensor
 
@@ -179,10 +182,11 @@ class _SingleTaskVariationalGP(ApproximateGP):
         # We use the model subclass wrapper to deal with input / outcome transforms.
         # The number of outputs will be correct here due to the check in
         # SingleTaskVariationalGP.
-        batch_shape = train_X.shape[:-2]
+        input_batch_shape = train_X.shape[:-2]
+        aug_batch_shape = copy.deepcopy(input_batch_shape)
         if num_outputs > 1:
-            batch_shape = torch.Size((num_outputs,)) + batch_shape
-        self._aug_batch_shape = batch_shape
+            aug_batch_shape += torch.Size((num_outputs,))
+        self._aug_batch_shape = aug_batch_shape
 
         if mean_module is None:
             mean_module = ConstantMean(batch_shape=self._aug_batch_shape).to(train_X)
@@ -211,27 +215,17 @@ class _SingleTaskVariationalGP(ApproximateGP):
                 # as a heuristic
                 inducing_points = int(0.25 * train_X.shape[-2])
 
-            with torch.no_grad():
-                train_train_kernel = covar_module(train_X)
-                if train_train_kernel.ndimension() > 2:
-                    train_train_kernel = train_train_kernel.evaluate_kernel()[0]
-                    need_to_repeat_over_batch = True
-                else:
-                    need_to_repeat_over_batch = False
-
-                inducing_points = _pivoted_cholesky_init(
-                    train_X, train_train_kernel, max_length=inducing_points
-                )
-
-                if need_to_repeat_over_batch:
-                    inducing_points = inducing_points.unsqueeze(0)
-                    inducing_points = inducing_points.repeat(
-                        *batch_shape, *([1] * (inducing_points.ndimension() - 1))
-                    )
+            inducing_points = _select_inducing_points(
+                inputs=train_X,
+                covar_module=covar_module,
+                num_inducing=inducing_points,
+                input_batch_shape=input_batch_shape,
+            )
 
         if variational_distribution is None:
             variational_distribution = CholeskyVariationalDistribution(
-                num_inducing_points=inducing_points.shape[-2], batch_shape=batch_shape
+                num_inducing_points=inducing_points.shape[-2],
+                batch_shape=self._aug_batch_shape,
             )
 
         variational_strategy = variational_strategy(
@@ -249,7 +243,6 @@ class _SingleTaskVariationalGP(ApproximateGP):
                 task_dim=-1,
             )
         super().__init__(variational_strategy=variational_strategy)
-        self._aug_batch_shape = batch_shape
         self.mean_module = mean_module
         self.covar_module = covar_module
 
@@ -336,7 +329,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
 
         self._num_outputs = num_outputs
         self._input_batch_shape = train_X.shape[:-2]
-        aug_batch_shape = self._input_batch_shape
+        aug_batch_shape = copy.deepcopy(self._input_batch_shape)
         if num_outputs > 1:
             aug_batch_shape += torch.Size([num_outputs])
         self._aug_batch_shape = aug_batch_shape
@@ -385,6 +378,111 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
             self.model.train_targets = train_Y.squeeze(-1)
 
         self.to(train_X)
+
+    def init_inducing_points(
+        self,
+        inputs: Tensor,
+    ) -> Tensor:
+        r"""
+        Reinitialize the inducing point locations in-place with the current kernel
+        applied to `inputs`.
+        The variational distribution and variational strategy caches are reset.
+
+        Args:
+            inputs: (\*batch_shape, n, d)-dim input data tensor.
+
+        Returns:
+            (\*batch_shape, m, d)-dim tensor of selected inducing point locations.
+        """
+        var_strat = self.model.variational_strategy
+        clear_cache_hook(var_strat)
+        if hasattr(var_strat, "base_variational_strategy"):
+            var_strat = var_strat.base_variational_strategy
+            clear_cache_hook(var_strat)
+
+        with torch.no_grad():
+            num_inducing = var_strat.inducing_points.size(-2)
+            inducing_points = _select_inducing_points(
+                inputs=inputs,
+                covar_module=self.model.covar_module,
+                num_inducing=num_inducing,
+                input_batch_shape=self._input_batch_shape,
+            )
+            var_strat.inducing_points.copy_(inducing_points)
+            var_strat.variational_params_initialized.fill_(0)
+
+        return inducing_points
+
+
+def _select_inducing_points(
+    inputs: Tensor,
+    covar_module: Module,
+    num_inducing: int,
+    input_batch_shape: torch.Size,
+) -> Tensor:
+    r"""
+    Utility function that evaluates a kernel at given inputs and selects inducing point
+    locations based on the pivoted Cholesky heuristic.
+
+    Args:
+        inputs: A (*batch_shape, n, d)-dim input data tensor.
+        covar_module: GPyTorch Module returning a LazyTensor kernel matrix.
+        num_inducing: The maximun number (m) of inducing points (m <= n).
+        input_batch_shape: The non-task-related batch shape.
+
+    Returns:
+        A (*batch_shape, m, d)-dim tensor of inducing point locations.
+    """
+
+    train_train_kernel = covar_module(inputs).evaluate_kernel()
+
+    # base case
+    if train_train_kernel.ndimension() == 2:
+        inducing_points = _pivoted_cholesky_init(
+            train_inputs=inputs,
+            kernel_matrix=train_train_kernel,
+            max_length=num_inducing,
+        )
+    # multi-task case
+    elif train_train_kernel.ndimension() == 3 and len(input_batch_shape) == 0:
+        input_element = inputs[0] if inputs.ndimension() == 3 else inputs
+        kernel_element = train_train_kernel[0]
+        inducing_points = _pivoted_cholesky_init(
+            train_inputs=input_element,
+            kernel_matrix=kernel_element,
+            max_length=num_inducing,
+        )
+    # batched input cases
+    else:
+        batched_inputs = (
+            inputs.expand(*input_batch_shape, -1, -1)
+            if inputs.ndimension() == 2
+            else inputs
+        )
+        reshaped_inputs = batched_inputs.flatten(end_dim=-3)
+        inducing_points = []
+        for input_element in reshaped_inputs:
+            # the extra kernel evals are a little wasteful but make it
+            # easier to infer the task batch size
+            kernel_element = covar_module(input_element).evaluate_kernel()
+            # handle extra task batch dimension
+            kernel_element = (
+                kernel_element[0]
+                if kernel_element.ndimension() == 3
+                else kernel_element
+            )
+            inducing_points.append(
+                _pivoted_cholesky_init(
+                    train_inputs=input_element,
+                    kernel_matrix=kernel_element,
+                    max_length=num_inducing,
+                )
+            )
+        inducing_points = torch.stack(inducing_points).view(
+            *input_batch_shape, num_inducing, -1
+        )
+
+    return inducing_points
 
 
 def _pivoted_cholesky_init(

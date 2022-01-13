@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -84,7 +84,9 @@ class TestOutcomeTransforms(BotorchTestCase):
             self.assertEqual(tf._min_stdv, 1e-8)
 
             # no observation noise
-            Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
+            with torch.random.fork_rng():
+                torch.manual_seed(0)
+                Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
             Y_tf, Yvar_tf = tf(Y, None)
             self.assertTrue(tf.training)
             self.assertTrue(torch.all(Y_tf.mean(dim=-2).abs() < 1e-4))

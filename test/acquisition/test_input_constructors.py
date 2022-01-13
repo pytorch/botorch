@@ -1,25 +1,37 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
+from typing import Callable
 from unittest import mock
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.analytic import (
-    # ConstrainedExpectedImprovement,
     ExpectedImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
     UpperConfidenceBound,
 )
+from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.input_constructors import (
     acqf_input_constructor,
+    construct_inputs_mf_base,
     get_acqf_input_constructor,
     get_best_f_analytic,
     get_best_f_mc,
+)
+from botorch.acquisition.knowledge_gradient import (
+    qKnowledgeGradient,
+    qMultiFidelityKnowledgeGradient,
+)
+from botorch.acquisition.max_value_entropy_search import (
+    qMaxValueEntropy,
+    qMultiFidelityMaxValueEntropy,
 )
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
@@ -39,9 +51,10 @@ from botorch.acquisition.multi_objective.objective import (
     WeightedMCMultiOutputObjective,
 )
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
-from botorch.acquisition.objective import LinearMCObjective
-from botorch.acquisition.objective import (
-    ScalarizedObjective,
+from botorch.acquisition.objective import LinearMCObjective, ScalarizedObjective
+from botorch.acquisition.utils import (
+    expand_trace_observations,
+    project_to_target_fidelity,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
@@ -67,6 +80,7 @@ class InputConstructorBaseTestCase:
         Xs = [torch.rand(2, 2), torch.rand(2, 2)]
         Ys = [torch.rand(2, 1), torch.rand(2, 1)]
         self.nbd_td = TrainingData(Xs=Xs, Ys=Ys)
+        self.bounds = 2 * [(0.0, 1.0)]
 
 
 class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
@@ -95,6 +109,53 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
         best_f = get_best_f_mc(training_data=self.bd_td_mo, objective=obj)
         best_f_expected = (self.bd_td_mo.Y @ obj.weights).max()
         self.assertEqual(best_f, best_f_expected)
+
+    @mock.patch("botorch.acquisition.input_constructors.optimize_acqf")
+    def test_optimize_objective(self, mock_optimize_acqf):
+        from botorch.acquisition.input_constructors import optimize_objective
+
+        mock_model = MockModel(posterior=MockPosterior(mean=None, variance=None))
+        bounds = torch.rand(2, len(self.bounds))
+
+        A = torch.rand(1, bounds.shape[-1])
+        b = torch.zeros([1, 1])
+        idx = A[0].nonzero(as_tuple=False).squeeze()
+        inequality_constraints = ((idx, -A[0, idx], -b[0, 0]),)
+
+        with self.subTest("scalarObjective_linearConstraints"):
+            _ = optimize_objective(
+                model=mock_model,
+                bounds=bounds,
+                q=1,
+                objective=ScalarizedObjective(weights=torch.rand(bounds.shape[-1])),
+                linear_constraints=(A, b),
+                fixed_features=None,
+            )
+
+            kwargs = mock_optimize_acqf.call_args[1]
+            self.assertIsInstance(kwargs["acq_function"], PosteriorMean)
+            self.assertTrue(torch.equal(kwargs["bounds"], bounds))
+            self.assertEqual(len(kwargs["inequality_constraints"]), 1)
+            for a, b in zip(
+                kwargs["inequality_constraints"][0], inequality_constraints[0]
+            ):
+                self.assertTrue(torch.equal(a, b))
+
+        with self.subTest("mcObjective_fixedFeatures"):
+            _ = optimize_objective(
+                model=mock_model,
+                bounds=bounds,
+                q=1,
+                objective=LinearMCObjective(weights=torch.rand(bounds.shape[-1])),
+                fixed_features={0: 0.5},
+            )
+
+            kwargs = mock_optimize_acqf.call_args[1]
+            self.assertIsInstance(
+                kwargs["acq_function"], FixedFeatureAcquisitionFunction
+            )
+            self.assertIsInstance(kwargs["acq_function"].acq_func, qSimpleRegret)
+            self.assertTrue(torch.equal(kwargs["bounds"], bounds[:, 1:]))
 
 
 class TestAnalyticAcquisitionFunctionInputConstructors(
@@ -552,3 +613,169 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertFalse(kwargs["cache_pending"])
         self.assertEqual(kwargs["max_iep"], 1)
         self.assertFalse(kwargs["incremental_nehvi"])
+
+    def test_construct_inputs_kg(self):
+        current_value = torch.tensor(1.23)
+        with mock.patch(
+            target="botorch.acquisition.input_constructors.optimize_objective",
+            return_value=(None, current_value),
+        ):
+            from botorch.acquisition import input_constructors
+
+            func = input_constructors.get_acqf_input_constructor(qKnowledgeGradient)
+            kwargs = func(
+                model=mock.Mock(),
+                training_data=self.bd_td,
+                objective=LinearMCObjective(torch.rand(2)),
+                bounds=self.bounds,
+                num_fantasies=33,
+            )
+
+            self.assertEqual(kwargs["num_fantasies"], 33)
+            self.assertEqual(kwargs["current_value"], current_value)
+
+    def test_construct_inputs_mes(self):
+        func = get_acqf_input_constructor(qMaxValueEntropy)
+        kwargs = func(
+            model=mock.Mock(),
+            training_data=self.bd_td,
+            objective=LinearMCObjective(torch.rand(2)),
+            bounds=self.bounds,
+            candidate_size=17,
+            maximize=False,
+        )
+
+        self.assertFalse(kwargs["maximize"])
+        self.assertGreaterEqual(kwargs["candidate_set"].min(), 0.0)
+        self.assertLessEqual(kwargs["candidate_set"].max(), 1.0)
+        self.assertEqual(
+            [int(s) for s in kwargs["candidate_set"].shape], [17, len(self.bounds)]
+        )
+
+    def test_construct_inputs_mf_base(self):
+        target_fidelities = {0: 0.123}
+        fidelity_weights = {0: 0.456}
+        cost_intercept = 0.789
+        num_trace_observations = 0
+
+        with self.subTest("test_fully_specified"):
+            kwargs = construct_inputs_mf_base(
+                model=mock.Mock(),
+                training_data=self.bd_td,
+                objective=LinearMCObjective(torch.rand(2)),
+                target_fidelities=target_fidelities,
+                fidelity_weights=fidelity_weights,
+                cost_intercept=cost_intercept,
+                num_trace_observations=num_trace_observations,
+            )
+
+            self.assertEqual(kwargs["target_fidelities"], target_fidelities)
+
+            X = torch.rand(3, 2)
+            self.assertTrue(isinstance(kwargs["expand"], Callable))
+            self.assertTrue(
+                torch.equal(
+                    kwargs["expand"](X),
+                    expand_trace_observations(
+                        X=X,
+                        fidelity_dims=sorted(target_fidelities),
+                        num_trace_obs=num_trace_observations,
+                    ),
+                )
+            )
+
+            self.assertTrue(isinstance(kwargs["project"], Callable))
+            self.assertTrue(
+                torch.equal(
+                    kwargs["project"](X),
+                    project_to_target_fidelity(X, target_fidelities=target_fidelities),
+                )
+            )
+
+            cm = kwargs["cost_aware_utility"].cost_model
+            w = torch.tensor(list(fidelity_weights.values()), dtype=cm.weights.dtype)
+            self.assertEqual(cm.fixed_cost, cost_intercept)
+            self.assertTrue(torch.allclose(cm.weights, w))
+
+        with self.subTest("test_missing_fidelity_weights"):
+            kwargs = construct_inputs_mf_base(
+                model=mock.Mock(),
+                training_data=self.bd_td,
+                objective=LinearMCObjective(torch.rand(2)),
+                target_fidelities=target_fidelities,
+                cost_intercept=cost_intercept,
+            )
+            cm = kwargs["cost_aware_utility"].cost_model
+            self.assertTrue(torch.allclose(cm.weights, torch.ones_like(cm.weights)))
+
+        with self.subTest("test_mismatched_weights"):
+            with self.assertRaisesRegex(
+                RuntimeError, "Must provide the same indices for"
+            ):
+                _ = construct_inputs_mf_base(
+                    model=mock.Mock(),
+                    training_data=self.bd_td,
+                    objective=LinearMCObjective(torch.rand(2)),
+                    target_fidelities={0: 1.0},
+                    fidelity_weights={1: 0.5},
+                    cost_intercept=cost_intercept,
+                )
+
+    def test_construct_inputs_mfkg(self):
+        constructor_args = {
+            "model": None,
+            "training_data": self.bd_td,
+            "objective": None,
+            "bounds": self.bounds,
+            "num_fantasies": 123,
+            "target_fidelities": {0: 0.987},
+            "fidelity_weights": {0: 0.654},
+            "cost_intercept": 0.321,
+        }
+        with mock.patch(
+            target="botorch.acquisition.input_constructors.construct_inputs_mf_base",
+            return_value={"foo": 0},
+        ), mock.patch(
+            target="botorch.acquisition.input_constructors.construct_inputs_qKG",
+            return_value={"bar": 1},
+        ):
+            from botorch.acquisition import input_constructors
+
+            input_constructor = input_constructors.get_acqf_input_constructor(
+                qMultiFidelityKnowledgeGradient
+            )
+            inputs_mfkg = input_constructor(**constructor_args)
+            inputs_test = {"foo": 0, "bar": 1}
+            self.assertEqual(inputs_mfkg, inputs_test)
+
+    def test_construct_inputs_mfmes(self):
+        constructor_args = {
+            "model": None,
+            "training_data": self.bd_td,
+            "objective": None,
+            "bounds": self.bounds,
+            "num_fantasies": 123,
+            "candidate_size": 17,
+            "target_fidelities": {0: 0.987},
+            "fidelity_weights": {0: 0.654},
+            "cost_intercept": 0.321,
+        }
+        current_value = torch.tensor(1.23)
+        with mock.patch(
+            target="botorch.acquisition.input_constructors.construct_inputs_mf_base",
+            return_value={"foo": 0},
+        ), mock.patch(
+            target="botorch.acquisition.input_constructors.construct_inputs_qMES",
+            return_value={"bar": 1},
+        ), mock.patch(
+            target="botorch.acquisition.input_constructors.optimize_objective",
+            return_value=(None, current_value),
+        ):
+            from botorch.acquisition import input_constructors
+
+            input_constructor = input_constructors.get_acqf_input_constructor(
+                qMultiFidelityMaxValueEntropy
+            )
+            inputs_mfmes = input_constructor(**constructor_args)
+            inputs_test = {"foo": 0, "bar": 1, "current_value": current_value}
+            self.assertEqual(inputs_mfmes, inputs_test)

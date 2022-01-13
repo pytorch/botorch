@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -15,9 +15,9 @@ from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
 from botorch.models import FixedNoiseGP, HeteroskedasticSingleTaskGP, SingleTaskGP
 from botorch.models.transforms.outcome import Standardize
 from botorch.optim.fit import (
-    OptimizationIteration,
     fit_gpytorch_scipy,
     fit_gpytorch_torch,
+    OptimizationIteration,
 )
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.constraints import GreaterThan, Interval

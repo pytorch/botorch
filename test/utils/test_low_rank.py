@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -9,10 +9,7 @@ from botorch.exceptions.errors import BotorchError
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.sampling.samplers import IIDNormalSampler
-from botorch.utils.low_rank import (
-    extract_batch_covar,
-    sample_cached_cholesky,
-)
+from botorch.utils.low_rank import extract_batch_covar, sample_cached_cholesky
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
@@ -73,7 +70,8 @@ class TestSampleCachedCholesky(BotorchTestCase):
                             train_Y[:, :m],
                         )
                     sampler = IIDNormalSampler(3)
-                    for q in (1, 3):
+                    base_sampler = IIDNormalSampler(3)
+                    for q in (1, 3, 9):
                         # test batched baseline_L
                         for train_batch_shape in (
                             torch.Size([]),
@@ -142,6 +140,34 @@ class TestSampleCachedCholesky(BotorchTestCase):
                                     torch.allclose(
                                         test_X2.grad[..., -q:, :],
                                         test_X.grad[..., -q:, :],
+                                        **all_close_kwargs,
+                                    )
+                                )
+                                # Test that adding a new point and base_sample
+                                # did not change posterior samples for previous points.
+                                # This tests that we properly account for not
+                                # interleaving.
+                                base_sampler.base_samples = (
+                                    sampler.base_samples[..., :-q, :].detach().clone()
+                                )
+
+                                baseline_samples = base_sampler(base_posterior)
+                                new_batch_shape = samples.shape[
+                                    1 : -baseline_samples.ndim + 1
+                                ]
+                                expanded_baseline_samples = baseline_samples.view(
+                                    baseline_samples.shape[0],
+                                    *[1] * len(new_batch_shape),
+                                    *baseline_samples.shape[1:],
+                                ).expand(
+                                    baseline_samples.shape[0],
+                                    *new_batch_shape,
+                                    *baseline_samples.shape[1:],
+                                )
+                                self.assertTrue(
+                                    torch.allclose(
+                                        expanded_baseline_samples,
+                                        samples[..., :-q, :],
                                         **all_close_kwargs,
                                     )
                                 )

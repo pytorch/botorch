@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -29,7 +29,14 @@ if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR):
 
 TEST_REQUIRES = ["pytest", "pytest-cov"]
 
-DEV_REQUIRES = TEST_REQUIRES + ["black", "flake8", "sphinx", "usort"]
+DEV_REQUIRES = TEST_REQUIRES + [
+    "flake8",
+    "sphinx",
+    "black==21.4b2",
+    "libcst==0.3.19",
+    "usort==0.6.4",
+    "ufmt",
+]
 
 TUTORIALS_REQUIRES = [
     "ax-platform",
@@ -81,8 +88,13 @@ setup(
             else "node-and-date"
         ),
     },
-    install_requires=["torch>=1.9", "gpytorch>=1.6", "scipy"],
     packages=find_packages(exclude=["test", "test.*"]),
+    install_requires=[
+        "torch>=1.9",
+        "gpytorch>=1.6",
+        "scipy",
+        "multipledispatch",
+    ],
     extras_require={
         "dev": DEV_REQUIRES,
         "test": TEST_REQUIRES,

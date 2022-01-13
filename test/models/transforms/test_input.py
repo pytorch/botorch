@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -12,12 +12,14 @@ from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.input import (
     AppendFeatures,
     ChainedInputTransform,
+    FilterFeatures,
     InputPerturbation,
+    InputStandardize,
     InputTransform,
-    Warp,
     Log10,
     Normalize,
     Round,
+    Warp,
 )
 from botorch.models.transforms.utils import expand_and_copy_tensor
 from botorch.models.utils import fantasize
@@ -123,6 +125,7 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue(torch.equal(ipt5(X), X))
 
     def test_normalize(self):
+
         for dtype in (torch.float, torch.double):
 
             # basic init, learned bounds
@@ -149,6 +152,25 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue(
                 torch.equal(nlz.mins, bounds[..., 1:2, :] - bounds[..., 0:1, :])
             )
+
+            # basic init, provided indices
+            with self.assertRaises(ValueError):
+                nlz = Normalize(d=2, indices=[0, 1, 2])
+            with self.assertRaises(ValueError):
+                nlz = Normalize(d=2, indices=[0, 2])
+            with self.assertRaises(ValueError):
+                nlz = Normalize(d=2, indices=[0, 0])
+            with self.assertRaises(ValueError):
+                nlz = Normalize(d=2, indices=[])
+            nlz = Normalize(d=2, indices=[0])
+            self.assertTrue(nlz.learn_bounds)
+            self.assertTrue(nlz.training)
+            self.assertEqual(nlz._d, 2)
+            self.assertEqual(nlz.mins.shape, torch.Size([1, 2]))
+            self.assertEqual(nlz.ranges.shape, torch.Size([1, 2]))
+            self.assertEqual(len(nlz.indices), 1)
+            self.assertTrue((nlz.indices == torch.tensor([0], dtype=torch.long)).all())
+
             # test .to
             other_dtype = torch.float if dtype == torch.double else torch.double
             nlz.to(other_dtype)
@@ -231,7 +253,32 @@ class TestInputTransforms(BotorchTestCase):
                 X_nlzd2 = nlz.untransform(X2)
                 self.assertTrue(torch.allclose(X_nlzd, X_nlzd2, atol=1e-4, rtol=1e-4))
 
+                # test non complete indices
+                indices = [0, 2]
+                nlz = Normalize(d=3, batch_shape=batch_shape, indices=indices)
+                X = torch.randn(*batch_shape, 4, 3, device=self.device, dtype=dtype)
+                X_nlzd = nlz(X)
+                self.assertEqual(X_nlzd[..., indices].min().item(), 0.0)
+                self.assertEqual(X_nlzd[..., indices].max().item(), 1.0)
+                self.assertTrue(torch.allclose(X_nlzd[..., 1], X[..., 1]))
+                nlz.eval()
+                X_unnlzd = nlz.untransform(X_nlzd)
+                self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
+                expected_bounds = torch.cat(
+                    [X.min(dim=-2, keepdim=True)[0], X.max(dim=-2, keepdim=True)[0]],
+                    dim=-2,
+                )
+                self.assertTrue(torch.allclose(nlz.bounds, expected_bounds))
+                # test errors on wrong shape
+                nlz = Normalize(d=2, batch_shape=batch_shape)
+                X = torch.randn(*batch_shape, 2, 1, device=self.device, dtype=dtype)
+                with self.assertRaises(BotorchTensorDimensionError):
+                    nlz(X)
+
                 # test equals
+                nlz = Normalize(
+                    d=2, bounds=bounds, batch_shape=batch_shape, reverse=True
+                )
                 nlz2 = Normalize(
                     d=2, bounds=bounds, batch_shape=batch_shape, reverse=False
                 )
@@ -247,6 +294,148 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertFalse(nlz.equals(nlz4))
                 nlz5 = Normalize(d=2, batch_shape=batch_shape)
                 self.assertFalse(nlz.equals(nlz5))
+                nlz6 = Normalize(d=2, batch_shape=batch_shape, indices=[0, 1])
+                self.assertFalse(nlz5.equals(nlz6))
+                nlz7 = Normalize(d=2, batch_shape=batch_shape, indices=[0])
+                self.assertFalse(nlz5.equals(nlz7))
+                nlz8 = Normalize(d=2, batch_shape=batch_shape, indices=[0, 1])
+                self.assertTrue(nlz6.equals(nlz8))
+                nlz9 = Normalize(d=3, batch_shape=batch_shape, indices=[0, 1])
+                nlz10 = Normalize(d=3, batch_shape=batch_shape, indices=[0, 2])
+                self.assertFalse(nlz9.equals(nlz10))
+
+    def test_standardize(self):
+        for dtype in (torch.float, torch.double):
+
+            # basic init
+            stdz = InputStandardize(d=2)
+            self.assertTrue(stdz.training)
+            self.assertEqual(stdz._d, 2)
+            self.assertEqual(stdz.means.shape, torch.Size([1, 2]))
+            self.assertEqual(stdz.stds.shape, torch.Size([1, 2]))
+            stdz = InputStandardize(d=2, batch_shape=torch.Size([3]))
+            self.assertTrue(stdz.training)
+            self.assertEqual(stdz._d, 2)
+            self.assertEqual(stdz.means.shape, torch.Size([3, 1, 2]))
+            self.assertEqual(stdz.stds.shape, torch.Size([3, 1, 2]))
+
+            # basic init, provided indices
+            with self.assertRaises(ValueError):
+                stdz = InputStandardize(d=2, indices=[0, 1, 2])
+            with self.assertRaises(ValueError):
+                stdz = InputStandardize(d=2, indices=[0, 2])
+            with self.assertRaises(ValueError):
+                stdz = InputStandardize(d=2, indices=[0, 0])
+            with self.assertRaises(ValueError):
+                stdz = InputStandardize(d=2, indices=[])
+            stdz = InputStandardize(d=2, indices=[0])
+            self.assertTrue(stdz.training)
+            self.assertEqual(stdz._d, 2)
+            self.assertEqual(stdz.means.shape, torch.Size([1, 2]))
+            self.assertEqual(stdz.stds.shape, torch.Size([1, 2]))
+            self.assertEqual(len(stdz.indices), 1)
+            self.assertTrue(
+                torch.equal(stdz.indices, torch.tensor([0], dtype=torch.long))
+            )
+            stdz = InputStandardize(d=2, indices=[0], batch_shape=torch.Size([3]))
+            self.assertTrue(stdz.training)
+            self.assertEqual(stdz._d, 2)
+            self.assertEqual(stdz.means.shape, torch.Size([3, 1, 2]))
+            self.assertEqual(stdz.stds.shape, torch.Size([3, 1, 2]))
+            self.assertEqual(len(stdz.indices), 1)
+            self.assertTrue(
+                torch.equal(stdz.indices, torch.tensor([0], dtype=torch.long))
+            )
+
+            # test jitter
+            stdz = InputStandardize(d=2, min_std=1e-4)
+            self.assertEqual(stdz.min_std, 1e-4)
+            X = torch.cat((torch.randn(4, 1), torch.zeros(4, 1)), dim=-1)
+            X = X.to(self.device, dtype=dtype)
+            self.assertEqual(torch.isfinite(stdz(X)).sum(), X.numel())
+
+            # basic usage
+            for batch_shape in (torch.Size(), torch.Size([3])):
+                stdz = InputStandardize(d=2, batch_shape=batch_shape)
+                torch.manual_seed(42)
+                X = torch.randn(*batch_shape, 4, 2, device=self.device, dtype=dtype)
+                X_stdz = stdz(X)
+                self.assertTrue(torch.all(X_stdz.mean(dim=-2).abs() < 1e-4))
+                self.assertTrue(torch.all((X_stdz.std(dim=-2) - 1.0).abs() < 1e-4))
+                stdz.eval()
+                X_unstdz = stdz.untransform(X_stdz)
+                self.assertTrue(torch.allclose(X, X_unstdz, atol=1e-4, rtol=1e-4))
+                expected_means = X.mean(dim=-2, keepdim=True)
+                expected_stds = X.std(dim=-2, keepdim=True)
+                self.assertTrue(torch.allclose(stdz.means, expected_means))
+                self.assertTrue(torch.allclose(stdz.stds, expected_stds))
+
+                # test to
+                other_dtype = torch.float if dtype == torch.double else torch.double
+                stdz.to(other_dtype)
+                self.assertTrue(stdz.means.dtype == other_dtype)
+
+                # test errors on wrong shape
+                stdz = InputStandardize(d=2, batch_shape=batch_shape)
+                X = torch.randn(*batch_shape, 2, 1, device=self.device, dtype=dtype)
+                with self.assertRaises(BotorchTensorDimensionError):
+                    stdz(X)
+
+                # test no normalization on eval
+                stdz = InputStandardize(
+                    d=2, batch_shape=batch_shape, transform_on_eval=False
+                )
+                X = torch.randn(*batch_shape, 4, 2, device=self.device, dtype=dtype)
+                X_stdz = stdz(X)
+                X_unstdz = stdz.untransform(X_stdz)
+                self.assertTrue(torch.allclose(X, X_unstdz, atol=1e-4, rtol=1e-4))
+                stdz.eval()
+                self.assertTrue(torch.equal(stdz(X), X))
+
+                # test no normalization on train
+                stdz = InputStandardize(
+                    d=2, batch_shape=batch_shape, transform_on_train=False
+                )
+                X_stdz = stdz(X)
+                self.assertTrue(torch.equal(stdz(X), X))
+                stdz.eval()
+                X_unstdz = stdz.untransform(X_stdz)
+                self.assertTrue(torch.allclose(X, X_unstdz, atol=1e-4, rtol=1e-4))
+
+                # test indices
+                indices = [0, 2]
+                stdz = InputStandardize(d=3, batch_shape=batch_shape, indices=indices)
+                X = torch.randn(*batch_shape, 4, 3, device=self.device, dtype=dtype)
+                X_stdz = stdz(X)
+                self.assertTrue(
+                    torch.all(X_stdz[..., indices].mean(dim=-2).abs() < 1e-4)
+                )
+                self.assertTrue(
+                    torch.all(X_stdz[..., indices].std(dim=-2) < 1.0 + 1e-4)
+                )
+                self.assertTrue(
+                    torch.all((X_stdz[..., indices].std(dim=-2) - 1.0).abs() < 1e-4)
+                )
+                self.assertTrue(torch.allclose(X_stdz[..., 1], X[..., 1]))
+                stdz.eval()
+                X_unstdz = stdz.untransform(X_stdz)
+                self.assertTrue(torch.allclose(X, X_unstdz, atol=1e-4, rtol=1e-4))
+
+                # test equals
+                stdz = InputStandardize(d=2, batch_shape=batch_shape, reverse=True)
+                stdz2 = InputStandardize(d=2, batch_shape=batch_shape, reverse=False)
+                self.assertFalse(stdz.equals(stdz2))
+                stdz3 = InputStandardize(d=2, batch_shape=batch_shape, reverse=True)
+                self.assertTrue(stdz.equals(stdz3))
+                stdz4 = InputStandardize(d=2, batch_shape=batch_shape, indices=[0, 1])
+                self.assertFalse(stdz4.equals(stdz))
+                stdz5 = InputStandardize(d=2, batch_shape=batch_shape, indices=[0])
+                self.assertFalse(stdz5.equals(stdz))
+                stdz6 = InputStandardize(d=2, batch_shape=batch_shape, indices=[0, 1])
+                self.assertTrue(stdz6.equals(stdz4))
+                stdz7 = InputStandardize(d=3, batch_shape=batch_shape, indices=[0, 1])
+                stdz8 = InputStandardize(d=3, batch_shape=batch_shape, indices=[0, 2])
+                self.assertFalse(stdz7.equals(stdz8))
 
     def test_chained_input_transform(self):
 
@@ -626,6 +815,82 @@ class TestAppendFeatures(BotorchTestCase):
                 transformed_X = transform(X)
             self.assertTrue(torch.equal(X, transformed_X))
 
+            # Make sure .to calls work.
+            transform.to(device=torch.device("cpu"), dtype=torch.half)
+            self.assertEqual(transform.feature_set.device.type, "cpu")
+            self.assertEqual(transform.feature_set.dtype, torch.half)
+
+
+class TestFilterFeatures(BotorchTestCase):
+    def test_filter_features(self):
+        with self.assertRaises(ValueError):
+            FilterFeatures(torch.tensor([[1, 2]], dtype=torch.long))
+        with self.assertRaises(ValueError):
+            FilterFeatures(torch.tensor([1.0, 2.0]))
+        with self.assertRaises(ValueError):
+            FilterFeatures(torch.tensor([-1, 0, 1], dtype=torch.long))
+        with self.assertRaises(ValueError):
+            FilterFeatures(torch.tensor([0, 1, 1], dtype=torch.long))
+
+        for dtype in (torch.float, torch.double):
+            feature_indices = torch.tensor(
+                [0, 2, 3, 5], dtype=torch.long, device=self.device
+            )
+            transform = FilterFeatures(feature_indices=feature_indices)
+            X = torch.rand(4, 5, 6, device=self.device, dtype=dtype)
+            # in train - yes transform
+            transform.train()
+            transformed_X = transform(X)
+            self.assertFalse(torch.equal(X, transformed_X))
+            self.assertEqual(transformed_X.shape, torch.Size([4, 5, 4]))
+            self.assertTrue(torch.equal(transformed_X, X[..., feature_indices]))
+            # in eval - yes transform
+            transform.eval()
+            transformed_X = transform(X)
+            self.assertFalse(torch.equal(X, transformed_X))
+            self.assertEqual(transformed_X.shape, torch.Size([4, 5, 4]))
+            self.assertTrue(torch.equal(transformed_X, X[..., feature_indices]))
+            # in fantasize - yes transform
+            with fantasize():
+                transformed_X = transform(X)
+                self.assertFalse(torch.equal(X, transformed_X))
+                self.assertEqual(transformed_X.shape, torch.Size([4, 5, 4]))
+                self.assertTrue(torch.equal(transformed_X, X[..., feature_indices]))
+
+            # Make sure .to calls work.
+            transform.to(device=torch.device("cpu"))
+            self.assertEqual(transform.feature_indices.device.type, "cpu")
+            # test equals
+            transform2 = FilterFeatures(feature_indices=feature_indices)
+            self.assertTrue(transform.equals(transform2))
+            # test different indices
+            feature_indices2 = torch.tensor(
+                [0, 2, 3, 6], dtype=torch.long, device=self.device
+            )
+            transform2 = FilterFeatures(feature_indices=feature_indices2)
+            self.assertFalse(transform.equals(transform2))
+            # test different length
+            feature_indices2 = torch.tensor(
+                [2, 3, 5], dtype=torch.long, device=self.device
+            )
+            transform2 = FilterFeatures(feature_indices=feature_indices2)
+            self.assertFalse(transform.equals(transform2))
+            # test different transform_on_train
+            transform2 = FilterFeatures(
+                feature_indices=feature_indices, transform_on_train=False
+            )
+            self.assertFalse(transform.equals(transform2))
+            # test different transform_on_eval
+            transform2 = FilterFeatures(
+                feature_indices=feature_indices, transform_on_eval=False
+            )
+            self.assertFalse(transform.equals(transform2))
+            # test different transform_on_fantasize
+            transform2 = FilterFeatures(
+                feature_indices=feature_indices, transform_on_fantasize=False
+            )
+            self.assertFalse(transform.equals(transform2))
+
 
 class TestInputPerturbation(BotorchTestCase):
     def test_input_perturbation(self):
@@ -711,6 +976,13 @@ class TestInputPerturbation(BotorchTestCase):
             )
             transformed = transform(X)
             self.assertTrue(torch.allclose(transformed, expected))
+
+            # Make sure .to calls work.
+            transform.to(device=torch.device("cpu"), dtype=torch.half)
+            self.assertEqual(transform.perturbation_set.device.type, "cpu")
+            self.assertEqual(transform.perturbation_set.dtype, torch.half)
+            self.assertEqual(transform.bounds.device.type, "cpu")
+            self.assertEqual(transform.bounds.dtype, torch.half)
 
             # multiplicative
             perturbation_set = torch.tensor(
