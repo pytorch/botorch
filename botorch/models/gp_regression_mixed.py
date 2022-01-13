@@ -51,6 +51,7 @@ class MixedSingleTaskGP(SingleTaskGP):
         train_X: Tensor,
         train_Y: Tensor,
         cat_dims: List[int],
+        ord_dims: Optional[List[int]] = None,
         cont_kernel_factory: Optional[Callable[[int, List[int]], Kernel]] = None,
         cont_kernel_options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
         likelihood: Optional[Likelihood] = None,
@@ -131,7 +132,9 @@ class MixedSingleTaskGP(SingleTaskGP):
 
         d = train_X.shape[-1]
         cat_dims = normalize_indices(indices=cat_dims, d=d)
-        ord_dims = sorted(set(range(d)) - set(cat_dims))
+        ord_dims = ord_dims or sorted(set(range(d)) - set(cat_dims))
+        if any(idx in cat_dims for idx in ord_dims):
+            raise ValueError("Inputs cannot be defined both as categorical and ordinal.")
         if len(ord_dims) == 0:
             covar_module = ScaleKernel(
                 CategoricalKernel(
