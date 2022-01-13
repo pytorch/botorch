@@ -735,7 +735,15 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
                     expanded_shape
                 )
                 if self._uses_matheron:
-                    self.sampler.base_samples[..., :end_idx] = expanded_samples
+                    n_train_samples = current_base_samples.shape[-1] // 2
+                    # The train base samples.
+                    self.sampler.base_samples[..., :n_train_samples] = expanded_samples[
+                        ..., :n_train_samples
+                    ]
+                    # The train noise base samples.
+                    self.sampler.base_samples[
+                        ..., -n_train_samples:
+                    ] = expanded_samples[..., -n_train_samples:]
                 else:
                     self.sampler.base_samples[..., :end_idx, :] = expanded_samples
                 # update cached subset indices

@@ -41,7 +41,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
-from botorch.utils.transforms import standardize
+from botorch.utils.transforms import standardize, match_batch_shape
 
 
 class DummyMultiObjectiveMCAcquisitionFunction(MultiObjectiveMCAcquisitionFunction):
@@ -1445,6 +1445,9 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     acqf = get_acqf(model)
             else:
                 acqf = get_acqf(model)
+            base_samples = acqf.base_sampler.base_samples
+            posterior = model.posterior(train_x)
+            base_evals = acqf.base_sampler(posterior)
             self.assertTrue(acqf._is_mt)
             self.assertEqual(acqf._uses_matheron, matheron)
             with mock.patch.object(
@@ -1461,4 +1464,32 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             )
             self.assertEqual(
                 wrapped_compute.call_args[-1]["samples"].shape, expected_shape
+            )
+            new_base_samples = acqf.sampler.base_samples
+            # Check that the base samples are the same.
+            if model is mtgp:
+                expected = new_base_samples[..., :-3, :].squeeze(-3)
+            else:
+                n_train = base_samples.shape[-1] // 2
+                expected = torch.cat(
+                    [new_base_samples[..., :n_train], new_base_samples[..., -n_train:]],
+                    dim=-1,
+                ).squeeze(-2)
+            self.assertTrue(torch.equal(base_samples, expected))
+            # Check that they produce the same f_X for baseline points.
+            X_full = torch.cat(
+                [match_batch_shape(acqf.X_baseline, test_x), test_x], dim=-2
+            )
+            posterior = acqf.model.posterior(X_full)
+            samples = acqf.sampler(posterior)
+            expected = samples[:, :, :-3]
+            repeat_shape = [1, 2, 1, 1]
+            if model is hogp:
+                repeat_shape.append(1)
+            self.assertTrue(
+                torch.allclose(
+                    base_evals.unsqueeze(1).repeat(*repeat_shape),
+                    expected,
+                    atol=1e-2,
+                )
             )
