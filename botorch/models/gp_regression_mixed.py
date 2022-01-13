@@ -115,7 +115,6 @@ class MixedSingleTaskGP(SingleTaskGP):
                 batch_shape: torch.Size,
                 ard_num_dims: int,
                 active_dims: List[int],
-                **kwargs: Any,
             ) -> MaternKernel:
                 return MaternKernel(
                     nu=2.5,
@@ -139,10 +138,6 @@ class MixedSingleTaskGP(SingleTaskGP):
         d = train_X.shape[-1]
         cat_dims = normalize_indices(indices=cat_dims, d=d)
         ord_dims = sorted(set(range(d)) - set(cat_dims))
-        if any(idx in cat_dims for idx in ord_dims):
-            raise ValueError(
-                "Inputs cannot be defined both as categorical and ordinal."
-            )
         if len(ord_dims) == 0:
             covar_module = ScaleKernel(
                 CategoricalKernel(
