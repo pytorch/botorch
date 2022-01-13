@@ -52,9 +52,11 @@ class MixedSingleTaskGP(SingleTaskGP):
         train_Y: Tensor,
         cat_dims: List[int],
         cont_kernel_factory: Optional[Callable[[int, List[int]], Kernel]] = None,
+        cont_kernel_options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
         likelihood: Optional[Likelihood] = None,
         outcome_transform: Optional[OutcomeTransform] = None,  # TODO
         input_transform: Optional[InputTransform] = None,  # TODO
+
     ) -> None:
         r"""A single-task exact GP model supporting categorical parameters.
 
@@ -87,10 +89,12 @@ class MixedSingleTaskGP(SingleTaskGP):
                 )
             >>> model = MixedSingleTaskGP(train_X, train_Y, cat_dims=[-1])
         """
-        if outcome_transform is not None:
-            raise UnsupportedError("outcome transforms not yet supported")
         if input_transform is not None:
-            raise UnsupportedError("input transforms not yet supported")
+            if hasattr(input_transform,"indices") == False:
+                raise ValueError("Only continuous inputs can be transformed. Please use `indices` in the `input_transform`.")
+            # check that no cat dim is in indices
+            elif any(idx in input_transform.indices for idx in cat_dims):
+                raise ValueError("Only continuous inputs can be transformed. Categorical index found in `indices` of the `input_transform`.")
         if len(cat_dims) == 0:
             raise ValueError(
                 "Must specify categorical dimensions for MixedSingleTaskGP"
@@ -100,10 +104,11 @@ class MixedSingleTaskGP(SingleTaskGP):
             train_X=train_X, train_Y=train_Y
         )
 
+        self.cont_kernel_options = cont_kernel_options or {}
         if cont_kernel_factory is None:
 
             def cont_kernel_factory(
-                batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
+                batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int], **kwargs: Any,
             ) -> MaternKernel:
                 return MaternKernel(
                     nu=2.5,
@@ -141,6 +146,7 @@ class MixedSingleTaskGP(SingleTaskGP):
                     batch_shape=aug_batch_shape,
                     ard_num_dims=len(ord_dims),
                     active_dims=ord_dims,
+                    **self.cont_kernel_options,
                 )
                 + ScaleKernel(
                     CategoricalKernel(
@@ -156,6 +162,7 @@ class MixedSingleTaskGP(SingleTaskGP):
                     batch_shape=aug_batch_shape,
                     ard_num_dims=len(ord_dims),
                     active_dims=ord_dims,
+                    **self.cont_kernel_options,
                 )
                 * CategoricalKernel(
                     batch_shape=aug_batch_shape,
