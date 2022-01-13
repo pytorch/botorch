@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import Any, Callable, Dict, List, Optional
 
 import torch
-from botorch.exceptions.errors import UnsupportedError
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.transforms.input import InputTransform
@@ -51,13 +50,10 @@ class MixedSingleTaskGP(SingleTaskGP):
         train_X: Tensor,
         train_Y: Tensor,
         cat_dims: List[int],
-        ord_dims: Optional[List[int]] = None,
         cont_kernel_factory: Optional[Callable[[int, List[int]], Kernel]] = None,
-        cont_kernel_options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
         likelihood: Optional[Likelihood] = None,
         outcome_transform: Optional[OutcomeTransform] = None,  # TODO
         input_transform: Optional[InputTransform] = None,  # TODO
-
     ) -> None:
         r"""A single-task exact GP model supporting categorical parameters.
 
@@ -73,12 +69,14 @@ class MixedSingleTaskGP(SingleTaskGP):
                 the kernel for the ordinal parameters.
             likelihood: A likelihood. If omitted, use a standard
                 GaussianLikelihood with inferred noise level.
-            # outcome_transform: An outcome transform that is applied to the
-            #     training data during instantiation and to the posterior during
-            #     inference (that is, the `Posterior` obtained by calling
-            #     `.posterior` on the model will be on the original scale).
-            # input_transform: An input transform that is applied in the model's
-            #     forward pass.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
+            input_transform: An input transform that is applied in the model's
+                forward pass. Only input transforms are allowed which do not
+                transform the categorical dimensions. This can be achieved
+                by using the `indices` argument when constructing the transform.
 
         Example:
             >>> train_X = torch.cat(
@@ -91,11 +89,17 @@ class MixedSingleTaskGP(SingleTaskGP):
             >>> model = MixedSingleTaskGP(train_X, train_Y, cat_dims=[-1])
         """
         if input_transform is not None:
-            if hasattr(input_transform,"indices") == False:
-                raise ValueError("Only continuous inputs can be transformed. Please use `indices` in the `input_transform`.")
+            if hasattr(input_transform, "indices") is False:
+                raise ValueError(
+                    "Only continuous inputs can be transformed. \
+                        Please use `indices` in the `input_transform`."
+                )
             # check that no cat dim is in indices
             elif any(idx in input_transform.indices for idx in cat_dims):
-                raise ValueError("Only continuous inputs can be transformed. Categorical index found in `indices` of the `input_transform`.")
+                raise ValueError(
+                    "Only continuous inputs can be transformed. \
+                        Categorical index found in `indices` of the `input_transform`."
+                )
         if len(cat_dims) == 0:
             raise ValueError(
                 "Must specify categorical dimensions for MixedSingleTaskGP"
@@ -105,11 +109,13 @@ class MixedSingleTaskGP(SingleTaskGP):
             train_X=train_X, train_Y=train_Y
         )
 
-        self.cont_kernel_options = cont_kernel_options or {}
         if cont_kernel_factory is None:
 
             def cont_kernel_factory(
-                batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int], **kwargs: Any,
+                batch_shape: torch.Size,
+                ard_num_dims: int,
+                active_dims: List[int],
+                **kwargs: Any,
             ) -> MaternKernel:
                 return MaternKernel(
                     nu=2.5,
@@ -132,9 +138,11 @@ class MixedSingleTaskGP(SingleTaskGP):
 
         d = train_X.shape[-1]
         cat_dims = normalize_indices(indices=cat_dims, d=d)
-        ord_dims = ord_dims or sorted(set(range(d)) - set(cat_dims))
+        ord_dims = sorted(set(range(d)) - set(cat_dims))
         if any(idx in cat_dims for idx in ord_dims):
-            raise ValueError("Inputs cannot be defined both as categorical and ordinal.")
+            raise ValueError(
+                "Inputs cannot be defined both as categorical and ordinal."
+            )
         if len(ord_dims) == 0:
             covar_module = ScaleKernel(
                 CategoricalKernel(
@@ -149,7 +157,6 @@ class MixedSingleTaskGP(SingleTaskGP):
                     batch_shape=aug_batch_shape,
                     ard_num_dims=len(ord_dims),
                     active_dims=ord_dims,
-                    **self.cont_kernel_options,
                 )
                 + ScaleKernel(
                     CategoricalKernel(
@@ -165,7 +172,6 @@ class MixedSingleTaskGP(SingleTaskGP):
                     batch_shape=aug_batch_shape,
                     ard_num_dims=len(ord_dims),
                     active_dims=ord_dims,
-                    **self.cont_kernel_options,
                 )
                 * CategoricalKernel(
                     batch_shape=aug_batch_shape,
