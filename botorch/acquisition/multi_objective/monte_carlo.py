@@ -730,7 +730,6 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
                 # For example, when using sequential greedy candidate generation
                 # then generate the new candidate point using last (-1) base_sample
                 # in sampler. This copies that base sample.
-                end_idx = current_base_samples.shape[-1 if self._uses_matheron else -2]
                 expanded_samples = current_base_samples.view(view_shape).expand(
                     expanded_shape
                 )
@@ -745,6 +744,7 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
                         ..., -n_train_samples:
                     ] = expanded_samples[..., -n_train_samples:]
                 else:
+                    end_idx = current_base_samples.shape[-2]
                     self.sampler.base_samples[..., :end_idx, :] = expanded_samples
                 # update cached subset indices
                 # Note: this also stores self.q = q
