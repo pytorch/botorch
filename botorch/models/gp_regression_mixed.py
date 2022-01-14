@@ -97,8 +97,8 @@ class MixedSingleTaskGP(SingleTaskGP):
             # check that no cat dim is in indices
             elif any(idx in input_transform.indices for idx in cat_dims):
                 raise ValueError(
-                    "Only continuous inputs can be transformed. \
-                        Categorical index found in `indices` of the `input_transform`."
+                    "Only continuous inputs can be transformed. "
+                    "Categorical index found in `indices` of the `input_transform`."
                 )
         if len(cat_dims) == 0:
             raise ValueError(
