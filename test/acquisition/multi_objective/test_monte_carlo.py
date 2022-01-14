@@ -1428,24 +1428,25 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
         hogp_obj = GenericMCMultiOutputObjective(lambda Y, X: Y.mean(dim=-2))
         test_x = torch.rand(2, 3, 2, **tkwargs)
 
-        def get_acqf(model):
+        def get_acqf(model, matheron):
+            batch_range = (0, -1) if matheron else (0, -2)
             return qNoisyExpectedHypervolumeImprovement(
                 model=model,
                 ref_point=torch.tensor([0.0, 0.0], **tkwargs),
                 X_baseline=train_x,
-                sampler=IIDNormalSampler(num_samples=2),
+                sampler=IIDNormalSampler(num_samples=2, batch_range=batch_range),
                 objective=hogp_obj if isinstance(model, HigherOrderGP) else None,
                 prune_baseline=True,
                 cache_root=True,
             )
 
+        # Test batch range error.
+        with self.assertRaisesRegex(RuntimeError, "batch_range"):
+            get_acqf(kmtgp, False)
+
         for model in [mtgp, kmtgp, hogp]:
             matheron = isinstance(model, (KroneckerMultiTaskGP, HigherOrderGP))
-            if matheron:
-                with self.assertWarnsRegex(BotorchWarning, "Matheron"):
-                    acqf = get_acqf(model)
-            else:
-                acqf = get_acqf(model)
+            acqf = get_acqf(model, matheron)
             base_samples = acqf.base_sampler.base_samples
             posterior = model.posterior(train_x)
             base_evals = acqf.base_sampler(posterior)

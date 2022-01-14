@@ -424,16 +424,11 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
             )
             self.sampler.base_samples = None
         elif self._uses_matheron and self.sampler.batch_range != (0, -1):
-            warnings.warn(
-                message=(
-                    "sampler.batch_range is not (0, -1). qNEHVI requires that the "
-                    "sampler.batch_range is (0, -1) with GPs that use Matheron's rule "
-                    "for sampling, in order to properly collapse batch dimensions. "
-                    "Overwriting the batch_range with (0, -1)!"
-                ),
-                category=BotorchWarning,
+            raise RuntimeError(
+                "sampler.batch_range is not (0, -1). qNEHVI requires that the "
+                "sampler.batch_range is (0, -1) with GPs that use Matheron's rule "
+                "for sampling, in order to properly collapse batch dimensions. "
             )
-            self.sampler.batch_range = (0, -1)
         if X_baseline.ndim > 2:
             raise UnsupportedError(
                 "qNoisyExpectedHypervolumeImprovement does not support batched "
