@@ -24,7 +24,6 @@ BoTorch API Reference
    test_functions
    exceptions
    utils
-   distributions
 
 
 Indices and Tables
