@@ -5,15 +5,15 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import random
 import warnings
 
 import torch
 from botorch import fit_gpytorch_model
-from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.kernels.categorical import CategoricalKernel
-from botorch.models.transforms import Normalize, Standardize
+from botorch.models.transforms import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.containers import TrainingData
@@ -42,15 +42,8 @@ class TestMixedSingleTaskGP(BotorchTestCase):
                 batch_shape=batch_shape, m=m, d=d, **tkwargs
             )
             cat_dims = list(range(ncat))
-            # test unsupported options
-            with self.assertRaises(UnsupportedError):
-                MixedSingleTaskGP(
-                    train_X,
-                    train_Y,
-                    cat_dims=cat_dims,
-                    outcome_transform=Standardize(m=m, batch_shape=batch_shape),
-                )
-            with self.assertRaises(UnsupportedError):
+            ord_dims = sorted(set(range(d)) - set(cat_dims))
+            with self.assertRaises(ValueError):
                 MixedSingleTaskGP(
                     train_X,
                     train_Y,
@@ -59,6 +52,44 @@ class TestMixedSingleTaskGP(BotorchTestCase):
                         d=d, bounds=bounds.to(**tkwargs), transform_on_train=True
                     ),
                 )
+            # test correct indices
+            if (ncat < 3) and (ncat > 0):
+                MixedSingleTaskGP(
+                    train_X,
+                    train_Y,
+                    cat_dims=cat_dims,
+                    input_transform=Normalize(
+                        d=d,
+                        bounds=bounds.to(**tkwargs),
+                        transform_on_train=True,
+                        indices=ord_dims,
+                    ),
+                )
+                with self.assertRaises(ValueError):
+                    MixedSingleTaskGP(
+                        train_X,
+                        train_Y,
+                        cat_dims=cat_dims,
+                        input_transform=Normalize(
+                            d=d,
+                            bounds=bounds.to(**tkwargs),
+                            transform_on_train=True,
+                            indices=cat_dims,
+                        ),
+                    )
+                with self.assertRaises(ValueError):
+                    MixedSingleTaskGP(
+                        train_X,
+                        train_Y,
+                        cat_dims=cat_dims,
+                        input_transform=Normalize(
+                            d=d,
+                            bounds=bounds.to(**tkwargs),
+                            transform_on_train=True,
+                            indices=ord_dims + [random.choice(cat_dims)],
+                        ),
+                    )
+
             if len(cat_dims) == 0:
                 with self.assertRaises(ValueError):
                     MixedSingleTaskGP(train_X, train_Y, cat_dims=cat_dims)
