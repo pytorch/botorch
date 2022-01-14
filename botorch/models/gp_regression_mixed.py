@@ -91,8 +91,8 @@ class MixedSingleTaskGP(SingleTaskGP):
         if input_transform is not None:
             if hasattr(input_transform, "indices") is False:
                 raise ValueError(
-                    "Only continuous inputs can be transformed. \
-                        Please use `indices` in the `input_transform`."
+                    "Only continuous inputs can be transformed. "
+                    "Please use `indices` in the `input_transform`."
                 )
             # check that no cat dim is in indices
             elif any(idx in input_transform.indices for idx in cat_dims):
