@@ -565,7 +565,7 @@ class InputStandardize(ReversibleInputTransform, Module):
                 + X_new[..., self.indices] * self.stds[..., self.indices]
             )
             return X_new
-        return self.means + self.stds * X
+        return self.means.to(X) + self.stds.to(X) * X
 
     def equals(self, other: InputTransform) -> bool:
         r"""Check if another input transform is equivalent.
