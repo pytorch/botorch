@@ -43,7 +43,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 # In[2]:
 
 
-from botorch.distributions import Kumaraswamy
+from torch.distributions import Kumaraswamy
 import matplotlib.pyplot as plt
 
 get_ipython().run_line_magic('matplotlib', 'inline')
