@@ -7,8 +7,12 @@
 import itertools
 from unittest import mock
 
+import numpy as np
 import torch
-from botorch.acquisition.acquisition import OneShotAcquisitionFunction
+from botorch.acquisition.acquisition import (
+    AcquisitionFunction,
+    OneShotAcquisitionFunction,
+)
 from botorch.optim.optimize import (
     optimize_acqf,
     optimize_acqf_cyclic,
@@ -16,7 +20,12 @@ from botorch.optim.optimize import (
     optimize_acqf_list,
     optimize_acqf_mixed,
 )
+from botorch.optim.parameter_constraints import (
+    _arrayify,
+    _make_f_and_grad_nonlinear_inequality_constraints,
+)
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
+from scipy.optimize import OptimizeResult
 from torch import Tensor
 
 
@@ -35,6 +44,14 @@ class MockOneShotAcquisitionFunction(
 
     def forward(self, X):
         pass
+
+
+class SquaredAcquisitionFunction(AcquisitionFunction):
+    def __init__(self, model=None):
+        super().__init__(model=model)
+
+    def forward(self, X):
+        return torch.norm(X, dim=-1).squeeze(-1)
 
 
 def rounding_func(X: Tensor) -> Tensor:
@@ -242,6 +259,211 @@ class TestOptimizeAcqf(BotorchTestCase):
                 return_best_only=False,
                 sequential=True,
             )
+
+    def test_optimize_acqf_nonlinear_constraints(self):
+        num_restarts = 2
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            mock_acq_function = SquaredAcquisitionFunction()
+            bounds = torch.stack(
+                [torch.zeros(3, **tkwargs), 4 * torch.ones(3, **tkwargs)]
+            )
+
+            # Make sure we find the global optimum [4, 4, 4] without constraints
+            with torch.random.fork_rng():
+                torch.manual_seed(0)
+                candidates, acq_value = optimize_acqf(
+                    acq_function=mock_acq_function,
+                    bounds=bounds,
+                    q=1,
+                    num_restarts=num_restarts,
+                    sequential=True,
+                    raw_samples=16,
+                )
+            self.assertTrue(torch.allclose(candidates, 4 * torch.ones(3, **tkwargs)))
+
+            # Constrain the sum to be <= 4 in which case the solution is a
+            # permutation of [4, 0, 0]
+            def nlc1(x):
+                return 4 - x.sum(dim=-1)
+
+            batch_initial_conditions = torch.tensor([[[0.5, 0.5, 3]]], **tkwargs)
+            candidates, acq_value = optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=1,
+                nonlinear_inequality_constraints=[nlc1],
+                batch_initial_conditions=batch_initial_conditions,
+                num_restarts=1,
+            )
+            self.assertTrue(
+                torch.allclose(
+                    torch.sort(candidates).values,
+                    torch.tensor([[0, 0, 4]], **tkwargs),
+                )
+            )
+            self.assertTrue(
+                torch.allclose(acq_value, torch.tensor([4], **tkwargs), atol=1e-3)
+            )
+
+            # Make sure we return the initial solution if SLSQP fails to return
+            # a feasible point.
+            with mock.patch("botorch.generation.gen.minimize") as mock_minimize:
+                mock_minimize.return_value = OptimizeResult(x=np.array([4, 4, 4]))
+                candidates, acq_value = optimize_acqf(
+                    acq_function=mock_acq_function,
+                    bounds=bounds,
+                    q=1,
+                    nonlinear_inequality_constraints=[nlc1],
+                    batch_initial_conditions=batch_initial_conditions,
+                    num_restarts=1,
+                )
+                self.assertTrue(torch.allclose(candidates, batch_initial_conditions))
+
+            # Constrain all variables to be >= 1. The global optimum is 2.45 and
+            # is attained by some permutation of [1, 1, 2]
+            def nlc2(x):
+                return x[..., 0] - 1
+
+            def nlc3(x):
+                return x[..., 1] - 1
+
+            def nlc4(x):
+                return x[..., 2] - 1
+
+            with torch.random.fork_rng():
+                torch.manual_seed(0)
+                batch_initial_conditions = 1 + 0.33 * torch.rand(
+                    num_restarts, 1, 3, **tkwargs
+                )
+            candidates, acq_value = optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=1,
+                nonlinear_inequality_constraints=[nlc1, nlc2, nlc3, nlc4],
+                batch_initial_conditions=batch_initial_conditions,
+                num_restarts=num_restarts,
+            )
+            self.assertTrue(
+                torch.allclose(
+                    torch.sort(candidates).values,
+                    torch.tensor([[1, 1, 2]], **tkwargs),
+                )
+            )
+            self.assertTrue(
+                torch.allclose(acq_value, torch.tensor(2.45, **tkwargs), atol=1e-3)
+            )
+
+            # Make sure fixed features aren't supported
+            with self.assertRaisesRegex(
+                NotImplementedError,
+                "Fixed features are not supported when non-linear inequality "
+                "constraints are given.",
+            ):
+                optimize_acqf(
+                    acq_function=mock_acq_function,
+                    bounds=bounds,
+                    q=1,
+                    nonlinear_inequality_constraints=[nlc1, nlc2, nlc3, nlc4],
+                    batch_initial_conditions=batch_initial_conditions,
+                    num_restarts=num_restarts,
+                    fixed_features={0: 0.1},
+                )
+
+            # Constraints must be passed in as lists
+            with self.assertRaisesRegex(
+                ValueError,
+                "`nonlinear_inequality_constraints` must be a list of callables, "
+                "got <class 'function'>.",
+            ):
+                optimize_acqf(
+                    acq_function=mock_acq_function,
+                    bounds=bounds,
+                    q=1,
+                    nonlinear_inequality_constraints=nlc1,
+                    num_restarts=num_restarts,
+                    batch_initial_conditions=batch_initial_conditions,
+                )
+
+            # batch_initial_conditions must be given
+            with self.assertRaisesRegex(
+                NotImplementedError,
+                "`batch_initial_conditions` must be given if there are non-linear "
+                "inequality constraints.",
+            ):
+                optimize_acqf(
+                    acq_function=mock_acq_function,
+                    bounds=bounds,
+                    q=1,
+                    nonlinear_inequality_constraints=[nlc1],
+                    num_restarts=num_restarts,
+                )
+
+            # batch_initial_conditions must be feasible
+            with self.assertRaisesRegex(
+                ValueError,
+                "`batch_initial_conditions` must satisfy the non-linear "
+                "inequality constraints.",
+            ):
+                optimize_acqf(
+                    acq_function=mock_acq_function,
+                    bounds=bounds,
+                    q=1,
+                    nonlinear_inequality_constraints=[nlc1],
+                    num_restarts=num_restarts,
+                    batch_initial_conditions=4 * torch.ones(1, 1, 3, **tkwargs),
+                )
+            # Explicitly setting batch_limit to be >1 should raise
+            with self.assertRaisesRegex(
+                ValueError,
+                "`batch_limit` must be 1 when non-linear inequality constraints "
+                "are given.",
+            ):
+                optimize_acqf(
+                    acq_function=mock_acq_function,
+                    bounds=bounds,
+                    q=1,
+                    nonlinear_inequality_constraints=[nlc1],
+                    batch_initial_conditions=torch.rand(5, 1, 3, **tkwargs),
+                    num_restarts=5,
+                    options={"batch_limit": 5},
+                )
+
+    def test_constraint_caching(self):
+        def nlc(x):
+            return 4 - x.sum(dim=-1)
+
+        class FunWrapperWithCallCount:
+            def __init__(self):
+                self.call_count = 0
+
+            def __call__(self, x, f):
+                self.call_count += 1
+                X = torch.from_numpy(x).view(-1).contiguous().requires_grad_(True)
+                loss = f(X).sum()
+                gradf = _arrayify(torch.autograd.grad(loss, X)[0].contiguous().view(-1))
+                return loss.item(), gradf
+
+        f_np_wrapper = FunWrapperWithCallCount()
+        f_obj, f_grad = _make_f_and_grad_nonlinear_inequality_constraints(
+            f_np_wrapper=f_np_wrapper, nlc=nlc
+        )
+        x1, x2 = np.array([1.0, 0.5, 0.25]), np.array([1.0, 0.5, 0.5])
+        # Call f_obj once, this requires calling f_np_wrapper
+        self.assertEqual(f_obj(x1), 2.25)
+        self.assertEqual(f_np_wrapper.call_count, 1)
+        # Call f_obj again, we should use the cached value this time
+        self.assertEqual(f_obj(x1), 2.25)
+        self.assertEqual(f_np_wrapper.call_count, 1)
+        # Call f_grad, we should use the cached value here as well
+        self.assertTrue(np.array_equal(f_grad(x1), -np.ones(3)))
+        self.assertEqual(f_np_wrapper.call_count, 1)
+        # Call f_grad with a new input
+        self.assertTrue(np.array_equal(f_grad(x2), -np.ones(3)))
+        self.assertEqual(f_np_wrapper.call_count, 2)
+        # Call f_obj on the new input, should use the cache
+        self.assertEqual(f_obj(x2), 2.0)
+        self.assertEqual(f_np_wrapper.call_count, 2)
 
 
 class TestOptimizeAcqfCyclic(BotorchTestCase):
@@ -602,33 +824,17 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             )
 
 
-class SquaredAcquisitionFunction:
-
-    X_pending = None
-
-    def __init__(self, f):
-        self.f = f
-
-    def __call__(self, X):
-        return self.f(X)
-
-    def set_X_pending(self, X_pending):
-        self.X_pending = X_pending
-
-
 class TestOptimizeAcqfDisrete(BotorchTestCase):
     def test_optimize_acqf_discrete(self):
 
         for q, dtype in itertools.product((1, 2), (torch.float, torch.double)):
             tkwargs = {"device": self.device, "dtype": dtype}
 
-            def square(X):
-                return torch.norm(X, dim=-1).squeeze(-1)
-
-            mock_acq_function = SquaredAcquisitionFunction(f=square)
+            mock_acq_function = SquaredAcquisitionFunction()
+            mock_acq_function.set_X_pending(None)
 
             choices = torch.rand(5, 2, **tkwargs)
-            exp_acq_vals = square(choices)
+            exp_acq_vals = mock_acq_function(choices)
 
             # test unique
             candidates, acq_value = optimize_acqf_discrete(

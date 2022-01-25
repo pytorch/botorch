@@ -10,7 +10,8 @@ Candidate generation utilities.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+import warnings
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import torch
@@ -20,6 +21,8 @@ from botorch.optim.parameter_constraints import (
     _arrayify,
     make_scipy_bounds,
     make_scipy_linear_constraints,
+    make_scipy_nonlinear_inequality_constraints,
+    NLC_TOL,
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
 from botorch.optim.utils import _filter_kwargs, columnwise_clamp, fix_features
@@ -35,6 +38,7 @@ def gen_candidates_scipy(
     upper_bounds: Optional[Union[float, Tensor]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    nonlinear_inequality_constraints: Optional[List[Dict[str, Any]]] = None,
     options: Optional[Dict[str, Any]] = None,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
 ) -> Tuple[Tensor, Tensor]:
@@ -54,6 +58,11 @@ def gen_candidates_scipy(
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
+        nonlinear_inequality_constraints: A list of callables with that represent
+            non-linear inequality constraints of the form `callable(x) >= 0`. Each
+            callable is expected to take a `(num_restarts) x q x d`-dim tensor as
+            an input and return a `(num_restarts) x q`-dim tensor with the
+            constraint values. The constraints will later be passed to SLSQP.
         options: Options used to control the optimization including "method"
             and "maxiter". Select method for `scipy.minimize` using the
             "method" key. By default uses L-BFGS-B for box-constrained problems
@@ -88,6 +97,13 @@ def gen_candidates_scipy(
     # if there are fixed features we may optimize over a domain of lower dimension
     reduced_domain = False
     if fixed_features:
+        # TODO: We can support fixed features, see Max's comment on D33551393. We can
+        # consider adding this at a later point.
+        if nonlinear_inequality_constraints:
+            raise NotImplementedError(
+                "Fixed features are not supported when non-linear inequality "
+                "constraints are given."
+            )
         # if there are no constraints things are straightforward
         if not (inequality_constraints or equality_constraints):
             reduced_domain = True
@@ -126,7 +142,7 @@ def gen_candidates_scipy(
     )
 
     shapeX = clamped_candidates.shape
-    x0 = _arrayify(clamped_candidates.view(-1))
+    x0 = clamped_candidates.view(-1)
     bounds = make_scipy_bounds(
         X=initial_conditions, lower_bounds=lower_bounds, upper_bounds=upper_bounds
     )
@@ -136,7 +152,8 @@ def gen_candidates_scipy(
         equality_constraints=equality_constraints,
     )
 
-    def f(x):
+    def f_np_wrapper(x: np.ndarray, f: Callable):
+        """Given a torch callable, compute value + grad given a numpy array."""
         if np.isnan(x).any():
             raise RuntimeError(
                 f"{np.isnan(x).sum()} elements of the {x.size} element array "
@@ -150,7 +167,7 @@ def gen_candidates_scipy(
             .requires_grad_(True)
         )
         X_fix = fix_features(X, fixed_features=fixed_features)
-        loss = -acquisition_function(X_fix).sum()
+        loss = f(X_fix).sum()
         # compute gradient w.r.t. the inputs (does not accumulate in leaves)
         gradf = _arrayify(torch.autograd.grad(loss, X)[0].contiguous().view(-1))
         if np.isnan(gradf).any():
@@ -164,9 +181,27 @@ def gen_candidates_scipy(
         fval = loss.item()
         return fval, gradf
 
+    if nonlinear_inequality_constraints:
+        # Make sure `batch_limit` is 1 for now.
+        if not (len(shapeX) == 3 and shapeX[:2] == torch.Size([1, 1])):
+            raise ValueError(
+                "`batch_limit` must be 1 when non-linear inequality constraints "
+                "are given."
+            )
+        constraints += make_scipy_nonlinear_inequality_constraints(
+            nonlinear_inequality_constraints=nonlinear_inequality_constraints,
+            f_np_wrapper=f_np_wrapper,
+            x0=x0,
+        )
+    x0 = _arrayify(x0)
+
+    def f(x):
+        return -acquisition_function(x)
+
     res = minimize(
-        f,
-        x0,
+        fun=f_np_wrapper,
+        args=(f,),
+        x0=x0,
         method=options.get("method", "SLSQP" if constraints else "L-BFGS-B"),
         jac=True,
         bounds=bounds,
@@ -178,6 +213,18 @@ def gen_candidates_scipy(
         X=torch.from_numpy(res.x).to(initial_conditions).reshape(shapeX),
         fixed_features=fixed_features,
     )
+
+    # SLSQP sometimes fails in the line search or may just fail to find a feasible
+    # candidate in which case we just return the starting point. This happens rarely,
+    # so it shouldn't be an issue given enough restarts.
+    if nonlinear_inequality_constraints and any(
+        nlc(candidates.view(-1)) < NLC_TOL for nlc in nonlinear_inequality_constraints
+    ):
+        candidates = torch.from_numpy(x0).to(candidates).reshape(shapeX)
+        warnings.warn(
+            "SLSQP failed to converge to a solution the satisfies the non-linear "
+            "constraints. Returning the feasible starting point."
+        )
 
     clamped_candidates = columnwise_clamp(
         X=candidates, lower=lower_bounds, upper=upper_bounds, raise_on_violation=True

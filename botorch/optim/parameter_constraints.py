@@ -23,6 +23,7 @@ from torch import Tensor
 ScipyConstraintDict = Dict[
     str, Union[str, Callable[[np.ndarray], float], Callable[[np.ndarray], np.ndarray]]
 ]
+NLC_TOL = -1e-6
 
 
 def make_scipy_bounds(
@@ -330,3 +331,88 @@ def _generate_unfixed_lin_constraints(
             new_coefficients = torch.stack(new_coefficients)
             new_constraints.append((new_indices, new_coefficients, new_rhs))
     return new_constraints
+
+
+def _make_f_and_grad_nonlinear_inequality_constraints(
+    f_np_wrapper: Callable, nlc: Callable
+) -> Tuple[Callable[[Tensor], Tensor], Callable[[Tensor], Tensor]]:
+    """
+    Create callables for objective + grad for the nonlinear inequality constraints.
+    The Scipy interface requires specifying separate callables and we use caching to
+    avoid evaluating the same input twice. This caching onlh works if
+    the returned functions are evaluated on the same input in immediate
+    sequence (i.e., calling `f_obj(X_1)`, `f_grad(X_1)` will result in a
+    single forward pass, while `f_obj(X_1)`, `f_grad(X_2)`, `f_obj(X_1)`
+    will result in three forward passes).
+    """
+
+    def f_obj_and_grad(x):
+        obj, grad = f_np_wrapper(x, f=nlc)
+        return obj, grad
+
+    cache = {"X": None, "obj": None, "grad": None}
+
+    def f_obj(X):
+        X_c = cache["X"]
+        if X_c is None or not np.array_equal(X_c, X):
+            cache["X"] = X.copy()
+            cache["obj"], cache["grad"] = f_obj_and_grad(X)
+        return cache["obj"]
+
+    def f_grad(X):
+        X_c = cache["X"]
+        if X_c is None or not np.array_equal(X_c, X):
+            cache["X"] = X.copy()
+            cache["obj"], cache["grad"] = f_obj_and_grad(X)
+        return cache["grad"]
+
+    return f_obj, f_grad
+
+
+def make_scipy_nonlinear_inequality_constraints(
+    nonlinear_inequality_constraints: List[Callable],
+    f_np_wrapper: Callable,
+    x0: Tensor,
+) -> List[Dict]:
+    r"""Generate Scipy nonlinear inequality constraints from callables.
+
+    Args:
+        `nonlinear_inequality_constraints`: List of callables for the nonlinear
+            inequality constraints. Each callable represents a constraint of the
+            form >= 0 and takes a torch tensor of size (p x q x dim) and returns a
+            torch tensor of size (p x q).
+        `f_np_wrapper`: A wrapper function that given a constraint evaluates the value
+             and gradient (using autograd) of a numpy input and returns both the
+             objective and the gradient.
+        `x0`: The starting point for SLSQP. We return this starting point in (rare)
+            cases where SLSQP fails and thus require it to be feasible.
+
+    Returns:
+        A list of dictionaries containing callables for constraint function
+        values and Jacobians and a string indicating the associated constraint
+        type ("eq", "ineq"), as expected by `scipy.minimize`.
+    """
+    if not isinstance(nonlinear_inequality_constraints, list):
+        raise ValueError(
+            "`nonlinear_inequality_constraints` must be a list of callables, "
+            f"got {type(nonlinear_inequality_constraints)}."
+        )
+
+    scipy_nonlinear_inequality_constraints = []
+    for nlc in nonlinear_inequality_constraints:
+        if _arrayify(nlc(x0)).item() < NLC_TOL:
+            raise ValueError(
+                "`batch_initial_conditions` must satisfy the non-linear inequality "
+                "constraints."
+            )
+        f_obj, f_grad = _make_f_and_grad_nonlinear_inequality_constraints(
+            f_np_wrapper=f_np_wrapper, nlc=nlc
+        )
+        scipy_nonlinear_inequality_constraints.append(
+            {
+                "type": "ineq",
+                "fun": f_obj,
+                "jac": f_grad,
+            }
+        )
+    return scipy_nonlinear_inequality_constraints
