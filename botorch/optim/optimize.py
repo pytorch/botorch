@@ -55,6 +55,7 @@ def optimize_acqf(
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    nonlinear_inequality_constraints: List[Callable] = None,
     fixed_features: Optional[Dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
@@ -79,6 +80,14 @@ def optimize_acqf(
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
+        nonlinear_inequality_constraints: A list of callables with that represent
+            non-linear inequality constraints of the form `callable(x) >= 0`. Each
+            callable is expected to take a `(num_restarts) x q x d`-dim tensor as an
+            input and return a `(num_restarts) x q`-dim tensor with the constraint
+            values. The constraints will later be passed to SLSQP. You need to pass in
+            `batch_initial_conditions` in this case. Using non-linear inequality
+            constraints also requires that `batch_limit` is set to 1, which will be
+            done automatically if not specified in `options`.
         fixed_features: A map `{feature_index: value}` for features that
             should be fixed to a particular value during generation.
         post_processing_func: A function that post-processes an optimization
@@ -137,6 +146,7 @@ def optimize_acqf(
                 options=options or {},
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints,
+                nonlinear_inequality_constraints=nonlinear_inequality_constraints,
                 fixed_features=fixed_features,
                 post_processing_func=post_processing_func,
                 batch_initial_conditions=None,
@@ -171,6 +181,11 @@ def optimize_acqf(
         return X, acq_value
 
     if batch_initial_conditions is None:
+        if nonlinear_inequality_constraints:
+            raise NotImplementedError(
+                "`batch_initial_conditions` must be given if there are non-linear "
+                "inequality constraints."
+            )
         if raw_samples is None:
             raise ValueError(
                 "Must specify `raw_samples` when `batch_initial_conditions` is `None`."
@@ -193,7 +208,9 @@ def optimize_acqf(
             equality_constraints=equality_constraints,
         )
 
-    batch_limit: int = options.get("batch_limit", num_restarts)
+    batch_limit: int = options.get(
+        "batch_limit", num_restarts if not nonlinear_inequality_constraints else 1
+    )
     batch_candidates_list: List[Tensor] = []
     batch_acq_values_list: List[Tensor] = []
     batched_ics = batch_initial_conditions.split(batch_limit)
@@ -207,6 +224,7 @@ def optimize_acqf(
             options={k: v for k, v in options.items() if k not in INIT_OPTION_KEYS},
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
+            nonlinear_inequality_constraints=nonlinear_inequality_constraints,
             fixed_features=fixed_features,
         )
         batch_candidates_list.append(batch_candidates_curr)
