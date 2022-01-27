@@ -55,7 +55,7 @@ def optimize_acqf(
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: List[Callable] = None,
+    nonlinear_inequality_constraints: Optional[List[Callable]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,

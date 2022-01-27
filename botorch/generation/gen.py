@@ -38,7 +38,7 @@ def gen_candidates_scipy(
     upper_bounds: Optional[Union[float, Tensor]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: Optional[List[Dict[str, Any]]] = None,
+    nonlinear_inequality_constraints: Optional[List[Callable]] = None,
     options: Optional[Dict[str, Any]] = None,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
 ) -> Tuple[Tensor, Tensor]:
