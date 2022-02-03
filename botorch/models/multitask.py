@@ -585,13 +585,13 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
             cols_to_add = data_data_evecs.shape[-2] - data_data_evecs.shape[-1]
             zero_evecs = torch.zeros(
                 *data_data_evecs.shape[:-1],
-                rows_to_add,
+                cols_to_add,
                 dtype=data_data_evals.dtype,
                 device=data_data_evals.device,
             )
             zero_evals = torch.zeros(
                 *data_data_evecs.shape[:-2],
-                rows_to_add,
+                cols_to_add,
                 dtype=data_data_evals.dtype,
                 device=data_data_evals.device,
             )
