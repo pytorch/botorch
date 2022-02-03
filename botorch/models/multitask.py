@@ -582,7 +582,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
 
         # pad the eigenvalue and eigenvectors with zeros if we are using lanczos
         if data_data_evecs.shape[-1] < data_data_evecs.shape[-2]:
-            rows_to_add = data_data_evecs.shape[-2] - data_data_evecs.shape[-1]
+            cols_to_add = data_data_evecs.shape[-2] - data_data_evecs.shape[-1]
             zero_evecs = torch.zeros(
                 *data_data_evecs.shape[:-1],
                 rows_to_add,
