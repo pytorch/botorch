@@ -39,7 +39,7 @@ from gpytorch.means import ConstantMean, MultitaskMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior, LogNormalPrior, SmoothedBoxPrior
 from gpytorch.priors.lkj_prior import LKJCovariancePrior
-from gpytorch.settings import max_cholesky_size
+from gpytorch.settings import max_cholesky_size, max_root_decomposition_size
 
 
 def _get_random_mt_data(**tkwargs):
@@ -737,7 +737,8 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             for max_cholesky in max_cholesky_sizes:
                 model.train()
                 test_x = torch.rand(2, 2, **tkwargs)
-                with max_cholesky_size(max_cholesky):
+                # small root decomp to enforce zero padding
+                with max_cholesky_size(max_cholesky), max_root_decomposition_size(3):
                     posterior_f = model.posterior(test_x)
                     self.assertIsInstance(posterior_f, GPyTorchPosterior)
                     self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)

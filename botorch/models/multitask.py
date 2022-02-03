@@ -583,9 +583,15 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
         # pad the eigenvalue and eigenvectors with zeros if we are using lanczos
         if data_data_evecs.shape[-1] < data_data_evecs.shape[-2]:
             rows_to_add = data_data_evecs.shape[-2] - data_data_evecs.shape[-1]
-            zero_evecs = torch.zeros(*data_data_evecs.shape[:-1], rows_to_add, dtype=data_data_evals.dtype, device=data_data_evals.device)
-            zero_evals = torch.zeros(*data_data_evecs.shape[:-2], rows_to_add, dtype=data_data_evals.dtype, device=data_data_evals.device)
-            data_data_evecs = CatLazyTensor(data_data_evecs, lazify(zero_evecs), dim=-1, output_device=data_data_evals.device)
+            zero_evecs = torch.zeros(
+                *data_data_evecs.shape[:-1], rows_to_add, dtype=data_data_evals.dtype, device=data_data_evals.device
+            )
+            zero_evals = torch.zeros(
+                *data_data_evecs.shape[:-2], rows_to_add, dtype=data_data_evals.dtype, device=data_data_evals.device
+            )
+            data_data_evecs = CatLazyTensor(
+                data_data_evecs, lazify(zero_evecs), dim=-1, output_device=data_data_evals.device
+            )
             data_data_evals = torch.cat((data_data_evals, zero_evals), dim=-1)
 
         # construct K_{xt, x}
