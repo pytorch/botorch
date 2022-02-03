@@ -42,6 +42,7 @@ from gpytorch.kernels.multitask_kernel import MultitaskKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.lazy import (
     BatchRepeatLazyTensor,
+    CatLazyTensor,
     DiagLazyTensor,
     KroneckerProductDiagLazyTensor,
     KroneckerProductLazyTensor,
@@ -578,6 +579,14 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
         # populate the diagonalziation caches for the root and inverse root
         # decomposition
         data_data_evals, data_data_evecs = data_data_covar.diagonalization()
+
+        # pad the eigenvalue and eigenvectors with zeros if we are using lanczos
+        if data_data_evecs.shape[-1] < data_data_evecs.shape[-2]:
+            rows_to_add = data_data_evecs.shape[-2] - data_data_evecs.shape[-1]
+            zero_evecs = torch.zeros(*data_data_evecs.shape[:-1], rows_to_add, dtype=data_data_evals.dtype, device=data_data_evals.device)
+            zero_evals = torch.zeros(*data_data_evecs.shape[:-2], rows_to_add, dtype=data_data_evals.dtype, device=data_data_evals.device)
+            data_data_evecs = CatLazyTensor(data_data_evecs, lazify(zero_evecs), dim=-1, output_device=data_data_evals.device)
+            data_data_evals = torch.cat((data_data_evals, zero_evals), dim=-1)
 
         # construct K_{xt, x}
         test_data_covar = self.covar_module.data_covar_module(X, train_x)

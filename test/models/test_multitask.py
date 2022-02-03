@@ -39,6 +39,7 @@ from gpytorch.means import ConstantMean, MultitaskMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior, LogNormalPrior, SmoothedBoxPrior
 from gpytorch.priors.lkj_prior import LKJCovariancePrior
+from gpytorch.settings import max_cholesky_size
 
 
 def _get_random_mt_data(**tkwargs):
@@ -732,12 +733,16 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
                 mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
 
             # test posterior
-            test_x = torch.rand(2, 2, **tkwargs)
-            posterior_f = model.posterior(test_x)
-            self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
-            self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
-            self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
+            max_cholesky_sizes = [1, 800]
+            for max_cholesky in max_cholesky_sizes:
+                model.train()
+                test_x = torch.rand(2, 2, **tkwargs)
+                with max_cholesky_size(max_cholesky):
+                    posterior_f = model.posterior(test_x)
+                    self.assertIsInstance(posterior_f, GPyTorchPosterior)
+                    self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+                    self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
+                    self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
 
             # test observation noise
             posterior_noisy = model.posterior(test_x, observation_noise=True)
