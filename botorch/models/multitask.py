@@ -100,7 +100,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             train_X: A `n x (d + 1)` or `b x n x (d + 1)` (batch mode) tensor
                 of training data. One of the columns should contain the task
                 features (see `task_feature` argument).
-            train_Y: A `n` or `b x n` (batch mode) tensor of training observations.
+            train_Y: A `n x 1` or `b x n x 1` (batch mode) tensor of training
+                observations.
             task_feature: The index of the task feature (`-d <= task_feature <= d`).
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
@@ -315,7 +316,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             train_X: A `n x (d + 1)` or `b x n x (d + 1)` (batch mode) tensor
                 of training data. One of the columns should contain the task
                 features (see `task_feature` argument).
-            train_Y: A `n` or `b x n` (batch mode) tensor of training
+            train_Y: A `n x 1` or `b x n x 1` (batch mode) tensor of training
                 observations.
             train_Yvar: A `n` or `b x n` (batch mode) tensor of observation
                 noise standard errors.
