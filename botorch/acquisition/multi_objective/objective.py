@@ -10,7 +10,7 @@ from abc import abstractmethod
 from typing import List, Optional
 
 import torch
-from botorch.acquisition.objective import AcquisitionObjective
+from botorch.acquisition.objective import AcquisitionObjective, GenericMCObjective
 from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
 from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors import GPyTorchPosterior
@@ -43,6 +43,16 @@ class MCMultiOutputObjective(AcquisitionObjective):
             >>> outcomes = multi_obj(samples)
         """
         pass  # pragma: no cover
+
+
+class GenericMCMultiOutputObjective(GenericMCObjective, MCMultiOutputObjective):
+    r"""Multi-output objective generated from a generic callable.
+
+    Allows to construct arbitrary MC-objective functions from a generic
+    callable. In order to be able to use gradient-based acquisition function
+    optimization it should be possible to backpropagate through the callable.
+    """
+    pass
 
 
 class IdentityMCMultiOutputObjective(MCMultiOutputObjective):

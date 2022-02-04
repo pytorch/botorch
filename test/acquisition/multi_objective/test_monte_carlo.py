@@ -18,12 +18,19 @@ from botorch.acquisition.multi_objective.monte_carlo import (
     qNoisyExpectedHypervolumeImprovement,
 )
 from botorch.acquisition.multi_objective.objective import (
+    GenericMCMultiOutputObjective,
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
 )
 from botorch.acquisition.objective import IdentityMCObjective
 from botorch.exceptions.errors import BotorchError, UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
+from botorch.models import (
+    GenericDeterministicModel,
+    HigherOrderGP,
+    KroneckerMultiTaskGP,
+    MultiTaskGP,
+)
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
@@ -35,7 +42,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
-from botorch.utils.transforms import standardize
+from botorch.utils.transforms import standardize, match_batch_shape
 
 
 class DummyMultiObjectiveMCAcquisitionFunction(MultiObjectiveMCAcquisitionFunction):
@@ -1388,3 +1395,103 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                         acqf(test_X)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+
+    def test_deterministic(self):
+        for dtype, prune in ((torch.float, False), (torch.double, True)):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            model = GenericDeterministicModel(f=lambda x: x, num_outputs=2)
+            acqf = qNoisyExpectedHypervolumeImprovement(
+                model=model,
+                ref_point=torch.tensor([0.0, 0.0], **tkwargs),
+                X_baseline=torch.rand(5, 2, **tkwargs),
+                sampler=SobolQMCNormalSampler(1),
+                prune_baseline=prune,
+                cache_root=True,
+            )
+            self.assertFalse(acqf._cache_root)
+            self.assertEqual(
+                acqf(torch.rand(3, 2, 2, **tkwargs)).shape, torch.Size([3])
+            )
+
+    def test_with_multitask(self):
+        # Verify that _set_sampler works with MTGP, KroneckerMTGP and HOGP.
+        tkwargs = {"device": self.device, "dtype": torch.float}
+        train_x = torch.rand(6, 2, **tkwargs)
+        train_y = torch.randn(6, 2, **tkwargs)
+        mtgp_task = torch.cat(
+            [torch.zeros(6, 1, **tkwargs), torch.ones(6, 1, **tkwargs)], dim=0
+        )
+        mtgp_x = torch.cat([train_x.repeat(2, 1), mtgp_task], dim=-1)
+        mtgp = MultiTaskGP(mtgp_x, train_y.view(-1, 1), task_feature=2).eval()
+        kmtgp = KroneckerMultiTaskGP(train_x, train_y).eval()
+        hogp = HigherOrderGP(train_x, train_y.repeat(6, 1, 1)).eval()
+        hogp_obj = GenericMCMultiOutputObjective(lambda Y, X: Y.mean(dim=-2))
+        test_x = torch.rand(2, 3, 2, **tkwargs)
+
+        def get_acqf(model, matheron):
+            batch_range = (0, -1) if matheron else (0, -2)
+            return qNoisyExpectedHypervolumeImprovement(
+                model=model,
+                ref_point=torch.tensor([0.0, 0.0], **tkwargs),
+                X_baseline=train_x,
+                sampler=IIDNormalSampler(num_samples=2, batch_range=batch_range),
+                objective=hogp_obj if isinstance(model, HigherOrderGP) else None,
+                prune_baseline=True,
+                cache_root=True,
+            )
+
+        # Test batch range error.
+        with self.assertRaisesRegex(RuntimeError, "batch_range"):
+            get_acqf(kmtgp, False)
+
+        for model in [mtgp, kmtgp, hogp]:
+            matheron = isinstance(model, (KroneckerMultiTaskGP, HigherOrderGP))
+            acqf = get_acqf(model, matheron)
+            base_samples = acqf.base_sampler.base_samples
+            posterior = model.posterior(train_x)
+            base_evals = acqf.base_sampler(posterior)
+            self.assertTrue(acqf._is_mt)
+            self.assertEqual(acqf._uses_matheron, matheron)
+            with mock.patch.object(
+                qNoisyExpectedHypervolumeImprovement,
+                "_compute_qehvi",
+                wraps=acqf._compute_qehvi,
+            ) as wrapped_compute:
+                acqf(test_x)
+            wrapped_compute.assert_called_once()
+            expected_shape = (
+                torch.Size([2, 2, 3, 6, 2])
+                if isinstance(model, HigherOrderGP)
+                else torch.Size([2, 2, 3, 2])
+            )
+            self.assertEqual(
+                wrapped_compute.call_args[-1]["samples"].shape, expected_shape
+            )
+            new_base_samples = acqf.sampler.base_samples
+            # Check that the base samples are the same.
+            if model is mtgp:
+                expected = new_base_samples[..., :-3, :].squeeze(-3)
+            else:
+                n_train = base_samples.shape[-1] // 2
+                expected = torch.cat(
+                    [new_base_samples[..., :n_train], new_base_samples[..., -n_train:]],
+                    dim=-1,
+                ).squeeze(-2)
+            self.assertTrue(torch.equal(base_samples, expected))
+            # Check that they produce the same f_X for baseline points.
+            X_full = torch.cat(
+                [match_batch_shape(acqf.X_baseline, test_x), test_x], dim=-2
+            )
+            posterior = acqf.model.posterior(X_full)
+            samples = acqf.sampler(posterior)
+            expected = samples[:, :, :-3]
+            repeat_shape = [1, 2, 1, 1]
+            if model is hogp:
+                repeat_shape.append(1)
+            self.assertTrue(
+                torch.allclose(
+                    base_evals.unsqueeze(1).repeat(*repeat_shape),
+                    expected,
+                    atol=1e-2,
+                )
+            )
