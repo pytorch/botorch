@@ -1448,7 +1448,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             matheron = isinstance(model, (KroneckerMultiTaskGP, HigherOrderGP))
             acqf = get_acqf(model, matheron)
             base_samples = acqf.base_sampler.base_samples
-            posterior = model.posterior(train_x)
+            posterior = model.posterior(acqf.X_baseline)
             base_evals = acqf.base_sampler(posterior)
             self.assertTrue(acqf._is_mt)
             self.assertEqual(acqf._uses_matheron, matheron)
@@ -1492,6 +1492,6 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 torch.allclose(
                     base_evals.unsqueeze(1).repeat(*repeat_shape),
                     expected,
-                    atol=1e-2,
+                    atol=5e-2,
                 )
             )
