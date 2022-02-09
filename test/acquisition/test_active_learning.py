@@ -8,7 +8,10 @@ from unittest import mock
 
 import torch
 from botorch.acquisition.active_learning import qNegIntegratedPosteriorVariance
-from botorch.acquisition.objective import IdentityMCObjective, ScalarizedObjective
+from botorch.acquisition.objective import (
+    IdentityMCObjective,
+    ScalarizedPosteriorTransform,
+)
 from botorch.exceptions.errors import UnsupportedError
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
@@ -27,7 +30,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
         self.assertFalse(sampler.resample)
         self.assertTrue(torch.equal(mc_points, qNIPV.mc_points))
         self.assertIsNone(qNIPV.X_pending)
-        self.assertIsNone(qNIPV.objective)
+        self.assertIsNone(qNIPV.posterior_transform)
         sampler = IIDNormalSampler(num_samples=2, resample=True)
         qNIPV = qNegIntegratedPosteriorVariance(
             model=mm, mc_points=mc_points, sampler=sampler
@@ -84,7 +87,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                     mock_num_outputs.return_value = 2
                     mm = MockModel(None)
 
-                    # check error if objective is not ScalarizedObjective
+                    # check error if objective is not ScalarizedPosteriorTransform
                     with self.assertRaises(UnsupportedError):
                         qNegIntegratedPosteriorVariance(
                             model=mm,
@@ -96,7 +99,9 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                     qNIPV = qNegIntegratedPosteriorVariance(
                         model=mm,
                         mc_points=mc_points,
-                        objective=ScalarizedObjective(weights=weights),
+                        posterior_transform=ScalarizedPosteriorTransform(
+                            weights=weights
+                        ),
                     )
                     X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
                     val = qNIPV(X)
@@ -118,7 +123,9 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                     qNIPV = qNegIntegratedPosteriorVariance(
                         model=mm,
                         mc_points=mc_points,
-                        objective=ScalarizedObjective(weights=weights),
+                        posterior_transform=ScalarizedPosteriorTransform(
+                            weights=weights
+                        ),
                     )
                     X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)  # dummy
                     val = qNIPV(X)

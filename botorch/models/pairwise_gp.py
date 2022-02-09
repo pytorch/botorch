@@ -27,6 +27,7 @@ from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.model import Model
 from botorch.models.transforms.input import InputTransform
 from botorch.posteriors.gpytorch import GPyTorchPosterior
@@ -914,6 +915,7 @@ class PairwiseGP(Model, GP):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
+        posterior_transform: Optional[PosteriorTransform] = None,
         **kwargs: Any,
     ) -> Posterior:
         r"""Computes the posterior over model outputs at the provided points.
@@ -924,6 +926,7 @@ class PairwiseGP(Model, GP):
             output_indices: As defined in parent Model class, not used for this model.
             observation_noise: Ignored (since noise is not identifiable from scale
                 in probit models).
+            posterior_transform: An optional PosteriorTransform.
 
         Returns:
             A `Posterior` object, representing joint
@@ -938,8 +941,11 @@ class PairwiseGP(Model, GP):
             )
 
         post = self(X)
-
-        return GPyTorchPosterior(post)
+        posterior = GPyTorchPosterior(post)
+        if posterior_transform is not None:
+            return posterior_transform(posterior)
+        else:
+            return posterior
 
     def condition_on_observations(self, X: Tensor, Y: Tensor, **kwargs: Any) -> Model:
         r"""Condition the model on new observations.

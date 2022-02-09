@@ -12,7 +12,11 @@ from botorch.acquisition import (
     qMultiStepLookahead,
 )
 from botorch.acquisition.multi_step_lookahead import make_best_f, warmstart_multistep
-from botorch.acquisition.objective import IdentityMCObjective, ScalarizedObjective
+from botorch.acquisition.objective import (
+    IdentityMCObjective,
+    ScalarizedObjective,
+    ScalarizedPosteriorTransform,
+)
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP
 from botorch.sampling import SobolQMCNormalSampler
@@ -113,20 +117,33 @@ class TestMultiStepLookahead(BotorchTestCase):
                     num_fantasies=num_fantasies,
                     inner_mc_samples=[2] * 4,
                 )
-            # MCAcquisitionFunction and non MCAcquisitionObjective
-            with self.assertRaises(UnsupportedError):
-                qMultiStepLookahead(
+            # AnalyticAcquisitionFunction with scalarized obj (deprecated)
+            with self.assertWarns(DeprecationWarning):
+                acqf = qMultiStepLookahead(
                     model=model,
-                    objective=ScalarizedObjective(
-                        weights=torch.tensor([1.0], device=self.device, dtype=dtype)
-                    ),
-                    batch_sizes=[2, 2, 2],
-                    valfunc_cls=[qExpectedImprovement] * 4,
+                    objective=ScalarizedObjective(weights=torch.ones(1)),
+                    batch_sizes=q_batch_sizes,
+                    valfunc_cls=[ExpectedImprovement] * 4,
                     valfunc_argfacs=[make_best_f] * 4,
                     num_fantasies=num_fantasies,
-                    inner_mc_samples=[2] * 4,
                 )
-
+            self.assertIsNone(acqf.objective)
+            self.assertIsInstance(
+                acqf.posterior_transform, ScalarizedPosteriorTransform
+            )
+            # Both scalarized obj and scalarized post_tf
+            with self.assertRaises(RuntimeError):
+                qMultiStepLookahead(
+                    model=model,
+                    objective=ScalarizedObjective(weights=torch.ones(1)),
+                    posterior_transform=ScalarizedPosteriorTransform(
+                        weights=torch.ones(1)
+                    ),
+                    batch_sizes=q_batch_sizes,
+                    valfunc_cls=[ExpectedImprovement] * 4,
+                    valfunc_argfacs=[make_best_f] * 4,
+                    num_fantasies=num_fantasies,
+                )
             # test warmstarting
             qMS = qMultiStepLookahead(
                 model=model,

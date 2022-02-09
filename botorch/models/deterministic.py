@@ -16,6 +16,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, List, Optional, Union
 
 import torch
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.posteriors.deterministic import DeterministicPosterior
@@ -44,7 +45,11 @@ class DeterministicModel(Model, ABC):
         return self._num_outputs
 
     def posterior(
-        self, X: Tensor, output_indices: Optional[List[int]] = None, **kwargs: Any
+        self,
+        X: Tensor,
+        output_indices: Optional[List[int]] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
+        **kwargs: Any
     ) -> DeterministicPosterior:
         r"""Compute the (deterministic) posterior at X.
 
@@ -53,6 +58,7 @@ class DeterministicModel(Model, ABC):
             output_indices: A list of indices, corresponding to the outputs over
                 which to compute the posterior. If omitted, computes the posterior
                 over all model outputs.
+            posterior_transform: An optional PosteriorTransform.
 
         Returns:
             A `DeterministicPosterior` object, representing `batch_shape` joint
@@ -77,7 +83,11 @@ class DeterministicModel(Model, ABC):
             values, _ = self.outcome_transform.untransform(values)
         if output_indices is not None:
             values = values[..., output_indices]
-        return DeterministicPosterior(values=values)
+        posterior = DeterministicPosterior(values=values)
+        if posterior_transform is not None:
+            return posterior_transform(posterior)
+        else:
+            return posterior
 
 
 class GenericDeterministicModel(DeterministicModel):

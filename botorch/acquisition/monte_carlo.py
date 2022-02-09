@@ -26,7 +26,11 @@ from typing import Any, Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.objective import IdentityMCObjective, MCAcquisitionObjective
+from botorch.acquisition.objective import (
+    IdentityMCObjective,
+    MCAcquisitionObjective,
+    PosteriorTransform,
+)
 from botorch.acquisition.utils import prune_inferior_points
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
@@ -47,6 +51,7 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
         model: Model,
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCAcquisitionObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
     ) -> None:
         r"""Constructor for the MCAcquisitionFunction base class.
@@ -57,6 +62,7 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
                 `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`.
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
+            posterior_transform: A PosteriorTransform (optional).
             X_pending: A `batch_shape, m x d`-dim Tensor of `m` design points
                 that have points that have been submitted for function evaluation
                 but have not yet been evaluated.
@@ -65,17 +71,20 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
         if sampler is None:
             sampler = SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)
         self.add_module("sampler", sampler)
-        if objective is None:
-            if model.num_outputs != 1:
+        if objective is None and model.num_outputs != 1:
+            if posterior_transform is None:
                 raise UnsupportedError(
-                    "Must specify an objective when using a multi-output model."
+                    "Must specify an objective or a posterior transform when using "
+                    "a multi-output model."
                 )
+            elif not posterior_transform.scalarize:
+                raise UnsupportedError(
+                    "If using a multi-output model without an objective, "
+                    "posterior_transform must scalarize the output."
+                )
+        if objective is None:
             objective = IdentityMCObjective()
-        elif not isinstance(objective, MCAcquisitionObjective):
-            raise UnsupportedError(
-                "Only objectives of type MCAcquisitionObjective are supported for "
-                "MC acquisition functions."
-            )
+        self.posterior_transform = posterior_transform
         self.add_module("objective", objective)
         self.set_X_pending(X_pending)
 
@@ -115,6 +124,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
         best_f: Union[float, Tensor],
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCAcquisitionObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
         **kwargs: Any,
     ) -> None:
@@ -129,13 +139,18 @@ class qExpectedImprovement(MCAcquisitionFunction):
                 `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`
             objective: The MCAcquisitionObjective under which the samples are evaluated.
                 Defaults to `IdentityMCObjective()`.
+            posterior_transform: A PosteriorTransform (optional).
             X_pending:  A `m x d`-dim Tensor of `m` design points that have been
                 submitted for function evaluation but have not yet been evaluated.
                 Concatenated into X upon forward call. Copied and set to have no
                 gradient.
         """
         super().__init__(
-            model=model, sampler=sampler, objective=objective, X_pending=X_pending
+            model=model,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
         )
         self.register_buffer("best_f", torch.as_tensor(best_f, dtype=float))
 
@@ -153,7 +168,9 @@ class qExpectedImprovement(MCAcquisitionFunction):
             design points `X`, where `batch_shape'` is the broadcasted batch shape of
             model and input `X`.
         """
-        posterior = self.model.posterior(X)
+        posterior = self.model.posterior(
+            X=X, posterior_transform=self.posterior_transform
+        )
         samples = self.sampler(posterior)
         obj = self.objective(samples, X=X)
         obj = (obj - self.best_f.unsqueeze(-1).to(obj)).clamp_min(0)
@@ -185,6 +202,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         X_baseline: Tensor,
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCAcquisitionObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
         prune_baseline: bool = False,
         **kwargs: Any,
@@ -200,6 +218,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
                 `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`.
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
+            posterior_transform: A PosteriorTransform (optional).
             X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points
                 that have points that have been submitted for function evaluation
                 but have not yet been evaluated. Concatenated into `X` upon
@@ -212,13 +231,18 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
                 before instantiating the acquisition function.
         """
         super().__init__(
-            model=model, sampler=sampler, objective=objective, X_pending=X_pending
+            model=model,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
         )
         if prune_baseline:
             X_baseline = prune_inferior_points(
                 model=model,
                 X=X_baseline,
                 objective=objective,
+                posterior_transform=posterior_transform,
                 marginalize_dim=kwargs.get("marginalize_dim"),
             )
         self.register_buffer("X_baseline", X_baseline)
@@ -241,7 +265,9 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         X_full = torch.cat([X, match_batch_shape(self.X_baseline, X)], dim=-2)
         # TODO: Implement more efficient way to compute posterior over both training and
         # test points in GPyTorch (https://github.com/cornellius-gp/gpytorch/issues/567)
-        posterior = self.model.posterior(X_full)
+        posterior = self.model.posterior(
+            X=X_full, posterior_transform=self.posterior_transform
+        )
         samples = self.sampler(posterior)
         obj = self.objective(samples, X=X_full)
         diffs = obj[..., :q].max(dim=-1).values - obj[..., q:].max(dim=-1).values
@@ -273,6 +299,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
         best_f: Union[float, Tensor],
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCAcquisitionObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
         tau: float = 1e-3,
     ) -> None:
@@ -287,6 +314,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
                 `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
+            posterior_transform: A PosteriorTransform (optional).
             X_pending:  A `m x d`-dim Tensor of `m` design points that have
                 points that have been submitted for function evaluation
                 but have not yet been evaluated.  Concatenated into X upon
@@ -297,7 +325,11 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
                 estimates with higher variance.
         """
         super().__init__(
-            model=model, sampler=sampler, objective=objective, X_pending=X_pending
+            model=model,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
         )
         self.register_buffer("best_f", torch.as_tensor(best_f, dtype=float))
         self.register_buffer("tau", torch.as_tensor(tau, dtype=float))
@@ -316,7 +348,9 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
             given design points `X`, where `batch_shape'` is the broadcasted batch shape
             of model and input `X`.
         """
-        posterior = self.model.posterior(X)
+        posterior = self.model.posterior(
+            X=X, posterior_transform=self.posterior_transform
+        )
         samples = self.sampler(posterior)
         obj = self.objective(samples, X=X)
         max_obj = obj.max(dim=-1)[0]
@@ -353,7 +387,9 @@ class qSimpleRegret(MCAcquisitionFunction):
             points `X`, where `batch_shape'` is the broadcasted batch shape of model
             and input `X`.
         """
-        posterior = self.model.posterior(X)
+        posterior = self.model.posterior(
+            X=X, posterior_transform=self.posterior_transform
+        )
         samples = self.sampler(posterior)
         obj = self.objective(samples, X=X)
         val = obj.max(dim=-1)[0].mean(dim=0)
@@ -382,6 +418,7 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
         beta: float,
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCAcquisitionObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
     ) -> None:
         r"""q-Upper Confidence Bound.
@@ -393,13 +430,18 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
                 `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
+            posterior_transform: A PosteriorTransform (optional).
             X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have
                 points that have been submitted for function evaluation but have not yet
                 been evaluated. Concatenated into X upon forward call. Copied and set to
                 have no gradient.
         """
         super().__init__(
-            model=model, sampler=sampler, objective=objective, X_pending=X_pending
+            model=model,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
         )
         self.beta_prime = math.sqrt(beta * math.pi / 2)
 
@@ -417,7 +459,9 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
             design points `X`, where `batch_shape'` is the broadcasted batch shape of
             model and input `X`.
         """
-        posterior = self.model.posterior(X)
+        posterior = self.model.posterior(
+            X=X, posterior_transform=self.posterior_transform
+        )
         samples = self.sampler(posterior)
         obj = self.objective(samples, X=X)
         mean = obj.mean(dim=0)

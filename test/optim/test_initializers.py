@@ -630,10 +630,10 @@ class TestSampleAroundBest(BotorchTestCase):
             self.assertTrue((X_rnd >= 1).all())
             self.assertTrue((X_rnd <= 2).all())
 
-            # test an acquisition function that has objective=None
+            # test an acquisition function that has no posterior_transform
             # and maximize=False
             pm = PosteriorMean(model, maximize=False)
-            self.assertIsNone(pm.objective)
+            self.assertIsNone(pm.posterior_transform)
             self.assertFalse(pm.maximize)
             X_rnd = sample_points_around_best(
                 acq_function=pm,

@@ -24,6 +24,7 @@ from botorch.acquisition.input_constructors import (
     get_acqf_input_constructor,
     get_best_f_analytic,
     get_best_f_mc,
+    _deprecate_objective_arg,
 )
 from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
@@ -51,7 +52,12 @@ from botorch.acquisition.multi_objective.objective import (
     WeightedMCMultiOutputObjective,
 )
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
-from botorch.acquisition.objective import LinearMCObjective, ScalarizedObjective
+from botorch.acquisition.objective import (
+    AcquisitionObjective,
+    LinearMCObjective,
+    ScalarizedObjective,
+    ScalarizedPosteriorTransform,
+)
 from botorch.acquisition.utils import (
     expand_trace_observations,
     project_to_target_fidelity,
@@ -68,6 +74,10 @@ from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
 class DummyAcquisitionFunction(AcquisitionFunction):
+    ...
+
+
+class DummyObjective(AcquisitionObjective):
     ...
 
 
@@ -92,10 +102,16 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
         self.assertEqual(best_f, best_f_expected)
         with self.assertRaises(NotImplementedError):
             get_best_f_analytic(training_data=self.bd_td_mo)
-        obj = ScalarizedObjective(weights=torch.rand(2))
-        best_f = get_best_f_analytic(training_data=self.bd_td_mo, objective=obj)
-        best_f_expected = obj.evaluate(self.bd_td_mo.Y).max()
-        self.assertEqual(best_f, best_f_expected)
+        weights = torch.rand(2)
+        obj = ScalarizedObjective(weights=weights)
+        best_f_obj = get_best_f_analytic(training_data=self.bd_td_mo, objective=obj)
+        post_tf = ScalarizedPosteriorTransform(weights=weights)
+        best_f_tf = get_best_f_analytic(
+            training_data=self.bd_td_mo, posterior_transform=post_tf
+        )
+        best_f_expected = post_tf.evaluate(self.bd_td_mo.Y).max()
+        self.assertEqual(best_f_obj, best_f_expected)
+        self.assertEqual(best_f_tf, best_f_expected)
 
     def test_get_best_f_mc(self):
         with self.assertRaises(NotImplementedError):
@@ -109,6 +125,25 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
         best_f = get_best_f_mc(training_data=self.bd_td_mo, objective=obj)
         best_f_expected = (self.bd_td_mo.Y @ obj.weights).max()
         self.assertEqual(best_f, best_f_expected)
+        post_tf = ScalarizedPosteriorTransform(weights=torch.ones(2))
+        best_f = get_best_f_mc(training_data=self.bd_td_mo, posterior_transform=post_tf)
+        best_f_expected = (self.bd_td_mo.Y.sum(dim=-1)).max()
+        self.assertEqual(best_f, best_f_expected)
+
+    def test_deprecate_objective_arg(self):
+        objective = ScalarizedObjective(weights=torch.ones(1))
+        post_tf = ScalarizedPosteriorTransform(weights=torch.zeros(1))
+        with self.assertRaises(RuntimeError):
+            _deprecate_objective_arg(posterior_transform=post_tf, objective=objective)
+        with self.assertWarns(DeprecationWarning):
+            new_tf = _deprecate_objective_arg(objective=objective)
+        self.assertTrue(torch.equal(new_tf.weights, objective.weights))
+        self.assertIsInstance(new_tf, ScalarizedPosteriorTransform)
+        new_tf = _deprecate_objective_arg(posterior_transform=post_tf)
+        self.assertEqual(id(new_tf), id(post_tf))
+        self.assertIsNone(_deprecate_objective_arg())
+        with self.assertRaises(UnsupportedError):
+            _deprecate_objective_arg(objective=DummyObjective())
 
     @mock.patch("botorch.acquisition.input_constructors.optimize_acqf")
     def test_optimize_objective(self, mock_optimize_acqf):
@@ -123,11 +158,12 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
         inequality_constraints = ((idx, -A[0, idx], -b[0, 0]),)
 
         with self.subTest("scalarObjective_linearConstraints"):
+            post_tf = ScalarizedPosteriorTransform(weights=torch.rand(bounds.shape[-1]))
             _ = optimize_objective(
                 model=mock_model,
                 bounds=bounds,
                 q=1,
-                objective=ScalarizedObjective(weights=torch.rand(bounds.shape[-1])),
+                posterior_transform=post_tf,
                 linear_constraints=(A, b),
                 fixed_features=None,
             )
@@ -179,11 +215,13 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
         mock_model = mock.Mock()
         kwargs = c(model=mock_model, training_data=self.bd_td)
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertIsNone(kwargs["objective"])
+        self.assertIsNone(kwargs["posterior_transform"])
         mock_obj = mock.Mock()
-        kwargs = c(model=mock_model, training_data=self.bd_td, objective=mock_obj)
+        kwargs = c(
+            model=mock_model, training_data=self.bd_td, posterior_transform=mock_obj
+        )
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertEqual(kwargs["objective"], mock_obj)
+        self.assertEqual(kwargs["posterior_transform"], mock_obj)
 
     def test_construct_inputs_best_f(self):
         c = get_acqf_input_constructor(ExpectedImprovement)
@@ -191,12 +229,12 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
         kwargs = c(model=mock_model, training_data=self.bd_td)
         best_f_expected = self.bd_td.Y.squeeze().max()
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertIsNone(kwargs["objective"])
+        self.assertIsNone(kwargs["posterior_transform"])
         self.assertEqual(kwargs["best_f"], best_f_expected)
         self.assertTrue(kwargs["maximize"])
         kwargs = c(model=mock_model, training_data=self.bd_td, best_f=0.1)
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertIsNone(kwargs["objective"])
+        self.assertIsNone(kwargs["posterior_transform"])
         self.assertEqual(kwargs["best_f"], 0.1)
         self.assertTrue(kwargs["maximize"])
 
@@ -205,12 +243,12 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
         mock_model = mock.Mock()
         kwargs = c(model=mock_model, training_data=self.bd_td)
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertIsNone(kwargs["objective"])
+        self.assertIsNone(kwargs["posterior_transform"])
         self.assertEqual(kwargs["beta"], 0.2)
         self.assertTrue(kwargs["maximize"])
         kwargs = c(model=mock_model, training_data=self.bd_td, beta=0.1, maximize=False)
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertIsNone(kwargs["objective"])
+        self.assertIsNone(kwargs["posterior_transform"])
         self.assertEqual(kwargs["beta"], 0.1)
         self.assertFalse(kwargs["maximize"])
 

@@ -15,7 +15,8 @@ from botorch.acquisition.objective import (
     IdentityMCObjective,
     LinearMCObjective,
     MCAcquisitionObjective,
-    ScalarizedObjective,
+    PosteriorTransform,
+    ScalarizedPosteriorTransform,
 )
 from botorch.utils import apply_constraints
 from botorch.utils.testing import _get_test_posterior, BotorchTestCase
@@ -40,14 +41,20 @@ def feasible_con(samples: Tensor) -> Tensor:
     )
 
 
-class TestScalarizedObjective(BotorchTestCase):
-    def test_affine_acquisition_objective(self):
+class TestPosteriorTransform(BotorchTestCase):
+    def test_abstract_raises(self):
+        with self.assertRaises(TypeError):
+            PosteriorTransform()
+
+
+class TestScalarizedPosteriorTransform(BotorchTestCase):
+    def test_scalarized_posterior_transform(self):
         for batch_shape, m, dtype in itertools.product(
             ([], [3]), (1, 2), (torch.float, torch.double)
         ):
             offset = torch.rand(1).item()
             weights = torch.randn(m, device=self.device, dtype=dtype)
-            obj = ScalarizedObjective(weights=weights, offset=offset)
+            obj = ScalarizedPosteriorTransform(weights=weights, offset=offset)
             posterior = _get_test_posterior(
                 batch_shape, m=m, device=self.device, dtype=dtype
             )
@@ -64,7 +71,7 @@ class TestScalarizedObjective(BotorchTestCase):
             )
             # test error
             with self.assertRaises(ValueError):
-                ScalarizedObjective(weights=torch.rand(2, m))
+                ScalarizedPosteriorTransform(weights=torch.rand(2, m))
             # test evaluate
             Y = torch.rand(2, m, device=self.device, dtype=dtype)
             val = obj.evaluate(Y)
