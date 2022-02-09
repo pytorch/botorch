@@ -17,12 +17,11 @@ from typing import Dict, Optional, Tuple, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.objective import ScalarizedObjective
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions import UnsupportedError
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
-from botorch.posteriors.posterior import Posterior
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
 from torch import Tensor
@@ -33,46 +32,34 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
     r"""Base class for analytic acquisition functions."""
 
     def __init__(
-        self, model: Model, objective: Optional[ScalarizedObjective] = None
+        self,
+        model: Model,
+        posterior_transform: Optional[PosteriorTransform] = None,
+        **kwargs,
     ) -> None:
         r"""Base constructor for analytic acquisition functions.
 
         Args:
             model: A fitted single-outcome model.
-            objective: A ScalarizedObjective (optional).
+            posterior_transform: A PosteriorTransform. Required for multi-output models.
         """
         super().__init__(model=model)
-        if objective is None:
+        posterior_transform = self._deprecate_acqf_objective(
+            posterior_transform=posterior_transform,
+            objective=kwargs.get("objective"),
+        )
+        if posterior_transform is None:
             if model.num_outputs != 1:
                 raise UnsupportedError(
-                    "Must specify an objective when using a multi-output model."
+                    "Must specify a posterior transform when using a "
+                    "multi-output model."
                 )
-        elif not isinstance(objective, ScalarizedObjective):
-            raise UnsupportedError(
-                "Only objectives of type ScalarizedObjective are supported for "
-                "analytic acquisition functions."
-            )
-        self.objective = objective
-
-    def _get_posterior(self, X: Tensor) -> Posterior:
-        r"""Compute the posterior at the input candidate set X.
-
-        Applies the objective if provided.
-
-        Args:
-            X: The input candidate set.
-
-        Returns:
-            The posterior at X. If a ScalarizedObjective is defined, this
-            posterior can be single-output even if the underlying model is a
-            multi-output model.
-        """
-        posterior = self.model.posterior(X)
-        if self.objective is not None:
-            # Unlike MCAcquisitionObjective (which transform samples), this
-            # transforms the posterior
-            posterior = self.objective(posterior)
-        return posterior
+        else:
+            if not isinstance(posterior_transform, PosteriorTransform):
+                raise UnsupportedError(
+                    "AnalyticAcquisitionFunctions only support PosteriorTransforms."
+                )
+        self.posterior_transform = posterior_transform
 
     def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
         raise UnsupportedError(
@@ -102,8 +89,9 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
         self,
         model: Model,
         best_f: Union[float, Tensor],
-        objective: Optional[ScalarizedObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
+        **kwargs,
     ) -> None:
         r"""Single-outcome Expected Improvement (analytic).
 
@@ -111,10 +99,10 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
             model: A fitted single-outcome model.
             best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
                 the best function value observed so far (assumed noiseless).
-            objective: A ScalarizedObjective (optional).
+            posterior_transform: A PosteriorTransform. Required for multi-output models.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, objective=objective)
+        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
         self.maximize = maximize
         if not torch.is_tensor(best_f):
             best_f = torch.tensor(best_f)
@@ -135,7 +123,9 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
             given design points `X`.
         """
         self.best_f = self.best_f.to(X)
-        posterior = self._get_posterior(X=X)
+        posterior = self.model.posterior(
+            X=X, posterior_transform=self.posterior_transform
+        )
         mean = posterior.mean
         # deal with batch evaluation and broadcasting
         view_shape = mean.shape[:-2] if mean.dim() >= X.dim() else X.shape[:-2]
@@ -166,7 +156,7 @@ class PosteriorMean(AnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        objective: Optional[ScalarizedObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
     ) -> None:
         r"""Single-outcome Posterior Mean.
@@ -174,13 +164,13 @@ class PosteriorMean(AnalyticAcquisitionFunction):
         Args:
             model: A fitted single-outcome GP model (must be in batch mode if
                 candidate sets X will be)
-            objective: A ScalarizedObjective (optional).
+            posterior_transform: A PosteriorTransform. Required for multi-output models.
             maximize: If True, consider the problem a maximization problem. Note
                 that if `maximize=False`, the posterior mean is negated. As a
                 consequence `optimize_acqf(PosteriorMean(gp, maximize=False))`
                 does actually return -1 * minimum of the posterior mean.
         """
-        super().__init__(model=model, objective=objective)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.maximize = maximize
 
     @t_batch_mode_transform(expected_q=1)
@@ -195,7 +185,9 @@ class PosteriorMean(AnalyticAcquisitionFunction):
             A `(b)`-dim Tensor of Posterior Mean values at the given design
             points `X`.
         """
-        posterior = self._get_posterior(X=X)
+        posterior = self.model.posterior(
+            X=X, posterior_transform=self.posterior_transform
+        )
         mean = posterior.mean.view(X.shape[:-2])
         if self.maximize:
             return mean
@@ -206,7 +198,7 @@ class PosteriorMean(AnalyticAcquisitionFunction):
 class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
     r"""Single-outcome Probability of Improvement.
 
-    Probability of improvment over the current best observed value, computed
+    Probability of improvement over the current best observed value, computed
     using the analytic formula under a Normal posterior distribution. Only
     supports the case of q=1. Requires the posterior to be Gaussian. The model
     must be single-outcome.
@@ -223,8 +215,9 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
         self,
         model: Model,
         best_f: Union[float, Tensor],
-        objective: Optional[ScalarizedObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
+        **kwargs,
     ) -> None:
         r"""Single-outcome analytic Probability of Improvement.
 
@@ -232,10 +225,10 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
             model: A fitted single-outcome model.
             best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
                 the best function value observed so far (assumed noiseless).
-            objective: A ScalarizedObjective (optional).
+            posterior_transform: A PosteriorTransform. Required for multi-output models.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, objective=objective)
+        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
         self.maximize = maximize
         if not torch.is_tensor(best_f):
             best_f = torch.tensor(best_f)
@@ -254,7 +247,9 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
             design points `X`.
         """
         self.best_f = self.best_f.to(X)
-        posterior = self._get_posterior(X=X)
+        posterior = self.model.posterior(
+            X=X, posterior_transform=self.posterior_transform
+        )
         mean, sigma = posterior.mean, posterior.variance.sqrt()
         batch_shape = X.shape[:-2]
         mean = posterior.mean.view(batch_shape)
@@ -287,8 +282,9 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
         self,
         model: Model,
         beta: Union[float, Tensor],
-        objective: Optional[ScalarizedObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
+        **kwargs,
     ) -> None:
         r"""Single-outcome Upper Confidence Bound.
 
@@ -297,10 +293,10 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
                 candidate sets X will be)
             beta: Either a scalar or a one-dim tensor with `b` elements (batch mode)
                 representing the trade-off parameter between mean and covariance
-            objective: A ScalarizedObjective (optional).
+            posterior_transform: A PosteriorTransform. Required for multi-output models.
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model, objective=objective)
+        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
         self.maximize = maximize
         if not torch.is_tensor(beta):
             beta = torch.tensor(beta)
@@ -319,7 +315,9 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
             design points `X`.
         """
         self.beta = self.beta.to(X)
-        posterior = self._get_posterior(X=X)
+        posterior = self.model.posterior(
+            X=X, posterior_transform=self.posterior_transform
+        )
         batch_shape = X.shape[:-2]
         mean = posterior.mean.view(batch_shape)
         variance = posterior.variance.view(batch_shape)
@@ -373,9 +371,9 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
                 bounds on that output (resp. interpreted as -Inf / Inf if None)
             maximize: If True, consider the problem a maximization problem.
         """
-        # use AcquisitionFunction constructor to avoid check for objective
+        # Use AcquisitionFunction constructor to avoid check for posterior transform.
         super(AnalyticAcquisitionFunction, self).__init__(model=model)
-        self.objective = None
+        self.posterior_transform = None
         self.maximize = maximize
         self.objective_index = objective_index
         self.constraints = constraints
@@ -396,7 +394,9 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
             design points `X`.
         """
         self.best_f = self.best_f.to(X)
-        posterior = self._get_posterior(X=X)
+        posterior = self.model.posterior(
+            X=X, posterior_transform=self.posterior_transform
+        )
         means = posterior.mean.squeeze(dim=-2)  # (b) x m
         sigmas = posterior.variance.squeeze(dim=-2).sqrt().clamp_min(1e-9)  # (b) x m
 
@@ -628,16 +628,17 @@ class ScalarizedPosteriorMean(AnalyticAcquisitionFunction):
         self,
         model: Model,
         weights: Tensor,
-        objective: Optional[ScalarizedObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
+        **kwargs,
     ) -> None:
         r"""Scalarized Posterior Mean.
 
         Args:
             model: A fitted single-outcome model.
             weights: A tensor of shape `q` for scalarization.
-            objective: A ScalarizedObjective. Required for multi-output models.
+            posterior_transform: A PosteriorTransform. Required for multi-output models.
         """
-        super().__init__(model=model, objective=objective)
+        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
         self.register_buffer("weights", weights.unsqueeze(dim=0))
 
     @t_batch_mode_transform()
@@ -652,6 +653,8 @@ class ScalarizedPosteriorMean(AnalyticAcquisitionFunction):
             A `(b)`-dim Tensor of Posterior Mean values at the given design
             points `X`.
         """
-        posterior = self._get_posterior(X=X)
+        posterior = self.model.posterior(
+            X=X, posterior_transform=self.posterior_transform
+        )
         weighted_means = posterior.mean.squeeze(dim=-1) * self.weights
         return weighted_means.sum(dim=-1)

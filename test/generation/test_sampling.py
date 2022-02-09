@@ -15,6 +15,7 @@ from botorch.acquisition.objective import (
     IdentityMCObjective,
     LinearMCObjective,
     ScalarizedObjective,
+    ScalarizedPosteriorTransform,
 )
 from botorch.generation.sampling import (
     BoltzmannSampling,
@@ -64,7 +65,7 @@ class TestMaxPosteriorSampling(BotorchTestCase):
                     s = MPS(X, num_samples=num_samples)
                     self.assertTrue(torch.equal(s, X[..., [0] * num_samples, :]))
 
-            # ScalarizedMCObjective, with replacement
+            # ScalarizedObjective, with replacement
             with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
                 mp = MockPosterior(None)
                 with mock.patch.object(MockModel, "posterior", return_value=mp):
@@ -76,6 +77,27 @@ class TestMaxPosteriorSampling(BotorchTestCase):
                         MPS = MaxPosteriorSampling(mm, objective=obj)
                         s = MPS(X, num_samples=num_samples)
                         self.assertTrue(torch.equal(s, X[..., [0] * num_samples, :]))
+
+            # ScalarizedPosteriorTransform w/ replacement
+            with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
+                mp = MockPosterior(None)
+                with mock.patch.object(MockModel, "posterior", return_value=mp):
+                    mm = MockModel(None)
+                    with mock.patch.object(
+                        ScalarizedPosteriorTransform, "forward", return_value=mp
+                    ):
+                        post_tf = ScalarizedPosteriorTransform(torch.rand(2, **tkwargs))
+                        MPS = MaxPosteriorSampling(mm, posterior_transform=post_tf)
+                        s = MPS(X, num_samples=num_samples)
+                        self.assertTrue(torch.equal(s, X[..., [0] * num_samples, :]))
+
+            # ScalarizedPosteriorTransform and Scalarized obj
+            mp = MockPosterior(None)
+            mm = MockModel(posterior=mp)
+            obj = ScalarizedObjective(torch.rand(2, **tkwargs))
+            post_tf = ScalarizedPosteriorTransform(torch.rand(2, **tkwargs))
+            with self.assertRaises(RuntimeError):
+                MaxPosteriorSampling(mm, posterior_transform=post_tf, objective=obj)
 
             # without replacement
             psamples[..., 1, 0] = 1e-6

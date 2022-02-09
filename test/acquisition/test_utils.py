@@ -16,7 +16,11 @@ from botorch.acquisition.multi_objective import (
     MCMultiOutputObjective,
     monte_carlo as moo_monte_carlo,
 )
-from botorch.acquisition.objective import GenericMCObjective, MCAcquisitionObjective
+from botorch.acquisition.objective import (
+    GenericMCObjective,
+    MCAcquisitionObjective,
+    ScalarizedPosteriorTransform,
+)
 from botorch.acquisition.utils import (
     expand_trace_observations,
     get_acquisition_function,
@@ -80,6 +84,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             best_f=best_f,
             sampler=mock.ANY,
             objective=self.objective,
+            posterior_transform=None,
             X_pending=self.X_pending,
         )
         # test batched model
@@ -123,6 +128,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             best_f=best_f,
             sampler=mock.ANY,
             objective=self.objective,
+            posterior_transform=None,
             X_pending=self.X_pending,
             tau=1e-3,
         )
@@ -241,6 +247,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             model=self.model,
             sampler=mock.ANY,
             objective=self.objective,
+            posterior_transform=None,
             X_pending=self.X_pending,
         )
         args, kwargs = mock_acqf.call_args
@@ -299,6 +306,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             beta=0.3,
             sampler=mock.ANY,
             objective=self.objective,
+            posterior_transform=None,
             X_pending=self.X_pending,
         )
         args, kwargs = mock_acqf.call_args
@@ -350,6 +358,19 @@ class TestGetAcquisitionFunction(BotorchTestCase):
                 acquisition_function_name="qEHVI",
                 model=self.model,
                 objective=self.mo_objective,
+                X_observed=self.X_observed,
+                X_pending=self.X_pending,
+                mc_samples=self.mc_samples,
+                seed=self.seed,
+                ref_point=self.ref_point,
+            )
+        # posterior transforms are not supported
+        with self.assertRaises(NotImplementedError):
+            acqf = get_acquisition_function(
+                acquisition_function_name="qEHVI",
+                model=self.model,
+                objective=self.mo_objective,
+                posterior_transform=ScalarizedPosteriorTransform(weights=torch.rand(2)),
                 X_observed=self.X_observed,
                 X_pending=self.X_pending,
                 mc_samples=self.mc_samples,

@@ -394,7 +394,8 @@ def gen_value_function_initial_conditions(
     # compute maximizer of the current value function
     value_function = _get_value_function(
         model=current_model,
-        objective=acq_function.objective,
+        objective=getattr(acq_function, "objective", None),
+        posterior_transform=acq_function.posterior_transform,
         sampler=getattr(acq_function, "sampler", None),
         project=getattr(acq_function, "project", None),
     )

@@ -17,7 +17,11 @@ from botorch.acquisition.analytic import (
     ScalarizedPosteriorMean,
     UpperConfidenceBound,
 )
-from botorch.acquisition.objective import IdentityMCObjective, ScalarizedObjective
+from botorch.acquisition.objective import (
+    IdentityMCObjective,
+    ScalarizedPosteriorTransform,
+    ScalarizedObjective,
+)
 from botorch.exceptions import UnsupportedError
 from botorch.models import FixedNoiseGP, SingleTaskGP
 from botorch.posteriors import GPyTorchPosterior
@@ -48,12 +52,24 @@ class TestAnalyticAcquisitionFunction(BotorchTestCase):
     def test_abstract_raises(self):
         with self.assertRaises(TypeError):
             AnalyticAcquisitionFunction()
-        # raise if model is multi-output, but no objective is given
+        # raise if model is multi-output, but no posterior transform is given
         mean = torch.zeros(1, 2)
         variance = torch.ones(1, 2)
         mm = MockModel(MockPosterior(mean=mean, variance=variance))
         with self.assertRaises(UnsupportedError):
             DummyAnalyticAcquisitionFunction(model=mm)
+
+    def test_deprecate_acqf_objective(self):
+        mean = torch.zeros(1, 2)
+        variance = torch.ones(1, 2)
+        mm = MockModel(MockPosterior(mean=mean, variance=variance))
+        obj = ScalarizedObjective(weights=torch.ones(2))
+        # check for deprecation warning
+        with self.assertWarns(DeprecationWarning):
+            acqf = DummyAnalyticAcquisitionFunction(model=mm, objective=obj)
+        # check that posterior transform was created and assigned
+        self.assertIsInstance(acqf.posterior_transform, ScalarizedPosteriorTransform)
+        self.assertFalse(hasattr(acqf, "objective"))
 
 
 class TestExpectedImprovement(BotorchTestCase):
@@ -79,20 +95,22 @@ class TestExpectedImprovement(BotorchTestCase):
             with self.assertRaises(UnsupportedError):
                 module.set_X_pending(None)
 
-            # test objective (single-output)
+            # test posterior transform (single-output)
             mean = torch.tensor([0.5], device=self.device, dtype=dtype)
             covar = torch.tensor([[0.16]], device=self.device, dtype=dtype)
             mvn = MultivariateNormal(mean, covar)
             p = GPyTorchPosterior(mvn)
             mm = MockModel(p)
             weights = torch.tensor([0.5], device=self.device, dtype=dtype)
-            obj = ScalarizedObjective(weights)
-            ei = ExpectedImprovement(model=mm, best_f=0.0, objective=obj)
+            transform = ScalarizedPosteriorTransform(weights)
+            ei = ExpectedImprovement(
+                model=mm, best_f=0.0, posterior_transform=transform
+            )
             X = torch.rand(1, 2, device=self.device, dtype=dtype)
             ei_expected = torch.tensor(0.2601, device=self.device, dtype=dtype)
             torch.allclose(ei(X), ei_expected, atol=1e-4)
 
-            # test objective (multi-output)
+            # test posterior transform (multi-output)
             mean = torch.tensor([[-0.25, 0.5]], device=self.device, dtype=dtype)
             covar = torch.tensor(
                 [[[0.5, 0.125], [0.125, 0.5]]], device=self.device, dtype=dtype
@@ -101,8 +119,10 @@ class TestExpectedImprovement(BotorchTestCase):
             p = GPyTorchPosterior(mvn)
             mm = MockModel(p)
             weights = torch.tensor([2.0, 1.0], device=self.device, dtype=dtype)
-            obj = ScalarizedObjective(weights)
-            ei = ExpectedImprovement(model=mm, best_f=0.0, objective=obj)
+            transform = ScalarizedPosteriorTransform(weights)
+            ei = ExpectedImprovement(
+                model=mm, best_f=0.0, posterior_transform=transform
+            )
             X = torch.rand(1, 2, device=self.device, dtype=dtype)
             ei_expected = torch.tensor(0.6910, device=self.device, dtype=dtype)
             torch.allclose(ei(X), ei_expected, atol=1e-4)
@@ -128,7 +148,7 @@ class TestExpectedImprovement(BotorchTestCase):
             with self.assertRaises(UnsupportedError):
                 ExpectedImprovement(model=mm2, best_f=0.0)
 
-            # test objective (single-output)
+            # test posterior transform (single-output)
             mean = torch.tensor([[[0.5]], [[0.25]]], device=self.device, dtype=dtype)
             covar = torch.tensor(
                 [[[[0.16]]], [[[0.125]]]], device=self.device, dtype=dtype
@@ -137,15 +157,17 @@ class TestExpectedImprovement(BotorchTestCase):
             p = GPyTorchPosterior(mvn)
             mm = MockModel(p)
             weights = torch.tensor([0.5], device=self.device, dtype=dtype)
-            obj = ScalarizedObjective(weights)
-            ei = ExpectedImprovement(model=mm, best_f=0.0, objective=obj)
+            transform = ScalarizedPosteriorTransform(weights)
+            ei = ExpectedImprovement(
+                model=mm, best_f=0.0, posterior_transform=transform
+            )
             X = torch.rand(2, 1, 2, device=self.device, dtype=dtype)
             ei_expected = torch.tensor(
                 [[0.2601], [0.1500]], device=self.device, dtype=dtype
             )
             torch.allclose(ei(X), ei_expected, atol=1e-4)
 
-            # test objective (multi-output)
+            # test posterior transform (multi-output)
             mean = torch.tensor(
                 [[[-0.25, 0.5]], [[0.2, -0.1]]], device=self.device, dtype=dtype
             )
@@ -158,17 +180,21 @@ class TestExpectedImprovement(BotorchTestCase):
             p = GPyTorchPosterior(mvn)
             mm = MockModel(p)
             weights = torch.tensor([2.0, 1.0], device=self.device, dtype=dtype)
-            obj = ScalarizedObjective(weights)
-            ei = ExpectedImprovement(model=mm, best_f=0.0, objective=obj)
+            transform = ScalarizedPosteriorTransform(weights)
+            ei = ExpectedImprovement(
+                model=mm, best_f=0.0, posterior_transform=transform
+            )
             X = torch.rand(2, 1, 2, device=self.device, dtype=dtype)
             ei_expected = torch.tensor(
                 [0.6910, 0.5371], device=self.device, dtype=dtype
             )
             torch.allclose(ei(X), ei_expected, atol=1e-4)
 
-        # test bad objective class
+        # test bad posterior transform class
         with self.assertRaises(UnsupportedError):
-            ExpectedImprovement(model=mm, best_f=0.0, objective=IdentityMCObjective())
+            ExpectedImprovement(
+                model=mm, best_f=0.0, posterior_transform=IdentityMCObjective()
+            )
 
 
 class TestPosteriorMean(BotorchTestCase):

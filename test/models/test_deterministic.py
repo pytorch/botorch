@@ -7,6 +7,7 @@
 import warnings
 
 import torch
+from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.deterministic import (
     AffineDeterministicModel,
@@ -119,3 +120,14 @@ class TestDeterministicModels(BotorchTestCase):
         model.train()
         with self.assertWarns(RuntimeWarning):
             model.eval()
+
+    def test_posterior_transform(self):
+        def f(X):
+            return X
+
+        model = GenericDeterministicModel(f)
+        test_X = torch.rand(3, 2)
+        post_tf = ScalarizedPosteriorTransform(weights=torch.rand(2))
+        # expect error due to post_tf expecting an MVN
+        with self.assertRaises(AttributeError):
+            model.posterior(test_X, posterior_transform=post_tf)

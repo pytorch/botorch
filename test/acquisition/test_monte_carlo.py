@@ -17,7 +17,7 @@ from botorch.acquisition.monte_carlo import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
-from botorch.acquisition.objective import ScalarizedObjective
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -28,17 +28,36 @@ class DummyMCAcquisitionFunction(MCAcquisitionFunction):
         pass
 
 
+class DummyNonScalarizingPosteriorTransform(PosteriorTransform):
+    scalarize = False
+
+    def evaluate(self, Y):
+        pass  # pragma: no cover
+
+    def forward(self, posterior):
+        pass  # pragma: no cover
+
+
 class TestMCAcquisitionFunction(BotorchTestCase):
     def test_abstract_raises(self):
         with self.assertRaises(TypeError):
             MCAcquisitionFunction()
-        # raise if model is multi-output, but no objective is given
+        # raise if model is multi-output, but no outcome transform or objective
+        # are given
         no = "botorch.utils.testing.MockModel.num_outputs"
         with mock.patch(no, new_callable=mock.PropertyMock) as mock_num_outputs:
             mock_num_outputs.return_value = 2
             mm = MockModel(MockPosterior())
             with self.assertRaises(UnsupportedError):
                 DummyMCAcquisitionFunction(model=mm)
+        # raise if model is multi-output, but outcome transform does not
+        # scalarize and no objetive is given
+        with mock.patch(no, new_callable=mock.PropertyMock) as mock_num_outputs:
+            mock_num_outputs.return_value = 2
+            mm = MockModel(MockPosterior())
+            ptf = DummyNonScalarizingPosteriorTransform()
+            with self.assertRaises(UnsupportedError):
+                DummyMCAcquisitionFunction(model=mm, posterior_transform=ptf)
 
 
 class TestQExpectedImprovement(BotorchTestCase):
@@ -109,13 +128,6 @@ class TestQExpectedImprovement(BotorchTestCase):
                 self.assertEqual(acqf.X_pending, X2)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
-
-        # test bad objective type
-        obj = ScalarizedObjective(
-            weights=torch.rand(2, device=self.device, dtype=dtype)
-        )
-        with self.assertRaises(UnsupportedError):
-            qExpectedImprovement(model=mm, best_f=0, sampler=sampler, objective=obj)
 
     def test_q_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):

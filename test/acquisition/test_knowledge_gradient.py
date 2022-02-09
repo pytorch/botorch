@@ -18,7 +18,11 @@ from botorch.acquisition.knowledge_gradient import (
     qMultiFidelityKnowledgeGradient,
 )
 from botorch.acquisition.monte_carlo import qExpectedImprovement, qSimpleRegret
-from botorch.acquisition.objective import GenericMCObjective, ScalarizedObjective
+from botorch.acquisition.objective import (
+    GenericMCObjective,
+    ScalarizedObjective,
+    ScalarizedPosteriorTransform,
+)
 from botorch.acquisition.utils import project_to_sample_points
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP
@@ -26,6 +30,8 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal
+
+from .test_monte_carlo import DummyNonScalarizingPosteriorTransform
 
 NO = "botorch.utils.testing.MockModel.num_outputs"
 
@@ -97,20 +103,41 @@ class TestQKnowledgeGradient(BotorchTestCase):
             self.assertIsNone(qKG.X_pending)
             self.assertTrue(torch.equal(qKG.current_value, current_value))
             self.assertEqual(qKG.get_augmented_q_batch_size(q=3), 8 + 3)
-            # test construction with non-MC objective (ScalarizedObjective)
+            # test construction with posterior_transform
             qKG_s = qKnowledgeGradient(
                 model=mm,
                 num_fantasies=16,
                 sampler=sampler,
-                objective=ScalarizedObjective(weights=torch.rand(2)),
+                posterior_transform=ScalarizedPosteriorTransform(weights=torch.rand(2)),
             )
             self.assertIsNone(qKG_s.inner_sampler)
-            self.assertIsInstance(qKG_s.objective, ScalarizedObjective)
-            # test error if no objective and multi-output model
+            self.assertIsInstance(
+                qKG_s.posterior_transform, ScalarizedPosteriorTransform
+            )
+            # test error if multi-output model and no objective or posterior transform
             mean2 = torch.zeros(1, 2, device=self.device, dtype=dtype)
             mm2 = MockModel(MockPosterior(mean=mean2))
             with self.assertRaises(UnsupportedError):
                 qKnowledgeGradient(model=mm2)
+            # test error if multi-output model and no objective and posterior transform
+            # does not scalarize
+            with self.assertRaises(UnsupportedError):
+                qKnowledgeGradient(
+                    model=mm2,
+                    posterior_transform=DummyNonScalarizingPosteriorTransform(),
+                )
+            # test handling of scalarized objective
+            obj = ScalarizedObjective(weights=torch.rand(2))
+            post_tf = ScalarizedPosteriorTransform(weights=torch.rand(2))
+            with self.assertRaises(RuntimeError):
+                qKnowledgeGradient(
+                    model=mm2, objective=obj, posterior_transform=post_tf
+                )
+            acqf = qKnowledgeGradient(model=mm2, objective=obj)
+            self.assertIsInstance(
+                acqf.posterior_transform, ScalarizedPosteriorTransform
+            )
+            self.assertIsNone(acqf.objective)
 
     def test_evaluate_q_knowledge_gradient(self):
         # Stop gap measure to avoid test failures on Ampere devices
@@ -196,9 +223,9 @@ class TestQKnowledgeGradient(BotorchTestCase):
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 1, 1]))
             self.assertTrue(torch.allclose(val, objective(samples).mean(), atol=1e-4))
             self.assertTrue(torch.equal(qKG.extract_candidates(X), X[..., :-n_f, :]))
-            # test non-MC objective (ScalarizedObjective)
+            # test scalarized posterior transform
             weights = torch.rand(2, device=self.device, dtype=dtype)
-            objective = ScalarizedObjective(weights=weights)
+            post_tf = ScalarizedPosteriorTransform(weights=weights)
             mean = torch.tensor([1.0, 0.5], device=self.device, dtype=dtype).expand(
                 n_f, 1, 2
             )
@@ -212,7 +239,7 @@ class TestQKnowledgeGradient(BotorchTestCase):
                     mock_num_outputs.return_value = 2
                     mm = MockModel(None)
                     qKG = qKnowledgeGradient(
-                        model=mm, num_fantasies=n_f, objective=objective
+                        model=mm, num_fantasies=n_f, posterior_transform=post_tf
                     )
                     val = qKG(X)
                     patch_f.assert_called_once()
@@ -538,7 +565,7 @@ class TestKGUtils(BotorchTestCase):
             # test PosteriorMean
             vf = _get_value_function(mm)
             self.assertIsInstance(vf, PosteriorMean)
-            self.assertIsNone(vf.objective)
+            self.assertIsNone(vf.posterior_transform)
             # test SimpleRegret
             obj = GenericMCObjective(lambda Y, X: Y.sum(dim=-1))
             sampler = IIDNormalSampler(num_samples=2)

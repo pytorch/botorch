@@ -19,7 +19,11 @@ from botorch import settings
 from botorch.acquisition import analytic, monte_carlo, multi_objective  # noqa F401
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.multi_objective import monte_carlo as moo_monte_carlo
-from botorch.acquisition.objective import IdentityMCObjective, MCAcquisitionObjective
+from botorch.acquisition.objective import (
+    IdentityMCObjective,
+    MCAcquisitionObjective,
+    PosteriorTransform,
+)
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.models.model import Model
@@ -37,6 +41,7 @@ def get_acquisition_function(
     model: Model,
     objective: MCAcquisitionObjective,
     X_observed: Tensor,
+    posterior_transform: Optional[PosteriorTransform] = None,
     X_pending: Optional[Tensor] = None,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     mc_samples: int = 500,
@@ -52,6 +57,7 @@ def get_acquisition_function(
         objective: A MCAcquisitionObjective.
         X_observed: A `m1 x d`-dim Tensor of `m1` design points that have
             already been observed.
+        posterior_transform: A PosteriorTransform (optional).
         X_pending: A `m2 x d`-dim Tensor of `m2` design points whose evaluation
             is pending.
         constraints: A list of callables, each mapping a Tensor of dimension
@@ -78,6 +84,14 @@ def get_acquisition_function(
         sampler = SobolQMCNormalSampler(num_samples=mc_samples, seed=seed)
     else:
         sampler = IIDNormalSampler(num_samples=mc_samples, seed=seed)
+    if posterior_transform is not None and acquisition_function_name in [
+        "qEHVI",
+        "qNEHVI",
+    ]:
+        raise NotImplementedError(
+            "PosteriorTransforms are not yet implemented for multi-objective "
+            "acquisition functions."
+        )
     # instantiate and return the requested acquisition function
     if acquisition_function_name in ("qEI", "qPI"):
         obj = objective(model.posterior(X_observed).mean)
@@ -88,6 +102,7 @@ def get_acquisition_function(
             best_f=best_f,
             sampler=sampler,
             objective=objective,
+            posterior_transform=posterior_transform,
             X_pending=X_pending,
         )
     elif acquisition_function_name == "qPI":
@@ -96,6 +111,7 @@ def get_acquisition_function(
             best_f=best_f,
             sampler=sampler,
             objective=objective,
+            posterior_transform=posterior_transform,
             X_pending=X_pending,
             tau=kwargs.get("tau", 1e-3),
         )
@@ -105,13 +121,18 @@ def get_acquisition_function(
             X_baseline=X_observed,
             sampler=sampler,
             objective=objective,
+            posterior_transform=posterior_transform,
             X_pending=X_pending,
             prune_baseline=kwargs.get("prune_baseline", False),
             marginalize_dim=kwargs.get("marginalize_dim"),
         )
     elif acquisition_function_name == "qSR":
         return monte_carlo.qSimpleRegret(
-            model=model, sampler=sampler, objective=objective, X_pending=X_pending
+            model=model,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
         )
     elif acquisition_function_name == "qUCB":
         if "beta" not in kwargs:
@@ -121,6 +142,7 @@ def get_acquisition_function(
             beta=kwargs["beta"],
             sampler=sampler,
             objective=objective,
+            posterior_transform=posterior_transform,
             X_pending=X_pending,
         )
     elif acquisition_function_name == "qEHVI":
@@ -184,6 +206,7 @@ def get_infeasible_cost(
     X: Tensor,
     model: Model,
     objective: Optional[Callable[[Tensor, Optional[Tensor]], Tensor]] = None,
+    posterior_transform: Optional[PosteriorTransform] = None,
 ) -> float:
     r"""Get infeasible cost for a model and objective.
 
@@ -196,6 +219,7 @@ def get_infeasible_cost(
             points the better the estimate, at the expense of added computation.
         model: A fitted botorch model.
         objective: The objective with which to evaluate the model output.
+        posterior_transform: A PosteriorTransform (optional).
 
     Returns:
         The infeasible cost `M` value.
@@ -210,7 +234,7 @@ def get_infeasible_cost(
         def objective(Y: Tensor, X: Optional[Tensor] = None):
             return Y.squeeze(-1)
 
-    posterior = model.posterior(X)
+    posterior = model.posterior(X, posterior_transform=posterior_transform)
     lb = objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt()).min()
     M = -(lb.clamp_max(0.0))
     return M.item()
@@ -251,6 +275,7 @@ def prune_inferior_points(
     model: Model,
     X: Tensor,
     objective: Optional[MCAcquisitionObjective] = None,
+    posterior_transform: Optional[PosteriorTransform] = None,
     num_samples: int = 2048,
     max_frac: float = 1.0,
     sampler: Optional[MCSampler] = None,
@@ -269,6 +294,7 @@ def prune_inferior_points(
         X: An input tensor of shape `n x d`. Batched inputs are currently not
             supported.
         objective: The objective under which to evaluate the posterior.
+        posterior_transform: A PosteriorTransform (optional).
         num_samples: The number of samples used to compute empirical
             probabilities of being the best point.
         max_frac: The maximum fraction of points to retain. Must satisfy
@@ -297,7 +323,7 @@ def prune_inferior_points(
     if max_points < 1 or max_points > X.size(-2):
         raise ValueError(f"max_frac must take values in (0, 1], is {max_frac}")
     with torch.no_grad():
-        posterior = model.posterior(X=X)
+        posterior = model.posterior(X=X, posterior_transform=posterior_transform)
     if sampler is None:
         if posterior.base_sample_shape.numel() > SobolEngine.MAXDIM:
             if settings.debug.on():
