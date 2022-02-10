@@ -560,6 +560,13 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
     ) -> MultitaskGPPosterior:
         self.eval()
 
+        if posterior_transform is not None:
+            # this could be very costly, disallow for now
+            raise NotImplementedError(
+                "Posterior transforms currently not supported for "
+                f"{self.__class__.__name__}"
+            )
+
         X = self.transform_inputs(X)
         train_x = self.transform_inputs(self.train_inputs[0])
 
@@ -745,10 +752,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
 
         if hasattr(self, "outcome_transform"):
             posterior = self.outcome_transform.untransform_posterior(posterior)
-        if posterior_transform is not None:
-            return posterior_transform(posterior)
-        else:
-            return posterior
+        return posterior
 
     def train(self, val=True, *args, **kwargs):
         if val:

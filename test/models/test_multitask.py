@@ -682,18 +682,10 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             self.assertEqual(posterior_f.mean.shape, torch.Size([3, 2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([3, 2, 2]))
 
-            # test posterior_tf
-            if not use_octf:
-                # Note that if a `Standardize` outcome transform is used this
-                # (currently) returns a `TransformedPosterior` which is incompatible
-                # with PosteriorTransform
-                post_tf = ScalarizedPosteriorTransform(weights=torch.ones(2, **tkwargs))
-                posterior_f_tf = model.posterior(test_x, posterior_transform=post_tf)
-                self.assertTrue(
-                    torch.equal(
-                        posterior_f.mean.sum(dim=-1, keepdim=True), posterior_f_tf.mean
-                    )
-                )
+            # test that using a posterior transform throws error
+            post_tf = ScalarizedPosteriorTransform(weights=torch.ones(2, **tkwargs))
+            with self.assertRaises(NotImplementedError):
+                model.posterior(test_x, posterior_transform=post_tf)
 
     def test_KroneckerMultiTaskGP_custom(self):
         for batch_shape, dtype in itertools.product(
