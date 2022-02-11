@@ -25,6 +25,7 @@ from botorch.test_functions.multi_objective import (
     DTLZ5,
     DTLZ7,
     MultiObjectiveTestProblem,
+    MW7,
     OSY,
     SRN,
     VehicleSafety,
@@ -255,6 +256,7 @@ class TestConstrainedMultiObjectiveProblems(
         CONSTR(),
         ConstrainedBraninCurrin(),
         C2DTLZ2(dim=3, num_objectives=2),
+        MW7(dim=2),
         WeldedBeam(),
         OSY(),
     ]
