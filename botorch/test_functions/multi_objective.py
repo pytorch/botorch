@@ -31,6 +31,11 @@ References
     Conference on Uncertainty in Artificial Intelligence (UAI’14).
     AUAI Press, Arlington, Virginia, USA, 250–259.
 
+.. [Ma2019]
+    Z. Ma and Y. Wang. Evolutionary Constrained Multiobjective Optimization:
+    Test Suite Construction and Performance Comparisons. IEEE Transactions
+    on Evolutionary Computation, 23(6):972–986, December 2019.
+
 .. [Oszycka1995]
     A. Osyczka, S. Kundu. 1995. A new method to solve generalized multicriteria
     optimization problems using the simple genetic algorithm. In Structural
@@ -1076,3 +1081,50 @@ class WeldedBeam(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         g3 = (1 / (5 - 0.125)) * (X[..., 0] - X[..., 3])
         g4 = (1 / P) * (P - P_c)
         return -torch.stack([g1, g2, g3, g4], dim=-1)
+
+
+class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
+    r"""The MW7 problem.
+
+    This problem has 2 objectives, 2 constraints, and a disconnected Pareto
+    frontier. It supports arbitrary input dimension. See [Ma2019]_ for details.
+
+    This implementation is adapted from:
+    https://github.com/anyoptimization/pymoo/blob/master/pymoo/problems/multi/mw.py
+    """
+    num_constraints = 2
+    num_objectives = 2
+    _ref_point = [1.2, 1.2]
+
+    def __init__(
+        self,
+        dim: int,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+    ) -> None:
+        self.dim = dim
+        self._bounds = [(0.0, 1.0) for _ in range(self.dim)]
+        super().__init__(noise_std=noise_std, negate=negate)
+
+    def LA2(self, A, B, C, D, theta):
+        return A * torch.sin(B * theta.pow(C)).pow(D)
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        a = X[..., :-1] - 0.5
+        contrib = 2 * (X[..., 1:] + a.pow(2) - 1).pow(2)
+        g = 1 + contrib.sum(dim=1)
+        f0 = g * X[..., 0]
+        f1 = g * torch.sqrt(1 - (f0 / g).pow(2))
+        return torch.stack([f0, f1], dim=-1)
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        ff = self.evaluate_true(X)
+        f0, f1 = ff[..., 0], ff[..., 1]
+        atan = torch.arctan(f1 / f0)
+        g0 = (
+            f0.pow(2)
+            + f1.pow(2)
+            - (1.2 + (self.LA2(0.4, 4.0, 1.0, 16.0, atan)).abs()).pow(2)
+        )
+        g1 = (1.15 - self.LA2(0.2, 4.0, 1.0, 8.0, atan)).pow(2) - f0.pow(2) - f1.pow(2)
+        return -torch.stack([g0, g1], dim=-1)
