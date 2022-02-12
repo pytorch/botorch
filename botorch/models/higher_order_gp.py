@@ -413,8 +413,10 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         self.eval()  # make sure we're calling a posterior
 
         if posterior_transform is not None:
+            # this could be very costly, disallow for now
             raise NotImplementedError(
-                "Posteriror transform currently not supported for HOGP"
+                "Posterior transforms currently not supported for "
+                f"{self.__class__.__name__}"
             )
 
         # input transforms are applied at `posterior` in `eval` mode, and at
