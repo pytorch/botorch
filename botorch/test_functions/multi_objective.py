@@ -889,30 +889,6 @@ class BNH(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         return torch.stack([c1, c2], dim=-1)
 
 
-class SRN(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
-    r"""The constrained SRN problem.
-
-    See [GarridoMerchan2020]_ for more details on this problem. Note that this is a
-    minimization problem.
-    """
-
-    dim = 2
-    num_objectives = 2
-    num_constraints = 2
-    _bounds = [(-20.0, 20.0), (-20.0, 20.0)]
-    _ref_point = [0.0, 0.0]  # TODO: Determine proper reference point
-
-    def evaluate_true(self, X: Tensor) -> Tensor:
-        obj1 = 2.0 + ((X - 2.0) ** 2).sum(dim=-1)
-        obj2 = 9.0 * X[..., 0] - (X[..., 1] - 1.0) ** 2
-        return torch.stack([obj1, obj2], dim=-1)
-
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
-        c1 = 225.0 - ((X ** 2) ** 2).sum(dim=-1)
-        c2 = -10.0 - X[..., 0] + 3 * X[..., 1]
-        return torch.stack([c1, c2], dim=-1)
-
-
 class CONSTR(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     r"""The constrained CONSTR problem.
 
@@ -987,6 +963,99 @@ class C2DTLZ2(DTLZ2, ConstrainedBaseTestProblem):
         return -torch.min(min1, min2).unsqueeze(-1)
 
 
+class DiscBrake(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
+    r"""The Disc Brake problem.
+
+    There are 2 objectives and 4 constraints.
+
+    Both objectives should be minimized.
+
+    See [Tanabe2020]_ for details.
+
+    The reference point was set using the `infer_reference_point`
+    heuristic on the Pareto frontier over a large discrete set of
+    random designs.
+    """
+
+    dim = 4
+    num_objectives = 2
+    num_constraints = 4
+    _bounds = [(55.0, 80.0), (75.0, 110.0), (1000.0, 3000.0), (11.0, 20.0)]
+    _ref_point = [5.7771, 3.9651]
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        f = torch.zeros(
+            *X.shape[:-1], self.num_objectives, dtype=X.dtype, device=X.device
+        )
+
+        X1, X2, X3, X4 = torch.split(X, 1, -1)
+        sq_diff = X2.pow(2) - X1.pow(2)
+        f[..., :1] = 4.9 * 1e-5 * sq_diff * (X4 - 1.0)
+        f[..., 1:] = (9.82 * 1e6) * sq_diff / (X3 * X4 * (X2.pow(3) - X1.pow(3)))
+
+        return f
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        g = torch.zeros(
+            *X.shape[:-1], self.num_constraints, dtype=X.dtype, device=X.device
+        )
+        X1, X2, X3, X4 = torch.split(X, 1, -1)
+        sq_diff = X2.pow(2) - X1.pow(2)
+        cub_diff = X2.pow(3) - X1.pow(3)
+        g[..., :1] = X2 - X1 - 20.0
+        g[..., 1:2] = 0.4 - X3 / (3.14 * sq_diff)
+        g[..., 2:3] = 1.0 - (2.22 * 1e-3 * X3 * cub_diff) / sq_diff.pow(2)
+        g[..., 3:] = (2.66 * 1e-2 * X3 * X4 * cub_diff) / sq_diff - 900.0
+        return g
+
+
+class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
+    r"""The MW7 problem.
+
+    This problem has 2 objectives, 2 constraints, and a disconnected Pareto
+    frontier. It supports arbitrary input dimension. See [Ma2019]_ for details.
+
+    This implementation is adapted from:
+    https://github.com/anyoptimization/pymoo/blob/master/pymoo/problems/multi/mw.py
+    """
+    num_constraints = 2
+    num_objectives = 2
+    _ref_point = [1.2, 1.2]
+
+    def __init__(
+        self,
+        dim: int,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+    ) -> None:
+        self.dim = dim
+        self._bounds = [(0.0, 1.0) for _ in range(self.dim)]
+        super().__init__(noise_std=noise_std, negate=negate)
+
+    def LA2(self, A, B, C, D, theta):
+        return A * torch.sin(B * theta.pow(C)).pow(D)
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        a = X[..., :-1] - 0.5
+        contrib = 2 * (X[..., 1:] + a.pow(2) - 1).pow(2)
+        g = 1 + contrib.sum(dim=1)
+        f0 = g * X[..., 0]
+        f1 = g * torch.sqrt(1 - (f0 / g).pow(2))
+        return torch.stack([f0, f1], dim=-1)
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        ff = self.evaluate_true(X)
+        f0, f1 = ff[..., 0], ff[..., 1]
+        atan = torch.arctan(f1 / f0)
+        g0 = (
+            f0.pow(2)
+            + f1.pow(2)
+            - (1.2 + (self.LA2(0.4, 4.0, 1.0, 16.0, atan)).abs()).pow(2)
+        )
+        g1 = (1.15 - self.LA2(0.2, 4.0, 1.0, 8.0, atan)).pow(2) - f0.pow(2) - f1.pow(2)
+        return -torch.stack([g0, g1], dim=-1)
+
+
 class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     r"""
     The OSY test problem from [Oszycka1995]_.
@@ -1027,6 +1096,30 @@ class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         g5 = 4.0 - (X[..., 2] - 3.0) ** 2 - X[..., 3]
         g6 = (X[..., 4] - 3.0) ** 2 + X[..., 5] - 4.0
         return torch.stack([g1, g2, g3, g4, g5, g6], dim=-1)
+
+
+class SRN(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
+    r"""The constrained SRN problem.
+
+    See [GarridoMerchan2020]_ for more details on this problem. Note that this is a
+    minimization problem.
+    """
+
+    dim = 2
+    num_objectives = 2
+    num_constraints = 2
+    _bounds = [(-20.0, 20.0), (-20.0, 20.0)]
+    _ref_point = [0.0, 0.0]  # TODO: Determine proper reference point
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        obj1 = 2.0 + ((X - 2.0) ** 2).sum(dim=-1)
+        obj2 = 9.0 * X[..., 0] - (X[..., 1] - 1.0) ** 2
+        return torch.stack([obj1, obj2], dim=-1)
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        c1 = 225.0 - ((X ** 2) ** 2).sum(dim=-1)
+        c2 = -10.0 - X[..., 0] + 3 * X[..., 1]
+        return torch.stack([c1, c2], dim=-1)
 
 
 class WeldedBeam(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
@@ -1081,50 +1174,3 @@ class WeldedBeam(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         g3 = (1 / (5 - 0.125)) * (X[..., 0] - X[..., 3])
         g4 = (1 / P) * (P - P_c)
         return -torch.stack([g1, g2, g3, g4], dim=-1)
-
-
-class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
-    r"""The MW7 problem.
-
-    This problem has 2 objectives, 2 constraints, and a disconnected Pareto
-    frontier. It supports arbitrary input dimension. See [Ma2019]_ for details.
-
-    This implementation is adapted from:
-    https://github.com/anyoptimization/pymoo/blob/master/pymoo/problems/multi/mw.py
-    """
-    num_constraints = 2
-    num_objectives = 2
-    _ref_point = [1.2, 1.2]
-
-    def __init__(
-        self,
-        dim: int,
-        noise_std: Optional[float] = None,
-        negate: bool = False,
-    ) -> None:
-        self.dim = dim
-        self._bounds = [(0.0, 1.0) for _ in range(self.dim)]
-        super().__init__(noise_std=noise_std, negate=negate)
-
-    def LA2(self, A, B, C, D, theta):
-        return A * torch.sin(B * theta.pow(C)).pow(D)
-
-    def evaluate_true(self, X: Tensor) -> Tensor:
-        a = X[..., :-1] - 0.5
-        contrib = 2 * (X[..., 1:] + a.pow(2) - 1).pow(2)
-        g = 1 + contrib.sum(dim=1)
-        f0 = g * X[..., 0]
-        f1 = g * torch.sqrt(1 - (f0 / g).pow(2))
-        return torch.stack([f0, f1], dim=-1)
-
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
-        ff = self.evaluate_true(X)
-        f0, f1 = ff[..., 0], ff[..., 1]
-        atan = torch.arctan(f1 / f0)
-        g0 = (
-            f0.pow(2)
-            + f1.pow(2)
-            - (1.2 + (self.LA2(0.4, 4.0, 1.0, 16.0, atan)).abs()).pow(2)
-        )
-        g1 = (1.15 - self.LA2(0.2, 4.0, 1.0, 8.0, atan)).pow(2) - f0.pow(2) - f1.pow(2)
-        return -torch.stack([g0, g1], dim=-1)
