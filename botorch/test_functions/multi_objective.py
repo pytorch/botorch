@@ -1196,7 +1196,7 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     r"""The MW7 problem.
 
     This problem has 2 objectives, 2 constraints, and a disconnected Pareto
-    frontier. It supports arbitrary input dimension. See [Ma2019]_ for details.
+    frontier. It supports arbitrary input dimension > 1. See [Ma2019]_ for details.
 
     This implementation is adapted from:
     https://github.com/anyoptimization/pymoo/blob/master/pymoo/problems/multi/mw.py
@@ -1211,6 +1211,8 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:
+        if dim < 2:
+            raise ValueError("dim must be greater than or equal to 2.")
         self.dim = dim
         self._bounds = [(0.0, 1.0) for _ in range(self.dim)]
         super().__init__(noise_std=noise_std, negate=negate)
@@ -1221,7 +1223,7 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     def evaluate_true(self, X: Tensor) -> Tensor:
         a = X[..., :-1] - 0.5
         contrib = 2 * (X[..., 1:] + a.pow(2) - 1).pow(2)
-        g = 1 + contrib.sum(dim=1)
+        g = 1 + contrib.sum(dim=-1)
         f0 = g * X[..., 0]
         f1 = g * torch.sqrt(1 - (f0 / g).pow(2))
         return torch.stack([f0, f1], dim=-1)
