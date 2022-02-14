@@ -24,6 +24,12 @@ References
     Multi-objective Optimization. Evolutionary Multi-Criterion Optimization,
     Springer-Berlin, pp. 150-164, 2005.
 
+.. [Frohlich2020]
+    L. Frohlich, E. Klenske, J. Vinogradska, C. Daniel, and M. Zeilinger.
+    Noisy-Input Entropy Search for Efficient Robust Bayesian Optimization.
+    Proceedings of the Twenty Third International Conference on Artificial
+    Intelligence and Statistics, PMLR 108:2262-2272, 2020.
+
 .. [GarridoMerchan2020]
     E. C. Garrido-Merch ́an and D. Hern ́andez-Lobato. Parallel Predictive Entropy
     Search for Multi-objective Bayesian Optimization with Constraints.
@@ -68,9 +74,11 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
+from math import pi
 from typing import Optional
 
 import torch
+from botorch.exceptions.errors import UnsupportedError
 from botorch.test_functions.base import (
     ConstrainedBaseTestProblem,
     MultiObjectiveTestProblem,
@@ -80,6 +88,7 @@ from botorch.utils.sampling import sample_hypersphere, sample_simplex
 from botorch.utils.transforms import unnormalize
 from scipy.special import gamma
 from torch import Tensor
+from torch.distributions import MultivariateNormal
 
 
 class BraninCurrin(MultiObjectiveTestProblem):
@@ -561,6 +570,101 @@ class DTLZ7(DTLZ):
             f / (1 + g_X.unsqueeze(-1)) * (1 + torch.sin(3 * math.pi * f)), dim=-1
         )
         return torch.cat([f, ((1 + g_X) * h).unsqueeze(-1)], dim=-1)
+
+
+class GMM(MultiObjectiveTestProblem):
+    r"""A test problem where each objective is a Gaussian mixture model.
+
+    This implementation is adapted from the single objective version (proposed by
+    [Frohlich2020]_) at
+    https://github.com/boschresearch/NoisyInputEntropySearch/blob/master/
+    core/util/objectives.py.
+
+    See [Daulton2022]_ for details on this multi-objective problem.
+    """
+    dim = 2
+    _bounds = [(0.0, 1.0), (0.0, 1.0)]
+
+    def __init__(
+        self,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        num_objectives: int = 2,
+    ) -> None:
+        r"""Constructor.
+
+        Args:
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the objectives.
+            num_objectives: The number of objectives.
+        """
+        if num_objectives not in (2, 3, 4):
+            raise UnsupportedError("GMM only currently supports 2 to 4 objectives.")
+        self._ref_point = [-0.2338, -0.2211]
+        if num_objectives > 2:
+            self._ref_point.append(-0.5180)
+        if num_objectives > 3:
+            self._ref_point.append(-0.1866)
+        self.num_objectives = num_objectives
+        super().__init__(noise_std=noise_std, negate=negate)
+        gmm_pos = torch.tensor(
+            [
+                [[0.2, 0.2], [0.8, 0.2], [0.5, 0.7]],
+                [[0.07, 0.2], [0.4, 0.8], [0.85, 0.1]],
+            ]
+        )
+        gmm_var = torch.tensor([[0.20, 0.10, 0.10], [0.2, 0.1, 0.05]]).pow(2)
+        gmm_norm = 2 * pi * gmm_var * torch.tensor([0.5, 0.7, 0.7])
+        if num_objectives > 2:
+            gmm_pos = torch.cat(
+                [gmm_pos, torch.tensor([[[0.08, 0.21], [0.45, 0.75], [0.86, 0.11]]])],
+                dim=0,
+            )
+            gmm_var = torch.cat(
+                [gmm_var, torch.tensor([[0.2, 0.1, 0.07]]).pow(2)], dim=0
+            )
+            gmm_norm = torch.cat(
+                [
+                    gmm_norm,
+                    2 * pi * gmm_var[2] * torch.tensor([[0.5, 0.7, 0.9]]),
+                ],
+                dim=0,
+            )
+        if num_objectives > 3:
+            gmm_pos = torch.cat(
+                [gmm_pos, torch.tensor([[[0.09, 0.19], [0.44, 0.72], [0.89, 0.13]]])],
+                dim=0,
+            )
+            gmm_var = torch.cat(
+                [gmm_var, torch.tensor([[0.15, 0.07, 0.09]]).pow(2)], dim=0
+            )
+            gmm_norm = torch.cat(
+                [
+                    gmm_norm,
+                    2 * pi * gmm_var[3] * torch.tensor([[0.5, 0.7, 0.9]]),
+                ],
+                dim=0,
+            )
+        gmm_covar = gmm_var.view(*gmm_var.shape, 1, 1) * torch.eye(
+            2, dtype=gmm_var.dtype, device=gmm_var.device
+        )
+        self.register_buffer("gmm_pos", gmm_pos)
+        self.register_buffer("gmm_covar", gmm_covar)
+        self.register_buffer("gmm_norm", gmm_norm)
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        r"""Evaluate the GMMs."""
+        # This needs to be reinstantiated because MVN apparently does not
+        # have a `to` method to make it device/dtype agnostic.
+        mvn = MultivariateNormal(loc=self.gmm_pos, covariance_matrix=self.gmm_covar)
+        view_shape = (
+            X.shape[:-1]
+            + torch.Size([1] * (self.gmm_pos.ndim - 1))
+            + self.gmm_pos.shape[-1:]
+        )
+        expand_shape = X.shape[:-1] + self.gmm_pos.shape
+        pdf_X = mvn.log_prob(X.view(view_shape).expand(expand_shape)).exp()
+        return (self.gmm_norm * pdf_X).sum(dim=-1)
 
 
 class Penicillin(MultiObjectiveTestProblem):

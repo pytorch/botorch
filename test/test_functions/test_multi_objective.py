@@ -7,6 +7,7 @@
 import math
 
 import torch
+from botorch.exceptions.errors import UnsupportedError
 from botorch.test_functions.multi_objective import (
     BNH,
     BraninCurrin,
@@ -25,6 +26,7 @@ from botorch.test_functions.multi_objective import (
     DTLZ4,
     DTLZ5,
     DTLZ7,
+    GMM,
     MultiObjectiveTestProblem,
     MW7,
     OSY,
@@ -175,6 +177,52 @@ class TestDTLZ(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
                                     ),
                                 )
                             )
+
+
+class TestGMM(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
+    functions = [GMM(num_objectives=4)]
+
+    def test_init(self):
+        f = self.functions[0]
+        with self.assertRaises(UnsupportedError):
+            f.__class__(num_objectives=5)
+        self.assertEqual(f.num_objectives, 4)
+        self.assertEqual(f.dim, 2)
+
+    def test_result(self):
+        x = torch.tensor(
+            [
+                [[0.0342, 0.8055], [0.7844, 0.4831]],
+                [[0.5236, 0.3158], [0.0992, 0.9873]],
+                [[0.4693, 0.5792], [0.5357, 0.9451]],
+            ],
+            device=self.device,
+        )
+        expected_f_x = torch.tensor(
+            [
+                [
+                    [3.6357e-03, 5.9030e-03, 5.8958e-03, 1.0309e-04],
+                    [1.6304e-02, 3.1430e-04, 4.7323e-04, 2.0691e-04],
+                ],
+                [
+                    [1.2251e-01, 3.2309e-02, 3.7199e-02, 5.4211e-03],
+                    [1.9378e-04, 1.5290e-03, 3.5051e-04, 3.6924e-07],
+                ],
+                [
+                    [3.5550e-01, 5.9409e-02, 1.7352e-01, 8.5574e-02],
+                    [3.2686e-02, 9.7298e-02, 7.2311e-02, 1.5613e-03],
+                ],
+            ],
+            device=self.device,
+        )
+        f = self.functions[0]
+        f.to(device=self.device)
+        for dtype in (torch.float, torch.double):
+            f.to(dtype=dtype)
+            f_x = f(x.to(dtype=dtype))
+            self.assertTrue(
+                torch.allclose(f_x, expected_f_x.to(dtype=dtype), rtol=1e-4, atol=1e-4)
+            )
 
 
 class TestMW7(ConstrainedMultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
