@@ -84,6 +84,20 @@ class TestMCAcquisitionObjective(BotorchTestCase):
         with self.assertRaises(TypeError):
             MCAcquisitionObjective()
 
+    def test_verify_output_shape(self):
+        obj = IdentityMCObjective()
+        self.assertTrue(obj._verify_output_shape)
+        samples = torch.zeros(2, 3, 1)
+        X = torch.ones(2, 1)
+        # No error if X is not given.
+        obj(samples=samples)
+        # Error if X is given, 2 != 3
+        with self.assertRaises(RuntimeError):
+            obj(samples=samples, X=X)
+        # No error if _verify_output_shape=False
+        obj._verify_output_shape = False
+        obj(samples=samples, X=X)
+
 
 class TestGenericMCObjective(BotorchTestCase):
     def test_generic_mc_objective(self):

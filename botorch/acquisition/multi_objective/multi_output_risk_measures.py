@@ -201,6 +201,8 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
     VaR. We support this alternative with an `expectation` flag.
     """
 
+    _verify_output_shape = False
+
     def __init__(
         self,
         n_w: int,

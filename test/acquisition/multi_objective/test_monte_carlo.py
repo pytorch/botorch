@@ -17,6 +17,9 @@ from botorch.acquisition.multi_objective.monte_carlo import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
+from botorch.acquisition.multi_objective.multi_output_risk_measures import (
+    MultiOutputRiskMeasureMCObjective,
+)
 from botorch.acquisition.multi_objective.objective import (
     GenericMCMultiOutputObjective,
     IdentityMCMultiOutputObjective,
@@ -32,6 +35,7 @@ from botorch.models import (
     MultiTaskGP,
 )
 from botorch.models.gp_regression import SingleTaskGP
+from botorch.models.transforms.input import InputPerturbation
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
 from botorch.utils.multi_objective.box_decompositions.dominated import (
@@ -51,8 +55,11 @@ class DummyMultiObjectiveMCAcquisitionFunction(MultiObjectiveMCAcquisitionFuncti
 
 
 class DummyMCMultiOutputObjective(MCMultiOutputObjective):
-    def forward(self, samples):
-        pass
+    def forward(self, samples, X=None):
+        if X is not None:
+            return samples[..., : X.shape[-2], :]
+        else:
+            return samples
 
 
 class TestMultiObjectiveMCAcquisitionFunction(BotorchTestCase):
@@ -84,8 +91,14 @@ class TestMultiObjectiveMCAcquisitionFunction(BotorchTestCase):
         self.assertTrue(torch.equal(acqf.X_pending, X_pending))
         # test unsupported objective
         with self.assertRaises(UnsupportedError):
-            acqf = DummyMultiObjectiveMCAcquisitionFunction(
+            DummyMultiObjectiveMCAcquisitionFunction(
                 model=mm, objective=IdentityMCObjective()
+            )
+        # test constraints with input perturbation.
+        mm.input_transform = InputPerturbation(perturbation_set=torch.rand(2, 1))
+        with self.assertRaises(UnsupportedError):
+            DummyMultiObjectiveMCAcquisitionFunction(
+                model=mm, constraints=[lambda Z: -100.0 * torch.ones_like(Z[..., -1])]
             )
 
 
@@ -231,6 +244,8 @@ class TestQExpectedHypervolumeImprovement(BotorchTestCase):
             self.assertIsNone(acqf.X_pending)
             acqf.set_X_pending(X)
             self.assertEqual(acqf.X_pending, X)
+            # get mm sample shape to match shape of X + X_pending
+            acqf.model._posterior._samples = torch.zeros(1, 2, 2, **tkwargs)
             res = acqf(X)
             X2 = torch.zeros(1, 1, 1, requires_grad=True, **tkwargs)
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
@@ -247,6 +262,8 @@ class TestQExpectedHypervolumeImprovement(BotorchTestCase):
                 sampler=sampler,
                 objective=IdentityMCMultiOutputObjective(),
             )
+            # get mm sample shape to match shape of X
+            acqf.model._posterior._samples = torch.zeros(1, 1, 2, **tkwargs)
             res = acqf(X)
             self.assertEqual(res.item(), 0.0)
 
@@ -948,6 +965,8 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             self.assertTrue(torch.equal(acqf_pareto_Y[-2:], expected_new_Y2))
 
             # test set X_pending with grad
+            # Get posterior samples to agree with X_pending
+            mm._posterior._samples = torch.zeros(1, 7, m, **tkwargs)
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(
                     torch.cat([X_pending2, X_pending2], dim=0).requires_grad_(True)
@@ -1010,7 +1029,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     baseline_samples,
                     new_Y,
                 ]
-            )
+            ).unsqueeze(0)
             X_pending10 = X_pending.expand(10, 1)
             acqf.set_X_pending(X_pending10)
             self.assertTrue(torch.equal(acqf.X_pending, X_pending10))
@@ -1022,16 +1041,16 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     baseline_samples,
                     new_Y2,
                 ]
-            )
+            ).unsqueeze(0)
             with torch.no_grad():
                 val = acqf(X_test)
             bd = DominatedPartitioning(
                 ref_point=torch.tensor(ref_point).to(**tkwargs), Y=pareto_Y
             )
             initial_hv = bd.compute_hypervolume()
-            bd.update(mm._posterior._samples)
+            bd.update(mm._posterior._samples.squeeze(0))
             expected_val = bd.compute_hypervolume() - initial_hv
-            self.assertTrue(torch.equal(expected_val, val))
+            self.assertTrue(torch.equal(expected_val.view(1), val))
             # test alpha > 0
             mm._posterior._samples = baseline_samples
             sampler = IIDNormalSampler(num_samples=1)
@@ -1057,7 +1076,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             acqf.set_X_pending(None)
             self.assertIsNone(acqf.X_pending)
             # test X_pending is not None on __init__
-            mm._posterior._samples = baseline_samples
+            mm._posterior._samples = torch.zeros(1, 5, m, **tkwargs)
             sampler = IIDNormalSampler(num_samples=1)
             acqf = qNoisyExpectedHypervolumeImprovement(
                 model=mm,
@@ -1264,7 +1283,8 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             sampler = IIDNormalSampler(1)
             with mock.patch(no, new_callable=mock.PropertyMock) as mock_num_outputs:
                 mock_num_outputs.return_value = 2
-                mm = MockModel(MockPosterior(samples=baseline_samples))
+                # Reduce samples to same shape as X_pruned.
+                mm = MockModel(MockPosterior(samples=baseline_samples[:1]))
                 with mock.patch(prune, return_value=X_pruned) as mock_prune:
                     acqf = qNoisyExpectedHypervolumeImprovement(
                         model=mm,
@@ -1395,6 +1415,48 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                         acqf(test_X)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+
+    def test_with_set_valued_objectives(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            tx = torch.rand(5, 2, **tkwargs)
+            ty = torch.randn(5, 2, **tkwargs)
+            perturbation = InputPerturbation(
+                perturbation_set=torch.randn(3, 2, **tkwargs)
+            ).eval()
+            baseline_samples = perturbation(ty)
+
+            class DummyObjective(MultiOutputRiskMeasureMCObjective):
+                r"""A dummy set valued objective."""
+                _verify_output_shape = False
+
+                def forward(self, samples, X=None):
+                    samples = self._prepare_samples(samples)
+                    return samples[..., :2, :].reshape(
+                        *samples.shape[:-3], -1, samples.shape[-1]
+                    )
+
+            model = MockModel(MockPosterior(samples=baseline_samples))
+            acqf = qNoisyExpectedHypervolumeImprovement(
+                model=model,
+                ref_point=torch.tensor([0.0, 0.0], **tkwargs),
+                X_baseline=tx,
+                sampler=SobolQMCNormalSampler(2),
+                objective=DummyObjective(n_w=3),
+                prune_baseline=False,
+                cache_root=False,
+            )
+            test_x = torch.rand(3, 2, 2, **tkwargs)
+            samples = torch.cat(
+                [baseline_samples.expand(3, -1, -1), torch.zeros(3, 6, 2, **tkwargs)],
+                dim=1,
+            )
+            acqf.model._posterior._samples = samples
+            res = acqf(test_x)
+            self.assertTrue(torch.equal(res, torch.zeros(3, **tkwargs)))
+            self.assertEqual(acqf.q_in, 6)
+            self.assertEqual(acqf.q_out, 4)
+            self.assertEqual(len(acqf.q_subset_indices.keys()), 4)
 
     def test_deterministic(self):
         for dtype, prune in ((torch.float, False), (torch.double, True)):

@@ -23,7 +23,13 @@ from torch import Tensor
 
 
 class MCMultiOutputObjective(MCAcquisitionObjective):
-    r"""Abstract base class for MC multi-output objectives."""
+    r"""Abstract base class for MC multi-output objectives.
+
+    Args:
+        _is_mo: A boolean denoting whether the objectives are multi-output.
+    """
+
+    _is_mo: bool = True
 
     @abstractmethod
     def forward(self, samples: Tensor, X: Optional[Tensor] = None, **kwargs) -> Tensor:

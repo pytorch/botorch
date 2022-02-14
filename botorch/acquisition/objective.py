@@ -132,7 +132,16 @@ class ScalarizedObjective(ScalarizedPosteriorTransform, AcquisitionObjective):
 
 
 class MCAcquisitionObjective(Module, ABC):
-    r"""Abstract base class for MC-based objectives."""
+    r"""Abstract base class for MC-based objectives.
+
+    Args:
+        _verify_output_shape: If True and `X` is given, check that the q-batch
+            shape of the objectives agrees with that of X.
+        _is_mo: A boolean denoting whether the objectives are multi-output.
+    """
+
+    _verify_output_shape: bool = True
+    _is_mo: bool = False
 
     @abstractmethod
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
@@ -148,7 +157,7 @@ class MCAcquisitionObjective(Module, ABC):
             Tensor: A `sample_shape x batch_shape x q`-dim Tensor of objective
             values (assuming maximization).
 
-        This method is usually not called directly, but via the objectives
+        This method is usually not called directly, but via the objectives.
 
         Example:
             >>> # `__call__` method:
@@ -156,6 +165,26 @@ class MCAcquisitionObjective(Module, ABC):
             >>> outcome = mc_obj(samples)
         """
         pass  # pragma: no cover
+
+    def __call__(
+        self, samples: Tensor, X: Optional[Tensor] = None, *args, **kwargs
+    ) -> Tensor:
+        output = super().__call__(samples=samples, X=X, *args, **kwargs)
+        # q-batch dimension is at -1 for single-output objectives and at
+        # -2 for multi-output objectives.
+        q_batch_idx = -2 if self._is_mo else -1
+        if (
+            X is not None
+            and self._verify_output_shape
+            and output.shape[q_batch_idx] != X.shape[-2]
+        ):
+            raise RuntimeError(
+                "The q-batch shape of the objective values does not agree with "
+                f"the q-batch shape of X. Got {output.shape[q_batch_idx]} and "
+                f"{X.shape[-2]}. This may happen if you used a one-to-many input "
+                "transform but forgot to use a corresponding objective."
+            )
+        return output
 
 
 class IdentityMCObjective(MCAcquisitionObjective):

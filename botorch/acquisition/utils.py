@@ -191,7 +191,7 @@ def get_acquisition_function(
             sampler=sampler,
             objective=objective,
             constraints=constraints,
-            prune_baseline=True,
+            prune_baseline=kwargs.get("prune_baseline", True),
             alpha=kwargs.get("alpha", 0.0),
             X_pending=X_pending,
             marginalize_dim=kwargs.get("marginalize_dim"),
