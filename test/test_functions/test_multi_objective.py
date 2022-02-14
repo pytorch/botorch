@@ -177,6 +177,17 @@ class TestDTLZ(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
                             )
 
 
+class TestMW7(ConstrainedMultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
+    functions = [MW7(dim=3)]
+
+    def test_init(self):
+        for f in self.functions:
+            with self.assertRaises(ValueError):
+                f.__class__(dim=1)
+            self.assertEqual(f.num_objectives, 2)
+            self.assertEqual(f.dim, 3)
+
+
 class TestZDT(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
     functions = [
         ZDT1(dim=3, num_objectives=2),
@@ -260,7 +271,6 @@ class TestConstrainedMultiObjectiveProblems(
         ConstrainedBraninCurrin(),
         C2DTLZ2(dim=3, num_objectives=2),
         DiscBrake(),
-        MW7(dim=2),
         WeldedBeam(),
         OSY(),
     ]
