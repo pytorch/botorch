@@ -9,6 +9,10 @@ Multi-objective optimization benchmark problems.
 
 References
 
+.. [Daulton2022]
+    S. Daulton, S. Cakmak, M. Balandat, M. A. Osborne, E. Zhou, and E. Bakshy.
+    Robust Multi-Objective Bayesian Optimization Under Input Noise. 2022.
+
 .. [Deb2005dtlz]
     K. Deb, L. Thiele, M. Laumanns, E. Zitzler, A. Abraham, L. Jain, and
     R. Goldberg. Scalable test problems for evolutionary multi-objective
@@ -71,7 +75,7 @@ from botorch.test_functions.base import (
     ConstrainedBaseTestProblem,
     MultiObjectiveTestProblem,
 )
-from botorch.test_functions.synthetic import Branin
+from botorch.test_functions.synthetic import Branin, Levy
 from botorch.utils.sampling import sample_hypersphere, sample_simplex
 from botorch.utils.transforms import unnormalize
 from scipy.special import gamma
@@ -690,6 +694,49 @@ class Penicillin(MultiObjectiveTestProblem):
         return self.penicillin_vectorized(X.view(-1, self.dim).clone()).view(
             *X.shape[:-1], self.num_objectives
         )
+
+
+class ToyRobust(MultiObjectiveTestProblem):
+    r"""A 1D problem where the Pareto frontier is sensitive to input noise.
+
+    Specifically, the pareto frontier over the nominal objectives is
+    sensitive to input noise. The first objective is a mixture of a linear
+    function and a sinusoidal function, and the second objective is a modified
+    Levy function, where the second parameter is fixed.
+
+    This function comes from [Daulton2022]_.
+
+    The reference point was set using the `infer_reference_point`
+    heuristic on the Pareto frontier over a large discrete set of
+    random designs.
+    """
+    dim = 1
+    _bounds = [(0.0, 0.7)]
+    _ref_point = [-6.1397, -8.1942]
+    num_objectives = 2
+    levy = Levy()
+
+    def f_1(self, X: Tensor) -> Tensor:
+        p1 = 2.4 - 10 * X - 0.1 * X.pow(2)
+        p2 = 2 * X - 0.1 * X.pow(2)
+        smoother = (X - 0.5).pow(2) + torch.sin(30 * X) * 0.1
+        x_mask = torch.sigmoid((0.2 - X) / 0.005)
+        return -(p1 * x_mask + p2 * (1 - x_mask) + smoother) * 30 + 30
+
+    def f_2(self, X: Tensor) -> Tensor:
+        X = torch.cat(
+            [X, torch.zeros_like(X)],
+            dim=-1,
+        )
+        # Cut out the first part of the function.
+        X = X * 0.95 + 0.03
+        X = unnormalize(X, self.levy.bounds.to(X))
+        Y = self.levy(X).unsqueeze(-1)
+        Y -= X[..., :1].pow(2) * 0.75
+        return Y
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        return -torch.cat([self.f_1(X), self.f_2(X)], dim=-1)
 
 
 class VehicleSafety(MultiObjectiveTestProblem):
