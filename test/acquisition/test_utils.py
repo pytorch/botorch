@@ -41,12 +41,12 @@ from torch import Tensor
 
 
 class DummyMCObjective(MCAcquisitionObjective):
-    def forward(self, samples: Tensor) -> Tensor:
+    def forward(self, samples: Tensor, X=None) -> Tensor:
         return samples.sum(-1)
 
 
 class DummyMCMultiOutputObjective(MCMultiOutputObjective):
-    def forward(self, samples: Tensor) -> Tensor:
+    def forward(self, samples: Tensor, X=None) -> Tensor:
         return samples
 
 

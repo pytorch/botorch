@@ -45,6 +45,7 @@ from botorch.models.deterministic import DeterministicModel
 from botorch.models.model import Model
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.multitask import KroneckerMultiTaskGP, MultiTaskGP
+from botorch.models.transforms.input import InputPerturbation
 from botorch.posteriors import DeterministicPosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
@@ -83,6 +84,7 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction):
         model: Model,
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCMultiOutputObjective] = None,
+        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
     ) -> None:
         r"""Constructor for the MCAcquisitionFunction base class.
@@ -93,6 +95,10 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction):
                 `SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)`.
             objective: The MCMultiOutputObjective under which the samples are
                 evaluated. Defaults to `IdentityMultiOutputObjective()`.
+            constraints: A list of callables, each mapping a Tensor of dimension
+                `sample_shape x batch-shape x q x m` to a Tensor of dimension
+                `sample_shape x batch-shape x q`, where negative values imply
+                feasibility.
             X_pending:  A `m x d`-dim Tensor of `m` design points that have
                 points that have been submitted for function evaluation
                 but have not yet been evaluated.
@@ -108,7 +114,19 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction):
                 "Only objectives of type MCMultiOutputObjective are supported for "
                 "Multi-Objective MC acquisition functions."
             )
+        if (
+            hasattr(model, "input_transform")
+            and isinstance(model.input_transform, InputPerturbation)
+            and constraints is not None
+        ):
+            raise UnsupportedError(
+                "Constraints are not supported with input perturbations, due to"
+                "sample q-batch shape being different than that of the inputs."
+                "Use a composite objective that applies feasibility weighting to"
+                "samples before calculating the risk measure."
+            )
         self.add_module("objective", objective)
+        self.constraints = constraints
         self.X_pending = None
         if X_pending is not None:
             self.set_X_pending(X_pending)
@@ -184,48 +202,56 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
             device=partitioning.pareto_Y.device,
         )
         super().__init__(
-            model=model, sampler=sampler, objective=objective, X_pending=X_pending
+            model=model,
+            sampler=sampler,
+            objective=objective,
+            constraints=constraints,
+            X_pending=X_pending,
         )
-        self.constraints = constraints
         self.eta = eta
         self.register_buffer("ref_point", ref_point)
         cell_bounds = partitioning.get_hypercell_bounds()
         self.register_buffer("cell_lower_bounds", cell_bounds[0])
         self.register_buffer("cell_upper_bounds", cell_bounds[1])
-        self.q = -1
+        self.q_out = -1
         self.q_subset_indices = BufferDict()
 
-    def _cache_q_subset_indices(self, q: int) -> None:
-        r"""Cache indices corresponding to all subsets of `q`.
+    def _cache_q_subset_indices(self, q_out: int) -> None:
+        r"""Cache indices corresponding to all subsets of `q_out`.
 
         This means that consecutive calls to `forward` with the same
-        `q` will not recompute the indices for all (2^q - 1) subsets.
+        `q_out` will not recompute the indices for all (2^q_out - 1) subsets.
 
         Note: this will use more memory than regenerating the indices
         for each i and then deleting them, but it will be faster for
         repeated evaluations (e.g. during optimization).
 
         Args:
-            q: batch size
+            q_out: The batch size of the objectives. This is typically equal
+                to the q-batch size of `X`. However, if using a set valued
+                objective (e.g., MVaR) that produces `s` objective values for
+                each point on the q-batch of `X`, we need to properly account
+                for each objective while calculating the hypervolume contributions
+                by using `q_out = q * s`.
         """
-        if q != self.q:
-            indices = list(range(q))
-            tkwargs = {"dtype": torch.long, "device": self.cell_lower_bounds.device}
+        if q_out != self.q_out:
+            indices = list(range(q_out))
+            tkwargs = {"dtype": torch.long, "device": self.ref_point.device}
             self.q_subset_indices = BufferDict(
                 {
                     f"q_choose_{i}": torch.tensor(
                         list(combinations(indices, i)), **tkwargs
                     )
-                    for i in range(1, q + 1)
+                    for i in range(1, q_out + 1)
                 }
             )
-            self.q = q
+            self.q_out = q_out
 
     def _compute_qehvi(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Compute the expected (feasible) hypervolume improvement given MC samples.
 
         Args:
-            samples: A `n_samples x batch_shape x q x m`-dim tensor of samples.
+            samples: A `n_samples x batch_shape x q' x m`-dim tensor of samples.
             X: A `batch_shape x q x d`-dim tensor of inputs.
 
         Returns:
@@ -246,7 +272,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
                 samples=samples,
                 eta=self.eta,
             )
-        self._cache_q_subset_indices(q=q)
+        self._cache_q_subset_indices(q_out=q)
         batch_shape = obj.shape[:-2]
         # this is n_samples x input_batch_shape x
         areas_per_segment = torch.zeros(
@@ -269,7 +295,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
             1,
             self.cell_upper_bounds.shape[-1],
         )
-        for i in range(1, q + 1):
+        for i in range(1, self.q_out + 1):
             # TODO: we could use batches to compute (q choose i) and (q choose q-i)
             # simultaneously since subsets of size i and q-i have the same number of
             # elements. This would decrease the number of iterations, but increase
@@ -315,7 +341,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
     def forward(self, X: Tensor) -> Tensor:
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
-        return self._compute_qehvi(samples=samples)
+        return self._compute_qehvi(samples=samples, X=X)
 
 
 class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
@@ -398,7 +424,10 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
             ref_point, dtype=X_baseline.dtype, device=X_baseline.device
         )
         super(qExpectedHypervolumeImprovement, self).__init__(
-            model=model, sampler=sampler, objective=objective
+            model=model,
+            sampler=sampler,
+            objective=objective,
+            constraints=constraints,
         )
         models = model.models if isinstance(model, ModelListGP) else [model]
         self._is_mt = any(
@@ -446,10 +475,10 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
         self.register_buffer("ref_point", ref_point)
         self.base_sampler = deepcopy(self.sampler)
 
-        self.constraints = constraints
         self.alpha = alpha
         self.eta = eta
-        self.q = -1
+        self.q_in = -1
+        self.q_out = -1
         self.q_subset_indices = BufferDict()
         self.partitioning = None
         # set partitioning class and args
@@ -482,11 +511,11 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
         )
 
         if X_pending is not None:
-            # this will call self._set_cell_bounds if the number of pending
-            # points is greater than self._max_iep
+            # This will call self._set_cell_bounds if the number of pending
+            # points is greater than self._max_iep.
             self.set_X_pending(X_pending)
         # In the case that X_pending is not None, but there are fewer than
-        # max_iep pending points, the box decompoisitions are not performed in
+        # max_iep pending points, the box decompositions are not performed in
         # set_X_pending. Therefore, we need to perform a box decomposition over
         # f(X_baseline) here.
         if X_pending is None or X_pending.shape[-2] <= self._max_iep:
@@ -504,7 +533,7 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
             obj: A `sample_shape x batch_shape x n x m`-dim tensor of samples
                 of objectives.
             feas: `sample_shape x batch_shape x n`-dim tensor of samples
-                of feasiblity indicators.
+                of feasibility indicators.
         """
         initial_hvs = []
         for i, sample in enumerate(obj):
@@ -551,9 +580,10 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
         if self.X_baseline.shape[0] > 0:
             with torch.no_grad():
                 posterior = self.model.posterior(self.X_baseline)
-            # reset sampler
-            self.q = -1
-            self._set_sampler(q=num_new_points, posterior=posterior)
+            # Reset sampler, accounting for possible one-to-many transform.
+            self.q_in = -1
+            n_w = posterior.event_shape[-2] // self.X_baseline.shape[-2]
+            self._set_sampler(q_in=num_new_points * n_w, posterior=posterior)
             # set base_sampler
             self.base_sampler.register_buffer(
                 "base_samples", self.sampler.base_samples.detach().clone()
@@ -563,7 +593,7 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
             # cache posterior
             if self._cache_root:
                 self._cache_root_decomposition(posterior=posterior)
-            obj = self.objective(samples)
+            obj = self.objective(samples, X=self.X_baseline)
             if self.constraints is not None:
                 feas = torch.stack(
                     [c(samples) <= 0 for c in self.constraints], dim=0
@@ -639,15 +669,15 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
             X_pending = X_pending.detach().clone()
             if self.cache_pending:
                 X_baseline = torch.cat([self._X_baseline, X_pending], dim=-2)
-                # number of new points is the total number of points minus
+                # Number of new points is the total number of points minus
                 # (the number of previously cached pending points plus the
-                # of number of baseline points)
+                # of number of baseline points).
                 num_new_points = X_baseline.shape[0] - self.X_baseline.shape[0]
                 if num_new_points > 0:
                     if num_new_points > self._max_iep:
-                        # set the new baseline points to include pending points
+                        # Set the new baseline points to include pending points.
                         self.register_buffer("_X_baseline_and_pending", X_baseline)
-                        # recompute box decompositions
+                        # Recompute box decompositions.
                         self._set_cell_bounds(num_new_points=num_new_points)
                         if not self.incremental_nehvi:
                             self._prev_nehvi = (
@@ -655,12 +685,12 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
                                 .clamp_min(0.0)
                                 .mean()
                             )
-                        # set to None so that pending points are not concatenated in
-                        # forward
+                        # Set to None so that pending points are not concatenated in
+                        # forward.
                         self.X_pending = None
-                        # set q=-1 to so that self.sampler is updated at the next
-                        # forward call
-                        self.q = -1
+                        # Set q_in=-1 to so that self.sampler is updated at the next
+                        # forward call.
+                        self.q_in = -1
                     else:
                         self.X_pending = X_pending[-num_new_points:]
             else:
@@ -681,18 +711,22 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
 
     def _set_sampler(
         self,
-        q: int,
+        q_in: int,
         posterior: Posterior,
     ) -> None:
         r"""Update the sampler to use the original base samples for X_baseline.
 
         Args:
-            q: the batch size
-            posterior: the posterior
+            q_in: The effective input batch size. This is typically equal to the
+                q-batch size of `X`. However, if using a one-to-many input transform,
+                e.g., `InputPerturbation` with `n_w` perturbations, the posterior will
+                have `n_w` points on the q-batch for each point on the q-batch of `X`.
+                In which case, `q_in = q * n_w` is used.
+            posterior: The posterior.
 
         TODO: refactor some/all of this into the MCSampler.
         """
-        if self.q != q:
+        if self.q_in != q_in:
             # create new base_samples
             base_sample_shape = self.sampler._get_base_sample_shape(posterior=posterior)
             self.sampler._construct_base_samples(
@@ -741,32 +775,30 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
                 else:
                     end_idx = current_base_samples.shape[-2]
                     self.sampler.base_samples[..., :end_idx, :] = expanded_samples
-                # update cached subset indices
-                # Note: this also stores self.q = q
-                self._cache_q_subset_indices(q=q)
+                self.q_in = q_in
 
-    def _get_f_X_samples(self, posterior: GPyTorchPosterior, q: int) -> Tensor:
-        r"""Get posterior samples at the `q` new points from the joint posterior.
+    def _get_f_X_samples(self, posterior: GPyTorchPosterior, q_in: int) -> Tensor:
+        r"""Get posterior samples at the `q_in` new points from the joint posterior.
 
         Args:
             posterior: The joint posterior is over (X_baseline, X).
-            q: The number of new points in X.
+            q_in: The number of new points in the posterior. See `_set_sampler` for
+                more information.
 
         Returns:
             A `sample_shape x batch_shape x q x m`-dim tensor of posterior
                 samples at the new points.
         """
-        # technically we should make sure that we add a consistent nugget to the
-        # cached covariance (and box decompositions)
-        # and the new block.
+        # Technically we should make sure that we add a consistent nugget to the
+        # cached covariance (and box decompositions) and the new block.
         # But recomputing box decompositions every time the jitter changes would
-        # be quite slow
+        # be quite slow.
         if not self._is_mt and self._cache_root and hasattr(self, "_baseline_L"):
             try:
                 return sample_cached_cholesky(
                     posterior=posterior,
                     baseline_L=self._baseline_L,
-                    q=q,
+                    q=q_in,
                     base_samples=self.sampler.base_samples,
                     sample_shape=self.sampler.sample_shape,
                 )
@@ -783,10 +815,12 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
         if isinstance(self.model, HigherOrderGP):
             # Select the correct q-batch dimension for HOGP.
             q_dim = -self.model._num_dimensions
-            q_idcs = torch.arange(-q, 0, device=samples.device) + samples.shape[q_dim]
+            q_idcs = (
+                torch.arange(-q_in, 0, device=samples.device) + samples.shape[q_dim]
+            )
             return samples.index_select(q_dim, q_idcs)
         else:
-            return samples[..., -q:, :]
+            return samples[..., -q_in:, :]
 
     @concatenate_pending_points
     @t_batch_mode_transform()
@@ -795,12 +829,14 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
         # Note: it is important to compute the full posterior over `(X_baseline, X)`
         # to ensure that we properly sample `f(X)` from the joint distribution `
         # `f(X_baseline, X) ~ P(f | D)` given that we can already fixed the sampled
-        # function values for `f(X_baseline)`
+        # function values for `f(X_baseline)`.
         # TODO: improve efficiency by not recomputing baseline-baseline
-        # covariance matrix
+        # covariance matrix.
         posterior = self.model.posterior(X_full)
-        q = X.shape[-2]
-        self._set_sampler(q=q, posterior=posterior)
-        samples = self._get_f_X_samples(posterior=posterior, q=q)
-        # add previous nehvi from pending points
-        return self._compute_qehvi(samples=samples) + self._prev_nehvi
+        # Account for possible one-to-many transform.
+        n_w = posterior.event_shape[X_full.dim() - 2] // X_full.shape[-2]
+        q_in = X.shape[-2] * n_w
+        self._set_sampler(q_in=q_in, posterior=posterior)
+        samples = self._get_f_X_samples(posterior=posterior, q_in=q_in)
+        # Add previous nehvi from pending points.
+        return self._compute_qehvi(samples=samples, X=X) + self._prev_nehvi
