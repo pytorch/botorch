@@ -30,6 +30,7 @@ from botorch.test_functions.multi_objective import (
     OSY,
     Penicillin,
     SRN,
+    ToyRobust,
     VehicleSafety,
     WeldedBeam,
     ZDT1,
@@ -246,7 +247,7 @@ class TestZDT(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
 class TestMultiObjectiveProblems(
     MultiObjectiveTestProblemBaseTestCase, BotorchTestCase
 ):
-    functions = [CarSideImpact(), Penicillin(), VehicleSafety()]
+    functions = [CarSideImpact(), Penicillin(), ToyRobust(), VehicleSafety()]
 
 
 class TestConstrainedMultiObjectiveProblems(
