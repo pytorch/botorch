@@ -198,7 +198,7 @@ class TestGMM(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
             ],
             device=self.device,
         )
-        expected_f_x = torch.tensor(
+        expected_f_x = -torch.tensor(
             [
                 [
                     [3.6357e-03, 5.9030e-03, 5.8958e-03, 1.0309e-04],
