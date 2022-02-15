@@ -664,7 +664,8 @@ class GMM(MultiObjectiveTestProblem):
         )
         expand_shape = X.shape[:-1] + self.gmm_pos.shape
         pdf_X = mvn.log_prob(X.view(view_shape).expand(expand_shape)).exp()
-        return (self.gmm_norm * pdf_X).sum(dim=-1)
+        # Multiply by -1 to make this a minimization problem by default
+        return -(self.gmm_norm * pdf_X).sum(dim=-1)
 
 
 class Penicillin(MultiObjectiveTestProblem):
