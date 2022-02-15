@@ -5,6 +5,9 @@
 # LICENSE file in the root directory of this source tree.
 
 import warnings
+from copy import deepcopy
+from itertools import product
+from math import pi
 from unittest import mock
 
 import torch
@@ -17,10 +20,13 @@ from botorch.acquisition.monte_carlo import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
-from botorch.acquisition.objective import PosteriorTransform
+from botorch.acquisition.objective import GenericMCObjective, PosteriorTransform
 from botorch.exceptions import BotorchWarning, UnsupportedError
+from botorch.models import SingleTaskGP
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.utils.low_rank import sample_cached_cholesky
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
+from botorch.utils.transforms import standardize
 
 
 class DummyMCAcquisitionFunction(MCAcquisitionFunction):
@@ -208,7 +214,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
     def test_q_noisy_expected_improvement(self):
         for dtype in (torch.float, torch.double):
             # the event shape is `b x q x t` = 1 x 2 x 1
-            samples_noisy = torch.tensor([1.0, 0.0], device=self.device, dtype=dtype)
+            samples_noisy = torch.tensor([0.0, 1.0], device=self.device, dtype=dtype)
             samples_noisy = samples_noisy.view(1, 2, 1)
             # X_baseline is `q' x d` = 1 x 1
             X_baseline = torch.zeros(1, 1, device=self.device, dtype=dtype)
@@ -219,7 +225,10 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             # basic test
             sampler = IIDNormalSampler(num_samples=2)
             acqf = qNoisyExpectedImprovement(
-                model=mm_noisy, X_baseline=X_baseline, sampler=sampler
+                model=mm_noisy,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                cache_root=False,
             )
             res = acqf(X)
             self.assertEqual(res.item(), 1.0)
@@ -227,7 +236,10 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             # basic test, no resample
             sampler = IIDNormalSampler(num_samples=2, seed=12345)
             acqf = qNoisyExpectedImprovement(
-                model=mm_noisy, X_baseline=X_baseline, sampler=sampler
+                model=mm_noisy,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                cache_root=False,
             )
             res = acqf(X)
             self.assertEqual(res.item(), 1.0)
@@ -239,7 +251,10 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             # basic test, qmc, no resample
             sampler = SobolQMCNormalSampler(num_samples=2)
             acqf = qNoisyExpectedImprovement(
-                model=mm_noisy, X_baseline=X_baseline, sampler=sampler
+                model=mm_noisy,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                cache_root=False,
             )
             res = acqf(X)
             self.assertEqual(res.item(), 1.0)
@@ -251,7 +266,10 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             # basic test, qmc, resample
             sampler = SobolQMCNormalSampler(num_samples=2, resample=True, seed=12345)
             acqf = qNoisyExpectedImprovement(
-                model=mm_noisy, X_baseline=X_baseline, sampler=sampler
+                model=mm_noisy,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                cache_root=False,
             )
             res = acqf(X)
             self.assertEqual(res.item(), 1.0)
@@ -268,7 +286,10 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             samples_noisy_pending = samples_noisy_pending.view(1, 3, 1)
             mm_noisy_pending = MockModel(MockPosterior(samples=samples_noisy_pending))
             acqf = qNoisyExpectedImprovement(
-                model=mm_noisy_pending, X_baseline=X_baseline, sampler=sampler
+                model=mm_noisy_pending,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                cache_root=False,
             )
             acqf.set_X_pending()
             self.assertIsNone(acqf.X_pending)
@@ -290,7 +311,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             # the event shape is `b x q x t` = 2 x 3 x 1
             samples_noisy = torch.zeros(2, 3, 1, device=self.device, dtype=dtype)
-            samples_noisy[0, 0, 0] = 1.0
+            samples_noisy[0, -1, 0] = 1.0
             mm_noisy = MockModel(MockPosterior(samples=samples_noisy))
             # X is `q x d` = 1 x 1
             X = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
@@ -299,7 +320,10 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             # test batch mode
             sampler = IIDNormalSampler(num_samples=2)
             acqf = qNoisyExpectedImprovement(
-                model=mm_noisy, X_baseline=X_baseline, sampler=sampler
+                model=mm_noisy,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                cache_root=False,
             )
             res = acqf(X)
             self.assertEqual(res[0].item(), 1.0)
@@ -308,7 +332,10 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             # test batch mode, no resample
             sampler = IIDNormalSampler(num_samples=2, seed=12345)
             acqf = qNoisyExpectedImprovement(
-                model=mm_noisy, X_baseline=X_baseline, sampler=sampler
+                model=mm_noisy,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                cache_root=False,
             )
             res = acqf(X)  # 1-dim batch
             self.assertEqual(res[0].item(), 1.0)
@@ -329,7 +356,10 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             # test batch mode, qmc, no resample
             sampler = SobolQMCNormalSampler(num_samples=2)
             acqf = qNoisyExpectedImprovement(
-                model=mm_noisy, X_baseline=X_baseline, sampler=sampler
+                model=mm_noisy,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                cache_root=False,
             )
             res = acqf(X)
             self.assertEqual(res[0].item(), 1.0)
@@ -342,7 +372,10 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             # test X_pending w/ batch mode, qmc, resample
             sampler = SobolQMCNormalSampler(num_samples=2, resample=True, seed=12345)
             acqf = qNoisyExpectedImprovement(
-                model=mm_noisy, X_baseline=X_baseline, sampler=sampler
+                model=mm_noisy,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                cache_root=False,
             )
             res = acqf(X)  # 1-dim batch
             self.assertEqual(res[0].item(), 1.0)
@@ -371,7 +404,10 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 mm = MockModel(mock.Mock())
                 with mock.patch(prune, return_value=X_pruned) as mock_prune:
                     acqf = qNoisyExpectedImprovement(
-                        model=mm, X_baseline=X_baseline, prune_baseline=True
+                        model=mm,
+                        X_baseline=X_baseline,
+                        prune_baseline=True,
+                        cache_root=False,
                     )
                 mock_prune.assert_called_once()
                 self.assertTrue(torch.equal(acqf.X_baseline, X_pruned))
@@ -381,9 +417,141 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                         X_baseline=X_baseline,
                         prune_baseline=True,
                         marginalize_dim=-3,
+                        cache_root=False,
                     )
                     _, kwargs = mock_prune.call_args
                     self.assertEqual(kwargs["marginalize_dim"], -3)
+
+    def test_cache_root(self):
+        sample_cached_path = (
+            "botorch.acquisition.cached_cholesky.sample_cached_cholesky"
+        )
+        raw_state_dict = {
+            "likelihood.noise_covar.raw_noise": torch.tensor(
+                [[0.0895], [0.2594]], dtype=torch.float64
+            ),
+            "mean_module.constant": torch.tensor(
+                [[-0.4545], [-0.1285]], dtype=torch.float64
+            ),
+            "covar_module.raw_outputscale": torch.tensor(
+                [1.4876, 1.4897], dtype=torch.float64
+            ),
+            "covar_module.base_kernel.raw_lengthscale": torch.tensor(
+                [[[-0.7202, -0.2868]], [[-0.8794, -1.2877]]], dtype=torch.float64
+            ),
+        }
+        # test batched models (e.g. for MCMC)
+        for train_batch_shape, m, dtype in product(
+            (torch.Size([]), torch.Size([3])), (1, 2), (torch.float, torch.double)
+        ):
+            state_dict = deepcopy(raw_state_dict)
+            for k, v in state_dict.items():
+                if m == 1:
+                    v = v[0]
+                if len(train_batch_shape) > 0:
+                    v = v.unsqueeze(0).expand(*train_batch_shape, *v.shape)
+                state_dict[k] = v
+            tkwargs = {"device": self.device, "dtype": dtype}
+            if m == 2:
+                objective = GenericMCObjective(lambda Y, X: Y.sum(dim=-1))
+            else:
+                objective = None
+            for k, v in state_dict.items():
+                state_dict[k] = v.to(**tkwargs)
+            all_close_kwargs = (
+                {
+                    "atol": 1e-1,
+                    "rtol": 0.0,
+                }
+                if dtype == torch.float
+                else {"atol": 1e-4, "rtol": 0.0}
+            )
+            torch.manual_seed(1234)
+            train_X = torch.rand(*train_batch_shape, 3, 2, **tkwargs)
+            train_Y = (
+                torch.sin(train_X * 2 * pi)
+                + torch.randn(*train_batch_shape, 3, 2, **tkwargs)
+            )[..., :m]
+            train_Y = standardize(train_Y)
+            model = SingleTaskGP(
+                train_X,
+                train_Y,
+            )
+            if len(train_batch_shape) > 0:
+                X_baseline = train_X[0]
+            else:
+                X_baseline = train_X
+            model.load_state_dict(state_dict, strict=False)
+            # test sampler with collapse_batch_dims=False
+            sampler = IIDNormalSampler(5, seed=0, collapse_batch_dims=False)
+            with self.assertRaises(UnsupportedError):
+                qNoisyExpectedImprovement(
+                    model=model,
+                    X_baseline=X_baseline,
+                    sampler=sampler,
+                    objective=objective,
+                    prune_baseline=False,
+                    cache_root=True,
+                )
+            sampler = IIDNormalSampler(5, seed=0)
+            torch.manual_seed(0)
+            acqf = qNoisyExpectedImprovement(
+                model=model,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                objective=objective,
+                prune_baseline=False,
+                cache_root=True,
+            )
+
+            orig_base_samples = acqf.base_sampler.base_samples.detach().clone()
+            sampler2 = IIDNormalSampler(5, seed=0)
+            sampler2.base_samples = orig_base_samples
+            torch.manual_seed(0)
+            acqf_no_cache = qNoisyExpectedImprovement(
+                model=model,
+                X_baseline=X_baseline,
+                sampler=sampler2,
+                objective=objective,
+                prune_baseline=False,
+                cache_root=False,
+            )
+            for q, batch_shape in product(
+                (1, 3), (torch.Size([]), torch.Size([3]), torch.Size([4, 3]))
+            ):
+                test_X = (
+                    0.3 + 0.05 * torch.randn(*batch_shape, q, 2, **tkwargs)
+                ).requires_grad_(True)
+                with mock.patch(
+                    sample_cached_path, wraps=sample_cached_cholesky
+                ) as mock_sample_cached:
+                    torch.manual_seed(0)
+                    val = acqf(test_X)
+                    mock_sample_cached.assert_called_once()
+                val.sum().backward()
+                base_samples = acqf.sampler.base_samples.detach().clone()
+                X_grad = test_X.grad.clone()
+                test_X2 = test_X.detach().clone().requires_grad_(True)
+                acqf_no_cache.sampler.base_samples = base_samples
+                with mock.patch(
+                    sample_cached_path, wraps=sample_cached_cholesky
+                ) as mock_sample_cached:
+                    torch.manual_seed(0)
+                    val2 = acqf_no_cache(test_X2)
+                mock_sample_cached.assert_not_called()
+                self.assertTrue(torch.allclose(val, val2, **all_close_kwargs))
+                val2.sum().backward()
+                self.assertTrue(
+                    torch.allclose(X_grad, test_X2.grad, **all_close_kwargs)
+                )
+            # test we fall back to standard sampling for
+            # ill-conditioned covariances
+            acqf._baseline_L = torch.zeros_like(acqf._baseline_L)
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                with torch.no_grad():
+                    acqf(test_X)
+            self.assertEqual(len(ws), 1)
+            self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
 
     # TODO: Test different objectives (incl. constraints)
 

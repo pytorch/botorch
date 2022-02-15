@@ -1299,7 +1299,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
 
     def test_cache_root(self):
         sample_cached_path = (
-            "botorch.acquisition.multi_objective.monte_carlo." "sample_cached_cholesky"
+            "botorch.acquisition.cached_cholesky.sample_cached_cholesky"
         )
         state_dict = {
             "likelihood.noise_covar.raw_noise": torch.tensor(
