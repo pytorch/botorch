@@ -30,7 +30,10 @@ from itertools import combinations
 from typing import Any, Callable, List, Optional, Union
 
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.acquisition import (
+    AcquisitionFunction,
+)
+from botorch.acquisition.cached_cholesky import CachedCholeskyMCAcquisitionFunction
 from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
@@ -40,17 +43,11 @@ from botorch.acquisition.multi_objective.utils import (
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
-from botorch.models import HigherOrderGP
-from botorch.models.deterministic import DeterministicModel
 from botorch.models.model import Model
-from botorch.models.model_list_gp_regression import ModelListGP
-from botorch.models.multitask import KroneckerMultiTaskGP, MultiTaskGP
 from botorch.models.transforms.input import InputPerturbation
 from botorch.posteriors import DeterministicPosterior
-from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
-from botorch.utils.low_rank import extract_batch_covar, sample_cached_cholesky
 from botorch.utils.multi_objective.box_decompositions.box_decomposition_list import (
     BoxDecompositionList,
 )
@@ -71,8 +68,6 @@ from botorch.utils.transforms import (
     match_batch_shape,
     t_batch_mode_transform,
 )
-from gpytorch import settings as gpt_settings
-from gpytorch.utils.errors import NanError, NotPSDError
 from torch import Tensor
 
 
@@ -344,7 +339,9 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
         return self._compute_qehvi(samples=samples, X=X)
 
 
-class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
+class qNoisyExpectedHypervolumeImprovement(
+    qExpectedHypervolumeImprovement, CachedCholeskyMCAcquisitionFunction
+):
     def __init__(
         self,
         model: Model,
@@ -429,35 +426,10 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
             objective=objective,
             constraints=constraints,
         )
-        models = model.models if isinstance(model, ModelListGP) else [model]
-        self._is_mt = any(
-            isinstance(m, (MultiTaskGP, KroneckerMultiTaskGP, HigherOrderGP))
-            for m in models
+        self._setup(
+            model=model, sampler=self.sampler, cache_root=cache_root, check_sampler=True
         )
-        self._uses_matheron = any(
-            isinstance(m, (KroneckerMultiTaskGP, HigherOrderGP)) for m in models
-        )
-        if not self.sampler.collapse_batch_dims:
-            raise UnsupportedError(
-                "qNoisyExpectedHypervolumeImprovement currently requires sampler "
-                "to use `collapse_batch_dims=True`."
-            )
-        elif self.sampler.base_samples is not None:
-            warnings.warn(
-                message=(
-                    "sampler.base_samples is not None. qNEHVI requires that the "
-                    "base_samples be initialized to None. Resetting "
-                    "sampler.base_samples to None."
-                ),
-                category=BotorchWarning,
-            )
-            self.sampler.base_samples = None
-        elif self._uses_matheron and self.sampler.batch_range != (0, -1):
-            raise RuntimeError(
-                "sampler.batch_range is not (0, -1). qNEHVI requires that the "
-                "sampler.batch_range is (0, -1) with GPs that use Matheron's rule "
-                "for sampling, in order to properly collapse batch dimensions. "
-            )
+
         if X_baseline.ndim > 2:
             raise UnsupportedError(
                 "qNoisyExpectedHypervolumeImprovement does not support batched "
@@ -490,9 +462,6 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
             self.p_class = FastNondominatedPartitioning
         self.register_buffer("_X_baseline", X_baseline)
         self.register_buffer("_X_baseline_and_pending", X_baseline)
-        if isinstance(model, DeterministicModel) or self._is_mt:
-            cache_root = False
-        self._cache_root = cache_root
         self.register_buffer(
             "cache_pending",
             torch.tensor(cache_pending, dtype=bool),
@@ -551,21 +520,6 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
                 self._batch_sample_shape, *obj.shape[-2:]
             ),
         )
-
-    def _cache_root_decomposition(
-        self,
-        posterior: GPyTorchPosterior,
-    ) -> None:
-        r"""Cache the root decomposition of the covariance of `f(X_baseline)`.
-
-        Args:
-            posterior: The posterior over f(X_baseline).
-        """
-        lazy_covar = extract_batch_covar(posterior.mvn)
-        with gpt_settings.fast_computations.covar_root_decomposition(False):
-            lazy_covar_root = lazy_covar.root_decomposition()
-            baseline_L = lazy_covar_root.root.evaluate()
-        self.register_buffer("_baseline_L", baseline_L)
 
     def _set_cell_bounds(self, num_new_points: int) -> None:
         r"""Compute the box decomposition under each posterior sample.
@@ -776,51 +730,6 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
                     end_idx = current_base_samples.shape[-2]
                     self.sampler.base_samples[..., :end_idx, :] = expanded_samples
                 self.q_in = q_in
-
-    def _get_f_X_samples(self, posterior: GPyTorchPosterior, q_in: int) -> Tensor:
-        r"""Get posterior samples at the `q_in` new points from the joint posterior.
-
-        Args:
-            posterior: The joint posterior is over (X_baseline, X).
-            q_in: The number of new points in the posterior. See `_set_sampler` for
-                more information.
-
-        Returns:
-            A `sample_shape x batch_shape x q x m`-dim tensor of posterior
-                samples at the new points.
-        """
-        # Technically we should make sure that we add a consistent nugget to the
-        # cached covariance (and box decompositions) and the new block.
-        # But recomputing box decompositions every time the jitter changes would
-        # be quite slow.
-        if not self._is_mt and self._cache_root and hasattr(self, "_baseline_L"):
-            try:
-                return sample_cached_cholesky(
-                    posterior=posterior,
-                    baseline_L=self._baseline_L,
-                    q=q_in,
-                    base_samples=self.sampler.base_samples,
-                    sample_shape=self.sampler.sample_shape,
-                )
-            except (NanError, NotPSDError):
-                warnings.warn(
-                    "Low-rank cholesky updates failed due NaNs or due to an "
-                    "ill-conditioned covariance matrix. "
-                    "Falling back to standard sampling.",
-                    BotorchWarning,
-                )
-
-        # TODO: improve efficiency for multi-task models
-        samples = self.sampler(posterior)
-        if isinstance(self.model, HigherOrderGP):
-            # Select the correct q-batch dimension for HOGP.
-            q_dim = -self.model._num_dimensions
-            q_idcs = (
-                torch.arange(-q_in, 0, device=samples.device) + samples.shape[q_dim]
-            )
-            return samples.index_select(q_dim, q_idcs)
-        else:
-            return samples[..., -q_in:, :]
 
     @concatenate_pending_points
     @t_batch_mode_transform()

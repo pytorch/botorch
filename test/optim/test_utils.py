@@ -322,7 +322,9 @@ class TestGetXBaseline(BotorchTestCase):
                 MockPosterior(mean=(2 * X_train + 1).sum(dim=-1, keepdim=True))
             )
             # test NEI with X_baseline
-            acqf = qNoisyExpectedImprovement(model, X_baseline=X_train[:2])
+            acqf = qNoisyExpectedImprovement(
+                model, X_baseline=X_train[:2], cache_root=False
+            )
             X = get_X_baseline(acq_function=acqf)
             self.assertTrue(torch.equal(X, acqf.X_baseline))
             # test EI without X_baseline
