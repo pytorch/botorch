@@ -16,6 +16,7 @@ from botorch.models.gp_regression import (
     SingleTaskGP,
 )
 from botorch.models.transforms import Normalize, Standardize
+from botorch.models.transforms.input import InputStandardize
 from botorch.models.utils import add_output_dim
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
@@ -324,6 +325,19 @@ class TestSingleTaskGP(BotorchTestCase):
             data_dict = model.construct_inputs(training_data)
             self.assertTrue(torch.equal(data_dict["train_X"], model_kwargs["train_X"]))
             self.assertTrue(torch.equal(data_dict["train_Y"], model_kwargs["train_Y"]))
+
+    def test_set_transformed_inputs(self):
+        # This intended to catch https://github.com/pytorch/botorch/issues/1078.
+        # More general testing of _set_transformed_inputs is done under ModelListGP.
+        X = torch.rand(5, 2)
+        Y = X ** 2
+        for tf_class in [Normalize, InputStandardize]:
+            intf = tf_class(d=2)
+            model = SingleTaskGP(X, Y, input_transform=intf)
+            mll = ExactMarginalLogLikelihood(model.likelihood, model)
+            fit_gpytorch_model(mll, options={"maxiter": 2})
+            tf_X = intf(X)
+            self.assertEqual(X.shape, tf_X.shape)
 
 
 class TestFixedNoiseGP(TestSingleTaskGP):
