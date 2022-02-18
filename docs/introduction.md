@@ -3,7 +3,7 @@ id: introduction
 title: Introduction
 ---
 
-BoTorch (pronounced like "blow-torch") is a library for
+BoTorch (pronounced "bow-torch" / ˈbō-tȯrch) is a library for
 [Bayesian Optimization](https://en.wikipedia.org/wiki/Bayesian_optimization)
 research built on top of [PyTorch](https://pytorch.org/), and is part of the
 PyTorch ecosystem. Read the [BoTorch paper](https://arxiv.org/abs/1910.06403)
