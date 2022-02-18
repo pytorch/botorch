@@ -136,7 +136,16 @@ class InputTransform(ABC):
             A `batch_shape x n x d`-dim tensor of (transformed) inputs.
         """
         if self.transform_on_train:
-            return self.transform(X)
+            # We need to disable learning of bounds here.
+            # See why: https://github.com/pytorch/botorch/issues/1078.
+            if hasattr(self, "learn_bounds"):
+                learn_bounds = self.learn_bounds
+                self.learn_bounds = False
+                result = self.transform(X)
+                self.learn_bounds = learn_bounds
+                return result
+            else:
+                return self.transform(X)
         return X
 
 
@@ -516,6 +525,7 @@ class InputStandardize(ReversibleInputTransform, Module):
         self.batch_shape = batch_shape
         self.min_std = min_std
         self.reverse = reverse
+        self.learn_bounds = True
 
     def _transform(self, X: Tensor) -> Tensor:
         r"""Standardize the inputs.
@@ -531,7 +541,7 @@ class InputStandardize(ReversibleInputTransform, Module):
             A `batch_shape x n x d`-dim tensor of inputs normalized to the
             module's bounds.
         """
-        if self.training:
+        if self.training and self.learn_bounds:
             if X.size(-1) != self.means.size(-1):
                 raise BotorchTensorDimensionError(
                     f"Wrong input. dimension. Received {X.size(-1)}, "
