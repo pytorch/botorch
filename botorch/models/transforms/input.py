@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -1087,7 +1087,7 @@ class InputPerturbation(InputTransform, Module):
 
     def __init__(
         self,
-        perturbation_set: Tensor,
+        perturbation_set: Union[Tensor, Callable[[Tensor], Tensor]],
         bounds: Optional[Tensor] = None,
         multiplicative: bool = False,
         transform_on_train: bool = False,
@@ -1098,7 +1098,9 @@ class InputPerturbation(InputTransform, Module):
 
         Args:
             perturbation_set: An `n_p x d`-dim tensor denoting the perturbations
-                to be added to the inputs.
+                to be added to the inputs. Alternatively, this can be a callable that
+                returns `batch x n_p x d`-dim tensor of perturbations for input of
+                shape `batch x d`. This is useful for heteroscedastic perturbations.
             bounds: A `2 x d`-dim tensor of lower and upper bounds for each
                 column of the input. If given, the perturbed inputs will be
                 clamped to these bounds.
@@ -1113,11 +1115,17 @@ class InputPerturbation(InputTransform, Module):
                 transform when called from within a `fantasize` call. Default: False.
         """
         super().__init__()
-        if perturbation_set.dim() != 2:
-            raise ValueError("`perturbation_set` must be an `n_p x d`-dim tensor!")
-        self.register_buffer("perturbation_set", perturbation_set)
+        if isinstance(perturbation_set, Tensor):
+            if perturbation_set.dim() != 2:
+                raise ValueError("`perturbation_set` must be an `n_p x d`-dim tensor!")
+            self.register_buffer("perturbation_set", perturbation_set)
+        else:
+            self.perturbation_set = perturbation_set
         if bounds is not None:
-            if bounds.shape[-1] != perturbation_set.shape[-1]:
+            if (
+                isinstance(perturbation_set, Tensor)
+                and bounds.shape[-1] != perturbation_set.shape[-1]
+            ):
                 raise ValueError(
                     "`bounds` must have the same number of columns (last dimension) as "
                     f"the `perturbation_set`! Got {bounds.shape[-1]} and "
@@ -1150,12 +1158,14 @@ class InputPerturbation(InputTransform, Module):
         Returns:
             A `batch_shape x (q * n_p) x d`-dim tensor of perturbed inputs.
         """
+        if isinstance(self.perturbation_set, Tensor):
+            perturbations = self.perturbation_set
+        else:
+            perturbations = self.perturbation_set(X)
         expanded_X = X.unsqueeze(dim=-2).expand(
-            *X.shape[:-1], self.perturbation_set.shape[0], -1
+            *X.shape[:-1], perturbations.shape[-2], -1
         )
-        expanded_perturbations = self.perturbation_set.expand(
-            *expanded_X.shape[:-1], -1
-        )
+        expanded_perturbations = perturbations.expand(*expanded_X.shape[:-1], -1)
         if self.multiplicative:
             perturbed_inputs = expanded_X * expanded_perturbations
         else:

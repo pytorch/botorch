@@ -25,6 +25,7 @@ from botorch.models.transforms.utils import expand_and_copy_tensor
 from botorch.models.utils import fantasize
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.priors import LogNormalPrior
+from torch import Tensor
 from torch.distributions import Kumaraswamy
 from torch.nn import Module
 
@@ -1002,5 +1003,24 @@ class TestInputPerturbation(BotorchTestCase):
                 ],
                 device=self.device,
                 dtype=dtype,
+            )
+            self.assertTrue(torch.allclose(transformed, expected))
+
+            # heteroscedastic
+            def perturbation_generator(X: Tensor) -> Tensor:
+                return torch.stack([X * 0.1, X * 0.2], dim=-2)
+
+            transform = InputPerturbation(
+                perturbation_set=perturbation_generator
+            ).eval()
+            transformed = transform(X)
+            expected = torch.stack(
+                [
+                    X[..., 0, :] * 1.1,
+                    X[..., 0, :] * 1.2,
+                    X[..., 1, :] * 1.1,
+                    X[..., 1, :] * 1.2,
+                ],
+                dim=-2,
             )
             self.assertTrue(torch.allclose(transformed, expected))
