@@ -4,6 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from unittest import mock
+
 import torch
 from botorch.exceptions.errors import BotorchError
 from botorch.models.gp_regression import SingleTaskGP
@@ -16,7 +18,7 @@ from gpytorch.distributions.multitask_multivariate_normal import (
 )
 from gpytorch.lazy import lazify
 from gpytorch.lazy.block_diag_lazy_tensor import BlockDiagLazyTensor
-from gpytorch.utils.errors import NanError
+from gpytorch.utils.errors import NotPSDError, NanError
 
 
 class TestExtractBatchCovar(BotorchTestCase):
@@ -197,3 +199,32 @@ class TestSampleCachedCholesky(BotorchTestCase):
                                     base_samples=sampler.base_samples.detach().clone(),
                                     sample_shape=sampler.sample_shape,
                                 )
+                            # test triangular solve raising RuntimeError
+                            test_posterior.mvn.loc = torch.full_like(
+                                test_posterior.mvn.loc, 0.0
+                            )
+                            base_samples = sampler.base_samples.detach().clone()
+                            with mock.patch(
+                                "botorch.utils.low_rank.torch.triangular_solve",
+                                side_effect=RuntimeError("singular"),
+                            ):
+                                with self.assertRaises(NotPSDError):
+                                    sample_cached_cholesky(
+                                        posterior=test_posterior,
+                                        baseline_L=baseline_L,
+                                        q=q,
+                                        base_samples=base_samples,
+                                        sample_shape=sampler.sample_shape,
+                                    )
+                            with mock.patch(
+                                "botorch.utils.low_rank.torch.triangular_solve",
+                                side_effect=RuntimeError(""),
+                            ):
+                                with self.assertRaises(RuntimeError):
+                                    sample_cached_cholesky(
+                                        posterior=test_posterior,
+                                        baseline_L=baseline_L,
+                                        q=q,
+                                        base_samples=base_samples,
+                                        sample_shape=sampler.sample_shape,
+                                    )

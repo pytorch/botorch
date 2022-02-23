@@ -16,7 +16,7 @@ from gpytorch.distributions.multitask_multivariate_normal import (
 from gpytorch.lazy import BlockDiagLazyTensor
 from gpytorch.lazy.lazy_tensor import LazyTensor
 from gpytorch.utils.cholesky import psd_safe_cholesky
-from gpytorch.utils.errors import NanError
+from gpytorch.utils.errors import NotPSDError, NanError
 from torch import Tensor
 
 
@@ -121,9 +121,16 @@ def sample_cached_cholesky(
     # and bl_chol := x^T
     # bl_chol is the new `(batch_shape) x q x n`-dim bottom left block
     # of the cholesky decomposition
-    bl_chol = torch.triangular_solve(
-        bl.transpose(-2, -1), baseline_L, upper=False
-    ).solution.transpose(-2, -1)
+    # TODO: remove the exception handling, when the pytorch
+    # version requirement is bumped to >= 1.10
+    try:
+        bl_chol = torch.triangular_solve(
+            bl.transpose(-2, -1), baseline_L, upper=False
+        ).solution.transpose(-2, -1)
+    except RuntimeError as e:
+        if "singular" in str(e):
+            raise NotPSDError(f"triangular_solve failed with RuntimeError: {e}")
+        raise e
     # Compute the new bottom right block of the Cholesky
     # decomposition via:
     # Cholesky(K(X, X) - bl_chol @ bl_chol^T)
