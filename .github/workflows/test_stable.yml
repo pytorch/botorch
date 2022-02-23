@@ -53,3 +53,60 @@ jobs:
       shell: bash -l {0}
       run: |
         pytest -ra
+
+  tests-and-coverage-min-req-pip:
+    name: Tests and coverage min req. torch & gpytorch versions (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        python-version: [3.7, 3.9]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python setup.py egg_info
+        req_txt="botorch.egg-info/requires.txt"
+        min_torch_version=$(grep '\btorch>=' ${req_txt} | sed 's/[^0-9.]//g')
+        min_gpytorch_version=$(grep '\bgpytorch>=' ${req_txt} | sed 's/[^0-9.]//g')
+        pip install "torch==${min_torch_version} gpytorch==${min_gpytorch_version}"
+        pip install .[test]
+    - name: Unit tests and coverage
+      run: |
+        pytest -ra --cov=. --cov-report term-missing
+
+  tests-min-req-conda:
+    name: Tests min req. torch & gpytorch versions (conda, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        python-version: ["3.7", "3.9"]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: "latest"
+        activate-environment: test
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      shell: bash -l {0}
+      run: |
+        python setup.py egg_info
+        req_txt="botorch.egg-info/requires.txt"
+        min_torch_version=$(grep '\btorch>=' ${req_txt} | sed 's/[^0-9.]//g')
+        min_gpytorch_version=$(grep '\bgpytorch>=' ${req_txt} | sed 's/[^0-9.]//g')
+        conda install -y -c pytorch "pytorch=${min_torch_version}" cpuonly
+        conda install -y pip scipy pytest
+        conda install -y -c gpytorch "gpytorch=${min_gpytorch_version}"
+        pip install .[test]
+    - name: Unit tests
+      shell: bash -l {0}
+      run: |
+        pytest -ra
