@@ -11,7 +11,8 @@ Candidate generation utilities.
 from __future__ import annotations
 
 import warnings
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from functools import partial
+from typing import Any, Callable, Dict, List, NoReturn, Optional, Tuple, Type, Union
 
 import numpy as np
 import torch
@@ -242,7 +243,7 @@ def gen_candidates_torch(
     upper_bounds: Optional[Union[float, Tensor]] = None,
     optimizer: Type[Optimizer] = torch.optim.Adam,
     options: Optional[Dict[str, Union[float, str]]] = None,
-    verbose: bool = True,
+    callback: Optional[Callable[[int, Tensor, Tensor], NoReturn]] = None,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of candidates using a `torch.optim` optimizer.
@@ -259,7 +260,9 @@ def gen_candidates_torch(
             candidate search.
         options: Options used to control the optimization. Includes
             maxiter: Maximum number of iterations
-        verbose: If True, provide verbose output.
+        callback: A callback function accepting the current iteration, loss,
+            and gradients as arguments. This function is executed after computing
+            the loss and gradients, but before calling the optimizer.
         fixed_features: This is a dictionary of feature indices to values, where
             all generated candidates will have features fixed to these values.
             If the dictionary value is None, then that feature will just be
@@ -289,7 +292,7 @@ def gen_candidates_torch(
 
     # if there are fixed features we may optimize over a domain of lower dimension
     if fixed_features:
-        _no_fixed_features = _remove_fixed_features_from_optimization(
+        subproblem = _remove_fixed_features_from_optimization(
             fixed_features=fixed_features,
             acquisition_function=acquisition_function,
             initial_conditions=initial_conditions,
@@ -301,26 +304,24 @@ def gen_candidates_torch(
 
         # call the routine with no fixed_features
         clamped_candidates, batch_acquisition = gen_candidates_torch(
-            initial_conditions=_no_fixed_features.initial_conditions,
-            acquisition_function=_no_fixed_features.acquisition_function,
-            lower_bounds=_no_fixed_features.lower_bounds,
-            upper_bounds=_no_fixed_features.upper_bounds,
+            initial_conditions=subproblem.initial_conditions,
+            acquisition_function=subproblem.acquisition_function,
+            lower_bounds=subproblem.lower_bounds,
+            upper_bounds=subproblem.upper_bounds,
             optimizer=optimizer,
             options=options,
-            verbose=verbose,
+            callback=callback,
             fixed_features=None,
         )
-        clamped_candidates = _no_fixed_features.acquisition_function._construct_X_full(
+        clamped_candidates = subproblem.acquisition_function._construct_X_full(
             clamped_candidates
         )
         return clamped_candidates, batch_acquisition
 
-    clamped_candidates = columnwise_clamp(
-        X=initial_conditions, lower=lower_bounds, upper=upper_bounds
-    ).requires_grad_(True)
-    bayes_optimizer = optimizer(
-        params=[clamped_candidates], lr=options.get("lr", 0.025)
-    )
+    _clamp = partial(columnwise_clamp, lower=lower_bounds, upper=upper_bounds)
+    clamped_candidates = _clamp(initial_conditions).requires_grad_(True)
+    _optimizer = optimizer(params=[clamped_candidates], lr=options.get("lr", 0.025))
+
     i = 0
     stop = False
     stopping_criterion = ExpMAStoppingCriterion(
@@ -328,28 +329,23 @@ def gen_candidates_torch(
     )
     while not stop:
         i += 1
-        loss = -acquisition_function(clamped_candidates).sum()
-        if verbose:
-            print("Iter: {} - Value: {:.3f}".format(i, -(loss.item())))
+        with torch.no_grad():
+            X = _clamp(clamped_candidates).requires_grad_(True)
 
-        def closure():
-            bayes_optimizer.zero_grad()
-            output_grad = torch.autograd.grad(loss, clamped_candidates)[0]
-            clamped_candidates.grad = output_grad
+        loss = -acquisition_function(X).sum()
+        grad = torch.autograd.grad(loss, X)[0]
+        if callback:
+            callback(i, loss, grad)
+
+        def assign_grad():
+            _optimizer.zero_grad()
+            clamped_candidates.grad = grad
             return loss
 
-        bayes_optimizer.step(closure)
-        with torch.no_grad():
-            clamped_candidates = columnwise_clamp(
-                X=clamped_candidates, lower=lower_bounds, upper=upper_bounds
-            ).requires_grad_(True)
+        _optimizer.step(assign_grad)
         stop = stopping_criterion.evaluate(fvals=loss.detach())
-    clamped_candidates = columnwise_clamp(
-        X=clamped_candidates,
-        lower=lower_bounds,
-        upper=upper_bounds,
-        raise_on_violation=True,
-    )
+
+    clamped_candidates = _clamp(clamped_candidates)
     with torch.no_grad():
         batch_acquisition = acquisition_function(clamped_candidates)
 
