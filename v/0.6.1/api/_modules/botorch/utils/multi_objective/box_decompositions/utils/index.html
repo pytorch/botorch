@@ -1,0 +1,419 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.6.1/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.6.1/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.6.1/img/botorch.png"/><link rel="shortcut icon" href="/v/0.6.1/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.6.1/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.6.1/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.6.1/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.6.1/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.6.1/css/main.css"/><script src="/v/0.6.1/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.6.1/"><img class="logo" src="/v/0.6.1/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.6.1/versions"><h3>0.6.1</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.6.1/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.6.1/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.6.1/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.6.1/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.utils.multi_objective.box_decompositions.utils</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""Utilities for box decomposition algorithms."""</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.pareto</span> <span class="kn">import</span> <span class="n">is_non_dominated</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Size</span><span class="p">,</span> <span class="n">Tensor</span>
+
+
+<span class="k">def</span> <span class="nf">_expand_ref_point</span><span class="p">(</span><span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">batch_shape</span><span class="p">:</span> <span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Expand reference point to the proper batch_shape.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ref_point: A `(batch_shape) x m`-dim tensor containing the reference</span>
+<span class="sd">            point.</span>
+<span class="sd">        batch_shape: The batch shape.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `batch_shape x m`-dim tensor containing the expanded reference point</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">batch_shape</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
+                <span class="s2">"Expected ref_point to be a `batch_shape x m` or `m`-dim tensor, "</span>
+                <span class="sa">f</span><span class="s2">"but got </span><span class="si">{</span><span class="n">ref_point</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
+            <span class="o">*</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">batch_shape</span><span class="p">),</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="k">return</span> <span class="n">ref_point</span>
+
+
+<span class="k">def</span> <span class="nf">_pad_batch_pareto_frontier</span><span class="p">(</span>
+    <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">is_pareto</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">feasibility_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Get a batch Pareto frontier by padding the pareto frontier with repeated points.</span>
+
+<span class="sd">    This assumes maximization.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        Y: A `(batch_shape) x n x m`-dim tensor of points</span>
+<span class="sd">        ref_point: a `(batch_shape) x m`-dim tensor containing the reference point</span>
+<span class="sd">        is_pareto: a boolean indicating whether the points in Y are already</span>
+<span class="sd">            non-dominated.</span>
+<span class="sd">        feasibility_mask: A `(batch_shape) x n`-dim tensor of booleans indicating</span>
+<span class="sd">            whether each point is feasible.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `(batch_shape) x max_num_pareto x m`-dim tensor of padded Pareto</span>
+<span class="sd">            frontiers.</span>
+<span class="sd">    """</span>
+    <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">Y</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">Y</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+    <span class="n">ref_point</span> <span class="o">=</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="s2">"_pad_batch_pareto_frontier only supports a single "</span>
+            <span class="sa">f</span><span class="s2">"batch dimension, but got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span><span class="si">}</span><span class="s2"> "</span>
+            <span class="s2">"batch dimensions."</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">feasibility_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># set infeasible points to be the reference point (corresponding to the batch)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">feasibility_mask</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">Y</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_pareto</span><span class="p">:</span>
+        <span class="n">pareto_mask</span> <span class="o">=</span> <span class="n">is_non_dominated</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">pareto_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">better_than_ref</span> <span class="o">=</span> <span class="p">(</span><span class="n">Y</span> <span class="o">&gt;</span> <span class="n">ref_point</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># is_non_dominated assumes maximization</span>
+    <span class="c1"># TODO: filter out points that are worse than the reference point first here</span>
+    <span class="n">pareto_mask</span> <span class="o">=</span> <span class="n">pareto_mask</span> <span class="o">&amp;</span> <span class="n">better_than_ref</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Y</span><span class="p">[</span><span class="n">pareto_mask</span><span class="p">]</span>
+    <span class="c1"># Note: in the batch case, the Pareto frontier is padded by repeating</span>
+    <span class="c1"># a Pareto point. This ensures that the padded box-decomposition has</span>
+    <span class="c1"># the same number of points, which enables fast batch operations.</span>
+    <span class="n">max_n_pareto</span> <span class="o">=</span> <span class="n">pareto_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="n">pareto_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">max_n_pareto</span><span class="p">,</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pareto_i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pareto_mask</span><span class="p">):</span>
+        <span class="n">pareto_i</span> <span class="o">=</span> <span class="n">Y</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">pareto_mask</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+        <span class="n">n_pareto</span> <span class="o">=</span> <span class="n">pareto_i</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">n_pareto</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">pareto_Y</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="n">n_pareto</span><span class="p">]</span> <span class="o">=</span> <span class="n">pareto_i</span>
+            <span class="c1"># pad pareto_Y, so that all batches have the same size Pareto set</span>
+            <span class="n">pareto_Y</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">n_pareto</span><span class="p">:]</span> <span class="o">=</span> <span class="n">pareto_i</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># if there are no pareto points in this batch, use the reference</span>
+            <span class="c1"># point</span>
+            <span class="n">pareto_Y</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">ref_point</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">pareto_Y</span>
+
+
+<div class="viewcode-block" id="compute_local_upper_bounds"><a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.utils.compute_local_upper_bounds">[docs]</a><span class="k">def</span> <span class="nf">compute_local_upper_bounds</span><span class="p">(</span>
+    <span class="n">U</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Tensor</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Compute local upper bounds.</span>
+
+<span class="sd">    Note: this assumes minimization.</span>
+
+<span class="sd">    This uses the incremental algorithm (Alg. 1) from [Lacour17]_.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        U: A `n x m`-dim tensor containing the local upper bounds.</span>
+<span class="sd">        Z: A `n x m x m`-dim tensor containing the defining points.</span>
+<span class="sd">        z: A `m`-dim tensor containing the new point.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        2-element tuple containing:</span>
+
+<span class="sd">        - A new `n' x m`-dim tensor local upper bounds.</span>
+<span class="sd">        - A `n' x m x m`-dim tensor containing the defining points.</span>
+<span class="sd">    """</span>
+    <span class="n">num_outcomes</span> <span class="o">=</span> <span class="n">U</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">z_dominates_U</span> <span class="o">=</span> <span class="p">(</span><span class="n">U</span> <span class="o">&gt;</span> <span class="n">z</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># Select upper bounds that are dominated by z.</span>
+    <span class="c1"># These are the search zones that contain z.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">z_dominates_U</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">U</span><span class="p">,</span> <span class="n">Z</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">U</span><span class="p">[</span><span class="n">z_dominates_U</span><span class="p">]</span>
+    <span class="n">A_Z</span> <span class="o">=</span> <span class="n">Z</span><span class="p">[</span><span class="n">z_dominates_U</span><span class="p">]</span>
+    <span class="n">P</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">P_Z</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_outcomes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">U</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_outcomes</span><span class="p">):</span>
+        <span class="n">mask</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">z_uj_max</span> <span class="o">=</span> <span class="n">A_Z</span><span class="p">[:,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">add_z</span> <span class="o">=</span> <span class="n">z</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">z_uj_max</span>
+        <span class="k">if</span> <span class="n">add_z</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">u_j</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="n">add_z</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+            <span class="n">u_j</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">z</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">P</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">u_j</span><span class="p">)</span>
+            <span class="n">A_Z_filtered</span> <span class="o">=</span> <span class="n">A_Z</span><span class="p">[</span><span class="n">add_z</span><span class="p">]</span>
+            <span class="n">Z_ku</span> <span class="o">=</span> <span class="n">A_Z_filtered</span><span class="p">[:,</span> <span class="n">mask</span><span class="p">]</span>
+            <span class="n">lt_zj</span> <span class="o">=</span> <span class="n">Z_ku</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">z</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">P_uj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="n">u_j</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">num_outcomes</span><span class="p">,</span> <span class="n">num_outcomes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">U</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">U</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">)</span>
+            <span class="n">P_uj</span><span class="p">[:,</span> <span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">Z_ku</span><span class="p">[</span><span class="n">lt_zj</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">P_uj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">num_outcomes</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">P_uj</span><span class="p">[:,</span> <span class="o">~</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">z</span>
+            <span class="n">P_Z</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">P_uj</span><span class="p">)</span>
+        <span class="n">mask</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="c1"># filter out elements of U that are in A</span>
+    <span class="n">not_z_dominates_U</span> <span class="o">=</span> <span class="o">~</span><span class="n">z_dominates_U</span>
+    <span class="n">U</span> <span class="o">=</span> <span class="n">U</span><span class="p">[</span><span class="n">not_z_dominates_U</span><span class="p">]</span>
+    <span class="c1"># remaining indices</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="n">Z</span><span class="p">[</span><span class="n">not_z_dominates_U</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># add points from P_Z</span>
+        <span class="n">Z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">Z</span><span class="p">,</span> <span class="o">*</span><span class="n">P_Z</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># return elements in P or elements in (U that are not in A)</span>
+        <span class="n">U</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">U</span><span class="p">,</span> <span class="o">*</span><span class="n">P</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">U</span><span class="p">,</span> <span class="n">Z</span></div>
+
+
+<div class="viewcode-block" id="get_partition_bounds"><a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.utils.get_partition_bounds">[docs]</a><span class="k">def</span> <span class="nf">get_partition_bounds</span><span class="p">(</span><span class="n">Z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Get the cell bounds given the local upper bounds and the defining points.</span>
+
+<span class="sd">    This implements Equation 2 in [Lacour17]_.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        Z: A `n x m x m`-dim tensor containing the defining points. The first</span>
+<span class="sd">            dimension corresponds to u_idx, the second dimension corresponds to j,</span>
+<span class="sd">            and Z[u_idx, j] is the set of definining points Z^j(u) where</span>
+<span class="sd">            u = U[u_idx].</span>
+<span class="sd">        U: A `n x m`-dim tensor containing the local upper bounds.</span>
+<span class="sd">        ref_point: A `m`-dim tensor containing the reference point.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `2 x num_cells x m`-dim tensor containing the lower and upper vertices</span>
+<span class="sd">            bounding each hypercell.</span>
+<span class="sd">    """</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">U</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">U</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">U</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">U</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">u_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">U</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="c1"># z_1^1(u)</span>
+        <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">u_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">Z</span><span class="p">[</span><span class="n">u_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># z_1^r(u)</span>
+        <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">u_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref_point</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">U</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">u_idx</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">Z</span><span class="p">[</span><span class="n">u_idx</span><span class="p">,</span> <span class="p">:</span><span class="n">j</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+            <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">u_idx</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">U</span><span class="p">[</span><span class="n">u_idx</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+    <span class="c1"># remove empty partitions</span>
+    <span class="c1"># Note: the equality will evaluate as True if the lower and upper bound</span>
+    <span class="c1"># are both (-inf), which could happen if the reference point is -inf.</span>
+    <span class="n">empty</span> <span class="o">=</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">bounds</span><span class="p">[:,</span> <span class="o">~</span><span class="n">empty</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="update_local_upper_bounds_incremental"><a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.utils.update_local_upper_bounds_incremental">[docs]</a><span class="k">def</span> <span class="nf">update_local_upper_bounds_incremental</span><span class="p">(</span>
+    <span class="n">new_pareto_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Z</span><span class="p">:</span> <span class="n">Tensor</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Update the current local upper with the new pareto points.</span>
+
+<span class="sd">    This assumes minimization.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        new_pareto_Y: A `n x m`-dim tensor containing the new</span>
+<span class="sd">            Pareto points.</span>
+<span class="sd">        U: A `n' x m`-dim tensor containing the local upper bounds.</span>
+<span class="sd">        Z: A `n x m x m`-dim tensor containing the defining points.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        2-element tuple containing:</span>
+
+<span class="sd">        - A new `n' x m`-dim tensor local upper bounds.</span>
+<span class="sd">        - A `n' x m x m`-dim tensor containing the defining points</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">new_pareto_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]):</span>
+        <span class="n">U</span><span class="p">,</span> <span class="n">Z</span> <span class="o">=</span> <span class="n">compute_local_upper_bounds</span><span class="p">(</span><span class="n">U</span><span class="o">=</span><span class="n">U</span><span class="p">,</span> <span class="n">Z</span><span class="o">=</span><span class="n">Z</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">new_pareto_Y</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">U</span><span class="p">,</span> <span class="n">Z</span></div>
+
+
+<div class="viewcode-block" id="compute_non_dominated_hypercell_bounds_2d"><a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.utils.compute_non_dominated_hypercell_bounds_2d">[docs]</a><span class="k">def</span> <span class="nf">compute_non_dominated_hypercell_bounds_2d</span><span class="p">(</span>
+    <span class="n">pareto_Y_sorted</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Compute an axis-aligned partitioning of the non-dominated space for 2 objectives.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        pareto_Y_sorted: A `(batch_shape) x n_pareto x 2`-dim tensor of pareto outcomes</span>
+<span class="sd">            that are sorted by the 0th dimension in increasing order. All points must be</span>
+<span class="sd">            better than the reference point.</span>
+<span class="sd">        ref_point: A `(batch_shape) x 2`-dim reference point.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `2 x (batch_shape) x n_pareto + 1 x m`-dim tensor of cell bounds.</span>
+<span class="sd">    """</span>
+    <span class="c1"># add boundary point to each front</span>
+    <span class="c1"># the boundary point is the extreme value in each outcome</span>
+    <span class="c1"># (a single coordinate of reference point)</span>
+    <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">pareto_Y_sorted</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">pareto_Y_sorted</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">expanded_boundary_point</span> <span class="o">=</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">view_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">))</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">expanded_shape</span> <span class="o">=</span> <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">expanded_boundary_point</span> <span class="o">=</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">expanded_shape</span><span class="p">)</span>
+
+    <span class="c1"># add the points (ref, y) and (x, ref) to the corresponding ends</span>
+    <span class="n">pareto_Y_sorted0</span><span class="p">,</span> <span class="n">pareto_Y_sorted1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">pareto_Y_sorted</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">expanded_boundary_point0</span><span class="p">,</span> <span class="n">expanded_boundary_point1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
+        <span class="n">expanded_boundary_point</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">left_end</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">expanded_boundary_point0</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="n">pareto_Y_sorted1</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">right_end</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">pareto_Y_sorted0</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">:,</span> <span class="p">:],</span> <span class="n">expanded_boundary_point1</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">front</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">left_end</span><span class="p">,</span> <span class="n">pareto_Y_sorted</span><span class="p">,</span> <span class="n">right_end</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="c1"># The top left corners of axis-aligned rectangles in dominated partitioning.</span>
+    <span class="c1"># These are the bottom left corners of the non-dominated partitioning</span>
+    <span class="n">front0</span><span class="p">,</span> <span class="n">front1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">front</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">bottom_lefts</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">front0</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="n">front1</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:,</span> <span class="p">:]],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">top_right_xs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">front0</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+                <span class="n">bottom_lefts</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span>
+                <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">),</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">front</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="n">front</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">top_rights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">top_right_xs</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+                <span class="n">bottom_lefts</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">]),</span>
+                <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">),</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">front</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="n">front</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">bottom_lefts</span><span class="p">,</span> <span class="n">top_rights</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="compute_dominated_hypercell_bounds_2d"><a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.utils.compute_dominated_hypercell_bounds_2d">[docs]</a><span class="k">def</span> <span class="nf">compute_dominated_hypercell_bounds_2d</span><span class="p">(</span>
+    <span class="n">pareto_Y_sorted</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Compute an axis-aligned partitioning of the dominated space for 2-objectives.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        pareto_Y_sorted: A `(batch_shape) x n_pareto x 2`-dim tensor of pareto outcomes</span>
+<span class="sd">            that are sorted by the 0th dimension in increasing order.</span>
+<span class="sd">        ref_point: A `2`-dim reference point.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `2 x (batch_shape) x n_pareto x m`-dim tensor of cell bounds.</span>
+<span class="sd">    """</span>
+    <span class="c1"># add boundary point to each front</span>
+    <span class="c1"># the boundary point is the extreme value in each outcome</span>
+    <span class="c1"># (a single coordinate of reference point)</span>
+    <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">pareto_Y_sorted</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">pareto_Y_sorted</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">expanded_boundary_point</span> <span class="o">=</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">view_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">))</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">expanded_shape</span> <span class="o">=</span> <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">expanded_boundary_point</span> <span class="o">=</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">expanded_shape</span><span class="p">)</span>
+
+    <span class="c1"># add the points (ref, y) and (x, ref) to the corresponding ends</span>
+    <span class="n">pareto_Y_sorted0</span><span class="p">,</span> <span class="n">pareto_Y_sorted1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">pareto_Y_sorted</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">expanded_boundary_point0</span><span class="p">,</span> <span class="n">expanded_boundary_point1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
+        <span class="n">expanded_boundary_point</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">left_end</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">expanded_boundary_point0</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="n">pareto_Y_sorted0</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">right_end</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">pareto_Y_sorted1</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="n">expanded_boundary_point1</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">front</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">left_end</span><span class="p">,</span> <span class="n">pareto_Y_sorted</span><span class="p">,</span> <span class="n">right_end</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="c1"># compute hypervolume by summing rectangles from min_x -&gt; max_x</span>
+    <span class="n">top_rights</span> <span class="o">=</span> <span class="n">front</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">bottom_lefts</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">front</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">expanded_boundary_point1</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">top_rights</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">bottom_lefts</span><span class="p">,</span> <span class="n">top_rights</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../../../index.html">Documentation overview</a><ul>
+<li><a href="../../../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.6.1/" class="nav-home"><img src="/v/0.6.1/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.6.1/docs/introduction">Introduction</a><a href="/v/0.6.1/docs/getting_started">Getting Started</a><a href="/v/0.6.1/tutorials/">Tutorials</a><a href="/v/0.6.1/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.6.1/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms Inc.</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.6.1/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

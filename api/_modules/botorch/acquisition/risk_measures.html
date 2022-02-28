@@ -25,7 +25,7 @@
 <div class="body" role="main">
 <h1>Source code for botorch.acquisition.risk_measures</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
@@ -50,6 +50,7 @@
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
+<span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">MCAcquisitionObjective</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
@@ -170,8 +171,12 @@
 <span class="sd">            A `sample_shape x batch_shape x q`-dim tensor of CVaR samples.</span>
 <span class="sd">        """</span>
         <span class="n">prepared_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-        <span class="n">sorted_samples</span> <span class="o">=</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
-        <span class="k">return</span> <span class="n">sorted_samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span> <span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span>
+            <span class="n">prepared_samples</span><span class="p">,</span>
+            <span class="n">k</span><span class="o">=</span><span class="n">prepared_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span><span class="p">,</span>
+            <span class="n">largest</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="VaR"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.VaR">[docs]</a><span class="k">class</span> <span class="nc">VaR</span><span class="p">(</span><span class="n">CVaR</span><span class="p">):</span>
@@ -182,6 +187,23 @@
 <span class="sd">    is commonly used in financial risk management, and it corresponds to the</span>
 <span class="sd">    `1 - alpha` quantile of a given random variable.</span>
 <span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">n_w</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Transform the posterior samples to samples of a risk measure.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alpha: The risk level, float in `(0.0, 1.0]`.</span>
+<span class="sd">            n_w: The size of the `w_set` to calculate the risk measure over.</span>
+<span class="sd">            weights: An optional `m`-dim tensor of weights for scalarizing</span>
+<span class="sd">                multi-objective samples before calculating the risk measure.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_w</span><span class="o">=</span><span class="n">n_w</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_q</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span> <span class="o">/</span> <span class="n">n_w</span>
 
 <div class="viewcode-block" id="VaR.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.VaR.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Calculate the VaR corresponding to the given samples.</span>
@@ -196,8 +218,20 @@
 <span class="sd">            A `sample_shape x batch_shape x q`-dim tensor of VaR samples.</span>
 <span class="sd">        """</span>
         <span class="n">prepared_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-        <span class="n">sorted_samples</span> <span class="o">=</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
-        <span class="k">return</span> <span class="n">sorted_samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span><span class="p">]</span></div></div>
+        <span class="c1"># this is equivalent to sorting along dim=-1 in descending order</span>
+        <span class="c1"># and taking the values at index self.alpha_idx. E.g.</span>
+        <span class="c1"># &gt;&gt;&gt; sorted_res = prepared_samples.sort(dim=-1, descending=True)</span>
+        <span class="c1"># &gt;&gt;&gt; sorted_res.values[..., self.alpha_idx]</span>
+        <span class="c1"># Using quantile is far more memory efficient since `torch.sort`</span>
+        <span class="c1"># produces values and indices tensors with shape</span>
+        <span class="c1"># `sample_shape x batch_shape x (q * n_w) x m`</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span>
+            <span class="nb">input</span><span class="o">=</span><span class="n">prepared_samples</span><span class="p">,</span>
+            <span class="n">q</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_q</span><span class="p">,</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">keepdim</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">interpolation</span><span class="o">=</span><span class="s2">"lower"</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="WorstCase"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.WorstCase">[docs]</a><span class="k">class</span> <span class="nc">WorstCase</span><span class="p">(</span><span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
@@ -240,7 +274,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../distributions.html">botorch.distributions</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
@@ -264,7 +297,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Meta Platforms Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

@@ -149,6 +149,105 @@ at the same training inputs.</p>
 </dd></dl>
 </dd></dl>
 </section>
+<section id="module-botorch.utils.dispatcher">
+<span id="dispatcher"></span><h2>Dispatcher<a class="headerlink" href="#module-botorch.utils.dispatcher" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.dispatcher.Dispatcher">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.dispatcher.</span></span><span class="sig-name descname"><span class="pre">Dispatcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">doc=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoder=&lt;class</span> <span class="pre">'type'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/dispatcher.html#Dispatcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.dispatcher.Dispatcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">multipledispatch.dispatcher.Dispatcher</span></code></p>
+<p>Clearing house for multiple dispatch functionality. This class extends
+<cite>&lt;multipledispatch.Dispatcher&gt;</cite> by: (i) generalizing the argument encoding
+convention during method lookup, (ii) implementing <cite>__getitem__</cite> as a dedicated
+method lookup function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – A string identifier for the <cite>Dispatcher</cite> instance.</p></li>
+<li><p><strong>doc</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – A docstring for the multiply dispatched method(s).</p></li>
+<li><p><strong>encoder</strong> (<em>Callable</em><em>[</em><em>Any</em><em>, </em><em>Type</em><em>]</em>) – A callable that individually transforms the arguments passed
+at runtime in order to construct the key used for method lookup as
+<cite>tuple(map(encoder, args))</cite>. Defaults to <cite>type</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.dispatcher.Dispatcher.dispatch">
+<span class="sig-name descname"><span class="pre">dispatch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">types</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/dispatcher.html#Dispatcher.dispatch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.dispatcher.Dispatcher.dispatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method lookup strategy. Checks for an exact match before traversing
+the set of registered methods according to the current ordering.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>types</strong> (<em>Type</em>) – A tuple of types that gets compared with the signatures
+of registered methods to determine compatibility.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The first method encountered with a matching signature.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Callable</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.dispatcher.Dispatcher.encode_args">
+<span class="sig-name descname"><span class="pre">encode_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/dispatcher.html#Dispatcher.encode_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.dispatcher.Dispatcher.encode_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts arguments into a tuple of types used during method lookup.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>Any</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Tuple[Type]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.dispatcher.Dispatcher.help">
+<span class="sig-name descname"><span class="pre">help</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/dispatcher.html#Dispatcher.help"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.dispatcher.Dispatcher.help" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints the retrieved method’s docstring.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.dispatcher.Dispatcher.source">
+<span class="sig-name descname"><span class="pre">source</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/dispatcher.html#Dispatcher.source"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.dispatcher.Dispatcher.source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints the retrieved method’s source types.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.dispatcher.Dispatcher.encoder">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">encoder</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Type</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.dispatcher.Dispatcher.encoder" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.dispatcher.Dispatcher.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#botorch.utils.dispatcher.Dispatcher.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.dispatcher.Dispatcher.funcs">
+<span class="sig-name descname"><span class="pre">funcs</span></span><a class="headerlink" href="#botorch.utils.dispatcher.Dispatcher.funcs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.dispatcher.Dispatcher.doc">
+<span class="sig-name descname"><span class="pre">doc</span></span><a class="headerlink" href="#botorch.utils.dispatcher.Dispatcher.doc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
 <section id="module-botorch.utils.low_rank">
 <span id="low-rank-cholesky-update-utils"></span><h2>Low-Rank Cholesky Update Utils<a class="headerlink" href="#module-botorch.utils.low_rank" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
@@ -639,14 +738,16 @@ This function will raise a ValueError if there is no such point.</p>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
-<dl class="simple">
-<dt>This method solves the following Linear Program:</dt><dd><p>min -s subject to A @ x &lt;= b - 2 * s, s &gt;= 0, A_eq @ x = b_eq</p>
-</dd>
-</dl>
+<p>This method solves the following Linear Program:</p>
+<blockquote>
+<div><p>min -s subject to A @ x &lt;= b - 2 * s, s &gt;= 0, A_eq @ x = b_eq</p>
+</div></blockquote>
+<p>In case the polytope is unbounded, then it will also constrain the slack
+variable <cite>s</cite> to <cite>s&lt;=1</cite>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.sampling.PolytopeSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">PolytopeSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">PolytopeSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Base class for samplers that sample points from a polytope.</p>
 <p>Initialize PolytopeSampler.</p>
@@ -660,10 +761,11 @@ the number of inequalities and <cite>d</cite> the dimension of the sample space.
 <li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Tensors <cite>(C, d)</cite> describing the equality constraints
 <cite>C @ x = d</cite>, where <cite>C</cite> is a <cite>n_eq_con x d</cite>-dim Tensor and <cite>d</cite> is a
 <cite>n_eq_con x 1</cite>-dim Tensor with <cite>n_eq_con</cite> the number of equalities.</p></li>
-<li><p><strong>interior_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>d_sample x 1</cite>-dim Tensor presenting a point in the
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>2 x d</cite>-dim tensor of box bounds, where <cite>inf</cite> (<cite>-inf</cite>) means
+that the respective dimension is unbounded above (below).</p></li>
+<li><p><strong>interior_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>d x 1</cite>-dim Tensor presenting a point in the
 (relative) interior of the polytope. If omitted, determined
 automatically by solving a Linear Program.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>2 x d</cite>-dim tensor of box bounds.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -713,7 +815,7 @@ This function will raise a ValueError if there is no such point.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>n x d_sample</cite> Tensor of samples from the polytope.</p>
+<dd class="field-even"><p>A <cite>n x d</cite> Tensor of samples from the polytope.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>torch.Tensor</p>
@@ -723,7 +825,7 @@ This function will raise a ValueError if there is no such point.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.sampling.HitAndRunPolytopeSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">HitAndRunPolytopeSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_burnin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#HitAndRunPolytopeSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.HitAndRunPolytopeSampler" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">HitAndRunPolytopeSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_burnin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#HitAndRunPolytopeSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.HitAndRunPolytopeSampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.utils.sampling.PolytopeSampler" title="botorch.utils.sampling.PolytopeSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.sampling.PolytopeSampler</span></code></a></p>
 <p>A sampler for sampling from a polyope using a hit-and-run algorithm.</p>
 <p>A sampler for sampling from a polyope using a hit-and-run algorithm.</p>
@@ -737,10 +839,11 @@ the number of inequalities and <cite>d</cite> the dimension of the sample space.
 <li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Tensors <cite>(C, d)</cite> describing the equality constraints
 <cite>C @ x = d</cite>, where <cite>C</cite> is a <cite>n_eq_con x d</cite>-dim Tensor and <cite>d</cite> is a
 <cite>n_eq_con x 1</cite>-dim Tensor with <cite>n_eq_con</cite> the number of equalities.</p></li>
-<li><p><strong>interior_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>d_sample x 1</cite>-dim Tensor presenting a point in the
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>2 x d</cite>-dim tensor of box bounds, where <cite>inf</cite> (<cite>-inf</cite>) means
+that the respective dimension is unbounded from above (below).</p></li>
+<li><p><strong>interior_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>d x 1</cite>-dim Tensor representing a point in the
 (relative) interior of the polytope. If omitted, determined
 automatically by solving a Linear Program.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>2 x d</cite>-dim tensor of box bounds.</p></li>
 <li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn in samples.</p></li>
 </ul>
 </dd>
@@ -760,7 +863,7 @@ automatically by solving a Linear Program.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>n x d_sample</cite> Tensor of samples from the polytope.</p>
+<dd class="field-even"><p>A <cite>n x d</cite> Tensor of samples from the polytope.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>torch.Tensor</p>
@@ -770,7 +873,7 @@ automatically by solving a Linear Program.</p></li>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.sampling.DelaunayPolytopeSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">DelaunayPolytopeSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#DelaunayPolytopeSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.DelaunayPolytopeSampler" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">DelaunayPolytopeSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#DelaunayPolytopeSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.DelaunayPolytopeSampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.utils.sampling.PolytopeSampler" title="botorch.utils.sampling.PolytopeSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.sampling.PolytopeSampler</span></code></a></p>
 <p>A polytope sampler using Delaunay triangulation.</p>
 <p>This sampler first enumerates the vertices of the constraint polytope and
@@ -797,10 +900,11 @@ the number of inequalities and <cite>d</cite> the dimension of the sample space.
 <li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Tensors <cite>(C, d)</cite> describing the equality constraints
 <cite>C @ x = d</cite>, where <cite>C</cite> is a <cite>n_eq_con x d</cite>-dim Tensor and <cite>d</cite> is a
 <cite>n_eq_con x 1</cite>-dim Tensor with <cite>n_eq_con</cite> the number of equalities.</p></li>
-<li><p><strong>interior_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>d_sample x 1</cite>-dim Tensor presenting a point in the
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>2 x d</cite>-dim tensor of box bounds, where <cite>inf</cite> (<cite>-inf</cite>) means
+that the respective dimension is unbounded from above (below).</p></li>
+<li><p><strong>interior_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>d x 1</cite>-dim Tensor representing a point in the
 (relative) interior of the polytope. If omitted, determined
 automatically by solving a Linear Program.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>2 x d</cite>-dim tensor of box bounds.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -824,7 +928,7 @@ An alternative is the <cite>HitAndRunPolytopeSampler</cite>.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>n x d_sample</cite> Tensor of samples from the polytope.</p>
+<dd class="field-even"><p>A <cite>n x d</cite> Tensor of samples from the polytope.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>torch.Tensor</p>
@@ -1205,7 +1309,7 @@ do a shape check but return the same mock samples.</p>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.testing.MockModel.posterior">
-<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.posterior" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.posterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
 <dl class="simple">
 <dt>Note: The input transforms should be applied here using</dt><dd><p><cite>self.transform_inputs(X)</cite> after the <cite>self.eval()</cite> call and before
@@ -1224,6 +1328,7 @@ Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add observation noise to the posterior.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>botorch.acquisition.objective.PosteriorTransform</em></a><em>]</em>) – An optional PosteriorTransform.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2774,14 +2879,12 @@ default value comes from <a class="reference internal" href="#knowles2005" id="i
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">botorch.utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="distributions.html">botorch.distributions</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
 <li><a href="index.html">Documentation overview</a><ul>
 <li>Previous: <a href="exceptions.html" title="previous chapter">botorch.exceptions</a></li>
-<li>Next: <a href="distributions.html" title="next chapter">botorch.distributions</a></li>
 </ul></li>
 </ul>
 </div>
@@ -2798,7 +2901,7 @@ default value comes from <a class="reference internal" href="#knowles2005" id="i
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Meta Platforms Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

@@ -25,7 +25,7 @@
 <div class="body" role="main">
 <h1>Source code for botorch.acquisition.objective</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
@@ -43,19 +43,52 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">scalarize_posterior</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
 <span class="kn">from</span> <span class="nn">botorch.utils</span> <span class="kn">import</span> <span class="n">apply_constraints</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
 
 <div class="viewcode-block" id="AcquisitionObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.AcquisitionObjective">[docs]</a><span class="k">class</span> <span class="nc">AcquisitionObjective</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for objectives."""</span>
+    <span class="sa">r</span><span class="sd">"""Abstract base class for objectives.</span>
 
+<span class="sd">    DEPRECATED - This will be removed in the next version.</span>
+<span class="sd">    """</span>
     <span class="o">...</span></div>
 
 
-<div class="viewcode-block" id="ScalarizedObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ScalarizedObjective">[docs]</a><span class="k">class</span> <span class="nc">ScalarizedObjective</span><span class="p">(</span><span class="n">AcquisitionObjective</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Affine objective to be used with analytic acquisition functions.</span>
+<div class="viewcode-block" id="PosteriorTransform"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.PosteriorTransform">[docs]</a><span class="k">class</span> <span class="nc">PosteriorTransform</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Abstract base class for objectives that transform the posterior."""</span>
+
+    <span class="n">scalarize</span><span class="p">:</span> <span class="nb">bool</span>  <span class="c1"># True if the transform reduces to single-output</span>
+
+<div class="viewcode-block" id="PosteriorTransform.evaluate"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.PosteriorTransform.evaluate">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate the transform on a set of outcomes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            Y: A `batch_shape x q x m`-dim tensor of outcomes.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x q' [x m']`-dim tensor of transformed outcomes.</span>
+<span class="sd">        """</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+
+<div class="viewcode-block" id="PosteriorTransform.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.PosteriorTransform.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Compute the transformed posterior.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            posterior: The posterior to be transformed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The transformed posterior object.</span>
+<span class="sd">        """</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+
+
+<div class="viewcode-block" id="ScalarizedPosteriorTransform"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ScalarizedPosteriorTransform">[docs]</a><span class="k">class</span> <span class="nc">ScalarizedPosteriorTransform</span><span class="p">(</span><span class="n">PosteriorTransform</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""An affine posterior transform for scalarizing multi-output posteriors.</span>
 
 <span class="sd">    For a Gaussian posterior at a single point (`q=1`) with mean `mu` and</span>
 <span class="sd">    covariance matrix `Sigma`, this yields a single-output posterior with mean</span>
@@ -65,12 +98,16 @@
 <span class="sd">        Example for a model with two outcomes:</span>
 
 <span class="sd">        &gt;&gt;&gt; weights = torch.tensor([0.5, 0.25])</span>
-<span class="sd">        &gt;&gt;&gt; objective = ScalarizedObjective(weights)</span>
-<span class="sd">        &gt;&gt;&gt; EI = ExpectedImprovement(model, best_f=0.1, objective=objective)</span>
+<span class="sd">        &gt;&gt;&gt; posterior_transform = ScalarizedPosteriorTransform(weights)</span>
+<span class="sd">        &gt;&gt;&gt; EI = ExpectedImprovement(</span>
+<span class="sd">        ... model, best_f=0.1, posterior_transform=posterior_transform</span>
+<span class="sd">        ... )</span>
 <span class="sd">    """</span>
 
+    <span class="n">scalarize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Affine objective.</span>
+        <span class="sa">r</span><span class="sd">"""Affine posterior transform.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            weights: A one-dimensional tensor with `m` elements representing the</span>
@@ -83,18 +120,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"weights"</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span>
 
-<div class="viewcode-block" id="ScalarizedObjective.evaluate"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ScalarizedObjective.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate the objective on a set of outcomes.</span>
+<div class="viewcode-block" id="ScalarizedPosteriorTransform.evaluate"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ScalarizedPosteriorTransform.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate the transform on a set of outcomes.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            Y: A `batch_shape x q x m`-dim tensor of outcomes.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `batch_shape x q`-dim tensor of objective values.</span>
+<span class="sd">            A `batch_shape x q`-dim tensor of transformed outcomes.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">+</span> <span class="n">Y</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span></div>
 
-<div class="viewcode-block" id="ScalarizedObjective.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ScalarizedObjective.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
+<div class="viewcode-block" id="ScalarizedPosteriorTransform.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ScalarizedPosteriorTransform.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Compute the posterior of the affine transformation.</span>
 
 <span class="sd">        Args:</span>
@@ -109,8 +146,28 @@
         <span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="MCAcquisitionObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.MCAcquisitionObjective">[docs]</a><span class="k">class</span> <span class="nc">MCAcquisitionObjective</span><span class="p">(</span><span class="n">AcquisitionObjective</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for MC-based objectives."""</span>
+<div class="viewcode-block" id="ScalarizedObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ScalarizedObjective">[docs]</a><span class="k">class</span> <span class="nc">ScalarizedObjective</span><span class="p">(</span><span class="n">ScalarizedPosteriorTransform</span><span class="p">,</span> <span class="n">AcquisitionObjective</span><span class="p">):</span>
+    <span class="sd">"""DEPRECATED - Use ScalarizedPosteriorTransform instead."""</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">"ScalarizedObjective is deprecated and will be removed in the next "</span>
+            <span class="s2">"version. Use ScalarizedPosteriorTransform instead."</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MCAcquisitionObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.MCAcquisitionObjective">[docs]</a><span class="k">class</span> <span class="nc">MCAcquisitionObjective</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Abstract base class for MC-based objectives.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        _verify_output_shape: If True and `X` is given, check that the q-batch</span>
+<span class="sd">            shape of the objectives agrees with that of X.</span>
+<span class="sd">        _is_mo: A boolean denoting whether the objectives are multi-output.</span>
+<span class="sd">    """</span>
+
+    <span class="n">_verify_output_shape</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">_is_mo</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
 <div class="viewcode-block" id="MCAcquisitionObjective.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.MCAcquisitionObjective.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -126,14 +183,34 @@
 <span class="sd">            Tensor: A `sample_shape x batch_shape x q`-dim Tensor of objective</span>
 <span class="sd">            values (assuming maximization).</span>
 
-<span class="sd">        This method is usually not called directly, but via the objectives</span>
+<span class="sd">        This method is usually not called directly, but via the objectives.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; # `__call__` method:</span>
 <span class="sd">            &gt;&gt;&gt; samples = sampler(posterior)</span>
 <span class="sd">            &gt;&gt;&gt; outcome = mc_obj(samples)</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># q-batch dimension is at -1 for single-output objectives and at</span>
+        <span class="c1"># -2 for multi-output objectives.</span>
+        <span class="n">q_batch_idx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_mo</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">X</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verify_output_shape</span>
+            <span class="ow">and</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">q_batch_idx</span><span class="p">]</span> <span class="o">!=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"The q-batch shape of the objective values does not agree with "</span>
+                <span class="sa">f</span><span class="s2">"the q-batch shape of X. Got </span><span class="si">{</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">q_batch_idx</span><span class="p">]</span><span class="si">}</span><span class="s2"> and "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">. This may happen if you used a one-to-many input "</span>
+                <span class="s2">"transform but forgot to use a corresponding objective."</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span></div>
 
 
 <div class="viewcode-block" id="IdentityMCObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.IdentityMCObjective">[docs]</a><span class="k">class</span> <span class="nc">IdentityMCObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">):</span>
@@ -345,7 +422,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../distributions.html">botorch.distributions</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
@@ -369,7 +445,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Meta Platforms Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

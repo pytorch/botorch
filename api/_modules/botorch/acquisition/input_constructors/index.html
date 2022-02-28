@@ -25,7 +25,7 @@
 <div class="body" role="main">
 <h1>Source code for botorch.acquisition.input_constructors</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
@@ -35,17 +35,30 @@
 <span class="sd">constructors programmatically from a consistent input format.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.analytic</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ConstrainedExpectedImprovement</span><span class="p">,</span>
     <span class="n">ExpectedImprovement</span><span class="p">,</span>
+    <span class="n">NoisyExpectedImprovement</span><span class="p">,</span>
     <span class="n">PosteriorMean</span><span class="p">,</span>
     <span class="n">ProbabilityOfImprovement</span><span class="p">,</span>
     <span class="n">UpperConfidenceBound</span><span class="p">,</span>
-    <span class="n">ConstrainedExpectedImprovement</span><span class="p">,</span>
-    <span class="n">NoisyExpectedImprovement</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.cost_aware</span> <span class="kn">import</span> <span class="n">InverseCostWeightedUtility</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.fixed_feature</span> <span class="kn">import</span> <span class="n">FixedFeatureAcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.knowledge_gradient</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">qKnowledgeGradient</span><span class="p">,</span>
+    <span class="n">qMultiFidelityKnowledgeGradient</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.max_value_entropy_search</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">qMaxValueEntropy</span><span class="p">,</span>
+    <span class="n">qMultiFidelityMaxValueEntropy</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">qExpectedImprovement</span><span class="p">,</span>
@@ -56,10 +69,12 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExpectedHypervolumeImprovement</span><span class="p">,</span>
+    <span class="n">MCMultiOutputObjective</span><span class="p">,</span>
     <span class="n">qExpectedHypervolumeImprovement</span><span class="p">,</span>
     <span class="n">qNoisyExpectedHypervolumeImprovement</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.objective</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AnalyticMultiOutputObjective</span><span class="p">,</span>
     <span class="n">IdentityAnalyticMultiOutputObjective</span><span class="p">,</span>
     <span class="n">IdentityMCMultiOutputObjective</span><span class="p">,</span>
 <span class="p">)</span>
@@ -67,10 +82,19 @@
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AcquisitionObjective</span><span class="p">,</span>
     <span class="n">IdentityMCObjective</span><span class="p">,</span>
+    <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
     <span class="n">ScalarizedObjective</span><span class="p">,</span>
+    <span class="n">PosteriorTransform</span><span class="p">,</span>
+    <span class="n">ScalarizedPosteriorTransform</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">expand_trace_observations</span><span class="p">,</span>
+    <span class="n">project_to_target_fidelity</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.models.cost</span> <span class="kn">import</span> <span class="n">AffineFidelityCostModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.constraints</span> <span class="kn">import</span> <span class="n">get_outcome_constraint_transforms</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">TrainingData</span>
@@ -140,6 +164,40 @@
     <span class="n">ACQF_INPUT_CONSTRUCTOR_REGISTRY</span><span class="p">[</span><span class="n">acqf_cls</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_constructor</span>
 
 
+<span class="c1"># ------------------------- Deprecation Helpers ------------------------- #</span>
+
+
+<span class="k">def</span> <span class="nf">_deprecate_objective_arg</span><span class="p">(</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">posterior_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">posterior_transform</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"Got both a non-MC objective (DEPRECATED) and a posterior "</span>
+                <span class="s2">"transform. Use only a posterior transform instead."</span>
+            <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">"The `objective` argument to AnalyticAcquisitionFunctions is deprecated "</span>
+            <span class="s2">"and will be removed in the next version. Use `posterior_transform` "</span>
+            <span class="s2">"instead."</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">ScalarizedObjective</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Analytic acquisition functions only support ScalarizedObjective "</span>
+                <span class="s2">"(DEPRECATED) type objectives."</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ScalarizedPosteriorTransform</span><span class="p">(</span>
+            <span class="n">weights</span><span class="o">=</span><span class="n">objective</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">objective</span><span class="o">.</span><span class="n">offset</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+
 <span class="c1"># --------------------- Input argument constructors --------------------- #</span>
 
 
@@ -147,7 +205,7 @@
 <span class="k">def</span> <span class="nf">construct_inputs_analytic_base</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
     <span class="sa">r</span><span class="sd">"""Construct kwargs for basic analytic acquisition functions.</span>
@@ -156,19 +214,26 @@
 <span class="sd">        model: The model to be used in the acquisition function.</span>
 <span class="sd">        training_data: A TrainingData object contraining the model's</span>
 <span class="sd">            training data. `best_f` is extracted from here.</span>
-<span class="sd">        objective: The objective to in the acquisition function.</span>
+<span class="sd">        posterior_transform: The posterior transform to be used in the</span>
+<span class="sd">            acquisition function.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A dict mapping kwarg names of the constructor to values.</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span> <span class="s2">"objective"</span><span class="p">:</span> <span class="n">objective</span><span class="p">}</span></div>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
+        <span class="s2">"posterior_transform"</span><span class="p">:</span> <span class="n">_deprecate_objective_arg</span><span class="p">(</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"objective"</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="construct_inputs_best_f"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_best_f">[docs]</a><span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">ExpectedImprovement</span><span class="p">,</span> <span class="n">ProbabilityOfImprovement</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">construct_inputs_best_f</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -178,17 +243,26 @@
 <span class="sd">        model: The model to be used in the acquisition function.</span>
 <span class="sd">        training_data: A TrainingData object contraining the model's</span>
 <span class="sd">            training data. `best_f` is extracted from here.</span>
-<span class="sd">        objective: The objective to in the acquisition function.</span>
+<span class="sd">        posterior_transform: The posterior transform to be used in the</span>
+<span class="sd">            acquisition function.</span>
 <span class="sd">        maximize: If True, consider the problem a maximization problem.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A dict mapping kwarg names of the constructor to values.</span>
 <span class="sd">    """</span>
     <span class="n">base_inputs</span> <span class="o">=</span> <span class="n">construct_inputs_analytic_base</span><span class="p">(</span>
-        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">best_f</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-        <span class="s2">"best_f"</span><span class="p">,</span> <span class="n">get_best_f_analytic</span><span class="p">(</span><span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">)</span>
+        <span class="s2">"best_f"</span><span class="p">,</span>
+        <span class="n">get_best_f_analytic</span><span class="p">(</span>
+            <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"objective"</span><span class="p">),</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">base_inputs</span><span class="p">,</span> <span class="s2">"best_f"</span><span class="p">:</span> <span class="n">best_f</span><span class="p">,</span> <span class="s2">"maximize"</span><span class="p">:</span> <span class="n">maximize</span><span class="p">}</span></div>
 
@@ -197,7 +271,7 @@
 <span class="k">def</span> <span class="nf">construct_inputs_ucb</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">beta</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
     <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -208,7 +282,8 @@
 <span class="sd">        model: The model to be used in the acquisition function.</span>
 <span class="sd">        training_data: A TrainingData object contraining the model's</span>
 <span class="sd">            training data. `best_f` is extracted from here.</span>
-<span class="sd">        objective: The objective to in the acquisition function.</span>
+<span class="sd">        posterior_transform: The posterior transform to be used in the</span>
+<span class="sd">            acquisition function.</span>
 <span class="sd">        beta: Either a scalar or a one-dim tensor with `b` elements (batch mode)</span>
 <span class="sd">            representing the trade-off parameter between mean and covariance</span>
 <span class="sd">        maximize: If True, consider the problem a maximization problem.</span>
@@ -217,7 +292,10 @@
 <span class="sd">        A dict mapping kwarg names of the constructor to values.</span>
 <span class="sd">    """</span>
     <span class="n">base_inputs</span> <span class="o">=</span> <span class="n">construct_inputs_analytic_base</span><span class="p">(</span>
-        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">base_inputs</span><span class="p">,</span> <span class="s2">"beta"</span><span class="p">:</span> <span class="n">beta</span><span class="p">,</span> <span class="s2">"maximize"</span><span class="p">:</span> <span class="n">maximize</span><span class="p">}</span></div>
 
@@ -295,7 +373,8 @@
 <span class="k">def</span> <span class="nf">construct_inputs_mc_base</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -307,7 +386,9 @@
 <span class="sd">        training_data: A TrainingData object contraining the model's</span>
 <span class="sd">            training data. Used e.g. to extract inputs such as `best_f`</span>
 <span class="sd">            for expected improvement acquisition functions.</span>
-<span class="sd">        objective: The objective to in the acquisition function.</span>
+<span class="sd">        objective: The objective to be used in the acquisition function.</span>
+<span class="sd">        posterior_transform: The posterior transform to be used in the</span>
+<span class="sd">            acquisition function.</span>
 <span class="sd">        X_pending: A `batch_shape, m x d`-dim Tensor of `m` design points</span>
 <span class="sd">            that have points that have been submitted for function evaluation</span>
 <span class="sd">            but have not yet been evaluated.</span>
@@ -320,6 +401,7 @@
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
         <span class="s2">"objective"</span><span class="p">:</span> <span class="n">objective</span><span class="p">,</span>
+        <span class="s2">"posterior_transform"</span><span class="p">:</span> <span class="n">posterior_transform</span><span class="p">,</span>
         <span class="s2">"X_pending"</span><span class="p">:</span> <span class="n">X_pending</span><span class="p">,</span>
         <span class="s2">"sampler"</span><span class="p">:</span> <span class="n">sampler</span><span class="p">,</span>
     <span class="p">}</span></div>
@@ -329,7 +411,8 @@
 <span class="k">def</span> <span class="nf">construct_inputs_qEI</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -341,7 +424,9 @@
 <span class="sd">        training_data: A TrainingData object contraining the model's</span>
 <span class="sd">            training data. Used e.g. to extract inputs such as `best_f`</span>
 <span class="sd">            for expected improvement acquisition functions.</span>
-<span class="sd">        objective: The objective to in the acquisition function.</span>
+<span class="sd">        objective: The objective to be used in the acquisition function.</span>
+<span class="sd">        posterior_transform: The posterior transform to be used in the</span>
+<span class="sd">            acquisition function.</span>
 <span class="sd">        X_pending: A `m x d`-dim Tensor of `m` design points that have been</span>
 <span class="sd">            submitted for function evaluation but have not yet been evaluated.</span>
 <span class="sd">            Concatenated into X upon forward call.</span>
@@ -355,13 +440,19 @@
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
         <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
         <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="c1"># TODO: Dedup handling of this here and in the constructor (maybe via a</span>
     <span class="c1"># shared classmethod doing this)</span>
     <span class="n">best_f</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-        <span class="s2">"best_f"</span><span class="p">,</span> <span class="n">get_best_f_mc</span><span class="p">(</span><span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">)</span>
+        <span class="s2">"best_f"</span><span class="p">,</span>
+        <span class="n">get_best_f_mc</span><span class="p">(</span>
+            <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">base_inputs</span><span class="p">,</span> <span class="s2">"best_f"</span><span class="p">:</span> <span class="n">best_f</span><span class="p">}</span></div>
 
@@ -370,7 +461,8 @@
 <span class="k">def</span> <span class="nf">construct_inputs_qNEI</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">X_baseline</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -385,7 +477,9 @@
 <span class="sd">            training data. Used e.g. to extract inputs such as `best_f`</span>
 <span class="sd">            for expected improvement acquisition functions. Only block-</span>
 <span class="sd">            design training data currently supported.</span>
-<span class="sd">        objective: The objective to in the acquisition function.</span>
+<span class="sd">        objective: The objective to be used in the acquisition function.</span>
+<span class="sd">        posterior_transform: The posterior transform to be used in the</span>
+<span class="sd">            acquisition function.</span>
 <span class="sd">        X_pending: A `m x d`-dim Tensor of `m` design points that have been</span>
 <span class="sd">            submitted for function evaluation but have not yet been evaluated.</span>
 <span class="sd">            Concatenated into X upon forward call.</span>
@@ -405,6 +499,7 @@
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
         <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
         <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
     <span class="p">)</span>
@@ -423,7 +518,8 @@
 <span class="k">def</span> <span class="nf">construct_inputs_qPI</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">tau</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
@@ -437,7 +533,9 @@
 <span class="sd">        training_data: A TrainingData object contraining the model's</span>
 <span class="sd">            training data. Used e.g. to extract inputs such as `best_f`</span>
 <span class="sd">            for expected improvement acquisition functions.</span>
-<span class="sd">        objective: The objective to in the acquisition function.</span>
+<span class="sd">        objective: The objective to be used in the acquisition function.</span>
+<span class="sd">        posterior_transform: The posterior transform to be used in the</span>
+<span class="sd">            acquisition function.</span>
 <span class="sd">        X_pending: A `m x d`-dim Tensor of `m` design points that have been</span>
 <span class="sd">            submitted for function evaluation but have not yet been evaluated.</span>
 <span class="sd">            Concatenated into X upon forward call.</span>
@@ -457,6 +555,7 @@
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
         <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
         <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
     <span class="p">)</span>
@@ -475,7 +574,8 @@
 <span class="k">def</span> <span class="nf">construct_inputs_qUCB</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
@@ -488,7 +588,9 @@
 <span class="sd">        training_data: A TrainingData object contraining the model's</span>
 <span class="sd">            training data. Used e.g. to extract inputs such as `best_f`</span>
 <span class="sd">            for expected improvement acquisition functions.</span>
-<span class="sd">        objective: The objective to in the acquisition function.</span>
+<span class="sd">        objective: The objective to be used in the acquisition function.</span>
+<span class="sd">        posterior_transform: The posterior transform to be used in the</span>
+<span class="sd">            acquisition function.</span>
 <span class="sd">        X_pending: A `m x d`-dim Tensor of `m` design points that have been</span>
 <span class="sd">            submitted for function evaluation but have not yet been evaluated.</span>
 <span class="sd">            Concatenated into X upon forward call.</span>
@@ -503,6 +605,7 @@
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
         <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
         <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
     <span class="p">)</span>
@@ -523,7 +626,7 @@
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
     <span class="n">objective_thresholds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AnalyticMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
     <span class="sa">r</span><span class="sd">"""Construct kwargs for `ExpectedHypervolumeImprovement` constructor."""</span>
@@ -573,7 +676,7 @@
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
     <span class="n">objective_thresholds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
     <span class="sa">r</span><span class="sd">"""Construct kwargs for `qExpectedHypervolumeImprovement` constructor."""</span>
@@ -627,7 +730,7 @@
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
     <span class="n">objective_thresholds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
     <span class="sa">r</span><span class="sd">"""Construct kwargs for `qNoisyExpectedHypervolumeImprovement` constructor."""</span>
@@ -665,15 +768,212 @@
     <span class="p">}</span></div>
 
 
+<div class="viewcode-block" id="construct_inputs_qMES"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qMES">[docs]</a><span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qMaxValueEntropy</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">construct_inputs_qMES</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">candidate_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Construct kwargs for `qMaxValueEntropy` constructor."""</span>
+    <span class="n">inputs_mc</span> <span class="o">=</span> <span class="n">construct_inputs_mc_base</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">_kw</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+    <span class="n">_rvs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">candidate_size</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">),</span> <span class="o">**</span><span class="n">_kw</span><span class="p">)</span>
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">_kw</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="o">**</span><span class="n">inputs_mc</span><span class="p">,</span>
+        <span class="s2">"candidate_set"</span><span class="p">:</span> <span class="n">_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">_rvs</span><span class="p">,</span>
+        <span class="s2">"maximize"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"maximize"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="construct_inputs_mf_base"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_mf_base">[docs]</a><span class="k">def</span> <span class="nf">construct_inputs_mf_base</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
+    <span class="n">target_fidelities</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">fidelity_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">cost_intercept</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">num_trace_observations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">ignore</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Construct kwargs for a multifidetlity acquisition function's constructor."""</span>
+    <span class="k">if</span> <span class="n">fidelity_weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fidelity_weights</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="p">:</span> <span class="mf">1.0</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">target_fidelities</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">target_fidelities</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">fidelity_weights</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">"Must provide the same indices for target_fidelities "</span>
+            <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="nb">set</span><span class="p">(</span><span class="n">target_fidelities</span><span class="p">)</span><span class="si">}</span><span class="s2">) and fidelity_weights "</span>
+            <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="nb">set</span><span class="p">(</span><span class="n">fidelity_weights</span><span class="p">)</span><span class="si">}</span><span class="s2">)."</span>
+        <span class="p">)</span>
+
+    <span class="n">cost_aware_utility</span> <span class="o">=</span> <span class="n">InverseCostWeightedUtility</span><span class="p">(</span>
+        <span class="n">cost_model</span><span class="o">=</span><span class="n">AffineFidelityCostModel</span><span class="p">(</span>
+            <span class="n">fidelity_weights</span><span class="o">=</span><span class="n">fidelity_weights</span><span class="p">,</span> <span class="n">fixed_cost</span><span class="o">=</span><span class="n">cost_intercept</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"target_fidelities"</span><span class="p">:</span> <span class="n">target_fidelities</span><span class="p">,</span>
+        <span class="s2">"cost_aware_utility"</span><span class="p">:</span> <span class="n">cost_aware_utility</span><span class="p">,</span>
+        <span class="s2">"expand"</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">X</span><span class="p">:</span> <span class="n">expand_trace_observations</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
+            <span class="n">fidelity_dims</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">target_fidelities</span><span class="p">),</span>
+            <span class="n">num_trace_obs</span><span class="o">=</span><span class="n">num_trace_observations</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="s2">"project"</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">X</span><span class="p">:</span> <span class="n">project_to_target_fidelity</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">target_fidelities</span><span class="o">=</span><span class="n">target_fidelities</span>
+        <span class="p">),</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="construct_inputs_qKG"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qKG">[docs]</a><span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qKnowledgeGradient</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">construct_inputs_qKG</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">target_fidelities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">num_fantasies</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Construct kwargs for `qKnowledgeGradient` constructor."""</span>
+
+    <span class="n">inputs_mc</span> <span class="o">=</span> <span class="n">construct_inputs_mc_base</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+        <span class="n">device</span><span class="o">=</span><span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">_</span><span class="p">,</span> <span class="n">current_value</span> <span class="o">=</span> <span class="n">optimize_objective</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">_bounds</span><span class="o">.</span><span class="n">t</span><span class="p">(),</span>
+        <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">target_fidelities</span><span class="o">=</span><span class="n">target_fidelities</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="o">**</span><span class="n">inputs_mc</span><span class="p">,</span>
+        <span class="s2">"num_fantasies"</span><span class="p">:</span> <span class="n">num_fantasies</span><span class="p">,</span>
+        <span class="s2">"current_value"</span><span class="p">:</span> <span class="n">current_value</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="construct_inputs_qMFKG"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qMFKG">[docs]</a><span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qMultiFidelityKnowledgeGradient</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">construct_inputs_qMFKG</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">target_fidelities</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Construct kwargs for `qMultiFidelityKnowledgeGradient` constructor."""</span>
+
+    <span class="n">inputs_mf</span> <span class="o">=</span> <span class="n">construct_inputs_mf_base</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
+        <span class="n">target_fidelities</span><span class="o">=</span><span class="n">target_fidelities</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">inputs_kg</span> <span class="o">=</span> <span class="n">construct_inputs_qKG</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">inputs_mf</span><span class="p">,</span> <span class="o">**</span><span class="n">inputs_kg</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="construct_inputs_qMFMES"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qMFMES">[docs]</a><span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qMultiFidelityMaxValueEntropy</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">construct_inputs_qMFMES</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">target_fidelities</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Construct kwargs for `qMultiFidelityMaxValueEntropy` constructor."""</span>
+    <span class="n">inputs_mf</span> <span class="o">=</span> <span class="n">construct_inputs_mf_base</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
+        <span class="n">target_fidelities</span><span class="o">=</span><span class="n">target_fidelities</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">inputs_qmes</span> <span class="o">=</span> <span class="n">construct_inputs_qMES</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+        <span class="n">device</span><span class="o">=</span><span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">_</span><span class="p">,</span> <span class="n">current_value</span> <span class="o">=</span> <span class="n">optimize_objective</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">_bounds</span><span class="o">.</span><span class="n">t</span><span class="p">(),</span>
+        <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+        <span class="n">target_fidelities</span><span class="o">=</span><span class="n">target_fidelities</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="o">**</span><span class="n">inputs_mf</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">inputs_qmes</span><span class="p">,</span>
+        <span class="s2">"current_value"</span><span class="p">:</span> <span class="n">current_value</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+    <span class="p">}</span></div>
+
+
 <div class="viewcode-block" id="get_best_f_analytic"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.get_best_f_analytic">[docs]</a><span class="k">def</span> <span class="nf">get_best_f_analytic</span><span class="p">(</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">training_data</span><span class="o">.</span><span class="n">is_block_design</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Currently only block designs are supported."</span><span class="p">)</span>
     <span class="n">Y</span> <span class="o">=</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Y</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">ScalarizedObjective</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">objective</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">posterior_transform</span> <span class="o">=</span> <span class="n">_deprecate_objective_arg</span><span class="p">(</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"objective"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">posterior_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">posterior_transform</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
     <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="s2">"Analytic acquisition functions currently only work with "</span>
@@ -684,11 +984,25 @@
 
 <div class="viewcode-block" id="get_best_f_mc"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.get_best_f_mc">[docs]</a><span class="k">def</span> <span class="nf">get_best_f_mc</span><span class="p">(</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">training_data</span><span class="o">.</span><span class="n">is_block_design</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Currently only block designs are supported."</span><span class="p">)</span>
     <span class="n">Y</span> <span class="o">=</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Y</span>
+    <span class="n">posterior_transform</span> <span class="o">=</span> <span class="n">_deprecate_objective_arg</span><span class="p">(</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span><span class="p">)</span>
+        <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">posterior_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># retain the original tensor dimension since objective expects explicit</span>
+        <span class="c1"># output dimension.</span>
+        <span class="n">Y_dim</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">posterior_transform</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">Y_dim</span><span class="p">:</span>
+            <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
@@ -697,7 +1011,115 @@
                 <span class="s2">"acquisition functions)."</span>
             <span class="p">)</span>
         <span class="n">objective</span> <span class="o">=</span> <span class="n">IdentityMCObjective</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">objective</span><span class="p">(</span><span class="n">training_data</span><span class="o">.</span><span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span></div>
+    <span class="k">return</span> <span class="n">objective</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span></div>
+
+
+<div class="viewcode-block" id="optimize_objective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.optimize_objective">[docs]</a><span class="k">def</span> <span class="nf">optimize_objective</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">linear_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">target_fidelities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">qmc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">mc_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+    <span class="n">seed_inner</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer_options</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sequential</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">ignore</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Optimize an objective under the given model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: The model to be used in the objective.</span>
+<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.</span>
+<span class="sd">        q: The cardinality of input sets on which the objective is to be evaluated.</span>
+<span class="sd">        objective: The objective to optimize.</span>
+<span class="sd">        posterior_transform: The posterior transform to be used in the</span>
+<span class="sd">            acquisition function.</span>
+<span class="sd">        linear_constraints: A tuple of (A, b). Given `k` linear constraints on a</span>
+<span class="sd">            `d`-dimensional space, `A` is `k x d` and `b` is `k x 1` such that</span>
+<span class="sd">            `A x &lt;= b`. (Not used by single task models).</span>
+<span class="sd">        fixed_features: A dictionary of feature assignments `{feature_index: value}` to</span>
+<span class="sd">            hold fixed during generation.</span>
+<span class="sd">        target_fidelities: A dictionary mapping input feature indices to fidelity</span>
+<span class="sd">            values. Defaults to `{-1: 1.0}`.</span>
+<span class="sd">        qmc: Toggle for enabling (qmc=1) or disabling (qmc=0) use of Quasi Monte Carlo.</span>
+<span class="sd">        mc_samples: Integer number of samples used to estimate Monte Carlo objectives.</span>
+<span class="sd">        seed_inner: Integer seed used to initialize the sampler passed to MCObjective.</span>
+<span class="sd">        optimizer_options: Table used to lookup keyword arguments for the optimizer.</span>
+<span class="sd">        post_processing_func: A function that post-processes an optimization</span>
+<span class="sd">            result appropriately (i.e. according to `round-trip` transformations).</span>
+<span class="sd">        batch_initial_conditions: A Tensor of initial values for the optimizer.</span>
+<span class="sd">        sequential: If False, uses joint optimization, otherwise uses sequential</span>
+<span class="sd">            optimization.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple containing the best input locations and corresponding objective values.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">optimizer_options</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">optimizer_options</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sampler_cls</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span> <span class="k">if</span> <span class="n">qmc</span> <span class="k">else</span> <span class="n">IIDNormalSampler</span>
+        <span class="n">acq_function</span> <span class="o">=</span> <span class="n">qSimpleRegret</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler_cls</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">mc_samples</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed_inner</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">acq_function</span> <span class="o">=</span> <span class="n">PosteriorMean</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fixed_features</span><span class="p">:</span>
+        <span class="n">acq_function</span> <span class="o">=</span> <span class="n">FixedFeatureAcquisitionFunction</span><span class="p">(</span>
+            <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+            <span class="n">d</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">columns</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">fixed_features</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+            <span class="n">values</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">fixed_features</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+        <span class="p">)</span>
+        <span class="n">free_feature_dims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">))</span> <span class="o">-</span> <span class="n">fixed_features</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">free_feature_bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[:,</span> <span class="n">free_feature_dims</span><span class="p">]</span>  <span class="c1"># (2, d' &lt;= d)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">free_feature_bounds</span> <span class="o">=</span> <span class="n">bounds</span>
+
+    <span class="k">if</span> <span class="n">linear_constraints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">inequality_constraints</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">A</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">linear_constraints</span>
+        <span class="n">inequality_constraints</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">k</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+            <span class="n">indicies</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">as_tuple</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+            <span class="n">coefficients</span> <span class="o">=</span> <span class="o">-</span><span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">indicies</span><span class="p">]</span>
+            <span class="n">rhs</span> <span class="o">=</span> <span class="o">-</span><span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="n">inequality_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">indicies</span><span class="p">,</span> <span class="n">coefficients</span><span class="p">,</span> <span class="n">rhs</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+        <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">free_feature_bounds</span><span class="p">,</span>
+        <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span>
+        <span class="n">num_restarts</span><span class="o">=</span><span class="n">optimizer_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_restarts"</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span>
+        <span class="n">raw_samples</span><span class="o">=</span><span class="n">optimizer_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"raw_samples"</span><span class="p">,</span> <span class="mi">1024</span><span class="p">),</span>
+        <span class="n">options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"batch_limit"</span><span class="p">:</span> <span class="n">optimizer_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"batch_limit"</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+            <span class="s2">"maxiter"</span><span class="p">:</span> <span class="n">optimizer_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"maxiter"</span><span class="p">,</span> <span class="mi">200</span><span class="p">),</span>
+            <span class="s2">"nonnegative"</span><span class="p">:</span> <span class="n">optimizer_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"nonnegative"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s2">"method"</span><span class="p">:</span> <span class="n">optimizer_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"method"</span><span class="p">,</span> <span class="s2">"L-BFGS-B"</span><span class="p">),</span>
+        <span class="p">},</span>
+        <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+        <span class="n">fixed_features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># handled inside the acquisition function</span>
+        <span class="n">post_processing_func</span><span class="o">=</span><span class="n">post_processing_func</span><span class="p">,</span>
+        <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="n">batch_initial_conditions</span><span class="p">,</span>
+        <span class="n">return_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">sequential</span><span class="o">=</span><span class="n">sequential</span><span class="p">,</span>
+    <span class="p">)</span></div>
 </pre></div>
 </div>
 </div>
@@ -721,7 +1143,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../distributions.html">botorch.distributions</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
@@ -745,7 +1166,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Meta Platforms Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {
