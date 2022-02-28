@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Callable
+from typing import Optional, Callable
 from unittest import mock
 
 import torch
@@ -16,10 +16,15 @@ from botorch.acquisition.max_value_entropy_search import (
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
 )
+from botorch.acquisition.objective import (
+    ScalarizedPosteriorTransform,
+    PosteriorTransform,
+)
+from botorch.exceptions.errors import UnsupportedError
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
-from gpytorch.distributions import MultivariateNormal
+from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from torch import Tensor
 
 
@@ -31,7 +36,12 @@ class MESMockModel(MockModel):
         self._num_outputs = num_outputs
         self._batch_shape = torch.Size() if batch_shape is None else batch_shape
 
-    def posterior(self, X: Tensor, observation_noise: bool = False) -> MockPosterior:
+    def posterior(
+        self,
+        X: Tensor,
+        observation_noise: bool = False,
+        posterior_transform: Optional[PosteriorTransform] = None,
+    ) -> MockPosterior:
         m_shape = X.shape[:-1]
         r_shape = list(X.shape[:-2]) + [1, 1]
         mvn = MultivariateNormal(
@@ -40,7 +50,14 @@ class MESMockModel(MockModel):
                 m_shape[-1], dtype=X.dtype, device=X.device
             ).repeat(r_shape),
         )
-        return GPyTorchPosterior(mvn)
+        if self.num_outputs > 1:
+            mvn = mvn = MultitaskMultivariateNormal.from_independent_mvns(
+                mvns=[mvn] * self.num_outputs
+            )
+        posterior = GPyTorchPosterior(mvn)
+        if posterior_transform is not None:
+            return posterior_transform(posterior)
+        return posterior
 
     def forward(self, X: Tensor) -> MultivariateNormal:
         return self.posterior(X).mvn
@@ -91,10 +108,10 @@ class TestMaxValueEntropySearch(BotorchTestCase):
                 num_mv_samples=10,
             )
 
-            # test error when number of outputs > 1
+            # test error when number of outputs > 1 and no transform is given.
             mm = MESMockModel()
             mm._num_outputs = 2
-            with self.assertRaises(NotImplementedError):
+            with self.assertRaises(UnsupportedError):
                 qMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
 
             # test with X_pending is None
@@ -139,6 +156,19 @@ class TestMaxValueEntropySearch(BotorchTestCase):
                 )
                 patch_f.assert_called_once()
 
+            # Test with multi-output model w/ transform.
+            mm = MESMockModel(num_outputs=2)
+            pt = ScalarizedPosteriorTransform(weights=torch.ones(2, dtype=dtype))
+            for gumbel in (True, False):
+                qMVE = qMaxValueEntropy(
+                    mm,
+                    candidate_set,
+                    num_mv_samples=10,
+                    use_gumbel=gumbel,
+                    posterior_transform=pt,
+                )
+                self.assertEqual(qMVE(X).shape, torch.Size([1]))
+
     def test_q_lower_bound_max_value_entropy(self):
         for dtype in (torch.float, torch.double):
             torch.manual_seed(7)
@@ -155,10 +185,10 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             with self.assertRaises(NotImplementedError):
                 qLowerBoundMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
 
-            # test error when number of outputs > 1
+            # test error when number of outputs > 1 and no transform
             mm = MESMockModel()
             mm._num_outputs = 2
-            with self.assertRaises(NotImplementedError):
+            with self.assertRaises(UnsupportedError):
                 qLowerBoundMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
             mm._num_outputs = 1
 
@@ -193,6 +223,20 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             )
             self.assertEqual(qGIBBON(X).shape, torch.Size([1]))
 
+            # Test with multi-output model w/ transform.
+            mm = MESMockModel(num_outputs=2)
+            pt = ScalarizedPosteriorTransform(weights=torch.ones(2, dtype=dtype))
+            qGIBBON = qLowerBoundMaxValueEntropy(
+                mm,
+                candidate_set,
+                num_mv_samples=10,
+                use_gumbel=False,
+                X_pending=torch.rand(1, 2, device=self.device, dtype=dtype),
+                posterior_transform=pt,
+            )
+            with self.assertRaisesRegex(UnsupportedError, "X_pending is not None"):
+                qGIBBON(X)
+
     def test_q_multi_fidelity_max_value_entropy(self):
         for dtype in (torch.float, torch.double):
             torch.manual_seed(7)
@@ -224,6 +268,18 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             X = torch.rand(1, 2, device=self.device, dtype=dtype)
             self.assertEqual(qMF_MVE(X).shape, torch.Size([1]))
 
+            # Test with multi-output model w/ transform.
+            mm = MESMockModel(num_outputs=2)
+            pt = ScalarizedPosteriorTransform(weights=torch.ones(2, dtype=dtype))
+            qMF_MVE = qMultiFidelityMaxValueEntropy(
+                model=mm,
+                candidate_set=candidate_set,
+                num_mv_samples=10,
+                posterior_transform=pt,
+            )
+            X = torch.rand(1, 2, device=self.device, dtype=dtype)
+            self.assertEqual(qMF_MVE(X).shape, torch.Size([1]))
+
     def test_sample_max_value_Gumbel(self):
         for dtype in (torch.float, torch.double):
             torch.manual_seed(7)
@@ -232,10 +288,26 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             samples = _sample_max_value_Gumbel(mm, candidate_set, 5)
             self.assertEqual(samples.shape, torch.Size([5, 3]))
 
+            # Test with multi-output model w/ transform.
+            mm = MESMockModel(num_outputs=2)
+            pt = ScalarizedPosteriorTransform(weights=torch.ones(2, dtype=dtype))
+            samples = _sample_max_value_Gumbel(
+                mm, candidate_set, 5, posterior_transform=pt
+            )
+            self.assertEqual(samples.shape, torch.Size([5, 3]))
+
     def test_sample_max_value_Thompson(self):
         for dtype in (torch.float, torch.double):
             torch.manual_seed(7)
             mm = MESMockModel()
             candidate_set = torch.rand(3, 10, 2, dtype=dtype)
             samples = _sample_max_value_Thompson(mm, candidate_set, 5)
+            self.assertEqual(samples.shape, torch.Size([5, 3]))
+
+            # Test with multi-output model w/ transform.
+            mm = MESMockModel(num_outputs=2)
+            pt = ScalarizedPosteriorTransform(weights=torch.ones(2, dtype=dtype))
+            samples = _sample_max_value_Thompson(
+                mm, candidate_set, 5, posterior_transform=pt
+            )
             self.assertEqual(samples.shape, torch.Size([5, 3]))

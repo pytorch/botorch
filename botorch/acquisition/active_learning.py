@@ -66,7 +66,9 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
             sampler: The sampler used for drawing fantasy samples. In the basic setting
                 of a standard GP (default) this is a dummy, since the variance of the
                 model after conditioning does not actually depend on the sampled values.
-            posterior_transform: A PosteriorTransform. Required for multi-output models.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
             X_pending: A `n' x d`-dim Tensor of `n'` design points that have
                 points that have been submitted for function evaluation but
                 have not yet been evaluated.
