@@ -113,6 +113,8 @@ class qMultiObjectiveMaxValueEntropy(
             self._sample_max_values()
         else:
             self.set_X_pending(X_pending)
+        # This avoids attribute errors in qMaxValueEntropy code.
+        self.posterior_transform = None
 
     def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
         r"""Set pending points.

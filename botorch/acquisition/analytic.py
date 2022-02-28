@@ -41,7 +41,9 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
 
         Args:
             model: A fitted single-outcome model.
-            posterior_transform: A PosteriorTransform. Required for multi-output models.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
         """
         super().__init__(model=model)
         posterior_transform = self._deprecate_acqf_objective(
@@ -99,7 +101,9 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
             model: A fitted single-outcome model.
             best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
                 the best function value observed so far (assumed noiseless).
-            posterior_transform: A PosteriorTransform. Required for multi-output models.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
         super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
@@ -164,7 +168,9 @@ class PosteriorMean(AnalyticAcquisitionFunction):
         Args:
             model: A fitted single-outcome GP model (must be in batch mode if
                 candidate sets X will be)
-            posterior_transform: A PosteriorTransform. Required for multi-output models.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
             maximize: If True, consider the problem a maximization problem. Note
                 that if `maximize=False`, the posterior mean is negated. As a
                 consequence `optimize_acqf(PosteriorMean(gp, maximize=False))`
@@ -225,7 +231,9 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
             model: A fitted single-outcome model.
             best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
                 the best function value observed so far (assumed noiseless).
-            posterior_transform: A PosteriorTransform. Required for multi-output models.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
         super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
@@ -293,7 +301,9 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
                 candidate sets X will be)
             beta: Either a scalar or a one-dim tensor with `b` elements (batch mode)
                 representing the trade-off parameter between mean and covariance
-            posterior_transform: A PosteriorTransform. Required for multi-output models.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
         """
         super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
@@ -636,7 +646,9 @@ class ScalarizedPosteriorMean(AnalyticAcquisitionFunction):
         Args:
             model: A fitted single-outcome model.
             weights: A tensor of shape `q` for scalarization.
-            posterior_transform: A PosteriorTransform. Required for multi-output models.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
         """
         super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
         self.register_buffer("weights", weights.unsqueeze(dim=0))

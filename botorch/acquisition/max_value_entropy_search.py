@@ -39,6 +39,8 @@ import numpy as np
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.cost_aware import CostAwareUtility, InverseCostWeightedUtility
+from botorch.acquisition.objective import PosteriorTransform
+from botorch.exceptions.errors import UnsupportedError
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.model import Model
 from botorch.models.utils import check_no_nans
@@ -68,6 +70,7 @@ class MaxValueBase(AcquisitionFunction, ABC):
         self,
         model: Model,
         num_mv_samples: int,
+        posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = True,
         X_pending: Optional[Tensor] = None,
     ) -> None:
@@ -76,17 +79,18 @@ class MaxValueBase(AcquisitionFunction, ABC):
         Args:
             model: A fitted single-outcome model.
             num_mv_samples: Number of max value samples.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
             X_pending: A `m x d`-dim Tensor of `m` design points that have been
                 submitted for function evaluation but have not yet been evaluated.
         """
         super().__init__(model=model)
 
-        # Multi-output GP models are not currently supported
-        if model.num_outputs != 1:
-            raise NotImplementedError(
-                "Multi-output models are not yet supported by "
-                f"`{self.__class__.__name__}`."
+        if posterior_transform is None and model.num_outputs != 1:
+            raise UnsupportedError(
+                "Must specify a posterior transform when using a multi-output model."
             )
 
         # Batched GP models are not currently supported
@@ -96,10 +100,11 @@ class MaxValueBase(AcquisitionFunction, ABC):
             batch_shape = torch.Size()
         if len(batch_shape) > 0:
             raise NotImplementedError(
-                "Batched GP models (e.g. fantasized models) are not yet "
+                "Batched GP models (e.g., fantasized models) are not yet "
                 f"supported by `{self.__class__.__name__}`."
             )
         self.num_mv_samples = num_mv_samples
+        self.posterior_transform = posterior_transform
         self.maximize = maximize
         self.weight = 1.0 if maximize else -1.0
         self.set_X_pending(X_pending)
@@ -116,7 +121,11 @@ class MaxValueBase(AcquisitionFunction, ABC):
             A `batch_shape`-dim Tensor of MVE values at the given design points `X`.
         """
         # Compute the posterior, posterior mean, variance and std
-        posterior = self.model.posterior(X.unsqueeze(-3), observation_noise=False)
+        posterior = self.model.posterior(
+            X.unsqueeze(-3),
+            observation_noise=False,
+            posterior_transform=self.posterior_transform,
+        )
         # batch_shape x num_fantasies x (m) x 1
         mean = self.weight * posterior.mean.squeeze(-1).squeeze(-1)
         variance = posterior.variance.clamp_min(CLAMP_LB).view_as(mean)
@@ -193,6 +202,7 @@ class DiscreteMaxValueBase(MaxValueBase):
         model: Model,
         candidate_set: Tensor,
         num_mv_samples: int = 10,
+        posterior_transform: Optional[PosteriorTransform] = None,
         use_gumbel: bool = True,
         maximize: bool = True,
         X_pending: Optional[Tensor] = None,
@@ -206,6 +216,9 @@ class DiscreteMaxValueBase(MaxValueBase):
                 discretize the design space. Max values are sampled from the
                 (joint) model posterior over these points.
             num_mv_samples: Number of max value samples.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
             use_gumbel: If True, use Gumbel approximation to sample the max values.
             maximize: If True, consider the problem a maximization problem.
             X_pending: A `m x d`-dim Tensor of `m` design points that have been
@@ -231,6 +244,7 @@ class DiscreteMaxValueBase(MaxValueBase):
         super().__init__(
             model=model,
             num_mv_samples=num_mv_samples,
+            posterior_transform=posterior_transform,
             maximize=maximize,
             X_pending=X_pending,
         )
@@ -275,6 +289,7 @@ class DiscreteMaxValueBase(MaxValueBase):
                 model=self.model,
                 candidate_set=candidate_set,
                 num_samples=self.num_mv_samples,
+                posterior_transform=self.posterior_transform,
                 maximize=self.maximize,
             )
 
@@ -303,6 +318,7 @@ class qMaxValueEntropy(DiscreteMaxValueBase):
         num_fantasies: int = 16,
         num_mv_samples: int = 10,
         num_y_samples: int = 128,
+        posterior_transform: Optional[PosteriorTransform] = None,
         use_gumbel: bool = True,
         maximize: bool = True,
         X_pending: Optional[Tensor] = None,
@@ -321,6 +337,9 @@ class qMaxValueEntropy(DiscreteMaxValueBase):
                 complexity, wall time and memory). Ignored if `X_pending` is `None`.
             num_mv_samples: Number of max value samples.
             num_y_samples: Number of posterior samples at specific design point `X`.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
             use_gumbel: If True, use Gumbel approximation to sample the max values.
             maximize: If True, consider the problem a maximization problem.
             X_pending: A `m x d`-dim Tensor of `m` design points that have been
@@ -332,6 +351,7 @@ class qMaxValueEntropy(DiscreteMaxValueBase):
             model=model,
             candidate_set=candidate_set,
             num_mv_samples=num_mv_samples,
+            posterior_transform=posterior_transform,
             use_gumbel=use_gumbel,
             maximize=maximize,
             X_pending=X_pending,
@@ -397,7 +417,11 @@ class qMaxValueEntropy(DiscreteMaxValueBase):
             given design points `X` (`num_fantasies=1` for non-fantasized models).
         """
         # compute the std_m, variance_m with noisy observation
-        posterior_m = self.model.posterior(X.unsqueeze(-3), observation_noise=True)
+        posterior_m = self.model.posterior(
+            X.unsqueeze(-3),
+            observation_noise=True,
+            posterior_transform=self.posterior_transform,
+        )
         # batch_shape x num_fantasies x (m) x (1 + num_trace_observations)
         mean_m = self.weight * posterior_m.mean.squeeze(-1)
         # batch_shape x num_fantasies x (m) x (1 + num_trace_observations)
@@ -489,7 +513,7 @@ class qLowerBoundMaxValueEntropy(DiscreteMaxValueBase):
     the mutual information between max values and a batch of candidate points `X`.
     See [Moss2021gibbon]_ for a detailed discussion.
 
-    The model must be single-outcome.
+    The model must be single-outcome, unless using a PosteriorTransform.
     q > 1 is supported through greedy batch filling.
 
     Example:
@@ -527,7 +551,9 @@ class qLowerBoundMaxValueEntropy(DiscreteMaxValueBase):
         # doing posterior computations twice
 
         # compute the mean_m, variance_m with noisy observation
-        posterior_m = self.model.posterior(X, observation_noise=True)
+        posterior_m = self.model.posterior(
+            X, observation_noise=True, posterior_transform=self.posterior_transform
+        )
         mean_m = self.weight * posterior_m.mean.squeeze(-1)
         # batch_shape x 1
         variance_m = posterior_m.variance.clamp_min(CLAMP_LB).squeeze(-1)
@@ -584,17 +610,29 @@ class qLowerBoundMaxValueEntropy(DiscreteMaxValueBase):
         # it provides only a translation of the acqusition function surface
         # and can thus be ignored.
 
+        if self.posterior_transform is not None:
+            raise UnsupportedError(
+                "qLowerBoundMaxValueEntropy does not support PosteriorTransforms"
+                "when X_pending is not None."
+            )
+
         X_batches = torch.cat(
             [X, self.X_pending.unsqueeze(0).repeat(X.shape[0], 1, 1)], 1
         )
         # batch_shape x (1 + m) x d
+        # NOTE: This is the blocker for supporting posterior transforms.
+        # We would have to process this MVN, applying whatever operations
+        # are typically applied for the corresponding posterior, then applying
+        # the posterior transform onto the resulting object.
         V = self.model(X_batches)
         # Evaluate terms required for A
         A = V.lazy_covariance_matrix[:, 0, 1:].unsqueeze(1)
         # batch_shape x 1 x m
         # Evaluate terms required for B
         B = self.model.posterior(
-            self.X_pending, observation_noise=True
+            self.X_pending,
+            observation_noise=True,
+            posterior_transform=self.posterior_transform,
         ).mvn.covariance_matrix.unsqueeze(0)
         # 1 x m x m
 
@@ -616,8 +654,8 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
     for a detailed discussion of the basic ideas on multi-fidelity MES
     (note that this implementation is somewhat different).
 
-    The model must be single-outcome. The batch case `q > 1` is supported
-    through cyclic optimization and fantasies.
+    The model must be single-outcome, unless using a PosteriorTransform.
+    The batch case `q > 1` is supported through cyclic optimization and fantasies.
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
@@ -634,6 +672,7 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         num_fantasies: int = 16,
         num_mv_samples: int = 10,
         num_y_samples: int = 128,
+        posterior_transform: Optional[PosteriorTransform] = None,
         use_gumbel: bool = True,
         maximize: bool = True,
         X_pending: Optional[Tensor] = None,
@@ -657,6 +696,9 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
                 is not `None`.
             num_mv_samples: Number of max value samples.
             num_y_samples: Number of posterior samples at specific design point `X`.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
             use_gumbel: If True, use Gumbel approximation to sample the max values.
             maximize: If True, consider the problem a maximization problem.
             X_pending: A `m x d`-dim Tensor of `m` design points that have been
@@ -678,9 +720,10 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
             num_fantasies=num_fantasies,
             num_mv_samples=num_mv_samples,
             num_y_samples=num_y_samples,
-            X_pending=X_pending,
+            posterior_transform=posterior_transform,
             use_gumbel=use_gumbel,
             maximize=maximize,
+            X_pending=X_pending,
         )
 
         if cost_aware_utility is None:
@@ -731,7 +774,9 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
 
         # Compute the posterior, posterior mean, variance without noise
         # `_m` and `_M` in the var names means the current and the max fidelity.
-        posterior = self.model.posterior(X_all, observation_noise=False)
+        posterior = self.model.posterior(
+            X_all, observation_noise=False, posterior_transform=self.posterior_transform
+        )
         mean_M = self.weight * posterior.mean[..., -1, 0]  # batch_shape x num_fantasies
         variance_M = posterior.variance[..., -1, 0].clamp_min(CLAMP_LB)
         # get the covariance between the low fidelities and max fidelity
@@ -751,7 +796,11 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
 
 
 def _sample_max_value_Thompson(
-    model: Model, candidate_set: Tensor, num_samples: int, maximize: bool = True
+    model: Model,
+    candidate_set: Tensor,
+    num_samples: int,
+    posterior_transform: Optional[PosteriorTransform] = None,
+    maximize: bool = True,
 ) -> Tensor:
     """Samples the max values by discrete Thompson sampling.
 
@@ -762,12 +811,15 @@ def _sample_max_value_Thompson(
         candidate_set: A `n x d` Tensor including `n` candidate points to
             discretize the design space.
         num_samples: Number of max value samples.
+        posterior_transform: A PosteriorTransform. If using a multi-output model,
+            a PosteriorTransform that transforms the multi-output posterior into a
+            single-output posterior is required.
         maximize: If True, consider the problem a maximization problem.
 
     Returns:
         A `num_samples x num_fantasies` Tensor of posterior max value samples.
     """
-    posterior = model.posterior(candidate_set)
+    posterior = model.posterior(candidate_set, posterior_transform=posterior_transform)
     weight = 1.0 if maximize else -1.0
     samples = weight * posterior.rsample(torch.Size([num_samples])).squeeze(-1)
     # samples is num_samples x (num_fantasies) x n
@@ -779,7 +831,11 @@ def _sample_max_value_Thompson(
 
 
 def _sample_max_value_Gumbel(
-    model: Model, candidate_set: Tensor, num_samples: int, maximize: bool = True
+    model: Model,
+    candidate_set: Tensor,
+    num_samples: int,
+    posterior_transform: Optional[PosteriorTransform] = None,
+    maximize: bool = True,
 ) -> Tensor:
     """Samples the max values by Gumbel approximation.
 
@@ -790,13 +846,16 @@ def _sample_max_value_Gumbel(
         candidate_set: A `n x d` Tensor including `n` candidate points to
             discretize the design space.
         num_samples: Number of max value samples.
+        posterior_transform: A PosteriorTransform. If using a multi-output model,
+            a PosteriorTransform that transforms the multi-output posterior into a
+            single-output posterior is required.
         maximize: If True, consider the problem a maximization problem.
 
     Returns:
         A `num_samples x num_fantasies` Tensor of posterior max value samples.
     """
     # define the approximate CDF for the max value under the independence assumption
-    posterior = model.posterior(candidate_set)
+    posterior = model.posterior(candidate_set, posterior_transform=posterior_transform)
     weight = 1.0 if maximize else -1.0
     mu = weight * posterior.mean
     sigma = posterior.variance.clamp_min(1e-8).sqrt()
