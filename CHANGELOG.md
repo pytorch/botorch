@@ -2,6 +2,40 @@
 
 The release log for BoTorch.
 
+## [0.6.1] - Feb 28, 2022
+
+#### New Features
+* Add `Standardize` input transform (#1053).
+* Low-rank Cholesky updates for NEI (#1056).
+* Add support for non-linear input constraints (#1067).
+* New MOO problems: MW7 (#1077), disc brake (#1078), penicillin (#1079), RobustToy (#1082), GMM (#1083).
+
+#### Other Changes
+* Add `Dispatcher` (#1009).
+* Modify qNEHVI to support deterministic models (#1026).
+* Store tensor attributes of input transforms as buffers (#1035).
+* Modify NEHVI to support MTGPs (#1037).
+* Make `Normalize` input transform input column-specific (#1047).
+* Improve `find_interior_point` (#1049).
+* Remove deprecated `botorch.distributions` module (#1061).
+* Avoid costly application of posterior transform in Kronecker & HOGP models (#1076).
+* Support heteroscedastic perturbations in `InputPerturbations` (#1088).
+
+#### Performance Improvements
+* Make risk measures more memory efficient (#1034).
+
+#### Bug Fixes
+* Properly handle empty `fixed_features` in optimization (#1029).
+* Fix missing weights in `VaR` risk measure (#1038).
+* Fix `find_interior_point` for negative variables & allow unbounded problems (#1045).
+* Filter out indefinite bounds in constraint utilities (#1048).
+* Make non-interleaved base samples use intuitive shape (#1057).
+* Pad small diagonalization with zeros for `KroneckerMultitaskGP` (#1071).
+* Disable learning of bounds in `preprocess_transform` (#1089).
+* Catch runtime errors with ill-conditioned covar (#1095).
+* Fix `compare_mc_analytic_acquisition` tutorial (#1099).
+
+
 ## [0.6.0] - Dec 8, 2021
 
 #### Compatibility
