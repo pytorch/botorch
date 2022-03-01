@@ -136,7 +136,6 @@ batch_candidates, batch_acq_values = gen_candidates_torch(
     lower_bounds=bounds[0],
     upper_bounds=bounds[1],
     optimizer=torch.optim.Adam,
-    verbose=False,
     options={"maxiter": 500},
 )
 new_point_torch_Adam = get_best_candidates(
@@ -167,7 +166,6 @@ batch_candidates, batch_acq_values = gen_candidates_torch(
     lower_bounds=bounds[0],
     upper_bounds=bounds[1],
     optimizer=torch.optim.SGD,
-    verbose=False,
     options={"maxiter": 500},
 )
 new_point_torch_SGD = get_best_candidates(

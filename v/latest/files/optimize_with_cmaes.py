@@ -3,7 +3,7 @@
 
 # ## Optimize acquisition functions using CMA-ES
 # 
-# In this tutorial, we show how to use an external optimizer (in this case [CMA-ES](https://en.wikipedia.org/wiki/CMA-ES)) for optimizing BoTorch acquisition functions. CMA-ES is a zero-th order optimizer, meaning that it only uses function evaluations and does not require gradient information. This is of course very useful if gradient informatiom about the function to be optimized is unavailable. 
+# In this tutorial, we show how to use an external optimizer (in this case [CMA-ES](https://en.wikipedia.org/wiki/CMA-ES)) for optimizing BoTorch acquisition functions. CMA-ES is a zero-th order optimizer, meaning that it only uses function evaluations and does not require gradient information. This is of course very useful if gradient information about the function to be optimized is unavailable. 
 # 
 # In BoTorch, we typically do have gradient information available (thanks, autograd!). One is also generally better off using this information, rather than just ignoring it. However, for certain custom models or acquisition functions, we may not be able to backprop through the acquisition function and/or model. In such instances, using a zero-th order optimizer is appropriate.
 # 
