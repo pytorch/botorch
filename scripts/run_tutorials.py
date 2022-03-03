@@ -52,7 +52,8 @@ def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
     script = parse_ipynb(tutorial)
     tic = time.time()
     print(f"Running tutorial {tutorial.name}.")
-    run_out = run_script(script, env={"SMOKE_TEST": "true"})
+    smoke_test = "true" if smoke_test else "false"
+    run_out = run_script(script, env={"SMOKE_TEST": smoke_test})
     try:
         run_out.check_returncode()
     except CalledProcessError:
