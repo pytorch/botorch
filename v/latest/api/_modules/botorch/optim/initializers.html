@@ -25,7 +25,7 @@
 <div class="body" role="main">
 <h1>Source code for botorch.optim.initializers</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
@@ -54,8 +54,8 @@
 <span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="n">is_nonnegative</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">BotorchWarning</span><span class="p">,</span>
     <span class="n">BadInitialCandidatesWarning</span><span class="p">,</span>
+    <span class="n">BotorchWarning</span><span class="p">,</span>
     <span class="n">SamplingWarning</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
@@ -64,10 +64,10 @@
 <span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">batched_multinomial</span><span class="p">,</span>
     <span class="n">draw_sobol_samples</span><span class="p">,</span>
-    <span class="n">manual_seed</span><span class="p">,</span>
     <span class="n">get_polytope_samples</span><span class="p">,</span>
+    <span class="n">manual_seed</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">unnormalize</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">standardize</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">standardize</span><span class="p">,</span> <span class="n">unnormalize</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Normal</span>
 <span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
@@ -420,7 +420,8 @@
     <span class="c1"># compute maximizer of the current value function</span>
     <span class="n">value_function</span> <span class="o">=</span> <span class="n">_get_value_function</span><span class="p">(</span>
         <span class="n">model</span><span class="o">=</span><span class="n">current_model</span><span class="p">,</span>
-        <span class="n">objective</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="s2">"objective"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">posterior_transform</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">posterior_transform</span><span class="p">,</span>
         <span class="n">sampler</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="s2">"sampler"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
         <span class="n">project</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="s2">"project"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
     <span class="p">)</span>

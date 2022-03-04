@@ -32,7 +32,7 @@
 <p>Methods for optimizing acquisition functions.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.optimize.optimize_acqf">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_initial_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_best_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequential</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nonlinear_inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_initial_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_best_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequential</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a set of candidates via multi-start optimization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -51,6 +51,14 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>]</em><em>]</em>) – A list of callables with that represent
+non-linear inequality constraints of the form <cite>callable(x) &gt;= 0</cite>. Each
+callable is expected to take a <cite>(num_restarts) x q x d</cite>-dim tensor as an
+input and return a <cite>(num_restarts) x q</cite>-dim tensor with the constraint
+values. The constraints will later be passed to SLSQP. You need to pass in
+<cite>batch_initial_conditions</cite> in this case. Using non-linear inequality
+constraints also requires that <cite>batch_limit</cite> is set to 1, which will be
+done automatically if not specified in <cite>options</cite>.</p></li>
 <li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A map <cite>{feature_index: value}</cite> for features that
 should be fixed to a particular value during generation.</p></li>
 <li><p><strong>post_processing_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Tensor</em><em>]</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – A function that post-processes an optimization
@@ -1074,6 +1082,34 @@ element of the q-batch, for each of the 3 t-batches:</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.parameter_constraints.make_scipy_nonlinear_inequality_constraints">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.parameter_constraints.</span></span><span class="sig-name descname"><span class="pre">make_scipy_nonlinear_inequality_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nonlinear_inequality_constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_np_wrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/parameter_constraints.html#make_scipy_nonlinear_inequality_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.parameter_constraints.make_scipy_nonlinear_inequality_constraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate Scipy nonlinear inequality constraints from callables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>]</em>) – List of callables for the nonlinear
+inequality constraints. Each callable represents a constraint of the
+form &gt;= 0 and takes a torch tensor of size (p x q x dim) and returns a
+torch tensor of size (p x q).</p></li>
+<li><p><strong>f_np_wrapper</strong> (<em>Callable</em>) – A wrapper function that given a constraint evaluates the value
+and gradient (using autograd) of a numpy input and returns both the
+objective and the gradient.</p></li>
+<li><p><strong>x0</strong> (<em>torch.Tensor</em>) – The starting point for SLSQP. We return this starting point in (rare)
+cases where SLSQP fails and thus require it to be feasible.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of dictionaries containing callables for constraint function
+values and Jacobians and a string indicating the associated constraint
+type (“eq”, “ineq”), as expected by <cite>scipy.minimize</cite>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List[Dict]</p>
 </dd>
 </dl>
 </dd></dl>

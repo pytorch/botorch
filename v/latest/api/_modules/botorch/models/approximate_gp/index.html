@@ -25,7 +25,7 @@
 <div class="body" role="main">
 <h1>Source code for botorch.models.approximate_gp</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
@@ -54,6 +54,7 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -74,13 +75,15 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">gpytorch.means</span> <span class="kn">import</span> <span class="n">ConstantMean</span><span class="p">,</span> <span class="n">Mean</span>
 <span class="kn">from</span> <span class="nn">gpytorch.models</span> <span class="kn">import</span> <span class="n">ApproximateGP</span>
+<span class="kn">from</span> <span class="nn">gpytorch.module</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
+<span class="kn">from</span> <span class="nn">gpytorch.utils.memoize</span> <span class="kn">import</span> <span class="n">clear_cache_hook</span>
 <span class="kn">from</span> <span class="nn">gpytorch.variational</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_VariationalDistribution</span><span class="p">,</span>
+    <span class="n">_VariationalStrategy</span><span class="p">,</span>
     <span class="n">CholeskyVariationalDistribution</span><span class="p">,</span>
     <span class="n">IndependentMultitaskVariationalStrategy</span><span class="p">,</span>
     <span class="n">VariationalStrategy</span><span class="p">,</span>
-    <span class="n">_VariationalDistribution</span><span class="p">,</span>
-    <span class="n">_VariationalStrategy</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
@@ -205,10 +208,11 @@
         <span class="c1"># We use the model subclass wrapper to deal with input / outcome transforms.</span>
         <span class="c1"># The number of outputs will be correct here due to the check in</span>
         <span class="c1"># SingleTaskVariationalGP.</span>
-        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">input_batch_shape</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">aug_batch_shape</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">input_batch_shape</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">((</span><span class="n">num_outputs</span><span class="p">,))</span> <span class="o">+</span> <span class="n">batch_shape</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
+            <span class="n">aug_batch_shape</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">((</span><span class="n">num_outputs</span><span class="p">,))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">aug_batch_shape</span>
 
         <span class="k">if</span> <span class="n">mean_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">mean_module</span> <span class="o">=</span> <span class="n">ConstantMean</span><span class="p">(</span><span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
@@ -237,27 +241,17 @@
                 <span class="c1"># as a heuristic</span>
                 <span class="n">inducing_points</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.25</span> <span class="o">*</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
 
-            <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-                <span class="n">train_train_kernel</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">train_train_kernel</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
-                    <span class="n">train_train_kernel</span> <span class="o">=</span> <span class="n">train_train_kernel</span><span class="o">.</span><span class="n">evaluate_kernel</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="n">need_to_repeat_over_batch</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">need_to_repeat_over_batch</span> <span class="o">=</span> <span class="kc">False</span>
-
-                <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">_pivoted_cholesky_init</span><span class="p">(</span>
-                    <span class="n">train_X</span><span class="p">,</span> <span class="n">train_train_kernel</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="n">inducing_points</span>
-                <span class="p">)</span>
-
-                <span class="k">if</span> <span class="n">need_to_repeat_over_batch</span><span class="p">:</span>
-                    <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">inducing_points</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-                    <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">inducing_points</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
-                        <span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="o">*</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">inducing_points</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
-                    <span class="p">)</span>
+            <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">_select_inducing_points</span><span class="p">(</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
+                <span class="n">covar_module</span><span class="o">=</span><span class="n">covar_module</span><span class="p">,</span>
+                <span class="n">num_inducing</span><span class="o">=</span><span class="n">inducing_points</span><span class="p">,</span>
+                <span class="n">input_batch_shape</span><span class="o">=</span><span class="n">input_batch_shape</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">variational_distribution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">variational_distribution</span> <span class="o">=</span> <span class="n">CholeskyVariationalDistribution</span><span class="p">(</span>
-                <span class="n">num_inducing_points</span><span class="o">=</span><span class="n">inducing_points</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span>
+                <span class="n">num_inducing_points</span><span class="o">=</span><span class="n">inducing_points</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
+                <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="n">variational_strategy</span> <span class="o">=</span> <span class="n">variational_strategy</span><span class="p">(</span>
@@ -275,7 +269,6 @@
                 <span class="n">task_dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">variational_strategy</span><span class="o">=</span><span class="n">variational_strategy</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span> <span class="o">=</span> <span class="n">mean_module</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">covar_module</span>
 
@@ -362,7 +355,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="n">num_outputs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-        <span class="n">aug_batch_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span>
+        <span class="n">aug_batch_shape</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">aug_batch_shape</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_outputs</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">aug_batch_shape</span>
@@ -410,7 +403,112 @@
         <span class="k">if</span> <span class="n">train_Y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_targets</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SingleTaskVariationalGP.init_inducing_points"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.SingleTaskVariationalGP.init_inducing_points">[docs]</a>    <span class="k">def</span> <span class="nf">init_inducing_points</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Reinitialize the inducing point locations in-place with the current kernel</span>
+<span class="sd">        applied to `inputs`.</span>
+<span class="sd">        The variational distribution and variational strategy caches are reset.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            inputs: (\*batch_shape, n, d)-dim input data tensor.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (\*batch_shape, m, d)-dim tensor of selected inducing point locations.</span>
+<span class="sd">        """</span>
+        <span class="n">var_strat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">variational_strategy</span>
+        <span class="n">clear_cache_hook</span><span class="p">(</span><span class="n">var_strat</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">var_strat</span><span class="p">,</span> <span class="s2">"base_variational_strategy"</span><span class="p">):</span>
+            <span class="n">var_strat</span> <span class="o">=</span> <span class="n">var_strat</span><span class="o">.</span><span class="n">base_variational_strategy</span>
+            <span class="n">clear_cache_hook</span><span class="p">(</span><span class="n">var_strat</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">num_inducing</span> <span class="o">=</span> <span class="n">var_strat</span><span class="o">.</span><span class="n">inducing_points</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">_select_inducing_points</span><span class="p">(</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
+                <span class="n">covar_module</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">covar_module</span><span class="p">,</span>
+                <span class="n">num_inducing</span><span class="o">=</span><span class="n">num_inducing</span><span class="p">,</span>
+                <span class="n">input_batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">var_strat</span><span class="o">.</span><span class="n">inducing_points</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">inducing_points</span><span class="p">)</span>
+            <span class="n">var_strat</span><span class="o">.</span><span class="n">variational_params_initialized</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">inducing_points</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_select_inducing_points</span><span class="p">(</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">covar_module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+    <span class="n">num_inducing</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">input_batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Utility function that evaluates a kernel at given inputs and selects inducing point</span>
+<span class="sd">    locations based on the pivoted Cholesky heuristic.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        inputs: A (*batch_shape, n, d)-dim input data tensor.</span>
+<span class="sd">        covar_module: GPyTorch Module returning a LazyTensor kernel matrix.</span>
+<span class="sd">        num_inducing: The maximun number (m) of inducing points (m &lt;= n).</span>
+<span class="sd">        input_batch_shape: The non-task-related batch shape.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A (*batch_shape, m, d)-dim tensor of inducing point locations.</span>
+<span class="sd">    """</span>
+
+    <span class="n">train_train_kernel</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate_kernel</span><span class="p">()</span>
+
+    <span class="c1"># base case</span>
+    <span class="k">if</span> <span class="n">train_train_kernel</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">_pivoted_cholesky_init</span><span class="p">(</span>
+            <span class="n">train_inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
+            <span class="n">kernel_matrix</span><span class="o">=</span><span class="n">train_train_kernel</span><span class="p">,</span>
+            <span class="n">max_length</span><span class="o">=</span><span class="n">num_inducing</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="c1"># multi-task case</span>
+    <span class="k">elif</span> <span class="n">train_train_kernel</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_batch_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">input_element</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">inputs</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span> <span class="k">else</span> <span class="n">inputs</span>
+        <span class="n">kernel_element</span> <span class="o">=</span> <span class="n">train_train_kernel</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">_pivoted_cholesky_init</span><span class="p">(</span>
+            <span class="n">train_inputs</span><span class="o">=</span><span class="n">input_element</span><span class="p">,</span>
+            <span class="n">kernel_matrix</span><span class="o">=</span><span class="n">kernel_element</span><span class="p">,</span>
+            <span class="n">max_length</span><span class="o">=</span><span class="n">num_inducing</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="c1"># batched input cases</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">batched_inputs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">inputs</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">input_batch_shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">inputs</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span>
+            <span class="k">else</span> <span class="n">inputs</span>
+        <span class="p">)</span>
+        <span class="n">reshaped_inputs</span> <span class="o">=</span> <span class="n">batched_inputs</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">end_dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span>
+        <span class="n">inducing_points</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">input_element</span> <span class="ow">in</span> <span class="n">reshaped_inputs</span><span class="p">:</span>
+            <span class="c1"># the extra kernel evals are a little wasteful but make it</span>
+            <span class="c1"># easier to infer the task batch size</span>
+            <span class="n">kernel_element</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">input_element</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate_kernel</span><span class="p">()</span>
+            <span class="c1"># handle extra task batch dimension</span>
+            <span class="n">kernel_element</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">kernel_element</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">kernel_element</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span>
+                <span class="k">else</span> <span class="n">kernel_element</span>
+            <span class="p">)</span>
+            <span class="n">inducing_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">_pivoted_cholesky_init</span><span class="p">(</span>
+                    <span class="n">train_inputs</span><span class="o">=</span><span class="n">input_element</span><span class="p">,</span>
+                    <span class="n">kernel_matrix</span><span class="o">=</span><span class="n">kernel_element</span><span class="p">,</span>
+                    <span class="n">max_length</span><span class="o">=</span><span class="n">num_inducing</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">inducing_points</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
+            <span class="o">*</span><span class="n">input_batch_shape</span><span class="p">,</span> <span class="n">num_inducing</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">inducing_points</span>
 
 
 <span class="k">def</span> <span class="nf">_pivoted_cholesky_init</span><span class="p">(</span>

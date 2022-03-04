@@ -25,7 +25,7 @@
 <div class="body" role="main">
 <h1>Source code for botorch.acquisition.knowledge_gradient</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
@@ -53,7 +53,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
@@ -65,9 +65,8 @@
 <span class="kn">from</span> <span class="nn">botorch.acquisition.cost_aware</span> <span class="kn">import</span> <span class="n">CostAwareUtility</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">MCAcquisitionFunction</span><span class="p">,</span> <span class="n">qSimpleRegret</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">AcquisitionObjective</span><span class="p">,</span>
     <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
-    <span class="n">ScalarizedObjective</span><span class="p">,</span>
+    <span class="n">PosteriorTransform</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
@@ -97,7 +96,8 @@
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">num_fantasies</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
         <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">inner_sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">current_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -113,11 +113,16 @@
 <span class="sd">            sampler: The sampler used to sample fantasy observations. Optional</span>
 <span class="sd">                if `num_fantasies` is specified.</span>
 <span class="sd">            objective: The objective under which the samples are evaluated. If</span>
-<span class="sd">                `None` or a ScalarizedObjective, then the analytic posterior mean</span>
-<span class="sd">                is used, otherwise the objective is MC-evaluated (using</span>
-<span class="sd">                inner_sampler).</span>
+<span class="sd">                `None`, then the analytic posterior mean is used. Otherwise, the</span>
+<span class="sd">                objective is MC-evaluated (using inner_sampler).</span>
+<span class="sd">            posterior_transform: An optional PosteriorTransform. If given, this</span>
+<span class="sd">                transforms the posterior before evaluation. If `objective is None`,</span>
+<span class="sd">                then the analytic posterior mean of the transformed posterior is</span>
+<span class="sd">                used. If `objective` is given, the `inner_sampler` is used to draw</span>
+<span class="sd">                samples from the transformed posterior, which are then evaluated under</span>
+<span class="sd">                the `objective`.</span>
 <span class="sd">            inner_sampler: The sampler used for inner sampling. Ignored if the</span>
-<span class="sd">                objective is `None` or a ScalarizedObjective.</span>
+<span class="sd">                objective is `None`.</span>
 <span class="sd">            X_pending: A `m x d`-dim Tensor of `m` design points that have</span>
 <span class="sd">                points that have been submitted for function evaluation</span>
 <span class="sd">                but have not yet been evaluated.</span>
@@ -148,12 +153,35 @@
             <span class="n">inner_sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span>
                 <span class="n">num_samples</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">resample</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">collapse_batch_dims</span><span class="o">=</span><span class="kc">True</span>
             <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">objective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span>
+        <span class="p">):</span>
+            <span class="c1"># TODO: clean this up after removing AcquisitionObjective.</span>
+            <span class="k">if</span> <span class="n">posterior_transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">posterior_transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deprecate_acqf_objective</span><span class="p">(</span>
+                    <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+                    <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">objective</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">"Got both a non-MC objective (DEPRECATED) and a posterior "</span>
+                    <span class="s2">"transform. Use only a posterior transform instead."</span>
+                <span class="p">)</span>
         <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-                <span class="s2">"Must specify an objective when using a multi-output model."</span>
-            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">posterior_transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                    <span class="s2">"Must specify an objective or a posterior transform when using "</span>
+                    <span class="s2">"a multi-output model."</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">posterior_transform</span><span class="o">.</span><span class="n">scalarize</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                    <span class="s2">"If using a multi-output model without an objective, "</span>
+                    <span class="s2">"posterior_transform must scalarize the output."</span>
+                <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">sampler</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">objective</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span> <span class="o">=</span> <span class="n">posterior_transform</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">X_pending</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">inner_sampler</span> <span class="o">=</span> <span class="n">inner_sampler</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_fantasies</span> <span class="o">=</span> <span class="n">num_fantasies</span>
@@ -200,7 +228,10 @@
 
         <span class="c1"># get the value function</span>
         <span class="n">value_function</span> <span class="o">=</span> <span class="n">_get_value_function</span><span class="p">(</span>
-            <span class="n">model</span><span class="o">=</span><span class="n">fantasy_model</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inner_sampler</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">fantasy_model</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inner_sampler</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># make sure to propagate gradients to the fantasy model train inputs</span>
@@ -248,6 +279,7 @@
         <span class="n">value_function</span> <span class="o">=</span> <span class="n">_get_value_function</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">fantasy_model</span><span class="p">,</span>
             <span class="n">objective</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span><span class="p">,</span>
             <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inner_sampler</span><span class="p">,</span>
             <span class="n">project</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"project"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
         <span class="p">)</span>
@@ -317,7 +349,7 @@
 <span class="sd">    via a `CostAwareUtility` and the `project` and `expand` operators. If none</span>
 <span class="sd">    of these are set, this acquisition function reduces to `qKnowledgeGradient`.</span>
 <span class="sd">    Through `valfunc_cls` and `valfunc_argfac`, this can be changed into a custom</span>
-<span class="sd">    multifidelity acquisition function (it is only KG if the terminal value is</span>
+<span class="sd">    multi-fidelity acquisition function (it is only KG if the terminal value is</span>
 <span class="sd">    computed using a posterior mean).</span>
 <span class="sd">    """</span>
 
@@ -326,7 +358,8 @@
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">num_fantasies</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
         <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">inner_sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">current_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -347,11 +380,16 @@
 <span class="sd">            sampler: The sampler used to sample fantasy observations. Optional</span>
 <span class="sd">                if `num_fantasies` is specified.</span>
 <span class="sd">            objective: The objective under which the samples are evaluated. If</span>
-<span class="sd">                `None` or a ScalarizedObjective, then the analytic posterior mean</span>
-<span class="sd">                is used, otherwise the objective is MC-evaluated (using</span>
-<span class="sd">                inner_sampler).</span>
+<span class="sd">                `None`, then the analytic posterior mean is used. Otherwise, the</span>
+<span class="sd">                objective is MC-evaluated (using inner_sampler).</span>
+<span class="sd">            posterior_transform: An optional PosteriorTransform. If given, this</span>
+<span class="sd">                transforms the posterior before evaluation. If `objective is None`,</span>
+<span class="sd">                then the analytic posterior mean of the transformed posterior is</span>
+<span class="sd">                used. If `objective` is given, the `inner_sampler` is used to draw</span>
+<span class="sd">                samples from the transformed posterior, which are then evaluated under</span>
+<span class="sd">                the `objective`.</span>
 <span class="sd">            inner_sampler: The sampler used for inner sampling. Ignored if the</span>
-<span class="sd">                objective is `None` or a ScalarizedObjective.</span>
+<span class="sd">                objective is `None`.</span>
 <span class="sd">            X_pending: A `m x d`-dim Tensor of `m` design points that have</span>
 <span class="sd">                points that have been submitted for function evaluation</span>
 <span class="sd">                but have not yet been evaluated.</span>
@@ -384,6 +422,7 @@
             <span class="n">num_fantasies</span><span class="o">=</span><span class="n">num_fantasies</span><span class="p">,</span>
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
             <span class="n">inner_sampler</span><span class="o">=</span><span class="n">inner_sampler</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
             <span class="n">current_value</span><span class="o">=</span><span class="n">current_value</span><span class="p">,</span>
@@ -458,6 +497,7 @@
         <span class="n">value_function</span> <span class="o">=</span> <span class="n">_get_value_function</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">fantasy_model</span><span class="p">,</span>
             <span class="n">objective</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span><span class="p">,</span>
             <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inner_sampler</span><span class="p">,</span>
             <span class="n">project</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="p">,</span>
             <span class="n">valfunc_cls</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">valfunc_cls</span><span class="p">,</span>
@@ -495,7 +535,8 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">base_value_function</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">base_value_function</span> <span class="o">=</span> <span class="n">base_value_function</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">project</span> <span class="o">=</span> <span class="n">project</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">base_value_function</span><span class="o">.</span><span class="n">objective</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">base_value_function</span><span class="p">,</span> <span class="s2">"objective"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span> <span class="o">=</span> <span class="n">base_value_function</span><span class="o">.</span><span class="n">posterior_transform</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">base_value_function</span><span class="p">,</span> <span class="s2">"sampler"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ProjectedAcquisitionFunction.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.knowledge_gradient.ProjectedAcquisitionFunction.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -504,7 +545,8 @@
 
 <span class="k">def</span> <span class="nf">_get_value_function</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">ScalarizedObjective</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">project</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">valfunc_cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">AcquisitionFunction</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -512,18 +554,27 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AcquisitionFunction</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Construct value function (i.e. inner acquisition function)."""</span>
     <span class="k">if</span> <span class="n">valfunc_cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">common_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span> <span class="s2">"objective"</span><span class="p">:</span> <span class="n">objective</span><span class="p">}</span>
+        <span class="n">common_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
+            <span class="s2">"posterior_transform"</span><span class="p">:</span> <span class="n">posterior_transform</span><span class="p">,</span>
+        <span class="p">}</span>
         <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">valfunc_cls</span><span class="p">,</span> <span class="n">MCAcquisitionFunction</span><span class="p">):</span>
             <span class="n">common_kwargs</span><span class="p">[</span><span class="s2">"sampler"</span><span class="p">]</span> <span class="o">=</span> <span class="n">sampler</span>
+            <span class="n">common_kwargs</span><span class="p">[</span><span class="s2">"objective"</span><span class="p">]</span> <span class="o">=</span> <span class="n">objective</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="n">valfunc_argfac</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span> <span class="k">if</span> <span class="n">valfunc_argfac</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
         <span class="n">base_value_function</span> <span class="o">=</span> <span class="n">valfunc_cls</span><span class="p">(</span><span class="o">**</span><span class="n">common_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">base_value_function</span> <span class="o">=</span> <span class="n">qSimpleRegret</span><span class="p">(</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+                <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+                <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">base_value_function</span> <span class="o">=</span> <span class="n">PosteriorMean</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">)</span>
+            <span class="n">base_value_function</span> <span class="o">=</span> <span class="n">PosteriorMean</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span>
+            <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">project</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">base_value_function</span>

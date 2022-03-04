@@ -25,7 +25,7 @@
 <div class="body" role="main">
 <h1>Source code for botorch.utils.low_rank</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
@@ -34,6 +34,7 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.base_samples</span> <span class="kn">import</span> <span class="n">_reshape_base_samples_non_interleaved</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multitask_multivariate_normal</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span>
@@ -41,7 +42,7 @@
 <span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">BlockDiagLazyTensor</span>
 <span class="kn">from</span> <span class="nn">gpytorch.lazy.lazy_tensor</span> <span class="kn">import</span> <span class="n">LazyTensor</span>
 <span class="kn">from</span> <span class="nn">gpytorch.utils.cholesky</span> <span class="kn">import</span> <span class="n">psd_safe_cholesky</span>
-<span class="kn">from</span> <span class="nn">gpytorch.utils.errors</span> <span class="kn">import</span> <span class="n">NanError</span>
+<span class="kn">from</span> <span class="nn">gpytorch.utils.errors</span> <span class="kn">import</span> <span class="n">NotPSDError</span><span class="p">,</span> <span class="n">NanError</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -81,13 +82,18 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        Reshaped and expanded base samples.</span>
 <span class="sd">    """</span>
-    <span class="n">loc</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">loc</span>
+    <span class="n">mvn</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span>
+    <span class="n">loc</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">loc</span>
     <span class="n">peshape</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span>
     <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
         <span class="n">sample_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">loc</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)])</span> <span class="o">+</span> <span class="n">peshape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
     <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">loc</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">peshape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:])</span>
+    <span class="k">if</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
+        <span class="n">base_samples</span> <span class="o">=</span> <span class="n">_reshape_base_samples_non_interleaved</span><span class="p">(</span>
+            <span class="n">mvn</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span>
+        <span class="p">)</span>
     <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
-        <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">loc</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">loc</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="p">)</span>
     <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">loc</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
@@ -135,15 +141,22 @@
     <span class="c1"># bl := K(X, X_baseline)</span>
     <span class="c1"># br := K(X, X)</span>
     <span class="c1"># Get bottom right block of new covariance</span>
-    <span class="n">bl</span><span class="p">,</span> <span class="n">br</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">bottom_rows</span><span class="p">,</span> <span class="n">bottom_rows</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">q</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">bl</span><span class="p">,</span> <span class="n">br</span> <span class="o">=</span> <span class="n">bottom_rows</span><span class="o">.</span><span class="n">split</span><span class="p">([</span><span class="n">bottom_rows</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">q</span><span class="p">,</span> <span class="n">q</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
     <span class="c1"># Solve Ax = b</span>
     <span class="c1"># where A = K(X_baseline, X_baseline) and b = K(X, X_baseline)^T</span>
     <span class="c1"># and bl_chol := x^T</span>
     <span class="c1"># bl_chol is the new `(batch_shape) x q x n`-dim bottom left block</span>
     <span class="c1"># of the cholesky decomposition</span>
-    <span class="n">bl_chol</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">triangular_solve</span><span class="p">(</span>
-        <span class="n">bl</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">baseline_L</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">False</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">solution</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># TODO: remove the exception handling, when the pytorch</span>
+    <span class="c1"># version requirement is bumped to &gt;= 1.10</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">bl_chol</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">triangular_solve</span><span class="p">(</span>
+            <span class="n">bl</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">baseline_L</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">solution</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">"singular"</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">NotPSDError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"triangular_solve failed with RuntimeError: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">e</span>
     <span class="c1"># Compute the new bottom right block of the Cholesky</span>
     <span class="c1"># decomposition via:</span>
     <span class="c1"># Cholesky(K(X, X) - bl_chol @ bl_chol^T)</span>
@@ -156,7 +169,9 @@
     <span class="n">new_Lq</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">bl_chol</span><span class="p">,</span> <span class="n">br_chol</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">mean</span>
     <span class="n">base_samples</span> <span class="o">=</span> <span class="n">_reshape_base_samples</span><span class="p">(</span>
-        <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span>
+        <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span><span class="p">,</span>
+        <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span>
+        <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="p">,</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">):</span>
         <span class="c1"># add output dim</span>
@@ -166,9 +181,9 @@
     <span class="n">new_mean</span> <span class="o">=</span> <span class="n">mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">q</span><span class="p">:,</span> <span class="p">:]</span>
     <span class="n">res</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">new_Lq</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">base_samples</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">mean</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_mean</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">loc</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">)</span>
         <span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
-        <span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_mean</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">contains_nans</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
     <span class="n">contains_infs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>

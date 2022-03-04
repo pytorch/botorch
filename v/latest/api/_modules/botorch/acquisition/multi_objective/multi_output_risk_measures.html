@@ -25,7 +25,7 @@
 <div class="body" role="main">
 <h1>Source code for botorch.acquisition.multi_objective.multi_output_risk_measures</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
@@ -226,6 +226,8 @@
 <span class="sd">    propose to use the expectation of the set-valued MVaR as the multivariate</span>
 <span class="sd">    VaR. We support this alternative with an `expectation` flag.</span>
 <span class="sd">    """</span>
+
+    <span class="n">_verify_output_shape</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>

@@ -25,7 +25,7 @@
 <div class="body" role="main">
 <h1>Source code for botorch.optim.parameter_constraints</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
@@ -41,7 +41,7 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span><span class="p">,</span> <span class="n">CandidateGenerationError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">CandidateGenerationError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">Bounds</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
@@ -49,6 +49,7 @@
 <span class="n">ScipyConstraintDict</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">[</span>
     <span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span>
 <span class="p">]</span>
+<span class="n">NLC_TOL</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1e-6</span>
 
 
 <div class="viewcode-block" id="make_scipy_bounds"><a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.make_scipy_bounds">[docs]</a><span class="k">def</span> <span class="nf">make_scipy_bounds</span><span class="p">(</span>
@@ -356,6 +357,91 @@
             <span class="n">new_coefficients</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">new_coefficients</span><span class="p">)</span>
             <span class="n">new_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_indices</span><span class="p">,</span> <span class="n">new_coefficients</span><span class="p">,</span> <span class="n">new_rhs</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">new_constraints</span>
+
+
+<span class="k">def</span> <span class="nf">_make_f_and_grad_nonlinear_inequality_constraints</span><span class="p">(</span>
+    <span class="n">f_np_wrapper</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">nlc</span><span class="p">:</span> <span class="n">Callable</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]:</span>
+    <span class="sd">"""</span>
+<span class="sd">    Create callables for objective + grad for the nonlinear inequality constraints.</span>
+<span class="sd">    The Scipy interface requires specifying separate callables and we use caching to</span>
+<span class="sd">    avoid evaluating the same input twice. This caching onlh works if</span>
+<span class="sd">    the returned functions are evaluated on the same input in immediate</span>
+<span class="sd">    sequence (i.e., calling `f_obj(X_1)`, `f_grad(X_1)` will result in a</span>
+<span class="sd">    single forward pass, while `f_obj(X_1)`, `f_grad(X_2)`, `f_obj(X_1)`</span>
+<span class="sd">    will result in three forward passes).</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="nf">f_obj_and_grad</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">obj</span><span class="p">,</span> <span class="n">grad</span> <span class="o">=</span> <span class="n">f_np_wrapper</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="n">nlc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="p">,</span> <span class="n">grad</span>
+
+    <span class="n">cache</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"X"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"obj"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"grad"</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">f_obj</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+        <span class="n">X_c</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="s2">"X"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">X_c</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">X_c</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+            <span class="n">cache</span><span class="p">[</span><span class="s2">"X"</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">cache</span><span class="p">[</span><span class="s2">"obj"</span><span class="p">],</span> <span class="n">cache</span><span class="p">[</span><span class="s2">"grad"</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_obj_and_grad</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cache</span><span class="p">[</span><span class="s2">"obj"</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">f_grad</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+        <span class="n">X_c</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="s2">"X"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">X_c</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">X_c</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+            <span class="n">cache</span><span class="p">[</span><span class="s2">"X"</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">cache</span><span class="p">[</span><span class="s2">"obj"</span><span class="p">],</span> <span class="n">cache</span><span class="p">[</span><span class="s2">"grad"</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_obj_and_grad</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cache</span><span class="p">[</span><span class="s2">"grad"</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">f_obj</span><span class="p">,</span> <span class="n">f_grad</span>
+
+
+<div class="viewcode-block" id="make_scipy_nonlinear_inequality_constraints"><a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.make_scipy_nonlinear_inequality_constraints">[docs]</a><span class="k">def</span> <span class="nf">make_scipy_nonlinear_inequality_constraints</span><span class="p">(</span>
+    <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">],</span>
+    <span class="n">f_np_wrapper</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">x0</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Generate Scipy nonlinear inequality constraints from callables.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        nonlinear_inequality_constraints: List of callables for the nonlinear</span>
+<span class="sd">            inequality constraints. Each callable represents a constraint of the</span>
+<span class="sd">            form &gt;= 0 and takes a torch tensor of size (p x q x dim) and returns a</span>
+<span class="sd">            torch tensor of size (p x q).</span>
+<span class="sd">        f_np_wrapper: A wrapper function that given a constraint evaluates the value</span>
+<span class="sd">             and gradient (using autograd) of a numpy input and returns both the</span>
+<span class="sd">             objective and the gradient.</span>
+<span class="sd">        x0: The starting point for SLSQP. We return this starting point in (rare)</span>
+<span class="sd">            cases where SLSQP fails and thus require it to be feasible.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A list of dictionaries containing callables for constraint function</span>
+<span class="sd">        values and Jacobians and a string indicating the associated constraint</span>
+<span class="sd">        type ("eq", "ineq"), as expected by `scipy.minimize`.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nonlinear_inequality_constraints</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"`nonlinear_inequality_constraints` must be a list of callables, "</span>
+            <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">nonlinear_inequality_constraints</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+        <span class="p">)</span>
+
+    <span class="n">scipy_nonlinear_inequality_constraints</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">nlc</span> <span class="ow">in</span> <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">_arrayify</span><span class="p">(</span><span class="n">nlc</span><span class="p">(</span><span class="n">x0</span><span class="p">))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">NLC_TOL</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"`batch_initial_conditions` must satisfy the non-linear inequality "</span>
+                <span class="s2">"constraints."</span>
+            <span class="p">)</span>
+        <span class="n">f_obj</span><span class="p">,</span> <span class="n">f_grad</span> <span class="o">=</span> <span class="n">_make_f_and_grad_nonlinear_inequality_constraints</span><span class="p">(</span>
+            <span class="n">f_np_wrapper</span><span class="o">=</span><span class="n">f_np_wrapper</span><span class="p">,</span> <span class="n">nlc</span><span class="o">=</span><span class="n">nlc</span>
+        <span class="p">)</span>
+        <span class="n">scipy_nonlinear_inequality_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"ineq"</span><span class="p">,</span>
+                <span class="s2">"fun"</span><span class="p">:</span> <span class="n">f_obj</span><span class="p">,</span>
+                <span class="s2">"jac"</span><span class="p">:</span> <span class="n">f_grad</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">scipy_nonlinear_inequality_constraints</span></div>
 </pre></div>
 </div>
 </div>

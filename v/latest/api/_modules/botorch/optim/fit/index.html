@@ -25,7 +25,7 @@
 <div class="body" role="main">
 <h1>Source code for botorch.optim.fit</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
@@ -43,9 +43,9 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">OptimizationWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.numpy_converter</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">TorchAttr</span><span class="p">,</span>
     <span class="n">module_to_array</span><span class="p">,</span>
     <span class="n">set_params_with_array</span><span class="p">,</span>
+    <span class="n">TorchAttr</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.stopping</span> <span class="kn">import</span> <span class="n">ExpMAStoppingCriterion</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="p">(</span>

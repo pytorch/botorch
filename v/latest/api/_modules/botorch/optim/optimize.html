@@ -25,7 +25,7 @@
 <div class="body" role="main">
 <h1>Source code for botorch.optim.optimize</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
@@ -81,6 +81,7 @@
     <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -105,6 +106,14 @@
 <span class="sd">        equality constraints: A list of tuples (indices, coefficients, rhs),</span>
 <span class="sd">            with each tuple encoding an inequality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`</span>
+<span class="sd">        nonlinear_inequality_constraints: A list of callables with that represent</span>
+<span class="sd">            non-linear inequality constraints of the form `callable(x) &gt;= 0`. Each</span>
+<span class="sd">            callable is expected to take a `(num_restarts) x q x d`-dim tensor as an</span>
+<span class="sd">            input and return a `(num_restarts) x q`-dim tensor with the constraint</span>
+<span class="sd">            values. The constraints will later be passed to SLSQP. You need to pass in</span>
+<span class="sd">            `batch_initial_conditions` in this case. Using non-linear inequality</span>
+<span class="sd">            constraints also requires that `batch_limit` is set to 1, which will be</span>
+<span class="sd">            done automatically if not specified in `options`.</span>
 <span class="sd">        fixed_features: A map `{feature_index: value}` for features that</span>
 <span class="sd">            should be fixed to a particular value during generation.</span>
 <span class="sd">        post_processing_func: A function that post-processes an optimization</span>
@@ -163,6 +172,7 @@
                 <span class="n">options</span><span class="o">=</span><span class="n">options</span> <span class="ow">or</span> <span class="p">{},</span>
                 <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
                 <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+                <span class="n">nonlinear_inequality_constraints</span><span class="o">=</span><span class="n">nonlinear_inequality_constraints</span><span class="p">,</span>
                 <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
                 <span class="n">post_processing_func</span><span class="o">=</span><span class="n">post_processing_func</span><span class="p">,</span>
                 <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -197,6 +207,11 @@
         <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">acq_value</span>
 
     <span class="k">if</span> <span class="n">batch_initial_conditions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"`batch_initial_conditions` must be given if there are non-linear "</span>
+                <span class="s2">"inequality constraints."</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="n">raw_samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"Must specify `raw_samples` when `batch_initial_conditions` is `None`."</span>
@@ -219,7 +234,9 @@
             <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="n">batch_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"batch_limit"</span><span class="p">,</span> <span class="n">num_restarts</span><span class="p">)</span>
+    <span class="n">batch_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">"batch_limit"</span><span class="p">,</span> <span class="n">num_restarts</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">nonlinear_inequality_constraints</span> <span class="k">else</span> <span class="mi">1</span>
+    <span class="p">)</span>
     <span class="n">batch_candidates_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">batch_acq_values_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">batched_ics</span> <span class="o">=</span> <span class="n">batch_initial_conditions</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">batch_limit</span><span class="p">)</span>
@@ -233,6 +250,7 @@
             <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">INIT_OPTION_KEYS</span><span class="p">},</span>
             <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
             <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+            <span class="n">nonlinear_inequality_constraints</span><span class="o">=</span><span class="n">nonlinear_inequality_constraints</span><span class="p">,</span>
             <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">batch_candidates_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_candidates_curr</span><span class="p">)</span>

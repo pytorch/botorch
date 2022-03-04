@@ -25,7 +25,7 @@
 <div class="body" role="main">
 <h1>Source code for botorch.acquisition.multi_objective.max_value_entropy_search</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
@@ -139,6 +139,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_sample_max_values</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">X_pending</span><span class="p">)</span>
+        <span class="c1"># This avoids attribute errors in qMaxValueEntropy code.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="qMultiObjectiveMaxValueEntropy.set_X_pending"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy.set_X_pending">[docs]</a>    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Set pending points.</span>

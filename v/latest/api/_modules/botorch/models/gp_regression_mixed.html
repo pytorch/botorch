@@ -25,18 +25,16 @@
 <div class="body" role="main">
 <h1>Source code for botorch.models.gp_regression_mixed</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.kernels.categorical</span> <span class="kn">import</span> <span class="n">CategoricalKernel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
@@ -97,12 +95,14 @@
 <span class="sd">                the kernel for the ordinal parameters.</span>
 <span class="sd">            likelihood: A likelihood. If omitted, use a standard</span>
 <span class="sd">                GaussianLikelihood with inferred noise level.</span>
-<span class="sd">            # outcome_transform: An outcome transform that is applied to the</span>
-<span class="sd">            #     training data during instantiation and to the posterior during</span>
-<span class="sd">            #     inference (that is, the `Posterior` obtained by calling</span>
-<span class="sd">            #     `.posterior` on the model will be on the original scale).</span>
-<span class="sd">            # input_transform: An input transform that is applied in the model's</span>
-<span class="sd">            #     forward pass.</span>
+<span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
+<span class="sd">                training data during instantiation and to the posterior during</span>
+<span class="sd">                inference (that is, the `Posterior` obtained by calling</span>
+<span class="sd">                `.posterior` on the model will be on the original scale).</span>
+<span class="sd">            input_transform: An input transform that is applied in the model's</span>
+<span class="sd">                forward pass. Only input transforms are allowed which do not</span>
+<span class="sd">                transform the categorical dimensions. This can be achieved</span>
+<span class="sd">                by using the `indices` argument when constructing the transform.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; train_X = torch.cat(</span>
@@ -114,10 +114,18 @@
 <span class="sd">                )</span>
 <span class="sd">            &gt;&gt;&gt; model = MixedSingleTaskGP(train_X, train_Y, cat_dims=[-1])</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span><span class="s2">"outcome transforms not yet supported"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span><span class="s2">"input transforms not yet supported"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">input_transform</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Only continuous inputs can be transformed. "</span>
+                    <span class="s2">"Please use `indices` in the `input_transform`."</span>
+                <span class="p">)</span>
+            <span class="c1"># check that no cat dim is in indices</span>
+            <span class="k">elif</span> <span class="nb">any</span><span class="p">(</span><span class="n">idx</span> <span class="ow">in</span> <span class="n">input_transform</span><span class="o">.</span><span class="n">indices</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">cat_dims</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Only continuous inputs can be transformed. "</span>
+                    <span class="s2">"Categorical index found in `indices` of the `input_transform`."</span>
+                <span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cat_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"Must specify categorical dimensions for MixedSingleTaskGP"</span>
@@ -130,7 +138,9 @@
         <span class="k">if</span> <span class="n">cont_kernel_factory</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 
             <span class="k">def</span> <span class="nf">cont_kernel_factory</span><span class="p">(</span>
-                <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="n">ard_num_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">active_dims</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+                <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+                <span class="n">ard_num_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                <span class="n">active_dims</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
             <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaternKernel</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">MaternKernel</span><span class="p">(</span>
                     <span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span>

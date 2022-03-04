@@ -25,7 +25,7 @@
 <div class="body" role="main">
 <h1>Source code for botorch.test_functions.multi_objective</h1><div class="highlight"><pre>
 <span></span><span class="ch">#! /usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
@@ -35,16 +35,26 @@
 
 <span class="sd">References</span>
 
+<span class="sd">.. [Daulton2022]</span>
+<span class="sd">    S. Daulton, S. Cakmak, M. Balandat, M. A. Osborne, E. Zhou, and E. Bakshy.</span>
+<span class="sd">    Robust Multi-Objective Bayesian Optimization Under Input Noise. 2022.</span>
+
 <span class="sd">.. [Deb2005dtlz]</span>
-<span class="sd">    K. Deb, L. Thiele, M. Laumanns, E. Zitzler, A. Abraham, L. Jain, R. Goldberg.</span>
-<span class="sd">    "Scalable test problems for evolutionary multi-objective optimization"</span>
-<span class="sd">    in Evolutionary Multiobjective Optimization, London, U.K.: Springer-Verlag,</span>
+<span class="sd">    K. Deb, L. Thiele, M. Laumanns, E. Zitzler, A. Abraham, L. Jain, and</span>
+<span class="sd">    R. Goldberg. Scalable test problems for evolutionary multi-objective</span>
+<span class="sd">    optimization. Evolutionary Multiobjective Optimization, Springer-Verlag,</span>
 <span class="sd">    pp. 105-145, 2005.</span>
 
 <span class="sd">.. [Deb2005robust]</span>
-<span class="sd">    K. Deb, H. Gupta. "Searching for Robust Pareto-Optimal Solutions in</span>
-<span class="sd">    Multi-objective Optimization" in Evolutionary Multi-Criterion Optimization,</span>
+<span class="sd">    K. Deb and H. Gupta. Searching for Robust Pareto-Optimal Solutions in</span>
+<span class="sd">    Multi-objective Optimization. Evolutionary Multi-Criterion Optimization,</span>
 <span class="sd">    Springer-Berlin, pp. 150-164, 2005.</span>
+
+<span class="sd">.. [Frohlich2020]</span>
+<span class="sd">    L. Frohlich, E. Klenske, J. Vinogradska, C. Daniel, and M. Zeilinger.</span>
+<span class="sd">    Noisy-Input Entropy Search for Efficient Robust Bayesian Optimization.</span>
+<span class="sd">    Proceedings of the Twenty Third International Conference on Artificial</span>
+<span class="sd">    Intelligence and Statistics, PMLR 108:2262-2272, 2020.</span>
 
 <span class="sd">.. [GarridoMerchan2020]</span>
 <span class="sd">    E. C. Garrido-Merch ́an and D. Hern ́andez-Lobato. Parallel Predictive Entropy</span>
@@ -57,43 +67,54 @@
 <span class="sd">    Conference on Uncertainty in Artificial Intelligence (UAI’14).</span>
 <span class="sd">    AUAI Press, Arlington, Virginia, USA, 250–259.</span>
 
+<span class="sd">.. [Liang2021]</span>
+<span class="sd">    Q. Liang and L. Lai, Scalable Bayesian Optimization Accelerates Process</span>
+<span class="sd">    Optimization of Penicillin Production. NeurIPS 2021 AI for Science Workshop, 2021.</span>
+
+<span class="sd">.. [Ma2019]</span>
+<span class="sd">    Z. Ma and Y. Wang. Evolutionary Constrained Multiobjective Optimization:</span>
+<span class="sd">    Test Suite Construction and Performance Comparisons. IEEE Transactions</span>
+<span class="sd">    on Evolutionary Computation, 23(6):972–986, December 2019.</span>
+
 <span class="sd">.. [Oszycka1995]</span>
-<span class="sd">    A. Osyczka, S. Kundu. 1995. A new method to solve generalized multicriteria</span>
-<span class="sd">    optimization problems using the simple genetic algorithm. In Structural</span>
-<span class="sd">    Optimization 10. 94–99.</span>
+<span class="sd">    A. Osyczka and S. Kundu. A new method to solve generalized</span>
+<span class="sd">    multicriteria optimization problems using the simple genetic algorithm.</span>
+<span class="sd">    In Structural Optimization 10. 94–99, 1995.</span>
 
 <span class="sd">.. [Tanabe2020]</span>
-<span class="sd">    Ryoji Tanabe, Hisao Ishibuchi, An easy-to-use real-world multi-objective</span>
+<span class="sd">    Ryoji Tanabe and Hisao Ishibuchi. An easy-to-use real-world multi-objective</span>
 <span class="sd">    optimization problem suite, Applied Soft Computing,Volume 89, 2020.</span>
 
 <span class="sd">.. [Yang2019a]</span>
-<span class="sd">    K. Yang, M. Emmerich, A. Deutz, and T. Bäck. 2019.</span>
-<span class="sd">    "Multi-Objective Bayesian Global Optimization using expected hypervolume</span>
-<span class="sd">    improvement gradient" in Swarm and evolutionary computation 44, pp. 945--956,</span>
-<span class="sd">    2019.</span>
+<span class="sd">    K. Yang, M. Emmerich, A. Deutz, and T. Bäck. Multi-Objective Bayesian</span>
+<span class="sd">    Global Optimization using expected hypervolume improvement gradient.</span>
+<span class="sd">    Swarm and evolutionary computation 44, pp. 945--956, 2019.</span>
 
 <span class="sd">.. [Zitzler2000]</span>
-<span class="sd">    E. Zitzler, K. Deb, and L. Thiele, “Comparison of multiobjective</span>
-<span class="sd">    evolutionary algorithms: Empirical results,” Evol. Comput., vol. 8, no. 2,</span>
-<span class="sd">    pp. 173–195, 2000.</span>
+<span class="sd">    E. Zitzler, K. Deb, and L. Thiele. Comparison of multiobjective</span>
+<span class="sd">    evolutionary algorithms: Empirical results. Evolutionary Computation, vol.</span>
+<span class="sd">    8, no. 2,pp. 173–195, 2000.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.test_functions.base</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ConstrainedBaseTestProblem</span><span class="p">,</span>
     <span class="n">MultiObjectiveTestProblem</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.test_functions.synthetic</span> <span class="kn">import</span> <span class="n">Branin</span>
+<span class="kn">from</span> <span class="nn">botorch.test_functions.synthetic</span> <span class="kn">import</span> <span class="n">Branin</span><span class="p">,</span> <span class="n">Levy</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">sample_hypersphere</span><span class="p">,</span> <span class="n">sample_simplex</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">unnormalize</span>
 <span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">gamma</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 
 
 <div class="viewcode-block" id="BraninCurrin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.BraninCurrin">[docs]</a><span class="k">class</span> <span class="nc">BraninCurrin</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
@@ -577,6 +598,278 @@
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">f</span><span class="p">,</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">g_X</span><span class="p">)</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
 
 
+<div class="viewcode-block" id="GMM"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.GMM">[docs]</a><span class="k">class</span> <span class="nc">GMM</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""A test problem where each objective is a Gaussian mixture model.</span>
+
+<span class="sd">    This implementation is adapted from the single objective version (proposed by</span>
+<span class="sd">    [Frohlich2020]_) at</span>
+<span class="sd">    https://github.com/boschresearch/NoisyInputEntropySearch/blob/master/</span>
+<span class="sd">    core/util/objectives.py.</span>
+
+<span class="sd">    See [Daulton2022]_ for details on this multi-objective problem.</span>
+<span class="sd">    """</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">num_objectives</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Constructor.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            noise_std: Standard deviation of the observation noise.</span>
+<span class="sd">            negate: If True, negate the objectives.</span>
+<span class="sd">            num_objectives: The number of objectives.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">num_objectives</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span><span class="s2">"GMM only currently supports 2 to 4 objectives."</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.2338</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.2211</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">num_objectives</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ref_point</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5180</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">num_objectives</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ref_point</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mf">0.1866</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span> <span class="o">=</span> <span class="n">num_objectives</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
+        <span class="n">gmm_pos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">[[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">]],</span>
+                <span class="p">[[</span><span class="mf">0.07</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.85</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]],</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">gmm_var</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.20</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">]])</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">gmm_norm</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="n">gmm_var</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">num_objectives</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">gmm_pos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">gmm_pos</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[[</span><span class="mf">0.08</span><span class="p">,</span> <span class="mf">0.21</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.45</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.86</span><span class="p">,</span> <span class="mf">0.11</span><span class="p">]]])],</span>
+                <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">gmm_var</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">gmm_var</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">]])</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span>
+            <span class="p">)</span>
+            <span class="n">gmm_norm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">gmm_norm</span><span class="p">,</span>
+                    <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="n">gmm_var</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">]]),</span>
+                <span class="p">],</span>
+                <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">num_objectives</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">gmm_pos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">gmm_pos</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[[</span><span class="mf">0.09</span><span class="p">,</span> <span class="mf">0.19</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.44</span><span class="p">,</span> <span class="mf">0.72</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.89</span><span class="p">,</span> <span class="mf">0.13</span><span class="p">]]])],</span>
+                <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">gmm_var</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">gmm_var</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">,</span> <span class="mf">0.09</span><span class="p">]])</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span>
+            <span class="p">)</span>
+            <span class="n">gmm_norm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">gmm_norm</span><span class="p">,</span>
+                    <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="n">gmm_var</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">]]),</span>
+                <span class="p">],</span>
+                <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">gmm_covar</span> <span class="o">=</span> <span class="n">gmm_var</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">gmm_var</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span>
+            <span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">gmm_var</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">gmm_var</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"gmm_pos"</span><span class="p">,</span> <span class="n">gmm_pos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"gmm_covar"</span><span class="p">,</span> <span class="n">gmm_covar</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"gmm_norm"</span><span class="p">,</span> <span class="n">gmm_norm</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GMM.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.GMM.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate the GMMs."""</span>
+        <span class="c1"># This needs to be reinstantiated because MVN apparently does not</span>
+        <span class="c1"># have a `to` method to make it device/dtype agnostic.</span>
+        <span class="n">mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gmm_pos</span><span class="p">,</span> <span class="n">covariance_matrix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gmm_covar</span><span class="p">)</span>
+        <span class="n">view_shape</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gmm_pos</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gmm_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="p">)</span>
+        <span class="n">expand_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gmm_pos</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">pdf_X</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">expand_shape</span><span class="p">))</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span>
+        <span class="c1"># Multiply by -1 to make this a minimization problem by default</span>
+        <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gmm_norm</span> <span class="o">*</span> <span class="n">pdf_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Penicillin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.Penicillin">[docs]</a><span class="k">class</span> <span class="nc">Penicillin</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""A penicillin production simulator from [Liang2021]_.</span>
+
+<span class="sd">    This implementation is adapted from</span>
+<span class="sd">    https://github.com/HarryQL/TuRBO-Penicillin.</span>
+
+<span class="sd">    The goal is to maximize the penicillin yield while minimizing</span>
+<span class="sd">    time to ferment and the CO2 byproduct.</span>
+
+<span class="sd">    The function is defined for minimization of all objectives.</span>
+
+<span class="sd">    The reference point was set using the `infer_reference_point` heuristic</span>
+<span class="sd">    on the Pareto frontier over a large discrete set of random designs.</span>
+<span class="sd">    """</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">num_objectives</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">60.0</span><span class="p">,</span> <span class="mf">120.0</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">18.0</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">293.0</span><span class="p">,</span> <span class="mf">303.0</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">18.0</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">500.0</span><span class="p">,</span> <span class="mf">700.0</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">6.5</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.85</span><span class="p">,</span> <span class="mf">86.93</span><span class="p">,</span> <span class="mf">514.70</span><span class="p">]</span>
+
+    <span class="n">Y_xs</span> <span class="o">=</span> <span class="mf">0.45</span>
+    <span class="n">Y_ps</span> <span class="o">=</span> <span class="mf">0.90</span>
+    <span class="n">K_1</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">K_2</span> <span class="o">=</span> <span class="mi">7</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">m_X</span> <span class="o">=</span> <span class="mf">0.014</span>
+    <span class="n">alpha_1</span> <span class="o">=</span> <span class="mf">0.143</span>
+    <span class="n">alpha_2</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">7</span><span class="p">)</span>
+    <span class="n">alpha_3</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span>
+    <span class="n">mu_X</span> <span class="o">=</span> <span class="mf">0.092</span>
+    <span class="n">K_X</span> <span class="o">=</span> <span class="mf">0.15</span>
+    <span class="n">mu_p</span> <span class="o">=</span> <span class="mf">0.005</span>
+    <span class="n">K_p</span> <span class="o">=</span> <span class="mf">0.0002</span>
+    <span class="n">K_I</span> <span class="o">=</span> <span class="mf">0.10</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="mf">0.04</span>
+    <span class="n">k_g</span> <span class="o">=</span> <span class="mf">7.0</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="mi">3</span>
+    <span class="n">E_g</span> <span class="o">=</span> <span class="mf">5100.0</span>
+    <span class="n">k_d</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="o">**</span> <span class="mi">33</span>
+    <span class="n">E_d</span> <span class="o">=</span> <span class="mf">50000.0</span>
+    <span class="n">lambd</span> <span class="o">=</span> <span class="mf">2.5</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span>
+    <span class="n">T_v</span> <span class="o">=</span> <span class="mf">273.0</span>  <span class="c1"># Kelvin</span>
+    <span class="n">T_o</span> <span class="o">=</span> <span class="mf">373.0</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="mf">1.9872</span>  <span class="c1"># CAL/(MOL K)</span>
+    <span class="n">V_max</span> <span class="o">=</span> <span class="mf">180.0</span>
+
+<div class="viewcode-block" id="Penicillin.penicillin_vectorized"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.Penicillin.penicillin_vectorized">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">penicillin_vectorized</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X_input</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Penicillin simulator, simplified and vectorized.</span>
+
+<span class="sd">        The 7 input parameters are (in order): culture volume, biomass</span>
+<span class="sd">        concentration, temperature, glucose concentration, substrate feed</span>
+<span class="sd">        rate, substrate feed concentration, and H+ concentration.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X_input: A `n x 7`-dim tensor of inputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            An `n x 3`-dim tensor of (negative) penicillin yield, CO2 and time.</span>
+<span class="sd">        """</span>
+        <span class="n">V</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">s_f</span><span class="p">,</span> <span class="n">H_</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X_input</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">P</span><span class="p">,</span> <span class="n">CO2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">V</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">H_</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="o">-</span><span class="n">H_</span><span class="p">)</span>
+
+        <span class="n">active</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">V</span><span class="p">)</span><span class="o">.</span><span class="n">bool</span><span class="p">()</span>
+        <span class="n">t_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="mi">2500</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2501</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">active</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">F_loss</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">V</span><span class="p">[</span><span class="n">active</span><span class="p">]</span>
+                <span class="o">*</span> <span class="bp">cls</span><span class="o">.</span><span class="n">lambd</span>
+                <span class="o">*</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="p">((</span><span class="n">T</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">-</span> <span class="bp">cls</span><span class="o">.</span><span class="n">T_o</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">T_v</span> <span class="o">-</span> <span class="bp">cls</span><span class="o">.</span><span class="n">T_o</span><span class="p">)))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">dV_dt</span> <span class="o">=</span> <span class="n">F</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">-</span> <span class="n">F_loss</span>
+            <span class="n">mu</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">mu_X</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="bp">cls</span><span class="o">.</span><span class="n">K_1</span> <span class="o">/</span> <span class="n">H</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">+</span> <span class="n">H</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">/</span> <span class="bp">cls</span><span class="o">.</span><span class="n">K_2</span><span class="p">))</span>
+                <span class="o">*</span> <span class="p">(</span><span class="n">S</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">K_X</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">+</span> <span class="n">S</span><span class="p">[</span><span class="n">active</span><span class="p">]))</span>
+                <span class="o">*</span> <span class="p">(</span>
+                    <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">k_g</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="bp">cls</span><span class="o">.</span><span class="n">E_g</span> <span class="o">/</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">R</span> <span class="o">*</span> <span class="n">T</span><span class="p">[</span><span class="n">active</span><span class="p">])))</span>
+                    <span class="o">-</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">k_d</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="bp">cls</span><span class="o">.</span><span class="n">E_d</span> <span class="o">/</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">R</span> <span class="o">*</span> <span class="n">T</span><span class="p">[</span><span class="n">active</span><span class="p">])))</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">dX_dt</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">/</span> <span class="n">V</span><span class="p">[</span><span class="n">active</span><span class="p">])</span> <span class="o">*</span> <span class="n">dV_dt</span>
+            <span class="n">mu_pp</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">mu_p</span> <span class="o">*</span> <span class="p">(</span>
+                <span class="n">S</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">K_p</span> <span class="o">+</span> <span class="n">S</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">+</span> <span class="n">S</span><span class="p">[</span><span class="n">active</span><span class="p">]</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="bp">cls</span><span class="o">.</span><span class="n">K_I</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">dS_dt</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="o">-</span><span class="p">(</span><span class="n">mu</span> <span class="o">/</span> <span class="bp">cls</span><span class="o">.</span><span class="n">Y_xs</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">active</span><span class="p">]</span>
+                <span class="o">-</span> <span class="p">(</span><span class="n">mu_pp</span> <span class="o">/</span> <span class="bp">cls</span><span class="o">.</span><span class="n">Y_ps</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">active</span><span class="p">]</span>
+                <span class="o">-</span> <span class="bp">cls</span><span class="o">.</span><span class="n">m_X</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">active</span><span class="p">]</span>
+                <span class="o">+</span> <span class="n">F</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">*</span> <span class="n">s_f</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">/</span> <span class="n">V</span><span class="p">[</span><span class="n">active</span><span class="p">]</span>
+                <span class="o">-</span> <span class="p">(</span><span class="n">S</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">/</span> <span class="n">V</span><span class="p">[</span><span class="n">active</span><span class="p">])</span> <span class="o">*</span> <span class="n">dV_dt</span>
+            <span class="p">)</span>
+            <span class="n">dP_dt</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">mu_pp</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">active</span><span class="p">])</span>
+                <span class="o">-</span> <span class="bp">cls</span><span class="o">.</span><span class="n">K</span> <span class="o">*</span> <span class="n">P</span><span class="p">[</span><span class="n">active</span><span class="p">]</span>
+                <span class="o">-</span> <span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">/</span> <span class="n">V</span><span class="p">[</span><span class="n">active</span><span class="p">])</span> <span class="o">*</span> <span class="n">dV_dt</span>
+            <span class="p">)</span>
+            <span class="n">dCO2_dt</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">alpha_1</span> <span class="o">*</span> <span class="n">dX_dt</span> <span class="o">+</span> <span class="bp">cls</span><span class="o">.</span><span class="n">alpha_2</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">+</span> <span class="bp">cls</span><span class="o">.</span><span class="n">alpha_3</span>
+
+            <span class="c1"># UPDATE</span>
+            <span class="n">P</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">=</span> <span class="n">P</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">+</span> <span class="n">dP_dt</span>  <span class="c1"># Penicillin concentration</span>
+            <span class="n">V</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">=</span> <span class="n">V</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">+</span> <span class="n">dV_dt</span>  <span class="c1"># Culture medium volume</span>
+            <span class="n">X</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">+</span> <span class="n">dX_dt</span>  <span class="c1"># Biomass concentration</span>
+            <span class="n">S</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">=</span> <span class="n">S</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">+</span> <span class="n">dS_dt</span>  <span class="c1"># Glucose concentration</span>
+            <span class="n">CO2</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">=</span> <span class="n">CO2</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">+</span> <span class="n">dCO2_dt</span>  <span class="c1"># CO2 concentration</span>
+
+            <span class="c1"># Update active indices</span>
+            <span class="n">full_dpdt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">P</span><span class="p">)</span>
+            <span class="n">full_dpdt</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">=</span> <span class="n">dP_dt</span>
+            <span class="n">inactive</span> <span class="o">=</span> <span class="p">(</span><span class="n">V</span> <span class="o">&gt;</span> <span class="bp">cls</span><span class="o">.</span><span class="n">V_max</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">S</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">full_dpdt</span> <span class="o">&lt;</span> <span class="mf">10e-12</span><span class="p">)</span>
+            <span class="n">t_tensor</span><span class="p">[</span><span class="n">inactive</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span>
+                <span class="n">t_tensor</span><span class="p">[</span><span class="n">inactive</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">t_tensor</span><span class="p">[</span><span class="n">inactive</span><span class="p">],</span> <span class="n">t</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">active</span><span class="p">[</span><span class="n">inactive</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="o">-</span><span class="n">P</span><span class="p">,</span> <span class="n">CO2</span><span class="p">,</span> <span class="n">t_tensor</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Penicillin.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.Penicillin.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="c1"># This uses in-place operations. Hence, the clone is to avoid modifying</span>
+        <span class="c1"># the original X in-place.</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">penicillin_vectorized</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">())</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
+            <span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ToyRobust"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ToyRobust">[docs]</a><span class="k">class</span> <span class="nc">ToyRobust</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""A 1D problem where the Pareto frontier is sensitive to input noise.</span>
+
+<span class="sd">    Specifically, the pareto frontier over the nominal objectives is</span>
+<span class="sd">    sensitive to input noise. The first objective is a mixture of a linear</span>
+<span class="sd">    function and a sinusoidal function, and the second objective is a modified</span>
+<span class="sd">    Levy function, where the second parameter is fixed.</span>
+
+<span class="sd">    This function comes from [Daulton2022]_.</span>
+
+<span class="sd">    The reference point was set using the `infer_reference_point`</span>
+<span class="sd">    heuristic on the Pareto frontier over a large discrete set of</span>
+<span class="sd">    random designs.</span>
+<span class="sd">    """</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">)]</span>
+    <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">6.1397</span><span class="p">,</span> <span class="o">-</span><span class="mf">8.1942</span><span class="p">]</span>
+    <span class="n">num_objectives</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">levy</span> <span class="o">=</span> <span class="n">Levy</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ToyRobust.f_1"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ToyRobust.f_1">[docs]</a>    <span class="k">def</span> <span class="nf">f_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">p1</span> <span class="o">=</span> <span class="mf">2.4</span> <span class="o">-</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">X</span> <span class="o">-</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">p2</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">X</span> <span class="o">-</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">smoother</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">30</span> <span class="o">*</span> <span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
+        <span class="n">x_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">((</span><span class="mf">0.2</span> <span class="o">-</span> <span class="n">X</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.005</span><span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="n">p1</span> <span class="o">*</span> <span class="n">x_mask</span> <span class="o">+</span> <span class="n">p2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x_mask</span><span class="p">)</span> <span class="o">+</span> <span class="n">smoother</span><span class="p">)</span> <span class="o">*</span> <span class="mi">30</span> <span class="o">+</span> <span class="mi">30</span></div>
+
+<div class="viewcode-block" id="ToyRobust.f_2"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ToyRobust.f_2">[docs]</a>    <span class="k">def</span> <span class="nf">f_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">X</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">X</span><span class="p">)],</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Cut out the first part of the function.</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">*</span> <span class="mf">0.95</span> <span class="o">+</span> <span class="mf">0.03</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">unnormalize</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">levy</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">levy</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">Y</span> <span class="o">-=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.75</span>
+        <span class="k">return</span> <span class="n">Y</span></div>
+
+<div class="viewcode-block" id="ToyRobust.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ToyRobust.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">f_1</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_2</span><span class="p">(</span><span class="n">X</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
 <div class="viewcode-block" id="VehicleSafety"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.VehicleSafety">[docs]</a><span class="k">class</span> <span class="nc">VehicleSafety</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Optimize Vehicle crash-worthiness.</span>
 
@@ -910,30 +1203,6 @@
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="SRN"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.SRN">[docs]</a><span class="k">class</span> <span class="nc">SRN</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The constrained SRN problem.</span>
-
-<span class="sd">    See [GarridoMerchan2020]_ for more details on this problem. Note that this is a</span>
-<span class="sd">    minimization problem.</span>
-<span class="sd">    """</span>
-
-    <span class="n">dim</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="n">num_objectives</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mf">20.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">20.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">)]</span>
-    <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>  <span class="c1"># TODO: Determine proper reference point</span>
-
-<div class="viewcode-block" id="SRN.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.SRN.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="n">obj1</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">+</span> <span class="p">((</span><span class="n">X</span> <span class="o">-</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">obj2</span> <span class="o">=</span> <span class="mf">9.0</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="SRN.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.SRN.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="n">c1</span> <span class="o">=</span> <span class="mf">225.0</span> <span class="o">-</span> <span class="p">((</span><span class="n">X</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">c2</span> <span class="o">=</span> <span class="o">-</span><span class="mf">10.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
-
-
 <div class="viewcode-block" id="CONSTR"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CONSTR">[docs]</a><span class="k">class</span> <span class="nc">CONSTR</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""The constrained CONSTR problem.</span>
 
@@ -1008,6 +1277,101 @@
         <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">min1</span><span class="p">,</span> <span class="n">min2</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div></div>
 
 
+<div class="viewcode-block" id="DiscBrake"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DiscBrake">[docs]</a><span class="k">class</span> <span class="nc">DiscBrake</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""The Disc Brake problem.</span>
+
+<span class="sd">    There are 2 objectives and 4 constraints.</span>
+
+<span class="sd">    Both objectives should be minimized.</span>
+
+<span class="sd">    See [Tanabe2020]_ for details.</span>
+
+<span class="sd">    The reference point was set using the `infer_reference_point`</span>
+<span class="sd">    heuristic on the Pareto frontier over a large discrete set of</span>
+<span class="sd">    random designs.</span>
+<span class="sd">    """</span>
+
+    <span class="n">dim</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">num_objectives</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">55.0</span><span class="p">,</span> <span class="mf">80.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">75.0</span><span class="p">,</span> <span class="mf">110.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">1000.0</span><span class="p">,</span> <span class="mf">3000.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">11.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">)]</span>
+    <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">5.7771</span><span class="p">,</span> <span class="mf">3.9651</span><span class="p">]</span>
+
+<div class="viewcode-block" id="DiscBrake.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DiscBrake.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span>
+
+        <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">X3</span><span class="p">,</span> <span class="n">X4</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">sq_diff</span> <span class="o">=</span> <span class="n">X2</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">X1</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">4.9</span> <span class="o">*</span> <span class="mf">1e-5</span> <span class="o">*</span> <span class="n">sq_diff</span> <span class="o">*</span> <span class="p">(</span><span class="n">X4</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">9.82</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span> <span class="o">*</span> <span class="n">sq_diff</span> <span class="o">/</span> <span class="p">(</span><span class="n">X3</span> <span class="o">*</span> <span class="n">X4</span> <span class="o">*</span> <span class="p">(</span><span class="n">X2</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">-</span> <span class="n">X1</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">3</span><span class="p">)))</span>
+
+        <span class="k">return</span> <span class="n">f</span></div>
+
+<div class="viewcode-block" id="DiscBrake.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DiscBrake.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_constraints</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span>
+        <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">X3</span><span class="p">,</span> <span class="n">X4</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">sq_diff</span> <span class="o">=</span> <span class="n">X2</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">X1</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">cub_diff</span> <span class="o">=</span> <span class="n">X2</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">-</span> <span class="n">X1</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="n">g</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">X2</span> <span class="o">-</span> <span class="n">X1</span> <span class="o">-</span> <span class="mf">20.0</span>
+        <span class="n">g</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.4</span> <span class="o">-</span> <span class="n">X3</span> <span class="o">/</span> <span class="p">(</span><span class="mf">3.14</span> <span class="o">*</span> <span class="n">sq_diff</span><span class="p">)</span>
+        <span class="n">g</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="mf">2.22</span> <span class="o">*</span> <span class="mf">1e-3</span> <span class="o">*</span> <span class="n">X3</span> <span class="o">*</span> <span class="n">cub_diff</span><span class="p">)</span> <span class="o">/</span> <span class="n">sq_diff</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">g</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">3</span><span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.66</span> <span class="o">*</span> <span class="mf">1e-2</span> <span class="o">*</span> <span class="n">X3</span> <span class="o">*</span> <span class="n">X4</span> <span class="o">*</span> <span class="n">cub_diff</span><span class="p">)</span> <span class="o">/</span> <span class="n">sq_diff</span> <span class="o">-</span> <span class="mf">900.0</span>
+        <span class="k">return</span> <span class="n">g</span></div></div>
+
+
+<div class="viewcode-block" id="MW7"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.MW7">[docs]</a><span class="k">class</span> <span class="nc">MW7</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""The MW7 problem.</span>
+
+<span class="sd">    This problem has 2 objectives, 2 constraints, and a disconnected Pareto</span>
+<span class="sd">    frontier. It supports arbitrary input dimension &gt; 1. See [Ma2019]_ for details.</span>
+
+<span class="sd">    This implementation is adapted from:</span>
+<span class="sd">    https://github.com/anyoptimization/pymoo/blob/master/pymoo/problems/multi/mw.py</span>
+<span class="sd">    """</span>
+    <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">num_objectives</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.2</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"dim must be greater than or equal to 2."</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)]</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MW7.LA2"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.MW7.LA2">[docs]</a>    <span class="k">def</span> <span class="nf">LA2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">A</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">B</span> <span class="o">*</span> <span class="n">theta</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">C</span><span class="p">))</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">D</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MW7.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.MW7.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span>
+        <span class="n">contrib</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">a</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">contrib</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">f0</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">f1</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">f0</span> <span class="o">/</span> <span class="n">g</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f0</span><span class="p">,</span> <span class="n">f1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MW7.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.MW7.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">ff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_true</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">f0</span><span class="p">,</span> <span class="n">f1</span> <span class="o">=</span> <span class="n">ff</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">ff</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">atan</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span><span class="n">f1</span> <span class="o">/</span> <span class="n">f0</span><span class="p">)</span>
+        <span class="n">g0</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">f0</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">f1</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="o">-</span> <span class="p">(</span><span class="mf">1.2</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">LA2</span><span class="p">(</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">16.0</span><span class="p">,</span> <span class="n">atan</span><span class="p">))</span><span class="o">.</span><span class="n">abs</span><span class="p">())</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">g1</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.15</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">LA2</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="n">atan</span><span class="p">))</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">f0</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">f1</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">g0</span><span class="p">,</span> <span class="n">g1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
 <div class="viewcode-block" id="OSY"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.OSY">[docs]</a><span class="k">class</span> <span class="nc">OSY</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    The OSY test problem from [Oszycka1995]_.</span>
@@ -1048,6 +1412,30 @@
         <span class="n">g5</span> <span class="o">=</span> <span class="mf">4.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
         <span class="n">g6</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span> <span class="o">-</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span> <span class="o">-</span> <span class="mf">4.0</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">g4</span><span class="p">,</span> <span class="n">g5</span><span class="p">,</span> <span class="n">g6</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SRN"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.SRN">[docs]</a><span class="k">class</span> <span class="nc">SRN</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""The constrained SRN problem.</span>
+
+<span class="sd">    See [GarridoMerchan2020]_ for more details on this problem. Note that this is a</span>
+<span class="sd">    minimization problem.</span>
+<span class="sd">    """</span>
+
+    <span class="n">dim</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">num_objectives</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mf">20.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">20.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">)]</span>
+    <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>  <span class="c1"># TODO: Determine proper reference point</span>
+
+<div class="viewcode-block" id="SRN.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.SRN.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">obj1</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">+</span> <span class="p">((</span><span class="n">X</span> <span class="o">-</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">obj2</span> <span class="o">=</span> <span class="mf">9.0</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SRN.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.SRN.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">c1</span> <span class="o">=</span> <span class="mf">225.0</span> <span class="o">-</span> <span class="p">((</span><span class="n">X</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">c2</span> <span class="o">=</span> <span class="o">-</span><span class="mf">10.0</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="WeldedBeam"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.WeldedBeam">[docs]</a><span class="k">class</span> <span class="nc">WeldedBeam</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
@@ -1101,7 +1489,7 @@
         <span class="n">g2</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">s_max</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">s</span> <span class="o">-</span> <span class="n">s_max</span><span class="p">)</span>
         <span class="n">g3</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">5</span> <span class="o">-</span> <span class="mf">0.125</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
         <span class="n">g4</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">P</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">P</span> <span class="o">-</span> <span class="n">P_c</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">g4</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">g4</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>

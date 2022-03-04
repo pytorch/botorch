@@ -25,7 +25,7 @@
 <div class="body" role="main">
 <h1>Source code for botorch.utils.multi_objective.box_decompositions.non_dominated</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
@@ -53,9 +53,9 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_expand_ref_point</span><span class="p">,</span>
+    <span class="n">compute_non_dominated_hypercell_bounds_2d</span><span class="p">,</span>
     <span class="n">get_partition_bounds</span><span class="p">,</span>
     <span class="n">update_local_upper_bounds_incremental</span><span class="p">,</span>
-    <span class="n">compute_non_dominated_hypercell_bounds_2d</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
