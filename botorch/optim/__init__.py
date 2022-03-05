@@ -11,6 +11,7 @@ from botorch.optim.optimize import (
     optimize_acqf,
     optimize_acqf_cyclic,
     optimize_acqf_discrete,
+    optimize_acqf_discrete_local_search,
     optimize_acqf_mixed,
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
@@ -23,6 +24,7 @@ __all__ = [
     "optimize_acqf",
     "optimize_acqf_cyclic",
     "optimize_acqf_discrete",
+    "optimize_acqf_discrete_local_search",
     "optimize_acqf_mixed",
     "module_to_array",
     "set_params_with_array",

@@ -581,11 +581,12 @@ def optimize_acqf_discrete(
         candidate_list, acq_value_list = [], []
         base_X_pending = acq_function.X_pending
         for _ in range(q):
-            acq_values = _split_batch_eval_acqf(
-                acq_function=acq_function,
-                X=choices_batched,
-                max_batch_size=max_batch_size,
-            )
+            with torch.no_grad():
+                acq_values = _split_batch_eval_acqf(
+                    acq_function=acq_function,
+                    X=choices_batched,
+                    max_batch_size=max_batch_size,
+                )
             best_idx = torch.argmax(acq_values)
             candidate_list.append(choices_batched[best_idx])
             acq_value_list.append(acq_values[best_idx])
@@ -606,9 +607,10 @@ def optimize_acqf_discrete(
         acq_function.set_X_pending(base_X_pending)
         return candidates, torch.stack(acq_value_list)
 
-    acq_values = _split_batch_eval_acqf(
-        acq_function=acq_function, X=choices_batched, max_batch_size=max_batch_size
-    )
+    with torch.no_grad():
+        acq_values = _split_batch_eval_acqf(
+            acq_function=acq_function, X=choices_batched, max_batch_size=max_batch_size
+        )
     best_idx = torch.argmax(acq_values)
     return choices_batched[best_idx], acq_values[best_idx]
 
@@ -617,3 +619,201 @@ def _split_batch_eval_acqf(
     acq_function: AcquisitionFunction, X: Tensor, max_batch_size: int
 ) -> Tensor:
     return torch.cat([acq_function(X_) for X_ in X.split(max_batch_size)])
+
+
+def _generate_neighbors(
+    x: Tensor,
+    discrete_choices: List[Tensor],
+    X_avoid: Tensor,
+    inequality_constraints: List[Tuple[Tensor, Tensor, float]],
+):
+    # generate all 1D perturbations
+    npts = sum([len(c) for c in discrete_choices])
+    X_loc = x.repeat(npts, 1)
+    j = 0
+    for i, c in enumerate(discrete_choices):
+        X_loc[j : j + len(c), i] = c
+        j += len(c)
+    # remove invalid and infeasible points (also remove x)
+    X_loc = _filter_invalid(X=X_loc, X_avoid=torch.cat((X_avoid, x)))
+    X_loc = _filter_infeasible(X=X_loc, inequality_constraints=inequality_constraints)
+    return X_loc
+
+
+def _filter_infeasible(
+    X: Tensor, inequality_constraints: List[Tuple[Tensor, Tensor, float]]
+):
+    """Remove all points from `X` that don't satisfy the constraints."""
+    is_feasible = torch.ones(X.shape[0], dtype=torch.bool, device=X.device)
+    for (inds, weights, bound) in inequality_constraints:
+        is_feasible &= (X[..., inds] * weights).sum(dim=-1) >= bound
+    return X[is_feasible]
+
+
+def _filter_invalid(X: Tensor, X_avoid: Tensor):
+    """Remove all occurences of `X_avoid` from `X`."""
+    return X[~(X == X_avoid.unsqueeze(-2)).all(dim=-1).any(dim=-2)]
+
+
+def _gen_batch_initial_conditions_local_search(
+    discrete_choices: List[Tensor],
+    raw_samples: int,
+    X_avoid: Tensor,
+    inequality_constraints: List[Tuple[Tensor, Tensor, float]],
+    min_points: int,
+    max_tries: int = 100,
+):
+    """Generate initial conditions for local search."""
+    tkwargs = {"device": discrete_choices[0].device, "dtype": discrete_choices[0].dtype}
+    dim = len(discrete_choices)
+    X = torch.zeros(0, dim, **tkwargs)
+    for _ in range(max_tries):
+        X_new = torch.zeros(raw_samples, dim, **tkwargs)
+        for i, c in enumerate(discrete_choices):
+            X_new[:, i] = c[
+                torch.randint(low=0, high=len(c), size=(raw_samples,), device=c.device)
+            ]
+        X = torch.unique(torch.cat((X, X_new)), dim=0)
+        X = _filter_invalid(X=X, X_avoid=X_avoid)
+        X = _filter_infeasible(X=X, inequality_constraints=inequality_constraints)
+        if len(X) >= min_points:
+            return X
+    raise RuntimeError(f"Failed to generate at least {min_points} initial conditions")
+
+
+def optimize_acqf_discrete_local_search(
+    acq_function: AcquisitionFunction,
+    discrete_choices: List[Tensor],
+    q: int,
+    num_restarts: int = 20,
+    raw_samples: int = 4096,
+    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    X_avoid: Optional[Tensor] = None,
+    batch_initial_conditions: Optional[Tensor] = None,
+    max_batch_size: int = 2048,
+    unique: bool = True,
+    **kwargs: Any,
+) -> Tuple[Tensor, Tensor]:
+    r"""Optimize acquisition function over a lattice.
+
+    This is useful when d is large and enumeration of the search space
+    isn't possible. For q > 1 this function always performs sequential
+    greedy optimization (with proper conditioning on generated candidates).
+
+    NOTE: While this method supports arbitrary lattices, it has only been
+    thoroughly tested for {0, 1}^d. Consider it to be in alpha stage for
+    the more general case.
+
+    Args:
+        acq_function: An AcquisitionFunction
+        discrete_choices: A list of possible discrete choices for each dimension.
+            Each element in the list is expected to be a torch tensor.
+        q: The number of candidates.
+        num_restarts:  Number of starting points for multistart acquisition
+            function optimization.
+        raw_samples: Number of samples for initialization. This is required
+            if `batch_initial_conditions` is not specified.
+        inequality_constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
+        X_avoid: An `n x d` tensor of candidates that we aren't allowed to pick.
+        batch_initial_conditions: A tensor of size `n x 1 x d` to specify the
+            initial conditions. Set this if you do not want to use default
+            initialization strategy.
+        max_batch_size: The maximum number of choices to evaluate in batch.
+            A large limit can cause excessive memory usage if the model has
+            a large training set.
+        unique: If True return unique choices, o/w choices may be repeated
+            (only relevant if `q > 1`).
+
+    Returns:
+        A two-element tuple containing
+
+        - a `q x d`-dim tensor of generated candidates.
+        - an associated acquisition value.
+    """
+    candidate_list = []
+    base_X_pending = acq_function.X_pending if q > 1 else None
+    base_X_avoid = X_avoid
+    tkwargs = {"device": discrete_choices[0].device, "dtype": discrete_choices[0].dtype}
+    dim = len(discrete_choices)
+    if X_avoid is None:
+        X_avoid = torch.zeros(0, dim, **tkwargs)
+
+    inequality_constraints = inequality_constraints or []
+    for i in range(q):
+        # generate some starting points
+        if i == 0 and batch_initial_conditions is not None:
+            X0 = _filter_invalid(X=batch_initial_conditions.squeeze(1), X_avoid=X_avoid)
+            X0 = _filter_infeasible(
+                X=X0, inequality_constraints=inequality_constraints
+            ).unsqueeze(1)
+        else:
+            X_init = _gen_batch_initial_conditions_local_search(
+                discrete_choices=discrete_choices,
+                raw_samples=raw_samples,
+                X_avoid=X_avoid,
+                inequality_constraints=inequality_constraints,
+                min_points=num_restarts,
+            )
+            # pick the best starting points
+            with torch.no_grad():
+                acqvals_init = _split_batch_eval_acqf(
+                    acq_function=acq_function,
+                    X=X_init.unsqueeze(1),
+                    max_batch_size=max_batch_size,
+                ).unsqueeze(-1)
+            X0 = X_init[acqvals_init.topk(k=num_restarts, largest=True, dim=0).indices]
+
+        # optimize from the best starting points
+        best_xs = torch.zeros(len(X0), dim, **tkwargs)
+        best_acqvals = torch.zeros(len(X0), 1, **tkwargs)
+        for j, x in enumerate(X0):
+            curr_x, curr_acqval = x.clone(), acq_function(x.unsqueeze(1))
+            while True:
+                # this generates all feasible neighbors that are one bit away
+                X_loc = _generate_neighbors(
+                    x=curr_x,
+                    discrete_choices=discrete_choices,
+                    X_avoid=X_avoid,
+                    inequality_constraints=inequality_constraints,
+                )
+                # there may not be any neighbors
+                if len(X_loc) == 0:
+                    break
+                with torch.no_grad():
+                    acqval_loc = acq_function(X_loc.unsqueeze(1))
+                # break if no neighbor is better than the current point (local optimum)
+                if acqval_loc.max() <= curr_acqval:
+                    break
+                best_ind = acqval_loc.argmax().item()
+                curr_x, curr_acqval = X_loc[best_ind].unsqueeze(0), acqval_loc[best_ind]
+            best_xs[j, :], best_acqvals[j] = curr_x, curr_acqval
+
+        # pick the best
+        best_idx = best_acqvals.argmax()
+        candidate_list.append(best_xs[best_idx].unsqueeze(0))
+
+        # set pending points
+        candidates = torch.cat(candidate_list, dim=-2)
+        if q > 1:
+            acq_function.set_X_pending(
+                torch.cat([base_X_pending, candidates], dim=-2)
+                if base_X_pending is not None
+                else candidates
+            )
+
+            # Update points to avoid if unique is True
+            if unique:
+                X_avoid = (
+                    torch.cat([base_X_avoid, candidates], dim=-2)
+                    if base_X_avoid is not None
+                    else candidates
+                )
+
+    # Reset acq_func to original X_pending state
+    if q > 1:
+        acq_function.set_X_pending(base_X_pending)
+    with torch.no_grad():
+        acq_value = acq_function(candidates)  # compute joint acquisition value
+    return candidates, acq_value
