@@ -33,7 +33,7 @@ def parse_ipynb(file: Path) -> str:
     return script
 
 
-def run_script(script: str, env: Dict[str, str] = None) -> None:
+def run_script(script: str, env: Optional[Dict[str, str]] = None) -> None:
     # need to keep the file around & close it so subprocess does not run into I/O issues
     with tempfile.NamedTemporaryFile(delete=False) as tf:
         tf_name = tf.name
@@ -52,8 +52,8 @@ def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
     script = parse_ipynb(tutorial)
     tic = time.time()
     print(f"Running tutorial {tutorial.name}.")
-    smoke_test = "true" if smoke_test else "false"
-    run_out = run_script(script, env={"SMOKE_TEST": smoke_test})
+    env = {"SMOKE_TEST": "True"} if smoke_test else None
+    run_out = run_script(script, env=env)
     try:
         run_out.check_returncode()
     except CalledProcessError:
