@@ -14,9 +14,14 @@ from botorch.acquisition.acquisition import (
     OneShotAcquisitionFunction,
 )
 from botorch.optim.optimize import (
+    _filter_infeasible,
+    _filter_invalid,
+    _generate_neighbors,
+    _gen_batch_initial_conditions_local_search,
     optimize_acqf,
     optimize_acqf_cyclic,
     optimize_acqf_discrete,
+    optimize_acqf_discrete_local_search,
     optimize_acqf_list,
     optimize_acqf_mixed,
 )
@@ -824,7 +829,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             )
 
 
-class TestOptimizeAcqfDisrete(BotorchTestCase):
+class TestOptimizeAcqfDiscrete(BotorchTestCase):
     def test_optimize_acqf_discrete(self):
 
         for q, dtype in itertools.product((1, 2), (torch.float, torch.double)):
@@ -881,3 +886,147 @@ class TestOptimizeAcqfDisrete(BotorchTestCase):
             expected_acq_value = exp_acq_vals[best_idx].repeat(q)
             self.assertTrue(torch.allclose(acq_value, expected_acq_value))
             self.assertTrue(torch.allclose(candidates, expected_candidates))
+
+    def test_optimize_acqf_discrete_local_search(self):
+        for q, dtype in itertools.product((1, 2), (torch.float, torch.double)):
+            tkwargs = {"device": self.device, "dtype": dtype}
+
+            mock_acq_function = SquaredAcquisitionFunction()
+            mock_acq_function.set_X_pending(None)
+            discrete_choices = [
+                torch.tensor([0, 1, 6], **tkwargs),
+                torch.tensor([2, 3, 4], **tkwargs),
+                torch.tensor([5, 6, 9], **tkwargs),
+            ]
+
+            # make sure we can find the global optimum
+            candidates, acq_value = optimize_acqf_discrete_local_search(
+                acq_function=mock_acq_function,
+                q=q,
+                discrete_choices=discrete_choices,
+                raw_samples=1,
+                num_restarts=1,
+            )
+            self.assertTrue(
+                torch.allclose(candidates[0], torch.tensor([6, 4, 9], **tkwargs))
+            )
+            if q > 1:  # there are three local minima
+                self.assertTrue(
+                    torch.allclose(candidates[1], torch.tensor([6, 3, 9], **tkwargs))
+                    or torch.allclose(candidates[1], torch.tensor([1, 4, 9], **tkwargs))
+                    or torch.allclose(candidates[1], torch.tensor([6, 4, 6], **tkwargs))
+                )
+
+            # same but with unique=False
+            candidates, acq_value = optimize_acqf_discrete_local_search(
+                acq_function=mock_acq_function,
+                q=q,
+                discrete_choices=discrete_choices,
+                raw_samples=1,
+                num_restarts=1,
+                unique=False,
+            )
+            expected_candidates = torch.tensor([[6, 4, 9], [6, 4, 9]], **tkwargs)
+            self.assertTrue(torch.allclose(candidates, expected_candidates[:q]))
+
+            # test X_avoid and batch_initial_conditions
+            candidates, acq_value = optimize_acqf_discrete_local_search(
+                acq_function=mock_acq_function,
+                q=q,
+                discrete_choices=discrete_choices,
+                X_avoid=torch.tensor([[6, 4, 9]], **tkwargs),
+                batch_initial_conditions=torch.tensor([[0, 2, 5]], **tkwargs).unsqueeze(
+                    1
+                ),
+            )
+            self.assertTrue(
+                torch.allclose(candidates[0], torch.tensor([6, 3, 9], **tkwargs))
+            )
+            if q > 1:  # there are two local minima
+                self.assertTrue(
+                    torch.allclose(candidates[1], torch.tensor([6, 2, 9], **tkwargs))
+                )
+
+            # test inequality constraints
+            inequality_constraints = [
+                (
+                    torch.tensor([2], device=self.device),
+                    -1 * torch.ones(1, **tkwargs),
+                    -6 * torch.ones(1, **tkwargs),
+                )
+            ]
+            candidates, acq_value = optimize_acqf_discrete_local_search(
+                acq_function=mock_acq_function,
+                q=q,
+                discrete_choices=discrete_choices,
+                raw_samples=1,
+                num_restarts=1,
+                inequality_constraints=inequality_constraints,
+            )
+            self.assertTrue(
+                torch.allclose(candidates[0], torch.tensor([6, 4, 6], **tkwargs))
+            )
+            if q > 1:  # there are three local minima
+                self.assertTrue(
+                    torch.allclose(candidates[1], torch.tensor([6, 4, 5], **tkwargs))
+                    or torch.allclose(candidates[1], torch.tensor([6, 3, 6], **tkwargs))
+                    or torch.allclose(candidates[1], torch.tensor([1, 4, 6], **tkwargs))
+                )
+
+            # make sure we break if there are no neighbors
+            optimize_acqf_discrete_local_search(
+                acq_function=mock_acq_function,
+                q=q,
+                discrete_choices=[
+                    torch.tensor([0, 1], **tkwargs),
+                    torch.tensor([1], **tkwargs),
+                ],
+                raw_samples=1,
+                num_restarts=1,
+            )
+
+            # test _filter_infeasible
+            X = torch.tensor([[0, 2, 5], [0, 2, 6], [0, 2, 9]], **tkwargs)
+            X_filtered = _filter_infeasible(
+                X=X, inequality_constraints=inequality_constraints
+            )
+            self.assertTrue(torch.allclose(X[:2], X_filtered))
+
+            # test _filter_invalid
+            X_filtered = _filter_invalid(X=X, X_avoid=X[1].unsqueeze(0))
+            self.assertTrue(torch.allclose(X[[0, 2]], X_filtered))
+            X_filtered = _filter_invalid(X=X, X_avoid=X[[0, 2]])
+            self.assertTrue(torch.allclose(X[1].unsqueeze(0), X_filtered))
+
+            # test _generate_neighbors
+            X_loc = _generate_neighbors(
+                x=torch.tensor([0, 2, 6], **tkwargs).unsqueeze(0),
+                discrete_choices=discrete_choices,
+                X_avoid=torch.tensor([[0, 3, 6], [0, 2, 5]], **tkwargs),
+                inequality_constraints=inequality_constraints,
+            )
+            self.assertTrue(
+                torch.allclose(
+                    X_loc, torch.tensor([[1, 2, 6], [6, 2, 6], [0, 4, 6]], **tkwargs)
+                )
+            )
+
+            # test _gen_batch_initial_conditions_local_search
+            with self.assertRaisesRegex(RuntimeError, "Failed to generate"):
+                _gen_batch_initial_conditions_local_search(
+                    discrete_choices=discrete_choices,
+                    raw_samples=1,
+                    X_avoid=torch.zeros(0, 3, **tkwargs),
+                    inequality_constraints=[],
+                    min_points=30,
+                )
+
+            X = _gen_batch_initial_conditions_local_search(
+                discrete_choices=discrete_choices,
+                raw_samples=1,
+                X_avoid=torch.zeros(0, 3, **tkwargs),
+                inequality_constraints=[],
+                min_points=20,
+            )
+            self.assertEqual(len(X), 20)
+            self.assertTrue(torch.allclose(torch.unique(X, dim=0), X))
