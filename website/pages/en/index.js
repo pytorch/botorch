@@ -77,20 +77,6 @@ class HomeSplash extends React.Component {
   }
 }
 
-function SocialBanner() {
-  return (
-    <div className="SocialBannerWrapper">
-      <div className="SocialBanner">
-        Support Ukraine 🇺🇦{' '}
-        <a href="https://opensource.fb.com/support-ukraine">
-          Help Provide Humanitarian Aid to Ukraine
-        </a>
-        .
-      </div>
-    </div>
-  );
-}
-
 class Index extends React.Component {
   render() {
     const {config: siteConfig, language = ''} = this.props;
@@ -276,7 +262,6 @@ candidate  # tensor([0.4887, 0.5063])
 
     return (
       <div>
-        <SocialBanner />
         <HomeSplash siteConfig={siteConfig} language={language} />
         <div className="landingPage mainContainer">
           <Features />
