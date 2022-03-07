@@ -272,7 +272,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
     To train this model, you should use `gpytorch.mlls.VariationalELBO` and not the
     exact marginal log likelihood. Example mll:
 
-        mll = VariationalELBO(model.likelihood, model, num_data=train_X.shape[-2])
+        mll = VariationalELBO(model.likelihood, model.model, num_data=train_X.shape[-2])
 
     """
 
