@@ -94,7 +94,9 @@ def get_acquisition_function(
         )
     # instantiate and return the requested acquisition function
     if acquisition_function_name in ("qEI", "qPI"):
-        obj = objective(model.posterior(X_observed).mean)
+        obj = objective(
+            model.posterior(X_observed, posterior_transform=posterior_transform).mean
+        )
         best_f = obj.max(dim=-1).values
     if acquisition_function_name == "qEI":
         return monte_carlo.qExpectedImprovement(

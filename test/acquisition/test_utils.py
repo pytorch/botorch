@@ -37,6 +37,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
+from gpytorch.distributions import MultivariateNormal
 from torch import Tensor
 
 
@@ -107,6 +108,25 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
         self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
+
+        # test w/ posterior transform
+        pm = torch.tensor([1.0, 2.0])
+        mvn = MultivariateNormal(pm, torch.eye(2))
+        self.model._posterior.mvn = mvn
+        self.model._posterior._mean = pm.unsqueeze(-1)
+        pt = ScalarizedPosteriorTransform(weights=torch.tensor([-1]))
+        acqf = get_acquisition_function(
+            acquisition_function_name="qEI",
+            model=self.model,
+            objective=self.objective,
+            X_observed=self.X_observed,
+            posterior_transform=pt,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            seed=self.seed,
+            marginalize_dim=0,
+        )
+        self.assertEqual(mock_acqf.call_args[-1]["best_f"].item(), -1.0)
 
     @mock.patch(f"{monte_carlo.__name__}.qProbabilityOfImprovement")
     def test_GetQPI(self, mock_acqf):

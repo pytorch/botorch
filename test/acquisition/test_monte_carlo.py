@@ -20,7 +20,11 @@ from botorch.acquisition.monte_carlo import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
-from botorch.acquisition.objective import GenericMCObjective, PosteriorTransform
+from botorch.acquisition.objective import (
+    ScalarizedPosteriorTransform,
+    GenericMCObjective,
+    PosteriorTransform,
+)
 from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.models import SingleTaskGP
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
@@ -552,6 +556,29 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                     acqf(test_X)
             self.assertEqual(len(ws), 1)
             self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+
+        # test w/ posterior transform
+        X_baseline = torch.rand(2, 1)
+        model = SingleTaskGP(X_baseline, torch.randn(2, 1))
+        pt = ScalarizedPosteriorTransform(weights=torch.tensor([-1]))
+        with mock.patch.object(
+            qNoisyExpectedImprovement,
+            "_cache_root_decomposition",
+        ) as mock_cache_root:
+            acqf = qNoisyExpectedImprovement(
+                model=model,
+                X_baseline=X_baseline,
+                sampler=IIDNormalSampler(1),
+                posterior_transform=pt,
+                prune_baseline=False,
+                cache_root=True,
+            )
+            tf_post = model.posterior(X_baseline, posterior_transform=pt)
+            self.assertTrue(
+                torch.allclose(
+                    tf_post.mean, mock_cache_root.call_args[-1]["posterior"].mean
+                )
+            )
 
     # TODO: Test different objectives (incl. constraints)
 
