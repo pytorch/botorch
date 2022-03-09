@@ -2906,7 +2906,7 @@ ModelListGP.</p>
 <p>To train this model, you should use <cite>gpytorch.mlls.VariationalELBO</cite> and not the
 exact marginal log likelihood. Example mll:</p>
 <blockquote>
-<div><p>mll = VariationalELBO(model.likelihood, model, num_data=train_X.shape[-2])</p>
+<div><p>mll = VariationalELBO(model.likelihood, model.model, num_data=train_X.shape[-2])</p>
 </div></blockquote>
 <p>A single task stochastic variational Gaussian process model (SVGP) as described
 by <a class="reference internal" href="#hensman2013svgp" id="id13"><span>[hensman2013svgp]</span></a>. We use pivoted cholesky initialization <a class="reference internal" href="#burt2020svgp" id="id14"><span>[burt2020svgp]</span></a> to
