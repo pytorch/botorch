@@ -158,7 +158,9 @@ class TestMaxValueEntropySearch(BotorchTestCase):
 
             # Test with multi-output model w/ transform.
             mm = MESMockModel(num_outputs=2)
-            pt = ScalarizedPosteriorTransform(weights=torch.ones(2, dtype=dtype))
+            pt = ScalarizedPosteriorTransform(
+                weights=torch.ones(2, device=self.device, dtype=dtype)
+            )
             for gumbel in (True, False):
                 qMVE = qMaxValueEntropy(
                     mm,
@@ -225,7 +227,9 @@ class TestMaxValueEntropySearch(BotorchTestCase):
 
             # Test with multi-output model w/ transform.
             mm = MESMockModel(num_outputs=2)
-            pt = ScalarizedPosteriorTransform(weights=torch.ones(2, dtype=dtype))
+            pt = ScalarizedPosteriorTransform(
+                weights=torch.ones(2, device=self.device, dtype=dtype)
+            )
             qGIBBON = qLowerBoundMaxValueEntropy(
                 mm,
                 candidate_set,
@@ -270,7 +274,9 @@ class TestMaxValueEntropySearch(BotorchTestCase):
 
             # Test with multi-output model w/ transform.
             mm = MESMockModel(num_outputs=2)
-            pt = ScalarizedPosteriorTransform(weights=torch.ones(2, dtype=dtype))
+            pt = ScalarizedPosteriorTransform(
+                weights=torch.ones(2, device=self.device, dtype=dtype)
+            )
             qMF_MVE = qMultiFidelityMaxValueEntropy(
                 model=mm,
                 candidate_set=candidate_set,
@@ -284,13 +290,15 @@ class TestMaxValueEntropySearch(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             torch.manual_seed(7)
             mm = MESMockModel()
-            candidate_set = torch.rand(3, 10, 2, dtype=dtype)
+            candidate_set = torch.rand(3, 10, 2, device=self.device, dtype=dtype)
             samples = _sample_max_value_Gumbel(mm, candidate_set, 5)
             self.assertEqual(samples.shape, torch.Size([5, 3]))
 
             # Test with multi-output model w/ transform.
             mm = MESMockModel(num_outputs=2)
-            pt = ScalarizedPosteriorTransform(weights=torch.ones(2, dtype=dtype))
+            pt = ScalarizedPosteriorTransform(
+                weights=torch.ones(2, device=self.device, dtype=dtype)
+            )
             samples = _sample_max_value_Gumbel(
                 mm, candidate_set, 5, posterior_transform=pt
             )
@@ -300,13 +308,15 @@ class TestMaxValueEntropySearch(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             torch.manual_seed(7)
             mm = MESMockModel()
-            candidate_set = torch.rand(3, 10, 2, dtype=dtype)
+            candidate_set = torch.rand(3, 10, 2, device=self.device, dtype=dtype)
             samples = _sample_max_value_Thompson(mm, candidate_set, 5)
             self.assertEqual(samples.shape, torch.Size([5, 3]))
 
             # Test with multi-output model w/ transform.
             mm = MESMockModel(num_outputs=2)
-            pt = ScalarizedPosteriorTransform(weights=torch.ones(2, dtype=dtype))
+            pt = ScalarizedPosteriorTransform(
+                weights=torch.ones(2, device=self.device, dtype=dtype)
+            )
             samples = _sample_max_value_Thompson(
                 mm, candidate_set, 5, posterior_transform=pt
             )

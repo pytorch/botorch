@@ -473,7 +473,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
         if task_covar_prior is None:
             task_covar_prior = LKJCovariancePrior(
                 n=num_tasks,
-                eta=kwargs.get("eta", 1.5),
+                eta=torch.tensor(kwargs.get("eta", 1.5)).to(train_X),
                 sd_prior=kwargs.get(
                     "sd_prior",
                     SmoothedBoxPrior(math.exp(-6), math.exp(1.25), 0.05),
