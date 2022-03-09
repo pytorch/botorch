@@ -2,6 +2,16 @@
 
 The release log for BoTorch.
 
+## [0.6.2] - Mar 9, 2022
+
+#### New Features
+* Use `BOTORCH_MODULAR` in tutorials with Ax (#1105).
+* Add `optimize_acqf_discrete_local_search` for discrete search spaces (#1111).
+
+#### Bug Fixes
+* Fix missing `posterior_transform` in qNEI and `get_acquisition_function` (#1113).
+
+
 ## [0.6.1] - Feb 28, 2022
 
 #### New Features
