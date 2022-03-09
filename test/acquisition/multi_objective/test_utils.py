@@ -129,7 +129,9 @@ class TestMultiObjectiveUtils(BotorchTestCase):
                 )
             if self.device.type == "cuda":
                 # sorting has different order on cuda
-                self.assertTrue(torch.equal(X_pruned, torch.stack([X[2], X[1]], dim=0)))
+                self.assertTrue(
+                    torch.equal(X_pruned, X[[2, 1]]) or torch.equal(X_pruned, X[[1, 2]])
+                )
             else:
                 self.assertTrue(torch.equal(X_pruned, X[:2]))
             # test that zero-probability is in fact pruned

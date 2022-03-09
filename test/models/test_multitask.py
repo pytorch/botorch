@@ -706,7 +706,7 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             )
             task_covar_prior = LKJCovariancePrior(
                 n=2,
-                eta=0.5,
+                eta=torch.tensor(0.5, **tkwargs),
                 sd_prior=SmoothedBoxPrior(math.exp(-3), math.exp(2), 0.1),
             )
             model_kwargs = {
