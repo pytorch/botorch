@@ -28,6 +28,7 @@ jobs:
         ALLOW_BOTORCH_LATEST: true
       run: |
         pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install git+https://github.com/facebook/Ax.git
         pip install .[tutorials]
     - name: Run tutorials
       run: |
