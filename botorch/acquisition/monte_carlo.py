@@ -266,7 +266,9 @@ class qNoisyExpectedImprovement(
             self.q = -1
             # set baseline samples
             with torch.no_grad():
-                posterior = self.model.posterior(X_baseline)
+                posterior = self.model.posterior(
+                    X_baseline, posterior_transform=self.posterior_transform
+                )
                 baseline_samples = self.base_sampler(posterior)
             baseline_obj = self.objective(baseline_samples, X=X_baseline)
             self.register_buffer("baseline_samples", baseline_samples)
