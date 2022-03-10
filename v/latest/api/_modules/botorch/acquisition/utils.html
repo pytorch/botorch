@@ -120,7 +120,9 @@
         <span class="p">)</span>
     <span class="c1"># instantiate and return the requested acquisition function</span>
     <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"qEI"</span><span class="p">,</span> <span class="s2">"qPI"</span><span class="p">):</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_observed</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_observed</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span>
+        <span class="p">)</span>
         <span class="n">best_f</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
     <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qEI"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qExpectedImprovement</span><span class="p">(</span>

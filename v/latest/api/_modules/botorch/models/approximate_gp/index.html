@@ -298,7 +298,7 @@
 <span class="sd">    To train this model, you should use `gpytorch.mlls.VariationalELBO` and not the</span>
 <span class="sd">    exact marginal log likelihood. Example mll:</span>
 
-<span class="sd">        mll = VariationalELBO(model.likelihood, model, num_data=train_X.shape[-2])</span>
+<span class="sd">        mll = VariationalELBO(model.likelihood, model.model, num_data=train_X.shape[-2])</span>
 
 <span class="sd">    """</span>
 

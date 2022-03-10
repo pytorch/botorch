@@ -292,7 +292,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
             <span class="c1"># set baseline samples</span>
             <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-                <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_baseline</span><span class="p">)</span>
+                <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+                    <span class="n">X_baseline</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
+                <span class="p">)</span>
                 <span class="n">baseline_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
             <span class="n">baseline_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">baseline_samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"baseline_samples"</span><span class="p">,</span> <span class="n">baseline_samples</span><span class="p">)</span>
