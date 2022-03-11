@@ -42,6 +42,7 @@ TUTORIALS_REQUIRES = [
     "ax-platform",
     "cma",
     "jupyter",
+    "kaleido",
     "matplotlib",
     "memory_profiler",
     "pykeops",
