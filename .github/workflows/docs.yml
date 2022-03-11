@@ -26,6 +26,8 @@ jobs:
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[dev]
         pip install beautifulsoup4 ipython "nbconvert<6.0"
+        # This is needed as a stop-gap until we remove nbconvert<6.0 restriction.
+        pip install ipython_genutils
     - name: Validate Sphinx
       run: |
         python scripts/validate_sphinx.py -p "$(pwd)"
