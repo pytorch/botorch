@@ -122,6 +122,8 @@ jobs:
         pip install .[dev]
         pip install git+https://github.com/facebook/Ax.git
         pip install beautifulsoup4 ipython "nbconvert<6.0"
+        # This is needed as a stop-gap until we remove nbconvert<6.0 restriction.
+        pip install ipython_genutils
     - name: Unit tests
       run: |
         pytest -ra
