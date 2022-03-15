@@ -18,9 +18,14 @@ import os
 from contextlib import contextmanager
 
 from ax.utils.testing.mock import fast_botorch_optimize_context_manager
-
+import plotly.io as pio
+# Ax uses Plotly to produce interactive plots. These are great for viewing and analysis,
+# though they also lead to large file sizes, which is not ideal for files living in GH.
+# Changing the default to `png` strips the interactive components to get around this.
+pio.renderers.default = "png"
 
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
+NUM_EVALS = 10 if SMOKE_TEST else 30
 
 
 @contextmanager
@@ -238,7 +243,7 @@ def evaluate(parameters):
 
 
 with fast_smoke_test():
-    for i in range(30):
+    for i in range(NUM_EVALS):
         parameters, trial_index = ax_client.get_next_trial()
         # Local evaluation here can be replaced with deployment to external system.
         ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters))
@@ -266,6 +271,7 @@ print(f"Corresponding mean: {values[0]}, covariance: {values[1]}")
 
 
 from ax.utils.notebook.plotting import render
+
 render(ax_client.get_contour_plot())
 
 
@@ -392,7 +398,7 @@ for i in range(5):
 
 
 with fast_smoke_test():
-    for i in range(25):
+    for i in range(NUM_EVALS - 5):
         model_bridge = Models.BOTORCH_MODULAR(
             experiment=exp,
             data=exp.fetch_data(),
@@ -428,7 +434,6 @@ exp.fetch_data().df
 
 import numpy as np
 from ax.plot.trace import optimization_trace_single_method
-from ax.utils.notebook.plotting import render
 
 
 # `plot_single_method` expects a 2-d array of means, because it expects to average means from multiple

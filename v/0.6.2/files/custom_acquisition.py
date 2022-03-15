@@ -1,34 +1,7 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-# ## Writing a custom acquisition function and interfacing with Ax
 # 
-# As seen in the [custom BoTorch model in Ax](./custom_botorch_model_in_ax) tutorial, Ax's `BotorchModel` is flexible in allowing different components of the Bayesian optimization loop to be specified through a functional API. This tutorial walks through the steps of writing a custom acquisition function and then inserting it into Ax. 
-# 
-# Next cell sets up a decorator solely to speed up the testing of the notebook. You can safely ignore this cell and use of the decorator throughout the tutorial.
-
-# In[1]:
-
-
-import os
-from contextlib import contextmanager
-
-from ax.utils.testing.mock import fast_botorch_optimize_context_manager
-
-
-SMOKE_TEST = os.environ.get("SMOKE_TEST")
-
-
-@contextmanager
-def dummy_context_manager():
-    yield
-
-
-if SMOKE_TEST:
-    fast_smoke_test = fast_botorch_optimize_context_manager
-else:
-    fast_smoke_test = dummy_context_manager
-
 
 # ### Upper Confidence Bound (UCB)
 # 
@@ -37,6 +10,16 @@ else:
 # ### A scalarized version of q-UCB
 # 
 # Suppose now that we are in a multi-output setting, where, e.g., we model the effects of a design on multiple metrics. We first show a simple extension of the q-UCB acquisition function that accepts a multi-output model and performs q-UCB on a scalarized version of the multiple outputs, achieved via a vector of weights. Implementing a new acquisition function in botorch is easy; one simply needs to implement the constructor and a `forward` method.
+
+# In[1]:
+
+
+import plotly.io as pio
+# Ax uses Plotly to produce interactive plots. These are great for viewing and analysis,
+# though they also lead to large file sizes, which is not ideal for files living in GH.
+# Changing the default to `png` strips the interactive components to get around this.
+pio.renderers.default = "png"
+
 
 # In[2]:
 
@@ -116,10 +99,9 @@ Y = torch.stack([torch.sin(X[:, 0]), torch.cos(X[:, 1])], -1)
 Y = standardize(Y)  # standardize to zero mean unit variance
 
 # construct and fit the multi-output model
-with fast_smoke_test():
-    gp = SingleTaskGP(X, Y)
-    mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-    fit_gpytorch_model(mll)
+gp = SingleTaskGP(X, Y)
+mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+fit_gpytorch_model(mll)
 
 # construct the acquisition function
 qSUCB = qScalarizedUpperConfidenceBound(gp, beta=0.1, weights=torch.tensor([0.1, 0.5]))
@@ -337,11 +319,10 @@ def evaluate(parameters):
 # In[13]:
 
 
-with fast_smoke_test():
-    for i in range(15):
-        parameters, trial_index = ax_client.get_next_trial()
-        # Local evaluation here can be replaced with deployment to external system.
-        ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters))
+for i in range(10):
+    parameters, trial_index = ax_client.get_next_trial()
+    # Local evaluation here can be replaced with deployment to external system.
+    ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters))
 
 
 # ### Viewing trials and plotting the Pareto frontier
@@ -356,25 +337,25 @@ ax_client.generation_strategy.trials_as_df
 
 # Plot the Pareto frontier.
 # 
-# Note that we do not expect a good coverage of the Pareto frontier since our acquisition function naively optimizes the sum of the two objectives.
+# Note that we do not expect a good coverage of the Pareto frontier since we use very small number of evaluations and our acquisition function naively optimizes the sum of the two objectives.
 
 # In[15]:
 
 
 from ax.plot.pareto_frontier import plot_pareto_frontier
-from ax.utils.notebook.plotting import render
 from ax.plot.pareto_utils import compute_posterior_pareto_frontier
+from ax.utils.notebook.plotting import render
+
+
 objectives = ax_client.experiment.optimization_config.objective.objectives
-with fast_smoke_test():
-    frontier = compute_posterior_pareto_frontier(
-        experiment=ax_client.experiment,
-        data=ax_client.experiment.fetch_data(),
-        primary_objective=objectives[1].metric,
-        secondary_objective=objectives[0].metric,
-        absolute_metrics=["branin", "currin"],
-        num_points=20,
-    )
-render(plot_pareto_frontier(frontier, CI_level=0.90)) 
+frontier = compute_posterior_pareto_frontier(
+    experiment=ax_client.experiment,
+    data=ax_client.experiment.fetch_data(),
+    primary_objective=objectives[1].metric,
+    secondary_objective=objectives[0].metric,
+    absolute_metrics=["branin", "currin"],
+)
+render(plot_pareto_frontier(frontier, CI_level=0.90))
 
 
 # ### Appendix: Using `ScalarizedPosteriorTransform`
