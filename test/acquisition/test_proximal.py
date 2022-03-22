@@ -236,3 +236,16 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     ExpectedImprovement(bad_model, 0.0, objective=scalarized_objective),
                     proximal_weights,
                 )
+
+            # try using unequal training sets
+            train_X = torch.rand(5, 3, device=self.device, dtype=dtype)
+            train_Y = train_X.norm(dim=-1, keepdim=True)
+            bad_model = ModelListGP(
+                SingleTaskGP(train_X[:-1], train_Y[:-1]).to(device=self.device),
+                SingleTaskGP(train_X, train_Y).to(device=self.device),
+            )
+            with self.assertRaises(UnsupportedError):
+                ProximalAcquisitionFunction(
+                    ExpectedImprovement(bad_model, 0.0, objective=scalarized_objective),
+                    proximal_weights,
+                )
