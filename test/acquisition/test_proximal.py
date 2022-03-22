@@ -13,7 +13,7 @@ from botorch.acquisition.analytic import ExpectedImprovement
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
-from botorch.models import SingleTaskGP, ModelListGP, KroneckerMultiTaskGP
+from botorch.models import SingleTaskGP, ModelListGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.utils.containers import TrainingData
@@ -209,7 +209,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             with self.assertRaises(ValueError):
                 ProximalAcquisitionFunction(
                     ExpectedImprovement(model, 0.0, objective=scalarized_objective),
-                    proximal_weights[:1]
+                    proximal_weights[:1],
                 )
 
             with self.assertRaises(ValueError):
@@ -234,5 +234,5 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             with self.assertRaises(UnsupportedError):
                 ProximalAcquisitionFunction(
                     ExpectedImprovement(bad_model, 0.0, objective=scalarized_objective),
-                    proximal_weights
+                    proximal_weights,
                 )
