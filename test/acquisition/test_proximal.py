@@ -7,12 +7,13 @@
 from typing import Any, Dict, List
 
 import torch
+from botorch.acquisition import ScalarizedObjective
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.analytic import ExpectedImprovement
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
-from botorch.models import SingleTaskGP
+from botorch.models import SingleTaskGP, ModelListGP, KroneckerMultiTaskGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.utils.containers import TrainingData
@@ -46,6 +47,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             train_X = torch.rand(5, 3, device=self.device, dtype=dtype)
             train_Y = train_X.norm(dim=-1, keepdim=True)
+
             model = (
                 SingleTaskGP(train_X, train_Y)
                 .to(device=self.device, dtype=dtype)
@@ -142,3 +144,34 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                 ProximalAcquisitionFunction(
                     ExpectedImprovement(bad_single_task, 0.0), proximal_weights
                 )
+
+    def test_proximal_model_list(self):
+        for dtype in (torch.float, torch.double):
+            proximal_weights = torch.ones(3, device=self.device, dtype=dtype)
+
+            # test with model-list model for complex objective optimization
+            train_X = torch.rand(5, 1, 3, device=self.device, dtype=dtype)
+            train_Y = train_X.norm(dim=-1, keepdim=True)
+
+            model = ModelListGP(
+                SingleTaskGP(train_X, train_Y).to(device=self.device),
+                SingleTaskGP(train_X, train_Y).to(device=self.device),
+            )
+            objective = ScalarizedObjective(
+                torch.ones(2, device=self.device, dtype=dtype)
+            )
+
+            EI = ExpectedImprovement(model, best_f=0.0, objective=objective)
+
+            test_X = torch.rand(1, 3, device=self.device, dtype=dtype)
+            EI_prox = ProximalAcquisitionFunction(EI, proximal_weights=proximal_weights)
+
+            ei = EI(test_X)
+            mv_normal = MultivariateNormal(train_X[-1], torch.diag(proximal_weights))
+            test_prox_weight = torch.exp(mv_normal.log_prob(test_X)) / torch.exp(
+                mv_normal.log_prob(train_X[-1])
+            )
+
+            ei_prox = EI_prox(test_X)
+            self.assertTrue(torch.allclose(ei_prox, ei * test_prox_weight))
+            self.assertTrue(ei_prox.shape == torch.Size([5]))
