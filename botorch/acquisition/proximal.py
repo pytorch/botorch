@@ -11,11 +11,14 @@ acquisition function.
 
 from __future__ import annotations
 
+from typing import Optional
+
 import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import ModelListGP
 from botorch.models.model import Model
+from botorch.models.transforms.input import InputTransform
 from botorch.utils import t_batch_mode_transform
 from torch import Tensor
 from torch.nn import Module
@@ -83,11 +86,12 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
         model = self.acq_func.model
 
         train_inputs = model.train_inputs[0]
+
         if isinstance(model, ModelListGP):
             train_inputs = train_inputs[0]
-            input_transform = _get_input_transform(model.models[0])
-        else:
-            input_transform = _get_input_transform(model)
+            model = model.models[0]
+
+        input_transform = _get_input_transform(model)
 
         last_X = train_inputs[-1].reshape(1, 1, -1)
 
@@ -102,7 +106,7 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
         return self.acq_func(X) * proximal_acq_weight.flatten()
 
 
-def _validate_model(model: Model, proximal_weights: Tensor):
+def _validate_model(model: Model, proximal_weights: Tensor) -> None:
     r"""Validate model
 
     Perform vaidation checks on model used in base acquisition function to make sure
@@ -163,7 +167,7 @@ def _validate_model(model: Model, proximal_weights: Tensor):
         )
 
 
-def _get_input_transform(model):
+def _get_input_transform(model: Model) -> Optional[InputTransform]:
     """get input transform if defined"""
     try:
         return model.input_transform
