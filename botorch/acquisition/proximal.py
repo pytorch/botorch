@@ -16,6 +16,7 @@ from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import ModelListGP
 from botorch.models.model import Model
+from botorch.models.transforms.input import ReversibleInputTransform
 from botorch.utils import t_batch_mode_transform
 from torch import Tensor
 from torch.nn import Module
@@ -81,12 +82,21 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
             weighting.
         """
         model = self.acq_func.model
+
         train_inputs = model.train_inputs[0]
         if isinstance(model, ModelListGP):
             train_inputs = train_inputs[0]
-        last_X = train_inputs[-1].reshape(1, 1, -1)
-        diff = X - last_X
+            input_transform = _get_input_transform(model.models[0])
+        else:
+            input_transform = _get_input_transform(model)
 
+        last_X = train_inputs[-1].reshape(1, 1, -1)
+
+        # un-transform last_X
+        if input_transform is not None:
+            last_X = input_transform.untransform(last_X)
+
+        diff = X - last_X
         M = torch.linalg.norm(diff / self.proximal_weights, dim=-1) ** 2
 
         proximal_acq_weight = torch.exp(-0.5 * M)
@@ -115,13 +125,22 @@ def _validate_model(model: Model, proximal_weights: Tensor):
     # get train inputs for each type of possible model
     if isinstance(model, ModelListGP):
         # ModelListGP models
-        # check to make sure that the training inputs for each model match
+        # check to make sure that the training inputs and input transformers for each
+        # model match and are reversible
         train_inputs = model.train_inputs[0][0]
+        input_transform = _get_input_transform(model.models[0])
+
         for i in range(len(model.train_inputs)):
             if not torch.equal(train_inputs, model.train_inputs[i][0]):
                 raise UnsupportedError(
                     "Proximal acquisition function does not support unequal "
                     "training inputs"
+                )
+
+            if not input_transform == _get_input_transform(model.models[i]):
+                raise UnsupportedError(
+                    "Proximal acquisition function does not support non-identical "
+                    "input transforms"
                 )
 
     else:
@@ -143,3 +162,11 @@ def _validate_model(model: Model, proximal_weights: Tensor):
             "`proximal_weights` must be a one dimensional tensor with "
             "same feature dimension as model."
         )
+
+
+def _get_input_transform(model):
+    """get input transform if defined"""
+    try:
+        return model.input_transform
+    except AttributeError:
+        return None

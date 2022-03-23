@@ -16,6 +16,7 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP, ModelListGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
+from botorch.models.transforms.input import InputTransform, Normalize
 from botorch.utils.containers import TrainingData
 from botorch.utils.testing import BotorchTestCase
 from torch.distributions.multivariate_normal import MultivariateNormal
@@ -45,30 +46,39 @@ class DummyAcquisitionFunction(AcquisitionFunction):
 class TestProximalAcquisitionFunction(BotorchTestCase):
     def test_proximal(self):
         for dtype in (torch.float, torch.double):
-            train_X = torch.rand(5, 3, device=self.device, dtype=dtype)
+            train_X = torch.rand(5, 3, device=self.device, dtype=dtype) * 2.0
             train_Y = train_X.norm(dim=-1, keepdim=True)
 
-            model = (
-                SingleTaskGP(train_X, train_Y)
-                .to(device=self.device, dtype=dtype)
-                .eval()
+            # test single point evaluation with and without input transform
+            normalize = Normalize(
+                3, bounds=torch.tensor(((0.0, 0.0, 0.0), (2.0, 2.0, 2.0)))
             )
-            EI = ExpectedImprovement(model, best_f=0.0)
+            for input_transform in [None, normalize]:
+                model = (
+                    SingleTaskGP(train_X, train_Y, input_transform=input_transform)
+                    .to(device=self.device, dtype=dtype)
+                    .eval()
+                )
 
-            # test single point
-            proximal_weights = torch.ones(3, device=self.device, dtype=dtype)
-            test_X = torch.rand(1, 3, device=self.device, dtype=dtype)
-            EI_prox = ProximalAcquisitionFunction(EI, proximal_weights=proximal_weights)
+                EI = ExpectedImprovement(model, best_f=0.0)
 
-            ei = EI(test_X)
-            mv_normal = MultivariateNormal(train_X[-1], torch.diag(proximal_weights))
-            test_prox_weight = torch.exp(mv_normal.log_prob(test_X)) / torch.exp(
-                mv_normal.log_prob(train_X[-1])
-            )
+                proximal_weights = torch.ones(3, device=self.device, dtype=dtype)
+                test_X = torch.rand(1, 3, device=self.device, dtype=dtype)
+                EI_prox = ProximalAcquisitionFunction(
+                    EI, proximal_weights=proximal_weights
+                )
 
-            ei_prox = EI_prox(test_X)
-            self.assertTrue(torch.allclose(ei_prox, ei * test_prox_weight))
-            self.assertTrue(ei_prox.shape == torch.Size([1]))
+                ei = EI(test_X)
+                mv_normal = MultivariateNormal(
+                    train_X[-1], torch.diag(proximal_weights)
+                )
+                test_prox_weight = torch.exp(mv_normal.log_prob(test_X)) / torch.exp(
+                    mv_normal.log_prob(train_X[-1])
+                )
+
+                ei_prox = EI_prox(test_X)
+                self.assertTrue(torch.allclose(ei_prox, ei * test_prox_weight))
+                self.assertTrue(ei_prox.shape == torch.Size([1]))
 
             # test t-batch with broadcasting
             test_X = torch.rand(4, 1, 3, device=self.device, dtype=dtype)
@@ -242,6 +252,21 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             train_Y = train_X.norm(dim=-1, keepdim=True)
             bad_model = ModelListGP(
                 SingleTaskGP(train_X[:-1], train_Y[:-1]).to(device=self.device),
+                SingleTaskGP(train_X, train_Y).to(device=self.device),
+            )
+            with self.assertRaises(UnsupportedError):
+                ProximalAcquisitionFunction(
+                    ExpectedImprovement(bad_model, 0.0, objective=scalarized_objective),
+                    proximal_weights,
+                )
+
+            # try with unequal input transforms
+            train_X = torch.rand(5, 3, device=self.device, dtype=dtype)
+            train_Y = train_X.norm(dim=-1, keepdim=True)
+            bad_model = ModelListGP(
+                SingleTaskGP(train_X, train_Y, input_transform=Normalize(3)).to(
+                    device=self.device
+                ),
                 SingleTaskGP(train_X, train_Y).to(device=self.device),
             )
             with self.assertRaises(UnsupportedError):
