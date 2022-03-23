@@ -16,7 +16,7 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP, ModelListGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
-from botorch.models.transforms.input import InputTransform, Normalize
+from botorch.models.transforms.input import Normalize
 from botorch.utils.containers import TrainingData
 from botorch.utils.testing import BotorchTestCase
 from torch.distributions.multivariate_normal import MultivariateNormal

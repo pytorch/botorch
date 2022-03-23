@@ -16,7 +16,6 @@ from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import ModelListGP
 from botorch.models.model import Model
-from botorch.models.transforms.input import ReversibleInputTransform
 from botorch.utils import t_batch_mode_transform
 from torch import Tensor
 from torch.nn import Module
