@@ -66,65 +66,7 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
             self.X_pending = acq_function.X_pending
 
         self.register_buffer("proximal_weights", proximal_weights)
-
-        # check model for train_inputs and single batch
-        if not hasattr(model, "train_inputs"):
-            raise UnsupportedError(
-                "Acquisition function model must have " "`train_inputs`."
-            )
-
-        # change behavior depending on type of model
-        if isinstance(model, ModelListGP):
-            # ModelListGP
-            # make sure that all of the training inputs match and are single batch
-            training_data = model.train_inputs[0][0]
-            for i in range(len(model.train_inputs)):
-
-                if (
-                    self.acq_func.model.batch_shape != torch.Size([])
-                    and model.train_inputs[i][0].shape[1] != 1
-                ):
-                    raise UnsupportedError(
-                        "Proximal acquisition function requires a single batch model"
-                    )
-
-                if not torch.equal(training_data, model.train_inputs[i][0]):
-                    raise UnsupportedError(
-                        "Proximal acquisition function does not support unequal "
-                        "training inputs"
-                    )
-
-            # check to make sure that weights match the training data shape
-            if (
-                len(self.proximal_weights.shape) != 1
-                or self.proximal_weights.shape[0] != training_data.shape[-1]
-            ):
-                raise ValueError(
-                    "`proximal_weights` must be a one dimensional tensor with "
-                    "same feature dimension as model."
-                )
-
-        else:
-            # SingleTask GP
-            # check to make sure that the model is single batch
-            if (
-                self.acq_func.model.batch_shape != torch.Size([])
-                and self.acq_func.model.train_inputs[0].shape[1] != 1
-            ):
-                raise UnsupportedError(
-                    "Proximal acquisition function requires a single batch model"
-                )
-
-            # check to make sure that weights match the training data shape
-            if (
-                len(self.proximal_weights.shape) != 1
-                or self.proximal_weights.shape[0]
-                != self.acq_func.model.train_inputs[0][-1].shape[-1]
-            ):
-                raise ValueError(
-                    "`proximal_weights` must be a one dimensional tensor with "
-                    "same feature dimension as model."
-                )
+        _validate_model(model, proximal_weights)
 
     @t_batch_mode_transform(expected_q=1, assert_output_shape=False)
     def forward(self, X: Tensor) -> Tensor:
@@ -138,13 +80,56 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
             weighting.
         """
         model = self.acq_func.model
+        train_inputs = model.train_inputs[0]
         if isinstance(model, ModelListGP):
-            last_X = model.train_inputs[0][0][-1].reshape(1, 1, -1)
-        else:
-            last_X = model.train_inputs[0][-1].reshape(1, 1, -1)
+            train_inputs = train_inputs[0]
+        last_X = train_inputs[-1].reshape(1, 1, -1)
         diff = X - last_X
 
         M = torch.linalg.norm(diff / self.proximal_weights, dim=-1) ** 2
 
         proximal_acq_weight = torch.exp(-0.5 * M)
         return self.acq_func(X) * proximal_acq_weight.flatten()
+
+
+def _validate_model(model, proximal_weights):
+    """
+    Perform vaidation checks on model used in base acquisition function to make sure
+    it is compatable with proximal weighting.
+    """
+
+    # check model for train_inputs and single batch
+    if not hasattr(model, "train_inputs"):
+        raise UnsupportedError("Acquisition function model must have `train_inputs`.")
+
+    # get train inputs for each type of possible model
+    if isinstance(model, ModelListGP):
+        # ModelListGP models
+        # check to make sure that the training inputs for each model match
+        train_inputs = model.train_inputs[0][0]
+        for i in range(len(model.train_inputs)):
+            if not torch.equal(train_inputs, model.train_inputs[i][0]):
+                raise UnsupportedError(
+                    "Proximal acquisition function does not support unequal "
+                    "training inputs"
+                )
+
+    else:
+        # any non-ModelListGP model
+        train_inputs = model.train_inputs[0]
+
+    # check to make sure that the model is single t-batch (q-batches are allowed)
+    if model.batch_shape != torch.Size([]) and train_inputs.shape[1] != 1:
+        raise UnsupportedError(
+            "Proximal acquisition function requires a single batch model"
+        )
+
+    # check to make sure that weights match the training data shape
+    if (
+        len(proximal_weights.shape) != 1
+        or proximal_weights.shape[0] != train_inputs.shape[-1]
+    ):
+        raise ValueError(
+            "`proximal_weights` must be a one dimensional tensor with "
+            "same feature dimension as model."
+        )
