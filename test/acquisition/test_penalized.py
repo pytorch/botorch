@@ -110,8 +110,8 @@ class TestPenalizedAcquisitionFunction(BotorchTestCase):
             tkwargs = {"device": self.device, "dtype": dtype}
             mock_model = MockModel(
                 MockPosterior(
-                    mean=torch.tensor([1.0], **tkwargs),
-                    variance=torch.tensor([1.0], **tkwargs),
+                    mean=torch.tensor([[1.0]], **tkwargs),
+                    variance=torch.tensor([[1.0]], **tkwargs),
                 )
             )
             init_point = torch.tensor([0.5, 0.5, 0.5], **tkwargs)

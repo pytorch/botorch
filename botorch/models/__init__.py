@@ -13,6 +13,7 @@ from botorch.models.deterministic import (
     AffineDeterministicModel,
     GenericDeterministicModel,
 )
+from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.gp_regression import (
     FixedNoiseGP,
     HeteroskedasticSingleTaskGP,
@@ -36,6 +37,7 @@ __all__ = [
     "ApproximateGPyTorchModel",
     "FixedNoiseGP",
     "FixedNoiseMultiTaskGP",
+    "SaasFullyBayesianSingleTaskGP",
     "GenericDeterministicModel",
     "HeteroskedasticSingleTaskGP",
     "HigherOrderGP",

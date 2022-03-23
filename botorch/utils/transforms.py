@@ -12,12 +12,14 @@ from __future__ import annotations
 
 import warnings
 from functools import wraps
-from typing import Any, Callable, List, Optional, TypeVar
+from typing import Any, Callable, List, Optional, TYPE_CHECKING
 
 import torch
 from torch import Tensor
 
-ACQF = TypeVar("AcquisitionFunction")
+if TYPE_CHECKING:
+    from botorch.acquisition import AcquisitionFunction  # pragma: no cover
+    from botorch.model import Model  # pragma: no cover
 
 
 def squeeze_last_dim(Y: Tensor) -> Tensor:
@@ -171,10 +173,35 @@ def _verify_output_shape(acqf: Any, X: Tensor, output: Tensor) -> bool:
         return True
 
 
+def is_fully_bayesian(model: Model) -> bool:
+    r"""Check if at least one model is a SaasFullyBayesianSingleTaskGP
+
+    Args:
+        model: A BoTorch model (may be a `ModelList` or `ModelListGP`)
+        d: The dimension of the tensor to index.
+
+    Returns:
+        True if at least one model is a `SaasFullyBayesianSingleTaskGP`
+    """
+    from botorch.models import ModelList
+    from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
+
+    if isinstance(model, SaasFullyBayesianSingleTaskGP):
+        return True
+    elif isinstance(model, ModelList) and any(
+        isinstance(m, SaasFullyBayesianSingleTaskGP) for m in model.models
+    ):
+        return True
+    return False
+
+
 def t_batch_mode_transform(
     expected_q: Optional[int] = None,
     assert_output_shape: bool = True,
-) -> Callable[[Callable[[ACQF, Any], Any]], Callable[[ACQF, Any], Any]]:
+) -> Callable[
+    [Callable[[AcquisitionFunction, Any], Any]],
+    Callable[[AcquisitionFunction, Any], Any],
+]:
     r"""Factory for decorators enabling consistent t-batch behavior.
 
     This method creates decorators for instance methods to transform an input tensor
@@ -205,10 +232,12 @@ def t_batch_mode_transform(
     """
 
     def decorator(
-        method: Callable[[ACQF, Any], Any],
-    ) -> Callable[[ACQF, Any], Any]:
+        method: Callable[[AcquisitionFunction, Any], Any],
+    ) -> Callable[[AcquisitionFunction, Any], Any]:
         @wraps(method)
-        def decorated(acqf: ACQF, X: Any, *args: Any, **kwargs: Any) -> Any:
+        def decorated(
+            acqf: AcquisitionFunction, X: Any, *args: Any, **kwargs: Any
+        ) -> Any:
 
             # Allow using acquisition functions for other inputs (e.g. lists of strings)
             if not isinstance(X, Tensor):
@@ -227,6 +256,8 @@ def t_batch_mode_transform(
             # add t-batch dim
             X = X if X.dim() > 2 else X.unsqueeze(0)
             output = method(acqf, X, *args, **kwargs)
+            if hasattr(acqf, "model") and is_fully_bayesian(acqf.model):
+                output = output.mean(dim=-1)
             if assert_output_shape and not _verify_output_shape(
                 acqf=acqf,
                 X=X,
@@ -234,9 +265,9 @@ def t_batch_mode_transform(
             ):
                 raise AssertionError(
                     "Expected the output shape to match either the t-batch shape of "
-                    "X, or the `model.batch_shape` in the case of acquisition functions"
-                    f"using batch models; but got output with shape {output.shape}"
-                    f"for X with shape {X.shape}."
+                    "X, or the `model.batch_shape` in the case of acquisition "
+                    "functions using batch models; but got output with shape "
+                    f"{output.shape} for X with shape {X.shape}."
                 )
             return output
 

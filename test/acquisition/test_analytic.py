@@ -200,16 +200,16 @@ class TestExpectedImprovement(BotorchTestCase):
 class TestPosteriorMean(BotorchTestCase):
     def test_posterior_mean(self):
         for dtype in (torch.float, torch.double):
-            mean = torch.tensor([[0.25]], device=self.device, dtype=dtype)
+            mean = torch.rand(3, 1, device=self.device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean))
 
             module = PosteriorMean(model=mm)
-            X = torch.empty(1, 1, device=self.device, dtype=dtype)
+            X = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             pm = module(X)
             self.assertTrue(torch.equal(pm, mean.view(-1)))
 
             module = PosteriorMean(model=mm, maximize=False)
-            X = torch.empty(1, 1, device=self.device, dtype=dtype)
+            X = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             pm = module(X)
             self.assertTrue(torch.equal(pm, -mean.view(-1)))
 
