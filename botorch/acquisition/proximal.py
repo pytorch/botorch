@@ -15,6 +15,7 @@ import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import ModelListGP
+from botorch.models.model import Model
 from botorch.utils import t_batch_mode_transform
 from torch import Tensor
 from torch.nn import Module
@@ -92,10 +93,19 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
         return self.acq_func(X) * proximal_acq_weight.flatten()
 
 
-def _validate_model(model, proximal_weights):
-    """
+def _validate_model(model: Model, proximal_weights: Tensor):
+    r"""Validate model
+
     Perform vaidation checks on model used in base acquisition function to make sure
     it is compatable with proximal weighting.
+
+    Args:
+        model: Model associated with base acquisition function to be validated.
+        proximal_weights: A `d` dim tensor used to bias locality
+                along each axis.
+
+        Returns:
+            None
     """
 
     # check model for train_inputs and single batch
