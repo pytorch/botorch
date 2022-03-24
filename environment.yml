@@ -2,7 +2,9 @@ name: botorch
 channels:
   - pytorch
   - gpytorch
+  - conda-forge
 dependencies:
   - pytorch>=1.9
   - gpytorch>=1.6
   - scipy
+  - pyro-ppl=1.8.0

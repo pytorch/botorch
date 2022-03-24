@@ -15,10 +15,10 @@ export BOTORCH_VERSION
 cur_dir="$(pwd)"
 build_dir="${cur_dir}/conda_build"
 mkdir "${build_dir}"
-conda build -c pytorch -c gpytorch --output-folder "${build_dir}" .
+conda build -c pytorch -c gpytorch -c conda-forge --output-folder "${build_dir}" .
 
 # name of package file (assuming first build)
-path="${build_dir}/noarch/botorch-${BOTORCH_VERSION}-0.tar.bz2"
+path="${build_dir}/noarch/botorch-${BOTORCH_VERSION}-py_0.tar.bz2"
 
 # verify that package installs correctly
 conda install --offline "${path}"
