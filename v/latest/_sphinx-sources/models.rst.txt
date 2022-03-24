@@ -84,6 +84,11 @@ Variational GP Models
 .. automodule:: botorch.models.approximate_gp
     :members:
 
+Fully Bayesian GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.fully_bayesian
+    :members:
+
 
 Model Components
 -------------------------------------------

@@ -44,6 +44,12 @@ Transformed Posterior
 .. automodule:: botorch.posteriors.transformed
     :members:
 
+Fully Bayesian Posterior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.posteriors.fully_bayesian
+    :members:
+
+
 Utilities
 ---------------------------------------------
 
