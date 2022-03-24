@@ -18,12 +18,14 @@ from typing import Any, Callable
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
 from botorch.models.converter import batched_to_model_list, model_list_to_batched
+from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.optim.fit import fit_gpytorch_scipy
 from botorch.optim.utils import sample_all_priors
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from gpytorch.utils.errors import NotPSDError
+from pyro.infer.mcmc import MCMC, NUTS
 
 
 FAILED_CONVERSION_MSG = (
@@ -149,3 +151,58 @@ def fit_gpytorch_model(
 
     warnings.warn("Fitting failed on all retries.", OptimizationWarning)
     return mll.eval()
+
+
+def fit_fully_bayesian_model_nuts(
+    model: SaasFullyBayesianSingleTaskGP,
+    max_tree_depth: int = 6,
+    warmup_steps: int = 512,
+    num_samples: int = 256,
+    thinning: int = 16,
+    disable_progbar: bool = False,
+) -> None:
+    r"""Fit a fully Bayesian model using the No-U-Turn-Sampler (NUTS)
+
+
+    Args:
+        model: SaasFullyBayesianSingleTaskGP to be fitted.
+        max_tree_depth: Maximum tree depth for NUTS
+        warmup_steps: The number of burn-in steps for NUTS.
+        num_samples:  The number of MCMC samples. Note that with thinning,
+            num_samples / thinning samples are retained.
+        thinning: The amount of thinning. Every nth sample is retained.
+        disable_progbar: A boolean indicating whether to print the progress
+            bar and diagnostics during MCMC.
+
+    Example:
+        >>> gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)
+        >>> fit_fully_bayesian_model_nuts(gp)
+    """
+    model.train()
+
+    # Do inference with NUTS
+    nuts = NUTS(
+        model.pyro_model.sample,
+        jit_compile=True,
+        full_mass=True,
+        ignore_jit_warnings=True,
+        max_tree_depth=max_tree_depth,
+    )
+    mcmc = MCMC(
+        nuts,
+        warmup_steps=warmup_steps,
+        num_samples=num_samples,
+        disable_progbar=disable_progbar,
+    )
+    mcmc.run()
+
+    # Get final MCMC samples from the Pyro model
+    mcmc_samples = model.pyro_model.postprocess_mcmc_samples(
+        mcmc_samples=mcmc.get_samples()
+    )
+    for k, v in mcmc_samples.items():
+        mcmc_samples[k] = v[::thinning]
+
+    # Load the MCMC samples back into the BoTorch model
+    model.load_mcmc_samples(mcmc_samples)
+    model.eval()

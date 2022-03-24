@@ -117,13 +117,13 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
         r"""Evaluate Expected Improvement on the candidate set X.
 
         Args:
-            X: A `b1 x ... bk x 1 x d`-dim batched tensor of `d`-dim design points.
+            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.
                 Expected Improvement is computed for each point individually,
                 i.e., what is considered are the marginal posteriors, not the
                 joint.
 
         Returns:
-            A `b1 x ... bk`-dim tensor of Expected Improvement values at the
+            A `(b1 x ... bk)`-dim tensor of Expected Improvement values at the
             given design points `X`.
         """
         self.best_f = self.best_f.to(X)
@@ -132,7 +132,7 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
         )
         mean = posterior.mean
         # deal with batch evaluation and broadcasting
-        view_shape = mean.shape[:-2] if mean.dim() >= X.dim() else X.shape[:-2]
+        view_shape = mean.shape[:-2] if mean.shape[-2] == 1 else mean.shape[:-1]
         mean = mean.view(view_shape)
         sigma = posterior.variance.clamp_min(1e-9).sqrt().view(view_shape)
         u = (mean - self.best_f.expand_as(mean)) / sigma
@@ -184,21 +184,19 @@ class PosteriorMean(AnalyticAcquisitionFunction):
         r"""Evaluate the posterior mean on the candidate set X.
 
         Args:
-            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design
-                points each.
+            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.
 
         Returns:
-            A `(b)`-dim Tensor of Posterior Mean values at the given design
-            points `X`.
+            A `(b1 x ... bk)`-dim tensor of Posterior Mean values at the
+            given design points `X`.
         """
         posterior = self.model.posterior(
             X=X, posterior_transform=self.posterior_transform
         )
-        mean = posterior.mean.view(X.shape[:-2])
-        if self.maximize:
-            return mean
-        else:
-            return -mean
+        mean = posterior.mean
+        view_shape = mean.shape[:-2] if mean.shape[-2] == 1 else mean.shape[:-1]
+        pm = posterior.mean.view(view_shape)
+        return pm if self.maximize else -1 * pm
 
 
 class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
@@ -247,21 +245,20 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
         r"""Evaluate the Probability of Improvement on the candidate set X.
 
         Args:
-            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design
-                points each.
+            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.
 
         Returns:
-            A `(b)`-dim tensor of Probability of Improvement values at the given
-            design points `X`.
+            A `(b1 x ... bk)`-dim tensor of Probability of Improvement values at the
+            given design points `X`.
         """
         self.best_f = self.best_f.to(X)
         posterior = self.model.posterior(
             X=X, posterior_transform=self.posterior_transform
         )
-        mean, sigma = posterior.mean, posterior.variance.sqrt()
-        batch_shape = X.shape[:-2]
-        mean = posterior.mean.view(batch_shape)
-        sigma = posterior.variance.sqrt().clamp_min(1e-9).view(batch_shape)
+        mean, sigma = posterior.mean, posterior.variance.sqrt().clamp_min(1e-9)
+        view_shape = mean.shape[:-2] if mean.shape[-2] == 1 else mean.shape[:-1]
+        mean = mean.view(view_shape)
+        sigma = sigma.view(view_shape)
         u = (mean - self.best_f.expand_as(mean)) / sigma
         if not self.maximize:
             u = -u
@@ -317,20 +314,20 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
         r"""Evaluate the Upper Confidence Bound on the candidate set X.
 
         Args:
-            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design
-                points each.
+            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.
 
         Returns:
-            A `(b)`-dim Tensor of Upper Confidence Bound values at the given
-            design points `X`.
+            A `(b1 x ... bk)`-dim tensor of Upper Confidence Bound values at the
+            given design points `X`.
         """
         self.beta = self.beta.to(X)
         posterior = self.model.posterior(
             X=X, posterior_transform=self.posterior_transform
         )
-        batch_shape = X.shape[:-2]
-        mean = posterior.mean.view(batch_shape)
-        variance = posterior.variance.view(batch_shape)
+        mean = posterior.mean
+        view_shape = mean.shape[:-2] if mean.shape[-2] == 1 else mean.shape[:-1]
+        mean = mean.view(view_shape)
+        variance = posterior.variance.view(view_shape)
         delta = (self.beta.expand_as(mean) * variance).sqrt()
         if self.maximize:
             return mean + delta
@@ -512,7 +509,7 @@ class NoisyExpectedImprovement(ExpectedImprovement):
     r"""Single-outcome Noisy Expected Improvement (via fantasies).
 
     This computes Noisy Expected Improvement by averaging over the Expected
-    Improvemnt values of a number of fantasy models. Only supports the case
+    Improvement values of a number of fantasy models. Only supports the case
     `q=1`. Assumes that the posterior distribution of the model is Gaussian.
     The model must be single-outcome.
 

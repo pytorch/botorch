@@ -68,6 +68,7 @@ from botorch.utils.transforms import (
     match_batch_shape,
     t_batch_mode_transform,
 )
+from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
 
 
@@ -742,8 +743,10 @@ class qNoisyExpectedHypervolumeImprovement(
         # TODO: improve efficiency by not recomputing baseline-baseline
         # covariance matrix.
         posterior = self.model.posterior(X_full)
-        # Account for possible one-to-many transform.
-        n_w = posterior.event_shape[X_full.dim() - 2] // X_full.shape[-2]
+        # Account for possible one-to-many transform and the MCMC batch dimension in
+        # `SaasFullyBayesianSingleTaskGP`
+        event_shape_lag = 1 if is_fully_bayesian(self.model) else 2
+        n_w = posterior.event_shape[X_full.dim() - event_shape_lag] // X_full.shape[-2]
         q_in = X.shape[-2] * n_w
         self._set_sampler(q_in=q_in, posterior=posterior)
         samples = self._get_f_X_samples(posterior=posterior, q_in=q_in)

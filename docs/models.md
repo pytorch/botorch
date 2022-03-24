@@ -69,6 +69,9 @@ uses fixed observation noise levels (requires noise observations).
 * [`HeteroskedasticSingleTaskGP`](../api/models.html#heteropskedasticsingletaskgp):
   a single-task exact GP that models heteroskedastic noise using an additional
   internal GP model (requires noise observations).
+* [`SaasFullyBayesianSingleTaskGP`](../api/models.html#saasfullybayesiansingletaskgp):
+  a fully Bayesian single-task GP with the SAAS prior. This model is suitable for
+  sample-efficient high-dimensional Bayesian optimization.
 
 ### Model List of Single-Task GPs
 * [`ModelListGP`](../api/models.html#modellistgp): A multi-output model in
