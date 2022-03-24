@@ -96,6 +96,7 @@ jobs:
         conda config --set anaconda_upload no
         conda install -y -c pytorch-nightly pytorch cpuonly
         conda install -y scipy
+        conda install -y -c conda-forge pyro-ppl==1.8.0
         pip install git+https://github.com/cornellius-gp/gpytorch.git
     - name: Build and verify conda package
       shell: bash -l {0}

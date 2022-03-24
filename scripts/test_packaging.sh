@@ -23,5 +23,6 @@ python setup.py sdist bdist_wheel
 conda config --show
 conda config --add channels pytorch
 conda config --add channels gpytorch
+conda config --add channels conda-forge
 cd .conda || exit
 ./build_conda.sh
