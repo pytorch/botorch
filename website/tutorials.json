@@ -23,6 +23,10 @@
       "title": "Trust Region Bayesian Optimization (TuRBO)"
     },
     {
+      "id": "saasbo",
+      "title": "High-dimensional Bayesian optimization with SAASBO"
+    },
+    {
       "id": "bo_with_warped_gp",
       "title": "Bayesian optimization with input warping"
     },
