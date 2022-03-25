@@ -99,14 +99,13 @@ def gen_tutorials(repo_dir: str) -> None:
         # displayname is absent from notebook metadata
         nb["metadata"]["kernelspec"]["display_name"] = "python3"
 
-        exporter = HTMLExporter()
+        exporter = HTMLExporter(template_name="classic")
         html, meta = exporter.from_notebook_node(nb)
 
-        # pull out html body for notebook
+        # pull out html div for notebook
         soup = BeautifulSoup(html, "html.parser")
-        nb_meat = soup.find("body", {"class": "jp-Notebook"})
-        del nb_meat.attrs["data-jp-theme-light"]
-        del nb_meat.attrs["data-jp-theme-name"]
+        nb_meat = soup.find("div", {"id": "notebook-container"})
+        del nb_meat.attrs["id"]
         nb_meat.attrs["class"] = ["notebook"]
         html_out = JS_SCRIPTS + str(nb_meat)
 
