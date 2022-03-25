@@ -102,10 +102,11 @@ def gen_tutorials(repo_dir: str) -> None:
         exporter = HTMLExporter()
         html, meta = exporter.from_notebook_node(nb)
 
-        # pull out html div for notebook
+        # pull out html body for notebook
         soup = BeautifulSoup(html, "html.parser")
-        nb_meat = soup.find("div", {"id": "notebook-container"})
-        del nb_meat.attrs["id"]
+        nb_meat = soup.find("body", {"class": "jp-Notebook"})
+        del nb_meat.attrs["data-jp-theme-light"]
+        del nb_meat.attrs["data-jp-theme-name"]
         nb_meat.attrs["class"] = ["notebook"]
         html_out = JS_SCRIPTS + str(nb_meat)
 
