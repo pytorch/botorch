@@ -19,6 +19,11 @@ References
     Multiple Noisy Objectives with Expected Hypervolume Improvement. Advances
     in Neural Information Processing Systems 34, 2021.
 
+.. [Irshad2021MOMF]
+     Irshad, Faran, Stefan Karsch, and Andreas Döpp. 
+     "Expected hypervolume improvement for simultaneous multi-objective and multi-fidelity optimization." 
+     arXiv preprint arXiv:2112.13901 (2021).
+
 """
 
 from __future__ import annotations
@@ -47,6 +52,10 @@ from botorch.models.model import Model
 from botorch.models.transforms.input import InputPerturbation
 from botorch.posteriors import DeterministicPosterior
 from botorch.posteriors.posterior import Posterior
+from botorch.acquisition.cost_aware import GenericCostAwareUtility
+from botorch.acquisition.cost_aware import InverseCostWeightedUtility
+from botorch.models.cost import AffineFidelityCostModel
+from botorch.models.deterministic import GenericDeterministicModel
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
 from botorch.utils.multi_objective.box_decompositions.box_decomposition_list import (
     BoxDecompositionList,
@@ -752,3 +761,102 @@ class qNoisyExpectedHypervolumeImprovement(
         samples = self._get_f_X_samples(posterior=posterior, q_in=q_in)
         # Add previous nehvi from pending points.
         return self._compute_qehvi(samples=samples, X=X) + self._prev_nehvi
+
+
+class MOMF(qExpectedHypervolumeImprovement):
+    def __init__(
+        self,
+        model: Model,
+        ref_point: Union[List[float], Tensor],
+        partitioning: NondominatedPartitioning,
+        sampler: Optional[MCSampler] = None,
+        objective: Optional[MCMultiOutputObjective] = None,
+        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        X_pending: Optional[Tensor] = None,
+        cost_call: CostAwareUtility = None,
+        eta: float = 1e-3,
+        **kwargs: Any,
+    ) -> None:
+        r"""MOMF acquisition function supporting m>=2 outcomes.
+        The model needs to have train_obj that has a fidelity objective appended to its end.
+        In the following example we consider a 2-D output space but the ref_point is 3D because of fidelity objective.
+
+        See [Irshad2021MOMF]_ for details.
+
+        Example:
+            >>> model = SingleTaskGP(train_X, train_Y)
+            >>> ref_point = [0.0, 0.0, 0.0]
+            >>> cost_func = lambda X:5+X[...,-1]
+            >>> momf = MOMF(model, ref_point, partitioning,cost_func)
+            >>> momf_val = momf(test_X)
+
+        Args:
+            model: A fitted model.
+            ref_point: A list or tensor with `m+1` elements representing the reference
+                point (in the outcome space) w.r.t. to which compute the hypervolume.
+                This is a reference point for the objective values (i.e. after
+                applying`objective` to the samples).
+            partitioning: A `NondominatedPartitioning` module that provides the non-
+                dominated front and a partitioning of the non-dominated space in hyper-
+                rectangles. If constraints are present, this partitioning must only
+                include feasible points.
+            sampler: The sampler used to draw base samples. Defaults to
+                `SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)`.
+            objective: The MCMultiOutputObjective under which the samples are evaluated.
+                Defaults to `IdentityMultiOutputObjective()`.
+            constraints: A list of callables, each mapping a Tensor of dimension
+                `sample_shape x batch-shape x q x m` to a Tensor of dimension
+                `sample_shape x batch-shape x q`, where negative values imply
+                feasibility. The acqusition function will compute expected feasible
+                hypervolume.
+            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have
+                points that have been submitted for function evaluation but have not yet
+                been evaluated. Concatenated into `X` upon forward call. Copied and set
+                to have no gradient.
+            cost_call: A callable cost function mapping an input tensor `batch_shape x q x d`-dim Tensor
+                to a cost tensor of dimension `batch_shape x q x m'. Defaults to an AffineCostModel
+                with a fixed cost of 1. Default C(s)=1+s.
+            eta: The temperature parameter for the sigmoid function used for the
+                differentiable approximation of the constraints.
+        """
+        
+        if len(ref_point) != partitioning.num_outcomes:
+            raise ValueError(
+                "The length of the reference point must match the number of outcomes. "
+                f"Got ref_point with {len(ref_point)} elements, but expected "
+                f"{partitioning.num_outcomes}."
+            )
+        ref_point = torch.as_tensor(
+            ref_point,
+            dtype=partitioning.pareto_Y.dtype,
+            device=partitioning.pareto_Y.device,
+        )
+        
+        super(qExpectedHypervolumeImprovement, self).__init__(
+            model=model,
+            sampler=sampler,
+            objective=objective,
+            constraints=constraints,
+            
+        )
+        self.eta = eta
+        self.register_buffer("ref_point", ref_point)
+        cell_bounds = partitioning.get_hypercell_bounds()
+        self.register_buffer("cell_lower_bounds", cell_bounds[0])
+        self.register_buffer("cell_upper_bounds", cell_bounds[1])
+        self.q_out = -1
+        self.q_subset_indices = BufferDict()
+        
+        if cost_call is None:
+            cost_model = AffineFidelityCostModel(fidelity_weights={-1: 1.0},fixed_cost=1.0)
+        else:
+            cost_model = GenericDeterministicModel(cost_call)
+        cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_model)
+        self.cost_aware_utility = cost_aware_utility
+    
+    def forward(self, X: Tensor) -> Tensor:
+        posterior = self.model.posterior(X)
+        samples = self.sampler(posterior)
+        hv_gain = self._compute_qehvi(samples=samples, X=X)
+        ig = self.cost_aware_utility(X=X, deltas=hv_gain)
+        return ig
