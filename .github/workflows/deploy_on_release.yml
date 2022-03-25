@@ -118,7 +118,9 @@ jobs:
         pip install .[dev]
         pip install git+https://github.com/facebook/Ax.git
         pip install .[tutorials]
-        pip install beautifulsoup4 ipython "nbconvert<6.0"
+        # NOTE: nbconvert 6.4.4 is incompatible with jinja2 3.1.0.
+        # We can unpin this with a future release of nbconvert.
+        pip install beautifulsoup4 ipython nbconvert "jinja2==3.0.3"
     - name: Publish latest website
       env:
         DOCUSAURUS_PUBLISH_TOKEN: ${{ secrets.DOCUSAURUS_PUBLISH_TOKEN }}
