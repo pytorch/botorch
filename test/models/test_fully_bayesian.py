@@ -35,6 +35,7 @@ from botorch.models.fully_bayesian import (
 from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors import FullyBayesianPosterior
 from botorch.sampling.samplers import IIDNormalSampler
+from botorch.utils.containers import TrainingData
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
@@ -360,3 +361,24 @@ class TestSingleTaskGP(BotorchTestCase):
                         train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
                     )
                 )
+
+    def test_construct_inputs(self):
+        for infer_noise, dtype in itertools.product(
+            (True, False), (torch.float, torch.double)
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            train_X, train_Y, train_Yvar, model = self._get_data_and_model(
+                infer_noise=infer_noise, **tkwargs
+            )
+            training_data = TrainingData.from_block_design(
+                X=train_X,
+                Y=train_Y,
+                Yvar=train_Yvar,
+            )
+            data_dict = model.construct_inputs(training_data)
+            if infer_noise:
+                self.assertTrue("train_Yvar" not in data_dict)
+            else:
+                self.assertTrue(torch.equal(data_dict["train_Yvar"], train_Yvar))
+            self.assertTrue(torch.equal(data_dict["train_X"], train_X))
+            self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
