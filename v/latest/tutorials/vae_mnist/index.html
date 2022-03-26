@@ -71,36 +71,26 @@
         </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="tutorialBody">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-<body class="notebook">
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<div class="notebook">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="VAE-MNIST-example:-BO-in-a-latent-space">VAE MNIST example: BO in a latent space<a class="anchor-link" href="#VAE-MNIST-example:-BO-in-a-latent-space">¶</a></h2>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <p>In this tutorial, we use the MNIST dataset and some standard PyTorch examples to show a synthetic problem where the input to the objective function is a <code>28 x 28</code> image. The main idea is to train a <a href="https://arxiv.org/abs/1312.6114">variational auto-encoder (VAE)</a> on the MNIST dataset and run Bayesian Optimization in the latent space. We also refer readers to <a href="http://krasserm.github.io/2018/04/07/latent-space-optimization/">this tutorial</a>, which discusses <a href="https://arxiv.org/abs/1610.02415">the method</a> of jointly training a VAE with a predictor (e.g., classifier), and shows a similar tutorial for the MNIST setting.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [1]:</div>
+<div class="inner_cell">
+<div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 
@@ -117,27 +107,20 @@
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Problem-setup">Problem setup<a class="anchor-link" href="#Problem-setup">¶</a></h3><p>Let's first define our synthetic expensive-to-evaluate objective function. We assume that it takes the following form:</p>
 $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{scoring function} 
 \longrightarrow \text{score}.$$<p>The classifier is a convolutional neural network (CNN) trained using the architecture of the <a href="https://github.com/pytorch/examples/tree/master/mnist">PyTorch CNN example</a>.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [2]:</div>
+<div class="inner_cell">
+<div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">Net</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Net</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -160,26 +143,19 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <p>We next instantiate the CNN for digit recognition and load a pre-trained model.</p>
 <p>Here, you may have to change <code>PRETRAINED_LOCATION</code> to the location of the <code>pretrained_models</code> folder on your machine.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [3]:</div>
+<div class="inner_cell">
+<div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">PRETRAINED_LOCATION</span> <span class="o">=</span> <span class="s2">"./pretrained_models"</span>
 
 <span class="n">cnn_model</span> <span class="o">=</span> <span class="n">Net</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
@@ -190,25 +166,18 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <p>Our VAE model follows the <a href="https://github.com/pytorch/examples/tree/master/vae">PyTorch VAE example</a>, except that we use the same data transform from the CNN tutorial for consistency. We then instantiate the model and again load a pre-trained model. To train these models, we refer readers to the PyTorch Github repository.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [4]:</div>
+<div class="inner_cell">
+<div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">VAE</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -245,25 +214,18 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <p>We now define the scoring function that maps digits to scores. The function below prefers the digit '3'.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [5]:</div>
+<div class="inner_cell">
+<div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">score</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
     <span class="sd">"""Returns a 'score' for each digit from 0 to 9. It is modeled as a squared exponential</span>
 <span class="sd">    centered at the digit '3'.</span>
@@ -274,25 +236,18 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <p>Given the scoring function, we can now write our overall objective, which as discussed above, starts with an image and outputs a score. Let's say the objective computes the expected score given the probabilities from the classifier.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [6]:</div>
+<div class="inner_cell">
+<div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">score_image_recognition</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="sd">"""The input x is an image and an expected score based on the CNN classifier and</span>
 <span class="sd">    the scoring function is returned.</span>
@@ -306,25 +261,18 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <p>Finally, we define a helper function <code>decode</code> that takes as input the parameters <code>mu</code> and <code>logvar</code> of the variational distribution and performs reparameterization and the decoding. We use batched Bayesian optimization to search over the parameters <code>mu</code> and <code>logvar</code></p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [7]:</div>
+<div class="inner_cell">
+<div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">train_x</span><span class="p">):</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
         <span class="n">decoded</span> <span class="o">=</span> <span class="n">vae_model</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span>
@@ -334,25 +282,18 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h4 id="Model-initialization-and-initial-random-batch">Model initialization and initial random batch<a class="anchor-link" href="#Model-initialization-and-initial-random-batch">¶</a></h4><p>We use a <code>SingleTaskGP</code> to model the score of an image generated by a latent representation. The model is initialized with points drawn from $[-6, 6]^{20}$.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [8]:</div>
+<div class="inner_cell">
+<div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.exact_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">standardize</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">unnormalize</span>
@@ -383,25 +324,18 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h4 id="Define-a-helper-function-that-performs-the-essential-BO-step">Define a helper function that performs the essential BO step<a class="anchor-link" href="#Define-a-helper-function-that-performs-the-essential-BO-step">¶</a></h4><p>The helper function below takes an acquisition function as an argument, optimizes it, and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. For this example, we'll use a small batch of $q=3$.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [9]:</div>
+<div class="inner_cell">
+<div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
 
 
@@ -434,25 +368,18 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Perform-Bayesian-Optimization-loop-with-qEI">Perform Bayesian Optimization loop with qEI<a class="anchor-link" href="#Perform-Bayesian-Optimization-loop-with-qEI">¶</a></h3><p>The Bayesian optimization "loop" for a batch size of $q$ simply iterates the following steps: (1) given a surrogate model, choose a batch of points $\{x_1, x_2, \ldots x_q\}$, (2) observe $f(x)$ for each $x$ in the batch, and (3) update the surrogate model. We run <code>N_BATCH=75</code> iterations. The acquisition function is approximated using <code>MC_SAMPLES=2048</code> samples. We also initialize the model with 5 randomly drawn points.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [10]:</div>
+<div class="inner_cell">
+<div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">fit_gpytorch_model</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">qExpectedImprovement</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
@@ -472,25 +399,18 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <p>We are now ready to run the BO loop (this make take a few minutes, depending on your machine).</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [11]:</div>
+<div class="inner_cell">
+<div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
@@ -532,14 +452,11 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
 <pre>
 Running BO ..................................................</pre>
 </div>
@@ -547,24 +464,18 @@ Running BO ..................................................</pre>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <p>EI recommends the best point observed so far. We can visualize what the images corresponding to recommended points <em>would have</em> been if the BO process ended at various times. Here, we show the progress of the algorithm by examining the images at 0%, 10%, 25%, 50%, 75%, and 100% completion. The first image is the best image found through the initial random batch.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [12]:</div>
+<div class="inner_cell">
+<div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
@@ -583,22 +494,19 @@ Running BO ..................................................</pre>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedImage jp-OutputArea-output">
-<img class="jp-needs-light-background" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAy8AAACRCAYAAADKBYeoAAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjMuMiwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy8vihELAAAACXBIWXMAAAsTAAALEwEAmpwYAAAQsElEQVR4nO3dX4ydZZ0H8N/TDm2jxES2aBohixdkg1eaTGnXEkEICdQYvNmIF0uNQCGRqIkXYjde+OdCE/RCXWMaJMOFsdlEDZiQqqlbN8S1HWoMqyDibuKKIl0TkyINwpRnL+aofQ9P58zMe8553+eczychp78zM+/7O2e+c2Z+vO/znpRzDgAAgL7b0nUDAAAA62F4AQAAqmB4AQAAqmB4AQAAqmB4AQAAqmB4AQAAqtBqeEkp3ZRSeiql9KuU0r3jaoq6yQUlckGJXFAiF5TIBRERabPv85JS2hoRv4yIGyPimYhYjoj35ZyfGF971EYuKJELSuSCErmgRC74i4UWX3t1RPwq5/w/EREppSMRcUtEXDBECwsLefv27S12SZfOnj37h5zzpSM+TS7myNmzZ1dyzhet41PlYo7IBSVyQYlcULJWLtoML2+KiN+cVz8TEXvW+oLt27fHVVdd1WKXdOnUqVO/XsenycUcOXXq1Evr/FS5mCNyQYlcUCIXlKyVizbDSyrc96pz0FJKByPiYETEtm3bWuyOSsgFJXJBiVxQIheUyAUR0W7B/jMRcfl59WUR8bvhT8o5H845L+acFxcW2sxKVEIuKJELSuSCErmgRC6IiHbDy3JEXJlSenNKaVtE3BoRD4+nLSomF5TIBSVyQYlcUCIXRESL08ZyzisppXsi4rsRsTUiHsg5/3xsnVEluaBELiiRC0rkghK54C9aHU/LOT8SEY+MqRdmhFxQIheUyAUlckGJXBDR8k0qAQAApsXwAgAAVMHwAgAAVMHwAgAAVMHwAgAAVMHwAgAAVMHwAgAAVMHwAgAAVMHwAgAAVGGh6wZmyV133dWo77zzzlbbe+CBBxr1V77ylVbbAwBgNmzbtq1R/+hHP2rUKysrjXrv3r0T72kaHHkBAACqYHgBAACqYHgBAACqYM3LBjz22GNT3d8HPvCBRm3NS50+8YlPNOpbbrml1fa+/OUvN+qlpaVW2wP6a6O/dxYXFyfUCW3s3LmzUd99992N+j3vec9E97979+5GnXOe6P4oG15zMvz7fNwWFpp/5o96Panl9cORFwAAoAqGFwAAoAqGFwAAoArWvKxh2mtcRhnup5ZzE2fdtHNyzz33NGprXrpx8uTJRr1ly3T/X5Cf/9nU9vXE74np6NvfB6MsLy83armYjK5/L7T12te+tlG/8MILHXWytrqeVQAAYG4ZXgAAgCoYXgAAgCpY83Ke4XMVISLi5ptvbtSf/vSnO+qkzDnu3ej6XObh7/vBgwcb9U9+8pNptsMm1bZ2glXD75OSUmq1vXe+852N+vnnn9/Q18tRPzz++OON+q1vfWur7R06dKhRf+9739vQ1280F31d4zLMkRcAAKAKhhcAAKAKhhcAAKAK1rycp+057KPWGvz4xz9u1AsLnv4aHD16tFEfO3asUX/7299u1L///e8b9e23396of/CDHzTq173udW1bpAN//vOfG/X27ds76mTV4cOHG7W1TzA5u3fv7rqFhrNnzzbq17zmNR11Mt/uuOOOrlto+NCHPtSov/jFL3bUyXg58gIAAFTB8AIAAFTB8AIAAFTBoosNOHXqVKO+6667NvT1f/zjHxv1pZde2ronJm/4ev4vvfRSo37Xu961oe1df/31jdr1+eu0b9++Rr1jx45GfdtttzXq4TUpw+RgPkx6reO73/3uiW6ffrLGhZJZWeMyzJEXAACgCiOHl5TSAyml0ymln5133yUppe+nlJ4e3L5+sm3SN3JBiVxQIheUyAUlcsEo6znyshQRNw3dd29EHMs5XxkRxwY182Up5IJXWwq54NWWQi54taWQC15tKeSCNYw8+Tbn/B8ppSuG7r4lIq4b/PvBiDgeER8bZ2NdGL5O+jve8Y6xbn+W1rjMUy5Yv3nOxYsvvtioR61xGXbttdc26h/+8Iete+qLec7FsJWVlYlu/7nnnpvo9sdJLiiRi8278847u25hKja75uWNOednIyIGt28YX0tUTC4okQtK5IISuaBELviriV9tLKV0MCIORkRs27Zt0rujEnJBiVxQIheUyAUlcjH7Nnvk5bmU0q6IiMHt6Qt9Ys75cM55Mee8OOlLRNI5uaBELiiRC0rkghK54K82+119OCIORMRnB7cPja2jDo17jcuw4fcLSSlt6OsXFxfH2c4kzGQu+k4uZsMsrXFZJ7mYgFdeeaXrFtqSi3WYw/eFkot12Oj7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
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_png output_subarea">
+<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAy8AAACRCAYAAADKBYeoAAAAOXRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjMuMiwgaHR0cHM6Ly9tYXRwbG90bGliLm9yZy8vihELAAAACXBIWXMAAAsTAAALEwEAmpwYAAAQsElEQVR4nO3dX4ydZZ0H8N/TDm2jxES2aBohixdkg1eaTGnXEkEICdQYvNmIF0uNQCGRqIkXYjde+OdCE/RCXWMaJMOFsdlEDZiQqqlbN8S1HWoMqyDibuKKIl0TkyINwpRnL+aofQ9P58zMe8553+eczychp78zM+/7O2e+c2Z+vO/znpRzDgAAgL7b0nUDAAAA62F4AQAAqmB4AQAAqmB4AQAAqmB4AQAAqmB4AQAAqtBqeEkp3ZRSeiql9KuU0r3jaoq6yQUlckGJXFAiF5TIBRERabPv85JS2hoRv4yIGyPimYhYjoj35ZyfGF971EYuKJELSuSCErmgRC74i4UWX3t1RPwq5/w/EREppSMRcUtEXDBECwsLefv27S12SZfOnj37h5zzpSM+TS7myNmzZ1dyzhet41PlYo7IBSVyQYlcULJWLtoML2+KiN+cVz8TEXvW+oLt27fHVVdd1WKXdOnUqVO/XsenycUcOXXq1Evr/FS5mCNyQYlcUCIXlKyVizbDSyrc96pz0FJKByPiYETEtm3bWuyOSsgFJXJBiVxQIheUyAUR0W7B/jMRcfl59WUR8bvhT8o5H845L+acFxcW2sxKVEIuKJELSuSCErmgRC6IiHbDy3JEXJlSenNKaVtE3BoRD4+nLSomF5TIBSVyQYlcUCIXRESL08ZyzisppXsi4rsRsTUiHsg5/3xsnVEluaBELiiRC0rkghK54C9aHU/LOT8SEY+MqRdmhFxQIheUyAUlckGJXBDR8k0qAQAApsXwAgAAVMHwAgAAVMHwAgAAVMHwAgAAVMHwAgAAVMHwAgAAVMHwAgAAVMHwAgAAVGGh6wZmyV133dWo77zzzlbbe+CBBxr1V77ylVbbAwBgNmzbtq1R/+hHP2rUKysrjXrv3r0T72kaHHkBAACqYHgBAACqYHgBAACqYM3LBjz22GNT3d8HPvCBRm3NS50+8YlPNOpbbrml1fa+/OUvN+qlpaVW2wP6a6O/dxYXFyfUCW3s3LmzUd99992N+j3vec9E97979+5GnXOe6P4oG15zMvz7fNwWFpp/5o96Panl9cORFwAAoAqGFwAAoAqGFwAAoArWvKxh2mtcRhnup5ZzE2fdtHNyzz33NGprXrpx8uTJRr1ly3T/X5Cf/9nU9vXE74np6NvfB6MsLy83armYjK5/L7T12te+tlG/8MILHXWytrqeVQAAYG4ZXgAAgCoYXgAAgCpY83Ke4XMVISLi5ptvbtSf/vSnO+qkzDnu3ej6XObh7/vBgwcb9U9+8pNptsMm1bZ2glXD75OSUmq1vXe+852N+vnnn9/Q18tRPzz++OON+q1vfWur7R06dKhRf+9739vQ1280F31d4zLMkRcAAKAKhhcAAKAKhhcAAKAK1rycp+057KPWGvz4xz9u1AsLnv4aHD16tFEfO3asUX/7299u1L///e8b9e23396of/CDHzTq173udW1bpAN//vOfG/X27ds76mTV4cOHG7W1TzA5u3fv7rqFhrNnzzbq17zmNR11Mt/uuOOOrlto+NCHPtSov/jFL3bUyXg58gIAAFTB8AIAAFTB8AIAAFTBoosNOHXqVKO+6667NvT1f/zjHxv1pZde2ronJm/4ev4vvfRSo37Xu961oe1df/31jdr1+eu0b9++Rr1jx45GfdtttzXq4TUpw+RgPkx6reO73/3uiW6ffrLGhZJZWeMyzJEXAACgCiOHl5TSAyml0ymln5133yUppe+nlJ4e3L5+sm3SN3JBiVxQIheUyAUlcsEo6znyshQRNw3dd29EHMs5XxkRxwY182Up5IJXWwq54NWWQi54taWQC15tKeSCNYw8+Tbn/B8ppSuG7r4lIq4b/PvBiDgeER8bZ2NdGL5O+jve8Y6xbn+W1rjMUy5Yv3nOxYsvvtioR61xGXbttdc26h/+8Iete+qLec7FsJWVlYlu/7nnnpvo9sdJLiiRi8278847u25hKja75uWNOednIyIGt28YX0tUTC4okQtK5IISuaBELviriV9tLKV0MCIORkRs27Zt0rujEnJBiVxQIheUyAUlcjH7Nnvk5bmU0q6IiMHt6Qt9Ys75cM55Mee8OOlLRNI5uaBELiiRC0rkghK54K82+119OCIORMRnB7cPja2jDo17jcuw4fcLSSlt6OsXFxfH2c4kzGQu+k4uZsMsrXFZJ7mYgFdeeaXrFtqSi3WYw/eFkot12Oj7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
 "/>
 </div>
 </div>
 </div>
 </div>
 </div>
-</body></div><div class="tutorialButtonWrapper buttonWrapper"><a class="tutorialButton button" download="" href="/v/latest/files/vae_mnist.ipynb" target="_blank"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-download" class="svg-inline--fa fa-file-download fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm76.45 211.36l-96.42 95.7c-6.65 6.61-17.39 6.61-24.04 0l-96.42-95.7C73.42 337.29 80.54 320 94.82 320H160v-80c0-8.84 7.16-16 16-16h32c8.84 0 16 7.16 16 16v80h65.18c14.28 0 21.4 17.29 11.27 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>Download Tutorial Jupyter Notebook</a></div><div class="tutorialButtonWrapper buttonWrapper"><a class="tutorialButton button" download="" href="/v/latest/files/vae_mnist.py" target="_blank"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-download" class="svg-inline--fa fa-file-download fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm76.45 211.36l-96.42 95.7c-6.65 6.61-17.39 6.61-24.04 0l-96.42-95.7C73.42 337.29 80.54 320 94.82 320H160v-80c0-8.84 7.16-16 16-16h32c8.84 0 16 7.16 16 16v80h65.18c14.28 0 21.4 17.29 11.27 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>Download Tutorial Source Code</a></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/latest/" class="nav-home"><img src="/v/latest/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/latest/docs/introduction">Introduction</a><a href="/v/latest/docs/getting_started">Getting Started</a><a href="/v/latest/tutorials/">Tutorials</a><a href="/v/latest/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/latest/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms Inc.</section><script>
+</div></div><div class="tutorialButtonWrapper buttonWrapper"><a class="tutorialButton button" download="" href="/v/latest/files/vae_mnist.ipynb" target="_blank"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-download" class="svg-inline--fa fa-file-download fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm76.45 211.36l-96.42 95.7c-6.65 6.61-17.39 6.61-24.04 0l-96.42-95.7C73.42 337.29 80.54 320 94.82 320H160v-80c0-8.84 7.16-16 16-16h32c8.84 0 16 7.16 16 16v80h65.18c14.28 0 21.4 17.29 11.27 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>Download Tutorial Jupyter Notebook</a></div><div class="tutorialButtonWrapper buttonWrapper"><a class="tutorialButton button" download="" href="/v/latest/files/vae_mnist.py" target="_blank"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-download" class="svg-inline--fa fa-file-download fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm76.45 211.36l-96.42 95.7c-6.65 6.61-17.39 6.61-24.04 0l-96.42-95.7C73.42 337.29 80.54 320 94.82 320H160v-80c0-8.84 7.16-16 16-16h32c8.84 0 16 7.16 16 16v80h65.18c14.28 0 21.4 17.29 11.27 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>Download Tutorial Source Code</a></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/latest/" class="nav-home"><img src="/v/latest/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/latest/docs/introduction">Introduction</a><a href="/v/latest/docs/getting_started">Getting Started</a><a href="/v/latest/tutorials/">Tutorials</a><a href="/v/latest/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/latest/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

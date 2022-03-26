@@ -51,27 +51,21 @@ fidelities = torch.tensor([0.5, 0.75, 1.0], **tkwargs)
 from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-from botorch.utils.transforms import unnormalize, standardize
-from botorch.utils.sampling import draw_sobol_samples
 
 
 def generate_initial_data(n=16):
     # generate training data
     train_x = torch.rand(n, 6, **tkwargs)
-    train_f = fidelities[torch.randint(3, (n,1))]
+    train_f = fidelities[torch.randint(3, (n, 1))]
     train_x_full = torch.cat((train_x, train_f), dim=1)
-    train_obj = problem(train_x_full).unsqueeze(-1) # add output dimension
+    train_obj = problem(train_x_full).unsqueeze(-1)  # add output dimension
     return train_x_full, train_obj
-    
+
+
 def initialize_model(train_x, train_obj):
     # define a surrogate model suited for a "training data"-like fidelity parameter
     # in dimension 6, as in [2]
-    model = SingleTaskMultiFidelityGP(
-        train_x, 
-        train_obj, 
-        outcome_transform=Standardize(m=1),
-        data_fidelity=6
-    )   
+    model = SingleTaskMultiFidelityGP(train_x, train_obj, outcome_transform=Standardize(m=1), data_fidelity=6)
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     return mll, model
 
@@ -138,34 +132,31 @@ def get_mfkg(model):
 # In[5]:
 
 
-from botorch.optim.initializers import gen_one_shot_kg_initial_conditions
 from botorch.optim.optimize import optimize_acqf_mixed
+
+
 torch.set_printoptions(precision=3, sci_mode=False)
 
-NUM_RESTARTS = 10 if not SMOKE_TEST else 2
-RAW_SAMPLES = 512 if not SMOKE_TEST else 4
+NUM_RESTARTS = 5 if not SMOKE_TEST else 2
+RAW_SAMPLES = 128 if not SMOKE_TEST else 4
+BATCH_SIZE = 4
 
 
 def optimize_mfkg_and_get_observation(mfkg_acqf):
     """Optimizes MFKG and returns a new candidate, observation, and cost."""
-    
-    X_init = gen_one_shot_kg_initial_conditions(
-        acq_function = mfkg_acqf,
-        bounds=bounds,
-        q=4,
-        num_restarts=10,
-        raw_samples=512,
-    )
+
+    # generate new candidates
     candidates, _ = optimize_acqf_mixed(
         acq_function=mfkg_acqf,
         bounds=bounds,
         fixed_features_list=[{6: 0.5}, {6: 0.75}, {6: 1.0}],
-        q=4,
+        q=BATCH_SIZE,
         num_restarts=NUM_RESTARTS,
         raw_samples=RAW_SAMPLES,
-        batch_initial_conditions=X_init,
+        # batch_initial_conditions=X_init,
         options={"batch_limit": 5, "maxiter": 200},
     )
+
     # observe new values
     cost = cost_model(candidates).sum()
     new_x = candidates.detach()
@@ -192,7 +183,7 @@ train_x, train_obj = generate_initial_data(n=16)
 cumulative_cost = 0.0
 N_ITER = 3 if not SMOKE_TEST else 1
 
-for _ in range(N_ITER):
+for i in range(N_ITER):
     mll, model = initialize_model(train_x, train_obj)
     fit_gpytorch_model(mll)
     mfkg_acqf = get_mfkg(model)
@@ -247,6 +238,7 @@ print(f"\ntotal cost: {cumulative_cost}\n")
 
 from botorch.acquisition import qExpectedImprovement
 
+
 def get_ei(model, best_f):
 
     return FixedFeatureAcquisitionFunction(
@@ -254,23 +246,24 @@ def get_ei(model, best_f):
         d=7,
         columns=[6],
         values=[1],
-    ) 
+    )
+
 
 def optimize_ei_and_get_observation(ei_acqf):
     """Optimizes EI and returns a new candidate, observation, and cost."""
-    
+
     candidates, _ = optimize_acqf(
         acq_function=ei_acqf,
-        bounds=bounds[:,:-1],
-        q=4,
+        bounds=bounds[:, :-1],
+        q=BATCH_SIZE,
         num_restarts=10,
         raw_samples=512,
         options={"batch_limit": 5, "maxiter": 200},
     )
-    
+
     # add the fidelity parameter
     candidates = ei_acqf._construct_X_full(candidates)
-    
+
     # observe new values
     cost = cost_model(candidates).sum()
     new_x = candidates.detach()
@@ -302,4 +295,10 @@ for _ in range(N_ITER):
 
 final_rec = get_recommendation(model)
 print(f"\ntotal cost: {cumulative_cost}\n")
+
+
+# In[12]:
+
+
+
 
