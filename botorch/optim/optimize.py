@@ -489,6 +489,14 @@ def optimize_acqf_mixed(
     if not fixed_features_list:
         raise ValueError("fixed_features_list must be non-empty.")
 
+    if isinstance(acq_function, OneShotAcquisitionFunction):
+        if not hasattr(acq_function, "evaluate") and q > 1:
+            raise ValueError(
+                "`OneShotAcquisitionFunction`s that do not implement `evaluate` "
+                "are currently not supported when `q > 1`. This is needed to "
+                "compute the joint acquisition value."
+            )
+
     if q == 1:
         ff_candidate_list, ff_acq_value_list = [], []
         for fixed_features in fixed_features_list:
@@ -541,7 +549,12 @@ def optimize_acqf_mixed(
         )
 
     acq_function.set_X_pending(base_X_pending)
-    acq_value = acq_function(candidates)  # compute joint acquisition value
+
+    # compute joint acquisition value
+    if isinstance(acq_function, OneShotAcquisitionFunction):
+        acq_value = acq_function.evaluate(X=candidates, bounds=bounds)
+    else:
+        acq_value = acq_function(candidates)
     return candidates, acq_value
 
 
