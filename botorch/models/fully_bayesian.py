@@ -32,6 +32,7 @@ from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling
 from botorch.posteriors.fully_bayesian import FullyBayesianPosterior
 from botorch.sampling.samplers import MCSampler
+from botorch.utils.containers import TrainingData
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -419,3 +420,19 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
             marginalize_over_mcmc_samples=marginalize_over_mcmc_samples,
         )
         return posterior
+
+    @classmethod
+    def construct_inputs(
+        cls, training_data: TrainingData, **kwargs: Any
+    ) -> Dict[str, Any]:
+        r"""Construct kwargs for the `Model` from `TrainingData` and other options.
+
+        Args:
+            training_data: `TrainingData` container with data for single outcome
+                or for multiple outcomes for batched multi-output case.
+            **kwargs: None expected for this class.
+        """
+        inputs = {"train_X": training_data.X, "train_Y": training_data.Y}
+        if training_data.Yvar is not None:
+            inputs["train_Yvar"] = training_data.Yvar
+        return inputs
