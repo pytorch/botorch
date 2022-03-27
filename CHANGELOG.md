@@ -2,6 +2,23 @@
 
 The release log for BoTorch.
 
+## [0.6.3] - Mar 28, 2022
+
+#### New Features
+* Implement SAASBO - `SaasFullyBayesianSingleTaskGP` model for sample-efficient high-dimensional Bayesian optimization (#1123).
+* Add SAASBO tutorial (#1127).
+* Add `LearnedObjective` (#1131), `AnalyticExpectedUtilityOfBestOption` acquisition function (#1135), and a few auxiliary classes to support Bayesian optimization with preference exploration (BOPE).
+* Add BOPE tutorial (#1138).
+
+#### Other Changes
+* Use `qKG.evaluate` in `optimize_acqf_mixed` (#1133).
+* Add `construct_inputs` to SAASBO (#1136).
+
+#### Bug Fixes
+* Fix "Constraint Active Search" tutorial (#1124).
+* Update "Discrete Multi-Fidelity BO" tutorial (#1134).
+
+
 ## [0.6.2] - Mar 9, 2022
 
 #### New Features
