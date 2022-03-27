@@ -12,6 +12,7 @@ from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.deterministic import (
     AffineDeterministicModel,
     GenericDeterministicModel,
+    PosteriorMeanModel,
 )
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.gp_regression import (
@@ -48,6 +49,7 @@ __all__ = [
     "MultiTaskGP",
     "PairwiseGP",
     "PairwiseLaplaceMarginalLogLikelihood",
+    "PosteriorMeanModel",
     "SingleTaskGP",
     "SingleTaskMultiFidelityGP",
     "SingleTaskVariationalGP",
