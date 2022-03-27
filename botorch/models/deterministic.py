@@ -180,3 +180,17 @@ class AffineDeterministicModel(DeterministicModel):
 
     def forward(self, X: Tensor) -> Tensor:
         return self.b + torch.einsum("...d,dm", X, self.a)
+
+
+class PosteriorMeanModel(DeterministicModel):
+    def __init__(self, model: Model) -> None:
+        r"""A deterministic model that always return the posterior mean.
+
+        Args:
+            model: The base model.
+        """
+        super().__init__()
+        self.model = model
+
+    def forward(self, X: Tensor) -> Tensor:
+        return self.model.posterior(X).mean

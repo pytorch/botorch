@@ -16,8 +16,10 @@ from abc import ABC, abstractmethod
 from typing import Callable, List, Optional
 
 import torch
+from botorch.models.model import Model
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
 from botorch.posteriors.posterior import Posterior
+from botorch.sampling import IIDNormalSampler, MCSampler
 from botorch.utils import apply_constraints
 from torch import Tensor
 from torch.nn import Module
@@ -59,6 +61,10 @@ class PosteriorTransform(Module, ABC):
             The transformed posterior object.
         """
         pass  # pragma: no cover
+
+
+# import DeterministicModel after PosteriorTransform to avoid circular import
+from botorch.models.deterministic import DeterministicModel  # noqa
 
 
 class ScalarizedPosteriorTransform(PosteriorTransform):
@@ -373,3 +379,68 @@ class ConstrainedMCObjective(GenericMCObjective):
             infeasible_cost=self.infeasible_cost,
             eta=self.eta,
         )
+
+
+class LearnedObjective(MCAcquisitionObjective):
+    r"""Learned preference objective constructed from a preference model.
+
+    For input `samples`, it samples each individual sample again from the latent
+    preference posterior distribution using `pref_model` and return the posterior mean.
+
+    Example:
+        >>> train_X = torch.rand(2, 2)
+        >>> train_comps = torch.LongTensor([[0, 1]])
+        >>> pref_model = PairwiseGP(train_X, train_comps)
+        >>> learned_pref_obj = LearnedObjective(pref_model)
+        >>> samples = sampler(posterior)
+        >>> objective = learned_pref_obj(samples)
+    """
+
+    def __init__(
+        self,
+        pref_model: Model,
+        sampler: Optional[MCSampler] = None,
+    ):
+        r"""Learned preference objective constructed from a preference model.
+
+        Args:
+            pref_model: A BoTorch model, which models the latent preference/utility
+                function. Given an input tensor of size
+                `sample_size x batch_shape x N x d`, its `posterior` method should
+                return a `Posterior` object with single outcome representing the
+                utility values of the input.
+            sampler: Sampler for the preference model to account for uncertainty in
+                preferece when calculating the objective; it's not the one used
+                in MC acquisition functions. If None,
+                it uses `IIDNormalSampler(num_samples=1)`.
+        """
+        super().__init__()
+        self.pref_model = pref_model
+        if isinstance(pref_model, DeterministicModel):
+            assert sampler is None
+            self.sampler = None
+        else:
+            if sampler is None:
+                self.sampler = IIDNormalSampler(num_samples=1)
+            else:
+                self.sampler = sampler
+
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+        r"""Sample each element of samples.
+
+        Args:
+            samples: A `sample_size x batch_shape x N x d`-dim Tensors of
+                samples from a model posterior.
+
+        Returns:
+            A `(sample_size * num_samples) x batch_shape x N`-dim Tensor of
+            objective values sampled from utility posterior using `pref_model`.
+        """
+        post = self.pref_model.posterior(samples)
+        if isinstance(self.pref_model, DeterministicModel):
+            # return preference posterior mean
+            return post.mean.squeeze(-1)
+        else:
+            # return preference posterior sample mean
+            samples = self.sampler(post).squeeze(-1)
+            return samples.reshape(-1, *samples.shape[2:])  # batch_shape x N
