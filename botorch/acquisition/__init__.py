@@ -47,17 +47,20 @@ from botorch.acquisition.objective import (
     ConstrainedMCObjective,
     GenericMCObjective,
     IdentityMCObjective,
+    LearnedObjective,
     LinearMCObjective,
     MCAcquisitionObjective,
     ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
+from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.acquisition.utils import get_acquisition_function
 
 __all__ = [
     "AcquisitionFunction",
     "AnalyticAcquisitionFunction",
+    "AnalyticExpectedUtilityOfBestOption",
     "ConstrainedExpectedImprovement",
     "ExpectedImprovement",
     "FixedFeatureAcquisitionFunction",
@@ -85,6 +88,7 @@ __all__ = [
     "ConstrainedMCObjective",
     "GenericMCObjective",
     "IdentityMCObjective",
+    "LearnedObjective",
     "LinearMCObjective",
     "MCAcquisitionFunction",
     "MCAcquisitionObjective",

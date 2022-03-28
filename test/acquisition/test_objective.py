@@ -9,6 +9,7 @@ import warnings
 
 import torch
 from botorch import settings
+from botorch.acquisition import LearnedObjective
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
     GenericMCObjective,
@@ -18,8 +19,11 @@ from botorch.acquisition.objective import (
     PosteriorTransform,
     ScalarizedPosteriorTransform,
 )
+from botorch.models.deterministic import PosteriorMeanModel
+from botorch.models.pairwise_gp import PairwiseGP
+from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.utils import apply_constraints
-from botorch.utils.testing import _get_test_posterior, BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, _get_test_posterior
 from torch import Tensor
 
 
@@ -254,3 +258,47 @@ class TestLinearMCObjective(BotorchTestCase):
                 LinearMCObjective(
                     weights=torch.tensor(1.0, device=self.device, dtype=dtype)
                 )
+
+
+class TestLearnedObjective(BotorchTestCase):
+    def test_learned_preference_objective(self):
+        X_dim = 2
+        train_X = torch.rand(2, X_dim)
+        train_comps = torch.LongTensor([[0, 1]])
+        pref_model = PairwiseGP(train_X, train_comps)
+
+        og_sample_shape = 3
+        batch_size = 2
+        n = 8
+        test_X = torch.rand(torch.Size((og_sample_shape, batch_size, n, X_dim)))
+
+        # test default setting where sampler = IIDNormalSampler(num_samples=1)
+        pref_obj = LearnedObjective(pref_model=pref_model)
+        self.assertEqual(
+            pref_obj(test_X).shape, torch.Size([og_sample_shape, batch_size, n])
+        )
+
+        # test when sampler has num_samples = 16
+        num_samples = 16
+        pref_obj = LearnedObjective(
+            pref_model=pref_model,
+            sampler=SobolQMCNormalSampler(num_samples=num_samples),
+        )
+        self.assertEqual(
+            pref_obj(test_X).shape,
+            torch.Size([num_samples * og_sample_shape, batch_size, n]),
+        )
+
+        # test posterior mean
+        mean_pref_model = PosteriorMeanModel(model=pref_model)
+        pref_obj = LearnedObjective(pref_model=mean_pref_model)
+        self.assertEqual(
+            pref_obj(test_X).shape, torch.Size([og_sample_shape, batch_size, n])
+        )
+
+        # cannot use a deterministic model together with a sampler
+        with self.assertRaises(AssertionError):
+            LearnedObjective(
+                pref_model=mean_pref_model,
+                sampler=SobolQMCNormalSampler(num_samples=num_samples),
+            )

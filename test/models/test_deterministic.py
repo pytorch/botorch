@@ -13,7 +13,10 @@ from botorch.models.deterministic import (
     AffineDeterministicModel,
     DeterministicModel,
     GenericDeterministicModel,
+    PosteriorMeanModel,
+    FixedSingleSampleModel,
 )
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors.deterministic import DeterministicPosterior
@@ -131,3 +134,38 @@ class TestDeterministicModels(BotorchTestCase):
         # expect error due to post_tf expecting an MVN
         with self.assertRaises(AttributeError):
             model.posterior(test_X, posterior_transform=post_tf)
+
+    def test_PosteriorMeanModel(self):
+        train_X = torch.rand(2, 3)
+        train_Y = torch.rand(2, 2)
+        model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
+        mean_model = PosteriorMeanModel(model=model)
+
+        test_X = torch.rand(2, 3)
+        post = model.posterior(test_X)
+        mean_post = mean_model.posterior(test_X)
+        self.assertTrue((mean_post.variance == 0).all())
+        self.assertTrue(torch.equal(post.mean, mean_post.mean))
+
+    def test_FixedSingleSampleModel(self):
+        torch.manual_seed(123)
+        train_X = torch.rand(2, 3)
+        train_Y = torch.rand(2, 2)
+        model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
+        fss_model = FixedSingleSampleModel(model=model)
+
+        test_X = torch.rand(2, 3)
+        w = fss_model.w
+        post = model.posterior(test_X)
+        original_output = post.mean + post.variance.sqrt() * w
+        fss_output = fss_model(test_X)
+        self.assertTrue(torch.equal(original_output, fss_output))
+
+        self.assertTrue(hasattr(fss_model, "num_outputs"))
+
+        # check w dtype conversion
+        train_X_double = torch.rand(2, 3, dtype=torch.double)
+        train_Y_double = torch.rand(2, 2, dtype=torch.double)
+        model_double = SingleTaskGP(train_X=train_X_double, train_Y=train_Y_double)
+        fss_model_double = FixedSingleSampleModel(model=model_double)
+        self.assertTrue(fss_model_double.w.dtype == train_X_double.dtype)

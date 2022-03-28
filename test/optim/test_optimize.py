@@ -59,6 +59,11 @@ class SquaredAcquisitionFunction(AcquisitionFunction):
         return torch.norm(X, dim=-1).squeeze(-1)
 
 
+class MockOneShotEvaluateAcquisitionFunction(MockOneShotAcquisitionFunction):
+    def evaluate(self, X: Tensor, bounds: Tensor):
+        return X.sum()
+
+
 def rounding_func(X: Tensor) -> Tensor:
     batch_shape, d = X.shape[:-1], X.shape[-1]
     X_round = torch.stack([x.round() for x in X.view(-1, d)])
@@ -781,8 +786,13 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         options = {}
         tkwargs = {"device": self.device}
         bounds = torch.stack([torch.zeros(3), 4 * torch.ones(3)])
-        mock_acq_function = MockAcquisitionFunction()
-        for num_ff, dtype in itertools.product([1, 3], (torch.float, torch.double)):
+        mock_acq_functions = [
+            MockAcquisitionFunction(),
+            MockOneShotEvaluateAcquisitionFunction(),
+        ]
+        for num_ff, dtype, mock_acq_function in itertools.product(
+            [1, 3], (torch.float, torch.double), mock_acq_functions
+        ):
             tkwargs["dtype"] = dtype
             mock_optimize_acqf.reset_mock()
             bounds = bounds.to(**tkwargs)
@@ -812,7 +822,12 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             )
 
             expected_candidates = torch.cat(exp_candidates, dim=-2)
-            expected_acq_value = mock_acq_function(expected_candidates)
+            if isinstance(mock_acq_function, MockOneShotEvaluateAcquisitionFunction):
+                expected_acq_value = mock_acq_function.evaluate(
+                    expected_candidates, bounds=bounds
+                )
+            else:
+                expected_acq_value = mock_acq_function(expected_candidates)
             self.assertTrue(torch.equal(candidates, expected_candidates))
             self.assertTrue(torch.equal(acq_value, expected_acq_value))
 
@@ -823,6 +838,19 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 acq_function=mock_acq_function,
                 q=1,
                 fixed_features_list=[],
+                bounds=torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
+                num_restarts=2,
+                raw_samples=10,
+            )
+
+    def test_optimize_acqf_one_shot_large_q(self):
+        with self.assertRaises(ValueError):
+            mock_acq_function = MockOneShotAcquisitionFunction()
+            fixed_features_list = [{i: i * 0.1} for i in range(2)]
+            optimize_acqf_mixed(
+                acq_function=mock_acq_function,
+                q=2,
+                fixed_features_list=fixed_features_list,
                 bounds=torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
                 num_restarts=2,
                 raw_samples=10,

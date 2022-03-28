@@ -180,3 +180,45 @@ class AffineDeterministicModel(DeterministicModel):
 
     def forward(self, X: Tensor) -> Tensor:
         return self.b + torch.einsum("...d,dm", X, self.a)
+
+
+class PosteriorMeanModel(DeterministicModel):
+    def __init__(self, model: Model) -> None:
+        r"""A deterministic model that always return the posterior mean.
+
+        Args:
+            model: The base model.
+        """
+        super().__init__()
+        self.model = model
+
+    def forward(self, X: Tensor) -> Tensor:
+        return self.model.posterior(X).mean
+
+
+class FixedSingleSampleModel(DeterministicModel):
+    def __init__(self, model: Model, w: Optional[Tensor] = None) -> None:
+        r"""A deterministic model defined by a single sample w.
+
+        Given a base model f and a fixed sample w, the model always outputs
+
+            y = f_mean(x) + f_stddev(x) * w
+
+        We assume the outcomes are uncorrelated here.
+
+        Args:
+            model: The base model.
+            w: A 1-d tensor with length model.num_outputs.
+                If None, draw it from a standard normal distribution.
+        """
+        super().__init__()
+        self.model = model
+        self._num_outputs = model.num_outputs
+        self.w = torch.randn(model.num_outputs)
+        # Check since Model doesn't guarantee a train_inputs attribute
+        if hasattr(model, "train_inputs"):
+            self.w = self.w.to(model.train_inputs[0])
+
+    def forward(self, X: Tensor) -> Tensor:
+        post = self.model.posterior(X)
+        return post.mean + post.variance.sqrt() * self.w
