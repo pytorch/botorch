@@ -44,12 +44,14 @@
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span><span class="p">,</span> <span class="n">OptimizationWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.converter</span> <span class="kn">import</span> <span class="n">batched_to_model_list</span><span class="p">,</span> <span class="n">model_list_to_batched</span>
+<span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">SaasFullyBayesianSingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_scipy</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="n">sample_all_priors</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.sum_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">SumMarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.utils.errors</span> <span class="kn">import</span> <span class="n">NotPSDError</span>
+<span class="kn">from</span> <span class="nn">pyro.infer.mcmc</span> <span class="kn">import</span> <span class="n">MCMC</span><span class="p">,</span> <span class="n">NUTS</span>
 
 
 <span class="n">FAILED_CONVERSION_MSG</span> <span class="o">=</span> <span class="p">(</span>
@@ -175,6 +177,61 @@
 
     <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Fitting failed on all retries."</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="fit_fully_bayesian_model_nuts"><a class="viewcode-back" href="../../fit.html#botorch.fit.fit_fully_bayesian_model_nuts">[docs]</a><span class="k">def</span> <span class="nf">fit_fully_bayesian_model_nuts</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">SaasFullyBayesianSingleTaskGP</span><span class="p">,</span>
+    <span class="n">max_tree_depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="n">warmup_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+    <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+    <span class="n">thinning</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span><span class="p">,</span>
+    <span class="n">disable_progbar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Fit a fully Bayesian model using the No-U-Turn-Sampler (NUTS)</span>
+
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: SaasFullyBayesianSingleTaskGP to be fitted.</span>
+<span class="sd">        max_tree_depth: Maximum tree depth for NUTS</span>
+<span class="sd">        warmup_steps: The number of burn-in steps for NUTS.</span>
+<span class="sd">        num_samples:  The number of MCMC samples. Note that with thinning,</span>
+<span class="sd">            num_samples / thinning samples are retained.</span>
+<span class="sd">        thinning: The amount of thinning. Every nth sample is retained.</span>
+<span class="sd">        disable_progbar: A boolean indicating whether to print the progress</span>
+<span class="sd">            bar and diagnostics during MCMC.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)</span>
+<span class="sd">        &gt;&gt;&gt; fit_fully_bayesian_model_nuts(gp)</span>
+<span class="sd">    """</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+
+    <span class="c1"># Do inference with NUTS</span>
+    <span class="n">nuts</span> <span class="o">=</span> <span class="n">NUTS</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">sample</span><span class="p">,</span>
+        <span class="n">jit_compile</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">full_mass</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">ignore_jit_warnings</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">max_tree_depth</span><span class="o">=</span><span class="n">max_tree_depth</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">mcmc</span> <span class="o">=</span> <span class="n">MCMC</span><span class="p">(</span>
+        <span class="n">nuts</span><span class="p">,</span>
+        <span class="n">warmup_steps</span><span class="o">=</span><span class="n">warmup_steps</span><span class="p">,</span>
+        <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">,</span>
+        <span class="n">disable_progbar</span><span class="o">=</span><span class="n">disable_progbar</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">mcmc</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+    <span class="c1"># Get final MCMC samples from the Pyro model</span>
+    <span class="n">mcmc_samples</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">postprocess_mcmc_samples</span><span class="p">(</span>
+        <span class="n">mcmc_samples</span><span class="o">=</span><span class="n">mcmc</span><span class="o">.</span><span class="n">get_samples</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">mcmc_samples</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">mcmc_samples</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[::</span><span class="n">thinning</span><span class="p">]</span>
+
+    <span class="c1"># Load the MCMC samples back into the BoTorch model</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">load_mcmc_samples</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span></div>
 </pre></div>
 </div>
 </div>
