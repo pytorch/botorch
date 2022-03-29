@@ -9,10 +9,11 @@ References
     arXiv preprint arXiv:2112.13901 (2021).
 """
 
-import torch
-from torch import Tensor
-from botorch.test_functions.base import MultiObjectiveTestProblem
 import math
+
+import torch
+from botorch.test_functions.base import MultiObjectiveTestProblem
+from torch import Tensor
 
 
 class MOMFBraninCurrin(MultiObjectiveTestProblem):
