@@ -5,7 +5,8 @@ References
 
 .. [Irshad2021]
     Irshad, Faran, Stefan Karsch, and Andreas Döpp. 
-    "Expected hypervolume improvement for simultaneous multi-objective and multi-fidelity optimization." 
+    "Expected hypervolume improvement for simultaneous multi-objective and 
+     multi-fidelity optimization." 
     arXiv preprint arXiv:2112.13901 (2021).
 """
 
@@ -17,17 +18,23 @@ from torch import Tensor
 
 
 class MOMFBraninCurrin(MultiObjectiveTestProblem):
-    r"""Augmented Branin-Currin test function for multi-objective multi-fidelity optimization.
-    (2+1)-dimensional function with domain `[0,1]^3` where the last dimension is the fidelity parameter `s`.
+    r"""Augmented Branin-Currin test function for multi-objective 
+    multi-fidelity optimization.
+    (2+1)-dimensional function with domain `[0,1]^3` where the last dimension 
+    is the fidelity parameter `s`.
     Both functions assume maximization.
 
     Modified Branin function:
 
          B(x,s) = 21-((
-         15*x_2 - b(s) * (15 * x_1 - 5) ** 2 + c(s) * (15 * x_1 - 5) - 6 ) ** 2 + 10 * (1 - t(s)) * cos(15 * x_1 - 5)+10)/22
+         15*x_2 - b(s) * (15 * x_1 - 5) ** 2 + c(s) * (15 * x_1 - 5) - 6 ) ** 2 
+         + 10 * (1 - t(s)) * cos(15 * x_1 - 5)+10)/22
 
-    Here `b`, `c`, `r` and `t` are constants and `s` is the fidelity parameter: where `b = 5.1 / (4 * math.pi ** 2) - 0.01(1-s)`
-     `c = 5 / math.pi - 0.1*(1 - s)`, `r = 6`, `t = 1 / (8 * math.pi) + 0.05*(1-s)`
+    Here `b`, `c`, `r` and `t` are constants and `s` is the fidelity parameter: 
+    where `b = 5.1 / (4 * math.pi ** 2) - 0.01(1-s)`, 
+          `c = 5 / math.pi - 0.1*(1 - s)`, 
+          `r = 6`, 
+          `t = 1 / (8 * math.pi) + 0.05*(1-s)`
 
     Modified Currin function:
 
@@ -51,7 +58,8 @@ class MOMFBraninCurrin(MultiObjectiveTestProblem):
         c = 5 / math.pi - 0.1 * (1 - s)
         r = 6
         t = 1 / (8 * math.pi) + 0.05 * (1 - s)
-        y = (x22 - b * x11**2 + c * x11 - r) ** 2 + 10 * (1 - t) * torch.cos(x11) + 10
+        y = (x22 - b * x11**2 + c * x11 - r) ** 2 + \
+            10 * (1 - t) * torch.cos(x11) + 10
         B = 21 - y
         return B / 22
 
@@ -70,8 +78,10 @@ class MOMFBraninCurrin(MultiObjectiveTestProblem):
 
 
 class MOMFPark(MultiObjectiveTestProblem):
-    r"""Modified Park test functions for multi-objective multi-fidelity optimization.
-    (4+1)-dimensional function with domain `[0,1]^5` where the last dimension is the fidelity parameter `s`.
+    r"""Modified Park test functions for multi-objective 
+    multi-fidelity optimization.
+    (4+1)-dimensional function with domain `[0,1]^5` where the last dimension 
+    is the fidelity parameter `s`.
 
     The first modified Park function is
 
@@ -97,19 +107,16 @@ class MOMFPark(MultiObjectiveTestProblem):
 
     def _transform(self, X: Tensor) -> Tensor:
         x1, x2, x3, x4, s = X.T
-        _x1 = 1 - 2 * (x1 - 0.6) ** 2
+        _x1 = 1 - 2 * (x1 - 0.6)**2
         _x2 = x2
-        _x3 = 1 - 3 * (x3 - 0.5) ** 2
-        _x4 = 1 - (x4 - 0.8) ** 2
+        _x3 = 1 - 3 * (x3 - 0.5)**2
+        _x4 = 1 - (x4 - 0.8)**2
         return torch.stack([_x1, _x2, _x3, _x4, s], axis=-1)
 
     def _park1(self, X: Tensor) -> Tensor:
         x1, x2, x3, x4, s = X.T
-        T1 = (
-            (x1 + 1e-3 * (1 - s))
-            / 2
-            * torch.sqrt(1 + (x2 + x3**2) * x4 / (x1**2 + 1e-4))
-        )
+        T1 = ((x1 + 1e-3 * (1 - s)) / 2 * torch.sqrt(1 + (x2 + x3**2) * x4 /
+                                                     (x1**2 + 1e-4)))
         T2 = (x1 + 3 * x4) * torch.exp(1 + torch.sin(x3))
         A = 0.9 + 0.1 * s
         B = 0.1 * (1 - s)
@@ -119,10 +126,8 @@ class MOMFPark(MultiObjectiveTestProblem):
         x1, x2, x3, x4, s = X.T
         A = 0.9 + 0.1 * s
         B = 0.1 * (1 - s)
-        return (
-            A * (5 - 2 / 3 * torch.exp(x1 + x2) + x4 * torch.sin(x3) * A - x3 + B) / 4
-            - 0.7
-        )
+        return (A * (5 - 2 / 3 * torch.exp(x1 + x2) + x4 * torch.sin(x3) * A -
+                     x3 + B) / 4 - 0.7)
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         X = self._transform(X)
