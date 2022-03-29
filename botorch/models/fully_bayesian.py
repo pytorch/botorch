@@ -304,8 +304,7 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
     def train(self, mode: bool = True) -> None:
         r"""Puts the model in `train` mode."""
         super().train(mode=mode)
-        if mode and self.train_X.ndim == 3:
-            self.train_X = self.train_X[0, ...].squeeze(0)
+        if mode:
             self.mean_module = None
             self.covar_module = None
             self.likelihood = None
@@ -319,10 +318,6 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
         tkwargs = {"device": self.train_X.device, "dtype": self.train_X.dtype}
         num_mcmc_samples = len(mcmc_samples["mean"])
         batch_shape = torch.Size([num_mcmc_samples])
-
-        self.train_X = self.train_X.unsqueeze(0).expand(
-            num_mcmc_samples, self.train_X.shape[0], -1
-        )
         self.mean_module = ConstantMean(batch_shape=batch_shape).to(**tkwargs)
         self.covar_module = ScaleKernel(
             base_kernel=MaternKernel(
