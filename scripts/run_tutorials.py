@@ -42,7 +42,11 @@ def run_script(script: str, env: Optional[Dict[str, str]] = None) -> None:
     if env is not None:
         env = {**os.environ, **env}
     run_out = subprocess.run(
-        ["ipython", tf_name], capture_output=True, text=True, env=env
+        ["ipython", tf_name],
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=1800,  # Count runtime >30 minutes as a failure
     )
     os.remove(tf_name)
     return run_out
@@ -53,7 +57,11 @@ def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
     tic = time.time()
     print(f"Running tutorial {tutorial.name}.")
     env = {"SMOKE_TEST": "True"} if smoke_test else None
-    run_out = run_script(script, env=env)
+    try:
+        run_out = run_script(script, env=env)
+    except subprocess.TimeoutExpired:
+        return f"Tutorial {tutorial.name} exceeded the maximum runtime of 30 minutes."
+
     try:
         run_out.check_returncode()
     except CalledProcessError:
