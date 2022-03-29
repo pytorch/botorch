@@ -124,7 +124,7 @@ def optimize_acqf(
         >>>     qEI, bounds, 3, 15, 256, sequential=True
         >>> )
     """
-    if bounds.shape[0] != 2:
+    if not (len(bounds.shape) == 2 and bounds.shape[0] == 2):
         raise ValueError(
             f"bounds should be a `2 x d` tensor, current shape: {bounds.shape}."
         )
