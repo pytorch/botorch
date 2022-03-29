@@ -144,7 +144,8 @@ class AugmentedRosenbrock(SyntheticTestFunction):
 class MFForrester(SyntheticTestFunction):
     """Modified Forrester synthetic test function for multi-fidelity optimization.
 
-    (1+1)-dimensional function (typically evaluated on `[0, 1]^2`) where the last dimension are the fidelity parameters.
+    (1+1)-dimensional function (typically evaluated on `[0, 1]^2`) where 
+    the last dimension are the fidelity parameters.
 
     The modified Forrester function reads:
 
@@ -154,7 +155,8 @@ class MFForrester(SyntheticTestFunction):
 
         g(x,s) = A(s) * f(x - 0.2 * (1 - x * s)) + B(s) * (x - 0.5) - C(s)
 
-    where `A(s)=0.5*(1+s)`, `B=2*(1-s)`, `C=5*(s-1)`, `D=1.5-0.5*s` and `E=25`. `f(x)` here is the original Forrester function
+    where `A(s)=0.5*(1+s)`, `B=2*(1-s)`, `C=5*(s-1)`, `D=1.5-0.5*s` and `E=25`. 
+    `f(x)` here is the original Forrester function
 
         f(x) = (6*x-2)**2 * sin(12*x-4) + 7.025 
     """
@@ -162,12 +164,13 @@ class MFForrester(SyntheticTestFunction):
     _bounds = [(0.0, 1.0), (0.0, 1.0)]
     _optimal_value = 23.9957389831542969
     _optimizers = [(0.797697, 1.000)]
-
+    _check_grad_at_opt = False
     def _SFForrester(self, X: Tensor) -> Tensor:
         return (6 * X - 2) ** 2 * torch.sin(12 * X - 4) + 7.025
 
     def evaluate_true(self, X: Tensor) -> Tensor:
-        x, s = X.T
+        x = X[...,0]
+        s = X[...,1]
         A = 0.5 * (1 + s)
         B = 2 * (1 - s)
         C = 5 * (s - 1)
