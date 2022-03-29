@@ -45,7 +45,7 @@ from gpytorch.likelihoods import GaussianLikelihood, FixedNoiseGaussianLikelihoo
 from gpytorch.means import ConstantMean
 
 
-class TestSingleTaskGP(BotorchTestCase):
+class TestFullyBayesianSingleTaskGP(BotorchTestCase):
     def _get_data_and_model(self, infer_noise: bool, **tkwargs):
         with torch.random.fork_rng():
             torch.manual_seed(0)
@@ -215,10 +215,8 @@ class TestSingleTaskGP(BotorchTestCase):
             self.assertEqual(model.num_mcmc_samples, 3)
 
             # Make sure the model shapes are set correctly
-            self.assertEqual(model.train_X.shape, torch.Size([3, n, d]))
-            self.assertTrue(
-                all(torch.allclose(model.train_X[i], model.train_X) for i in range(3))
-            )
+            self.assertEqual(model.train_X.shape, torch.Size([n, d]))
+            self.assertTrue(torch.allclose(model.train_X, train_X))
             model.train()  # Put the model in train mode
             self.assertTrue(torch.allclose(train_X, model.train_X))
             self.assertIsNone(model.mean_module)
