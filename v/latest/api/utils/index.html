@@ -1704,6 +1704,25 @@ contained within <cite>bounds</cite>.</p>
 </dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.transforms.is_fully_bayesian">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></span><span class="sig-name descname"><span class="pre">is_fully_bayesian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#is_fully_bayesian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.is_fully_bayesian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if at least one model is a SaasFullyBayesianSingleTaskGP</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A BoTorch model (may be a <cite>ModelList</cite> or <cite>ModelListGP</cite>)</p></li>
+<li><p><strong>d</strong> – The dimension of the tensor to index.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if at least one model is a <cite>SaasFullyBayesianSingleTaskGP</cite></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.transforms.t_batch_mode_transform">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></span><span class="sig-name descname"><span class="pre">t_batch_mode_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expected_q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assert_output_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#t_batch_mode_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.t_batch_mode_transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Factory for decorators enabling consistent t-batch behavior.</p>
@@ -1726,7 +1745,7 @@ batched models.</p></li>
 <dd class="field-even"><p>The decorated instance method.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Callable[[Callable[[botorch.utils.transforms.AcquisitionFunction, Any], Any]], Callable[[botorch.utils.transforms.AcquisitionFunction, Any], Any]]</p>
+<dd class="field-odd"><p>Callable[[Callable[[<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction">AcquisitionFunction</a>, Any], Any]], Callable[[<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction">AcquisitionFunction</a>, Any], Any]]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>

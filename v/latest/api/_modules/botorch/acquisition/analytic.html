@@ -143,13 +143,13 @@
         <span class="sa">r</span><span class="sd">"""Evaluate Expected Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `b1 x ... bk x 1 x d`-dim batched tensor of `d`-dim design points.</span>
+<span class="sd">            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.</span>
 <span class="sd">                Expected Improvement is computed for each point individually,</span>
 <span class="sd">                i.e., what is considered are the marginal posteriors, not the</span>
 <span class="sd">                joint.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `b1 x ... bk`-dim tensor of Expected Improvement values at the</span>
+<span class="sd">            A `(b1 x ... bk)`-dim tensor of Expected Improvement values at the</span>
 <span class="sd">            given design points `X`.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
@@ -158,7 +158,7 @@
         <span class="p">)</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span>
         <span class="c1"># deal with batch evaluation and broadcasting</span>
-        <span class="n">view_shape</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">mean</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">X</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="k">else</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">view_shape</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span>
         <span class="n">sigma</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mf">1e-9</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span>
         <span class="n">u</span> <span class="o">=</span> <span class="p">(</span><span class="n">mean</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span><span class="o">.</span><span class="n">expand_as</span><span class="p">(</span><span class="n">mean</span><span class="p">))</span> <span class="o">/</span> <span class="n">sigma</span>
@@ -210,21 +210,19 @@
         <span class="sa">r</span><span class="sd">"""Evaluate the posterior mean on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design</span>
-<span class="sd">                points each.</span>
+<span class="sd">            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `(b)`-dim Tensor of Posterior Mean values at the given design</span>
-<span class="sd">            points `X`.</span>
+<span class="sd">            A `(b1 x ... bk)`-dim tensor of Posterior Mean values at the</span>
+<span class="sd">            given design points `X`.</span>
 <span class="sd">        """</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
             <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
         <span class="p">)</span>
-        <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">mean</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="o">-</span><span class="n">mean</span></div></div>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">view_shape</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">pm</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pm</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">pm</span></div></div>
 
 
 <div class="viewcode-block" id="ProbabilityOfImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ProbabilityOfImprovement">[docs]</a><span class="k">class</span> <span class="nc">ProbabilityOfImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
@@ -273,21 +271,20 @@
         <span class="sa">r</span><span class="sd">"""Evaluate the Probability of Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design</span>
-<span class="sd">                points each.</span>
+<span class="sd">            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `(b)`-dim tensor of Probability of Improvement values at the given</span>
-<span class="sd">            design points `X`.</span>
+<span class="sd">            A `(b1 x ... bk)`-dim tensor of Probability of Improvement values at the</span>
+<span class="sd">            given design points `X`.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
             <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
         <span class="p">)</span>
-        <span class="n">mean</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">posterior</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
-        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-        <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span>
-        <span class="n">sigma</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mf">1e-9</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span>
+        <span class="n">mean</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">posterior</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mf">1e-9</span><span class="p">)</span>
+        <span class="n">view_shape</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span>
         <span class="n">u</span> <span class="o">=</span> <span class="p">(</span><span class="n">mean</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span><span class="o">.</span><span class="n">expand_as</span><span class="p">(</span><span class="n">mean</span><span class="p">))</span> <span class="o">/</span> <span class="n">sigma</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">:</span>
             <span class="n">u</span> <span class="o">=</span> <span class="o">-</span><span class="n">u</span>
@@ -343,20 +340,20 @@
         <span class="sa">r</span><span class="sd">"""Evaluate the Upper Confidence Bound on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design</span>
-<span class="sd">                points each.</span>
+<span class="sd">            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `(b)`-dim Tensor of Upper Confidence Bound values at the given</span>
-<span class="sd">            design points `X`.</span>
+<span class="sd">            A `(b1 x ... bk)`-dim tensor of Upper Confidence Bound values at the</span>
+<span class="sd">            given design points `X`.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
             <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
         <span class="p">)</span>
-        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-        <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span>
-        <span class="n">variance</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">view_shape</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span>
+        <span class="n">variance</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span>
         <span class="n">delta</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">expand_as</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span> <span class="o">*</span> <span class="n">variance</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">mean</span> <span class="o">+</span> <span class="n">delta</span>
@@ -538,7 +535,7 @@
     <span class="sa">r</span><span class="sd">"""Single-outcome Noisy Expected Improvement (via fantasies).</span>
 
 <span class="sd">    This computes Noisy Expected Improvement by averaging over the Expected</span>
-<span class="sd">    Improvemnt values of a number of fantasy models. Only supports the case</span>
+<span class="sd">    Improvement values of a number of fantasy models. Only supports the case</span>
 <span class="sd">    `q=1`. Assumes that the posterior distribution of the model is Gaussian.</span>
 <span class="sd">    The model must be single-outcome.</span>
 

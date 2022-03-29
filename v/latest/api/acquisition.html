@@ -393,13 +393,13 @@ single-output posterior is required.</p></li>
 <dd><p>Evaluate Expected Improvement on the candidate set X.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>b1 x … bk x 1 x d</cite>-dim batched tensor of <cite>d</cite>-dim design points.
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>(b1 x … bk) x 1 x d</cite>-dim batched tensor of <cite>d</cite>-dim design points.
 Expected Improvement is computed for each point individually,
 i.e., what is considered are the marginal posteriors, not the
 joint.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>b1 x … bk</cite>-dim tensor of Expected Improvement values at the
+<dd class="field-even"><p>A <cite>(b1 x … bk)</cite>-dim tensor of Expected Improvement values at the
 given design points <cite>X</cite>.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
@@ -450,12 +450,11 @@ does actually return -1 * minimum of the posterior mean.</p></li>
 <dd><p>Evaluate the posterior mean on the candidate set X.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>(b) x 1 x d</cite>-dim Tensor of <cite>(b)</cite> t-batches of <cite>d</cite>-dim design
-points each.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>(b1 x … bk) x 1 x d</cite>-dim batched tensor of <cite>d</cite>-dim design points.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>(b)</cite>-dim Tensor of Posterior Mean values at the given design
-points <cite>X</cite>.</p>
+<dd class="field-even"><p>A <cite>(b1 x … bk)</cite>-dim tensor of Posterior Mean values at the
+given design points <cite>X</cite>.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>torch.Tensor</p>
@@ -506,12 +505,11 @@ single-output posterior is required.</p></li>
 <dd><p>Evaluate the Probability of Improvement on the candidate set X.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>(b) x 1 x d</cite>-dim Tensor of <cite>(b)</cite> t-batches of <cite>d</cite>-dim design
-points each.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>(b1 x … bk) x 1 x d</cite>-dim batched tensor of <cite>d</cite>-dim design points.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>(b)</cite>-dim tensor of Probability of Improvement values at the given
-design points <cite>X</cite>.</p>
+<dd class="field-even"><p>A <cite>(b1 x … bk)</cite>-dim tensor of Probability of Improvement values at the
+given design points <cite>X</cite>.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>torch.Tensor</p>
@@ -564,12 +562,11 @@ single-output posterior is required.</p></li>
 <dd><p>Evaluate the Upper Confidence Bound on the candidate set X.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>(b) x 1 x d</cite>-dim Tensor of <cite>(b)</cite> t-batches of <cite>d</cite>-dim design
-points each.</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>(b1 x … bk) x 1 x d</cite>-dim batched tensor of <cite>d</cite>-dim design points.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>(b)</cite>-dim Tensor of Upper Confidence Bound values at the given
-design points <cite>X</cite>.</p>
+<dd class="field-even"><p>A <cite>(b1 x … bk)</cite>-dim tensor of Upper Confidence Bound values at the
+given design points <cite>X</cite>.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>torch.Tensor</p>
@@ -651,7 +648,7 @@ design points <cite>X</cite>.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.analytic.ExpectedImprovement" title="botorch.acquisition.analytic.ExpectedImprovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.analytic.ExpectedImprovement</span></code></a></p>
 <p>Single-outcome Noisy Expected Improvement (via fantasies).</p>
 <p>This computes Noisy Expected Improvement by averaging over the Expected
-Improvemnt values of a number of fantasy models. Only supports the case
+Improvement values of a number of fantasy models. Only supports the case
 <cite>q=1</cite>. Assumes that the posterior distribution of the model is Gaussian.
 The model must be single-outcome.</p>
 <p><cite>NEI(x) = E(max(y - max Y_baseline), 0)), (y, Y_baseline) ~ f((x, X_baseline))</cite>,
@@ -2485,8 +2482,66 @@ design points <cite>X</cite>.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="preference-acquisition-functions">
-<h3>Preference Acquisition Functions<a class="headerlink" href="#preference-acquisition-functions" title="Permalink to this headline">¶</a></h3>
+<section id="module-botorch.acquisition.preference">
+<span id="preference-acquisition-functions"></span><h3>Preference Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.preference" title="Permalink to this headline">¶</a></h3>
+<p>Preference acquisition functions. This includes:
+Analytical EUBO acquisition function as introduced in <a class="reference internal" href="#lin2020preference" id="id25"><span>[Lin2020preference]</span></a>.</p>
+<dl class="citation">
+<dt class="label" id="lin2020preference"><span class="brackets">Lin2020preference</span><span class="fn-backref">(<a href="#id25">1</a>,<a href="#id26">2</a>)</span></dt>
+<dd><p>Lin, Z.J., Astudillo, R., Frazier, P.I. and Bakshy, E. Preference Exploration
+for Efficient Bayesian Optimization with Multiple Outcomes. International
+Conference on Artificial Intelligence and Statistics (AISTATS), 2022.</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.preference.</span></span><span class="sig-name descname"><span class="pre">AnalyticExpectedUtilityOfBestOption</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pref_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_winner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/preference.html#AnalyticExpectedUtilityOfBestOption"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.analytic.AnalyticAcquisitionFunction" title="botorch.acquisition.analytic.AnalyticAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.analytic.AnalyticAcquisitionFunction</span></code></a></p>
+<p>Analytic Prefential Expected Utility of Best Options, i.e., Analytical EUBO</p>
+<p>Analytic implementation of Expected Utility of the Best Option under the
+Laplace model (assumes a PairwiseGP is used as the preference model) as
+proposed in <a class="reference internal" href="#lin2020preference" id="id26"><span>[Lin2020preference]</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pref_model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The preference model that maps the outcomes (i.e., Y) to
+scalar-valued utility.</p></li>
+<li><p><strong>model</strong> – A deterministic model that maps parameters (i.e., X) to outcomes
+(i.e., Y). The outcome model f defines the search space of Y = f(X).
+If model is None, we are directly calculating EUBO on the parameter
+space. When used with <cite>OneSamplePosteriorDrawModel</cite>, we are obtaining
+EUBO-zeta as described in [Lin2020preference].</p></li>
+<li><p><strong>previous_winner</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Tensor representing the previous winner in the Y space.
+Defaults to None.</p></li>
+<li><p><strong>outcome_model</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="models.html#botorch.models.deterministic.DeterministicModel" title="botorch.models.deterministic.DeterministicModel"><em>DeterministicModel</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/preference.html#AnalyticExpectedUtilityOfBestOption.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate analytical EUBO on the candidate set X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor, where <cite>q = 2</cite> if <cite>previous_winner</cite>
+is not <cite>None</cite>, and <cite>q = 1</cite> otherwise.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The acquisition value for each batch as a tensor of shape <cite>batch_shape</cite>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
 </section>
 </section>
 <section id="objectives-and-cost-aware-utilities">
@@ -2906,6 +2961,60 @@ the objective depends on the inputs explicitly.</p></li>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A <cite>sample_shape x batch_shape x q</cite>-dim Tensor of objective values
 weighted by feasibility (assuming maximization).</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.objective.LearnedObjective">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.objective.</span></span><span class="sig-name descname"><span class="pre">LearnedObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pref_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#LearnedObjective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.objective.LearnedObjective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.objective.MCAcquisitionObjective</span></code></a></p>
+<p>Learned preference objective constructed from a preference model.</p>
+<p>For input <cite>samples</cite>, it samples each individual sample again from the latent
+preference posterior distribution using <cite>pref_model</cite> and return the posterior mean.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_comps</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pref_model</span> <span class="o">=</span> <span class="n">PairwiseGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_comps</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">learned_pref_obj</span> <span class="o">=</span> <span class="n">LearnedObjective</span><span class="p">(</span><span class="n">pref_model</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">objective</span> <span class="o">=</span> <span class="n">learned_pref_obj</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Learned preference objective constructed from a preference model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pref_model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A BoTorch model, which models the latent preference/utility
+function. Given an input tensor of size
+<cite>sample_size x batch_shape x N x d</cite>, its <cite>posterior</cite> method should
+return a <cite>Posterior</cite> object with single outcome representing the
+utility values of the input.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="sampling.html#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><em>MCSampler</em></a><em>]</em>) – Sampler for the preference model to account for uncertainty in
+preferece when calculating the objective; it’s not the one used
+in MC acquisition functions. If None,
+it uses <cite>IIDNormalSampler(num_samples=1)</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.objective.LearnedObjective.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#LearnedObjective.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.objective.LearnedObjective.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample each element of samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – A <cite>sample_size x batch_shape x N x d</cite>-dim Tensors of
+samples from a model posterior.</p></li>
+<li><p><strong>X</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>(sample_size * num_samples) x batch_shape x N</cite>-dim Tensor of
+objective values sampled from utility posterior using <cite>pref_model</cite>.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>torch.Tensor</p>
@@ -3415,15 +3524,15 @@ model (required if <cite>use_mean=False</cite>, ignored if <cite>use_mean=True</
 <section id="module-botorch.acquisition.risk_measures">
 <span id="risk-measures"></span><h3>Risk Measures<a class="headerlink" href="#module-botorch.acquisition.risk_measures" title="Permalink to this headline">¶</a></h3>
 <p>Risk Measures implemented as Monte-Carlo objectives, based on Bayesian
-optimization of risk measures as introduced in <a class="reference internal" href="#cakmak2020risk" id="id25"><span>[Cakmak2020risk]</span></a>. For a
+optimization of risk measures as introduced in <a class="reference internal" href="#cakmak2020risk" id="id27"><span>[Cakmak2020risk]</span></a>. For a
 broader discussion of Monte-Carlo methods for VaR and CVaR risk measures,
-see also <a class="reference internal" href="#hong2014review" id="id26"><span>[Hong2014review]</span></a>.</p>
+see also <a class="reference internal" href="#hong2014review" id="id28"><span>[Hong2014review]</span></a>.</p>
 <dl class="citation">
-<dt class="label" id="cakmak2020risk"><span class="brackets"><a class="fn-backref" href="#id25">Cakmak2020risk</a></span></dt>
+<dt class="label" id="cakmak2020risk"><span class="brackets"><a class="fn-backref" href="#id27">Cakmak2020risk</a></span></dt>
 <dd><p>S. Cakmak, R. Astudillo, P. Frazier, and E. Zhou. Bayesian Optimization of
 Risk Measures. Advances in Neural Information Processing Systems 33, 2020.</p>
 </dd>
-<dt class="label" id="hong2014review"><span class="brackets"><a class="fn-backref" href="#id26">Hong2014review</a></span></dt>
+<dt class="label" id="hong2014review"><span class="brackets"><a class="fn-backref" href="#id28">Hong2014review</a></span></dt>
 <dd><p>L. J. Hong, Z. Hu, and G. Liu. Monte carlo methods for value-at-risk and
 conditional value-at-risk: a review. ACM Transactions on Modeling and
 Computer Simulation, 2014.</p>
@@ -3623,11 +3732,11 @@ output dimension independently. In contrast, MVaR is computed using the
 joint distribution of the outputs, and provides more accurate risk estimates.</p>
 <p>References</p>
 <dl class="citation">
-<dt class="label" id="prekopa2012mvar"><span class="brackets">Prekopa2012MVaR</span><span class="fn-backref">(<a href="#id27">1</a>,<a href="#id30">2</a>,<a href="#id31">3</a>,<a href="#id32">4</a>)</span></dt>
+<dt class="label" id="prekopa2012mvar"><span class="brackets">Prekopa2012MVaR</span><span class="fn-backref">(<a href="#id29">1</a>,<a href="#id32">2</a>,<a href="#id33">3</a>,<a href="#id34">4</a>)</span></dt>
 <dd><p>A. Prekopa. Multivariate value at risk and related topics.
 Annals of Operations Research, 2012.</p>
 </dd>
-<dt class="label" id="cousin2013mvar"><span class="brackets">Cousin2013MVaR</span><span class="fn-backref">(<a href="#id28">1</a>,<a href="#id29">2</a>)</span></dt>
+<dt class="label" id="cousin2013mvar"><span class="brackets">Cousin2013MVaR</span><span class="fn-backref">(<a href="#id30">1</a>,<a href="#id31">2</a>)</span></dt>
 <dd><p>A. Cousin and E. Di Bernardino. On multivariate extensions of Value-at-Risk.
 Journal of Multivariate Analysis, 2013.</p>
 </dd>
@@ -3829,11 +3938,11 @@ posterior samples. The q-batches should be ordered so that each
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">MVaR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expectation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad_to_n_w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_dominated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective" title="botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective</span></code></a></p>
-<p>The multivariate Value-at-Risk as introduced in <a class="reference internal" href="#prekopa2012mvar" id="id27"><span>[Prekopa2012MVaR]</span></a>.</p>
+<p>The multivariate Value-at-Risk as introduced in <a class="reference internal" href="#prekopa2012mvar" id="id29"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>MVaR is defined as the non-dominated set of points in the extended domain
 of the random variable that have multivariate CDF greater than or equal to
 <cite>alpha</cite>. Note that MVaR is set valued and the size of the set depends on the
-particular realizations of the random variable. <a class="reference internal" href="#cousin2013mvar" id="id28"><span>[Cousin2013MVaR]</span></a> instead
+particular realizations of the random variable. <a class="reference internal" href="#cousin2013mvar" id="id30"><span>[Cousin2013MVaR]</span></a> instead
 propose to use the expectation of the set-valued MVaR as the multivariate
 VaR. We support this alternative with an <cite>expectation</cite> flag.</p>
 <p>The multivariate Value-at-Risk.</p>
@@ -3844,7 +3953,7 @@ VaR. We support this alternative with an <cite>expectation</cite> flag.</p>
 <li><p><strong>alpha</strong> (<em>float</em>) – The risk level of MVaR, float in <cite>(0.0, 1.0]</cite>. Each MVaR value
 dominates <cite>alpha</cite> fraction of all observations.</p></li>
 <li><p><strong>expectation</strong> (<em>bool</em>) – If True, returns the expectation of the MVaR set as is
-done in <a class="reference internal" href="#cousin2013mvar" id="id29"><span>[Cousin2013MVaR]</span></a>. Otherwise, it returns the union of all
+done in <a class="reference internal" href="#cousin2013mvar" id="id31"><span>[Cousin2013MVaR]</span></a>. Otherwise, it returns the union of all
 values in the MVaR set. Default: False.</p></li>
 <li><p><strong>weights</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An optional <cite>m</cite>-dim tensor of weights for scaling
 multi-output samples before calculating the risk measure.
@@ -3858,7 +3967,7 @@ in general be much larger than the alternative. See <cite>forward</cite> for
 more details on the return shape.
 NOTE: this is only relevant if <cite>expectation=False</cite>.</p></li>
 <li><p><strong>filter_dominated</strong> (<em>bool</em>) – If True, returns the non-dominated subset of
-alpha level points (this is MVaR as defined by <a class="reference internal" href="#prekopa2012mvar" id="id30"><span>[Prekopa2012MVaR]</span></a>).
+alpha level points (this is MVaR as defined by <a class="reference internal" href="#prekopa2012mvar" id="id32"><span>[Prekopa2012MVaR]</span></a>).
 Disabling this will make it faster, and may be preferable if
 the dominated points will be filtered out later, e.g., while
 calculating the hypervolume. Disabling this is not recommended
@@ -3872,7 +3981,7 @@ if <cite>expectation=True</cite>.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_cpu">
 <span class="sig-name descname"><span class="pre">get_mvar_set_cpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR.get_mvar_set_cpu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_cpu" title="Permalink to this definition">¶</a></dt>
-<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id31"><span>[Prekopa2012MVaR]</span></a>.</p>
+<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id33"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>NOTE: This is much faster on CPU for large <cite>n_w</cite> than the alternative but it
 is significantly slower on GPU. Based on empirical evidence, this is recommended
 when running on CPU with <cite>n_w &gt; 64</cite>.</p>
@@ -3899,7 +4008,7 @@ are not in-sample points.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_gpu">
 <span class="sig-name descname"><span class="pre">get_mvar_set_gpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR.get_mvar_set_gpu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_gpu" title="Permalink to this definition">¶</a></dt>
-<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id32"><span>[Prekopa2012MVaR]</span></a>.</p>
+<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id34"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>NOTE: This is much faster on GPU than the alternative but it scales very poorly
 on CPU as <cite>n_w</cite> increases. This should be preferred if a GPU is available or
 when <cite>n_w &lt;= 64</cite>. In addition, this supports <cite>m &gt;= 2</cite> outcomes (vs <cite>m = 2</cite> for

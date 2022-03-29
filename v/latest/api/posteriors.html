@@ -613,8 +613,39 @@ This is used for deterministic optimization.</p></li>
 </dd></dl>
 </dd></dl>
 </section>
-<section id="fully-bayesian-posterior">
-<h3>Fully Bayesian Posterior<a class="headerlink" href="#fully-bayesian-posterior" title="Permalink to this headline">¶</a></h3>
+<section id="module-botorch.posteriors.fully_bayesian">
+<span id="fully-bayesian-posterior"></span><h3>Fully Bayesian Posterior<a class="headerlink" href="#module-botorch.posteriors.fully_bayesian" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.posteriors.fully_bayesian.FullyBayesianPosterior">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.fully_bayesian.</span></span><span class="sig-name descname"><span class="pre">FullyBayesianPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mvn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marginalize_over_mcmc_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/fully_bayesian.html#FullyBayesianPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.fully_bayesian.FullyBayesianPosterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.gpytorch.GPyTorchPosterior</span></code></a></p>
+<p>A posterior for a fully Bayesian model.</p>
+<p>A posterior for a fully Bayesian model.</p>
+<p>The MCMC batch dimension is -3.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mvn</strong> (<em>gpytorch.distributions.multivariate_normal.MultivariateNormal</em>) – A GPyTorch MultivariateNormal (single-output case)</p></li>
+<li><p><strong>marginalize_over_mcmc_samples</strong> (<em>bool</em>) – If true, use the law of total variance to
+marginalize over the hyperparameter samples. This should always be
+false when computing acquisition functions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.posteriors.fully_bayesian.FullyBayesianPosterior.mean">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mean</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.fully_bayesian.FullyBayesianPosterior.mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>The posterior mean.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.posteriors.fully_bayesian.FullyBayesianPosterior.variance">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">variance</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.fully_bayesian.FullyBayesianPosterior.variance" title="Permalink to this definition">¶</a></dt>
+<dd><p>The posterior variance.</p>
+</dd></dl>
+</dd></dl>
 </section>
 </section>
 <section id="utilities">
