@@ -37,6 +37,10 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 from torch.quasirandom import SobolEngine
 
 
+get_ipython().run_line_magic('matplotlib', 'inline')
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
+
+
 # In[2]:
 
 
@@ -44,7 +48,6 @@ tkwargs = {
     "device": torch.device("cuda" if torch.cuda.is_available() else "cpu"),
     "dtype": torch.double,
 }
-SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
 # To start, we need to be able to sample points in $\mathbb{N}(x) \setminus \mathbb{N}_{r}(X)$. We can generate a pool of points and use standard rejection sampling to do so, but this leads to an acquisition function that isn't immediately differentiable; rejection sampling is essentially providing either a binary weight of either 0 or 1 to each point in the sample pool, which is not a differentiable function. 

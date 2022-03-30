@@ -240,7 +240,7 @@ def optimize_qparego_and_get_observation(model, train_obj, train_con, sampler):
 # 3. update the surrogate model. 
 # 
 # 
-# Just for illustration purposes, we run three trials each of which do `N_BATCH=20` rounds of optimization. The acquisition function is approximated using `MC_SAMPLES=128` samples.
+# Just for illustration purposes, we run one trial with `N_BATCH=20` rounds of optimization. The acquisition function is approximated using `MC_SAMPLES=128` samples.
 # 
 # *Note*: Running this may take a little while.
 
@@ -363,7 +363,7 @@ for iteration in range(1, N_BATCH + 1):
 
 
 # #### Plot the results
-# The plot below shows the log feasible hypervolume difference: the log difference between the hypervolume of the true feasible pareto front and the hypervolume of the observed (feasible) pareto front identified by each algorithm. The log feasible hypervolume difference is plotted at each step of the optimization for each of the algorithms. The confidence intervals represent the variance at that step in the optimization across the trial runs. The variance across optimization runs is quite high, so in order to get a better estimate of the average performance one would have to run a much larger number of trials `N_TRIALS` (we avoid this here to limit the runtime of this tutorial). 
+# The plot below shows the log feasible hypervolume difference: the log difference between the hypervolume of the true feasible pareto front and the hypervolume of the observed (feasible) pareto front identified by each algorithm. The log feasible hypervolume difference is plotted at each step of the optimization for each of the algorithms.
 # 
 # The plot show that $q$NEHVI vastly outperforms the $q$ParEGO and Sobol baselines.
 

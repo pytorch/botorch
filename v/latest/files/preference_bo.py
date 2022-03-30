@@ -269,6 +269,8 @@ for i in range(NUM_TRIALS):
 
 from matplotlib import pyplot as plt
 
+get_ipython().run_line_magic('matplotlib', 'inline')
+
 plt.rcParams.update({'font.size': 14})
 
 algo_labels = {

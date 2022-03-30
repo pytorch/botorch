@@ -51,6 +51,8 @@ from botorch.test_functions import SixHumpCamel
 from gpytorch import ExactMarginalLogLikelihood
 from torch import Tensor
 
+get_ipython().run_line_magic('matplotlib', 'inline')
+
 warnings.filterwarnings("ignore")
 
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
@@ -182,7 +184,7 @@ final_candidate = train_X[max_idx]
 # ### Plotting the risk measure corresponding to the best observed point over iterations
 # As before, we define the best observed point as the previously evaluated point that maximizes the posterior expectation of the risk measure.
 
-# In[9]:
+# In[7]:
 
 
 best_observed = torch.zeros(NUM_ITERATIONS + 1, **tkwargs)
@@ -203,7 +205,7 @@ plt.show()
 # We plot both the response surface, $f(x)$, and the risk measure surface, $\rho[f(x + \Delta_x)]$, and mark the best risk averse solution found on both plots. 
 # The plots are restricted to $[0.3, 0.7]^2$ to highlight more promising areas of the solution space.
 
-# In[10]:
+# In[8]:
 
 
 n_plot = 100

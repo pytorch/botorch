@@ -55,6 +55,8 @@ from botorch.test_functions import Branin
 from gpytorch import ExactMarginalLogLikelihood
 from torch import Tensor
 
+get_ipython().run_line_magic('matplotlib', 'inline')
+
 warnings.filterwarnings("ignore")
 
 SMOKE_TEST = os.environ.get("SMOKE_TEST")

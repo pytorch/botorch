@@ -13,7 +13,7 @@
 # 
 # Recently, [Maddox et al, '21](https://arxiv.org/abs/2106.12997) proposed a method for computing posterior samples from the HOGP by exploiting structure in the posterior distribution, thereby enabling its usage in BO settings. While they show that this approach allows to use composite BO on problems with tens or thousands of outputs, for scalability we consider a much smaller example here (that does not require GPU acceleration).
 
-# In[1]:
+# In[4]:
 
 
 import torch
@@ -38,10 +38,12 @@ from botorch.utils.sampling import draw_sobol_samples
 
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
+get_ipython().run_line_magic('matplotlib', 'inline')
+
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
-# In[2]:
+# In[5]:
 
 
 from botorch.optim.fit import fit_gpytorch_torch
@@ -49,16 +51,17 @@ from botorch.optim.fit import fit_gpytorch_torch
 
 # #### Set Device and dtype
 
-# In[3]:
+# In[6]:
 
 
+torch.manual_seed(0)
 device = torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0")
 dtype = torch.float
 
 print("Using ", device)
 
 
-# In[4]:
+# In[7]:
 
 
 models_used = (
@@ -74,7 +77,7 @@ models_used = (
 # $$ f(s,t | M, D, L, \tau) := \frac{M}{\sqrt{4 \pi D t}}  \exp\{-\frac{s^2}{4Dt}\} + \frac{1_{t > \tau} M}{\sqrt{4 \pi D(t - \tau)}} \exp\{- \frac{(s - L)^2}{4 D (t - \tau)}\}, $$
 # with the cheap to evaluate, differentiable function given by $g(y):= \sum_{(s,t) \in S \times T} \left(c(s, t|x_{\text{true}}) - y\right)^2.$ As the objective function itself is going to be implemented in Pytorch, we will be able to differentiate through it, enabling the usage of gradient-based optimization to optimize the objectives with respect to the inputs.
 
-# In[5]:
+# In[8]:
 
 
 def env_cfun(s, t, M, D, L, tau):
@@ -92,7 +95,7 @@ def env_cfun(s, t, M, D, L, tau):
 
 # These are helper functions for us to maximize the acquisition function and to get random points.
 
-# In[6]:
+# In[9]:
 
 
 def gen_rand_points(bounds, num_samples):
@@ -110,7 +113,7 @@ def optimize_ei(qEI, bounds, **options):
 
 # Below is a wrapped function to help us define bounds on the parameter space, we can also vary the size of the grid if we'd like to.
 
-# In[7]:
+# In[10]:
 
 
 def prepare_data(s_size=3, t_size=4, device=device, dtype=dtype):
@@ -169,7 +172,7 @@ def prepare_data(s_size=3, t_size=4, device=device, dtype=dtype):
 # 
 # We will be comparing to both random selection and batch expected improvment on the aggregated metric.
 
-# In[8]:
+# In[11]:
 
 
 n_init = 30
@@ -186,107 +189,101 @@ else:
 
 # As a word of caution, we've found that when fitting the HOGP model, using first-order optimizers (e.g. Adam) as is used in `fit_gpytorch_torch` tends to outperform second-order optimizers such as L-BFGS-B due to the large number of free parameters in the HOGP. L-BFGS-B tends to overfit in practice here.
 
-# In[9]:
+# In[12]:
 
 
 all_objective_vals = []
 
 with gpt_settings.cholesky_jitter(1e-4):
-    for trial in range(n_trials):
-        print("Beginning with trial: ", trial+1)
-        c_batched, objective, bounds, num_samples = prepare_data(device=device, dtype=dtype)
+    c_batched, objective, bounds, num_samples = prepare_data(device=device, dtype=dtype)
 
-        train_X_init = gen_rand_points(bounds, n_init)
-        train_Y_init = c_batched(train_X_init)
+    train_X_init = gen_rand_points(bounds, n_init)
+    train_Y_init = c_batched(train_X_init)
 
-        # these will keep track of the points explored
-        train_X = {k: train_X_init.clone() for k in models_used}
-        train_Y = {k: train_Y_init.clone() for k in train_X}
+    # these will keep track of the points explored
+    train_X = {k: train_X_init.clone() for k in models_used}
+    train_Y = {k: train_Y_init.clone() for k in train_X}
 
-        # run the BO loop
-        for i in range(n_batches):
-            tic = time.time()
+    # run the BO loop
+    for i in range(n_batches):
+        tic = time.time()
 
-            # get best observations, log status
-            best_f = {k: objective(v).max().detach() for k, v in train_Y.items()}
+        # get best observations, log status
+        best_f = {k: objective(v).max().detach() for k, v in train_Y.items()}
 
-            logging.info(
-                f"It {i+1:>2}/{n_batches}, best obs.: "
-                ", ".join([f"{k}: {v:.3f}" for k, v in best_f.items()])
-            )
+        logging.info(
+            f"It {i+1:>2}/{n_batches}, best obs.: "
+            ", ".join([f"{k}: {v:.3f}" for k, v in best_f.items()])
+        )
 
-            # generate random candidates
-            cands = {}
-            cands["rnd"] = gen_rand_points(bounds, batch_size)
+        # generate random candidates
+        cands = {}
+        cands["rnd"] = gen_rand_points(bounds, batch_size)
 
-            optimize_acqf_kwargs = {
-                "q": batch_size,
-                "num_restarts": 10,
-                "raw_samples": 512,
-            }
-            sampler = IIDNormalSampler(num_samples=128)
+        optimize_acqf_kwargs = {
+            "q": batch_size,
+            "num_restarts": 10,
+            "raw_samples": 512,
+        }
+        sampler = IIDNormalSampler(num_samples=128)
 
-            train_Y_ei = objective(train_Y["ei"]).unsqueeze(-1)
-            model_ei = SingleTaskGP(
-                train_X["ei"],
-                train_Y_ei,
-                input_transform=Normalize(train_X["ei"].shape[-1]),
-                outcome_transform=Standardize(train_Y_ei.shape[-1]),
-            )
+        train_Y_ei = objective(train_Y["ei"]).unsqueeze(-1)
+        model_ei = SingleTaskGP(
+            train_X["ei"],
+            train_Y_ei,
+            input_transform=Normalize(train_X["ei"].shape[-1]),
+            outcome_transform=Standardize(train_Y_ei.shape[-1]),
+        )
 
-            mll = ExactMarginalLogLikelihood(model_ei.likelihood, model_ei)
-            fit_gpytorch_torch(mll, options={"lr": 0.01, "maxiter": 3000, "disp": False})
+        mll = ExactMarginalLogLikelihood(model_ei.likelihood, model_ei)
+        fit_gpytorch_torch(mll, options={"lr": 0.01, "maxiter": 3000, "disp": False})
 
-            # generate qEI candidate (single output modeling)
-            qEI = qExpectedImprovement(model_ei, best_f=best_f["ei"], sampler=sampler)
-            cands["ei"] = optimize_ei(qEI, bounds, **optimize_acqf_kwargs)
+        # generate qEI candidate (single output modeling)
+        qEI = qExpectedImprovement(model_ei, best_f=best_f["ei"], sampler=sampler)
+        cands["ei"] = optimize_ei(qEI, bounds, **optimize_acqf_kwargs)
 
-            model_ei_hogp_cf = HigherOrderGP(
-                train_X["ei_hogp_cf"],
-                train_Y["ei_hogp_cf"],
-                outcome_transform=FlattenedStandardize(train_Y["ei_hogp_cf"].shape[1:]),
-                input_transform=Normalize(train_X["ei_hogp_cf"].shape[-1]),
-                latent_init="gp",
-            )
+        model_ei_hogp_cf = HigherOrderGP(
+            train_X["ei_hogp_cf"],
+            train_Y["ei_hogp_cf"],
+            outcome_transform=FlattenedStandardize(train_Y["ei_hogp_cf"].shape[1:]),
+            input_transform=Normalize(train_X["ei_hogp_cf"].shape[-1]),
+            latent_init="gp",
+        )
 
-            mll = ExactMarginalLogLikelihood(model_ei_hogp_cf.likelihood, model_ei_hogp_cf)
-            fit_gpytorch_torch(mll, options={"lr": 0.01, "maxiter": 3000, "disp": False})
+        mll = ExactMarginalLogLikelihood(model_ei_hogp_cf.likelihood, model_ei_hogp_cf)
+        fit_gpytorch_torch(mll, options={"lr": 0.01, "maxiter": 3000, "disp": False})
 
-            # generate qEI candidate (multi-output modeling)
-            qEI_hogp_cf = qExpectedImprovement(
-                model_ei_hogp_cf,
-                best_f=best_f["ei_hogp_cf"],
-                sampler=sampler,
-                objective=objective,
-            )
-            cands["ei_hogp_cf"] = optimize_ei(qEI_hogp_cf, bounds, **optimize_acqf_kwargs)
+        # generate qEI candidate (multi-output modeling)
+        qEI_hogp_cf = qExpectedImprovement(
+            model_ei_hogp_cf,
+            best_f=best_f["ei_hogp_cf"],
+            sampler=sampler,
+            objective=objective,
+        )
+        cands["ei_hogp_cf"] = optimize_ei(qEI_hogp_cf, bounds, **optimize_acqf_kwargs)
 
-            # make observations and update data
-            for k, Xold in train_X.items():
-                Xnew = cands[k]
-                if Xnew.shape[0] > 0:
-                    train_X[k] = torch.cat([Xold, Xnew])
-                    train_Y[k] = torch.cat([train_Y[k], c_batched(Xnew)])
+        # make observations and update data
+        for k, Xold in train_X.items():
+            Xnew = cands[k]
+            if Xnew.shape[0] > 0:
+                train_X[k] = torch.cat([Xold, Xnew])
+                train_Y[k] = torch.cat([train_Y[k], c_batched(Xnew)])
 
-            logging.info(f"Wall time: {time.time() - tic:1f}")
+        logging.info(f"Wall time: {time.time() - tic:1f}")
 
-        objective_dict = {k: objective(train_Y[k]) for k in train_Y}
-        all_objective_vals.append(objective_dict)
-        print("Finished with trial: ", trial+1)
+    objective_dict = {k: objective(train_Y[k]) for k in train_Y}
 
 
-# In[10]:
+# In[18]:
 
 
-methods_dict = {k: torch.stack([trial[k].cpu() for trial in all_objective_vals]).cummax(1)[0] for k in models_used}
-mean_and_sem_results = {k: [
-    -methods_dict[k].mean(0)[n_init:], 
-    2. * methods_dict[k].std(0)[n_init:] / (n_trials**0.5)] for k in models_used}
+methods_dict = {k: objective_dict[k].cpu().cummax(0)[0] for k in models_used}
+mean_results = {k: -methods_dict[k][n_init:] for k in models_used}
 
 
 # Finally, we plot the results, showing that the HOGP performs well on this task, and converges to a closer parameter value than a batch GP on the composite metric itself.
 
-# In[11]:
+# In[22]:
 
 
 plt.figure(figsize = (8,6))
@@ -294,15 +291,8 @@ labels_dict = {"rnd": "Random", "ei": "EI", "ei_hogp_cf": "Composite EI"}
 for k in models_used:
     plt.plot(
         torch.arange(n_batches * batch_size),
-        mean_and_sem_results[k][0],
+        mean_results[k],
         label = labels_dict[k],
-    )
-    
-    plt.fill_between(
-        torch.arange(n_batches * batch_size),
-        (mean_and_sem_results[k][0] - mean_and_sem_results[k][1]).clamp(min=1e-3),
-        mean_and_sem_results[k][0] + mean_and_sem_results[k][1],
-        alpha = 0.3
     )
 plt.legend(fontsize = 20)
 plt.semilogy()

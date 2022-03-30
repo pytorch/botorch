@@ -133,11 +133,13 @@ candidates, acq_value
 # Firstly, we investigate GIBBON in the purely sequential case, comparing agaisnt MES, Expected Improvement (EI) and Probability of Improvement (PI). We see that GIBBON provides a very high-quality approximation of MES, choosing essentially the same location.
 # 
 
-# In[8]:
+# In[6]:
 
 
 from botorch.acquisition import ExpectedImprovement, ProbabilityOfImprovement, qMaxValueEntropy
 import matplotlib.pyplot as plt
+
+get_ipython().run_line_magic('matplotlib', 'inline')
 
 # prep different acqusition functions
 acqs = {}
@@ -187,7 +189,7 @@ fig.text(-0.1, 0.5, 'x_2', va='center')
 # 
 # For the batch BO case, GIBBON selects similar points to MES but with an order-of-magnitude lower computational overhead, i.e perfoming information-theoretic BO at the cost of much simpler acqusition functions like EI and PI. We stress that this gap in computational overhead between GIBBON and MES grows substantially as the optimisation progresses (see [2]).
 
-# In[9]:
+# In[7]:
 
 
 from botorch.acquisition import qNoisyExpectedImprovement, qProbabilityOfImprovement

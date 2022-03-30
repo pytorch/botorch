@@ -25,6 +25,8 @@
 
 import os
 
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from botorch import fit_fully_bayesian_model_nuts
 from botorch.acquisition import qExpectedImprovement
@@ -35,6 +37,7 @@ from botorch.test_functions import Branin
 from torch.quasirandom import SobolEngine
 
 
+get_ipython().run_line_magic('matplotlib', 'inline')
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
@@ -45,7 +48,7 @@ tkwargs = {"device": torch.device("cuda" if torch.cuda.is_available() else "cpu"
 
 
 # ## Simple model fitting
-# We generate a simple function that only depends no the first parameter and show that the SAAS
+# We generate a simple function that only depends on the first parameter and show that the SAAS
 # model sets all other lengthscale to large values.
 
 # In[3]:
@@ -198,10 +201,6 @@ for i in range(N_ITERATIONS):
 # In[13]:
 
 
-import matplotlib.pyplot as plt
-import numpy as np
-
-
 Y_np = Y.cpu().numpy()
 fig, ax = plt.subplots(figsize=(8, 6))
 ax.plot(np.minimum.accumulate(Y_np), color="b", label="SAASBO")
@@ -216,6 +215,57 @@ ax.legend(fontsize=18)
 plt.show()
 
 
+# ## Predict on some test points
+# We fit a model using the 50 datapoints collected by SAASBO and predict on 50 test 
+# points in order to see how well the SAAS model predicts out-of-sample.
+# The plot shows the mean and a 95% confidence interval for each test point.
+
+# In[14]:
+
+
+gp = SaasFullyBayesianSingleTaskGP(
+    train_X=X, train_Y=Y, train_Yvar=torch.full_like(Y, 1e-6), outcome_transform=Standardize(m=1)
+)
+fit_fully_bayesian_model_nuts(gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, disable_progbar=True)
+
+
+# In[15]:
+
+
+test_X = SobolEngine(dimension=DIM, scramble=True, seed=1234).draw(50).to(**tkwargs)
+test_Y = branin_emb(test_X).unsqueeze(-1)
+
+with torch.no_grad():
+    posterior = gp.posterior(test_X, marginalize_over_mcmc_samples=True)
+    mean, var = posterior.mean, posterior.variance
+
+
+# In[16]:
+
+
+fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+ax.plot([0, 80], [0, 80], "b--", lw=2)
+markers, caps, bars = ax.errorbar(
+    test_Y.squeeze(-1).cpu().numpy(),
+    mean.squeeze(-1).cpu().numpy(),
+    yerr=1.96 * var.squeeze(-1).sqrt().cpu().numpy(),
+    fmt=".",
+    capsize=4,
+    elinewidth=2.0,
+    ms=14,
+    c="k",
+    ecolor="gray",
+)
+ax.set_xlim([0, 80])
+ax.set_ylim([0, 80])
+[bar.set_alpha(0.8) for bar in bars]
+[cap.set_alpha(0.8) for cap in caps]
+ax.set_xlabel("True value", fontsize=20)
+ax.set_ylabel("Predicted value", fontsize=20)
+ax.set_aspect("equal")
+ax.grid(True)
+
+
 # ## Look a the lengthscales from the final model
 # 
 # As SAASBO places strong priors on the inverse lengthscales, we only expect parameters 
@@ -223,7 +273,7 @@ plt.show()
 # We can confirm that this is the case below as the lengthscales of parameters 0 and 1 are 
 # small with all other lengthscales being large.
 
-# In[14]:
+# In[17]:
 
 
 median_lengthscales = gp.median_lengthscale
@@ -231,7 +281,7 @@ for i in median_lengthscales.argsort()[:10]:
     print(f"Parameter {i:2}) Median lengthscale = {median_lengthscales[i].item():.2e}")
 
 
-# In[14]:
+# In[ ]:
 
 
 

@@ -26,13 +26,14 @@
 # 
 # [1] [Z.J. Lin, R. Astudillo, P.I. Frazier, and E. Bakshy, Preference Exploration for Efficient Bayesian Optimization with Multiple Outcomes. AISTATS, 2022.](https://arxiv.org/abs/2203.11382)
 
-# In[1]:
+# In[7]:
 
 
 import os
 
 import matplotlib as mpl
 import matplotlib.pylab as plt
+import numpy as np
 import pandas as pd
 import torch
 from botorch.acquisition import GenericMCObjective, LearnedObjective
@@ -47,6 +48,9 @@ from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.test_functions.multi_objective import DTLZ2
 from botorch.utils.sampling import draw_sobol_samples
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+
+
+get_ipython().run_line_magic('matplotlib', 'inline')
 
 
 # Set plotting colors
@@ -76,12 +80,14 @@ def neg_l1_dist(Y):
 
 if SMOKE_TEST:
     NUM_RESTARTS = 2
-    NUM_SMAPLES = 8
+    NUM_PREF_SAMPLES = 1
+    NUM_OUTCOME_SAMPLES = 4
     RAW_SAMPLES = 4
     BATCH_LIMIT = 2
 else:
-    NUM_RESTARTS = 16
-    NUM_SMAPLES = 128
+    NUM_RESTARTS = 8
+    NUM_PREF_SAMPLES = 1
+    NUM_OUTCOME_SAMPLES = 64
     RAW_SAMPLES = 128
     BATCH_LIMIT = 4
 
@@ -143,53 +149,16 @@ def gen_comps(util):
     return comps
 
 
-def gen_exp_cand(outcome_model, objective, q, acqf_name):
-    """Given an outcome model and an objective, generate q experimental candidates
-    using specified acquisition function."""
-    sampler = SobolQMCNormalSampler(num_samples=NUM_SMAPLES)
-    if acqf_name == "qNEI":
-        # generate experimental candidates with qNEI/qNEIUU
-        acq_func = qNoisyExpectedImprovement(
-            model=outcome_model,
-            objective=objective,
-            X_baseline=X,
-            sampler=sampler,
-            prune_baseline=True,
-        )
-    elif acqf_name == "posterior_mean":
-        # generate experimental candidates with maximum posterior mean
-        acq_func = qSimpleRegret(
-            model=outcome_model,
-            sampler=sampler,
-            objective=objective,
-        )
-    else:
-        raise RuntimeError("Unknown acquisition function name!")
-
-    # optimize the acqf
-    candidates, _ = optimize_acqf(
-        acq_function=acq_func,
-        q=q,
-        bounds=problem.bounds,
-        num_restarts=NUM_RESTARTS,
-        raw_samples=RAW_SAMPLES,
-        options={"batch_limit": BATCH_LIMIT},
-        sequential=True,
-    )
-    return candidates
-
-
-def run_pref_learn(outcome_model, train_Y, train_comps, n_comps, pe_strategy):
+def run_pref_learn(outcome_model, train_Y, train_comps, n_comps, pe_strategy, verbose=False):
     """Perform preference exploration with a given PE strategy for n_comps rounds"""
     for i in range(n_comps):
-        print(f"Running {i+1}/{n_comps} preference learning using {pe_strategy}")
+        if verbose:
+            print(f"Running {i+1}/{n_comps} preference learning using {pe_strategy}")
         pref_model = fit_pref_model(train_Y, train_comps)
-
         if pe_strategy == "EUBO-zeta":
             # EUBO-zeta
             one_sample_outcome_model = FixedSingleSampleModel(model=outcome_model)
             acqf = AnalyticExpectedUtilityOfBestOption(pref_model=pref_model, outcome_model=one_sample_outcome_model)
-
             cand_X, acqf_val = optimize_acqf(
                 acq_function=acqf,
                 q=2,
@@ -215,7 +184,44 @@ def run_pref_learn(outcome_model, train_Y, train_comps, n_comps, pe_strategy):
     return train_Y, train_comps
 
 
-def find_max_posterior_mean(outcome_model, train_Y, train_comps):
+def gen_exp_cand(outcome_model, objective, q, acqf_name):
+    """Given an outcome model and an objective, generate q experimental candidates
+    using specified acquisition function."""
+    sampler = SobolQMCNormalSampler(num_samples=NUM_OUTCOME_SAMPLES)
+    NUM_PREF_SMAPLES = 4
+    if acqf_name == "qNEI":
+        # generate experimental candidates with qNEI/qNEIUU
+        acq_func = qNoisyExpectedImprovement(
+            model=outcome_model,
+            objective=objective,
+            X_baseline=X,
+            sampler=sampler,
+            prune_baseline=True,
+        )
+    elif acqf_name == "posterior_mean":
+        # generate experimental candidates with maximum posterior mean
+        acq_func = qSimpleRegret(
+            model=outcome_model,
+            sampler=sampler,
+            objective=objective,
+        )
+    else:
+        raise RuntimeError("Unknown acquisition function name!")
+
+    # optimize the acquisition function
+    candidates, _ = optimize_acqf(
+        acq_function=acq_func,
+        q=q,
+        bounds=problem.bounds,
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,
+        options={"batch_limit": BATCH_LIMIT},
+        sequential=True,
+    )
+    return candidates
+
+
+def find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=False):
     """Helper function that find the max posterior mean under current outcome and
     preference model"""
     pref_model = fit_pref_model(train_Y, train_comps)
@@ -223,7 +229,8 @@ def find_max_posterior_mean(outcome_model, train_Y, train_comps):
     post_mean_cand_X = gen_exp_cand(outcome_model, pref_obj, q=1, acqf_name="posterior_mean")
 
     post_mean_util = util_func(problem(post_mean_cand_X)).item()
-    print(f"Max posterior mean utility: {post_mean_util:.3f}")
+    if verbose:
+        print(f"Max posterior mean utility: {post_mean_util:.3f}")
     within_result = {
         "n_comps": train_comps.shape[0],
         "util": post_mean_util,
@@ -248,8 +255,8 @@ def find_max_posterior_mean(outcome_model, train_Y, train_comps):
 # then perform PE using the $\text{EUBO}\mathrm{-}\zeta$ acquisition function as proposed in [1].
 # <!-- \tilde{f} somehow is not rendering --> 
 # 
-# In this tutorial, we examine both strategies by starting with initializating the preference model with 2k=8 comparisons using $\text{Random}\mathrm{-}f$.
-# After that, we perform 20 pairwise comparisons using either $\text{EUBO}\mathrm{-}\zeta$ or $\text{Random}\mathrm{-}f$.
+# In this tutorial, we examine both strategies by starting with initializating the preference model with 3 comparisons using $\text{Random}\mathrm{-}f$.
+# After that, we perform 3 * 4 = 12 pairwise comparisons using either $\text{EUBO}\mathrm{-}\zeta$ or $\text{Random}\mathrm{-}f$.
 # Then we move on to the 2nd experimentation stage by generating a candidate using qNEIUU by
 # leveraging both the outcome model and the learned preference model.
 # 
@@ -258,13 +265,13 @@ def find_max_posterior_mean(outcome_model, train_Y, train_comps):
 # This represents the performance upper bound of PE strategies.
 # For the second experiment canadidate generation strategy, we use random design points to generate new candidates.
 
-# In[4]:
+# In[8]:
 
 
 verbose = False
-every_n_comps = 5
+every_n_comps = 3
 n_check_post_mean = 4
-n_reps = 2 if SMOKE_TEST else 30
+n_reps = 1
 within_session_results = []
 exp_candidate_results = []
 
@@ -272,15 +279,16 @@ for i in range(n_reps):
     print(f"Run {i}")
     # Experimentation stage: initial exploration batch
     torch.manual_seed(i)
+    np.random.seed(i)
     X, Y = generate_random_exp_data(problem, 16)
     outcome_model = fit_outcome_model(X, Y, problem.bounds)
 
     # Preference exploration stage: initialize the preference model with comparsions
     # between pairs of outcomes estimated using random design points
-    init_train_Y, init_train_comps = generate_random_pref_data(outcome_model, n=2 * Y_dim)
+    init_train_Y, init_train_comps = generate_random_pref_data(outcome_model, n=3)
 
     # Perform preference exploration using either Random-f or EUBO-zeta
-    for pe_strategy in ["Random-f", "EUBO-zeta"]:
+    for pe_strategy in ["EUBO-zeta", "Random-f"]:
         train_Y, train_comps = init_train_Y, init_train_comps
         within_result = find_max_posterior_mean(outcome_model, train_Y, train_comps)
         within_result.update({"run_id": i, "pe_strategy": pe_strategy})
@@ -288,22 +296,22 @@ for i in range(n_reps):
 
         for j in range(n_check_post_mean):
             train_Y, train_comps = run_pref_learn(
-                outcome_model, train_Y, train_comps, n_comps=every_n_comps, pe_strategy=pe_strategy
+                outcome_model, train_Y, train_comps, n_comps=every_n_comps, pe_strategy=pe_strategy, verbose=verbose
             )
             if verbose:
                 print(f"Checking posterior mean after {(j+1) * every_n_comps} comps using PE strategy {pe_strategy}")
-            within_result = find_max_posterior_mean(outcome_model, train_Y, train_comps)
+            within_result = find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=verbose)
             within_result.update({"run_id": i, "pe_strategy": pe_strategy})
             within_session_results.append(within_result)
 
         # Going back to the experimentation stage: generate an additional batch of experimental evaluations
         # with the learned preference model and qNEIUU
         pref_model = fit_pref_model(train_Y, train_comps)
-        pref_obj = LearnedObjective(pref_model=pref_model)
+        sampler = SobolQMCNormalSampler(num_samples=NUM_PREF_SAMPLES)
+        pref_obj = LearnedObjective(pref_model=pref_model, sampler=sampler)
         exp_cand_X = gen_exp_cand(outcome_model, pref_obj, q=1, acqf_name="qNEI")
         qneiuu_util = util_func(problem(exp_cand_X)).item()
-        if verbose:
-            print(f"qNEIUU candidate utility: {qneiuu_util:.3f}")
+        print(f"{pe_strategy} qNEIUU candidate utility: {qneiuu_util:.3f}")
         exp_result = {
             "util": qneiuu_util,
             "strategy": pe_strategy,
@@ -316,8 +324,7 @@ for i in range(n_reps):
     true_obj = GenericMCObjective(util_func)
     true_obj_cand_X = gen_exp_cand(outcome_model, true_obj, q=1, acqf_name="qNEI")
     true_obj_util = util_func(problem(true_obj_cand_X)).item()
-    if verbose:
-        print(f"True objective utility: {true_obj_util:.3f}")
+    print(f"True objective utility: {true_obj_util:.3f}")
     exp_result = {
         "util": true_obj_util,
         "strategy": "True Utility",
@@ -328,8 +335,7 @@ for i in range(n_reps):
     # Random experiment
     _, random_Y = generate_random_exp_data(problem, 1)
     random_util = util_func(random_Y).item()
-    if verbose:
-        print(f"Random experiment utility: {random_util:.3f}")
+    print(f"Random experiment utility: {random_util:.3f}")
     exp_result = {
         "util": random_util,
         "strategy": "Random Experiment",
@@ -344,13 +350,13 @@ for i in range(n_reps):
 # 
 # In the first plot, we focus on comparing how $\text{EUBO}\mathrm{-}\zeta$ can efficiently identify the maximizer 
 # of $g_\mathrm{true}(f_\mathrm{true}(x))$ within a preference exploration stage.
-# We examine this by estimatig the maximum posterior mean after every 5 pairwise comparisons.
+# We examine this by estimatig the maximum posterior mean after every 3 pairwise comparisons.
 # 
 # Here, we plot the the max utility value identified using $\text{EUBO}\mathrm{-}\zeta$ and $\text{Random}\mathrm{-}f$
 # with increasing number of pairwise comparisons.
 # As we can see in this plot, the preference model learned using $\text{EUBO}\mathrm{-}\zeta$ is able to identify the maximum utility more efficiently.
 
-# In[12]:
+# In[9]:
 
 
 # Prepare PE data for plots
@@ -375,15 +381,14 @@ plt.ylabel("Max value identified")
 plt.legend(title="PE Strategy")
 
 
-# In the following cell, we show the box plot of utility values achieved using different methods in the 2nd experimentation stage.
+# In the following cell, we show the average utility values achieved using different methods in the 2nd experimentation stage.
 # 
 # We see that $\text{EUBO}\mathrm{-}\zeta$, as a one-step Bayesian optimal PE strategy, performs very similarly to the true utility strategy.
 # 
 # On the other hand, despite that $\text{Random}\mathrm{-}f$ is a relatively straightforward PE strategy,
-# it is still able to suggest experimental candidates with generally higher utility values than the random experiment baseline,
-# demonstrating the efficacy of the BOPE framework.
+# it is still able to suggest experimental candidates with generally higher utility values than the random experiment baseline.
 
-# In[16]:
+# In[10]:
 
 
 # Prepare the 2nd experimentation batch data for plot
@@ -392,20 +397,23 @@ exp_df["strategy"] = exp_df["strategy"].str.replace("EUBO-zeta", r"$EUBO-\\zeta$
 exp_df["strategy"] = pd.Categorical(
     exp_df["strategy"], ["True Utility", "$EUBO-\zeta$", "Random-f", "Random Experiment"]
 )
-bp_data = []
-labels = []
-for name, group in exp_df.groupby("strategy", sort=True):
-    bp_data.append(group["util"])
-    labels.append(name)
+exp_df = exp_df.groupby(["strategy"]).agg({"util": ["mean", "sem"]}).droplevel(level=0, axis=1).reset_index()
 
 # Plotting
-plt.figure(figsize=(9, 6))
-bp = plt.boxplot(bp_data, labels=labels, patch_artist=True)
-for median in bp["medians"]:
-    median.set_color("black")
-for patch, color in zip(bp["boxes"], colors):
-    patch.set_facecolor(color)
+plt.figure(figsize=(8, 6))
+for name, group in exp_df.groupby("strategy", sort=True):
+    plt.errorbar(
+        x=group["strategy"],
+        y=group["mean"],
+        yerr=1.96 * group["sem"],
+        fmt="o",
+        markersize=10,
+        label=name,
+        linewidth=1.5,
+        capsize=3,
+    )
 
-plt.xlabel("Strategy")
+plt.xlabel("Experimentation Strategy")
 plt.ylabel("Utility achieved in the 2nd experiment stage")
+plt.legend(title="Experimentation Strategy")
 
