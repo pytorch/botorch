@@ -21,7 +21,7 @@ References:
 
 import math
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pyro
 import torch
@@ -36,12 +36,14 @@ from botorch.utils.containers import TrainingData
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
-from gpytorch.kernels.kernel import Distance
+from gpytorch.kernels.kernel import Distance, Kernel
 from gpytorch.likelihoods.gaussian_likelihood import (
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
 )
+from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.means.constant_mean import ConstantMean
+from gpytorch.means.mean import Mean
 from torch import Tensor
 
 MIN_INFERRED_NOISE_LEVEL = 1e-6
@@ -63,8 +65,27 @@ def compute_dists(X: Tensor, lengthscale: Tensor) -> Tensor:
     )
 
 
+def reshape_and_detach(target: Tensor, new_value: Tensor) -> None:
+    """Detach and reshape `new_value` to match `target`."""
+    return new_value.detach().clone().view(target.shape).to(target)
+
+
 class PyroModel:
     r"""Abstract base class for a Pyro model."""
+
+    def set_inputs(
+        self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
+    ):
+        """Set the training data.
+
+        Args:
+            train_X: Training inputs (n x d)
+            train_Y: Training targets (n x 1)
+            train_Yvar: Observed noise variance (n x 1). Inferred if None.
+        """
+        self.train_X = train_X
+        self.train_Y = train_Y
+        self.train_Yvar = train_Yvar
 
     @abstractmethod
     def sample(self) -> None:
@@ -78,6 +99,12 @@ class PyroModel:
         """Post-process the final MCMC samples."""
         pass  # pragma: no cover
 
+    @abstractmethod
+    def load_mcmc_samples(
+        self, mcmc_samples: Dict[str, Tensor]
+    ) -> Tuple[Mean, Kernel, Likelihood]:
+        pass  # pragma: no cover
+
 
 class SaasPyroModel(PyroModel):
     r"""Implementation of the sparse axis-aligned subspace priors (SAAS) model.
@@ -86,20 +113,6 @@ class SaasPyroModel(PyroModel):
     parameters. This model is suitable for high-dimensional BO with potentially
     hundreds of tunable parameters. See [Eriksson2021saasbo]_ for more details.
     """
-
-    def __init__(
-        self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
-    ):
-        r"""Initialize the SAAS model.
-
-        Args:
-            train_X: Training inputs (n x d)
-            train_Y: Training targets (n x 1)
-            train_Yvar: Observed noise variance (n x 1). Inferred if None.
-        """
-        self.train_X = train_X
-        self.train_Y = train_Y
-        self.train_Yvar = train_Yvar
 
     def sample(self) -> None:
         r"""Sample from the SAAS model.
@@ -197,12 +210,55 @@ class SaasPyroModel(PyroModel):
         del mcmc_samples["kernel_tausq"], mcmc_samples["_kernel_inv_length_sq"]
         return mcmc_samples
 
+    def load_mcmc_samples(
+        self, mcmc_samples: Dict[str, Tensor]
+    ) -> Tuple[Mean, Kernel, Likelihood]:
+        r"""Load the MCMC samples into the mean_module, covar_module, and likelihood."""
+        tkwargs = {"device": self.train_X.device, "dtype": self.train_X.dtype}
+        num_mcmc_samples = len(mcmc_samples["mean"])
+        batch_shape = torch.Size([num_mcmc_samples])
+
+        mean_module = ConstantMean(batch_shape=batch_shape).to(**tkwargs)
+        covar_module = ScaleKernel(
+            base_kernel=MaternKernel(
+                ard_num_dims=self.train_X.shape[-1],
+                batch_shape=batch_shape,
+            ),
+            batch_shape=batch_shape,
+        ).to(**tkwargs)
+        if self.train_Yvar is not None:
+            likelihood = FixedNoiseGaussianLikelihood(
+                noise=self.train_Yvar, batch_shape=batch_shape
+            ).to(**tkwargs)
+        else:
+            likelihood = GaussianLikelihood(
+                batch_shape=batch_shape,
+                noise_constraint=GreaterThan(MIN_INFERRED_NOISE_LEVEL),
+            ).to(**tkwargs)
+            likelihood.noise_covar.noise = reshape_and_detach(
+                target=likelihood.noise_covar.noise,
+                new_value=mcmc_samples["noise"].clamp_min(MIN_INFERRED_NOISE_LEVEL),
+            )
+        covar_module.base_kernel.lengthscale = reshape_and_detach(
+            target=covar_module.base_kernel.lengthscale,
+            new_value=mcmc_samples["lengthscale"],
+        )
+        covar_module.outputscale = reshape_and_detach(
+            target=covar_module.outputscale,
+            new_value=mcmc_samples["outputscale"],
+        )
+        mean_module.constant.data = reshape_and_detach(
+            target=mean_module.constant.data,
+            new_value=mcmc_samples["mean"],
+        )
+        return mean_module, covar_module, likelihood
+
 
 class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
     r"""A fully Bayesian single-task GP model with the SAAS prior.
 
     This model assumes that the inputs have been normalized to [0, 1]^d and that
-    the output has been standardizes to have zero mean and unit variance. The SAAS
+    the output has been standardized to have zero mean and unit variance. The SAAS
     model [Eriksson2021saasbo]_ with a Matern-5/2 is used by default.
 
     You are expected to use `fit_fully_bayesian_model_nuts` to fit this model as it
@@ -221,6 +277,7 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
         train_Yvar: Optional[Tensor] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
+        pyro_model: Optional[PyroModel] = None,
     ) -> None:
         r"""Initialize the fully Bayesian single-task GP model.
 
@@ -228,6 +285,13 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
             train_X: Training inputs (n x d)
             train_Y: Training targets (n x 1)
             train_Yvar: Observed noise variance (n x 1). Inferred if None.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
+            input_transform: An input transform that is applied in the model's
+                forward pass.
+            pyro_model: Optional `PyroModel`, defaults to `SaasPyroModel`.
         """
         if not (
             train_X.ndim == train_Y.ndim == 2
@@ -257,15 +321,15 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
             train_Yvar = train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
 
         super().__init__(train_X, train_Y)
-        self.train_X = train_X
-        self.train_Y = train_Y
-        self.train_Yvar = train_Yvar
         self.mean_module = None
         self.covar_module = None
         self.likelihood = None
-        self.pyro_model = SaasPyroModel(
+        if pyro_model is None:
+            pyro_model = SaasPyroModel()
+        pyro_model.set_inputs(
             train_X=transformed_X, train_Y=train_Y, train_Yvar=train_Yvar
         )
+        self.pyro_model = pyro_model
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
         if input_transform is not None:
@@ -315,56 +379,11 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
         This method will be called by `fit_fully_bayesian_model_nuts` when the model
         has been fitted in order to create a batched SingleTaskGP model.
         """
-        tkwargs = {"device": self.train_X.device, "dtype": self.train_X.dtype}
-        num_mcmc_samples = len(mcmc_samples["mean"])
-        batch_shape = torch.Size([num_mcmc_samples])
-        self.mean_module = ConstantMean(batch_shape=batch_shape).to(**tkwargs)
-        self.covar_module = ScaleKernel(
-            base_kernel=MaternKernel(
-                ard_num_dims=self.train_X.shape[-1],
-                batch_shape=batch_shape,
-            ),
-            batch_shape=batch_shape,
-        ).to(**tkwargs)
-        if self.train_Yvar is not None:
-            self.likelihood = FixedNoiseGaussianLikelihood(
-                noise=self.train_Yvar, batch_shape=batch_shape
-            ).to(**tkwargs)
-        else:
-            self.likelihood = GaussianLikelihood(
-                batch_shape=batch_shape,
-                noise_constraint=GreaterThan(MIN_INFERRED_NOISE_LEVEL),
-            ).to(**tkwargs)
-            self.likelihood.noise_covar.noise = (
-                mcmc_samples["noise"]
-                .detach()
-                .clone()
-                .view(self.likelihood.noise_covar.noise.shape)
-                .clamp_min(MIN_INFERRED_NOISE_LEVEL)
-                .to(**tkwargs)
-            )
-
-        self.covar_module.base_kernel.lengthscale = (
-            mcmc_samples["lengthscale"]
-            .detach()
-            .clone()
-            .view(self.covar_module.base_kernel.lengthscale.shape)
-            .to(**tkwargs)
-        )
-        self.covar_module.outputscale = (
-            mcmc_samples["outputscale"]
-            .detach()
-            .clone()
-            .view(self.covar_module.outputscale.shape)
-            .to(**tkwargs)
-        )
-        self.mean_module.constant.data = (
-            mcmc_samples["mean"]
-            .detach()
-            .clone()
-            .view(self.mean_module.constant.shape)
-            .to(**tkwargs)
-        )
+        (
+            self.mean_module,
+            self.covar_module,
+            self.likelihood,
+        ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
 
     def forward(self, X: Tensor) -> MultivariateNormal:
         self._check_if_fitted()

@@ -31,6 +31,7 @@ from botorch.models.fully_bayesian import (
     SaasFullyBayesianSingleTaskGP,
     SaasPyroModel,
     MIN_INFERRED_NOISE_LEVEL,
+    PyroModel,
 )
 from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors import FullyBayesianPosterior
@@ -43,6 +44,17 @@ from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood, FixedNoiseGaussianLikelihood
 from gpytorch.means import ConstantMean
+
+
+class CustomPyroModel(PyroModel):
+    def sample(self) -> None:
+        pass
+
+    def postprocess_mcmc_samples(self, mcmc_samples, **kwargs):
+        pass
+
+    def load_mcmc_samples(self, mcmc_samples):
+        pass
 
 
 class TestFullyBayesianSingleTaskGP(BotorchTestCase):
@@ -153,14 +165,15 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             self.assertIsNone(model.covar_module)
             self.assertIsNone(model.likelihood)
             self.assertIsInstance(model.pyro_model, SaasPyroModel)
-            self.assertTrue(torch.allclose(train_X, model.train_X))
-            self.assertTrue(torch.allclose(train_Y, model.train_Y))
+            self.assertTrue(torch.allclose(train_X, model.pyro_model.train_X))
+            self.assertTrue(torch.allclose(train_Y, model.pyro_model.train_Y))
             if infer_noise:
-                self.assertIsNone(model.train_Yvar)
+                self.assertIsNone(model.pyro_model.train_Yvar)
             else:
                 self.assertTrue(
                     torch.allclose(
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL), model.train_Yvar
+                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
+                        model.pyro_model.train_Yvar,
                     )
                 )
 
@@ -215,15 +228,15 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             self.assertEqual(model.num_mcmc_samples, 3)
 
             # Make sure the model shapes are set correctly
-            self.assertEqual(model.train_X.shape, torch.Size([n, d]))
-            self.assertTrue(torch.allclose(model.train_X, train_X))
+            self.assertEqual(model.pyro_model.train_X.shape, torch.Size([n, d]))
+            self.assertTrue(torch.allclose(model.pyro_model.train_X, train_X))
             model.train()  # Put the model in train mode
-            self.assertTrue(torch.allclose(train_X, model.train_X))
+            self.assertTrue(torch.allclose(train_X, model.pyro_model.train_X))
             self.assertIsNone(model.mean_module)
             self.assertIsNone(model.covar_module)
             self.assertIsNone(model.likelihood)
 
-    def test_input_transforms(self):
+    def test_transforms(self):
         for infer_noise in [True, False]:
             tkwargs = {"device": self.device, "dtype": torch.double}
             train_X, train_Y, train_Yvar, test_X = self._get_unnormalized_data(
@@ -380,3 +393,56 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 self.assertTrue(torch.equal(data_dict["train_Yvar"], train_Yvar))
             self.assertTrue(torch.equal(data_dict["train_X"], train_X))
             self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
+
+    def test_custom_pyro_model(self):
+        for infer_noise, dtype in itertools.product(
+            (True, False), (torch.float, torch.double)
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            train_X, train_Y, train_Yvar, _ = self._get_unnormalized_data(
+                infer_noise=infer_noise, **tkwargs
+            )
+            model = SaasFullyBayesianSingleTaskGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                train_Yvar=train_Yvar,
+                pyro_model=CustomPyroModel(),
+            )
+            self.assertIsInstance(model.pyro_model, CustomPyroModel)
+            self.assertTrue(torch.allclose(model.pyro_model.train_X, train_X))
+            self.assertTrue(torch.allclose(model.pyro_model.train_Y, train_Y))
+            if infer_noise:
+                self.assertIsNone(model.pyro_model.train_Yvar)
+            else:
+                self.assertTrue(
+                    torch.allclose(
+                        model.pyro_model.train_Yvar,
+                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
+                    )
+                )
+            # Use transforms
+            model = SaasFullyBayesianSingleTaskGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                train_Yvar=train_Yvar,
+                input_transform=Normalize(d=train_X.shape[-1]),
+                outcome_transform=Standardize(m=1),
+                pyro_model=CustomPyroModel(),
+            )
+            self.assertIsInstance(model.pyro_model, CustomPyroModel)
+            lb, ub = train_X.min(dim=0).values, train_X.max(dim=0).values
+            self.assertTrue(
+                torch.allclose(model.pyro_model.train_X, (train_X - lb) / (ub - lb))
+            )
+            mu, sigma = train_Y.mean(dim=0), train_Y.std(dim=0)
+            self.assertTrue(
+                torch.allclose(model.pyro_model.train_Y, (train_Y - mu) / sigma)
+            )
+            if not infer_noise:
+                self.assertTrue(
+                    torch.allclose(
+                        model.pyro_model.train_Yvar,
+                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL) / (sigma ** 2),
+                        atol=1e-4,
+                    )
+                )
