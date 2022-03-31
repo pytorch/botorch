@@ -19,8 +19,12 @@ import nbformat
 from nbconvert import PythonExporter
 
 
-IGNORE = {
+IGNORE = {  # ignored in smoke tests and full runs
     "vae_mnist.ipynb",  # requires setting paths to local data
+}
+IGNORE_SMOKE_TEST_ONLY = {  # only used in smoke tests
+    "thompson_sampling.ipynb",  # very slow without KeOps + GPU
+    "composite_mtbo.ipynb",  # TODO: very slow, figure out if we can make it faster
 }
 
 
@@ -89,10 +93,11 @@ def run_tutorials(
     tutorial_dir = Path(repo_dir).joinpath("tutorials")
     num_runs = 0
     num_errors = 0
+    ignored_tutorials = IGNORE if smoke_test else IGNORE | IGNORE_SMOKE_TEST_ONLY
     for tutorial in tutorial_dir.iterdir():
         if not tutorial.is_file or tutorial.suffix != ".ipynb":
             continue
-        if not include_ignored and tutorial.name in IGNORE:
+        if not include_ignored and tutorial.name in ignored_tutorials:
             print(f"Ignoring tutorial {tutorial.name}.")
             continue
         num_runs += 1
