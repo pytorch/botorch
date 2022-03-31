@@ -51,10 +51,10 @@ class MOMFBraninCurrin(MultiObjectiveTestProblem):
     _max_hv = 0.5235514158034145
 
     def _branin(self, X: Tensor) -> Tensor:
-        x1 = X[...,0]
-        x2 = X[...,1]
-        s = X[...,2]
-        
+        x1 = X[..., 0]
+        x2 = X[..., 1]
+        s = X[..., 2]
+
         x11 = 15 * x1 - 5
         x22 = 15 * x2
         b = 5.1 / (4 * math.pi**2) - 0.01 * (1 - s)
@@ -66,9 +66,9 @@ class MOMFBraninCurrin(MultiObjectiveTestProblem):
         return B / 22
 
     def _currin(self, X: Tensor) -> Tensor:
-        x1 = X[...,0]
-        x2 = X[...,1]
-        s = X[...,2]
+        x1 = X[..., 0]
+        x2 = X[..., 1]
+        s = X[..., 2]
         A = 2300 * x1**3 + 1900 * x1**2 + 2092 * x1 + 60
         B = 100 * x1**3 + 500 * x1**2 + 4 * x1 + 20
         y = (1 - 0.1 * (1 - s) * torch.exp(-1 / (2 * x2))) * A / B
@@ -111,11 +111,11 @@ class MOMFPark(MultiObjectiveTestProblem):
     _max_hv = 0.08551927363087991
 
     def _transform(self, X: Tensor) -> Tensor:
-        x1 = X[...,0]
-        x2 = X[...,1]
-        x3 = X[...,2]
-        x4 = X[...,3]
-        s = X[...,4]
+        x1 = X[..., 0]
+        x2 = X[..., 1]
+        x3 = X[..., 2]
+        x4 = X[..., 3]
+        s = X[..., 4]
         _x1 = 1 - 2 * (x1 - 0.6) ** 2
         _x2 = x2
         _x3 = 1 - 3 * (x3 - 0.5) ** 2
@@ -123,11 +123,11 @@ class MOMFPark(MultiObjectiveTestProblem):
         return torch.stack([_x1, _x2, _x3, _x4, s], axis=-1)
 
     def _park1(self, X: Tensor) -> Tensor:
-        x1 = X[...,0]
-        x2 = X[...,1]
-        x3 = X[...,2]
-        x4 = X[...,3]
-        s = X[...,4]
+        x1 = X[..., 0]
+        x2 = X[..., 1]
+        x3 = X[..., 2]
+        x4 = X[..., 3]
+        s = X[..., 4]
         T1 = (
             (x1 + 1e-3 * (1 - s))
             / 2
@@ -139,11 +139,11 @@ class MOMFPark(MultiObjectiveTestProblem):
         return A * (T1 + T2 - B) / 22 - 0.8
 
     def _park2(self, X: Tensor) -> Tensor:
-        x1 = X[...,0]
-        x2 = X[...,1]
-        x3 = X[...,2]
-        x4 = X[...,3]
-        s = X[...,4]
+        x1 = X[..., 0]
+        x2 = X[..., 1]
+        x3 = X[..., 2]
+        x4 = X[..., 3]
+        s = X[..., 4]
         A = 0.9 + 0.1 * s
         B = 0.1 * (1 - s)
         return (

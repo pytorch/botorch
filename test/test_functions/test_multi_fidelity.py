@@ -46,6 +46,7 @@ class TestAugmentedRosenbrock(SyntheticTestFunctionBaseTestCase, BotorchTestCase
         with self.assertRaises(ValueError):
             AugmentedRosenbrock(dim=2)
 
+
 class TestMFForrester(SyntheticTestFunctionBaseTestCase, BotorchTestCase):
 
     functions = [

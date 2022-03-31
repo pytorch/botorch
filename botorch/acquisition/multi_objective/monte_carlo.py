@@ -35,10 +35,12 @@ from itertools import combinations
 from typing import Any, Callable, List, Optional, Union
 
 import torch
-from botorch.acquisition.acquisition import (
-    AcquisitionFunction,
-)
+from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCAcquisitionFunction
+from botorch.acquisition.cost_aware import (
+    GenericCostAwareUtility,
+    InverseCostWeightedUtility,
+)
 from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
@@ -48,14 +50,12 @@ from botorch.acquisition.multi_objective.utils import (
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
+from botorch.models.cost import AffineFidelityCostModel
+from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.model import Model
 from botorch.models.transforms.input import InputPerturbation
 from botorch.posteriors import DeterministicPosterior
 from botorch.posteriors.posterior import Posterior
-from botorch.acquisition.cost_aware import GenericCostAwareUtility
-from botorch.acquisition.cost_aware import InverseCostWeightedUtility
-from botorch.models.cost import AffineFidelityCostModel
-from botorch.models.deterministic import GenericDeterministicModel
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
 from botorch.utils.multi_objective.box_decompositions.box_decomposition_list import (
     BoxDecompositionList,
@@ -74,10 +74,10 @@ from botorch.utils.objective import apply_constraints_nonnegative_soft
 from botorch.utils.torch import BufferDict
 from botorch.utils.transforms import (
     concatenate_pending_points,
+    is_fully_bayesian,
     match_batch_shape,
     t_batch_mode_transform,
 )
-from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
 
 
@@ -819,7 +819,7 @@ class MOMF(qExpectedHypervolumeImprovement):
             eta: The temperature parameter for the sigmoid function used for the
                 differentiable approximation of the constraints.
         """
-        
+
         if len(ref_point) != partitioning.num_outcomes:
             raise ValueError(
                 "The length of the reference point must match the number of outcomes. "
@@ -831,7 +831,7 @@ class MOMF(qExpectedHypervolumeImprovement):
             dtype=partitioning.pareto_Y.dtype,
             device=partitioning.pareto_Y.device,
         )
-        
+
         super(qExpectedHypervolumeImprovement, self).__init__(
             model=model,
             sampler=sampler,
@@ -847,9 +847,11 @@ class MOMF(qExpectedHypervolumeImprovement):
         self.q_out = -1
         self.q_subset_indices = BufferDict()
         self.cost_call = cost_call
-        
+
         if self.cost_call is None:
-            cost_model = AffineFidelityCostModel(fidelity_weights={-1: 1.0},fixed_cost=1.0)
+            cost_model = AffineFidelityCostModel(
+                fidelity_weights={-1: 1.0}, fixed_cost=1.0
+            )
         else:
             cost_model = GenericDeterministicModel(cost_call)
         cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_model)

@@ -169,8 +169,8 @@ class MFForrester(SyntheticTestFunction):
         return (6 * X - 2) ** 2 * torch.sin(12 * X - 4) + 7.025
 
     def evaluate_true(self, X: Tensor) -> Tensor:
-        x = X[...,0]
-        s = X[...,1]
+        x = X[..., 0]
+        s = X[..., 1]
         A = 0.5 * (1 + s)
         B = 2 * (1 - s)
         C = 5 * (s - 1)
