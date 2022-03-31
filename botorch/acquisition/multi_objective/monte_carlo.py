@@ -20,10 +20,10 @@ References
     in Neural Information Processing Systems 34, 2021.
 
 .. [Irshad2021MOMF]
-     Irshad, Faran, Stefan Karsch, and Andreas Döpp.
-     "Expected hypervolume improvement for simultaneous multi-objective
-     and multi-fidelity optimization."
-     arXiv preprint arXiv:2112.13901 (2021).
+    Irshad, Faran, Stefan Karsch, and Andreas Döpp.
+    "Expected hypervolume improvement for simultaneous multi-objective
+    and multi-fidelity optimization."
+    arXiv preprint arXiv:2112.13901 (2021).
 
 """
 
@@ -813,9 +813,9 @@ class MOMF(qExpectedHypervolumeImprovement):
                 points that have been submitted for function evaluation but have not yet
                 been evaluated. Concatenated into `X` upon forward call. Copied and set
                 to have no gradient.
-            cost_call: A callable cost function mapping
-                an input tensor `batch_shape x q x d`-dim Tensor
-                to a cost tensor of dimension `batch_shape x q x m'.
+            cost_call: A callable cost function mapping a Tensor of dimension
+                `batch_shape x q x d` to a cost Tensor of dimension
+                `batch_shape x q x m`.
                 Defaults to an AffineCostModel with C(s)=1+s.
             eta: The temperature parameter for the sigmoid function used for the
                 differentiable approximation of the constraints.

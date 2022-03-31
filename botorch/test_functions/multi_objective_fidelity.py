@@ -5,9 +5,8 @@ References
 
 .. [Irshad2021]
     Irshad, Faran, Stefan Karsch, and Andreas Döpp.
-    "Expected hypervolume improvement for simultaneous multi-objective and
-     multi-fidelity optimization."
-    arXiv preprint arXiv:2112.13901 (2021).
+    Expected hypervolume improvement for simultaneous multi-objective and
+    multi-fidelity optimization. arXiv preprint arXiv:2112.13901 (2021).
 """
 
 import math
@@ -22,25 +21,25 @@ class MOMFBraninCurrin(MultiObjectiveTestProblem):
     multi-fidelity optimization.
     (2+1)-dimensional function with domain `[0,1]^3` where the last dimension
     is the fidelity parameter `s`.
-    Both functions assume maximization.
+    Both functions assume maximization. See [Irshad2021]_ for more details.
 
     Modified Branin function:
 
-         B(x,s) = 21-((
-         15*x_2 - b(s) * (15 * x_1 - 5) ** 2 + c(s) * (15 * x_1 - 5) - 6 ) ** 2
-         + 10 * (1 - t(s)) * cos(15 * x_1 - 5)+10)/22
+        B(x,s) = 21-((
+        15*x_2 - b(s) * (15 * x_1 - 5) ** 2 + c(s) * (15 * x_1 - 5) - 6 ) ** 2
+        + 10 * (1 - t(s)) * cos(15 * x_1 - 5)+10)/22
 
     Here `b`, `c`, `r` and `t` are constants and `s` is the fidelity parameter:
-    where `b = 5.1 / (4 * math.pi ** 2) - 0.01(1-s)`,
-          `c = 5 / math.pi - 0.1*(1 - s)`,
-          `r = 6`,
-          `t = 1 / (8 * math.pi) + 0.05*(1-s)`
+        where `b = 5.1 / (4 * math.pi ** 2) - 0.01(1-s)`,
+        `c = 5 / math.pi - 0.1*(1 - s)`,
+        `r = 6`,
+        `t = 1 / (8 * math.pi) + 0.05*(1-s)`
 
     Modified Currin function:
 
-         C(x) = 14-((1 - 0.1(1-s)exp(-1 / (2 * x_2))) * (
-         2300 * x_1 ** 3 + 1900 * x_1 ** 2 + 2092 * x_1 + 60
-         ) / 100 * x_1 ** 3 + 500 * x_1 ** 2 + 4 * x_2 + 20)/15
+        C(x) = 14-((1 - 0.1(1-s)exp(-1 / (2 * x_2))) * (
+        2300 * x_1 ** 3 + 1900 * x_1 ** 2 + 2092 * x_1 + 60
+        ) / 100 * x_1 ** 3 + 500 * x_1 ** 2 + 4 * x_2 + 20)/15
 
     """
 
@@ -83,7 +82,7 @@ class MOMFBraninCurrin(MultiObjectiveTestProblem):
 
 class MOMFPark(MultiObjectiveTestProblem):
     r"""Modified Park test functions for multi-objective
-    multi-fidelity optimization.
+    multi-fidelity optimization. See [Irshad2021]_ for more details.
     (4+1)-dimensional function with domain `[0,1]^5` where the last dimension
     is the fidelity parameter `s`.
 
