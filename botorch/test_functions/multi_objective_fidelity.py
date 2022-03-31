@@ -4,9 +4,9 @@ Multi-objective optimization benchmark problems.
 References
 
 .. [Irshad2021]
-    Irshad, Faran, Stefan Karsch, and Andreas Döpp. 
-    "Expected hypervolume improvement for simultaneous multi-objective and 
-     multi-fidelity optimization." 
+    Irshad, Faran, Stefan Karsch, and Andreas Döpp.
+    "Expected hypervolume improvement for simultaneous multi-objective and
+     multi-fidelity optimization."
     arXiv preprint arXiv:2112.13901 (2021).
 """
 
@@ -57,11 +57,11 @@ class MOMFBraninCurrin(MultiObjectiveTestProblem):
 
         x11 = 15 * x1 - 5
         x22 = 15 * x2
-        b = 5.1 / (4 * math.pi**2) - 0.01 * (1 - s)
+        b = 5.1 / (4 * math.pi ** 2) - 0.01 * (1 - s)
         c = 5 / math.pi - 0.1 * (1 - s)
         r = 6
         t = 1 / (8 * math.pi) + 0.05 * (1 - s)
-        y = (x22 - b * x11**2 + c * x11 - r) ** 2 + 10 * (1 - t) * torch.cos(x11) + 10
+        y = (x22 - b * x11 ** 2 + c * x11 - r) ** 2 + 10 * (1 - t) * torch.cos(x11) + 10
         B = 21 - y
         return B / 22
 
@@ -69,8 +69,8 @@ class MOMFBraninCurrin(MultiObjectiveTestProblem):
         x1 = X[..., 0]
         x2 = X[..., 1]
         s = X[..., 2]
-        A = 2300 * x1**3 + 1900 * x1**2 + 2092 * x1 + 60
-        B = 100 * x1**3 + 500 * x1**2 + 4 * x1 + 20
+        A = 2300 * x1 ** 3 + 1900 * x1 ** 2 + 2092 * x1 + 60
+        B = 100 * x1 ** 3 + 500 * x1 ** 2 + 4 * x1 + 20
         y = (1 - 0.1 * (1 - s) * torch.exp(-1 / (2 * x2))) * A / B
         C = -y + 14
         return C / 15
@@ -131,7 +131,7 @@ class MOMFPark(MultiObjectiveTestProblem):
         T1 = (
             (x1 + 1e-3 * (1 - s))
             / 2
-            * torch.sqrt(1 + (x2 + x3**2) * x4 / (x1**2 + 1e-4))
+            * torch.sqrt(1 + (x2 + x3 ** 2) * x4 / (x1 ** 2 + 1e-4))
         )
         T2 = (x1 + 3 * x4) * torch.exp(1 + torch.sin(x3))
         A = 0.9 + 0.1 * s

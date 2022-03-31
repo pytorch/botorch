@@ -1558,7 +1558,8 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     atol=5e-2,
                 )
             )
-            
+
+
 class TestMOMF(BotorchTestCase):
     def test_momf(self):
         tkwargs = {"device": self.device}
@@ -1575,15 +1576,11 @@ class TestMOMF(BotorchTestCase):
             mm = MockModel(MockPosterior(samples=samples))
             # test error if there is not pareto_Y initialized in partitioning
             with self.assertRaises(BotorchError):
-                MOMF(
-                    model=mm, ref_point=ref_point, partitioning=partitioning
-                )
+                MOMF(model=mm, ref_point=ref_point, partitioning=partitioning)
             partitioning.update(Y=pareto_Y)
             # test error if ref point has wrong shape
             with self.assertRaises(ValueError):
-                MOMF(
-                    model=mm, ref_point=ref_point[:1], partitioning=partitioning
-                )
+                MOMF(model=mm, ref_point=ref_point[:1], partitioning=partitioning)
 
             X = torch.zeros(1, 1, **tkwargs)
             # basic test
@@ -1755,14 +1752,14 @@ class TestMOMF(BotorchTestCase):
             res = acqf(X)
             # since q = 2, fidelity cost is 0 but fixed cost is 1 for each
             # hence total cost is 2 MOMF defaults to an Affine Cost Model.
-            self.assertEqual(res.item(), 1.75/2)
+            self.assertEqual(res.item(), 1.75 / 2)
 
             # test q = 2, only 1 point contributes
             samples = torch.tensor([[6.5, 4.5], [6.0, 4.0]], **tkwargs).unsqueeze(0)
             mm = MockModel(MockPosterior(samples=samples))
             acqf.model = mm
             res = acqf(X)
-            self.assertEqual(res.item(), 1.5/2)
+            self.assertEqual(res.item(), 1.5 / 2)
 
             # test q = 2, neither contributes
             samples = torch.tensor([[2.0, 2.0], [0.0, 0.1]], **tkwargs).unsqueeze(0)
@@ -1776,7 +1773,7 @@ class TestMOMF(BotorchTestCase):
             mm = MockModel(MockPosterior(samples=samples))
             acqf.model = mm
             res = acqf(X)
-            self.assertEqual(res.item(), 8.0/2)
+            self.assertEqual(res.item(), 8.0 / 2)
 
             # test q = 2, test point better than current-best first objective
             samples = torch.tensor([[6.5, 4.5], [9.0, 2.0]], **tkwargs).unsqueeze(0)
@@ -1788,7 +1785,7 @@ class TestMOMF(BotorchTestCase):
                 sampler=sampler,
             )
             res = acqf(X)
-            self.assertEqual(res.item(), 2.0/2)
+            self.assertEqual(res.item(), 2.0 / 2)
             # test q = 3, all contribute
             X = torch.zeros(3, 1, **tkwargs)
             samples = torch.tensor(
@@ -1804,7 +1801,7 @@ class TestMOMF(BotorchTestCase):
             res = acqf(X)
             # since q = 3, fidelity cost is 0 but fixed cost is 1 for each
             # hence total cost is 3.
-            self.assertEqual(res.item(), 2.25/3)
+            self.assertEqual(res.item(), 2.25 / 3)
             # test q = 3, not all contribute
             samples = torch.tensor(
                 [[6.5, 4.5], [9.0, 2.0], [7.0, 5.0]], **tkwargs
@@ -1817,7 +1814,9 @@ class TestMOMF(BotorchTestCase):
                 sampler=sampler,
             )
             res = acqf(X)
-            self.assertTrue(torch.allclose(res, torch.tensor(3.5/3, **tkwargs), atol=1e-15))
+            self.assertTrue(
+                torch.allclose(res, torch.tensor(3.5 / 3, **tkwargs), atol=1e-15)
+            )
             # test q = 3, none contribute
             samples = torch.tensor(
                 [[0.0, 4.5], [1.0, 2.0], [3.0, 0.0]], **tkwargs
@@ -1852,7 +1851,7 @@ class TestMOMF(BotorchTestCase):
             X = torch.zeros(1, 2, **tkwargs)
             res = acqf(X)
             self.assertEqual(res.item(), 12.0)
-            
+
             # test m = 3, q=1, X is ones so fidelity + fixed_cost is 2
             pareto_Y = torch.tensor(
                 [[4.0, 2.0, 3.0], [3.0, 5.0, 1.0], [2.0, 4.0, 2.0], [1.0, 3.0, 4.0]],
@@ -1872,8 +1871,8 @@ class TestMOMF(BotorchTestCase):
             )
             X = torch.ones(1, 2, **tkwargs)
             res = acqf(X)
-            self.assertEqual(res.item(), 12.0/2)
-            
+            self.assertEqual(res.item(), 12.0 / 2)
+
             # change reference point
             ref_point = [0.0] * 3
             X = torch.zeros(1, 2, **tkwargs)
@@ -1920,7 +1919,7 @@ class TestMOMF(BotorchTestCase):
             )
             X = torch.zeros(2, 2, **tkwargs)
             res = acqf(X)
-            self.assertEqual(res.item(), 22.0/2)
+            self.assertEqual(res.item(), 22.0 / 2)
 
             # test batched model
             pareto_Y = torch.tensor(
@@ -1946,7 +1945,7 @@ class TestMOMF(BotorchTestCase):
                 torch.equal(
                     res,
                     # batch_shape x model_batch_shape
-                    torch.tensor([[22.0, 60.0]], **tkwargs)/2,
+                    torch.tensor([[22.0, 60.0]], **tkwargs) / 2,
                 )
             )
             # test batched model with batched partitioning with multiple batch dims
@@ -1989,6 +1988,7 @@ class TestMOMF(BotorchTestCase):
                     # batch_shape x model_batch_shape
                     torch.tensor(
                         [[1.75, 3.5]], dtype=samples.dtype, device=samples.device
-                    )/2,
+                    )
+                    / 2,
                 )
             )

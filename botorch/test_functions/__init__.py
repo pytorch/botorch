@@ -36,6 +36,10 @@ from botorch.test_functions.multi_objective import (
     ZDT2,
     ZDT3,
 )
+from botorch.test_functions.multi_objective_fidelity import (
+    MOMFBraninCurrin,
+    MOMFPark,
+)
 from botorch.test_functions.synthetic import (
     Ackley,
     Beale,
@@ -58,10 +62,6 @@ from botorch.test_functions.synthetic import (
     StyblinskiTang,
     SyntheticTestFunction,
     ThreeHumpCamel,
-)
-from botorch.test_functions.multi_objective_fidelity import (
-    MOMFBraninCurrin,
-    MOMFPark,
 )
 
 

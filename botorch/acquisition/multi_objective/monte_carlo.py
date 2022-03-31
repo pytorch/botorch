@@ -20,8 +20,9 @@ References
     in Neural Information Processing Systems 34, 2021.
 
 .. [Irshad2021MOMF]
-     Irshad, Faran, Stefan Karsch, and Andreas Döpp. 
-     "Expected hypervolume improvement for simultaneous multi-objective and multi-fidelity optimization." 
+     Irshad, Faran, Stefan Karsch, and Andreas Döpp.
+     "Expected hypervolume improvement for simultaneous multi-objective
+     and multi-fidelity optimization."
      arXiv preprint arXiv:2112.13901 (2021).
 
 """
@@ -37,10 +38,7 @@ from typing import Any, Callable, List, Optional, Union
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCAcquisitionFunction
-from botorch.acquisition.cost_aware import (
-    GenericCostAwareUtility,
-    InverseCostWeightedUtility,
-)
+from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
@@ -773,13 +771,15 @@ class MOMF(qExpectedHypervolumeImprovement):
         objective: Optional[MCMultiOutputObjective] = None,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
-        cost_call: CostAwareUtility = None,
+        cost_call: Callable[Tensor, Tensor] = None,
         eta: float = 1e-3,
         **kwargs: Any,
     ) -> None:
         r"""MOMF acquisition function supporting m>=2 outcomes.
-        The model needs to have train_obj that has a fidelity objective appended to its end.
-        In the following example we consider a 2-D output space but the ref_point is 3D because of fidelity objective.
+        The model needs to have train_obj that has a fidelity
+        objective appended to its end.
+        In the following example we consider a 2-D output space
+        but the ref_point is 3D because of fidelity objective.
 
         See [Irshad2021MOMF]_ for details.
 
@@ -813,9 +813,10 @@ class MOMF(qExpectedHypervolumeImprovement):
                 points that have been submitted for function evaluation but have not yet
                 been evaluated. Concatenated into `X` upon forward call. Copied and set
                 to have no gradient.
-            cost_call: A callable cost function mapping an input tensor `batch_shape x q x d`-dim Tensor
-                to a cost tensor of dimension `batch_shape x q x m'. Defaults to an AffineCostModel
-                with a fixed cost of 1. Default C(s)=1+s.
+            cost_call: A callable cost function mapping
+                an input tensor `batch_shape x q x d`-dim Tensor
+                to a cost tensor of dimension `batch_shape x q x m'.
+                Defaults to an AffineCostModel with C(s)=1+s.
             eta: The temperature parameter for the sigmoid function used for the
                 differentiable approximation of the constraints.
         """

@@ -1,5 +1,4 @@
 import torch
-
 from botorch.test_functions.multi_objective_fidelity import MOMFBraninCurrin, MOMFPark
 from botorch.utils.testing import BotorchTestCase, MultiObjectiveTestProblemBaseTestCase
 
