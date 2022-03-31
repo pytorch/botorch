@@ -8,6 +8,7 @@ from botorch.test_functions.multi_fidelity import (
     AugmentedBranin,
     AugmentedHartmann,
     AugmentedRosenbrock,
+    MFForrester,
 )
 from botorch.test_functions.multi_objective import (
     BNH,
@@ -58,6 +59,10 @@ from botorch.test_functions.synthetic import (
     SyntheticTestFunction,
     ThreeHumpCamel,
 )
+from botorch.test_functions.multi_objective_fidelity import (
+    MOMFBraninCurrin,
+    MOMFPark,
+)
 
 
 __all__ = [
@@ -65,6 +70,7 @@ __all__ = [
     "AugmentedBranin",
     "AugmentedHartmann",
     "AugmentedRosenbrock",
+    "MFForrester",
     "Beale",
     "BNH",
     "Branin",
@@ -109,4 +115,6 @@ __all__ = [
     "ZDT1",
     "ZDT2",
     "ZDT3",
+    "MOMFBraninCurrin",
+    "MOMFPark",
 ]

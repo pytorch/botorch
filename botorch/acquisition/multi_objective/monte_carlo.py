@@ -837,7 +837,7 @@ class MOMF(qExpectedHypervolumeImprovement):
             sampler=sampler,
             objective=objective,
             constraints=constraints,
-            
+            X_pending=X_pending,
         )
         self.eta = eta
         self.register_buffer("ref_point", ref_point)
@@ -846,14 +846,17 @@ class MOMF(qExpectedHypervolumeImprovement):
         self.register_buffer("cell_upper_bounds", cell_bounds[1])
         self.q_out = -1
         self.q_subset_indices = BufferDict()
+        self.cost_call = cost_call
         
-        if cost_call is None:
+        if self.cost_call is None:
             cost_model = AffineFidelityCostModel(fidelity_weights={-1: 1.0},fixed_cost=1.0)
         else:
             cost_model = GenericDeterministicModel(cost_call)
         cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_model)
         self.cost_aware_utility = cost_aware_utility
-    
+
+    @concatenate_pending_points
+    @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
