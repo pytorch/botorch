@@ -257,6 +257,19 @@ class TestOptimizeAcqf(BotorchTestCase):
                 raw_samples=raw_samples,
                 sequential=True,
             )
+        # Verify error for passing in incorrect bounds
+        with self.assertRaisesRegex(
+            ValueError,
+            "bounds should be a `2 x d` tensor",
+        ):
+            optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds.T,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                sequential=True,
+            )
 
     def test_optimize_acqf_sequential_notimplemented(self):
         with self.assertRaises(NotImplementedError):
