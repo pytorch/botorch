@@ -1883,7 +1883,9 @@ class TestMOMF(BotorchTestCase):
             partitioning = NondominatedPartitioning(ref_point=t_ref_point, Y=pareto_Y)
             samples = torch.tensor([[1.0, 2.0, 6.0]], **tkwargs).unsqueeze(0)
             mm = MockModel(MockPosterior(samples=samples))
-            cost = lambda x: (6 * x[..., -1]).unsqueeze(-1)
+
+            def cost(x):
+                return (6 * x[..., -1]).unsqueeze(-1)
 
             acqf = MOMF(
                 model=mm,
