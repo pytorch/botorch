@@ -1873,6 +1873,28 @@ class TestMOMF(BotorchTestCase):
             res = acqf(X)
             self.assertEqual(res.item(), 12.0 / 2)
 
+            # test m = 3, q=1, with custom callable function
+            pareto_Y = torch.tensor(
+                [[4.0, 2.0, 3.0], [3.0, 5.0, 1.0], [2.0, 4.0, 2.0], [1.0, 3.0, 4.0]],
+                **tkwargs,
+            )
+            ref_point = [-1.0] * 3
+            t_ref_point = torch.tensor(ref_point, **tkwargs)
+            partitioning = NondominatedPartitioning(ref_point=t_ref_point, Y=pareto_Y)
+            samples = torch.tensor([[1.0, 2.0, 6.0]], **tkwargs).unsqueeze(0)
+            mm = MockModel(MockPosterior(samples=samples))
+            cost = lambda x: (6 * x[..., -1]).unsqueeze(-1)
+
+            acqf = MOMF(
+                model=mm,
+                ref_point=ref_point,
+                partitioning=partitioning,
+                sampler=sampler,
+                cost_call=cost,
+            )
+            X = torch.ones(1, 2, **tkwargs)
+            res = acqf(X)
+            self.assertEqual(res.item(), 12.0 / 6)
             # change reference point
             ref_point = [0.0] * 3
             X = torch.zeros(1, 2, **tkwargs)
