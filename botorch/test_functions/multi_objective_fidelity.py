@@ -1,5 +1,5 @@
 r"""
-Multi-objective optimization benchmark problems.
+Multi-objective multi-fidelity optimization benchmark problems.
 
 References
 
