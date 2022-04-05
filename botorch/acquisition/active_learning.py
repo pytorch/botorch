@@ -27,7 +27,8 @@ from typing import Optional
 
 from botorch import settings
 from botorch.acquisition.analytic import AnalyticAcquisitionFunction
-from botorch.acquisition.objective import PosteriorTransform
+from botorch.acquisition.monte_carlo import MCAcquisitionFunction
+from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
 from botorch.models.model import Model
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
@@ -122,3 +123,64 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
         else:
             # if multi-output + obj, shape is num_grid_points x batch_shape x 1 x 1
             return neg_variance.mean(dim=0).squeeze(-1).squeeze(-1)
+
+
+class PairwiseMCPosteriorVariance(MCAcquisitionFunction):
+    r"""Variance of difference for Active Learning
+
+    Given a model and an objective, calculate the posterior sample variance
+    of the objective on the difference of pairs of points. See more implementation
+    details in `forward`. This acquisition function is typically used with a
+    pairwise model (e.g., PairwiseGP) and a likelihood/link function
+    on the pair difference (e.g., logistic or probit) for pure exploration
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        objective: MCAcquisitionObjective,
+        sampler: Optional[MCSampler] = None,
+    ) -> None:
+        r"""Pairwise Monte Carlo Posterior Variance
+
+        Args:
+            model: A fitted model.
+            objective: An MCAcquisitionObjective representing the link function
+                (e.g., logistic or probit.) applied on the difference of (usually 1-d)
+                two samples. Can be implemented via GenericMCObjective.
+            sampler: The sampler used for drawing MC samples.
+        """
+        if sampler is None:
+            sampler = SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)
+        super().__init__(
+            model=model, sampler=sampler, objective=objective, X_pending=None
+        )
+
+    @t_batch_mode_transform()
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Evaluate PairwiseMCPosteriorVariance on the candidate set `X`.
+
+        Args:
+            X: A `batch_size x q x d`-dim Tensor. q should be a multiple of 2.
+
+        Returns:
+            Tensor of shape `batch_size x q` representing the posterior variance
+            of link function at X that active learning hopes to maximize
+        """
+        if X.shape[-2] == 0 or X.shape[-2] % 2 != 0:
+            raise RuntimeError(
+                "q must be a multiple of 2 for PairwiseMCPosteriorVariance"
+            )
+
+        # The output is of shape batch_shape x 2 x d
+        # For PairwiseGP, d = 1
+        post = self.model.posterior(X)
+        samples = self.sampler(post)  # num_samples x batch_shape x 2 x d
+
+        # The output is of shape num_samples x batch_shape x q/2 x d
+        # assuming the comparison is made between the 2 * i and 2 * i + 1 elements
+        samples_diff = samples[..., ::2, :] - samples[..., 1::2, :]
+        mc_var = self.objective(samples_diff).var(dim=0)
+        mean_mc_var = mc_var.mean(dim=-1)
+
+        return mean_mc_var
