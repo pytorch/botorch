@@ -23,7 +23,7 @@ from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.containers import TrainingData
 from botorch.utils.sampling import manual_seed
 from botorch.utils.testing import _get_random_data, BotorchTestCase
-from gpytorch.kernels import MaternKernel, ScaleKernel
+from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
 from gpytorch.likelihoods import (
     _GaussianLikelihoodBase,
     FixedNoiseGaussianLikelihood,
@@ -31,6 +31,7 @@ from gpytorch.likelihoods import (
     HeteroskedasticNoise,
 )
 from gpytorch.means import ConstantMean
+from gpytorch.means import ZeroMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.noise_model_added_loss_term import NoiseModelAddedLossTerm
 from gpytorch.priors import GammaPrior
@@ -38,8 +39,15 @@ from gpytorch.priors import GammaPrior
 
 class TestSingleTaskGP(BotorchTestCase):
     def _get_model_and_data(
-        self, batch_shape, m, outcome_transform=None, input_transform=None, **tkwargs
+        self,
+        batch_shape,
+        m,
+        outcome_transform=None,
+        input_transform=None,
+        extra_model_kwargs=None,
+        **tkwargs,
     ):
+        extra_model_kwargs = extra_model_kwargs or {}
         train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
         model_kwargs = {
             "train_X": train_X,
@@ -47,8 +55,15 @@ class TestSingleTaskGP(BotorchTestCase):
             "outcome_transform": outcome_transform,
             "input_transform": input_transform,
         }
-        model = SingleTaskGP(**model_kwargs)
+        model = SingleTaskGP(**model_kwargs, **extra_model_kwargs)
         return model, model_kwargs
+
+    def _get_extra_model_kwargs(self):
+        return {
+            "mean_module": ZeroMean(),
+            "covar_module": RBFKernel(use_ard=False),
+            "likelihood": GaussianLikelihood(),
+        }
 
     def test_gp(self, double_only: bool = False):
         bounds = torch.tensor([[-1.0], [1.0]])
@@ -152,6 +167,25 @@ class TestSingleTaskGP(BotorchTestCase):
                 pvar = posterior_pred.variance
                 pvar_exp = _get_pvar_expected(posterior, model, X, m)
                 self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
+
+    def test_custom_init(self):
+        extra_model_kwargs = self._get_extra_model_kwargs()
+        for batch_shape, m, dtype in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (1, 2),
+            (torch.float, torch.double),
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            model, model_kwargs = self._get_model_and_data(
+                batch_shape=batch_shape,
+                m=m,
+                extra_model_kwargs=extra_model_kwargs,
+                **tkwargs,
+            )
+            self.assertEqual(model.mean_module, extra_model_kwargs["mean_module"])
+            self.assertEqual(model.covar_module, extra_model_kwargs["covar_module"])
+            if "likelihood" in extra_model_kwargs:
+                self.assertEqual(model.likelihood, extra_model_kwargs["likelihood"])
 
     def test_condition_on_observations(self):
         for batch_shape, m, dtype, use_octf in itertools.product(
@@ -342,8 +376,15 @@ class TestSingleTaskGP(BotorchTestCase):
 
 class TestFixedNoiseGP(TestSingleTaskGP):
     def _get_model_and_data(
-        self, batch_shape, m, outcome_transform=None, input_transform=None, **tkwargs
+        self,
+        batch_shape,
+        m,
+        outcome_transform=None,
+        input_transform=None,
+        extra_model_kwargs=None,
+        **tkwargs,
     ):
+        extra_model_kwargs = extra_model_kwargs or {}
         train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
         model_kwargs = {
             "train_X": train_X,
@@ -352,8 +393,14 @@ class TestFixedNoiseGP(TestSingleTaskGP):
             "input_transform": input_transform,
             "outcome_transform": outcome_transform,
         }
-        model = FixedNoiseGP(**model_kwargs)
+        model = FixedNoiseGP(**model_kwargs, **extra_model_kwargs)
         return model, model_kwargs
+
+    def _get_extra_model_kwargs(self):
+        return {
+            "mean_module": ZeroMean(),
+            "covar_module": RBFKernel(use_ard=False),
+        }
 
     def test_fixed_noise_likelihood(self):
         for batch_shape, m, dtype in itertools.product(
@@ -415,6 +462,9 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
         }
         model = HeteroskedasticSingleTaskGP(**model_kwargs)
         return model, model_kwargs
+
+    def test_custom_init(self):
+        pass
 
     def test_gp(self):
         super().test_gp(double_only=True)

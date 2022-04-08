@@ -32,6 +32,7 @@ from gpytorch.likelihoods.gaussian_likelihood import (
 from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.likelihoods.noise_models import HeteroskedasticNoise
 from gpytorch.means.constant_mean import ConstantMean
+from gpytorch.means.mean import Mean
 from gpytorch.mlls.noise_model_added_loss_term import NoiseModelAddedLossTerm
 from gpytorch.models.exact_gp import ExactGP
 from gpytorch.module import Module
@@ -66,6 +67,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         train_Y: Tensor,
         likelihood: Optional[Likelihood] = None,
         covar_module: Optional[Module] = None,
+        mean_module: Optional[Mean] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
     ) -> None:
@@ -78,6 +80,8 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 GaussianLikelihood with inferred noise level.
             covar_module: The module computing the covariance (Kernel) matrix.
                 If omitted, use a `MaternKernel`.
+            mean_module: The mean function to be used. If omitted, use a
+                `ConstantMean`.
             outcome_transform: An outcome transform that is applied to the
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
@@ -118,9 +122,11 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         else:
             self._is_custom_likelihood = True
         ExactGP.__init__(self, train_X, train_Y, likelihood)
-        self.mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
+        if mean_module is None:
+            mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
+        self.mean_module = mean_module
         if covar_module is None:
-            self.covar_module = ScaleKernel(
+            covar_module = ScaleKernel(
                 MaternKernel(
                     nu=2.5,
                     ard_num_dims=transformed_X.shape[-1],
@@ -136,8 +142,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 "covar_module.raw_outputscale": -1,
                 "covar_module.base_kernel.raw_lengthscale": -3,
             }
-        else:
-            self.covar_module = covar_module
+        self.covar_module = covar_module
         # TODO: Allow subsetting of other covar modules
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
@@ -183,6 +188,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         train_Y: Tensor,
         train_Yvar: Tensor,
         covar_module: Optional[Module] = None,
+        mean_module: Optional[Mean] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
         **kwargs: Any,
@@ -194,6 +200,10 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             train_Y: A `batch_shape x n x m` tensor of training observations.
             train_Yvar: A `batch_shape x n x m` tensor of observed measurement
                 noise.
+            covar_module: The module computing the covariance (Kernel) matrix.
+                If omitted, use a `MaternKernel`.
+            mean_module: The mean function to be used. If omitted, use a
+                `ConstantMean`.
             outcome_transform: An outcome transform that is applied to the
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
@@ -227,9 +237,11 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         ExactGP.__init__(
             self, train_inputs=train_X, train_targets=train_Y, likelihood=likelihood
         )
-        self.mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
+        if mean_module is None:
+            mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
+        self.mean_module = mean_module
         if covar_module is None:
-            self.covar_module = ScaleKernel(
+            covar_module = ScaleKernel(
                 base_kernel=MaternKernel(
                     nu=2.5,
                     ard_num_dims=transformed_X.shape[-1],
@@ -244,8 +256,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 "covar_module.raw_outputscale": -1,
                 "covar_module.base_kernel.raw_lengthscale": -3,
             }
-        else:
-            self.covar_module = covar_module
+        self.covar_module = covar_module
         # TODO: Allow subsetting of other covar modules
         if input_transform is not None:
             self.input_transform = input_transform
