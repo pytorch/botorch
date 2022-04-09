@@ -123,7 +123,7 @@ print(saas_gp.median_lengthscale)
 # The time to fit the SAAS model can be decreased by lowering
 # `WARMUP_STEPS` and `NUM_SAMPLES`. We recommend using 512 warmup steps and 256 samples when
 # possible and to not use fewer than 256 warmup steps and 128 samples. By default, we only
-# keep each 16th sample which with 256 samples results in 32 hyperparameter samples.
+# keep each 16th sample (thinning) which with 256 samples results in 32 hyperparameter samples.
 # We average over these samples when computing the acquisition function.
 
 # In[10]:
@@ -173,11 +173,13 @@ for i in range(N_ITERATIONS):
     gp = SaasFullyBayesianSingleTaskGP(
         train_X=X, train_Y=train_Y, train_Yvar=torch.full_like(train_Y, 1e-6), outcome_transform=Standardize(m=1)
     )
-    fit_fully_bayesian_model_nuts(gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, disable_progbar=True)
+    fit_fully_bayesian_model_nuts(
+        gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, thinning=THINNING, disable_progbar=True
+    )
 
-    EI = qExpectedImprovement(model=gp, best_f=train_Y.max())
+    qEI = qExpectedImprovement(model=gp, best_f=train_Y.max())
     candidates, acq_values = optimize_acqf(
-        EI,
+        qEI,
         bounds=torch.cat((torch.zeros(1, DIM), torch.ones(1, DIM))).to(**tkwargs),
         q=BATCH_SIZE,
         num_restarts=10,
@@ -216,24 +218,26 @@ plt.show()
 
 
 # ## Predict on some test points
-# We fit a model using the 50 datapoints collected by SAASBO and predict on 50 test 
+# We fit a model using 50 datapoints and predict on 50 test 
 # points in order to see how well the SAAS model predicts out-of-sample.
 # The plot shows the mean and a 95% confidence interval for each test point.
 
 # In[14]:
 
 
+train_X = SobolEngine(dimension=DIM, scramble=True, seed=0).draw(50).to(**tkwargs)
+test_X = SobolEngine(dimension=DIM, scramble=True, seed=1).draw(50).to(**tkwargs)
+train_Y = branin_emb(train_X).unsqueeze(-1)
+test_Y = branin_emb(test_X).unsqueeze(-1)
+
 gp = SaasFullyBayesianSingleTaskGP(
-    train_X=X, train_Y=Y, train_Yvar=torch.full_like(Y, 1e-6), outcome_transform=Standardize(m=1)
+    train_X=train_X, train_Y=train_Y, train_Yvar=torch.full_like(train_Y, 1e-6), outcome_transform=Standardize(m=1)
 )
-fit_fully_bayesian_model_nuts(gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, disable_progbar=True)
+fit_fully_bayesian_model_nuts(gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES)
 
 
 # In[15]:
 
-
-test_X = SobolEngine(dimension=DIM, scramble=True, seed=1234).draw(50).to(**tkwargs)
-test_Y = branin_emb(test_X).unsqueeze(-1)
 
 with torch.no_grad():
     posterior = gp.posterior(test_X, marginalize_over_mcmc_samples=True)
@@ -281,7 +285,7 @@ for i in median_lengthscales.argsort()[:10]:
     print(f"Parameter {i:2}) Median lengthscale = {median_lengthscales[i].item():.2e}")
 
 
-# In[ ]:
+# In[17]:
 
 
 
