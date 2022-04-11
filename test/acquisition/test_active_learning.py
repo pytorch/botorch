@@ -7,12 +7,15 @@
 from unittest import mock
 
 import torch
+from botorch.acquisition.active_learning import PairwiseMCPosteriorVariance
 from botorch.acquisition.active_learning import qNegIntegratedPosteriorVariance
 from botorch.acquisition.objective import (
     IdentityMCObjective,
     ScalarizedPosteriorTransform,
+    GenericMCObjective,
 )
 from botorch.exceptions.errors import UnsupportedError
+from botorch.models.pairwise_gp import PairwiseGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -131,3 +134,27 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                     val = qNIPV(X)
                     val_exp = -0.5 * variance.mean(dim=0).view(3, -1).mean(dim=-1)
                     self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
+
+
+class TestPairwiseMCPosteriorVariance(BotorchTestCase):
+    def test_pairwise_mc_post_var(self):
+        train_X = torch.tensor([[0.0, 0.0, 0.0], [1.0, 1.0, 0.0]])
+        train_comp = torch.tensor([[0, 1]], dtype=torch.long)
+        model = PairwiseGP(train_X, train_comp)
+
+        # example link function
+        probit = torch.distributions.normal.Normal(0, 1).cdf
+        probit_obj = GenericMCObjective(objective=lambda Y, X: probit(Y.squeeze(-1)))
+        pv = PairwiseMCPosteriorVariance(model=model, objective=probit_obj)
+
+        n_test_pair = 8
+        good_X_2 = torch.rand((n_test_pair, 2, 3))
+        good_X_4 = torch.rand((n_test_pair, 4, 3))
+        bad_X = torch.rand((n_test_pair, 3, 3))
+
+        # ensure q is a multiple of 2
+        with self.assertRaises(RuntimeError):
+            pv(bad_X)
+
+        self.assertEqual(pv(good_X_2).shape, torch.Size([n_test_pair]))
+        self.assertEqual(pv(good_X_4).shape, torch.Size([n_test_pair]))

@@ -8,7 +8,10 @@ from botorch.acquisition.acquisition import (
     AcquisitionFunction,
     OneShotAcquisitionFunction,
 )
-from botorch.acquisition.active_learning import qNegIntegratedPosteriorVariance
+from botorch.acquisition.active_learning import (
+    qNegIntegratedPosteriorVariance,
+    PairwiseMCPosteriorVariance,
+)
 from botorch.acquisition.analytic import (
     AnalyticAcquisitionFunction,
     ConstrainedExpectedImprovement,
@@ -68,6 +71,7 @@ __all__ = [
     "InverseCostWeightedUtility",
     "NoisyExpectedImprovement",
     "OneShotAcquisitionFunction",
+    "PairwiseMCPosteriorVariance",
     "PosteriorMean",
     "ProbabilityOfImprovement",
     "ProximalAcquisitionFunction",
