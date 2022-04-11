@@ -171,7 +171,6 @@ else:
 # In[9]:
 
 
-
 mtgp_trial_objectives = []
 batch_trial_objectives = []
 rand_trial_objectives = []
