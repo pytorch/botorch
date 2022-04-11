@@ -8,7 +8,6 @@ from botorch.test_functions.multi_fidelity import (
     AugmentedBranin,
     AugmentedHartmann,
     AugmentedRosenbrock,
-    MFForrester,
 )
 from botorch.test_functions.multi_objective import (
     BNH,
@@ -70,7 +69,6 @@ __all__ = [
     "AugmentedBranin",
     "AugmentedHartmann",
     "AugmentedRosenbrock",
-    "MFForrester",
     "Beale",
     "BNH",
     "Branin",
