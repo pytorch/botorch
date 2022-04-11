@@ -35,7 +35,7 @@ from botorch.test_functions.multi_objective import (
     ZDT2,
     ZDT3,
 )
-from botorch.test_functions.multi_objective_fidelity import (
+from botorch.test_functions.multi_objective_multi_fidelity import (
     MOMFBraninCurrin,
     MOMFPark,
 )
