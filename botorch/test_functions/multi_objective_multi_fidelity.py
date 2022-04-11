@@ -23,7 +23,8 @@ from torch import Tensor
 
 
 class MOMFBraninCurrin(MultiObjectiveTestProblem):
-    r"""Two Objective Branin-Currin problem for multi-objective-multi-fidelity optimization.
+    r"""Branin-Currin problem for multi-objective-multi-fidelity optimization.
+
     (2+1)-dimensional function with domain `[0,1]^3` where the last dimension
     is the fidelity parameter `s`.
     Both functions assume minimization. See [Irshad2021MOMF]_ for more details.
@@ -86,10 +87,10 @@ class MOMFBraninCurrin(MultiObjectiveTestProblem):
 
 
 class MOMFPark(MultiObjectiveTestProblem):
-    r"""Modified Park test functions for multi-objective
-    multi-fidelity optimization. See [Irshad2021MOMF]_ for more details.
+    r"""Modified Park test functions for multi-objective multi-fidelity optimization.
+
     (4+1)-dimensional function with domain `[0,1]^5` where the last dimension
-    is the fidelity parameter `s`.
+    is the fidelity parameter `s`. See [Irshad2021MOMF]_ for more details.
 
     The first modified Park function is
 
