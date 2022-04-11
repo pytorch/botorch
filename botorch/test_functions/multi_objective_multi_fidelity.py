@@ -1,12 +1,18 @@
+#!/usr/bin/env python3
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 r"""
-Multi-objective optimization benchmark problems.
+Multi-objective multi-fidelity optimization benchmark problems.
 
 References
 
-.. [Irshad2021]
-    Irshad, Faran, Stefan Karsch, and Andreas Döpp.
-    Expected hypervolume improvement for simultaneous multi-objective and
-    multi-fidelity optimization. arXiv preprint arXiv:2112.13901 (2021).
+.. [Irshad2021MOMF]
+    F. Irshad, S. Karsch, and A. Döpp. Expected hypervolume improvement for
+    simultaneous multi-objective and multi-fidelity optimization.
+    arXiv preprint arXiv:2112.13901, 2021.
 """
 
 import math
@@ -17,11 +23,10 @@ from torch import Tensor
 
 
 class MOMFBraninCurrin(MultiObjectiveTestProblem):
-    r"""Augmented Branin-Currin test function for multi-objective
-    multi-fidelity optimization.
+    r"""Two Objective Branin-Currin problem for multi-objective-multi-fidelity optimization.
     (2+1)-dimensional function with domain `[0,1]^3` where the last dimension
     is the fidelity parameter `s`.
-    Both functions assume maximization. See [Irshad2021]_ for more details.
+    Both functions assume minimization. See [Irshad2021MOMF]_ for more details.
 
     Modified Branin function:
 
@@ -77,12 +82,12 @@ class MOMFBraninCurrin(MultiObjectiveTestProblem):
     def evaluate_true(self, X: Tensor) -> Tensor:
         branin = self._branin(X)
         currin = self._currin(X)
-        return torch.stack([branin, currin], dim=-1)
+        return torch.stack([-branin, -currin], dim=-1)
 
 
 class MOMFPark(MultiObjectiveTestProblem):
     r"""Modified Park test functions for multi-objective
-    multi-fidelity optimization. See [Irshad2021]_ for more details.
+    multi-fidelity optimization. See [Irshad2021MOMF]_ for more details.
     (4+1)-dimensional function with domain `[0,1]^5` where the last dimension
     is the fidelity parameter `s`.
 
@@ -154,4 +159,4 @@ class MOMFPark(MultiObjectiveTestProblem):
         X = self._transform(X)
         park1 = self._park1(X)
         park2 = self._park2(X)
-        return torch.stack([park1, park2], dim=-1)
+        return torch.stack([-park1, -park2], dim=-1)

@@ -8,7 +8,6 @@ from botorch.test_functions.multi_fidelity import (
     AugmentedBranin,
     AugmentedHartmann,
     AugmentedRosenbrock,
-    MFForrester,
 )
 from botorch.utils.testing import BotorchTestCase, SyntheticTestFunctionBaseTestCase
 
@@ -45,12 +44,3 @@ class TestAugmentedRosenbrock(SyntheticTestFunctionBaseTestCase, BotorchTestCase
     def test_min_dimension(self):
         with self.assertRaises(ValueError):
             AugmentedRosenbrock(dim=2)
-
-
-class TestMFForrester(SyntheticTestFunctionBaseTestCase, BotorchTestCase):
-
-    functions = [
-        MFForrester(),
-        MFForrester(negate=True),
-        MFForrester(noise_std=0.1),
-    ]

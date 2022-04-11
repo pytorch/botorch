@@ -20,10 +20,9 @@ References
     in Neural Information Processing Systems 34, 2021.
 
 .. [Irshad2021MOMF]
-    Irshad, Faran, Stefan Karsch, and Andreas Döpp.
-    "Expected hypervolume improvement for simultaneous multi-objective
-    and multi-fidelity optimization."
-    arXiv preprint arXiv:2112.13901 (2021).
+    F. Irshad, S. Karsch, and A. Döpp. Expected hypervolume improvement for
+    simultaneous multi-objective and multi-fidelity optimization.
+    arXiv preprint arXiv:2112.13901, 2021.
 
 """
 
@@ -812,7 +811,8 @@ class MOMF(qExpectedHypervolumeImprovement):
             X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have
                 points that have been submitted for function evaluation but have not yet
                 been evaluated. Concatenated into `X` upon forward call. Copied and set
-                to have no gradient.
+                to have no gradient. The default assumption here is that fidelity
+                parameter s is the dimension of the input.
             cost_call: A callable cost function mapping a Tensor of dimension
                 `batch_shape x q x d` to a cost Tensor of dimension
                 `batch_shape x q x m`.
@@ -832,21 +832,15 @@ class MOMF(qExpectedHypervolumeImprovement):
             dtype=partitioning.pareto_Y.dtype,
             device=partitioning.pareto_Y.device,
         )
-
-        super(qExpectedHypervolumeImprovement, self).__init__(
+        super().__init__(
             model=model,
+            ref_point=ref_point,
+            partitioning=partitioning,
             sampler=sampler,
             objective=objective,
             constraints=constraints,
             X_pending=X_pending,
         )
-        self.eta = eta
-        self.register_buffer("ref_point", ref_point)
-        cell_bounds = partitioning.get_hypercell_bounds()
-        self.register_buffer("cell_lower_bounds", cell_bounds[0])
-        self.register_buffer("cell_upper_bounds", cell_bounds[1])
-        self.q_out = -1
-        self.q_subset_indices = BufferDict()
         self.cost_call = cost_call
 
         if self.cost_call is None:
@@ -864,5 +858,5 @@ class MOMF(qExpectedHypervolumeImprovement):
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
         hv_gain = self._compute_qehvi(samples=samples, X=X)
-        ig = self.cost_aware_utility(X=X, deltas=hv_gain)
-        return ig
+        cost_weighted_qehvi = self.cost_aware_utility(X=X, deltas=hv_gain)
+        return cost_weighted_qehvi
