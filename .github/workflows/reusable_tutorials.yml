@@ -54,7 +54,7 @@ jobs:
       env:
         ALLOW_BOTORCH_LATEST: true
       run: |
-        pip install git+https://github.com/facebook/Ax.git@0.2.4
+        pip install ax-platform --no-binary ax-platform
     - name: Install BoTorch with tutorials dependencies
       run: |
         pip install .[tutorials]
