@@ -27,6 +27,10 @@ class AcquisitionFunction(Module, ABC):
     def __init__(self, model: Model) -> None:
         r"""Constructor for the AcquisitionFunction base class.
 
+        Please note that if your acquisition requires a backwards call,
+        you will need to wrap the backwards call inside of an enable_grad
+        context to be able to optimize the acquisition. See #1164.
+
         Args:
             model: A fitted model.
         """
