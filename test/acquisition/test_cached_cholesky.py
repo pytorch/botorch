@@ -19,7 +19,7 @@ from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.higher_order_gp import HigherOrderGP
 from botorch.sampling.samplers import IIDNormalSampler
 from botorch.utils.low_rank import extract_batch_covar
-from botorch.utils.testing import MockPosterior, MockModel, BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.utils.errors import NanError, NotPSDError
 
 CHOLESKY_PATH = "gpytorch.lazy.lazy_tensor.psd_safe_cholesky"

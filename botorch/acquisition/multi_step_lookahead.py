@@ -26,10 +26,7 @@ import torch
 from botorch.acquisition import AcquisitionFunction, OneShotAcquisitionFunction
 from botorch.acquisition.analytic import AnalyticAcquisitionFunction, PosteriorMean
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
-from botorch.acquisition.objective import (
-    MCAcquisitionObjective,
-    PosteriorTransform,
-)
+from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.model import Model

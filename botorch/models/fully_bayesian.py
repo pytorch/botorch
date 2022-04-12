@@ -26,7 +26,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import pyro
 import torch
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.models.gp_regression import SingleTaskGP, FixedNoiseGP
+from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling

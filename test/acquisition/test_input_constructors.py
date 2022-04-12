@@ -19,12 +19,12 @@ from botorch.acquisition.analytic import (
 )
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.input_constructors import (
+    _deprecate_objective_arg,
     acqf_input_constructor,
     construct_inputs_mf_base,
     get_acqf_input_constructor,
     get_best_f_analytic,
     get_best_f_mc,
-    _deprecate_objective_arg,
 )
 from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,

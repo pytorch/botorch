@@ -16,8 +16,8 @@ from botorch.acquisition.acquisition import (
 from botorch.optim.optimize import (
     _filter_infeasible,
     _filter_invalid,
-    _generate_neighbors,
     _gen_batch_initial_conditions_local_search,
+    _generate_neighbors,
     optimize_acqf,
     optimize_acqf_cyclic,
     optimize_acqf_discrete,

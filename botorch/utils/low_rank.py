@@ -16,7 +16,7 @@ from gpytorch.distributions.multitask_multivariate_normal import (
 from gpytorch.lazy import BlockDiagLazyTensor
 from gpytorch.lazy.lazy_tensor import LazyTensor
 from gpytorch.utils.cholesky import psd_safe_cholesky
-from gpytorch.utils.errors import NotPSDError, NanError
+from gpytorch.utils.errors import NanError, NotPSDError
 from torch import Tensor
 
 
