@@ -9,8 +9,8 @@ from botorch.acquisition.acquisition import (
     OneShotAcquisitionFunction,
 )
 from botorch.acquisition.active_learning import (
-    qNegIntegratedPosteriorVariance,
     PairwiseMCPosteriorVariance,
+    qNegIntegratedPosteriorVariance,
 )
 from botorch.acquisition.analytic import (
     AnalyticAcquisitionFunction,

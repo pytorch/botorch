@@ -46,7 +46,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
-from botorch.utils.transforms import standardize, match_batch_shape
+from botorch.utils.transforms import match_batch_shape, standardize
 
 
 class DummyMultiObjectiveMCAcquisitionFunction(MultiObjectiveMCAcquisitionFunction):

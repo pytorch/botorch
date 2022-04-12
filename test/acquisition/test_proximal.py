@@ -7,13 +7,13 @@
 from typing import Any, Dict, List
 
 import torch
-from botorch.acquisition import ScalarizedObjective, LinearMCObjective
+from botorch.acquisition import LinearMCObjective, ScalarizedObjective
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.analytic import ExpectedImprovement
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
-from botorch.models import SingleTaskGP, ModelListGP
+from botorch.models import ModelListGP, SingleTaskGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.models.transforms.input import Normalize

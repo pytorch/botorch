@@ -18,7 +18,7 @@ from gpytorch.distributions.multitask_multivariate_normal import (
 )
 from gpytorch.lazy import lazify
 from gpytorch.lazy.block_diag_lazy_tensor import BlockDiagLazyTensor
-from gpytorch.utils.errors import NotPSDError, NanError
+from gpytorch.utils.errors import NanError, NotPSDError
 
 
 class TestExtractBatchCovar(BotorchTestCase):

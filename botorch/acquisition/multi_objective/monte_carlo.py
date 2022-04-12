@@ -30,9 +30,7 @@ from itertools import combinations
 from typing import Any, Callable, List, Optional, Union
 
 import torch
-from botorch.acquisition.acquisition import (
-    AcquisitionFunction,
-)
+from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCAcquisitionFunction
 from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
@@ -65,10 +63,10 @@ from botorch.utils.objective import apply_constraints_nonnegative_soft
 from botorch.utils.torch import BufferDict
 from botorch.utils.transforms import (
     concatenate_pending_points,
+    is_fully_bayesian,
     match_batch_shape,
     t_batch_mode_transform,
 )
-from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
 
 

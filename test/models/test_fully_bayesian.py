@@ -23,15 +23,15 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 from botorch.acquisition.multi_objective import (
-    qNoisyExpectedHypervolumeImprovement,
     qExpectedHypervolumeImprovement,
+    qNoisyExpectedHypervolumeImprovement,
 )
 from botorch.models import ModelListGP
 from botorch.models.fully_bayesian import (
-    SaasFullyBayesianSingleTaskGP,
-    SaasPyroModel,
     MIN_INFERRED_NOISE_LEVEL,
     PyroModel,
+    SaasFullyBayesianSingleTaskGP,
+    SaasPyroModel,
 )
 from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors import FullyBayesianPosterior
@@ -42,7 +42,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 )
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import MaternKernel, ScaleKernel
-from gpytorch.likelihoods import GaussianLikelihood, FixedNoiseGaussianLikelihood
+from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihood
 from gpytorch.means import ConstantMean
 
 

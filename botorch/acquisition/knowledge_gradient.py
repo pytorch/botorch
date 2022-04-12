@@ -38,10 +38,7 @@ from botorch.acquisition.acquisition import (
 from botorch.acquisition.analytic import PosteriorMean
 from botorch.acquisition.cost_aware import CostAwareUtility
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction, qSimpleRegret
-from botorch.acquisition.objective import (
-    MCAcquisitionObjective,
-    PosteriorTransform,
-)
+from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler

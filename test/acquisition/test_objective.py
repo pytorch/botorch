@@ -23,7 +23,7 @@ from botorch.models.deterministic import PosteriorMeanModel
 from botorch.models.pairwise_gp import PairwiseGP
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.utils import apply_constraints
-from botorch.utils.testing import BotorchTestCase, _get_test_posterior
+from botorch.utils.testing import _get_test_posterior, BotorchTestCase
 from torch import Tensor
 
 

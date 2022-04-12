@@ -30,8 +30,7 @@ from gpytorch.likelihoods import (
     GaussianLikelihood,
     HeteroskedasticNoise,
 )
-from gpytorch.means import ConstantMean
-from gpytorch.means import ZeroMean
+from gpytorch.means import ConstantMean, ZeroMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.noise_model_added_loss_term import NoiseModelAddedLossTerm
 from gpytorch.priors import GammaPrior

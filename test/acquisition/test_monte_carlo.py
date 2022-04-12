@@ -21,9 +21,9 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 from botorch.acquisition.objective import (
-    ScalarizedPosteriorTransform,
     GenericMCObjective,
     PosteriorTransform,
+    ScalarizedPosteriorTransform,
 )
 from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.models import SingleTaskGP

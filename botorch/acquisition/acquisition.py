@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Optional, Callable
+from typing import Callable, Optional
 
 from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.models.model import Model

@@ -19,8 +19,8 @@ from botorch.acquisition.analytic import (
 )
 from botorch.acquisition.objective import (
     IdentityMCObjective,
-    ScalarizedPosteriorTransform,
     ScalarizedObjective,
+    ScalarizedPosteriorTransform,
 )
 from botorch.exceptions import UnsupportedError
 from botorch.models import FixedNoiseGP, SingleTaskGP

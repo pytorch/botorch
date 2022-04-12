@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Optional, Callable
+from typing import Callable, Optional
 from unittest import mock
 
 import torch
@@ -17,8 +17,8 @@ from botorch.acquisition.max_value_entropy_search import (
     qMultiFidelityMaxValueEntropy,
 )
 from botorch.acquisition.objective import (
-    ScalarizedPosteriorTransform,
     PosteriorTransform,
+    ScalarizedPosteriorTransform,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.posteriors import GPyTorchPosterior
