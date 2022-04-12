@@ -29,19 +29,19 @@ jobs:
     - name: Fetch all history for all tags and branches
       # We need to do this so setuptools_scm knows how to set the BoTorch version.
       run: git fetch --prune --unshallow
-    - if: ${{ !inputs.use_stable_pytorch_botorch }}
+    - if: ${{ !inputs.use_stable_pytorch_gpytorch }}
       name: Install latest PyTorch & GPyTorch
       run: |
-        pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+        pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
         pip install git+https://github.com/cornellius-gp/gpytorch.git
-    - if: ${{ inputs.use_stable_pytorch_botorch }}
+    - if: ${{ inputs.use_stable_pytorch_gpytorch }}
       name: Install min required PyTorch & GPyTorch
       run: |
         python setup.py egg_info
         req_txt="botorch.egg-info/requires.txt"
         min_torch_version=$(grep '\btorch>=' ${req_txt} | sed 's/[^0-9.]//g')
         min_gpytorch_version=$(grep '\bgpytorch>=' ${req_txt} | sed 's/[^0-9.]//g')
-        pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}"
+        pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}" torchvision
     - if: ${{ !inputs.use_stable_ax }}
       name: Install latest Ax
       env:
@@ -49,9 +49,13 @@ jobs:
         ALLOW_BOTORCH_LATEST: true
       run: |
         pip install git+https://github.com/facebook/Ax.git
-    - name: Install BoTorch with tutorials dependencies
+    - if: ${{ inputs.use_stable_ax }}
+      name: Install stable Ax
       env:
         ALLOW_BOTORCH_LATEST: true
+      run: |
+        pip install ax-platform --no-binary ax-platform
+    - name: Install BoTorch with tutorials dependencies
       run: |
         pip install .[tutorials]
     - if: ${{ inputs.smoke_test }}
