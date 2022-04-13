@@ -13,6 +13,7 @@ import torch
 from botorch import fit_gpytorch_model, settings
 from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
 from botorch.models import FixedNoiseGP, HeteroskedasticSingleTaskGP, SingleTaskGP
+from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.outcome import Standardize
 from botorch.optim.fit import (
     fit_gpytorch_scipy,
@@ -23,8 +24,10 @@ from botorch.utils.testing import BotorchTestCase
 from gpytorch.constraints import GreaterThan, Interval
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from gpytorch.utils.errors import NanError, NotPSDError
 from gpytorch.utils.warnings import NumericalWarning
+from scipy.optimize import OptimizeResult
 
 
 NOISE = [
@@ -322,3 +325,45 @@ class TestFitGPyTorchModel(BotorchTestCase):
             mll = self._getBatchedModel()
             fit_gpytorch_model(mll, options=options, max_retries=3)
         self.assertFalse(any("ITERATIONS REACHED LIMIT" in str(w.message) for w in ws))
+
+    def test_warnings_on_failed_fit(self):
+        mll = self._getModel()
+        mock_res = OptimizeResult(
+            x=[0.00836791, -0.01646641, 0.33771477, -0.9502073],
+            success=True,
+            status=0,
+            fun=1.0,
+            jac=None,
+            nfev=40,
+            njev=40,
+            nhev=40,
+            nit=20,
+            message="CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH".encode(),
+        )
+
+        # Should not get errors here, so single call.
+        with mock.patch(
+            f"{fit_gpytorch_scipy.__module__}.minimize", return_value=mock_res
+        ) as mock_minimize:
+            fit_gpytorch_model(mll, max_retries=3)
+        mock_minimize.assert_called_once()
+
+        # The following should use all 3 tries due to OptimizationWarning.
+        mock_res.fun = float("nan")
+        mock_res.message = "ABNORMAL_TERMINATION_IN_LNSRCH".encode()
+        mock_res.success = False
+        with mock.patch(
+            f"{fit_gpytorch_scipy.__module__}.minimize", return_value=mock_res
+        ) as mock_minimize:
+            fit_gpytorch_model(mll, max_retries=3)
+        self.assertEqual(mock_minimize.call_count, 3)
+
+        # Check that it works with SumMarginalLogLikelihood.
+        # This should use 6 tries, 3 for each sub-model.
+        model = ModelListGP(mll.model, mll.model)
+        mll = SumMarginalLogLikelihood(model.likelihood, model)
+        with mock.patch(
+            f"{fit_gpytorch_scipy.__module__}.minimize", return_value=mock_res
+        ) as mock_minimize:
+            fit_gpytorch_model(mll, max_retries=3)
+        self.assertEqual(mock_minimize.call_count, 6)
