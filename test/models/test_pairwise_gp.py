@@ -287,3 +287,15 @@ class TestPairwiseGP(BotorchTestCase):
             self.assertIsInstance(fm, model.__class__)
             fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)
             self.assertIsInstance(fm, model.__class__)
+
+    def test_load_state_dict(self):
+        model, _ = self._get_model_and_data(batch_shape=[])
+        sd = model.state_dict()
+        with warnings.catch_warnings(record=True) as ws:
+            missing, unexpected = model.load_state_dict(sd, strict=True)
+        # Check that the warning was raised.
+        self.assertTrue(any("strict=True" in str(w.message) for w in ws))
+        # Check that buffers are missing.
+        self.assertIn("datapoints", missing)
+        self.assertIn("D", missing)
+        self.assertIn("covar", missing)
