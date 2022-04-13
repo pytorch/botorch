@@ -120,6 +120,8 @@ def fit_gpytorch_model(
     retry = 0
     while retry < max_retries:
         with warnings.catch_warnings(record=True) as ws:
+            # Make sure we catch all OptimizationWarnings.
+            warnings.simplefilter("always", category=OptimizationWarning)
             if retry > 0:  # use normal initial conditions on first try
                 mll.model.load_state_dict(original_state_dict)
                 sample_all_priors(mll.model)
