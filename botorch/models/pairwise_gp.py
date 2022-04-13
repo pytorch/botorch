@@ -23,7 +23,7 @@ from __future__ import annotations
 import math
 import warnings
 from copy import deepcopy
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -47,6 +47,7 @@ from gpytorch.priors.torch_priors import GammaPrior
 from gpytorch.utils.cholesky import psd_safe_cholesky
 from scipy import optimize
 from torch import float32, float64, Tensor
+from torch.nn.modules.module import _IncompatibleKeys
 
 
 class PairwiseGP(Model, GP):
@@ -61,6 +62,19 @@ class PairwiseGP(Model, GP):
     elsewhere in botorch, we instead do not include :math:`\sigma` in the code
     (implicitly setting it to 1) and use ScaleKernel to scale the function.
     """
+
+    _buffer_names = [
+        "datapoints",
+        "comparisons",
+        "D",
+        "DT",
+        "utility",
+        "covar_chol",
+        "likelihood_hess",
+        "hlcov_eye",
+        "covar",
+        "covar_inv",
+    ]
 
     def __init__(
         self,
@@ -94,18 +108,8 @@ class PairwiseGP(Model, GP):
         # it doesn't make much sense to keep it separate
         self.likelihood = None
 
-        # TODO: remove these variables from `state_dict()` so that when calling
-        #       `load_state_dict()`, only the hyperparameters are copied over
-        self.register_buffer("datapoints", None)
-        self.register_buffer("comparisons", None)
-        self.register_buffer("D", None)
-        self.register_buffer("DT", None)
-        self.register_buffer("utility", None)
-        self.register_buffer("covar_chol", None)
-        self.register_buffer("likelihood_hess", None)
-        self.register_buffer("hlcov_eye", None)
-        self.register_buffer("covar", None)
-        self.register_buffer("covar_inv", None)
+        for key in self._buffer_names:
+            self.register_buffer(key, None)
 
         self.train_inputs = []
         self.train_targets = None
@@ -780,6 +784,36 @@ class PairwiseGP(Model, GP):
             self._update(transformed_dp)
 
         self.to(self.datapoints)
+
+    def load_state_dict(
+        self, state_dict: Dict[str, Tensor], strict: Optional[bool] = False
+    ) -> _IncompatibleKeys:
+        r"""Removes data related buffers from the `state_dict` and calls
+        `super().load_state_dict` with `strict=False`.
+
+        Args:
+            state_dict: The state dict.
+            strict: A boolean denoting whether to error out if all keys are not
+                present in the `state_dict`. Since we remove data related buffers
+                from the `state_dict`, this will lead to an error whenever
+                `strict=True`. Instead, we overwrite it with `strict=False`, and
+                raise a warning explaining this if `strict=True` is passed.
+
+        Returns:
+            A named tuple `_IncompatibleKeys`, containing the `missing_keys`
+            and `unexpected_keys`. Note that the buffers we remove from the
+            `state_dict` may be listed under `missing_keys`.
+        """
+        if strict:
+            warnings.warn(
+                f"Received `strict=True` in {self.__class__.__name__}.load_state_dict "
+                "call. This will be overwritten with `strict=False` after removing "
+                "a set of data related buffers from the `state_dict`.",
+                RuntimeWarning,
+            )
+        for key in self._buffer_names:
+            state_dict.pop(key, None)
+        return super().load_state_dict(state_dict=state_dict, strict=False)
 
     def forward(self, datapoints: Tensor) -> MultivariateNormal:
         r"""Calculate a posterior or prior prediction.
