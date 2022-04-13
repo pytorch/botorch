@@ -790,9 +790,13 @@ class MOMF(qExpectedHypervolumeImprovement):
             >>> momf_val = momf(test_X)
 
         Args:
-            model: A fitted model.
+            model: A fitted model. There are two default assumptions in the training
+                data. Train_X should have fidelity parameter s as the last dimension
+                of the input and train_Y contains a trust objective as it's last
+                dimension.
             ref_point: A list or tensor with `m+1` elements representing the reference
                 point (in the outcome space) w.r.t. to which compute the hypervolume.
+                The '+1' takes care of the trust objective appended to train_Y.
                 This is a reference point for the objective values (i.e. after
                 applying`objective` to the samples).
             partitioning: A `NondominatedPartitioning` module that provides the non-
@@ -811,8 +815,7 @@ class MOMF(qExpectedHypervolumeImprovement):
             X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have
                 points that have been submitted for function evaluation but have not yet
                 been evaluated. Concatenated into `X` upon forward call. Copied and set
-                to have no gradient. The default assumption here is that fidelity
-                parameter s is the dimension of the input.
+                to have no gradient.
             cost_call: A callable cost function mapping a Tensor of dimension
                 `batch_shape x q x d` to a cost Tensor of dimension
                 `batch_shape x q x m`.
