@@ -94,6 +94,26 @@ class MultiOutputRiskMeasureMCObjective(
         pass  # pragma: no cover
 
 
+class MultiOutputExpectation(MultiOutputRiskMeasureMCObjective):
+    r"""A multi-output MC expectation risk measure."""
+
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+        r"""Calculate the expectation of the given samples. Expectation is
+        calculated over each `n_w` samples in the q-batch dimension.
+
+        Args:
+            samples: A `sample_shape x batch_shape x (q * n_w) x m`-dim tensor of
+                posterior samples. The q-batches should be ordered so that each
+                `n_w` block of samples correspond to the same input.
+            X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.
+
+        Returns:
+            A `sample_shape x batch_shape x q x m`-dim tensor of expectation samples.
+        """
+        prepared_samples = self._prepare_samples(samples)
+        return prepared_samples.mean(dim=-2)
+
+
 class IndependentCVaR(CVaR, MultiOutputRiskMeasureMCObjective):
     r"""The multi-output Conditional Value-at-Risk risk measure that operates on
     each output dimension independently. Since this does not consider the joint

@@ -225,3 +225,25 @@ class WorstCase(RiskMeasureMCObjective):
         """
         prepared_samples = self._prepare_samples(samples)
         return prepared_samples.min(dim=-1).values
+
+
+class Expectation(RiskMeasureMCObjective):
+    r"""The expectation risk measure."""
+
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+        r"""Calculate the expectation corresponding to the given samples.
+        This calculates the expectation / mean / average of each `n_w` samples
+        across the q-batch dimension. If `self.weights` is given, the samples
+        are scalarized across the output dimension before taking the expectation.
+
+        Args:
+            samples: A `sample_shape x batch_shape x (q * n_w) x m`-dim tensor of
+                posterior samples. The q-batches should be ordered so that each
+                `n_w` block of samples correspond to the same input.
+            X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.
+
+        Returns:
+            A `sample_shape x batch_shape x q`-dim tensor of expectation samples.
+        """
+        prepared_samples = self._prepare_samples(samples)
+        return prepared_samples.mean(dim=-1)
