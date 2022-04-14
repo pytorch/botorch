@@ -85,11 +85,6 @@ Box Decomposition Utilities
 .. automodule:: botorch.utils.multi_objective.box_decompositions.utils
     	:members:
 
-Box Decompositions [DEPRECATED - use botorch..utils.multi_objective.box_decompositions]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.utils.multi_objective.box_decomposition
-		:members:
-
 Dominated Partitionings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.multi_objective.box_decompositions.dominated
