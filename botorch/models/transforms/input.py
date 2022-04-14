@@ -18,12 +18,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import Callable, List, Optional, Union
+from typing import List, Optional, Union
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.utils import expand_and_copy_tensor
-from botorch.models.utils import fantasize
 from botorch.utils.rounding import approximate_round
 from gpytorch import Module as GPyTorchModule
 from gpytorch.constraints import GreaterThan
@@ -39,19 +38,7 @@ class InputTransform(ABC):
     Note: Input transforms must inherit from `torch.nn.Module`. This
         is deferred to the subclasses to avoid any potential conflict
         between `gpytorch.module.Module` and `torch.nn.Module` in `Warp`.
-
-    Properties:
-        transform_on_train: A boolean indicating whether to apply the
-            transform in train() mode.
-        transform_on_eval: A boolean indicating whether to apply the
-            transform in eval() mode.
-        transform_on_fantasize: A boolean indicating whether to apply
-            the transform when called from within a `fantasize` call.
     """
-
-    transform_on_eval: bool
-    transform_on_train: bool
-    transform_on_fantasize: bool
 
     def forward(self, X: Tensor) -> Tensor:
         r"""Transform the inputs to a model.
@@ -60,15 +47,9 @@ class InputTransform(ABC):
             X: A `batch_shape x n x d`-dim tensor of inputs.
 
         Returns:
-            A `batch_shape x n' x d`-dim tensor of transformed inputs.
+            A `batch_shape x n x d`-dim tensor of transformed inputs.
         """
-        if self.training:
-            if self.transform_on_train:
-                return self.transform(X)
-        elif self.transform_on_eval:
-            if fantasize.off() or self.transform_on_fantasize:
-                return self.transform(X)
-        return X
+        return self.transform(X)
 
     @abstractmethod
     def transform(self, X: Tensor) -> Tensor:
@@ -110,43 +91,10 @@ class InputTransform(ABC):
             A boolean indicating if the other transform is equivalent.
         """
         other_state_dict = other.state_dict()
-        return (
-            type(self) == type(other)
-            and (self.transform_on_train == other.transform_on_train)
-            and (self.transform_on_eval == other.transform_on_eval)
-            and (self.transform_on_fantasize == other.transform_on_fantasize)
-            and all(
-                torch.allclose(v, other_state_dict[k].to(v))
-                for k, v in self.state_dict().items()
-            )
+        return type(self) == type(other) and all(
+            torch.allclose(v, other_state_dict[k].to(v))
+            for k, v in self.state_dict().items()
         )
-
-    def preprocess_transform(self, X: Tensor) -> Tensor:
-        r"""Apply transforms for preprocessing inputs.
-
-        The main use cases for this method are 1) to preprocess training data
-        before calling `set_train_data` and 2) preprocess `X_baseline` for noisy
-        acquisition functions so that `X_baseline` is "preprocessed" with the
-        same transformations as the cached training inputs.
-
-        Args:
-            X: A `batch_shape x n x d`-dim tensor of inputs.
-
-        Returns:
-            A `batch_shape x n x d`-dim tensor of (transformed) inputs.
-        """
-        if self.transform_on_train:
-            # We need to disable learning of bounds here.
-            # See why: https://github.com/pytorch/botorch/issues/1078.
-            if hasattr(self, "learn_bounds"):
-                learn_bounds = self.learn_bounds
-                self.learn_bounds = False
-                result = self.transform(X)
-                self.learn_bounds = learn_bounds
-                return result
-            else:
-                return self.transform(X)
-        return X
 
 
 class ChainedInputTransform(InputTransform, ModuleDict):
@@ -171,13 +119,6 @@ class ChainedInputTransform(InputTransform, ModuleDict):
 
         """
         super().__init__(OrderedDict(transforms))
-        self.transform_on_train = False
-        self.transform_on_eval = False
-        self.transform_on_fantasize = False
-        for tf in transforms.values():
-            self.transform_on_train |= tf.transform_on_train
-            self.transform_on_eval |= tf.transform_on_eval
-            self.transform_on_fantasize |= tf.transform_on_fantasize
 
     def transform(self, X: Tensor) -> Tensor:
         r"""Transform the inputs to a model.
@@ -221,24 +162,6 @@ class ChainedInputTransform(InputTransform, ModuleDict):
         return super().equals(other=other) and all(
             t1 == t2 for t1, t2 in zip(self.values(), other.values())
         )
-
-    def preprocess_transform(self, X: Tensor) -> Tensor:
-        r"""Apply transforms for preprocessing inputs.
-
-        The main use cases for this method are 1) to preprocess training data
-        before calling `set_train_data` and 2) preprocess `X_baseline` for noisy
-        acquisition functions so that `X_baseline` is "preprocessed" with the
-        same transformations as the cached training inputs.
-
-        Args:
-            X: A `batch_shape x n x d`-dim tensor of inputs.
-
-        Returns:
-            A `batch_shape x n x d`-dim tensor of (transformed) inputs.
-        """
-        for tf in self.values():
-            X = tf.preprocess_transform(X)
-        return X
 
 
 class ReversibleInputTransform(InputTransform, ABC):
@@ -323,9 +246,6 @@ class Normalize(ReversibleInputTransform, Module):
         indices: Optional[List[int]] = None,
         bounds: Optional[Tensor] = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
-        transform_on_train: bool = True,
-        transform_on_eval: bool = True,
-        transform_on_fantasize: bool = True,
         reverse: bool = False,
         min_range: float = 1e-8,
     ) -> None:
@@ -340,12 +260,6 @@ class Normalize(ReversibleInputTransform, Module):
             batch_shape: The batch shape of the inputs (asssuming input tensors
                 of shape `batch_shape x n x d`). If provided, perform individual
                 normalization per batch, otherwise uses a single normalization.
-            transform_on_train: A boolean indicating whether to apply the
-                transforms in train() mode. Default: True.
-            transform_on_eval: A boolean indicating whether to apply the
-                transform in eval() mode. Default: True.
-            transform_on_fantasize: A boolean indicating whether to apply the
-                transform when called from within a `fantasize` call. Default: True.
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
             min_range: Amount of noise to add to the range to ensure no division by
@@ -378,9 +292,6 @@ class Normalize(ReversibleInputTransform, Module):
         self.register_buffer("mins", mins)
         self.register_buffer("ranges", ranges)
         self._d = d
-        self.transform_on_train = transform_on_train
-        self.transform_on_eval = transform_on_eval
-        self.transform_on_fantasize = transform_on_fantasize
         self.reverse = reverse
         self.batch_shape = batch_shape
         self.min_range = min_range
@@ -480,9 +391,6 @@ class InputStandardize(ReversibleInputTransform, Module):
         d: int,
         indices: Optional[List[int]] = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
-        transform_on_train: bool = True,
-        transform_on_eval: bool = True,
-        transform_on_fantasize: bool = True,
         reverse: bool = False,
         min_std: float = 1e-8,
     ) -> None:
@@ -495,10 +403,6 @@ class InputStandardize(ReversibleInputTransform, Module):
             batch_shape: The batch shape of the inputs (asssuming input tensors
                 of shape `batch_shape x n x d`). If provided, perform individual
                 normalization per batch, otherwise uses a single normalization.
-            transform_on_train: A boolean indicating whether to apply the
-                transforms in train() mode. Default: True
-            transform_on_eval: A boolean indicating whether to apply the
-                transform in eval() mode. Default: True
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
             min_std: Amount of noise to add to the standard deviation to ensure no
@@ -519,9 +423,6 @@ class InputStandardize(ReversibleInputTransform, Module):
         self.register_buffer("means", torch.zeros(*batch_shape, 1, d))
         self.register_buffer("stds", torch.ones(*batch_shape, 1, d))
         self._d = d
-        self.transform_on_train = transform_on_train
-        self.transform_on_eval = transform_on_eval
-        self.transform_on_fantasize = transform_on_fantasize
         self.batch_shape = batch_shape
         self.min_std = min_std
         self.reverse = reverse
@@ -639,9 +540,6 @@ class Round(InputTransform, Module):
     def __init__(
         self,
         indices: List[int],
-        transform_on_train: bool = True,
-        transform_on_eval: bool = True,
-        transform_on_fantasize: bool = True,
         approximate: bool = True,
         tau: float = 1e-3,
     ) -> None:
@@ -649,20 +547,11 @@ class Round(InputTransform, Module):
 
         Args:
             indices: The indices of the integer inputs.
-            transform_on_train: A boolean indicating whether to apply the
-                transforms in train() mode. Default: True.
-            transform_on_eval: A boolean indicating whether to apply the
-                transform in eval() mode. Default: True.
-            transform_on_fantasize: A boolean indicating whether to apply the
-                transform when called from within a `fantasize` call. Default: True.
             approximate: A boolean indicating whether approximate or exact
                 rounding should be used. Default: approximate.
             tau: The temperature parameter for approximate rounding.
         """
         super().__init__()
-        self.transform_on_train = transform_on_train
-        self.transform_on_eval = transform_on_eval
-        self.transform_on_fantasize = transform_on_fantasize
         self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
         self.approximate = approximate
         self.tau = tau
@@ -707,29 +596,17 @@ class Log10(ReversibleInputTransform, Module):
     def __init__(
         self,
         indices: List[int],
-        transform_on_train: bool = True,
-        transform_on_eval: bool = True,
-        transform_on_fantasize: bool = True,
         reverse: bool = False,
     ) -> None:
         r"""Initialize transform.
 
         Args:
             indices: The indices of the inputs to log transform.
-            transform_on_train: A boolean indicating whether to apply the
-                transforms in train() mode. Default: True.
-            transform_on_eval: A boolean indicating whether to apply the
-                transform in eval() mode. Default: True.
-            transform_on_fantasize: A boolean indicating whether to apply the
-                transform when called from within a `fantasize` call. Default: True.
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
         """
         super().__init__()
         self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
-        self.transform_on_train = transform_on_train
-        self.transform_on_eval = transform_on_eval
-        self.transform_on_fantasize = transform_on_fantasize
         self.reverse = reverse
 
     def _transform(self, X: Tensor) -> Tensor:
@@ -780,9 +657,6 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
     def __init__(
         self,
         indices: List[int],
-        transform_on_train: bool = True,
-        transform_on_eval: bool = True,
-        transform_on_fantasize: bool = True,
         reverse: bool = False,
         eps: float = 1e-7,
         concentration1_prior: Optional[Prior] = None,
@@ -793,12 +667,6 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
 
         Args:
             indices: The indices of the inputs to warp.
-            transform_on_train: A boolean indicating whether to apply the
-                transforms in train() mode. Default: True.
-            transform_on_eval: A boolean indicating whether to apply the
-                transform in eval() mode. Default: True.
-            transform_on_fantasize: A boolean indicating whether to apply the
-                transform when called from within a `fantasize` call. Default: True.
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
             eps: A small value used to clip values to be in the interval (0, 1).
@@ -810,9 +678,6 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         """
         super().__init__()
         self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
-        self.transform_on_train = transform_on_train
-        self.transform_on_eval = transform_on_eval
-        self.transform_on_fantasize = transform_on_fantasize
         self.reverse = reverse
         self.batch_shape = batch_shape or torch.Size([])
         self._X_min = eps
@@ -913,105 +778,6 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         return X_tf
 
 
-class AppendFeatures(InputTransform, Module):
-    r"""A transform that appends the input with a given set of features.
-
-    As an example, this can be used with `RiskMeasureMCObjective` to optimize risk
-    measures as described in [Cakmak2020risk]_. A tutorial notebook implementing the
-    rhoKG acqusition function introduced in [Cakmak2020risk]_ can be found at
-    https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables.
-
-    The steps for using this to obtain samples of a risk measure are as follows:
-
-    -   Train a model on `(x, w)` inputs and the corresponding observations;
-
-    -   Pass in an instance of `AppendFeatures` with the `feature_set` denoting the
-        samples of `W` as the `input_transform` to the trained model;
-
-    -   Call `posterior(...).rsample(...)` on the model with `x` inputs only to
-        get the joint posterior samples over `(x, w)`s, where the `w`s come
-        from the `feature_set`;
-
-    -   Pass these posterior samples through the `RiskMeasureMCObjective` of choice to
-        get the samples of the risk measure.
-
-    Note: The samples of the risk measure obtained this way are in general biased
-    since the `feature_set` does not fully represent the distribution of the
-    environmental variable.
-
-    Example:
-        >>> # We consider 1D `x` and 1D `w`, with `W` having a
-        >>> # uniform distribution over [0, 1]
-        >>> model = SingleTaskGP(
-        ...     train_X=torch.rand(10, 2),
-        ...     train_Y=torch.randn(10, 1),
-        ...     input_transform=AppendFeatures(feature_set=torch.rand(10, 1))
-        ... )
-        >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        >>> fit_gpytorch_model(mll)
-        >>> test_x = torch.rand(3, 1)
-        >>> # `posterior_samples` is a `10 x 30 x 1`-dim tensor
-        >>> posterior_samples = model.posterior(test_x).rsamples(torch.size([10]))
-        >>> risk_measure = VaR(alpha=0.8, n_w=10)
-        >>> # `risk_measure_samples` is a `10 x 3`-dim tensor of samples of the
-        >>> # risk measure VaR
-        >>> risk_measure_samples = risk_measure(posterior_samples)
-    """
-
-    def __init__(
-        self,
-        feature_set: Tensor,
-        transform_on_train: bool = False,
-        transform_on_eval: bool = True,
-        transform_on_fantasize: bool = False,
-    ) -> None:
-        r"""Append `feature_set` to each input.
-
-        Args:
-            feature_set: An `n_f x d_f`-dim tensor denoting the features to be
-                appended to the inputs.
-            transform_on_train: A boolean indicating whether to apply the
-                transforms in train() mode. Default: False.
-            transform_on_eval: A boolean indicating whether to apply the
-                transform in eval() mode. Default: True.
-            transform_on_fantasize: A boolean indicating whether to apply the
-                transform when called from within a `fantasize` call. Default: False.
-        """
-        super().__init__()
-        if feature_set.dim() != 2:
-            raise ValueError("`feature_set` must be an `n_f x d_f`-dim tensor!")
-        self.register_buffer("feature_set", feature_set)
-        self.transform_on_train = transform_on_train
-        self.transform_on_eval = transform_on_eval
-        self.transform_on_fantasize = transform_on_fantasize
-
-    def transform(self, X: Tensor) -> Tensor:
-        r"""Transform the inputs by appending `feature_set` to each input.
-
-        For each `1 x d`-dim element in the input tensor, this will produce
-        an `n_f x (d + d_f)`-dim tensor with `feature_set` appended as the last `d_f`
-        dimensions. For a generic `batch_shape x q x d`-dim `X`, this translates to a
-        `batch_shape x (q * n_f) x (d + d_f)`-dim output, where the values corresponding
-        to `X[..., i, :]` are found in `output[..., i * n_f: (i + 1) * n_f, :]`.
-
-        Note: Adding the `feature_set` on the `q-batch` dimension is necessary to avoid
-        introducing additional bias by evaluating the inputs on independent GP
-        sample paths.
-
-        Args:
-            X: A `batch_shape x q x d`-dim tensor of inputs.
-
-        Returns:
-            A `batch_shape x (q * n_f) x (d + d_f)`-dim tensor of appended inputs.
-        """
-        expanded_X = X.unsqueeze(dim=-2).expand(
-            *X.shape[:-1], self.feature_set.shape[0], -1
-        )
-        expanded_features = self.feature_set.expand(*expanded_X.shape[:-1], -1)
-        appended_X = torch.cat([expanded_X, expanded_features], dim=-1)
-        return appended_X.view(*X.shape[:-2], -1, appended_X.shape[-1])
-
-
 class FilterFeatures(InputTransform, Module):
 
     r"""A transform that filters the input with a given set of features indices.
@@ -1025,21 +791,12 @@ class FilterFeatures(InputTransform, Module):
     def __init__(
         self,
         feature_indices: Tensor,
-        transform_on_train: bool = True,
-        transform_on_eval: bool = True,
-        transform_on_fantasize: bool = True,
     ) -> None:
         r"""Filter features from a model.
 
         Args:
             feature_set: An one-dim tensor denoting the indices of the features to be
                 kept and fed to the model.
-            transform_on_train: A boolean indicating whether to apply the
-                transforms in train() mode. Default: True.
-            transform_on_eval: A boolean indicating whether to apply the
-                transform in eval() mode. Default: True.
-            transform_on_fantasize: A boolean indicating whether to apply the
-                transform when called from within a `fantasize` call. Default: True.
         """
         super().__init__()
         if feature_indices.dim() != 1:
@@ -1052,9 +809,6 @@ class FilterFeatures(InputTransform, Module):
             )
         if len(feature_indices.unique()) != len(feature_indices):
             raise ValueError("Elements of `feature_indices` tensor must be unique!")
-        self.transform_on_train = transform_on_train
-        self.transform_on_eval = transform_on_eval
-        self.transform_on_fantasize = transform_on_fantasize
         self.register_buffer("feature_indices", feature_indices)
 
     def transform(self, X: Tensor) -> Tensor:
@@ -1062,10 +816,10 @@ class FilterFeatures(InputTransform, Module):
         feature indices and filtering out the others.
 
         Args:
-            X: A `batch_shape x q x d`-dim tensor of inputs.
+            X: A `batch_shape x n x d`-dim tensor of inputs.
 
         Returns:
-            A `batch_shape x q x e`-dim tensor of filtered inputs,
+            A `batch_shape x n x e`-dim tensor of filtered inputs,
                 where `e` is the length of `feature_indices`.
         """
         return X[..., self.feature_indices]
@@ -1082,107 +836,3 @@ class FilterFeatures(InputTransform, Module):
         if len(self.feature_indices) != len(other.feature_indices):
             return False
         return super().equals(other=other)
-
-
-class InputPerturbation(InputTransform, Module):
-    r"""A transform that adds the set of perturbations to the given input.
-
-    Similar to `AppendFeatures`, this can be used with `RiskMeasureMCObjective`
-    to optimize risk measures. See `AppendFeatures` for additional discussion
-    on optimizing risk measures.
-
-    A tutorial notebook using this with `qNoisyExpectedImprovement` can be found at
-    https://botorch.org/tutorials/risk_averse_bo_with_input_perturbations.
-    """
-
-    def __init__(
-        self,
-        perturbation_set: Union[Tensor, Callable[[Tensor], Tensor]],
-        bounds: Optional[Tensor] = None,
-        multiplicative: bool = False,
-        transform_on_train: bool = False,
-        transform_on_eval: bool = True,
-        transform_on_fantasize: bool = False,
-    ) -> None:
-        r"""Add `perturbation_set` to each input.
-
-        Args:
-            perturbation_set: An `n_p x d`-dim tensor denoting the perturbations
-                to be added to the inputs. Alternatively, this can be a callable that
-                returns `batch x n_p x d`-dim tensor of perturbations for input of
-                shape `batch x d`. This is useful for heteroscedastic perturbations.
-            bounds: A `2 x d`-dim tensor of lower and upper bounds for each
-                column of the input. If given, the perturbed inputs will be
-                clamped to these bounds.
-            multiplicative: A boolean indicating whether the input perturbations
-                are additive or multiplicative. If True, inputs will be multiplied
-                with the perturbations.
-            transform_on_train: A boolean indicating whether to apply the
-                transforms in train() mode. Default: False.
-            transform_on_eval: A boolean indicating whether to apply the
-                transform in eval() mode. Default: True.
-            transform_on_fantasize: A boolean indicating whether to apply the
-                transform when called from within a `fantasize` call. Default: False.
-        """
-        super().__init__()
-        if isinstance(perturbation_set, Tensor):
-            if perturbation_set.dim() != 2:
-                raise ValueError("`perturbation_set` must be an `n_p x d`-dim tensor!")
-            self.register_buffer("perturbation_set", perturbation_set)
-        else:
-            self.perturbation_set = perturbation_set
-        if bounds is not None:
-            if (
-                isinstance(perturbation_set, Tensor)
-                and bounds.shape[-1] != perturbation_set.shape[-1]
-            ):
-                raise ValueError(
-                    "`bounds` must have the same number of columns (last dimension) as "
-                    f"the `perturbation_set`! Got {bounds.shape[-1]} and "
-                    f"{perturbation_set.shape[-1]}."
-                )
-            self.register_buffer("bounds", bounds)
-        else:
-            self.bounds = None
-        self.multiplicative = multiplicative
-        self.transform_on_train = transform_on_train
-        self.transform_on_eval = transform_on_eval
-        self.transform_on_fantasize = transform_on_fantasize
-
-    def transform(self, X: Tensor) -> Tensor:
-        r"""Transform the inputs by adding `perturbation_set` to each input.
-
-        For each `1 x d`-dim element in the input tensor, this will produce
-        an `n_p x d`-dim tensor with the `perturbation_set` added to the input.
-        For a generic `batch_shape x q x d`-dim `X`, this translates to a
-        `batch_shape x (q * n_p) x d`-dim output, where the values corresponding
-        to `X[..., i, :]` are found in `output[..., i * n_w: (i + 1) * n_w, :]`.
-
-        Note: Adding the `perturbation_set` on the `q-batch` dimension is necessary
-        to avoid introducing additional bias by evaluating the inputs on independent
-        GP sample paths.
-
-        Args:
-            X: A `batch_shape x q x d`-dim tensor of inputs.
-
-        Returns:
-            A `batch_shape x (q * n_p) x d`-dim tensor of perturbed inputs.
-        """
-        if isinstance(self.perturbation_set, Tensor):
-            perturbations = self.perturbation_set
-        else:
-            perturbations = self.perturbation_set(X)
-        expanded_X = X.unsqueeze(dim=-2).expand(
-            *X.shape[:-1], perturbations.shape[-2], -1
-        )
-        expanded_perturbations = perturbations.expand(*expanded_X.shape[:-1], -1)
-        if self.multiplicative:
-            perturbed_inputs = expanded_X * expanded_perturbations
-        else:
-            perturbed_inputs = expanded_X + expanded_perturbations
-        perturbed_inputs = perturbed_inputs.reshape(*X.shape[:-2], -1, X.shape[-1])
-        if self.bounds is not None:
-            perturbed_inputs = torch.maximum(
-                torch.minimum(perturbed_inputs, self.bounds[1]), self.bounds[0]
-            )
-        return perturbed_inputs

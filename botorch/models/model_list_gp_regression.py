@@ -102,13 +102,3 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
             The current model, subset to the specified output indices.
         """
         return self.__class__(*[deepcopy(self.models[i]) for i in idcs])
-
-    def _set_transformed_inputs(self) -> None:
-        r"""Update training inputs with transformed inputs."""
-        for m in self.models:
-            m._set_transformed_inputs()
-
-    def _revert_to_original_inputs(self) -> None:
-        r"""Revert training inputs back to original."""
-        for m in self.models:
-            m._revert_to_original_inputs()

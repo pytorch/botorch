@@ -10,7 +10,6 @@ Abstract base module for all BoTorch models.
 
 from __future__ import annotations
 
-import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from copy import deepcopy
@@ -19,32 +18,48 @@ from typing import Any, Callable, Dict, List, Optional
 import numpy as np
 import torch
 from botorch import settings
-from botorch.models.utils import fantasize as fantasize_flag
 from botorch.posteriors import Posterior, PosteriorList
 from botorch.posteriors.fully_bayesian import FullyBayesianPosteriorList
 from botorch.sampling.samplers import MCSampler
 from botorch.utils.containers import TrainingData
 from botorch.utils.transforms import is_fully_bayesian
+from gpytorch.distributions import MultivariateNormal
 from torch import Tensor
 from torch.nn import Module, ModuleList
 
 
 class Model(Module, ABC):
-    r"""Abstract base class for BoTorch models.
+    r"""Abstract base class for BoTorch models."""
 
-    Args:
-        _has_transformed_inputs: A boolean denoting whether `train_inputs` are currently
-            stored as transformed or not.
-        _original_train_inputs: A Tensor storing the original train inputs for use in
-            `_revert_to_original_inputs`. Note that this is necessary since
-            transform / untransform cycle introduces numerical errors which lead
-            to upstream errors during training.
-    """
+    def forward(self, x: Tensor) -> MultivariateNormal:
+        r"""Transforms the inputs and computes the prior over model outputs
+        at the provided points.
 
-    _has_transformed_inputs: bool = False
-    _original_train_inputs: Optional[Tensor] = None
+        Args:
+            x: A `b x q x d`-dim Tensor of inputs, where `d` is the dimension of
+                the feature space, `q` is the number of points considered jointly,
+                and `b` is the batch dimension.
+
+        Returns:
+            A MultivariateNormal object denoting the prior distribution.
+        """
+        x = self.transform_inputs(x)
+        return self._forward(x)
 
     @abstractmethod
+    def _forward(self, x: Tensor) -> MultivariateNormal:
+        r"""Computes the prior over model outputs at the provided points.
+
+        Args:
+            x: A `b x q x d`-dim Tensor of inputs, where `d` is the dimension of
+                the feature space, `q` is the number of points considered jointly,
+                and `b` is the batch dimension.
+
+        Returns:
+            A MultivariateNormal object denoting the prior distribution.
+        """
+        pass  # pragma: no cover
+
     def posterior(
         self,
         X: Tensor,
@@ -53,11 +68,8 @@ class Model(Module, ABC):
         posterior_transform: Optional[Callable[[Posterior], Posterior]] = None,
         **kwargs: Any,
     ) -> Posterior:
-        r"""Computes the posterior over model outputs at the provided points.
-
-        Note: The input transforms should be applied here using
-            `self.transform_inputs(X)` after the `self.eval()` call and before
-            any `model.forward` or `model.likelihood` calls.
+        r"""Augments the inputs, if needed, and computes the posterior over model
+        outputs at the provided points.
 
         Args:
             X: A `b x q x d`-dim Tensor, where `d` is the dimension of the
@@ -70,6 +82,42 @@ class Model(Module, ABC):
                 computes the posterior over all model outputs.
             observation_noise: If True, add observation noise to the posterior.
             posterior_transform: An optional PosteriorTransform.
+
+        Returns:
+            A `Posterior` object, representing a batch of `b` joint distributions
+            over `q` points and `m` outputs each.
+        """
+        X = self.augment_inputs(X)
+        posterior = self._posterior(
+            X=X,
+            output_indices=output_indices,
+            observation_noise=observation_noise,
+            kwargs=kwargs,
+        )
+        if posterior_transform is not None:
+            posterior = posterior_transform(posterior)
+        return posterior
+
+    @abstractmethod
+    def _posterior(
+        self,
+        X: Tensor,
+        output_indices: Optional[List[int]] = None,
+        observation_noise: bool = False,
+        **kwargs: Any,
+    ) -> Posterior:
+        r"""Computes the posterior over model outputs at the provided points.
+
+        Args:
+            X: A `b x q x d`-dim Tensor, where `d` is the dimension of the
+                feature space, `q` is the number of points considered jointly,
+                and `b` is the batch dimension.
+            output_indices: A list of indices, corresponding to the outputs over
+                which to compute the posterior (if the model is multi-output).
+                Can be used to speed up computation if only a subset of the
+                model's outputs are required for optimization. If omitted,
+                computes the posterior over all model outputs.
+            observation_noise: If True, add observation noise to the posterior.
 
         Returns:
             A `Posterior` object, representing a batch of `b` joint distributions
@@ -161,13 +209,12 @@ class Model(Module, ABC):
             The constructed fantasy model.
         """
         propagate_grads = kwargs.pop("propagate_grads", False)
-        with fantasize_flag():
-            with settings.propagate_grads(propagate_grads):
-                post_X = self.posterior(X, observation_noise=observation_noise)
-            Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
-            return self.condition_on_observations(
-                X=self.transform_inputs(X), Y=Y_fantasized, **kwargs
-            )
+        with settings.propagate_grads(propagate_grads):
+            post_X = self._posterior(X, observation_noise=observation_noise)
+        Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
+        return self.condition_on_observations(
+            X=self.transform_inputs(X), Y=Y_fantasized, **kwargs
+        )
 
     @classmethod
     def construct_inputs(
@@ -186,11 +233,11 @@ class Model(Module, ABC):
         r"""Transform inputs.
 
         Args:
-            X: A tensor of inputs
+            X: A `b x q x d`-dim tensor of inputs.
             input_transform: A Module that performs the input transformation.
 
         Returns:
-            A tensor of transformed inputs
+            A `b x q x d`-dim tensor of transformed inputs.
         """
         if input_transform is not None:
             input_transform.to(X)
@@ -200,49 +247,22 @@ class Model(Module, ABC):
         except AttributeError:
             return X
 
-    def _set_transformed_inputs(self) -> None:
-        r"""Update training inputs with transformed inputs."""
-        if hasattr(self, "input_transform") and not self._has_transformed_inputs:
-            if hasattr(self, "train_inputs"):
-                self._original_train_inputs = self.train_inputs[0]
-                with torch.no_grad():
-                    X_tf = self.input_transform.preprocess_transform(
-                        self.train_inputs[0]
-                    )
-                self.set_train_data(X_tf, strict=False)
-                self._has_transformed_inputs = True
-            else:
-                warnings.warn(
-                    "Could not update `train_inputs` with transformed inputs "
-                    f"since {self.__class__.__name__} does not have a `train_inputs` "
-                    "attribute. Make sure that the `input_transform` is applied to "
-                    "both the train inputs and test inputs.",
-                    RuntimeWarning,
-                )
-
-    def _revert_to_original_inputs(self) -> None:
-        r"""Revert training inputs back to original."""
-        if hasattr(self, "input_transform") and self._has_transformed_inputs:
-            self.set_train_data(self._original_train_inputs, strict=False)
-            self._has_transformed_inputs = False
-
-    def eval(self) -> Model:
-        r"""Puts the model in `eval` mode and sets the transformed inputs."""
-        self._set_transformed_inputs()
-        return super().eval()
-
-    def train(self, mode: bool = True) -> Model:
-        r"""Puts the model in `train` mode and reverts to the original inputs.
+    def augment_inputs(
+        self,
+        X: Tensor,
+    ) -> Tensor:
+        r"""Applies the input augmentation transform, if any.
 
         Args:
-            mode: A boolean denoting whether to put in `train` or `eval` mode.
-                If `False`, model is put in `eval` mode.
+            X: A `b x q x d`-dim tensor of inputs.
+
+        Returns:
+            A `b x q' x d'`-dim tensor of augmented inputs.
         """
-        if mode:
-            self._revert_to_original_inputs()
-        else:
-            self._set_transformed_inputs()
-        return super().train(mode=mode)
+        try:
+            return self.input_augmentation_transform(X)
+        except AttributeError:
+            return X
 
 
 class ModelList(Model):

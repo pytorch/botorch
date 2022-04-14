@@ -16,8 +16,9 @@ import torch
 from botorch import settings
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.input_augmentation import InputAugmentationTransform
 from botorch.models.transforms.outcome import Log, OutcomeTransform
-from botorch.models.utils import fantasize as fantasize_flag, validate_input_scaling
+from botorch.models.utils import validate_input_scaling
 from botorch.sampling.samplers import MCSampler
 from botorch.utils.containers import TrainingData
 from gpytorch.constraints.constraints import GreaterThan
@@ -70,6 +71,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         mean_module: Optional[Mean] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
+        input_augmentation_transform: Optional[InputAugmentationTransform] = None,
     ) -> None:
         r"""A single-task exact GP model.
 
@@ -88,6 +90,8 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 `.posterior` on the model will be on the original scale).
             input_transform: An input transform that is applied in the model's
                 forward pass.
+            input_augmentation_transform: An input augmentation transform that is
+                applied in the `posterior` call.
 
         Example:
             >>> train_X = torch.rand(20, 2)
@@ -148,11 +152,11 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             self.outcome_transform = outcome_transform
         if input_transform is not None:
             self.input_transform = input_transform
+        if input_augmentation_transform is not None:
+            self.input_augmentation_transform = input_augmentation_transform
         self.to(train_X)
 
-    def forward(self, x: Tensor) -> MultivariateNormal:
-        if self.training:
-            x = self.transform_inputs(x)
+    def _forward(self, x: Tensor) -> MultivariateNormal:
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
@@ -191,6 +195,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         mean_module: Optional[Mean] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
+        input_augmentation_transform: Optional[InputAugmentationTransform] = None,
         **kwargs: Any,
     ) -> None:
         r"""A single-task exact GP model using fixed noise levels.
@@ -210,6 +215,8 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 `.posterior` on the model will be on the original scale).
             input_transform: An input transfrom that is applied in the model's
                 forward pass.
+            input_augmentation_transform: An input augmentation transform that is
+                applied in the `posterior` call.
 
         Example:
             >>> train_X = torch.rand(20, 2)
@@ -262,7 +269,8 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             self.input_transform = input_transform
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
-
+        if input_augmentation_transform is not None:
+            self.input_augmentation_transform = input_augmentation_transform
         self.to(train_X)
 
     def fantasize(
@@ -298,24 +306,19 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             The constructed fantasy model.
         """
         propagate_grads = kwargs.pop("propagate_grads", False)
-        with fantasize_flag():
-            with settings.propagate_grads(propagate_grads):
-                post_X = self.posterior(
-                    X, observation_noise=observation_noise, **kwargs
-                )
-            Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
-            # Use the mean of the previous noise values (TODO: be smarter here).
-            # noise should be batch_shape x q x m when X is batch_shape x q x d, and
-            # Y_fantasized is num_fantasies x batch_shape x q x m.
-            noise_shape = Y_fantasized.shape[1:]
-            noise = self.likelihood.noise.mean().expand(noise_shape)
-            return self.condition_on_observations(
-                X=self.transform_inputs(X), Y=Y_fantasized, noise=noise
-            )
+        with settings.propagate_grads(propagate_grads):
+            post_X = self._posterior(X, observation_noise=observation_noise, **kwargs)
+        Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
+        # Use the mean of the previous noise values (TODO: be smarter here).
+        # noise should be batch_shape x q x m when X is batch_shape x q x d, and
+        # Y_fantasized is num_fantasies x batch_shape x q x m.
+        noise_shape = Y_fantasized.shape[1:]
+        noise = self.likelihood.noise.mean().expand(noise_shape)
+        return self.condition_on_observations(
+            X=self.transform_inputs(X), Y=Y_fantasized, noise=noise
+        )
 
-    def forward(self, x: Tensor) -> MultivariateNormal:
-        if self.training:
-            x = self.transform_inputs(x)
+    def _forward(self, x: Tensor) -> MultivariateNormal:
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
@@ -370,6 +373,7 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
         train_Yvar: Tensor,
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
+        input_augmentation_transform: Optional[InputAugmentationTransform] = None,
     ) -> None:
         r"""A single-task exact GP model using a heteroskedastic noise model.
 
@@ -386,6 +390,8 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
                 variances, which will happen after this transform is applied.
             input_transform: An input transfrom that is applied in the model's
                 forward pass.
+            input_augmentation_transform: An input augmentation transform that is
+                applied in the `posterior` call.
 
         Example:
             >>> train_X = torch.rand(20, 2)
@@ -419,6 +425,7 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             train_Y=train_Y,
             likelihood=likelihood,
             input_transform=input_transform,
+            input_augmentation_transform=input_augmentation_transform,
         )
         self.register_added_loss_term("noise_added_loss")
         self.update_added_loss_term(
