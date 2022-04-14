@@ -47,11 +47,24 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 tkwargs = {"device": torch.device("cuda" if torch.cuda.is_available() else "cpu"), "dtype": torch.double}
 
 
-# ## Simple model fitting
-# We generate a simple function that only depends on the first parameter and show that the SAAS
-# model sets all other lengthscale to large values.
+# The time to fit the SAAS model can be decreased by lowering
+# `WARMUP_STEPS` and `NUM_SAMPLES`. We recommend using 512 warmup steps and 256 samples when
+# possible and to not use fewer than 256 warmup steps and 128 samples. By default, we only
+# keep each 16th sample which with 256 samples results in 32 hyperparameter samples.
 
 # In[3]:
+
+
+WARMUP_STEPS = 512 if not SMOKE_TEST else 32
+NUM_SAMPLES = 256 if not SMOKE_TEST else 16
+THINNING = 16
+
+
+# ## Simple model fitting
+# We generate a simple function that only depends on the first parameter and show that the SAAS
+# model sets all other lengthscales to large values.
+
+# In[4]:
 
 
 train_X = torch.rand(10, 4, **tkwargs)
@@ -60,57 +73,63 @@ train_Y = torch.sin(train_X[:, :1])
 test_Y = torch.sin(test_X[:, :1])
 
 
-# In[4]:
-
-
-saas_gp = SaasFullyBayesianSingleTaskGP(train_X=train_X, train_Y=train_Y)
-fit_fully_bayesian_model_nuts(saas_gp)
-with torch.no_grad():
-    posterior = saas_gp.posterior(test_X, marginalize_over_mcmc_samples=True)
-
-
-# Test predictions are very close to the ground-truth
+# By default, we infer the unknown noise variance in the data. You can also pass in a known 
+# noise variance (`train_Yvar`) for each observation, which may be useful in cases where you for example
+# know that the problem is noise-free and can then set the noise variance to a small value such as `1e-6`.
+# 
+# In this case you can construct a model as follows:
+# ```
+# gp = SaasFullyBayesianSingleTaskGP(train_X=train_X, train_Y=train_Y, train_Yvar=torch.full_like(train_Y, 1e-6))
+# ```
 
 # In[5]:
 
 
-print(posterior.mean.squeeze(-1))
-print(test_Y.squeeze(-1))
+gp = SaasFullyBayesianSingleTaskGP(train_X=train_X, train_Y=train_Y)
+fit_fully_bayesian_model_nuts(
+    gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, thinning=THINNING, disable_progbar=False
+)
+with torch.no_grad():
+    posterior = gp.posterior(test_X)
 
 
-# The first feature has the smallest lengthscale
+# Computing the median lengthscales over the MCMC dimensions makes it clear that the first feature has the smallest lengthscale
+# 
 
 # In[6]:
 
 
-print(saas_gp.median_lengthscale)
+print(gp.median_lengthscale.detach())
 
 
-# ## Model fitting with fixed noise
-# By default, we infer the unknown noise variance in the data. You can also pass in a known 
-# noise variance for each observation, which may be useful in cases where you for example
-# know that the problem is noise-free and can then set the noise variance to a small value such as `1e-6`.
+# ### Make predictions with the model
+# 
+# In the next cell we show how to make predictions with the SAAS model. You compute the mean
+# and variance for test points just like for any other BoTorch posteriors. Note that the mean 
+# and posterior will have an extra batch dimension at -3 that corresponds to the number of MCMC
+# samples (which is 16 in this tutorial).
 
 # In[7]:
 
 
-saas_gp = SaasFullyBayesianSingleTaskGP(train_X=train_X, train_Y=train_Y, train_Yvar=torch.full_like(train_Y, 1e-6))
-fit_fully_bayesian_model_nuts(saas_gp)
-with torch.no_grad():
-    posterior = saas_gp.posterior(test_X, marginalize_over_mcmc_samples=True)
+print(posterior.mean.shape)
+print(posterior.variance.shape)
 
+
+# We also provide several convenience methods for computing different statistics over the MCMC samples:
+# ```
+# mixture_mean = posterior.mixture_mean
+# mixture_variance = posterior.mixture_variance
+# mixture_median = posterior.mixture_median
+# mixture_quantile = posterior.quantile(q=0.95)
+# ```
 
 # In[8]:
 
 
-print(posterior.mean.squeeze(-1))
-print(test_Y.squeeze(-1))
-
-
-# In[9]:
-
-
-print(saas_gp.median_lengthscale)
+print(f"Ground truth:     {test_Y.squeeze(-1)}")
+print(f"Mixture mean:     {posterior.mixture_mean.squeeze(-1)}")
+print(f"Mixture median:   {posterior.mixture_median.squeeze(-1)}")
 
 
 # ## Optimize Branin embedded in a 50D space
@@ -119,14 +138,8 @@ print(saas_gp.median_lengthscale)
 # SAASBO is able to identify the important dimensions and efficiently optimize this function.
 # We work with the domain $[0, 1]^d$ and unnormalize the inputs to the true domain of Branin 
 # before evaluating the function.
-# 
-# The time to fit the SAAS model can be decreased by lowering
-# `WARMUP_STEPS` and `NUM_SAMPLES`. We recommend using 512 warmup steps and 256 samples when
-# possible and to not use fewer than 256 warmup steps and 128 samples. By default, we only
-# keep each 16th sample (thinning) which with 256 samples results in 32 hyperparameter samples.
-# We average over these samples when computing the acquisition function.
 
-# In[10]:
+# In[9]:
 
 
 branin = Branin().to(**tkwargs)
@@ -138,7 +151,7 @@ def branin_emb(x):
     return branin(lb + (ub - lb) * x[..., :2])
 
 
-# In[11]:
+# In[10]:
 
 
 DIM = 50 if not SMOKE_TEST else 10
@@ -149,11 +162,6 @@ N_ITERATIONS = 10 if not SMOKE_TEST else 1
 BATCH_SIZE = 4 if not SMOKE_TEST else 1
 print(f"Using a total of {N_INIT + BATCH_SIZE * N_ITERATIONS} function evaluations")
 
-# Settings for NUTS
-WARMUP_STEPS = 512 if not SMOKE_TEST else 32
-NUM_SAMPLES = 256 if not SMOKE_TEST else 16
-THINNING = 16
-
 
 # ### Run the optimization
 # We use 10 initial Sobol points followed by 10 iterations of BO using a batch size of 4, 
@@ -161,7 +169,7 @@ THINNING = 16
 # the sign of the function values before fitting the SAAS model as the BoTorch acquisition
 # functions assume maximization.
 
-# In[12]:
+# In[11]:
 
 
 X = SobolEngine(dimension=DIM, scramble=True, seed=0).draw(N_INIT).to(**tkwargs)
@@ -177,9 +185,9 @@ for i in range(N_ITERATIONS):
         gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, thinning=THINNING, disable_progbar=True
     )
 
-    qEI = qExpectedImprovement(model=gp, best_f=train_Y.max())
+    EI = qExpectedImprovement(model=gp, best_f=train_Y.max())
     candidates, acq_values = optimize_acqf(
-        qEI,
+        EI,
         bounds=torch.cat((torch.zeros(1, DIM), torch.ones(1, DIM))).to(**tkwargs),
         q=BATCH_SIZE,
         num_restarts=10,
@@ -200,7 +208,7 @@ for i in range(N_ITERATIONS):
 # We can see that we were able to get close to the global optimium of $\approx 0.398$ after 50 function evaluations.
 # 
 
-# In[13]:
+# In[12]:
 
 
 Y_np = Y.cpu().numpy()
@@ -218,11 +226,11 @@ plt.show()
 
 
 # ## Predict on some test points
-# We fit a model using 50 datapoints and predict on 50 test 
+# We fit a model using the 50 datapoints collected by SAASBO and predict on 50 test 
 # points in order to see how well the SAAS model predicts out-of-sample.
 # The plot shows the mean and a 95% confidence interval for each test point.
 
-# In[14]:
+# In[13]:
 
 
 train_X = SobolEngine(dimension=DIM, scramble=True, seed=0).draw(50).to(**tkwargs)
@@ -233,26 +241,33 @@ test_Y = branin_emb(test_X).unsqueeze(-1)
 gp = SaasFullyBayesianSingleTaskGP(
     train_X=train_X, train_Y=train_Y, train_Yvar=torch.full_like(train_Y, 1e-6), outcome_transform=Standardize(m=1)
 )
-fit_fully_bayesian_model_nuts(gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES)
+fit_fully_bayesian_model_nuts(
+    gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, thinning=THINNING, disable_progbar=False
+)
+
+
+# In[14]:
+
+
+with torch.no_grad():
+    posterior = gp.posterior(test_X)
+median = posterior.mixture_median
+q1 = posterior.mixture_quantile(q=0.025)
+q2 = posterior.mixture_quantile(q=0.975)
 
 
 # In[15]:
 
 
-with torch.no_grad():
-    posterior = gp.posterior(test_X, marginalize_over_mcmc_samples=True)
-    mean, var = posterior.mean, posterior.variance
-
-
-# In[16]:
-
-
 fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 ax.plot([0, 80], [0, 80], "b--", lw=2)
+
+yerr1, yerr2 = median - q1, q2 - median
+yerr = torch.cat((yerr1.unsqueeze(0), yerr2.unsqueeze(0)), dim=0).squeeze(-1)
 markers, caps, bars = ax.errorbar(
-    test_Y.squeeze(-1).cpu().numpy(),
-    mean.squeeze(-1).cpu().numpy(),
-    yerr=1.96 * var.squeeze(-1).sqrt().cpu().numpy(),
+    test_Y.squeeze(-1).cpu(),
+    median.squeeze(-1).cpu(),
+    yerr=yerr.cpu(),
     fmt=".",
     capsize=4,
     elinewidth=2.0,
@@ -277,7 +292,7 @@ ax.grid(True)
 # We can confirm that this is the case below as the lengthscales of parameters 0 and 1 are 
 # small with all other lengthscales being large.
 
-# In[17]:
+# In[16]:
 
 
 median_lengthscales = gp.median_lengthscale
@@ -285,7 +300,7 @@ for i in median_lengthscales.argsort()[:10]:
     print(f"Parameter {i:2}) Median lengthscale = {median_lengthscales[i].item():.2e}")
 
 
-# In[17]:
+# In[16]:
 
 
 
