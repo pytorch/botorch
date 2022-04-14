@@ -26,22 +26,26 @@ from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
-from botorch.models import ModelListGP
+from botorch.models import ModelListGP, ModelList
+from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.fully_bayesian import (
     MIN_INFERRED_NOISE_LEVEL,
     PyroModel,
     SaasFullyBayesianSingleTaskGP,
     SaasPyroModel,
+    MCMC_DIM,
 )
 from botorch.models.transforms import Normalize, Standardize
-from botorch.posteriors import FullyBayesianPosterior
+from botorch.posteriors.fully_bayesian import batched_bisect, FullyBayesianPosterior
 from botorch.sampling.samplers import IIDNormalSampler
 from botorch.utils.containers import TrainingData
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase
+from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
+from gpytorch.lazy.non_lazy_tensor import lazify
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihood
 from gpytorch.means import ConstantMean
 
@@ -205,22 +209,95 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 )
 
             # Predict on some test points
-            for batch_shape, marginalize in itertools.product(
-                [[5], [6, 5, 2]], [True, False]
-            ):
+            for batch_shape in [[5], [6, 5, 2]]:
                 test_X = torch.rand(*batch_shape, d, **tkwargs)
-                posterior = model.posterior(
-                    test_X, marginalize_over_mcmc_samples=marginalize
-                )
+                posterior = model.posterior(test_X)
                 self.assertIsInstance(posterior, FullyBayesianPosterior)
+                # Mean/variance
                 expected_shape = (
-                    batch_shape + [1]
-                    if marginalize
-                    else batch_shape[:-1] + [3] + batch_shape[-1:] + [1]
+                    batch_shape[: MCMC_DIM + 2]
+                    + [3]
+                    + batch_shape[MCMC_DIM + 2 :]
+                    + [1]
                 )
                 mean, var = posterior.mean, posterior.variance
                 self.assertEqual(mean.shape, torch.Size(expected_shape))
                 self.assertEqual(var.shape, torch.Size(expected_shape))
+                # Mixture mean/variance/median/quantiles
+                mixture_mean = posterior.mixture_mean
+                mixture_median = posterior.mixture_median
+                mixture_variance = posterior.mixture_variance
+                mixture_quantile1 = posterior.mixture_quantile(q=0.01)
+                mixture_quantile2 = posterior.mixture_quantile(q=0.99)
+                self.assertEqual(mixture_mean.shape, torch.Size(batch_shape + [1]))
+                self.assertEqual(mixture_median.shape, torch.Size(batch_shape + [1]))
+                self.assertTrue(
+                    torch.allclose(mixture_median, posterior.mixture_quantile(q=0.5))
+                )
+                self.assertEqual(mixture_variance.shape, torch.Size(batch_shape + [1]))
+                self.assertTrue(mixture_variance.min() > 0.0)
+                self.assertEqual(mixture_quantile1.shape, torch.Size(batch_shape + [1]))
+                self.assertEqual(mixture_quantile2.shape, torch.Size(batch_shape + [1]))
+                self.assertTrue((mixture_quantile2 > mixture_quantile1).all())
+                dist = torch.distributions.Normal(
+                    loc=posterior.mean, scale=posterior.variance.sqrt()
+                )
+                torch.allclose(
+                    dist.cdf(mixture_median.unsqueeze(MCMC_DIM)).mean(dim=MCMC_DIM),
+                    0.5 * torch.ones(batch_shape + [1], **tkwargs),
+                )
+                torch.allclose(
+                    dist.cdf(mixture_quantile1.unsqueeze(MCMC_DIM)).mean(dim=MCMC_DIM),
+                    0.05 * torch.ones(batch_shape + [1], **tkwargs),
+                )
+                torch.allclose(
+                    dist.cdf(mixture_quantile2.unsqueeze(MCMC_DIM)).mean(dim=MCMC_DIM),
+                    0.95 * torch.ones(batch_shape + [1], **tkwargs),
+                )
+                # Invalid quantile should raise
+                with self.assertRaisesRegex(ValueError, "q is expected to be a float."):
+                    posterior.mixture_quantile(q="cat")
+                for q in [-1.0, 0.0, 1.0, 1.3333]:
+                    with self.assertRaisesRegex(
+                        ValueError, "q is expected to be in the range"
+                    ):
+                        posterior.mixture_quantile(q=q)
+
+                # Test model lists with fully Bayesian models and mixed modeling
+                deterministic = GenericDeterministicModel(f=lambda x: x[..., :1])
+                for ModelListClass, model2 in zip(
+                    [ModelList, ModelListGP], [deterministic, model]
+                ):
+                    expected_shape = (
+                        batch_shape[: MCMC_DIM + 2]
+                        + [3]
+                        + batch_shape[MCMC_DIM + 2 :]
+                        + [2]
+                    )
+                    model_list = ModelListClass(model, model2)
+                    posterior = model_list.posterior(test_X)
+                    mean, var = posterior.mean, posterior.variance
+                    self.assertEqual(mean.shape, torch.Size(expected_shape))
+                    self.assertEqual(var.shape, torch.Size(expected_shape))
+
+            # Mixing fully Bayesian models with different batch shapes isn't supported
+            _, _, _, model2 = self._get_data_and_model(
+                infer_noise=infer_noise, **tkwargs
+            )
+            fit_fully_bayesian_model_nuts(
+                model2, warmup_steps=1, num_samples=1, thinning=1, disable_progbar=True
+            )
+            with self.assertRaisesRegex(
+                NotImplementedError,
+                "`FullyBayesianPosteriorList.event_shape` is only supported if all "
+                "constituent posteriors have the same `event_shape`.",
+            ):
+                ModelList(model, model2).posterior(test_X).event_shape
+            with self.assertRaisesRegex(
+                NotImplementedError,
+                "All MCMC batch dimensions must have the same size, got",
+            ):
+                ModelList(model, model2).posterior(test_X).mean
 
             # Check properties
             median_lengthscale = model.median_lengthscale
@@ -260,9 +337,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 fit_fully_bayesian_model_nuts(
                     gp1, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
                 )
-                posterior1 = gp1.posterior(
-                    (test_X - lb) / (ub - lb), marginalize_over_mcmc_samples=True
-                )
+                posterior1 = gp1.posterior((test_X - lb) / (ub - lb))
                 pred_mean1 = mu + sigma * posterior1.mean
                 pred_var1 = (sigma ** 2) * posterior1.variance
 
@@ -279,7 +354,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 fit_fully_bayesian_model_nuts(
                     gp2, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
                 )
-                posterior2 = gp2.posterior(test_X, marginalize_over_mcmc_samples=True)
+                posterior2 = gp2.posterior(test_X)
                 pred_mean2, pred_var2 = posterior2.mean, posterior2.variance
 
             self.assertTrue(torch.allclose(pred_mean1, pred_mean2))
@@ -293,6 +368,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
         fit_fully_bayesian_model_nuts(
             model, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
         )
+        deterministic = GenericDeterministicModel(f=lambda x: x[..., :1])
         sampler = IIDNormalSampler(num_samples=2)
         acquisition_functions = [
             ExpectedImprovement(model=model, best_f=train_Y.max()),
@@ -314,6 +390,21 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             ),
             qExpectedHypervolumeImprovement(
                 model=ModelListGP(model, model),
+                ref_point=torch.zeros(2, **tkwargs),
+                sampler=sampler,
+                partitioning=NondominatedPartitioning(
+                    ref_point=torch.zeros(2, **tkwargs), Y=train_Y.repeat([1, 2])
+                ),
+            ),
+            # qEHVI/qNEHVI with mixed models
+            qNoisyExpectedHypervolumeImprovement(
+                model=ModelList(deterministic, model),
+                X_baseline=train_X,
+                ref_point=torch.zeros(2, **tkwargs),
+                sampler=sampler,
+            ),
+            qExpectedHypervolumeImprovement(
+                model=ModelList(deterministic, model),
                 ref_point=torch.zeros(2, **tkwargs),
                 sampler=sampler,
                 partitioning=NondominatedPartitioning(
@@ -444,5 +535,54 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                         model.pyro_model.train_Yvar,
                         train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL) / (sigma ** 2),
                         atol=1e-4,
+                    )
+                )
+
+    def test_bisect(self):
+        def f(x):
+            return 1 + x
+
+        for dtype, batch_shape in itertools.product(
+            (torch.float, torch.double), ([5], [6, 5, 2])
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            bounds = torch.stack(
+                (
+                    torch.zeros(batch_shape, **tkwargs),
+                    torch.ones(batch_shape, **tkwargs),
+                )
+            )
+            for target, tol in itertools.product([1.01, 1.5, 1.99], [1e-3, 1e-6]):
+                x = batched_bisect(f=f, target=target, bounds=bounds, tol=tol)
+                self.assertTrue(
+                    torch.allclose(
+                        f(x), target * torch.ones(batch_shape, **tkwargs), atol=tol
+                    )
+                )
+            # Do one step and make sure we didn't converge in this case
+            x = batched_bisect(f=f, target=1.71, bounds=bounds, max_steps=1)
+            self.assertTrue(
+                torch.allclose(x, 0.75 * torch.ones(batch_shape, **tkwargs), atol=tol)
+            )
+            # Target outside the bounds should raise
+            with self.assertRaisesRegex(
+                ValueError,
+                "The target is not contained in the interval specified by the bounds",
+            ):
+                batched_bisect(f=f, target=2.1, bounds=bounds)
+            # Test analytic solution when there is only one MCMC sample
+            mean = torch.randn(1, 5, **tkwargs)
+            variance = torch.rand(1, 5, **tkwargs)
+            covar = torch.diag_embed(variance)
+            mvn = MultivariateNormal(mean, lazify(covar))
+            posterior = FullyBayesianPosterior(mvn=mvn)
+            dist = torch.distributions.Normal(
+                loc=mean.unsqueeze(-1), scale=variance.unsqueeze(-1).sqrt()
+            )
+            for q in [0.1, 0.5, 0.9]:
+                x = posterior.mixture_quantile(q=q)
+                self.assertTrue(
+                    torch.allclose(
+                        dist.cdf(x), q * torch.ones(1, 5, **tkwargs), atol=1e-4
                     )
                 )

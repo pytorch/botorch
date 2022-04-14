@@ -11,7 +11,7 @@ Abstract base module for all botorch posteriors.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Optional
+from typing import List, Optional
 
 import torch
 from torch import Tensor
@@ -185,6 +185,28 @@ class PosteriorList(Posterior):
         r"""The variance of the posterior as a `(b) x n x m`-dim Tensor."""
         return torch.cat([p.variance for p in self.posteriors], dim=-1)
 
+    def _rsample(
+        self,
+        sample_shape: Optional[torch.Size] = None,
+        base_samples: Optional[Tensor] = None,
+    ) -> List[Tensor]:
+        if base_samples is not None:
+            split_sizes = [
+                p.base_sample_shape[-1] if p.base_sample_shape else 0
+                for p in self.posteriors
+            ]
+            base_sample_splits = torch.split(base_samples, split_sizes, dim=-1)
+            base_sample_splits = [
+                bss if ss > 0 else None
+                for ss, bss in zip(split_sizes, base_sample_splits)
+            ]
+        else:
+            base_sample_splits = [None] * len(self.posteriors)
+        return [
+            p.rsample(sample_shape=sample_shape, base_samples=bss)
+            for p, bss in zip(self.posteriors, base_sample_splits)
+        ]
+
     def rsample(
         self,
         sample_shape: Optional[torch.Size] = None,
@@ -203,20 +225,5 @@ class PosteriorList(Posterior):
         Returns:
             A `sample_shape x event`-dim Tensor of samples from the posterior.
         """
-        if base_samples is not None:
-            split_sizes = [
-                p.base_sample_shape[-1] if p.base_sample_shape else 0
-                for p in self.posteriors
-            ]
-            base_sample_splits = torch.split(base_samples, split_sizes, dim=-1)
-            base_sample_splits = [
-                bss if ss > 0 else None
-                for ss, bss in zip(split_sizes, base_sample_splits)
-            ]
-        else:
-            base_sample_splits = [None] * len(self.posteriors)
-        samples = [
-            p.rsample(sample_shape=sample_shape, base_samples=bss)
-            for p, bss in zip(self.posteriors, base_sample_splits)
-        ]
+        samples = self._rsample(sample_shape=sample_shape, base_samples=base_samples)
         return torch.cat(samples, dim=-1)
