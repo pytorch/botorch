@@ -5,6 +5,8 @@
 # 
 # Max-value entropy search (MES) acquisition function quantifies the information gain about the maximum of a black-box function by observing this black-box function $f$ at the candidate set $\{\textbf{x}\}$ (see [1, 2]). BoTorch provides implementations of the MES acquisition function and its multi-fidelity (MF) version with support for trace observations. In this tutorial, we explain at a high level how the MES acquisition function works, its implementation in BoTorch and how to use the MES acquisition function to query the next point in the optimization process. 
 # 
+# In general, we recommend using [Ax](https://ax.dev) for a simple BO setup like this one, since this will simplify your setup (including the amount of code you need to write) considerably. You can use a custom BoTorch model and acquisition function in Ax, following the [Using BoTorch with Ax](./custom_botorch_model_in_ax) tutorial. To use the MES acquisition function, it is sufficient to add `"botorch_acqf_class": qMaxValueEntropy,` to `model_kwargs`. The linked tutorial shows how to use a custom BoTorch model. If you'd like to let Ax choose which model to use based on the properties of the search space, you can skip the `surrogate` argument in `model_kwargs`.
+# 
 # ### 1. MES acquisition function for $q=1$ with noisy observation
 # For illustrative purposes, we focus in this section on the non-q-batch-mode case ($q=1$). We also assume that the evaluation of the black-box function is noisy. Let us first introduce some notation: 
 # + $f^* = \max_\mathcal{X} (f(\textbf{x}))$, the maximum of the black-box function $f(\textbf{x})$ in the design space $\mathcal{X}$

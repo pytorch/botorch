@@ -5,7 +5,7 @@
 # 
 # In this tutorial, we illustrate how to use learned input warping functions for robust bayesian optimization when the outcome may be non-stationary functions. When the lenglescales are non-stationarity in the raw input space, learning a warping function  that maps raw inputs to a warped space where the lengthscales are stationary can be useful because then standard stationary kernels can be used for to effectively model the function.
 # 
-# In general, we recommend for a relatively simple setup (like this one) to use Ax, since this will simplify your setup (including the amount of code you need to write) considerably. See the [Using BoTorch with Ax](./custom_botorch_model_in_ax) tutorial.
+# In general, we recommend for a relatively simple setup (like this one) to use [Ax](https://ax.dev), since this will simplify your setup (including the amount of code you need to write) considerably. See the [Using BoTorch with Ax](./custom_botorch_model_in_ax) tutorial. To use input warping with `MODULAR_BOTORCH`, we can pass the `warp_tf`, constructed as below, by adding `input_transform=warp_tf` argument to the `Surrogate(...)` call. 
 # 
 # We consider use a Kumaraswamy CDF as the class of input warping function and learn the concentration parameters ($a>0$ and $b>0$). Kumaraswamy CDFs are quite flexible and map inputs in [0, 1] to outputs in [0, 1]. This work follows the Beta CDF input warping proposed by Snoek et al., but replaces the Beta distribution Kumaraswamy distribution, which has a *differentiable* and closed-form CDF. 
 #    
