@@ -89,7 +89,7 @@ test_Y = torch.sin(test_X[:, :1])
 
 gp = SaasFullyBayesianSingleTaskGP(train_X=train_X, train_Y=train_Y)
 fit_fully_bayesian_model_nuts(
-    gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, thinning=THINNING, disable_progbar=False
+    gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, thinning=THINNING, disable_progbar=True
 )
 with torch.no_grad():
     posterior = gp.posterior(test_X)
@@ -244,7 +244,7 @@ gp = SaasFullyBayesianSingleTaskGP(
     train_X=train_X, train_Y=train_Y, train_Yvar=torch.full_like(train_Y, 1e-6), outcome_transform=Standardize(m=1)
 )
 fit_fully_bayesian_model_nuts(
-    gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, thinning=THINNING, disable_progbar=False
+    gp, warmup_steps=WARMUP_STEPS, num_samples=NUM_SAMPLES, thinning=THINNING, disable_progbar=True
 )
 
 
@@ -302,7 +302,7 @@ for i in median_lengthscales.argsort()[:10]:
     print(f"Parameter {i:2}) Median lengthscale = {median_lengthscales[i].item():.2e}")
 
 
-# In[16]:
+# In[ ]:
 
 
 
