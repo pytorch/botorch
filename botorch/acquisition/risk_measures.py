@@ -228,7 +228,13 @@ class WorstCase(RiskMeasureMCObjective):
 
 
 class Expectation(RiskMeasureMCObjective):
-    r"""The expectation risk measure."""
+    r"""The expectation risk measure.
+
+    For unconstrained problems, we recommend using the `ExpectationPosteriorTransform`
+    instead. `ExpectationPosteriorTransform` directly transforms the posterior
+    distribution over `q * n_w` to a posterior of `q` expectations, significantly
+    reducing the cost of posterior sampling as a result.
+    """
 
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Calculate the expectation corresponding to the given samples.

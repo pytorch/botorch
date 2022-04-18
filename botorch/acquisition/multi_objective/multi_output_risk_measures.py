@@ -95,7 +95,13 @@ class MultiOutputRiskMeasureMCObjective(
 
 
 class MultiOutputExpectation(MultiOutputRiskMeasureMCObjective):
-    r"""A multi-output MC expectation risk measure."""
+    r"""A multi-output MC expectation risk measure.
+
+    For unconstrained problems, we recommend using the `ExpectationPosteriorTransform`
+    instead. `ExpectationPosteriorTransform` directly transforms the posterior
+    distribution over `q * n_w` to a posterior of `q` expectations, significantly
+    reducing the cost of posterior sampling as a result.
+    """
 
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Calculate the expectation of the given samples. Expectation is
