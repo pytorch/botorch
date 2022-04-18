@@ -16,11 +16,14 @@ from abc import ABC, abstractmethod
 from typing import Callable, List, Optional
 
 import torch
+from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
 from botorch.posteriors.posterior import Posterior
 from botorch.sampling import IIDNormalSampler, MCSampler
 from botorch.utils import apply_constraints
+from gpytorch.distributions import MultivariateNormal, MultitaskMultivariateNormal
+from gpytorch.lazy import lazify
 from torch import Tensor
 from torch.nn import Module
 
@@ -135,6 +138,110 @@ class ScalarizedObjective(ScalarizedPosteriorTransform, AcquisitionObjective):
             "version. Use ScalarizedPosteriorTransform instead."
         )
         super().__init__(weights=weights, offset=offset)
+
+
+class ExpectationPosteriorTransform(PosteriorTransform):
+    r"""Transform the `batch x (q * n_w) x m` posterior into a `batch x q x m`
+    posterior of the expectation. The expectation is calculated over each
+    consecutive `n_w` block of points in the posterior.
+
+    This is intended for use with `InputPerturbation` or `AppendFeatures` for
+    optimizing the expectation over `n_w` points. This should not be used when
+    there are constraints present, since this does not take into account
+    the feasibility of the objectives.
+
+    Note: This is different than `ScalarizedPosteriorTransform` in that
+    this operates over the q-batch dimension.
+    """
+
+    def __init__(self, n_w: int, weights: Optional[Tensor] = None) -> None:
+        r"""A posterior transform calculating the expectation over the q-batch
+        dimension.
+
+        Args:
+            n_w: The number of points in the q-batch of the posterior to compute
+                the expectation over. This corresponds to the size of the
+                `feature_set` of `AppendFeatures` or the size of the `perturbation_set`
+                of `InputPerturbation`.
+            weights: An optional `n_w x m`-dim tensor of weights. Can be used to
+                compute a weighted expectation. Weights are normalized before use.
+        """
+        super().__init__()
+        if weights is not None:
+            if weights.dim() != 2 or weights.shape[0] != n_w:
+                raise ValueError("`weights` must be a tensor of size `n_w x m`.")
+            if torch.any(weights < 0):
+                raise ValueError("`weights` must be non-negative.")
+        else:
+            weights = torch.ones(n_w, 1)
+        # Normalize the weights.
+        weights = weights / weights.sum(dim=0)
+        self.register_buffer("weights", weights)
+        self.n_w = n_w
+
+    def evaluate(self, Y: Tensor) -> Tensor:
+        r"""Evaluate the expectation of a set of outcomes.
+
+        Args:
+            Y: A `batch_shape x (q * n_w) x m`-dim tensor of outcomes.
+
+        Returns:
+            A `batch_shape x q x m`-dim tensor of expectation outcomes.
+        """
+        batch_shape, m = Y.shape[:-2], Y.shape[-1]
+        weighted_Y = Y.view(*batch_shape, -1, self.n_w, m) * self.weights.to(Y)
+        return weighted_Y.sum(dim=-2)
+
+    def forward(self, posterior: GPyTorchPosterior) -> GPyTorchPosterior:
+        r"""Compute the posterior of the expectation.
+
+        Args:
+            posterior: An `m`-outcome joint posterior over `q * n_w` points.
+
+        Returns:
+            An `m`-outcome joint posterior over `q` expectations.
+        """
+        org_mvn = posterior.mvn
+        if getattr(org_mvn, "_interleaved", False):
+            raise UnsupportedError(
+                "`ExpectationPosteriorTransform` does not support "
+                "interleaved posteriors."
+            )
+        # Initialize the weight matrix of shape compatible with the mvn.
+        org_event_shape = org_mvn.event_shape
+        batch_shape = org_mvn.batch_shape
+        q = org_event_shape[0] // self.n_w
+        m = 1 if len(org_event_shape) == 1 else org_event_shape[-1]
+        tkwargs = {"device": org_mvn.loc.device, "dtype": org_mvn.loc.dtype}
+        weights = torch.zeros(q * m, q * self.n_w * m, **tkwargs)
+        # Make sure self.weights has the correct dtype/device and shape.
+        self.weights = self.weights.to(org_mvn.loc).expand(self.n_w, m)
+        # Fill in the non-zero entries of the weight matrix.
+        # We want each row to have non-zero weights for the corresponding
+        # `n_w` sized diagonal. The `m` outcomes are not interleaved.
+        for i in range(q * m):
+            weights[i, self.n_w * i : self.n_w * (i + 1)] = self.weights[:, i // q]
+        # Trasform the mean.
+        new_loc = (
+            (weights @ org_mvn.loc.unsqueeze(-1))
+            .view(*batch_shape, m, q)
+            .transpose(-1, -2)
+        )
+        # Transform the covariance matrix.
+        org_cov = (
+            org_mvn.lazy_covariance_matrix
+            if org_mvn.islazy
+            else org_mvn.covariance_matrix
+        )
+        new_cov = weights @ (org_cov @ weights.t())
+        if m == 1:
+            new_mvn = MultivariateNormal(new_loc.squeeze(-1), lazify(new_cov))
+        else:
+            # Using MTMVN since we pass a single loc and covar for all `m` outputs.
+            new_mvn = MultitaskMultivariateNormal(
+                new_loc, lazify(new_cov), interleaved=False
+            )
+        return GPyTorchPosterior(mvn=new_mvn)
 
 
 class MCAcquisitionObjective(Module, ABC):
