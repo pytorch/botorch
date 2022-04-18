@@ -228,7 +228,11 @@ class SaasPyroModel(PyroModel):
         ).to(**tkwargs)
         if self.train_Yvar is not None:
             likelihood = FixedNoiseGaussianLikelihood(
-                noise=self.train_Yvar, batch_shape=batch_shape
+                # Reshape to shape `num_mcmc_samples x N`
+                noise=self.train_Yvar.squeeze(-1).expand(
+                    num_mcmc_samples, len(self.train_Yvar)
+                ),
+                batch_shape=batch_shape,
             ).to(**tkwargs)
         else:
             likelihood = GaussianLikelihood(
