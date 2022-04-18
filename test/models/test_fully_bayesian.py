@@ -200,10 +200,12 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             if infer_noise:
                 self.assertEqual(model.likelihood.noise.shape, torch.Size([3, 1]))
             else:
-                self.assertEqual(model.likelihood.noise.shape, torch.Size([n, 1]))
+                self.assertEqual(model.likelihood.noise.shape, torch.Size([3, n]))
                 self.assertTrue(
                     torch.allclose(
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
+                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
+                        .squeeze(-1)
+                        .repeat(3, 1),
                         model.likelihood.noise,
                     )
                 )
@@ -460,7 +462,9 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 self.assertTrue(
                     torch.allclose(
                         model.likelihood.noise_covar.noise,
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
+                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
+                        .squeeze(-1)
+                        .repeat(3, 1),
                     )
                 )
 
