@@ -302,7 +302,7 @@ for i in median_lengthscales.argsort()[:10]:
     print(f"Parameter {i:2}) Median lengthscale = {median_lengthscales[i].item():.2e}")
 
 
-# In[ ]:
+# In[16]:
 
 
 
