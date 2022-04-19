@@ -31,6 +31,10 @@
       "title": "High-dimensional Bayesian optimization with SAASBO"
     },
     {
+      "id": "Multi_objective_multi_fidelity_BO",
+      "title": "Multi-Objective-Multi-Fidelity optimization with MOMF"
+    },
+    {
       "id": "bo_with_warped_gp",
       "title": "Bayesian optimization with input warping"
     },
