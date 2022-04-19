@@ -8,7 +8,6 @@ on:
 
 
 jobs:
-
   tests-and-coverage-nightly:
     name: Tests and coverage (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -135,25 +134,9 @@ jobs:
         ./scripts/publish_site.sh -d
 
   run_tutorials:
-    name: Run tutorials without smoke test
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.7
-    - name: Fetch all history for all tags and branches
-      # we need to do this so setuptools_scm knows how to set the botorch version
-      run: git fetch --prune --unshallow
-    - name: Install dependencies
-      env:
-        # this is so Ax's setup doesn't install a pinned BoTorch version
-        ALLOW_BOTORCH_LATEST: true
-      run: |
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install git+https://github.com/facebook/Ax.git
-        pip install .[tutorials]
-    - name: Run tutorials
-      run: |
-        python scripts/run_tutorials.py -p "$(pwd)"
+    name: Run tutorials without smoke test on latest PyTorch / GPyTorch / Ax
+    uses: ./.github/workflows/reusable_tutorials.yml
+    with:
+      smoke_test: false
+      use_stable_pytorch_gpytorch: false
+      use_stable_ax: false

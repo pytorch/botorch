@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Optional, Callable
+from typing import Callable, Optional
 
 from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.models.model import Model
@@ -22,7 +22,12 @@ from torch.nn import Module
 
 
 class AcquisitionFunction(Module, ABC):
-    r"""Abstract base class for acquisition functions."""
+    r"""Abstract base class for acquisition functions.
+
+    Please note that if your acquisition requires a backwards call,
+    you will need to wrap the backwards call inside of an enable_grad
+    context to be able to optimize the acquisition. See #1164.
+    """
 
     def __init__(self, model: Model) -> None:
         r"""Constructor for the AcquisitionFunction base class.

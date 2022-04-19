@@ -10,6 +10,7 @@ from typing import Optional
 import torch
 from botorch.acquisition.risk_measures import (
     CVaR,
+    Expectation,
     RiskMeasureMCObjective,
     VaR,
     WorstCase,
@@ -171,5 +172,47 @@ class TestWorstCase(BotorchTestCase):
                 torch.equal(
                     rm_samples,
                     torch.tensor([[-2.0, -5.0]], device=self.device, dtype=dtype),
+                )
+            )
+
+
+class TestExpectation(BotorchTestCase):
+    def test_expectation(self):
+        for dtype in (torch.float, torch.double):
+            obj = Expectation(n_w=3)
+            samples = torch.tensor(
+                [[[1.0], [0.5], [1.5], [3.0], [1.0], [5.0]]],
+                device=self.device,
+                dtype=dtype,
+            )
+            rm_samples = obj(samples)
+            self.assertTrue(
+                torch.equal(
+                    rm_samples,
+                    torch.tensor([[1.0, 3.0]], device=self.device, dtype=dtype),
+                )
+            )
+            # w/ weights
+            samples = torch.tensor(
+                [
+                    [
+                        [1.0, 3.0],
+                        [0.5, 1.0],
+                        [1.5, 2.0],
+                        [3.0, 1.0],
+                        [1.0, 2.0],
+                        [5.0, 3.0],
+                    ]
+                ],
+                device=self.device,
+                dtype=dtype,
+            )
+            weights = torch.tensor([-1.0, 2.0], device=self.device, dtype=dtype)
+            obj = Expectation(n_w=3, weights=weights)
+            rm_samples = obj(samples)
+            self.assertTrue(
+                torch.equal(
+                    rm_samples,
+                    torch.tensor([[3.0, 1.0]], device=self.device, dtype=dtype),
                 )
             )

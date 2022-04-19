@@ -10,6 +10,7 @@ import torch
 from botorch.acquisition.multi_objective.multi_output_risk_measures import (
     IndependentCVaR,
     IndependentVaR,
+    MultiOutputExpectation,
     MultiOutputRiskMeasureMCObjective,
     MultiOutputWorstCase,
     MVaR,
@@ -65,6 +66,47 @@ class TestMultiOutputRiskMeasureMCObjective(BotorchTestCase):
             )
             prepared_samples = obj._prepare_samples(samples)
             self.assertTrue(torch.equal(prepared_samples, -expected_samples))
+
+
+class TestMultiOutputExpectation(BotorchTestCase):
+    def test_mo_expectation(self):
+        obj = MultiOutputExpectation(n_w=3)
+        for dtype in (torch.float, torch.double):
+            obj = MultiOutputExpectation(n_w=3)
+            samples = torch.tensor(
+                [
+                    [
+                        [1.0, 1.2],
+                        [0.5, 0.5],
+                        [1.5, 2.2],
+                        [3.0, 1.2],
+                        [1.0, 7.1],
+                        [5.0, 5.8],
+                    ]
+                ],
+                device=self.device,
+                dtype=dtype,
+            )
+            rm_samples = obj(samples)
+            self.assertTrue(
+                torch.allclose(
+                    rm_samples,
+                    torch.tensor(
+                        [[[1.0, 1.3], [3.0, 4.7]]], device=self.device, dtype=dtype
+                    ),
+                )
+            )
+            # w/ first output negated
+            obj.weights = torch.tensor([-1.0, 1.0], device=self.device, dtype=dtype)
+            rm_samples = obj(samples)
+            self.assertTrue(
+                torch.allclose(
+                    rm_samples,
+                    torch.tensor(
+                        [[[-1.0, 1.3], [-3.0, 4.7]]], device=self.device, dtype=dtype
+                    ),
+                )
+            )
 
 
 class TestIndependentCVaR(BotorchTestCase):

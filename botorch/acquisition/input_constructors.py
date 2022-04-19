@@ -57,8 +57,8 @@ from botorch.acquisition.objective import (
     AcquisitionObjective,
     IdentityMCObjective,
     MCAcquisitionObjective,
-    ScalarizedObjective,
     PosteriorTransform,
+    ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
 from botorch.acquisition.utils import (

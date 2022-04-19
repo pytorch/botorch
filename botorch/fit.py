@@ -22,6 +22,7 @@ from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.optim.fit import fit_gpytorch_scipy
 from botorch.optim.utils import sample_all_priors
+from botorch.settings import debug
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from gpytorch.utils.errors import NotPSDError
@@ -119,7 +120,9 @@ def fit_gpytorch_model(
     original_state_dict = deepcopy(mll.model.state_dict())
     retry = 0
     while retry < max_retries:
-        with warnings.catch_warnings(record=True) as ws:
+        with warnings.catch_warnings(record=True) as ws, debug(True):
+            # Make sure we catch all OptimizationWarnings.
+            warnings.simplefilter("always", category=OptimizationWarning)
             if retry > 0:  # use normal initial conditions on first try
                 mll.model.load_state_dict(original_state_dict)
                 sample_all_priors(mll.model)
@@ -149,7 +152,7 @@ def fit_gpytorch_model(
         retry += 1
         logging.log(logging.DEBUG, f"Fitting failed on try {retry}.")
 
-    warnings.warn("Fitting failed on all retries.", OptimizationWarning)
+    warnings.warn("Fitting failed on all retries.", RuntimeWarning)
     return mll.eval()
 
 

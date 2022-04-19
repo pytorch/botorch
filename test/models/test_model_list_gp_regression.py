@@ -8,6 +8,7 @@ import itertools
 import warnings
 
 import torch
+from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_model
@@ -161,6 +162,18 @@ class TestModelListGP(BotorchTestCase):
             # test condition_on_observations (incorrect input shape error)
             with self.assertRaises(BotorchTensorDimensionError):
                 model.condition_on_observations(f_x, torch.rand(3, 2, 3, **tkwargs))
+
+            # test posterior transform
+            X = torch.rand(3, 1, **tkwargs)
+            weights = torch.tensor([1, 2], **tkwargs)
+            post_tf = ScalarizedPosteriorTransform(weights=weights)
+            posterior_tf = model.posterior(X, posterior_transform=post_tf)
+            self.assertTrue(
+                torch.allclose(
+                    posterior_tf.mean,
+                    model.posterior(X).mean @ weights.unsqueeze(-1),
+                )
+            )
 
     def test_ModelListGP_fixed_noise(self):
         for dtype, use_octf in itertools.product(

@@ -14,15 +14,17 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import torch
 from botorch import settings
 from botorch.models.utils import fantasize as fantasize_flag
 from botorch.posteriors import Posterior, PosteriorList
+from botorch.posteriors.fully_bayesian import FullyBayesianPosteriorList
 from botorch.sampling.samplers import MCSampler
 from botorch.utils.containers import TrainingData
+from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
 from torch.nn import Module, ModuleList
 
@@ -291,6 +293,7 @@ class ModelList(Model):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
+        posterior_transform: Optional[Callable[[Posterior], Posterior]] = None,
         **kwargs: Any,
     ) -> Posterior:
         r"""Computes the posterior over model outputs at the provided points.
@@ -309,6 +312,7 @@ class ModelList(Model):
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
             observation_noise: If True, add observation noise to the posterior.
+            posterior_transform: An optional PosteriorTransform.
 
         Returns:
             A `Posterior` object, representing a batch of `b` joint distributions
@@ -321,7 +325,13 @@ class ModelList(Model):
             )
             for i, idcs in group_indices.items()
         ]
-        return PosteriorList(*posteriors)
+        if any(is_fully_bayesian(m) for m in self.models):
+            posterior = FullyBayesianPosteriorList(*posteriors)
+        else:
+            posterior = PosteriorList(*posteriors)
+        if posterior_transform is not None:
+            posterior = posterior_transform(posterior)
+        return posterior
 
     @property
     def batch_shape(self) -> torch.Size:

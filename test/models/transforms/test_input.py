@@ -269,7 +269,9 @@ class TestInputTransforms(BotorchTestCase):
                     [X.min(dim=-2, keepdim=True)[0], X.max(dim=-2, keepdim=True)[0]],
                     dim=-2,
                 )
-                self.assertTrue(torch.allclose(nlz.bounds, expected_bounds))
+                self.assertTrue(
+                    torch.allclose(nlz.bounds, expected_bounds, atol=1e-4, rtol=1e-4)
+                )
                 # test errors on wrong shape
                 nlz = Normalize(d=2, batch_shape=batch_shape)
                 X = torch.randn(*batch_shape, 2, 1, device=self.device, dtype=dtype)

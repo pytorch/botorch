@@ -12,9 +12,9 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.models.deterministic import (
     AffineDeterministicModel,
     DeterministicModel,
+    FixedSingleSampleModel,
     GenericDeterministicModel,
     PosteriorMeanModel,
-    FixedSingleSampleModel,
 )
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.transforms.input import Normalize

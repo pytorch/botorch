@@ -47,7 +47,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
-from botorch.utils.transforms import standardize, match_batch_shape
+from botorch.utils.transforms import match_batch_shape, standardize
 
 
 class DummyMultiObjectiveMCAcquisitionFunction(MultiObjectiveMCAcquisitionFunction):
@@ -1329,12 +1329,9 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 for k, v in state_dict.items():
                     state_dict[k] = v.to(**tkwargs)
                 all_close_kwargs = (
-                    {
-                        "atol": 1e-1,
-                        "rtol": 0.0,
-                    }
+                    {"atol": 1e-1, "rtol": 1e-2}
                     if dtype == torch.float
-                    else {"atol": 1e-4, "rtol": 0.0}
+                    else {"atol": 1e-4, "rtol": 1e-6}
                 )
                 torch.manual_seed(1234)
                 train_X = torch.rand(*train_batch_shape, 3, 2, **tkwargs)
@@ -1381,6 +1378,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 for q, batch_shape in product(
                     (1, 3), (torch.Size([]), torch.Size([3]), torch.Size([4, 3]))
                 ):
+                    torch.manual_seed(0)
                     test_X = (
                         0.3 + 0.05 * torch.randn(*batch_shape, q, 2, **tkwargs)
                     ).requires_grad_(True)
@@ -1403,9 +1401,12 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     mock_sample_cached.assert_not_called()
                     self.assertTrue(torch.allclose(val, val2, **all_close_kwargs))
                     val2.sum().backward()
-                    self.assertTrue(
-                        torch.allclose(X_grad, test_X2.grad, **all_close_kwargs)
-                    )
+                    if dtype == torch.double:
+                        # The gradient computation is very unstable in single precision
+                        # so we only check the gradient when using torch.double.
+                        self.assertTrue(
+                            torch.allclose(X_grad, test_X2.grad, **all_close_kwargs)
+                        )
                     if ref_point == [-5.0, -5.0]:
                         self.assertTrue((X_grad != 0).any())
                 # test we fall back to standard sampling for
@@ -1478,7 +1479,8 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
 
     def test_with_multitask(self):
         # Verify that _set_sampler works with MTGP, KroneckerMTGP and HOGP.
-        tkwargs = {"device": self.device, "dtype": torch.float}
+        torch.manual_seed(1234)
+        tkwargs = {"device": self.device, "dtype": torch.double}
         train_x = torch.rand(6, 2, **tkwargs)
         train_y = torch.randn(6, 2, **tkwargs)
         mtgp_task = torch.cat(
@@ -1555,7 +1557,8 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 torch.allclose(
                     base_evals.unsqueeze(1).repeat(*repeat_shape),
                     expected,
-                    atol=5e-2,
+                    atol=1e-2,
+                    rtol=1e-4,
                 )
             )
 

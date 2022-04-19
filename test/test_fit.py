@@ -13,18 +13,22 @@ import torch
 from botorch import fit_gpytorch_model, settings
 from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
 from botorch.models import FixedNoiseGP, HeteroskedasticSingleTaskGP, SingleTaskGP
+from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.outcome import Standardize
 from botorch.optim.fit import (
     fit_gpytorch_scipy,
     fit_gpytorch_torch,
     OptimizationIteration,
 )
+from botorch.settings import debug
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.constraints import GreaterThan, Interval
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from gpytorch.utils.errors import NanError, NotPSDError
 from gpytorch.utils.warnings import NumericalWarning
+from scipy.optimize import OptimizeResult
 
 
 NOISE = [
@@ -144,10 +148,11 @@ class TestFitGPyTorchModel(BotorchTestCase):
             # because of different scipy OptimizeResult.message type
             if optimizer == fit_gpytorch_scipy:
                 with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                    warnings.simplefilter("always", category=OptimizationWarning)
                     mll, info_dict = optimizer(
                         mll, options=options, track_iterations=False, method="slsqp"
                     )
-                self.assertGreaterEqual(len(ws), 1)
+                    self.assertGreaterEqual(len(ws), 1)
                 self.assertEqual(len(info_dict["iterations"]), 0)
                 self.assertTrue("fopt" in info_dict)
                 self.assertTrue("wall_time" in info_dict)
@@ -322,3 +327,57 @@ class TestFitGPyTorchModel(BotorchTestCase):
             mll = self._getBatchedModel()
             fit_gpytorch_model(mll, options=options, max_retries=3)
         self.assertFalse(any("ITERATIONS REACHED LIMIT" in str(w.message) for w in ws))
+
+    def test_warnings_on_failed_fit(self):
+        def has_failed_fit_warning(ws):
+            for w in ws:
+                if MAX_RETRY_MSG in str(w.message):
+                    return True
+            return False
+
+        for debug_state in (True, False):
+            debug._set_state(debug_state)
+            self.assertEqual(debug._state, debug_state)
+            mll = self._getModel()
+            mock_res = OptimizeResult(
+                x=[0.00836791, -0.01646641, 0.33771477, -0.9502073],
+                success=True,
+                status=0,
+                fun=1.0,
+                jac=None,
+                nfev=40,
+                njev=40,
+                nhev=40,
+                nit=20,
+                message="CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH".encode(),
+            )
+
+            # Should not get errors here, so single call.
+            with mock.patch(
+                f"{fit_gpytorch_scipy.__module__}.minimize", return_value=mock_res
+            ) as mock_minimize, warnings.catch_warnings(record=True) as ws:
+                fit_gpytorch_model(mll, max_retries=3)
+            mock_minimize.assert_called_once()
+            self.assertFalse(has_failed_fit_warning(ws))
+
+            # The following should use all 3 tries due to OptimizationWarning.
+            mock_res.fun = float("nan")
+            mock_res.message = "ABNORMAL_TERMINATION_IN_LNSRCH".encode()
+            mock_res.success = False
+            with mock.patch(
+                f"{fit_gpytorch_scipy.__module__}.minimize", return_value=mock_res
+            ) as mock_minimize, warnings.catch_warnings(record=True) as ws:
+                fit_gpytorch_model(mll, max_retries=3)
+            self.assertEqual(mock_minimize.call_count, 3)
+            self.assertTrue(has_failed_fit_warning(ws))
+
+            # Check that it works with SumMarginalLogLikelihood.
+            # This should use 6 tries, 3 for each sub-model.
+            model = ModelListGP(mll.model, mll.model)
+            mll = SumMarginalLogLikelihood(model.likelihood, model)
+            with mock.patch(
+                f"{fit_gpytorch_scipy.__module__}.minimize", return_value=mock_res
+            ) as mock_minimize, warnings.catch_warnings(record=True) as ws:
+                fit_gpytorch_model(mll, max_retries=3)
+            self.assertEqual(mock_minimize.call_count, 6)
+            self.assertTrue(has_failed_fit_warning(ws))

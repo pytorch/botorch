@@ -7,12 +7,14 @@
 from unittest import mock
 
 import torch
-from botorch.acquisition.active_learning import PairwiseMCPosteriorVariance
-from botorch.acquisition.active_learning import qNegIntegratedPosteriorVariance
+from botorch.acquisition.active_learning import (
+    PairwiseMCPosteriorVariance,
+    qNegIntegratedPosteriorVariance,
+)
 from botorch.acquisition.objective import (
+    GenericMCObjective,
     IdentityMCObjective,
     ScalarizedPosteriorTransform,
-    GenericMCObjective,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.pairwise_gp import PairwiseGP

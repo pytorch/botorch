@@ -31,7 +31,9 @@ from botorch.models.utils import (
     mod_batch_shape,
     multioutput_to_batch_mode_transform,
 )
+from botorch.posteriors.fully_bayesian import FullyBayesianPosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch.utils.transforms import is_fully_bayesian
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from gpytorch.utils.broadcasting import _mul_broadcast_shape
@@ -542,9 +544,9 @@ class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
             posterior_transform: An optional PosteriorTransform.
 
         Returns:
-            A `GPyTorchPosterior` object, representing `batch_shape` joint
-            distributions over `q` points and the outputs selected by
-            `output_indices` each. Includes measurement noise if
+            A `GPyTorchPosterior` or `FullyBayesianPosterior` object, representing
+            `batch_shape` joint distributions over `q` points and the outputs selected
+            by `output_indices` each. Includes measurement noise if
             `observation_noise` is specified.
         """
         self.eval()  # make sure model is in eval mode
@@ -594,13 +596,17 @@ class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
             except AttributeError:
                 tf_mvn = mvn
             mvns.append(tf_mvn)
-        # return result as a GPyTorchPosteriors
-        if len(mvns) == 1:
-            posterior = GPyTorchPosterior(mvn=mvns[0])
+        # return result as a GPyTorchPosteriors/FullyBayesianPosterior
+        mvn = (
+            mvns[0]
+            if len(mvns) == 1
+            else MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
+        )
+        if any(is_fully_bayesian(m) for m in self.models):
+            # mixing fully Bayesian and other GP models is currently not supported
+            posterior = FullyBayesianPosterior(mvn=mvn)
         else:
-            posterior = GPyTorchPosterior(
-                mvn=MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
-            )
+            posterior = GPyTorchPosterior(mvn=mvn)
         if posterior_transform is not None:
             return posterior_transform(posterior)
         return posterior

@@ -26,11 +26,11 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import pyro
 import torch
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.models.gp_regression import SingleTaskGP, FixedNoiseGP
+from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling
-from botorch.posteriors.fully_bayesian import FullyBayesianPosterior
+from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
 from botorch.sampling.samplers import MCSampler
 from botorch.utils.containers import TrainingData
 from gpytorch.constraints import GreaterThan
@@ -228,7 +228,11 @@ class SaasPyroModel(PyroModel):
         ).to(**tkwargs)
         if self.train_Yvar is not None:
             likelihood = FixedNoiseGaussianLikelihood(
-                noise=self.train_Yvar, batch_shape=batch_shape
+                # Reshape to shape `num_mcmc_samples x N`
+                noise=self.train_Yvar.squeeze(-1).expand(
+                    num_mcmc_samples, len(self.train_Yvar)
+                ),
+                batch_shape=batch_shape,
             ).to(**tkwargs)
         else:
             likelihood = GaussianLikelihood(
@@ -269,7 +273,7 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
     Example:
     >>> saas_gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)
     >>> fit_fully_bayesian_model_nuts(saas_gp)
-    >>> posterior = saas_gp.posterior(test_X, marginalize_over_mcmc_samples=True)
+    >>> posterior = saas_gp.posterior(test_X)
     """
 
     def __init__(
@@ -389,7 +393,7 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
 
     def forward(self, X: Tensor) -> MultivariateNormal:
         self._check_if_fitted()
-        return super().forward(X.unsqueeze(-3))
+        return super().forward(X.unsqueeze(MCMC_DIM))
 
     def posterior(
         self,
@@ -397,7 +401,6 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
         posterior_transform: Optional[PosteriorTransform] = None,
-        marginalize_over_mcmc_samples: bool = False,
         **kwargs: Any,
     ) -> FullyBayesianPosterior:
         r"""Computes the posterior over model outputs at the provided points.
@@ -415,10 +418,6 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
                 likelihood to the posterior. If a Tensor, use it directly as the
                 observation noise (must be of shape `(batch_shape) x q x m`).
             posterior_transform: An optional PosteriorTransform.
-            marginalize_over_mcmc_samples: If True, we will use the law of total
-                variance to marginalize over the MCMC samples. This is useful when
-                making test predictions, but shouldn't be used when computing
-                acquisition functions values.
 
         Returns:
             A `FullyBayesianPosterior` object. Includes observation noise if specified.
@@ -431,10 +430,7 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
             posterior_transform=posterior_transform,
             **kwargs,
         )
-        posterior = FullyBayesianPosterior(
-            mvn=posterior.mvn,
-            marginalize_over_mcmc_samples=marginalize_over_mcmc_samples,
-        )
+        posterior = FullyBayesianPosterior(mvn=posterior.mvn)
         return posterior
 
     @classmethod

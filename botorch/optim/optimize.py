@@ -18,6 +18,7 @@ from botorch.acquisition.acquisition import (
     OneShotAcquisitionFunction,
 )
 from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
+from botorch.exceptions import UnsupportedError
 from botorch.generation.gen import gen_candidates_scipy
 from botorch.logging import logger
 from botorch.optim.initializers import (
@@ -594,6 +595,11 @@ def optimize_acqf_discrete(
         - a `q x d`-dim tensor of generated candidates.
         - an associated acquisition value.
     """
+    if isinstance(acq_function, OneShotAcquisitionFunction):
+        raise UnsupportedError(
+            "Discrete optimization is not supported for"
+            "one-shot acquisition functions."
+        )
     choices_batched = choices.unsqueeze(-2)
     if q > 1:
         candidate_list, acq_value_list = [], []
