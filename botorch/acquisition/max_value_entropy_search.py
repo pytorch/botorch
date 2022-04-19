@@ -795,6 +795,58 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         return ig.mean(dim=0)  # average over the fantasies
 
 
+class qMultiFidelityLowerBoundMaxValueEntropy(
+    qMultiFidelityMaxValueEntropy, qLowerBoundMaxValueEntropy
+):
+    r"""Multi-fidelity acquisition function for General-purpose Information-Based
+    Bayesian optimization (GIBBON).
+
+    The acquisition function for multi-fidelity max-value entropy search
+    with support for trace observations. See [Takeno2020mfmves]_
+    for a detailed discussion of the basic ideas on multi-fidelity MES
+    (note that this implementation is somewhat different). This acquisition function
+    is similar to `qMultiFidelityMaxValueEntropy` but computes the information gain
+    from the lower bound described in [Moss2021gibbon].
+
+    The model must be single-outcome, unless using a PosteriorTransform.
+    The batch case `q > 1` is supported through cyclic optimization and fantasies.
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> candidate_set = torch.rand(1000, bounds.size(1))
+        >>> candidate_set = bounds[0] + (bounds[1] - bounds[0]) * candidate_set
+        >>> MF_qGIBBON = qMultiFidelityLowerBoundMaxValueEntropy(model, candidate_set)
+        >>> mf_gibbon = MF_qGIBBON(test_X)
+    """
+
+    def _compute_information_gain(
+        self, X: Tensor, mean_M: Tensor, variance_M: Tensor, covar_mM: Tensor
+    ) -> Tensor:
+        r"""Compute GIBBON's approximation of information gain at the design points `X`.
+
+        When using GIBBON for batch optimization (i.e `q > 1`), we calculate the
+        additional information provided by adding a new candidate point to the current
+        batch of design points (`X_pending`), rather than calculating the information
+        provided by the whole batch. This allows a modest computational saving.
+
+        Args:
+            X: A `batch_shape x 1 x d`-dim Tensor of `batch_shape` t-batches
+                with `1` `d`-dim design point each.
+            mean_M: A `batch_shape x 1`-dim Tensor of means.
+            variance_M: A `batch_shape x 1`-dim Tensor of variances
+                consisting of `batch_shape` t-batches with `num_fantasies` fantasies.
+            covar_mM: A `batch_shape x num_fantasies x (1 + num_trace_observations)`
+                -dim Tensor of covariances.
+
+        Returns:
+            A `num_fantasies x batch_shape`-dim Tensor of information gains at the
+            given design points `X`.
+        """
+        return qLowerBoundMaxValueEntropy._compute_information_gain(
+            self, X=X, mean_M=mean_M, variance_M=variance_M, covar_mM=covar_mM
+        )
+
+
 def _sample_max_value_Thompson(
     model: Model,
     candidate_set: Tensor,

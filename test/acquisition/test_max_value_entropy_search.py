@@ -15,6 +15,7 @@ from botorch.acquisition.max_value_entropy_search import (
     qLowerBoundMaxValueEntropy,
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
+    qMultiFidelityLowerBoundMaxValueEntropy,
 )
 from botorch.acquisition.objective import (
     PosteriorTransform,
@@ -285,6 +286,51 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             )
             X = torch.rand(1, 2, device=self.device, dtype=dtype)
             self.assertEqual(qMF_MVE(X).shape, torch.Size([1]))
+
+    def test_q_multi_fidelity_lower_bound_max_value_entropy(self):
+        for dtype in (torch.float, torch.double):
+            torch.manual_seed(7)
+            mm = MESMockModel()
+            train_inputs = torch.rand(10, 2, device=self.device, dtype=dtype)
+            mm.train_inputs = (train_inputs,)
+            candidate_set = torch.rand(10, 2, device=self.device, dtype=dtype)
+            qMF_LBMVE = qMultiFidelityLowerBoundMaxValueEntropy(
+                model=mm, candidate_set=candidate_set, num_mv_samples=10
+            )
+
+            # test initialization
+            self.assertEqual(qMF_LBMVE.num_fantasies, 16)
+            self.assertEqual(qMF_LBMVE.num_mv_samples, 10)
+            self.assertIsInstance(qMF_LBMVE.sampler, SobolQMCNormalSampler)
+            self.assertIsInstance(qMF_LBMVE.cost_sampler, SobolQMCNormalSampler)
+            self.assertEqual(qMF_LBMVE.sampler.sample_shape, torch.Size([128]))
+            self.assertIsInstance(qMF_LBMVE.fantasies_sampler, SobolQMCNormalSampler)
+            self.assertEqual(qMF_LBMVE.fantasies_sampler.sample_shape, torch.Size([16]))
+            self.assertIsInstance(qMF_LBMVE.expand, Callable)
+            self.assertIsInstance(qMF_LBMVE.project, Callable)
+            self.assertIsNone(qMF_LBMVE.X_pending)
+            self.assertEqual(qMF_LBMVE.posterior_max_values.shape, torch.Size([10, 1]))
+            self.assertIsInstance(
+                qMF_LBMVE.cost_aware_utility, InverseCostWeightedUtility
+            )
+
+            # test evaluation
+            X = torch.rand(1, 2, device=self.device, dtype=dtype)
+            self.assertEqual(qMF_LBMVE(X).shape, torch.Size([1]))
+
+            # Test with multi-output model w/ transform.
+            mm = MESMockModel(num_outputs=2)
+            pt = ScalarizedPosteriorTransform(
+                weights=torch.ones(2, device=self.device, dtype=dtype)
+            )
+            qMF_LBMVE = qMultiFidelityLowerBoundMaxValueEntropy(
+                model=mm,
+                candidate_set=candidate_set,
+                num_mv_samples=10,
+                posterior_transform=pt,
+            )
+            X = torch.rand(1, 2, device=self.device, dtype=dtype)
+            self.assertEqual(qMF_LBMVE(X).shape, torch.Size([1]))
 
     def test_sample_max_value_Gumbel(self):
         for dtype in (torch.float, torch.double):
