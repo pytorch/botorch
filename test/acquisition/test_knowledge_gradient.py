@@ -26,6 +26,7 @@ from botorch.acquisition.objective import (
 from botorch.acquisition.utils import project_to_sample_points
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP
+from botorch.optim.optimize import optimize_acqf
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -558,6 +559,48 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                     num_restarts=1,
                     raw_samples=1,
                 )
+
+    def test_optimize_w_posterior_transform(self):
+        # This is mainly testing that we can optimize without errors.
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"dtype": dtype, "device": self.device}
+            mean = torch.tensor([1.0, 0.5], **tkwargs).expand(2, 1, 2)
+            cov = torch.tensor([[1.0, 0.1], [0.1, 0.5]], **tkwargs).expand(2, 2, 2)
+            posterior = GPyTorchPosterior(MultitaskMultivariateNormal(mean, cov))
+            model = MockModel(posterior)
+            n_f = 4
+            mean = torch.tensor([1.0, 0.5], **tkwargs).expand(n_f, 2, 1, 2)
+            cov = torch.tensor([[1.0, 0.1], [0.1, 0.5]], **tkwargs).expand(n_f, 2, 2, 2)
+            posterior = GPyTorchPosterior(MultitaskMultivariateNormal(mean, cov))
+            mfm = MockModel(posterior)
+            bounds = torch.zeros(2, 2, **tkwargs)
+            bounds[1] = 1
+            options = {"num_inner_restarts": 2, "raw_inner_samples": 2}
+            with mock.patch.object(MockModel, "fantasize", return_value=mfm):
+                kg = qMultiFidelityKnowledgeGradient(
+                    model=model,
+                    num_fantasies=n_f,
+                    posterior_transform=ScalarizedPosteriorTransform(
+                        weights=torch.rand(2, **tkwargs)
+                    ),
+                )
+                # Mocking this to get around grad issues.
+                with mock.patch(
+                    f"{optimize_acqf.__module__}.gen_candidates_scipy",
+                    return_value=(
+                        torch.zeros(2, n_f + 1, 2, **tkwargs),
+                        torch.zeros(2, **tkwargs),
+                    ),
+                ):
+                    candidate, value = optimize_acqf(
+                        acq_function=kg,
+                        bounds=bounds,
+                        q=1,
+                        num_restarts=2,
+                        raw_samples=2,
+                        options=options,
+                    )
+            self.assertTrue(torch.equal(candidate, torch.zeros(1, 2, **tkwargs)))
 
 
 class TestKGUtils(BotorchTestCase):
