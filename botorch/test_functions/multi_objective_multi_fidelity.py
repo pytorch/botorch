@@ -9,7 +9,7 @@ Multi-objective multi-fidelity optimization benchmark problems.
 
 References
 
-.. [Irshad2021MOMF]
+.. [Irshad2021]
     F. Irshad, S. Karsch, and A. Döpp. Expected hypervolume improvement for
     simultaneous multi-objective and multi-fidelity optimization.
     arXiv preprint arXiv:2112.13901, 2021.
@@ -27,7 +27,7 @@ class MOMFBraninCurrin(MultiObjectiveTestProblem):
 
     (2+1)-dimensional function with domain `[0,1]^3` where the last dimension
     is the fidelity parameter `s`.
-    Both functions assume minimization. See [Irshad2021MOMF]_ for more details.
+    Both functions assume minimization. See [Irshad2021]_ for more details.
 
     Modified Branin function:
 
@@ -90,7 +90,7 @@ class MOMFPark(MultiObjectiveTestProblem):
     r"""Modified Park test functions for multi-objective multi-fidelity optimization.
 
     (4+1)-dimensional function with domain `[0,1]^5` where the last dimension
-    is the fidelity parameter `s`. See [Irshad2021MOMF]_ for more details.
+    is the fidelity parameter `s`. See [Irshad2021]_ for more details.
 
     The first modified Park function is
 
