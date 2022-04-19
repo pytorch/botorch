@@ -13,6 +13,7 @@ from botorch.acquisition.acquisition import (
     AcquisitionFunction,
     OneShotAcquisitionFunction,
 )
+from botorch.exceptions import UnsupportedError
 from botorch.optim.optimize import (
     _filter_infeasible,
     _filter_invalid,
@@ -927,6 +928,14 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             expected_acq_value = exp_acq_vals[best_idx].repeat(q)
             self.assertTrue(torch.allclose(acq_value, expected_acq_value))
             self.assertTrue(torch.allclose(candidates, expected_candidates))
+
+        with self.assertRaises(UnsupportedError):
+            acqf = MockOneShotAcquisitionFunction()
+            optimize_acqf_discrete(
+                acq_function=acqf,
+                q=1,
+                choices=torch.tensor([[0.5], [0.2]]),
+            )
 
     def test_optimize_acqf_discrete_local_search(self):
         for q, dtype in itertools.product((1, 2), (torch.float, torch.double)):
