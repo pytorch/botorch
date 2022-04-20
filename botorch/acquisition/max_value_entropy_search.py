@@ -795,9 +795,7 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         return ig.mean(dim=0)  # average over the fantasies
 
 
-class qMultiFidelityLowerBoundMaxValueEntropy(
-    qMultiFidelityMaxValueEntropy, qLowerBoundMaxValueEntropy
-):
+class qMultiFidelityLowerBoundMaxValueEntropy(qMultiFidelityMaxValueEntropy):
     r"""Multi-fidelity acquisition function for General-purpose Information-Based
     Bayesian optimization (GIBBON).
 
