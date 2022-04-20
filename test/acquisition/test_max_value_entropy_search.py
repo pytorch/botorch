@@ -15,6 +15,7 @@ from botorch.acquisition.max_value_entropy_search import (
     qLowerBoundMaxValueEntropy,
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
+    qMultiFidelityLowerBoundMaxValueEntropy,
 )
 from botorch.acquisition.objective import (
     PosteriorTransform,
@@ -241,14 +242,16 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             with self.assertRaisesRegex(UnsupportedError, "X_pending is not None"):
                 qGIBBON(X)
 
-    def test_q_multi_fidelity_max_value_entropy(self):
+    def test_q_multi_fidelity_max_value_entropy(
+        self, acqf_class=qMultiFidelityMaxValueEntropy
+    ):
         for dtype in (torch.float, torch.double):
             torch.manual_seed(7)
             mm = MESMockModel()
             train_inputs = torch.rand(10, 2, device=self.device, dtype=dtype)
             mm.train_inputs = (train_inputs,)
             candidate_set = torch.rand(10, 2, device=self.device, dtype=dtype)
-            qMF_MVE = qMultiFidelityMaxValueEntropy(
+            qMF_MVE = acqf_class(
                 model=mm, candidate_set=candidate_set, num_mv_samples=10
             )
 
@@ -277,7 +280,7 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             pt = ScalarizedPosteriorTransform(
                 weights=torch.ones(2, device=self.device, dtype=dtype)
             )
-            qMF_MVE = qMultiFidelityMaxValueEntropy(
+            qMF_MVE = acqf_class(
                 model=mm,
                 candidate_set=candidate_set,
                 num_mv_samples=10,
@@ -285,6 +288,13 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             )
             X = torch.rand(1, 2, device=self.device, dtype=dtype)
             self.assertEqual(qMF_MVE(X).shape, torch.Size([1]))
+
+    def test_q_multi_fidelity_lower_bound_max_value_entropy(self):
+        # Same test as for MF-MES since GIBBON only changes in the way it computes the
+        # information gain.
+        self.test_q_multi_fidelity_max_value_entropy(
+            acqf_class=qMultiFidelityLowerBoundMaxValueEntropy
+        )
 
     def test_sample_max_value_Gumbel(self):
         for dtype in (torch.float, torch.double):
