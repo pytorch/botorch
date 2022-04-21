@@ -631,3 +631,127 @@ class Power(OutcomeTransform):
             posterior=posterior,
             sample_transform=lambda x: x.pow(1.0 / self.power),
         )
+
+
+class Tanh(OutcomeTransform):
+    r"""Tanh-transform outcomes.
+
+    Useful for modeling constraining functions. Magnifies values near zero and
+    flattens extreme values outside the domain [-1,1].
+    """
+
+    def __init__(self, outputs: Optional[List[int]] = None) -> None:
+        r"""Tanh-transform outcomes.
+
+        Args:
+            outputs: Which of the outputs to tanh-transform. If omitted, all
+                outputs will be transformed.
+        """
+        super().__init__()
+        self._outputs = outputs
+
+    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+        r"""Subset the transform along the output dimension.
+
+        Args:
+            idcs: The output indices to subset the transform to.
+
+        Returns:
+            The current outcome transform, subset to the specified output indices.
+        """
+        new_outputs = None
+        if self._outputs is not None:
+            if min(self._outputs + idcs) < 0:
+                raise NotImplementedError(
+                    f"Negative indexing not supported for {self.__class__.__name__} "
+                    "when subsetting outputs and only transforming some outputs."
+                )
+            new_outputs = [i for i in self._outputs if i in idcs]
+        new_tf = self.__class__(outputs=new_outputs)
+        if not self.training:
+            new_tf.eval()
+        return new_tf
+
+    def forward(
+        self, Y: Tensor, Yvar: Optional[Tensor] = None
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        r"""Tanh-transform outcomes.
+
+        Args:
+            Y: A `batch_shape x n x m`-dim tensor of training targets.
+            Yvar: A `batch_shape x n x m`-dim tensor of observation noises
+                associated with the training targets (if applicable).
+
+        Returns:
+            A two-tuple with the transformed outcomes:
+
+            - The transformed outcome observations.
+            - The transformed observation noise (if applicable).
+        """
+        Y_tf = Y.tanh()
+        outputs = normalize_indices(self._outputs, d=Y.size(-1))
+        if outputs is not None:
+            Y_tf = torch.stack(
+                [
+                    Y_tf[..., i] if i in outputs else Y[..., i]
+                    for i in range(Y.size(-1))
+                ],
+                dim=-1,
+            )
+        if Yvar is not None:
+            raise NotImplementedError(
+                "Tanh does not yet support transforming observation noise"
+            )
+        return Y_tf, Yvar
+
+    def untransform(
+        self, Y: Tensor, Yvar: Optional[Tensor] = None
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        r"""Un-transform tanh-transformed outcomes
+
+        Args:
+            Y: A `batch_shape x n x m`-dim tensor of power-transfomred targets.
+            Yvar: A `batch_shape x n x m`-dim tensor of power-transformed
+                observation noises associated with the training targets
+                (if applicable).
+
+        Returns:
+            A two-tuple with the un-transformed outcomes:
+
+            - The un-power transformed outcome observations.
+            - The un-power transformed observation noise (if applicable).
+        """
+        Y_utf = Y.atanh()
+        outputs = normalize_indices(self._outputs, d=Y.size(-1))
+        if outputs is not None:
+            Y_utf = torch.stack(
+                [
+                    Y_utf[..., i] if i in outputs else Y[..., i]
+                    for i in range(Y.size(-1))
+                ],
+                dim=-1,
+            )
+        if Yvar is not None:
+            # TODO: Delta method, possibly issue warning
+            raise NotImplementedError(
+                "Tanh does not yet support transforming observation noise"
+            )
+        return Y_utf, Yvar
+
+    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+        r"""Un-transform the tanh-transformed posterior.
+
+        Args:
+            posterior: A posterior in the tanh-transformed space.
+
+        Returns:
+            The un-transformed posterior.
+        """
+        if self._outputs is not None:
+            raise NotImplementedError(
+                "Tanh does not yet support output selection for untransform_posterior"
+            )
+        return TransformedPosterior(
+            posterior=posterior,
+            sample_transform=lambda x: x.atanh(),
+        )

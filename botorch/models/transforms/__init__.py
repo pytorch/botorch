@@ -15,6 +15,7 @@ from botorch.models.transforms.outcome import (
     Log,
     Power,
     Standardize,
+    Tanh
 )
 
 
@@ -27,4 +28,5 @@ __all__ = [
     "Round",
     "Standardize",
     "Warp",
+    "Tanh"
 ]
