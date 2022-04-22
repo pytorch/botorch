@@ -14,7 +14,7 @@ from botorch.models.transforms.outcome import (
     OutcomeTransform,
     Power,
     Standardize,
-    Tanh
+    Tanh,
 )
 from botorch.models.transforms.utils import (
     norm_to_lognorm_mean,
