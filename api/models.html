@@ -264,7 +264,7 @@ If <cite>False</cite>, model is put in <cite>eval</cite> mode.</p>
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.model.ModelList.posterior">
-<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList.posterior" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList.posterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
 <dl class="simple">
 <dt>Note: The input transforms should be applied here using</dt><dd><p><cite>self.transform_inputs(X)</cite> after the <cite>self.eval()</cite> call and before
@@ -283,6 +283,7 @@ Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add observation noise to the posterior.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>botorch.posteriors.posterior.Posterior</em></a><em>]</em><em>, </em><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>botorch.posteriors.posterior.Posterior</em></a><em>]</em><em>]</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -658,9 +659,9 @@ of the <cite>i</cite>-th model).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>GPyTorchPosterior</cite> object, representing <cite>batch_shape</cite> joint
-distributions over <cite>q</cite> points and the outputs selected by
-<cite>output_indices</cite> each. Includes measurement noise if
+<dd class="field-even"><p>A <cite>GPyTorchPosterior</cite> or <cite>FullyBayesianPosterior</cite> object, representing
+<cite>batch_shape</cite> joint distributions over <cite>q</cite> points and the outputs selected
+by <cite>output_indices</cite> each. Includes measurement noise if
 <cite>observation_noise</cite> is specified.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
@@ -1067,7 +1068,7 @@ an element of a q-batch).</p></li>
 <p>Gaussian Process Regression models based on GPyTorch models.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.gp_regression.SingleTaskGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression.</span></span><span class="sig-name descname"><span class="pre">SingleTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#SingleTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.SingleTaskGP" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression.</span></span><span class="sig-name descname"><span class="pre">SingleTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#SingleTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.SingleTaskGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel" title="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.models.exact_gp.ExactGP</span></code></p>
 <p>A single-task exact GP model.</p>
 <p>A single-task exact GP using relatively strong priors on the Kernel
@@ -1090,6 +1091,8 @@ outputs, use the MultiTaskGP.</p>
 GaussianLikelihood with inferred noise level.</p></li>
 <li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – The module computing the covariance (Kernel) matrix.
 If omitted, use a <cite>MaternKernel</cite>.</p></li>
+<li><p><strong>mean_module</strong> (<em>Optional</em><em>[</em><em>Mean</em><em>]</em>) – The mean function to be used. If omitted, use a
+<cite>ConstantMean</cite>.</p></li>
 <li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em>]</em>) – An outcome transform that is applied to the
 training data during instantiation and to the posterior during
 inference (that is, the <cite>Posterior</cite> obtained by calling
@@ -1150,7 +1153,7 @@ or for multiple outcomes for batched multi-output case.</p></li>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.gp_regression.FixedNoiseGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression.</span></span><span class="sig-name descname"><span class="pre">FixedNoiseGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression.</span></span><span class="sig-name descname"><span class="pre">FixedNoiseGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel" title="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.models.exact_gp.ExactGP</span></code></p>
 <p>A single-task exact GP model using fixed noise levels.</p>
 <p>A single-task exact GP that uses fixed observation noise levels. This model
@@ -1166,13 +1169,16 @@ standardized (zero mean, unit variance).</p>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
 <li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of observed measurement
 noise.</p></li>
+<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – The module computing the covariance (Kernel) matrix.
+If omitted, use a <cite>MaternKernel</cite>.</p></li>
+<li><p><strong>mean_module</strong> (<em>Optional</em><em>[</em><em>Mean</em><em>]</em>) – The mean function to be used. If omitted, use a
+<cite>ConstantMean</cite>.</p></li>
 <li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em>]</em>) – An outcome transform that is applied to the
 training data during instantiation and to the posterior during
 inference (that is, the <cite>Posterior</cite> obtained by calling
 <cite>.posterior</cite> on the model will be on the original scale).</p></li>
 <li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em>]</em>) – An input transfrom that is applied in the model’s
 forward pass.</p></li>
-<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – </p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -1440,6 +1446,8 @@ forward pass.</p></li>
 GaussianLikelihood with inferred noise level.</p></li>
 <li><p><strong>covar_module</strong> – The module computing the covariance (Kernel) matrix.
 If omitted, use a <cite>MaternKernel</cite>.</p></li>
+<li><p><strong>mean_module</strong> – The mean function to be used. If omitted, use a
+<cite>ConstantMean</cite>.</p></li>
 <li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em>]</em>) – An outcome transform that is applied to the
 training data during instantiation and to the posterior during
 inference (that is, the <cite>Posterior</cite> obtained by calling
@@ -1538,6 +1546,10 @@ forward pass.</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
 <li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of observed measurement
 noise.</p></li>
+<li><p><strong>covar_module</strong> – The module computing the covariance (Kernel) matrix.
+If omitted, use a <cite>MaternKernel</cite>.</p></li>
+<li><p><strong>mean_module</strong> – The mean function to be used. If omitted, use a
+<cite>ConstantMean</cite>.</p></li>
 <li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em>]</em>) – An outcome transform that is applied to the
 training data during instantiation and to the posterior during
 inference (that is, the <cite>Posterior</cite> obtained by calling
@@ -2423,6 +2435,32 @@ re-setting the data.</p></li>
 </dl>
 </dd></dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.pairwise_gp.PairwiseGP.load_state_dict">
+<span class="sig-name descname"><span class="pre">load_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP.load_state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.load_state_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes data related buffers from the <cite>state_dict</cite> and calls
+<cite>super().load_state_dict</cite> with <cite>strict=False</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state_dict</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>torch.Tensor</em><em>]</em>) – The state dict.</p></li>
+<li><p><strong>strict</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – A boolean denoting whether to error out if all keys are not
+present in the <cite>state_dict</cite>. Since we remove data related buffers
+from the <cite>state_dict</cite>, this will lead to an error whenever
+<cite>strict=True</cite>. Instead, we overwrite it with <cite>strict=False</cite>, and
+raise a warning explaining this if <cite>strict=True</cite> is passed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A named tuple <cite>_IncompatibleKeys</cite>, containing the <cite>missing_keys</cite>
+and <cite>unexpected_keys</cite>. Note that the buffers we remove from the
+<cite>state_dict</cite> may be listed under <cite>missing_keys</cite>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.nn.modules.module._IncompatibleKeys</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.pairwise_gp.PairwiseGP.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datapoints</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate a posterior or prior prediction.</p>
@@ -2571,6 +2609,10 @@ the same order across contexts.</p></li>
 <li><p><strong>train_Y</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
 <li><p><strong>train_Yvar</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of observed measurement
 noise.</p></li>
+<li><p><strong>covar_module</strong> – The module computing the covariance (Kernel) matrix.
+If omitted, use a <cite>MaternKernel</cite>.</p></li>
+<li><p><strong>mean_module</strong> – The mean function to be used. If omitted, use a
+<cite>ConstantMean</cite>.</p></li>
 <li><p><strong>outcome_transform</strong> – An outcome transform that is applied to the
 training data during instantiation and to the posterior during
 inference (that is, the <cite>Posterior</cite> obtained by calling
@@ -2632,6 +2674,10 @@ for each categorical variable.</p></li>
 <li><p><strong>train_Y</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
 <li><p><strong>train_Yvar</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of observed measurement
 noise.</p></li>
+<li><p><strong>covar_module</strong> – The module computing the covariance (Kernel) matrix.
+If omitted, use a <cite>MaternKernel</cite>.</p></li>
+<li><p><strong>mean_module</strong> – The mean function to be used. If omitted, use a
+<cite>ConstantMean</cite>.</p></li>
 <li><p><strong>outcome_transform</strong> – An outcome transform that is applied to the
 training data during instantiation and to the posterior during
 inference (that is, the <cite>Posterior</cite> obtained by calling
@@ -3077,11 +3123,41 @@ Seventh Conference on Uncertainty in Artificial Intelligence, 2021.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian.reshape_and_detach">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.fully_bayesian.</span></span><span class="sig-name descname"><span class="pre">reshape_and_detach</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#reshape_and_detach"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.reshape_and_detach" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detach and reshape <cite>new_value</cite> to match <cite>target</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target</strong> (<em>torch.Tensor</em>) – </p></li>
+<li><p><strong>new_value</strong> (<em>torch.Tensor</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian.PyroModel">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.fully_bayesian.</span></span><span class="sig-name descname"><span class="pre">PyroModel</span></span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#PyroModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.PyroModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Abstract base class for a Pyro model.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian.PyroModel.set_inputs">
+<span class="sig-name descname"><span class="pre">set_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#PyroModel.set_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.PyroModel.set_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the training data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<em>torch.Tensor</em>) – Training inputs (n x d)</p></li>
+<li><p><strong>train_Y</strong> (<em>torch.Tensor</em>) – Training targets (n x 1)</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – Observed noise variance (n x 1). Inferred if None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian.PyroModel.sample">
 <em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#PyroModel.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.PyroModel.sample" title="Permalink to this definition">¶</a></dt>
@@ -3108,25 +3184,27 @@ Seventh Conference on Uncertainty in Artificial Intelligence, 2021.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian.PyroModel.load_mcmc_samples">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_mcmc_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcmc_samples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#PyroModel.load_mcmc_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.PyroModel.load_mcmc_samples" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>torch.Tensor</em><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Tuple[gpytorch.means.mean.Mean, gpytorch.kernels.kernel.Kernel, gpytorch.likelihoods.likelihood.Likelihood]</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian.SaasPyroModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.fully_bayesian.</span></span><span class="sig-name descname"><span class="pre">SaasPyroModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasPyroModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasPyroModel" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.fully_bayesian.</span></span><span class="sig-name descname"><span class="pre">SaasPyroModel</span></span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasPyroModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasPyroModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.fully_bayesian.PyroModel" title="botorch.models.fully_bayesian.PyroModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.fully_bayesian.PyroModel</span></code></a></p>
 <p>Implementation of the sparse axis-aligned subspace priors (SAAS) model.</p>
 <p>The SAAS model uses sparsity-inducing priors to identift the most important
 parameters. This model is suitable for high-dimensional BO with potentially
 hundreds of tunable parameters. See <a class="reference internal" href="#eriksson2021saasbo" id="id15"><span>[Eriksson2021saasbo]</span></a> for more details.</p>
-<p>Initialize the SAAS model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>train_X</strong> (<em>torch.Tensor</em>) – Training inputs (n x d)</p></li>
-<li><p><strong>train_Y</strong> (<em>torch.Tensor</em>) – Training targets (n x 1)</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – Observed noise variance (n x 1). Inferred if None.</p></li>
-</ul>
-</dd>
-</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian.SaasPyroModel.sample">
 <span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasPyroModel.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasPyroModel.sample" title="Permalink to this definition">¶</a></dt>
@@ -3214,21 +3292,36 @@ tausq (global shrinkage).</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian.SaasPyroModel.load_mcmc_samples">
+<span class="sig-name descname"><span class="pre">load_mcmc_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcmc_samples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasPyroModel.load_mcmc_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasPyroModel.load_mcmc_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the MCMC samples into the mean_module, covar_module, and likelihood.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>torch.Tensor</em><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Tuple[gpytorch.means.mean.Mean, gpytorch.kernels.kernel.Kernel, gpytorch.likelihoods.likelihood.Likelihood]</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.fully_bayesian.</span></span><span class="sig-name descname"><span class="pre">SaasFullyBayesianSingleTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasFullyBayesianSingleTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.fully_bayesian.</span></span><span class="sig-name descname"><span class="pre">SaasFullyBayesianSingleTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyro_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasFullyBayesianSingleTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gp_regression.SingleTaskGP</span></code></a></p>
 <p>A fully Bayesian single-task GP model with the SAAS prior.</p>
 <p>This model assumes that the inputs have been normalized to [0, 1]^d and that
-the output has been standardizes to have zero mean and unit variance. The SAAS
-model <a class="reference internal" href="#eriksson2021saasbo" id="id16"><span>[Eriksson2021saasbo]</span></a> with a Matern-5/2 is used by default.</p>
+the output has been standardized to have zero mean and unit variance. You can
+either normalize and standardize the data before constructing the model or use
+an <cite>input_transform</cite> and <cite>outcome_transform</cite>. The SAAS model <a class="reference internal" href="#eriksson2021saasbo" id="id16"><span>[Eriksson2021saasbo]</span></a>
+with a Matern-5/2 kernel is used by default.</p>
 <p>You are expected to use <cite>fit_fully_bayesian_model_nuts</cite> to fit this model as it
 isn’t compatible with <cite>fit_gpytorch_model</cite>.</p>
 <p>Example:
 &gt;&gt;&gt; saas_gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)
 &gt;&gt;&gt; fit_fully_bayesian_model_nuts(saas_gp)
-&gt;&gt;&gt; posterior = saas_gp.posterior(test_X, marginalize_over_mcmc_samples=True)</p>
+&gt;&gt;&gt; posterior = saas_gp.posterior(test_X)</p>
 <p>Initialize the fully Bayesian single-task GP model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -3236,8 +3329,13 @@ isn’t compatible with <cite>fit_gpytorch_model</cite>.</p>
 <li><p><strong>train_X</strong> (<em>torch.Tensor</em>) – Training inputs (n x d)</p></li>
 <li><p><strong>train_Y</strong> (<em>torch.Tensor</em>) – Training targets (n x 1)</p></li>
 <li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – Observed noise variance (n x 1). Inferred if None.</p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>botorch.models.transforms.outcome.OutcomeTransform</em></a><em>]</em>) – </p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>botorch.models.transforms.input.InputTransform</em></a><em>]</em>) – </p></li>
+<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>botorch.models.transforms.outcome.OutcomeTransform</em></a><em>]</em>) – An outcome transform that is applied to the
+training data during instantiation and to the posterior during
+inference (that is, the <cite>Posterior</cite> obtained by calling
+<cite>.posterior</cite> on the model will be on the original scale).</p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>botorch.models.transforms.input.InputTransform</em></a><em>]</em>) – An input transform that is applied in the model’s
+forward pass.</p></li>
+<li><p><strong>pyro_model</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.fully_bayesian.PyroModel" title="botorch.models.fully_bayesian.PyroModel"><em>botorch.models.fully_bayesian.PyroModel</em></a><em>]</em>) – Optional <cite>PyroModel</cite>, defaults to <cite>SaasPyroModel</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -3335,7 +3433,7 @@ registered hooks while the latter silently ignores them.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.posterior">
-<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marginalize_over_mcmc_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasFullyBayesianSingleTaskGP.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.posterior" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasFullyBayesianSingleTaskGP.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.posterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -3352,10 +3450,6 @@ computes the posterior over all model outputs.</p></li>
 likelihood to the posterior. If a Tensor, use it directly as the
 observation noise (must be of shape <cite>(batch_shape) x q x m</cite>).</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>botorch.acquisition.objective.PosteriorTransform</em></a><em>]</em>) – An optional PosteriorTransform.</p></li>
-<li><p><strong>marginalize_over_mcmc_samples</strong> (<em>bool</em>) – If True, we will use the law of total
-variance to marginalize over the MCMC samples. This is useful when
-making test predictions, but shouldn’t be used when computing
-acquisition functions values.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -5526,7 +5620,7 @@ attribute.</p></li>
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {
