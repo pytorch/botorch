@@ -251,6 +251,34 @@
 <span class="sd">        """</span>
         <span class="n">prepared_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span></div></div>
+
+
+<div class="viewcode-block" id="Expectation"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.Expectation">[docs]</a><span class="k">class</span> <span class="nc">Expectation</span><span class="p">(</span><span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""The expectation risk measure.</span>
+
+<span class="sd">    For unconstrained problems, we recommend using the `ExpectationPosteriorTransform`</span>
+<span class="sd">    instead. `ExpectationPosteriorTransform` directly transforms the posterior</span>
+<span class="sd">    distribution over `q * n_w` to a posterior of `q` expectations, significantly</span>
+<span class="sd">    reducing the cost of posterior sampling as a result.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="Expectation.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.Expectation.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Calculate the expectation corresponding to the given samples.</span>
+<span class="sd">        This calculates the expectation / mean / average of each `n_w` samples</span>
+<span class="sd">        across the q-batch dimension. If `self.weights` is given, the samples</span>
+<span class="sd">        are scalarized across the output dimension before taking the expectation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            samples: A `sample_shape x batch_shape x (q * n_w) x m`-dim tensor of</span>
+<span class="sd">                posterior samples. The q-batches should be ordered so that each</span>
+<span class="sd">                `n_w` block of samples correspond to the same input.</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `sample_shape x batch_shape x q`-dim tensor of expectation samples.</span>
+<span class="sd">        """</span>
+        <span class="n">prepared_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>

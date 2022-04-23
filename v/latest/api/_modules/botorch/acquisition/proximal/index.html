@@ -37,9 +37,14 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.utils</span> <span class="kn">import</span> <span class="n">t_batch_mode_transform</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
@@ -81,6 +86,7 @@
         <span class="n">Module</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span> <span class="o">=</span> <span class="n">acq_function</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">model</span>
 
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="s2">"X_pending"</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -90,31 +96,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">X_pending</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"proximal_weights"</span><span class="p">,</span> <span class="n">proximal_weights</span><span class="p">)</span>
-
-        <span class="c1"># check model for train_inputs and single batch</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">"train_inputs"</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-                <span class="s2">"Acquisition function model must have "</span> <span class="s2">"`train_inputs`."</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([])</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-                <span class="s2">"Proximal acquisition function requires a single batch model"</span>
-            <span class="p">)</span>
-
-        <span class="c1"># check to make sure that weights match the training data shape</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proximal_weights</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span>
-            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">proximal_weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"`proximal_weights` must be a one dimensional tensor with "</span>
-                <span class="s2">"same feature dimension as model."</span>
-            <span class="p">)</span>
+        <span class="n">_validate_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">proximal_weights</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ProximalAcquisitionFunction.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.proximal.ProximalAcquisitionFunction.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">assert_output_shape</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -127,13 +109,93 @@
 <span class="sd">            Base acquisition function evaluated on tensor `X` multiplied by proximal</span>
 <span class="sd">            weighting.</span>
 <span class="sd">        """</span>
-        <span class="n">last_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">diff</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">last_X</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">model</span>
 
+        <span class="n">train_inputs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelListGP</span><span class="p">):</span>
+            <span class="n">train_inputs</span> <span class="o">=</span> <span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">input_transform</span> <span class="o">=</span> <span class="n">_get_input_transform</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+        <span class="n">last_X</span> <span class="o">=</span> <span class="n">train_inputs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># un-transform last_X</span>
+        <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">last_X</span> <span class="o">=</span> <span class="n">input_transform</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">last_X</span><span class="p">)</span>
+
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">last_X</span>
         <span class="n">M</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">diff</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">proximal_weights</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
 
         <span class="n">proximal_acq_weight</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">M</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="n">proximal_acq_weight</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_validate_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">proximal_weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Validate model</span>
+
+<span class="sd">    Perform vaidation checks on model used in base acquisition function to make sure</span>
+<span class="sd">    it is compatible with proximal weighting.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: Model associated with base acquisition function to be validated.</span>
+<span class="sd">        proximal_weights: A `d` dim tensor used to bias locality</span>
+<span class="sd">                along each axis.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># check model for train_inputs and single batch</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"train_inputs"</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span><span class="s2">"Acquisition function model must have `train_inputs`."</span><span class="p">)</span>
+
+    <span class="c1"># get train inputs for each type of possible model</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelListGP</span><span class="p">):</span>
+        <span class="c1"># ModelListGP models</span>
+        <span class="c1"># check to make sure that the training inputs and input transformers for each</span>
+        <span class="c1"># model match and are reversible</span>
+        <span class="n">train_inputs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">input_transform</span> <span class="o">=</span> <span class="n">_get_input_transform</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">train_inputs</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                    <span class="s2">"Proximal acquisition function does not support unequal "</span>
+                    <span class="s2">"training inputs"</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">input_transform</span> <span class="o">==</span> <span class="n">_get_input_transform</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+                <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                    <span class="s2">"Proximal acquisition function does not support non-identical "</span>
+                    <span class="s2">"input transforms"</span>
+                <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># any non-ModelListGP model</span>
+        <span class="n">train_inputs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># check to make sure that the model is single t-batch (q-batches are allowed)</span>
+    <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([])</span> <span class="ow">and</span> <span class="n">train_inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="s2">"Proximal acquisition function requires a single batch model"</span>
+        <span class="p">)</span>
+
+    <span class="c1"># check to make sure that weights match the training data shape</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">proximal_weights</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span>
+        <span class="ow">or</span> <span class="n">proximal_weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">train_inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"`proximal_weights` must be a one dimensional tensor with "</span>
+            <span class="s2">"same feature dimension as model."</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_input_transform</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]:</span>
+    <span class="sd">"""get input transform if defined"""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">input_transform</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
 </pre></div>
 </div>
 </div>

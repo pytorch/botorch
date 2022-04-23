@@ -42,11 +42,14 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">scalarize_posterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils</span> <span class="kn">import</span> <span class="n">apply_constraints</span>
+<span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span><span class="p">,</span> <span class="n">MultitaskMultivariateNormal</span>
+<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">lazify</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
@@ -161,6 +164,110 @@
             <span class="s2">"version. Use ScalarizedPosteriorTransform instead."</span>
         <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ExpectationPosteriorTransform"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ExpectationPosteriorTransform">[docs]</a><span class="k">class</span> <span class="nc">ExpectationPosteriorTransform</span><span class="p">(</span><span class="n">PosteriorTransform</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Transform the `batch x (q * n_w) x m` posterior into a `batch x q x m`</span>
+<span class="sd">    posterior of the expectation. The expectation is calculated over each</span>
+<span class="sd">    consecutive `n_w` block of points in the posterior.</span>
+
+<span class="sd">    This is intended for use with `InputPerturbation` or `AppendFeatures` for</span>
+<span class="sd">    optimizing the expectation over `n_w` points. This should not be used when</span>
+<span class="sd">    there are constraints present, since this does not take into account</span>
+<span class="sd">    the feasibility of the objectives.</span>
+
+<span class="sd">    Note: This is different than `ScalarizedPosteriorTransform` in that</span>
+<span class="sd">    this operates over the q-batch dimension.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_w</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""A posterior transform calculating the expectation over the q-batch</span>
+<span class="sd">        dimension.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            n_w: The number of points in the q-batch of the posterior to compute</span>
+<span class="sd">                the expectation over. This corresponds to the size of the</span>
+<span class="sd">                `feature_set` of `AppendFeatures` or the size of the `perturbation_set`</span>
+<span class="sd">                of `InputPerturbation`.</span>
+<span class="sd">            weights: An optional `n_w x m`-dim tensor of weights. Can be used to</span>
+<span class="sd">                compute a weighted expectation. Weights are normalized before use.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">weights</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">n_w</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`weights` must be a tensor of size `n_w x m`."</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">weights</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`weights` must be non-negative."</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_w</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># Normalize the weights.</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">/</span> <span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"weights"</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_w</span> <span class="o">=</span> <span class="n">n_w</span>
+
+<div class="viewcode-block" id="ExpectationPosteriorTransform.evaluate"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ExpectationPosteriorTransform.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate the expectation of a set of outcomes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            Y: A `batch_shape x (q * n_w) x m`-dim tensor of outcomes.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x q x m`-dim tensor of expectation outcomes.</span>
+<span class="sd">        """</span>
+        <span class="n">batch_shape</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">weighted_Y</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_w</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">weighted_Y</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ExpectationPosteriorTransform.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.ExpectationPosteriorTransform.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Compute the posterior of the expectation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            posterior: An `m`-outcome joint posterior over `q * n_w` points.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            An `m`-outcome joint posterior over `q` expectations.</span>
+<span class="sd">        """</span>
+        <span class="n">org_mvn</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">org_mvn</span><span class="p">,</span> <span class="s2">"_interleaved"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"`ExpectationPosteriorTransform` does not support "</span>
+                <span class="s2">"interleaved posteriors."</span>
+            <span class="p">)</span>
+        <span class="c1"># Initialize the weight matrix of shape compatible with the mvn.</span>
+        <span class="n">org_event_shape</span> <span class="o">=</span> <span class="n">org_mvn</span><span class="o">.</span><span class="n">event_shape</span>
+        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">org_mvn</span><span class="o">.</span><span class="n">batch_shape</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">org_event_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_w</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">org_event_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">org_event_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"device"</span><span class="p">:</span> <span class="n">org_mvn</span><span class="o">.</span><span class="n">loc</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">:</span> <span class="n">org_mvn</span><span class="o">.</span><span class="n">loc</span><span class="o">.</span><span class="n">dtype</span><span class="p">}</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">m</span><span class="p">,</span> <span class="n">q</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_w</span> <span class="o">*</span> <span class="n">m</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="c1"># Make sure self.weights has the correct dtype/device and shape.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">org_mvn</span><span class="o">.</span><span class="n">loc</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_w</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+        <span class="c1"># Fill in the non-zero entries of the weight matrix.</span>
+        <span class="c1"># We want each row to have non-zero weights for the corresponding</span>
+        <span class="c1"># `n_w` sized diagonal. The `m` outcomes are not interleaved.</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">m</span><span class="p">):</span>
+            <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_w</span> <span class="o">*</span> <span class="n">i</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_w</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">//</span> <span class="n">q</span><span class="p">]</span>
+        <span class="c1"># Trasform the mean.</span>
+        <span class="n">new_loc</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">weights</span> <span class="o">@</span> <span class="n">org_mvn</span><span class="o">.</span><span class="n">loc</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1"># Transform the covariance matrix.</span>
+        <span class="n">org_cov</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">org_mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span>
+            <span class="k">if</span> <span class="n">org_mvn</span><span class="o">.</span><span class="n">islazy</span>
+            <span class="k">else</span> <span class="n">org_mvn</span><span class="o">.</span><span class="n">covariance_matrix</span>
+        <span class="p">)</span>
+        <span class="n">new_cov</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">@</span> <span class="p">(</span><span class="n">org_cov</span> <span class="o">@</span> <span class="n">weights</span><span class="o">.</span><span class="n">t</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">new_mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">new_loc</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">lazify</span><span class="p">(</span><span class="n">new_cov</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Using MTMVN since we pass a single loc and covar for all `m` outputs.</span>
+            <span class="n">new_mvn</span> <span class="o">=</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">(</span>
+                <span class="n">new_loc</span><span class="p">,</span> <span class="n">lazify</span><span class="p">(</span><span class="n">new_cov</span><span class="p">),</span> <span class="n">interleaved</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">new_mvn</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="MCAcquisitionObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.objective.MCAcquisitionObjective">[docs]</a><span class="k">class</span> <span class="nc">MCAcquisitionObjective</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>

@@ -48,6 +48,7 @@
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_scipy</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="n">sample_all_priors</span>
+<span class="kn">from</span> <span class="nn">botorch.settings</span> <span class="kn">import</span> <span class="n">debug</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.sum_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">SumMarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.utils.errors</span> <span class="kn">import</span> <span class="n">NotPSDError</span>
@@ -145,7 +146,9 @@
     <span class="n">original_state_dict</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
     <span class="n">retry</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">while</span> <span class="n">retry</span> <span class="o">&lt;</span> <span class="n">max_retries</span><span class="p">:</span>
-        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">ws</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">ws</span><span class="p">,</span> <span class="n">debug</span><span class="p">(</span><span class="kc">True</span><span class="p">):</span>
+            <span class="c1"># Make sure we catch all OptimizationWarnings.</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"always"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">OptimizationWarning</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">retry</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># use normal initial conditions on first try</span>
                 <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">original_state_dict</span><span class="p">)</span>
                 <span class="n">sample_all_priors</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
@@ -175,7 +178,7 @@
         <span class="n">retry</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Fitting failed on try </span><span class="si">{</span><span class="n">retry</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
 
-    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Fitting failed on all retries."</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">)</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Fitting failed on all retries."</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span></div>
 
 
