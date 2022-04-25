@@ -15,8 +15,8 @@ from botorch.acquisition.multi_objective.monte_carlo import (
     MultiObjectiveMCAcquisitionFunction,
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
-    MOMF,
 )
+from botorch.acquisition.multi_objective.multi_fidelity import MOMF
 from botorch.acquisition.multi_objective.objective import (
     AnalyticMultiOutputObjective,
     IdentityAnalyticMultiOutputObjective,
