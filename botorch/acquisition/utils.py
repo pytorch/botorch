@@ -209,22 +209,22 @@ def get_infeasible_cost(
     model: Model,
     objective: Optional[Callable[[Tensor, Optional[Tensor]], Tensor]] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
-) -> float:
+) -> Tensor:
     r"""Get infeasible cost for a model and objective.
 
-    Computes an infeasible cost `M` such that `-M < min_x f(x)` almost always,
-        so that feasible points are preferred.
+    For each outcome, computes an infeasible cost `M` such that
+    `-M < min_x f(x)` almost always, so that feasible points are preferred.
 
     Args:
         X: A `n x d` Tensor of `n` design points to use in evaluating the
             minimum. These points should cover the design space well. The more
             points the better the estimate, at the expense of added computation.
-        model: A fitted botorch model.
+        model: A fitted botorch model with `m` outcomes.
         objective: The objective with which to evaluate the model output.
         posterior_transform: A PosteriorTransform (optional).
 
     Returns:
-        The infeasible cost `M` value.
+        An `m`-dim tensor of infeasible cost values.
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
@@ -237,9 +237,13 @@ def get_infeasible_cost(
             return Y.squeeze(-1)
 
     posterior = model.posterior(X, posterior_transform=posterior_transform)
-    lb = objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt()).min()
-    M = -(lb.clamp_max(0.0))
-    return M.item()
+    lb = objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt())
+    if lb.ndim < posterior.mean.ndim:
+        lb = lb.unsqueeze(-1)
+    # Take outcome-wise min. Looping in to handle batched models.
+    while lb.dim() > 1:
+        lb = lb.min(dim=-2).values
+    return -(lb.clamp_max(0.0))
 
 
 def is_nonnegative(acq_function: AcquisitionFunction) -> bool:

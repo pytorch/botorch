@@ -13,7 +13,7 @@ from __future__ import annotations
 import inspect
 import warnings
 from abc import ABC, abstractmethod
-from typing import Callable, List, Optional
+from typing import Union, Callable, List, Optional
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -441,7 +441,7 @@ class ConstrainedMCObjective(GenericMCObjective):
         self,
         objective: Callable[[Tensor, Optional[Tensor]], Tensor],
         constraints: List[Callable[[Tensor], Tensor]],
-        infeasible_cost: float = 0.0,
+        infeasible_cost: Union[Tensor, float] = 0.0,
         eta: float = 1e-3,
     ) -> None:
         r"""Feasibility-weighted objective.

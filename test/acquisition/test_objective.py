@@ -320,7 +320,7 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 obj=constrained_obj,
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
-                infeasible_cost=0.0,
+                infeasible_cost=torch.tensor([0.0], device=self.device, dtype=dtype),
             )
             self.assertTrue(torch.equal(obj(samples), constrained_obj))
             # one feasible, one infeasible, infeasible_cost
@@ -342,7 +342,7 @@ class TestConstrainedMCObjective(BotorchTestCase):
             obj = ConstrainedMCObjective(
                 objective=generic_obj,
                 constraints=[feasible_con, infeasible_con],
-                infeasible_cost=5.0,
+                infeasible_cost=torch.tensor([5.0], device=self.device, dtype=dtype),
             )
             samples = torch.randn(4, 3, 2, device=self.device, dtype=dtype)
             constrained_obj = generic_obj(samples)
