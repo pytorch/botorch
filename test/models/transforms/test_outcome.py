@@ -9,12 +9,12 @@ from copy import deepcopy
 
 import torch
 from botorch.models.transforms.outcome import (
+    Bilog,
     ChainedOutcomeTransform,
     Log,
     OutcomeTransform,
     Power,
     Standardize,
-    Tanh,
 )
 from botorch.models.transforms.utils import (
     norm_to_lognorm_mean,
@@ -584,7 +584,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             self.assertTrue(torch.equal(Y_tf_subset, Y_tf[..., [0]]))
             self.assertIsNone(Yvar_tf_subset)
 
-    def test_tanh(self, seed=0):
+    def test_bilog(self, seed=0):
         torch.random.manual_seed(seed)
 
         ms = (1, 2)
@@ -595,7 +595,7 @@ class TestOutcomeTransforms(BotorchTestCase):
         for m, batch_shape, dtype in itertools.product(ms, batch_shapes, dtypes):
 
             # test init
-            tf = Tanh()
+            tf = Bilog()
             self.assertTrue(tf.training)
             self.assertIsNone(tf._outputs)
 
@@ -603,7 +603,11 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
             Y_tf, Yvar_tf = tf(Y, None)
             self.assertTrue(tf.training)
-            self.assertTrue(torch.allclose(Y_tf, Y.tanh()))
+            self.assertTrue(
+                torch.allclose(
+                    Y_tf, torch.sign(Y) * torch.log(torch.tensor(1.0) + torch.abs(Y))
+                )
+            )
             self.assertIsNone(Yvar_tf)
             tf.eval()
             self.assertFalse(tf.training)
@@ -618,7 +622,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             self.assertIsNone(Yvar_tf_subset)
 
             # test error if observation noise present
-            tf = Tanh()
+            tf = Bilog()
             Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
             Yvar = 1e-8 + torch.rand(
                 *batch_shape, 3, m, device=self.device, dtype=dtype
@@ -630,7 +634,7 @@ class TestOutcomeTransforms(BotorchTestCase):
                 tf.untransform(Y, Yvar)
 
             # untransform_posterior
-            tf = Tanh()
+            tf = Bilog()
             Y_tf, Yvar_tf = tf(Y, None)
             tf.eval()
             shape = batch_shape + torch.Size([3, m])
@@ -654,7 +658,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             outputs = [-1]
 
             # test init
-            tf = Tanh(outputs=outputs)
+            tf = Bilog(outputs=outputs)
             self.assertTrue(tf.training)
             # cannot normalize indices b/c we don't know dimension yet
             self.assertEqual(tf._outputs, [-1])
@@ -677,7 +681,7 @@ class TestOutcomeTransforms(BotorchTestCase):
                 tf_subset = tf.subset_output(idcs=[0])
 
             # with observation noise
-            tf = Tanh(outputs=outputs)
+            tf = Bilog(outputs=outputs)
             Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
             Yvar = 1e-8 + torch.rand(
                 *batch_shape, 3, m, device=self.device, dtype=dtype
@@ -690,7 +694,7 @@ class TestOutcomeTransforms(BotorchTestCase):
                 tf.untransform_posterior(None)
 
             # test subset_output with positive on subset of outcomes (pos. index)
-            tf = Tanh(outputs=[0])
+            tf = Bilog(outputs=[0])
             Y_tf, Yvar_tf = tf(Y, None)
             tf_subset = tf.subset_output(idcs=[0])
             Y_tf_subset, Yvar_tf_subset = tf_subset(Y[..., [0]], None)

@@ -633,18 +633,18 @@ class Power(OutcomeTransform):
         )
 
 
-class Tanh(OutcomeTransform):
-    r"""Tanh-transform outcomes.
+class Bilog(OutcomeTransform):
+    r"""Bilog-transform outcomes.
 
     Useful for modeling constraining functions. Magnifies values near zero and
     flattens extreme values outside the domain [-1,1].
     """
 
     def __init__(self, outputs: Optional[List[int]] = None) -> None:
-        r"""Tanh-transform outcomes.
+        r"""Bilog-transform outcomes.
 
         Args:
-            outputs: Which of the outputs to tanh-transform. If omitted, all
+            outputs: Which of the outputs to Bilog-transform. If omitted, all
                 outputs will be transformed.
         """
         super().__init__()
@@ -675,7 +675,7 @@ class Tanh(OutcomeTransform):
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
     ) -> Tuple[Tensor, Optional[Tensor]]:
-        r"""Tanh-transform outcomes.
+        r"""Bilog-transform outcomes.
 
         Args:
             Y: A `batch_shape x n x m`-dim tensor of training targets.
@@ -688,7 +688,7 @@ class Tanh(OutcomeTransform):
             - The transformed outcome observations.
             - The transformed observation noise (if applicable).
         """
-        Y_tf = Y.tanh()
+        Y_tf = torch.sign(Y) * torch.log(torch.abs(Y) + torch.tensor(1.0).to(Y))
         outputs = normalize_indices(self._outputs, d=Y.size(-1))
         if outputs is not None:
             Y_tf = torch.stack(
@@ -707,7 +707,7 @@ class Tanh(OutcomeTransform):
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
     ) -> Tuple[Tensor, Optional[Tensor]]:
-        r"""Un-transform tanh-transformed outcomes
+        r"""Un-transform bilog-transformed outcomes
 
         Args:
             Y: A `batch_shape x n x m`-dim tensor of power-transfomred targets.
@@ -721,7 +721,7 @@ class Tanh(OutcomeTransform):
             - The un-power transformed outcome observations.
             - The un-power transformed observation noise (if applicable).
         """
-        Y_utf = Y.atanh()
+        Y_utf = torch.sign(Y) * (torch.exp(torch.abs(Y)) - torch.tensor(1.0).to(Y))
         outputs = normalize_indices(self._outputs, d=Y.size(-1))
         if outputs is not None:
             Y_utf = torch.stack(
@@ -734,7 +734,7 @@ class Tanh(OutcomeTransform):
         if Yvar is not None:
             # TODO: Delta method, possibly issue warning
             raise NotImplementedError(
-                "Tanh does not yet support transforming observation noise"
+                "Bilog does not yet support transforming observation noise"
             )
         return Y_utf, Yvar
 
@@ -749,9 +749,10 @@ class Tanh(OutcomeTransform):
         """
         if self._outputs is not None:
             raise NotImplementedError(
-                "Tanh does not yet support output selection for untransform_posterior"
+                "Bilog does not yet support output selection for untransform_posterior"
             )
         return TransformedPosterior(
             posterior=posterior,
-            sample_transform=lambda x: x.atanh(),
+            sample_transform=lambda x: torch.sign(x)
+            * (torch.exp(torch.abs(x)) - torch.tensor(1.0).to(x)),
         )

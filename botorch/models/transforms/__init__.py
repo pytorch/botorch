@@ -11,15 +11,17 @@ from botorch.models.transforms.input import (
     Warp,
 )
 from botorch.models.transforms.outcome import (
+    Bilog,
     ChainedOutcomeTransform,
     Log,
     Power,
     Standardize,
-    Tanh,
+
 )
 
 
 __all__ = [
+    "Bilog",
     "ChainedInputTransform",
     "ChainedOutcomeTransform",
     "Log",
@@ -28,5 +30,4 @@ __all__ = [
     "Round",
     "Standardize",
     "Warp",
-    "Tanh",
 ]
