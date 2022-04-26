@@ -16,7 +16,6 @@ from botorch.models.transforms.outcome import (
     Log,
     Power,
     Standardize,
-
 )
 
 
