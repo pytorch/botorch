@@ -47,7 +47,7 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
         self,
         acq_function: AcquisitionFunction,
         proximal_weights: Tensor,
-        transformed_weighting: bool = False,
+        transformed_weighting: bool = True,
     ) -> None:
         r"""Derived Acquisition Function weighted by proximity to recently
         observed point.
