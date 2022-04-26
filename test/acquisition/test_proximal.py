@@ -90,34 +90,52 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     self.assertTrue(torch.allclose(ei_prox, ei * test_prox_weight))
                     self.assertTrue(ei_prox.shape == torch.Size([1]))
 
-            # test t-batch with broadcasting
-            test_X = torch.rand(4, 1, 3, device=self.device, dtype=dtype)
-            ei = EI(test_X)
-            mv_normal = MultivariateNormal(train_X[-1], torch.diag(proximal_weights))
-            test_prox_weight = torch.exp(mv_normal.log_prob(test_X)) / torch.exp(
-                mv_normal.log_prob(train_X[-1])
-            )
+                    # test t-batch with broadcasting
+                    test_X = torch.rand(4, 1, 3, device=self.device, dtype=dtype)
+                    proximal_test_X = test_X.clone()
+                    if transformed_weighting:
+                        if input_transform is not None:
+                            last_X = input_transform(train_X[-1])
+                            proximal_test_X = input_transform(test_X)
 
-            ei_prox = EI_prox(test_X)
-            self.assertTrue(torch.allclose(ei_prox, ei * test_prox_weight.flatten()))
-            self.assertTrue(ei_prox.shape == torch.Size([4]))
+                    ei = EI(test_X)
+                    mv_normal = MultivariateNormal(last_X, torch.diag(proximal_weights))
+                    test_prox_weight = torch.exp(
+                        mv_normal.log_prob(proximal_test_X)
+                    ) / torch.exp(mv_normal.log_prob(last_X))
 
-            # test MC acquisition function
-            qEI = qExpectedImprovement(model, best_f=0.0)
-            test_X = torch.rand(4, 1, 3, device=self.device, dtype=dtype)
-            qEI_prox = ProximalAcquisitionFunction(
-                qEI, proximal_weights=proximal_weights
-            )
+                    ei_prox = EI_prox(test_X)
+                    self.assertTrue(
+                        torch.allclose(ei_prox, ei * test_prox_weight.flatten())
+                    )
+                    self.assertTrue(ei_prox.shape == torch.Size([4]))
 
-            qei = qEI(test_X)
-            mv_normal = MultivariateNormal(train_X[-1], torch.diag(proximal_weights))
-            test_prox_weight = torch.exp(mv_normal.log_prob(test_X)) / torch.exp(
-                mv_normal.log_prob(train_X[-1])
-            )
+                    # test MC acquisition function
+                    qEI = qExpectedImprovement(model, best_f=0.0)
+                    test_X = torch.rand(4, 1, 3, device=self.device, dtype=dtype)
+                    proximal_test_X = test_X.clone()
+                    if transformed_weighting:
+                        if input_transform is not None:
+                            last_X = input_transform(train_X[-1])
+                            proximal_test_X = input_transform(test_X)
 
-            qei_prox = qEI_prox(test_X)
-            self.assertTrue(torch.allclose(qei_prox, qei * test_prox_weight.flatten()))
-            self.assertTrue(qei_prox.shape == torch.Size([4]))
+                    qEI_prox = ProximalAcquisitionFunction(
+                        qEI,
+                        proximal_weights=proximal_weights,
+                        transformed_weighting=transformed_weighting,
+                    )
+
+                    qei = qEI(test_X)
+                    mv_normal = MultivariateNormal(last_X, torch.diag(proximal_weights))
+                    test_prox_weight = torch.exp(
+                        mv_normal.log_prob(proximal_test_X)
+                    ) / torch.exp(mv_normal.log_prob(last_X))
+
+                    qei_prox = qEI_prox(test_X)
+                    self.assertTrue(
+                        torch.allclose(qei_prox, qei * test_prox_weight.flatten())
+                    )
+                    self.assertTrue(qei_prox.shape == torch.Size([4]))
 
             # test gradient
             test_X = torch.rand(
