@@ -54,6 +54,8 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                 3, bounds=torch.tensor(((0.0, 0.0, 0.0), (2.0, 2.0, 2.0)))
             )
             for input_transform in [None, normalize]:
+
+                # test with and without transformed weights
                 for transformed_weighting in [True, False]:
                     model = (
                         SingleTaskGP(train_X, train_Y, input_transform=input_transform)
@@ -110,7 +112,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     )
                     self.assertTrue(ei_prox.shape == torch.Size([4]))
 
-                    # test MC acquisition function
+                    # test q-based MC acquisition function
                     qEI = qExpectedImprovement(model, best_f=0.0)
                     test_X = torch.rand(4, 1, 3, device=self.device, dtype=dtype)
                     proximal_test_X = test_X.clone()
