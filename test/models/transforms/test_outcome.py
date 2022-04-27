@@ -608,7 +608,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            self.assertTrue(torch.allclose(Y_utf, Y))
+            self.assertTrue(torch.allclose(Y_utf, Y, atol=1e-7))
             self.assertIsNone(Yvar_utf)
 
             # subset_output
