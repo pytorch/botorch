@@ -644,7 +644,7 @@ class Power(OutcomeTransform):
 class Bilog(OutcomeTransform):
     r"""Bilog-transform outcomes.
 
-    The Bilog transform [eriksson2021scalable] is useful for modeling constraining
+    The Bilog transform [eriksson2021scalable]_ is useful for modeling constraining
     functions. It magnifies values near zero and flattens extreme values outside the
     domain [-1,1].
     """
