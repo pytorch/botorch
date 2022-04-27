@@ -10,6 +10,14 @@ model outputs. Outcome transformations are typically part of a Model and
 applied (i) within the model constructor to transform the train observations
 to the model space, and (ii) in the `Model.posterior` call to untransform
 the model posterior back to the original space.
+
+References
+
+.. [eriksson2021scalable]
+    Eriksson, David, and Matthias Poloczek. Scalable constrained bayesian optimization.
+    International Conference on Artificial Intelligence and Statistics. PMLR, 2021,
+    http://proceedings.mlr.press/v130/eriksson21a.html
+
 """
 
 from __future__ import annotations
@@ -636,8 +644,9 @@ class Power(OutcomeTransform):
 class Bilog(OutcomeTransform):
     r"""Bilog-transform outcomes.
 
-    Useful for modeling constraining functions. Magnifies values near zero and
-    flattens extreme values outside the domain [-1,1].
+    The Bilog transform [eriksson2021scalable] is useful for modeling constraining
+    functions. It magnifies values near zero and flattens extreme values outside the
+    domain [-1,1].
     """
 
     def __init__(self, outputs: Optional[List[int]] = None) -> None:
@@ -688,7 +697,7 @@ class Bilog(OutcomeTransform):
             - The transformed outcome observations.
             - The transformed observation noise (if applicable).
         """
-        Y_tf = torch.sign(Y) * torch.log(torch.abs(Y) + torch.tensor(1.0).to(Y))
+        Y_tf = Y.sign() * (Y.abs() + 1.0).log()
         outputs = normalize_indices(self._outputs, d=Y.size(-1))
         if outputs is not None:
             Y_tf = torch.stack(
@@ -710,8 +719,8 @@ class Bilog(OutcomeTransform):
         r"""Un-transform bilog-transformed outcomes
 
         Args:
-            Y: A `batch_shape x n x m`-dim tensor of power-transfomred targets.
-            Yvar: A `batch_shape x n x m`-dim tensor of power-transformed
+            Y: A `batch_shape x n x m`-dim tensor of bilog-transfomred targets.
+            Yvar: A `batch_shape x n x m`-dim tensor of bilog-transformed
                 observation noises associated with the training targets
                 (if applicable).
 
@@ -721,7 +730,7 @@ class Bilog(OutcomeTransform):
             - The un-power transformed outcome observations.
             - The un-power transformed observation noise (if applicable).
         """
-        Y_utf = torch.sign(Y) * (torch.exp(torch.abs(Y)) - torch.tensor(1.0).to(Y))
+        Y_utf = Y.sign() * (Y.abs().exp() - 1.0)
         outputs = normalize_indices(self._outputs, d=Y.size(-1))
         if outputs is not None:
             Y_utf = torch.stack(
@@ -739,10 +748,10 @@ class Bilog(OutcomeTransform):
         return Y_utf, Yvar
 
     def untransform_posterior(self, posterior: Posterior) -> Posterior:
-        r"""Un-transform the tanh-transformed posterior.
+        r"""Un-transform the bilog-transformed posterior.
 
         Args:
-            posterior: A posterior in the tanh-transformed space.
+            posterior: A posterior in the bilog-transformed space.
 
         Returns:
             The un-transformed posterior.
@@ -753,6 +762,5 @@ class Bilog(OutcomeTransform):
             )
         return TransformedPosterior(
             posterior=posterior,
-            sample_transform=lambda x: torch.sign(x)
-            * (torch.exp(torch.abs(x)) - torch.tensor(1.0).to(x)),
+            sample_transform=lambda x: x.sign() * (x.abs().exp() - 1.0),
         )
