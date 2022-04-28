@@ -22,7 +22,7 @@ see also [Hong2014review]_.
 
 from abc import ABC, abstractmethod
 from math import ceil
-from typing import Optional
+from typing import List, Optional, Union
 
 import torch
 from botorch.acquisition.objective import MCAcquisitionObjective
@@ -47,18 +47,20 @@ class RiskMeasureMCObjective(MCAcquisitionObjective, ABC):
     def __init__(
         self,
         n_w: int,
-        weights: Optional[Tensor] = None,
+        weights: Optional[Union[List[float], Tensor]] = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
         Args:
             n_w: The size of the `w_set` to calculate the risk measure over.
-            weights: An optional `m`-dim tensor of weights for scalarizing
+            weights: An optional `m`-dim tensor or list of weights for scalarizing
                 multi-output samples before calculating the risk measure.
         """
         super().__init__()
         self.n_w = n_w
-        self.weights = weights
+        self.register_buffer(
+            "weights", torch.as_tensor(weights) if weights is not None else None
+        )
 
     def _prepare_samples(self, samples: Tensor) -> Tensor:
         r"""Prepare samples for risk measure calculations by scalarizing and
@@ -77,6 +79,7 @@ class RiskMeasureMCObjective(MCAcquisitionObjective, ABC):
                 "Multi-output samples require `weights` for scalarization!"
             )
         if self.weights is not None:
+            self.weights = self.weights.to(samples)
             samples = samples @ self.weights
         else:
             samples = samples.squeeze(-1)
@@ -116,14 +119,14 @@ class CVaR(RiskMeasureMCObjective):
         self,
         alpha: float,
         n_w: int,
-        weights: Optional[Tensor] = None,
+        weights: Optional[Union[List[float], Tensor]] = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
         Args:
             alpha: The risk level, float in `(0.0, 1.0]`.
             n_w: The size of the `w_set` to calculate the risk measure over.
-            weights: An optional `m`-dim tensor of weights for scalarizing
+            weights: An optional `m`-dim tensor or list of weights for scalarizing
                 multi-objective samples before calculating the risk measure.
         """
         super().__init__(n_w=n_w, weights=weights)
@@ -166,14 +169,14 @@ class VaR(CVaR):
         self,
         alpha: float,
         n_w: int,
-        weights: Optional[Tensor] = None,
+        weights: Optional[Union[List[float], Tensor]] = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
         Args:
             alpha: The risk level, float in `(0.0, 1.0]`.
             n_w: The size of the `w_set` to calculate the risk measure over.
-            weights: An optional `m`-dim tensor of weights for scalarizing
+            weights: An optional `m`-dim tensor or list of weights for scalarizing
                 multi-objective samples before calculating the risk measure.
         """
         super().__init__(n_w=n_w, alpha=alpha, weights=weights)
