@@ -24,7 +24,7 @@ References
 import warnings
 from abc import ABC, abstractmethod
 from math import ceil
-from typing import Optional
+from typing import List, Optional, Union
 
 import torch
 from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
@@ -48,13 +48,13 @@ class MultiOutputRiskMeasureMCObjective(
     def __init__(
         self,
         n_w: int,
-        weights: Optional[Tensor] = None,
+        weights: Optional[Union[List[float], Tensor]] = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
         Args:
             n_w: The size of the `w_set` to calculate the risk measure over.
-            weights: An optional `m`-dim tensor of weights for scaling
+            weights: An optional `m`-dim tensor or list of weights for scaling
                 multi-output samples before calculating the risk measure.
                 This can also be used to make sure that all outputs are
                 correctly aligned for maximization by negating those that are
@@ -75,6 +75,7 @@ class MultiOutputRiskMeasureMCObjective(
             A `sample_shape x batch_shape x q x n_w x m`-dim tensor of prepared samples.
         """
         if self.weights is not None:
+            self.weights = self.weights.to(samples)
             samples = samples * self.weights
         return samples.view(*samples.shape[:-2], -1, self.n_w, samples.shape[-1])
 
@@ -234,7 +235,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         n_w: int,
         alpha: float,
         expectation: bool = False,
-        weights: Optional[Tensor] = None,
+        weights: Optional[Union[List[float], Tensor]] = None,
         pad_to_n_w: bool = False,
         filter_dominated: bool = True,
     ) -> None:
@@ -247,7 +248,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             expectation: If True, returns the expectation of the MVaR set as is
                 done in [Cousin2013MVaR]_. Otherwise, it returns the union of all
                 values in the MVaR set. Default: False.
-            weights: An optional `m`-dim tensor of weights for scaling
+            weights: An optional `m`-dim tensor or list of weights for scaling
                 multi-output samples before calculating the risk measure.
                 This can also be used to make sure that all outputs are
                 correctly aligned for maximization by negating those that are

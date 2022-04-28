@@ -66,6 +66,10 @@ class TestMultiOutputRiskMeasureMCObjective(BotorchTestCase):
             )
             prepared_samples = obj._prepare_samples(samples)
             self.assertTrue(torch.equal(prepared_samples, -expected_samples))
+            # List of weights
+            obj = NotSoAbstractMORiskMeasure(n_w=3, weights=[-1.0, -1.0, -1.0])
+            prepared_samples = obj._prepare_samples(samples)
+            self.assertTrue(torch.equal(prepared_samples, -expected_samples))
 
 
 class TestMultiOutputExpectation(BotorchTestCase):

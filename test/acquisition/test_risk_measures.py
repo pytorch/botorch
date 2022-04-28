@@ -60,6 +60,10 @@ class TestRiskMeasureMCObjective(BotorchTestCase):
             )
             prepared_samples = obj._prepare_samples(samples)
             self.assertTrue(torch.equal(prepared_samples, -expected_samples))
+            # List of weights
+            obj = NotSoAbstractRiskMeasure(n_w=3, weights=[-1.0])
+            prepared_samples = obj._prepare_samples(samples)
+            self.assertTrue(torch.equal(prepared_samples, -expected_samples))
             # MO with weights
             obj = NotSoAbstractRiskMeasure(
                 n_w=2,
@@ -83,6 +87,13 @@ class TestRiskMeasureMCObjective(BotorchTestCase):
                 [[[5.0, 1.9], [5.0, 11.0], [1.0, 11.0]]],
                 device=self.device,
                 dtype=dtype,
+            )
+            prepared_samples = obj._prepare_samples(samples)
+            self.assertTrue(torch.equal(prepared_samples, expected_samples))
+            # List of weights
+            obj = NotSoAbstractRiskMeasure(
+                n_w=2,
+                weights=[1.0, 2.0],
             )
             prepared_samples = obj._prepare_samples(samples)
             self.assertTrue(torch.equal(prepared_samples, expected_samples))
