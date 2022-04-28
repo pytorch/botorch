@@ -117,6 +117,8 @@ for epoch in range(NUM_EPOCHS):
 
 # #### Compute posterior over test points and plot fit
 # We plot the posterior mean and the 2 standard deviations from the mean.
+# 
+# Note: The posterior below is the posterior prediction for the underlying sinusoidal function, i.e., it does not include the observation noise. If we wanted to get the posterior prediction for the observations (including the predicted observation noise), we would instead use `posterior = posterior = model.posterior(test_X, observation_noise=True)`. 
 
 # In[8]:
 
