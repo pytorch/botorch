@@ -462,7 +462,7 @@ class ConstrainedMCObjective(GenericMCObjective):
         """
         super().__init__(objective=objective)
         self.constraints = constraints
-        self.eta = eta
+        self.register_buffer("eta", torch.as_tensor(eta))
         self.register_buffer("infeasible_cost", torch.as_tensor(infeasible_cost))
 
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
