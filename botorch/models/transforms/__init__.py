@@ -11,6 +11,7 @@ from botorch.models.transforms.input import (
     Warp,
 )
 from botorch.models.transforms.outcome import (
+    Bilog,
     ChainedOutcomeTransform,
     Log,
     Power,
@@ -19,6 +20,7 @@ from botorch.models.transforms.outcome import (
 
 
 __all__ = [
+    "Bilog",
     "ChainedInputTransform",
     "ChainedOutcomeTransform",
     "Log",
