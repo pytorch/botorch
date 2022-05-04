@@ -125,7 +125,7 @@ class MOMFPark(MultiObjectiveTestProblem):
         _x2 = x2
         _x3 = 1 - 3 * (x3 - 0.5) ** 2
         _x4 = 1 - (x4 - 0.8) ** 2
-        return torch.stack([_x1, _x2, _x3, _x4, s],dim=-1)
+        return torch.stack([_x1, _x2, _x3, _x4, s], dim=-1)
 
     def _park1(self, X: Tensor) -> Tensor:
         x1 = X[..., 0]
