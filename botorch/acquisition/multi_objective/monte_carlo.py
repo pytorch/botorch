@@ -32,7 +32,6 @@ from typing import Any, Callable, List, Optional, Union
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCAcquisitionFunction
-from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
@@ -42,8 +41,6 @@ from botorch.acquisition.multi_objective.utils import (
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
-from botorch.models.cost import AffineFidelityCostModel
-from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.model import Model
 from botorch.models.transforms.input import InputPerturbation
 from botorch.posteriors import DeterministicPosterior

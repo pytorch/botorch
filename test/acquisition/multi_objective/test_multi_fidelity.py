@@ -5,9 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import warnings
-from copy import deepcopy
-from itertools import product
-from math import pi
 from unittest import mock
 
 import torch

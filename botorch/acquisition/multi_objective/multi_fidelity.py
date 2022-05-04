@@ -25,10 +25,11 @@ from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.multi_objective.monte_carlo import (
     qExpectedHypervolumeImprovement,
 )
+from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.model import Model
-from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.sampling.samplers import MCSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
