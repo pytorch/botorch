@@ -17,6 +17,8 @@ Before jumping the gun, we recommend you start with the high-level
 - PyTorch >= 1.9
 - gpytorch >= 1.6
 - scipy
+- multiple-dispatch
+- pyro-ppl == 1.8.0
 
 BoTorch is easily installed via
 [Anaconda](https://www.anaconda.com/distribution/#download-section) (recommended)
@@ -25,7 +27,7 @@ or `pip`:
 <!--DOCUSAURUS_CODE_TABS-->
 <!--conda-->
 ```bash
-conda install botorch -c pytorch -c gpytorch
+conda install botorch -c pytorch -c gpytorch -c conda-forge
 ```
 <!--pip-->
 ```bash
