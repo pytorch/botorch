@@ -59,6 +59,8 @@ Optimization simply use Ax.
 - PyTorch >= 1.9
 - gpytorch >= 1.6
 - scipy
+- multiple-dispatch
+- pyro-ppl == 1.8.0
 
 
 ##### Installing the latest release
@@ -66,7 +68,7 @@ Optimization simply use Ax.
 The latest release of BoTorch is easily installed either via
 [Anaconda](https://www.anaconda.com/distribution/#download-section) (recommended):
 ```bash
-conda install botorch -c pytorch -c gpytorch
+conda install botorch -c pytorch -c gpytorch -c conda-forge
 ```
 or via `pip`:
 ```bash
