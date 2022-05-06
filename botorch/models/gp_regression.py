@@ -10,7 +10,7 @@ Gaussian Process Regression models based on GPyTorch models.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, List, Optional, Union
 
 import torch
 from botorch import settings
@@ -19,7 +19,6 @@ from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import Log, OutcomeTransform
 from botorch.models.utils import fantasize as fantasize_flag, validate_input_scaling
 from botorch.sampling.samplers import MCSampler
-from botorch.utils.containers import TrainingData
 from gpytorch.constraints.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.matern_kernel import MaternKernel
@@ -156,19 +155,6 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
-
-    @classmethod
-    def construct_inputs(
-        cls, training_data: TrainingData, **kwargs: Any
-    ) -> Dict[str, Any]:
-        r"""Construct kwargs for the `Model` from `TrainingData` and other options.
-
-        Args:
-            training_data: `TrainingData` container with data for single outcome
-                or for multiple outcomes for batched multi-output case.
-            **kwargs: None expected for this class.
-        """
-        return {"train_X": training_data.X, "train_Y": training_data.Y}
 
 
 class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
@@ -334,25 +320,6 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         new_noise = full_noise[..., idcs if len(idcs) > 1 else idcs[0], :]
         new_model.likelihood.noise_covar.noise = new_noise
         return new_model
-
-    @classmethod
-    def construct_inputs(
-        cls, training_data: TrainingData, **kwargs: Any
-    ) -> Dict[str, Any]:
-        r"""Construct kwargs for the `Model` from `TrainingData` and other options.
-
-        Args:
-            training_data: `TrainingData` container with data for single outcome
-                or for multiple outcomes for batched multi-output case.
-            **kwargs: None expected for this class.
-        """
-        if training_data.Yvar is None:
-            raise ValueError(f"Yvar required for {cls.__name__}.")
-        return {
-            "train_X": training_data.X,
-            "train_Y": training_data.Y,
-            "train_Yvar": training_data.Yvar,
-        }
 
 
 class HeteroskedasticSingleTaskGP(SingleTaskGP):

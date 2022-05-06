@@ -20,7 +20,7 @@ from botorch.models.transforms.input import InputStandardize
 from botorch.models.utils import add_output_dim
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
-from botorch.utils.containers import TrainingData
+from botorch.utils.datasets import FixedNoiseDataset, SupervisedDataset
 from botorch.utils.sampling import manual_seed
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
@@ -350,14 +350,14 @@ class TestSingleTaskGP(BotorchTestCase):
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             model, model_kwargs = self._get_model_and_data(
-                batch_shape=batch_shape, m=2, **tkwargs
+                batch_shape=batch_shape, m=1, **tkwargs
             )
-            training_data = TrainingData.from_block_design(
-                X=model_kwargs["train_X"], Y=model_kwargs["train_Y"]
-            )
+            X = model_kwargs["train_X"]
+            Y = model_kwargs["train_Y"]
+            training_data = SupervisedDataset(X, Y)
             data_dict = model.construct_inputs(training_data)
-            self.assertTrue(torch.equal(data_dict["train_X"], model_kwargs["train_X"]))
-            self.assertTrue(torch.equal(data_dict["train_Y"], model_kwargs["train_Y"]))
+            self.assertTrue(X.equal(data_dict["train_X"]))
+            self.assertTrue(Y.equal(data_dict["train_Y"]))
 
     def test_set_transformed_inputs(self):
         # This intended to catch https://github.com/pytorch/botorch/issues/1078.
@@ -423,26 +423,16 @@ class TestFixedNoiseGP(TestSingleTaskGP):
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             model, model_kwargs = self._get_model_and_data(
-                batch_shape=batch_shape, m=2, **tkwargs
+                batch_shape=batch_shape, m=1, **tkwargs
             )
-            training_data = TrainingData.from_block_design(
-                X=model_kwargs["train_X"],
-                Y=model_kwargs["train_Y"],
-                Yvar=model_kwargs["train_Yvar"],
-            )
+            X = model_kwargs["train_X"]
+            Y = model_kwargs["train_Y"]
+            Yvar = model_kwargs["train_Yvar"]
+            training_data = FixedNoiseDataset(X, Y, Yvar)
             data_dict = model.construct_inputs(training_data)
-            self.assertTrue("train_Yvar" in data_dict)
-            self.assertTrue(torch.equal(data_dict["train_X"], model_kwargs["train_X"]))
-            self.assertTrue(torch.equal(data_dict["train_Y"], model_kwargs["train_Y"]))
-            self.assertTrue(
-                torch.equal(data_dict["train_Yvar"], model_kwargs["train_Yvar"])
-            )
-            # if Yvars is missing, then raise error
-            training_data = TrainingData.from_block_design(
-                X=model_kwargs["train_X"], Y=model_kwargs["train_Y"]
-            )
-            with self.assertRaises(ValueError):
-                model.construct_inputs(training_data)
+            self.assertTrue(X.equal(data_dict["train_X"]))
+            self.assertTrue(Y.equal(data_dict["train_Y"]))
+            self.assertTrue(Yvar.equal(data_dict["train_Yvar"]))
 
 
 class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
