@@ -95,9 +95,14 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
 
         train_inputs = model.train_inputs[0]
 
+        # if the model is ModelListGP then get the first model
         if isinstance(model, ModelListGP):
             train_inputs = train_inputs[0]
             model = model.models[0]
+
+        # if the model has more than one output get the first copy of training inputs
+        if model.num_outputs > 1:
+            train_inputs = train_inputs[0]
 
         input_transform = _get_input_transform(model)
 
