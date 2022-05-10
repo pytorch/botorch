@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List
+from typing import List
 
 import torch
 from botorch.acquisition import LinearMCObjective, ScalarizedPosteriorTransform
@@ -17,7 +17,6 @@ from botorch.models import ModelListGP, SingleTaskGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.models.transforms.input import Normalize
-from botorch.utils.containers import TrainingData
 from botorch.utils.testing import BotorchTestCase
 from torch.distributions.multivariate_normal import MultivariateNormal
 
@@ -27,12 +26,6 @@ class DummyModel(GPyTorchModel):
 
     def __init__(self):
         super(GPyTorchModel, self).__init__()
-
-    @classmethod
-    def construct_inputs(
-        cls, training_data: TrainingData, **kwargs: Any
-    ) -> Dict[str, Any]:
-        pass
 
     def subset_output(self, idcs: List[int]) -> Model:
         pass

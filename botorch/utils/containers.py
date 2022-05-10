@@ -4,129 +4,151 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-r"""
-Containers to standardize inputs into models and acquisition functions.
-"""
+r"""Representations for different kinds of data."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import List, Optional
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, fields
+from typing import Any
 
-import torch
-from botorch.exceptions.errors import UnsupportedError
-from torch import Tensor
+from torch import (
+    device as Device,
+    dtype as Dtype,
+    LongTensor,
+    Size,
+    Tensor,
+)
 
 
-@dataclass
-class TrainingData:
-    r"""Standardized container of model training data for models.
+class BotorchContainer(ABC):
+    r"""Abstract base class for BoTorch's data containers.
 
-    Properties:
-        Xs: A list of tensors, each of shape `batch_shape x n_i x d`,
-            where `n_i` is the number of training inputs for the i-th model.
-        Ys: A list of tensors, each of shape `batch_shape x n_i x 1`,
-            where `n_i` is the number of training observations for the i-th
-            (single-output) model.
-        Yvars: A list of tensors, each of shape `batch_shape x n_i x 1`,
-            where `n_i` is the number of training observations of the
-            observation noise for the i-th  (single-output) model.
-            If `None`, the observation noise level is unobserved.
+    A BotorchContainer represents a tensor, which should be the sole object
+    returned by its `__call__` method. Said tensor is expected to consist of
+    one or more "events" (e.g. data points or feature vectors), whose shape is
+    given by the required `event_shape` field.
+
+    Notice: Once version 3.10 becomes standard, this class should
+    be reworked to take advantage of dataclasses' `kw_only` flag.
     """
 
-    Xs: List[Tensor]  # `batch_shape x n_i x 1`
-    Ys: List[Tensor]  # `batch_shape x n_i x 1`
-    Yvars: Optional[List[Tensor]] = None  # `batch_shape x n_i x 1`
+    def __post_init__(self, validate_init: bool = True) -> None:
+        if validate_init:
+            self._validate()
 
-    def __post_init__(self):
-        self._is_block_design = all(torch.equal(X, self.Xs[0]) for X in self.Xs[1:])
+    @abstractmethod
+    def __call__(self) -> Tensor:
+        raise NotImplementedError
 
-    @classmethod
-    def from_block_design(cls, X: Tensor, Y: Tensor, Yvar: Optional[Tensor] = None):
-        r"""Construct a TrainingData object from a block design description.
+    @abstractmethod
+    def __eq__(self, other: Any) -> bool:
+        raise NotImplementedError
 
-        Args:
-            X: A `batch_shape x n x d` tensor of training points (shared across
-                all outcomes).
-            Y: A `batch_shape x n x m` tensor of training observations.
-            Yvar: A `batch_shape x n x m` tensor of training noise variance
-                observations, or `None`.
+    @property
+    @abstractmethod
+    def shape(self) -> Size:
+        raise NotImplementedError
 
-        Returns:
-            The `TrainingData` object (with `is_block_design=True`).
-        """
-        return cls(
-            Xs=[X for _ in range(Y.shape[-1])],
-            Ys=list(torch.split(Y, 1, dim=-1)),
-            Yvars=None if Yvar is None else list(torch.split(Yvar, 1, dim=-1)),
+    @property
+    @abstractmethod
+    def device(self) -> Device:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def dtype(self) -> Dtype:
+        raise NotImplementedError
+
+    def _validate(self) -> None:
+        for field in fields(self):
+            if field.name == "event_shape":
+                return
+        raise AttributeError("Missing required field `event_shape`.")
+
+
+@dataclass(eq=False)
+class DenseContainer(BotorchContainer):
+    r"""Basic representation of data stored as a dense Tensor."""
+    values: Tensor
+    event_shape: Size
+
+    def __call__(self) -> Tensor:
+        """Returns a dense tensor representation of the container's contents."""
+        return self.values
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            type(other) is type(self)
+            and self.shape == other.shape
+            and self.values.equal(other.values)
         )
 
     @property
-    def is_block_design(self) -> bool:
-        r"""Indicates whether training data is a "block design".
-
-        Block designs are designs in which all outcomes are observed
-        at the same training inputs.
-        """
-        return self._is_block_design
+    def shape(self) -> Size:
+        return self.values.shape
 
     @property
-    def X(self) -> Tensor:
-        r"""The training inputs (block-design only).
-
-        This raises an `UnsupportedError` in the non-block-design case.
-        """
-        if not self.is_block_design:
-            raise UnsupportedError
-        return self.Xs[0]
+    def device(self) -> Device:
+        return self.values.device
 
     @property
-    def Y(self) -> Tensor:
-        r"""The training observations (block-design only).
+    def dtype(self) -> Dtype:
+        return self.values.dtype
 
-        This raises an `UnsupportedError` in the non-block-design case.
-        """
-        if not self.is_block_design:
-            raise UnsupportedError
-        return torch.cat(self.Ys, dim=-1)
-
-    @property
-    def Yvar(self) -> Optional[List[Tensor]]:
-        r"""The training observations's noise variance (block-design only).
-
-        This raises an `UnsupportedError` in the non-block-design case.
-        """
-        if self.Yvars is not None:
-            if not self.is_block_design:
-                raise UnsupportedError
-            return torch.cat(self.Yvars, dim=-1)
-
-    def __eq__(self, other: TrainingData) -> bool:
-        # Check for `None` Yvars and unequal attribute lengths upfront.
-        if self.Yvars is None or other.Yvars is None:
-            if not (self.Yvars is other.Yvars is None):
-                return False
-        else:
-            if len(self.Yvars) != len(other.Yvars):
-                return False
-
-        if len(self.Xs) != len(other.Xs) or len(self.Ys) != len(other.Ys):
-            return False
-
-        return (  # Deep-check equality of attributes.
-            all(
-                torch.equal(self_X, other_X)
-                for self_X, other_X in zip(self.Xs, other.Xs)
-            )
-            and all(
-                torch.equal(self_Y, other_Y)
-                for self_Y, other_Y in zip(self.Ys, other.Ys)
-            )
-            and (
-                self.Yvars is other.Yvars is None
-                or all(
-                    torch.equal(self_Yvar, other_Yvar)
-                    for self_Yvar, other_Yvar in zip(self.Yvars, other.Yvars)
+    def _validate(self) -> None:
+        super()._validate()
+        for a, b in zip(reversed(self.event_shape), reversed(self.values.shape)):
+            if a != b:
+                raise ValueError(
+                    f"Shape of `values` {self.values.shape} incompatible with "
+                    f"`event shape` {self.event_shape}."
                 )
-            )
+
+
+@dataclass(eq=False)
+class SliceContainer(BotorchContainer):
+    r"""Represent data points formed by concatenating (n-1)-dimensional slices
+    taken from the leading dimension of an n-dimensional source tensor."""
+
+    values: Tensor
+    indices: LongTensor
+    event_shape: Size
+
+    def __call__(self) -> Tensor:
+        flat = self.values.index_select(dim=0, index=self.indices.view(-1))
+        return flat.view(*self.indices.shape[:-1], -1, *self.values.shape[2:])
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            type(other) is type(self)
+            and self.values.equal(other.values)
+            and self.indices.equal(other.indices)
         )
+
+    @property
+    def shape(self) -> Size:
+        return self.indices.shape[:-1] + self.event_shape
+
+    @property
+    def device(self) -> Device:
+        return self.values.device
+
+    @property
+    def dtype(self) -> Dtype:
+        return self.values.dtype
+
+    def _validate(self) -> None:
+        super()._validate()
+        values = self.values
+        indices = self.indices
+        assert indices.ndim > 1
+        assert (-1 < indices.min()) & (indices.max() < len(values))
+
+        event_shape = self.event_shape
+        _event_shape = (indices.shape[-1] * values.shape[1],) + values.shape[2:]
+        if event_shape != _event_shape:
+            raise ValueError(
+                f"Shapes of `values` {values.shape} and `indices` "
+                f"{indices.shape} incompatible with `event_shape` {event_shape}."
+            )

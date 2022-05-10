@@ -14,16 +14,16 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from copy import deepcopy
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Hashable, List, Optional, Union
 
 import numpy as np
 import torch
 from botorch import settings
-from botorch.models.utils import fantasize as fantasize_flag
+from botorch.models.utils.assorted import fantasize as fantasize_flag
 from botorch.posteriors import Posterior, PosteriorList
 from botorch.posteriors.fully_bayesian import FullyBayesianPosteriorList
 from botorch.sampling.samplers import MCSampler
-from botorch.utils.containers import TrainingData
+from botorch.utils.datasets import BotorchDataset
 from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
 from torch.nn import Module, ModuleList
@@ -171,12 +171,14 @@ class Model(Module, ABC):
 
     @classmethod
     def construct_inputs(
-        cls, training_data: TrainingData, **kwargs: Any
+        cls,
+        training_data: Union[BotorchDataset, Dict[Hashable, BotorchDataset]],
+        **kwargs: Any,
     ) -> Dict[str, Any]:
-        r"""Construct kwargs for the `Model` from `TrainingData` and other options."""
-        raise NotImplementedError(
-            f"`construct_inputs` not implemented for {cls.__name__}."
-        )
+        r"""Construct `Model` keyword arguments from a dict of `BotorchDataset`."""
+        from botorch.models.utils.parse_training_data import parse_training_data
+
+        return parse_training_data(cls, training_data, **kwargs)
 
     def transform_inputs(
         self,
