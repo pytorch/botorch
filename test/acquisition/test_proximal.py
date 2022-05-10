@@ -36,6 +36,11 @@ class DummyAcquisitionFunction(AcquisitionFunction):
         pass
 
 
+class DummyAcquisitionFunction(AcquisitionFunction):
+    def forward(self, X):
+        pass
+
+
 class TestProximalAcquisitionFunction(BotorchTestCase):
     def test_proximal(self):
         for dtype in (torch.float, torch.double):
@@ -156,7 +161,6 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     ExpectedImprovement(model, 0.0), proximal_weights[:1]
                 )
 
-            # test proximal weights that are not 1D
             with self.assertRaises(ValueError):
                 ProximalAcquisitionFunction(
                     ExpectedImprovement(model, 0.0),
