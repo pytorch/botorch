@@ -74,44 +74,11 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
                 )
             self.X_pending = acq_function.X_pending
 
-        if hasattr(acq_function, "X_pending"):
-            if acq_function.X_pending is not None:
-                raise UnsupportedError(
-                    "Proximal acquisition function requires `X_pending` to be None."
-                )
-            self.X_pending = acq_function.X_pending
-
         self.register_buffer("proximal_weights", proximal_weights)
         self.register_buffer(
             "transformed_weighting", torch.tensor(transformed_weighting)
         )
         _validate_model(model, proximal_weights)
-
-
-        # check model for train_inputs and single batch
-        if not hasattr(self.acq_func.model, "train_inputs"):
-            raise UnsupportedError(
-                "Acquisition function model must have " "`train_inputs`."
-            )
-
-        if (
-            self.acq_func.model.batch_shape != torch.Size([])
-            and self.acq_func.model.train_inputs[0].shape[1] != 1
-        ):
-            raise UnsupportedError(
-                "Proximal acquisition function requires a single batch model"
-            )
-
-        # check to make sure that weights match the training data shape
-        if (
-            len(self.proximal_weights.shape) != 1
-            or self.proximal_weights.shape[0]
-            != self.acq_func.model.train_inputs[0][-1].shape[-1]
-        ):
-            raise ValueError(
-                "`proximal_weights` must be a one dimensional tensor with "
-                "same feature dimension as model."
-            )
 
     @t_batch_mode_transform(expected_q=1, assert_output_shape=False)
     def forward(self, X: Tensor) -> Tensor:

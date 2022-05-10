@@ -36,11 +36,6 @@ class DummyAcquisitionFunction(AcquisitionFunction):
         pass
 
 
-class DummyAcquisitionFunction(AcquisitionFunction):
-    def forward(self, X):
-        pass
-
-
 class TestProximalAcquisitionFunction(BotorchTestCase):
     def test_proximal(self):
         for dtype in (torch.float, torch.double):
