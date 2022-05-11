@@ -50,6 +50,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
 
                 # test with and without transformed weights
                 for transformed_weighting in [True, False]:
+                    # test with single outcome model
                     model = (
                         SingleTaskGP(train_X, train_Y, input_transform=input_transform)
                         .to(device=self.device, dtype=dtype)
@@ -155,7 +156,6 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     ExpectedImprovement(model, 0.0), proximal_weights[:1]
                 )
 
-            # test proximal weights that are not 1D
             with self.assertRaises(ValueError):
                 ProximalAcquisitionFunction(
                     ExpectedImprovement(model, 0.0),
@@ -178,6 +178,22 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                 ProximalAcquisitionFunction(
                     ExpectedImprovement(bad_single_task, 0.0), proximal_weights
                 )
+
+            # test a multi-output SingleTaskGP model
+            train_X = torch.rand(5, 3, device=self.device, dtype=dtype)
+            train_Y = torch.rand(5, 2, device=self.device, dtype=dtype)
+
+            multi_output_model = SingleTaskGP(train_X, train_Y).to(device=self.device)
+            ptransform = ScalarizedPosteriorTransform(
+                weights=torch.ones(2, dtype=dtype)
+            )
+            acq = ProximalAcquisitionFunction(
+                ExpectedImprovement(
+                    multi_output_model, 0.0, posterior_transform=ptransform
+                ),
+                proximal_weights,
+            )
+            acq(test_X)
 
     def test_proximal_model_list(self):
         for dtype in (torch.float, torch.double):

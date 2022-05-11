@@ -17,6 +17,7 @@ import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import ModelListGP
+from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.model import Model
 from botorch.models.transforms.input import InputTransform
 from botorch.utils import t_batch_mode_transform
@@ -95,9 +96,14 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
 
         train_inputs = model.train_inputs[0]
 
+        # if the model is ModelListGP then get the first model
         if isinstance(model, ModelListGP):
             train_inputs = train_inputs[0]
             model = model.models[0]
+
+        # if the model has more than one output get the first copy of training inputs
+        if isinstance(model, BatchedMultiOutputGPyTorchModel) and model.num_outputs > 1:
+            train_inputs = train_inputs[0]
 
         input_transform = _get_input_transform(model)
 
