@@ -36,11 +36,6 @@ class DummyAcquisitionFunction(AcquisitionFunction):
         pass
 
 
-class DummyAcquisitionFunction(AcquisitionFunction):
-    def forward(self, X):
-        pass
-
-
 class TestProximalAcquisitionFunction(BotorchTestCase):
     def test_proximal(self):
         for dtype in (torch.float, torch.double):
@@ -188,9 +183,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             train_X = torch.rand(5, 3, device=self.device, dtype=dtype)
             train_Y = torch.rand(5, 2, device=self.device, dtype=dtype)
 
-            multi_output_model = (
-                SingleTaskGP(train_X, train_Y).to(device=self.device).eval()
-            )
+            multi_output_model = SingleTaskGP(train_X, train_Y).to(device=self.device)
             ptransform = ScalarizedPosteriorTransform(
                 weights=torch.ones(2, dtype=dtype)
             )
@@ -342,4 +335,3 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     ),
                     proximal_weights,
                 )
-                
