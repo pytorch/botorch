@@ -14,10 +14,10 @@ from __future__ import annotations
 from typing import Optional
 
 import torch
-from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import ModelListGP
+from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.model import Model
 from botorch.models.transforms.input import InputTransform
 from botorch.utils import t_batch_mode_transform
