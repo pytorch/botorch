@@ -15,7 +15,6 @@ from typing import Optional
 
 import torch
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
-
 from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import ModelListGP
