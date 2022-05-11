@@ -51,7 +51,7 @@ else:
 
 
 from botorch.models.gpytorch import GPyTorchModel
-from botorch.utils.containers import TrainingData
+from botorch.utils.datasets import SupervisedDataset
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import RBFKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
@@ -76,17 +76,6 @@ class SimpleCustomGP(ExactGP, GPyTorchModel):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
-
-    @classmethod
-    def construct_inputs(cls, training_data: TrainingData, **kwargs):
-        r"""Construct kwargs for the `SimpleCustomGP` from `TrainingData` and other options.
-
-        Args:
-            training_data: `TrainingData` container with data for single outcome
-                or for multiple outcomes for batched multi-output case.
-            **kwargs: None expected for this class.
-        """
-        return {"train_X": training_data.X, "train_Y": training_data.Y}
 
 
 # ### Instantiate a `BoTorchModel` in Ax
@@ -232,9 +221,9 @@ branin = Branin()
 
 def evaluate(parameters):
     x = torch.tensor([[parameters.get(f"x{i+1}") for i in range(2)]])
-    # In our case, standard error is 0, since we are computing a synthetic function.
-    # Our custom model does not utilize the SEM, so this (passing 0) has no effect.
-    return {"branin": (branin(x).item(), 0.0)}
+    # The GaussianLikelihood used by our model infers an observation noise level,
+    # so we pass an sem value of NaN to indicate that observation noise is unknown
+    return {"branin": (branin(x).item(), float("nan"))}
 
 
 # ### Running the BO loop
@@ -333,7 +322,7 @@ class BraninMetric(Metric):
                     "metric_name": self.name,
                     "trial_index": trial.index,
                     "mean": branin_func(tensor_params),
-                    "sem": 0.0,  # SEM - standard error of the mean - corresponds to Yvar in BoTorch.
+                    "sem": float("nan"),  # SEM (observation noise) - NaN indicates unknown
                 }
             )
         return Data(df=pd.DataFrame.from_records(records))

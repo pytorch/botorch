@@ -136,6 +136,11 @@ Transform Utilities
 Utilities
 -------------------------------------------
 
+Dataset Parsing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.utils.parse_training_data
+    :members:
+
 Model Conversion
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.converter
@@ -143,5 +148,5 @@ Model Conversion
 
 Other Utilties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.utils
+.. automodule:: botorch.models.utils.assorted
     :members:
