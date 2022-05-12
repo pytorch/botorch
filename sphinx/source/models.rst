@@ -113,6 +113,10 @@ Kernels
 .. automodule:: botorch.models.kernels.contextual_sac
 .. autoclass:: SACKernel
 
+Likelihoods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.likelihoods.pairwise
+    :members:
 
 Transforms
 -------------------------------------------
