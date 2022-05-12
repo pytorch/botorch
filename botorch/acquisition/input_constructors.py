@@ -100,7 +100,7 @@ MaybeDict = Union[T, Dict[Hashable, T]]
 
 
 def _field_is_shared(
-    datasets: Union[Dict[Hashable, BotorchDataset], Iterable[BotorchDataset]],
+    datasets: Union[Iterable[BotorchDataset], Dict[Hashable, BotorchDataset]],
     fieldname: Hashable,
 ) -> bool:
     r"""Determines whether or not a given field is shared by all datasets."""
@@ -1006,7 +1006,9 @@ def get_best_f_analytic(
     posterior_transform: Optional[PosteriorTransform] = None,
     **kwargs,
 ) -> Tensor:
-    if not _field_is_shared(training_data, fieldname="X"):
+    if isinstance(training_data, dict) and not _field_is_shared(
+        training_data, fieldname="X"
+    ):
         raise NotImplementedError("Currently only block designs are supported.")
 
     Y = _get_dataset_field(
@@ -1034,7 +1036,9 @@ def get_best_f_mc(
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
 ) -> Tensor:
-    if not _field_is_shared(training_data, fieldname="X"):
+    if isinstance(training_data, dict) and not _field_is_shared(
+        training_data, fieldname="X"
+    ):
         raise NotImplementedError("Currently only block designs are supported.")
 
     Y = _get_dataset_field(
