@@ -105,7 +105,10 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
     def test_get_best_f_analytic(self):
         with self.assertRaises(NotImplementedError):
             get_best_f_analytic(training_data=self.multiX_multiY)
+
         best_f = get_best_f_analytic(training_data=self.blockX_blockY)
+        self.assertEqual(best_f, get_best_f_analytic(self.blockX_blockY[0]))
+
         best_f_expected = self.blockX_blockY[0].Y().squeeze().max()
         self.assertEqual(best_f, best_f_expected)
         with self.assertRaises(NotImplementedError):
@@ -128,7 +131,10 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
     def test_get_best_f_mc(self):
         with self.assertRaises(NotImplementedError):
             get_best_f_mc(training_data=self.multiX_multiY)
+
         best_f = get_best_f_mc(training_data=self.blockX_blockY)
+        self.assertEqual(best_f, get_best_f_mc(self.blockX_blockY[0]))
+
         best_f_expected = self.blockX_blockY[0].Y().squeeze().max()
         self.assertEqual(best_f, best_f_expected)
         with self.assertRaisesRegex(UnsupportedError, "require an objective"):
