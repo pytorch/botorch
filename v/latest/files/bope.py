@@ -26,10 +26,11 @@
 # 
 # [1] [Z.J. Lin, R. Astudillo, P.I. Frazier, and E. Bakshy, Preference Exploration for Efficient Bayesian Optimization with Multiple Outcomes. AISTATS, 2022.](https://arxiv.org/abs/2203.11382)
 
-# In[7]:
+# In[1]:
 
 
 import os
+import warnings
 
 import matplotlib as mpl
 import matplotlib.pylab as plt
@@ -52,6 +53,8 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 
 get_ipython().run_line_magic('matplotlib', 'inline')
 
+# Suppress potential optimization warnings for cleaner notebook
+warnings.filterwarnings("ignore")
 
 # Set plotting colors
 colors = ["tab:blue", "tab:orange", "tab:green", "tab:red"]
@@ -62,10 +65,10 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 # ## Problem Setup
 # 
-# In this tutorial, we use the DTLZ2 problem with d=6 inputs and k=4 outcomes as our test problem $f_\mathrm{true}$.
+# In this tutorial, we use the DTLZ2 problem with d=5 inputs and k=4 outcomes as our test problem $f_\mathrm{true}$.
 # 
 # For the utility function $g_\mathrm{true}$, we use the negative L1 distance from a Pareto-optimal point the outcome space:
-# $Y^* = f(X^*)$ where $X^* = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]$. 
+# $Y^* = f(X^*)$ where $X^* = [0.5, 0.5, 0.5, 0.5, 0.5]$. 
 
 # In[2]:
 
@@ -82,16 +85,16 @@ if SMOKE_TEST:
     NUM_RESTARTS = 2
     NUM_PREF_SAMPLES = 1
     NUM_OUTCOME_SAMPLES = 4
-    RAW_SAMPLES = 4
+    RAW_SAMPLES = 8
     BATCH_LIMIT = 2
 else:
     NUM_RESTARTS = 8
     NUM_PREF_SAMPLES = 1
     NUM_OUTCOME_SAMPLES = 64
-    RAW_SAMPLES = 128
+    RAW_SAMPLES = 64
     BATCH_LIMIT = 4
 
-X_dim = 6
+X_dim = 5
 Y_dim = 4
 problem = DTLZ2(dim=X_dim, num_objectives=Y_dim)
 util_func = neg_l1_dist
@@ -113,7 +116,7 @@ def fit_outcome_model(X, Y, X_bounds):
 def fit_pref_model(Y, comps):
     """Fit the preference model g"""
     model = PairwiseGP(Y, comps, jitter=1e-4)
-    mll = PairwiseLaplaceMarginalLogLikelihood(model)
+    mll = PairwiseLaplaceMarginalLogLikelihood(model.likelihood, model)
     fit_gpytorch_model(mll)
     return model
 
@@ -188,7 +191,6 @@ def gen_exp_cand(outcome_model, objective, q, acqf_name):
     """Given an outcome model and an objective, generate q experimental candidates
     using specified acquisition function."""
     sampler = SobolQMCNormalSampler(num_samples=NUM_OUTCOME_SAMPLES)
-    NUM_PREF_SMAPLES = 4
     if acqf_name == "qNEI":
         # generate experimental candidates with qNEI/qNEIUU
         acq_func = qNoisyExpectedImprovement(
@@ -225,7 +227,8 @@ def find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=False):
     """Helper function that find the max posterior mean under current outcome and
     preference model"""
     pref_model = fit_pref_model(train_Y, train_comps)
-    pref_obj = LearnedObjective(pref_model=pref_model)
+    sampler = SobolQMCNormalSampler(num_samples=NUM_PREF_SAMPLES)
+    pref_obj = LearnedObjective(pref_model=pref_model, sampler=sampler)
     post_mean_cand_X = gen_exp_cand(outcome_model, pref_obj, q=1, acqf_name="posterior_mean")
 
     post_mean_util = util_func(problem(post_mean_cand_X)).item()
@@ -265,12 +268,14 @@ def find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=False):
 # This represents the performance upper bound of PE strategies.
 # For the second experiment canadidate generation strategy, we use random design points to generate new candidates.
 
-# In[8]:
+# In[4]:
 
 
 verbose = False
+# Number of pairwise comparisons performed before checking posterior mean
 every_n_comps = 3
-n_check_post_mean = 4
+# Total number of checking the maximum posterior mean
+n_check_post_mean = 3
 n_reps = 1
 within_session_results = []
 exp_candidate_results = []
@@ -285,11 +290,11 @@ for i in range(n_reps):
 
     # Preference exploration stage: initialize the preference model with comparsions
     # between pairs of outcomes estimated using random design points
-    init_train_Y, init_train_comps = generate_random_pref_data(outcome_model, n=3)
+    init_train_Y, init_train_comps = generate_random_pref_data(outcome_model, n=1)
 
     # Perform preference exploration using either Random-f or EUBO-zeta
     for pe_strategy in ["EUBO-zeta", "Random-f"]:
-        train_Y, train_comps = init_train_Y, init_train_comps
+        train_Y, train_comps = init_train_Y.clone(), init_train_comps.clone()
         within_result = find_max_posterior_mean(outcome_model, train_Y, train_comps)
         within_result.update({"run_id": i, "pe_strategy": pe_strategy})
         within_session_results.append(within_result)
@@ -356,7 +361,7 @@ for i in range(n_reps):
 # with increasing number of pairwise comparisons.
 # As we can see in this plot, the preference model learned using $\text{EUBO}\mathrm{-}\zeta$ is able to identify the maximum utility more efficiently.
 
-# In[9]:
+# In[5]:
 
 
 # Prepare PE data for plots
@@ -388,7 +393,7 @@ plt.legend(title="PE Strategy")
 # On the other hand, despite that $\text{Random}\mathrm{-}f$ is a relatively straightforward PE strategy,
 # it is still able to suggest experimental candidates with generally higher utility values than the random experiment baseline.
 
-# In[10]:
+# In[6]:
 
 
 # Prepare the 2nd experimentation batch data for plot

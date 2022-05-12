@@ -31,7 +31,6 @@
 
 import os
 import warnings
-
 from itertools import combinations
 
 import numpy as np
@@ -116,7 +115,7 @@ from botorch.fit import fit_gpytorch_model
 
 
 model = PairwiseGP(train_X, train_comp)
-mll = PairwiseLaplaceMarginalLogLikelihood(model)
+mll = PairwiseLaplaceMarginalLogLikelihood(model.likelihood, model)
 mll = fit_gpytorch_model(mll)
 
 
@@ -161,15 +160,15 @@ from botorch.optim import optimize_acqf
 
 
 def init_and_fit_model(X, comp, state_dict=None):
-    """ Model fitting helper function """
+    """Model fitting helper function"""
     model = PairwiseGP(X, comp)
-    mll = PairwiseLaplaceMarginalLogLikelihood(model)
+    mll = PairwiseLaplaceMarginalLogLikelihood(model.likelihood, model)
     fit_gpytorch_model(mll)
     return mll, model
 
 
 def make_new_data(X, next_X, comps, q_comp):
-    """ Given X and next_X, 
+    """Given X and next_X,
     generate q_comp new comparisons between next_X
     and return the concatenated X and comparisons
     """
