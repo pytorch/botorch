@@ -11,6 +11,10 @@ import torch
 from botorch import fit_gpytorch_model
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions.warnings import OptimizationWarning
+from botorch.models.likelihoods.pairwise import (
+    PairwiseLogitLikelihood,
+    PairwiseProbitLikelihood,
+)
 from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
 from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
@@ -30,31 +34,42 @@ class TestPairwiseGP(BotorchTestCase):
 
         return train_X, train_Y, train_comp
 
-    def _get_model_and_data(self, batch_shape, X_dim=2, **tkwargs):
+    def _get_model_and_data(self, batch_shape, X_dim=2, likelihood_cls=None, **tkwargs):
         train_X, train_Y, train_comp = self._make_rand_mini_data(
             batch_shape=batch_shape, X_dim=X_dim, **tkwargs
         )
 
-        model_kwargs = {"datapoints": train_X, "comparisons": train_comp}
+        model_kwargs = {
+            "datapoints": train_X,
+            "comparisons": train_comp,
+            "likelihood": None if likelihood_cls is None else likelihood_cls(),
+        }
         model = PairwiseGP(**model_kwargs)
         return model, model_kwargs
 
     def test_pairwise_gp(self):
-        for batch_shape, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])), (torch.float, torch.double)
+        for batch_shape, dtype, likelihood_cls in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (torch.float, torch.double),
+            (PairwiseLogitLikelihood, PairwiseProbitLikelihood),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             X_dim = 2
 
             model, model_kwargs = self._get_model_and_data(
-                batch_shape=batch_shape, X_dim=X_dim, **tkwargs
+                batch_shape=batch_shape,
+                X_dim=X_dim,
+                likelihood_cls=likelihood_cls,
+                **tkwargs
             )
             train_X = model_kwargs["datapoints"]
             train_comp = model_kwargs["comparisons"]
 
             # test training
             # regular training
-            mll = PairwiseLaplaceMarginalLogLikelihood(model).to(**tkwargs)
+            mll = PairwiseLaplaceMarginalLogLikelihood(model.likelihood, model).to(
+                **tkwargs
+            )
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
                 fit_gpytorch_model(mll, options={"maxiter": 2}, max_retries=1)
@@ -68,7 +83,9 @@ class TestPairwiseGP(BotorchTestCase):
             other_comp = train_comp.clone()
             with self.assertRaises(RuntimeError):
                 custom_m(other_X)
-            custom_mll = PairwiseLaplaceMarginalLogLikelihood(custom_m).to(**tkwargs)
+            custom_mll = PairwiseLaplaceMarginalLogLikelihood(
+                custom_m.likelihood, custom_m
+            ).to(**tkwargs)
             post = custom_m(train_X)
             with self.assertRaises(RuntimeError):
                 custom_mll(post, other_comp)
@@ -172,20 +189,26 @@ class TestPairwiseGP(BotorchTestCase):
                 model.set_train_data(train_X, changed_train_comp, strict=True)
 
     def test_condition_on_observations(self):
-        for batch_shape, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])), (torch.float, torch.double)
+        for batch_shape, dtype, likelihood_cls in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (torch.float, torch.double),
+            (PairwiseLogitLikelihood, PairwiseProbitLikelihood),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             X_dim = 2
 
             model, model_kwargs = self._get_model_and_data(
-                batch_shape=batch_shape, X_dim=X_dim, **tkwargs
+                batch_shape=batch_shape,
+                X_dim=X_dim,
+                likelihood_cls=likelihood_cls,
+                **tkwargs
             )
             train_X = model_kwargs["datapoints"]
             train_comp = model_kwargs["comparisons"]
 
             # evaluate model
             model.posterior(torch.rand(torch.Size([4, X_dim]), **tkwargs))
+
             # test condition_on_observations
 
             # test condition_on_observations with prior mode
@@ -241,6 +264,7 @@ class TestPairwiseGP(BotorchTestCase):
                     model_kwargs_non_batch = {
                         "datapoints": model_kwargs["datapoints"][0],
                         "comparisons": model_kwargs["comparisons"][0],
+                        "likelihood": likelihood_cls(),
                     }
                     model_non_batch = model.__class__(**model_kwargs_non_batch)
                     model_non_batch.load_state_dict(state_dict_non_batch)
@@ -268,14 +292,19 @@ class TestPairwiseGP(BotorchTestCase):
                     )
 
     def test_fantasize(self):
-        for batch_shape, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])), (torch.float, torch.double)
+        for batch_shape, dtype, likelihood_cls in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (torch.float, torch.double),
+            (PairwiseLogitLikelihood, PairwiseProbitLikelihood),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             X_dim = 2
 
             model, model_kwargs = self._get_model_and_data(
-                batch_shape=batch_shape, X_dim=X_dim, **tkwargs
+                batch_shape=batch_shape,
+                X_dim=X_dim,
+                likelihood_cls=likelihood_cls,
+                **tkwargs
             )
 
             # fantasize
