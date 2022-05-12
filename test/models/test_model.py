@@ -4,10 +4,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from unittest.mock import patch
+
 import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.model import Model, ModelList
+from botorch.models.utils import parse_training_data
 from botorch.posteriors.deterministic import DeterministicPosterior
 from botorch.posteriors.posterior import PosteriorList
 from botorch.utils.testing import BotorchTestCase
@@ -50,8 +53,13 @@ class TestBaseModel(BotorchTestCase):
             model.batch_shape
         with self.assertRaises(NotImplementedError):
             model.subset_output([0])
-        with self.assertRaises(NotImplementedError):
-            model.construct_inputs(None)
+
+    def test_construct_inputs(self):
+        with patch.object(
+            parse_training_data, "parse_training_data", return_value={"a": 1}
+        ):
+            model = NotSoAbstractBaseModel()
+            self.assertEqual(model.construct_inputs(None), {"a": 1})
 
     def test_model_list(self):
         tkwargs = {"device": self.device, "dtype": torch.double}

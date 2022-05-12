@@ -16,7 +16,7 @@ from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.transforms import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
-from botorch.utils.containers import TrainingData
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.kernels.kernel import AdditiveKernel, ProductKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
@@ -293,20 +293,18 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             # )
 
     def test_construct_inputs(self):
-        d, m = 3, 1
+        d = 3
         for batch_shape, ncat, dtype in itertools.product(
             (torch.Size(), torch.Size([2])), (1, 2), (torch.float, torch.double)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            train_X, train_Y = _get_random_data(
-                batch_shape=batch_shape, m=m, d=d, **tkwargs
-            )
+            X, Y = _get_random_data(batch_shape=batch_shape, m=1, d=d, **tkwargs)
             cat_dims = list(range(ncat))
-            training_data = TrainingData.from_block_design(X=train_X, Y=train_Y)
-            kwarg_dict = MixedSingleTaskGP.construct_inputs(
+            training_data = SupervisedDataset(X, Y)
+            model_kwargs = MixedSingleTaskGP.construct_inputs(
                 training_data, categorical_features=cat_dims
             )
-            self.assertTrue(torch.equal(kwarg_dict["train_X"], train_X))
-            self.assertTrue(torch.equal(kwarg_dict["train_Y"], train_Y))
-            self.assertEqual(kwarg_dict["cat_dims"], cat_dims)
-            self.assertIsNone(kwarg_dict["likelihood"])
+            self.assertTrue(X.equal(model_kwargs["train_X"]))
+            self.assertTrue(Y.equal(model_kwargs["train_Y"]))
+            self.assertEqual(model_kwargs["cat_dims"], cat_dims)
+            self.assertIsNone(model_kwargs["likelihood"])

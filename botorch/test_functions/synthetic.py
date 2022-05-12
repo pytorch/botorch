@@ -88,8 +88,8 @@ class Beale(SyntheticTestFunction):
     def evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2 = X[..., 0], X[..., 1]
         part1 = (1.5 - x1 + x1 * x2) ** 2
-        part2 = (2.25 - x1 + x1 * x2 ** 2) ** 2
-        part3 = (2.625 - x1 + x1 * x2 ** 3) ** 2
+        part2 = (2.25 - x1 + x1 * x2**2) ** 2
+        part3 = (2.625 - x1 + x1 * x2**3) ** 2
         return part1 + part2 + part3
 
 
@@ -114,12 +114,12 @@ class Branin(SyntheticTestFunction):
     def evaluate_true(self, X: Tensor) -> Tensor:
         t1 = (
             X[..., 1]
-            - 5.1 / (4 * math.pi ** 2) * X[..., 0] ** 2
+            - 5.1 / (4 * math.pi**2) * X[..., 0] ** 2
             + 5 / math.pi * X[..., 0]
             - 6
         )
         t2 = 10 * (1 - 1 / (8 * math.pi)) * torch.cos(X[..., 0])
-        return t1 ** 2 + t2 + 10
+        return t1**2 + t2 + 10
 
 
 class Bukin(SyntheticTestFunction):
@@ -153,7 +153,7 @@ class Cosine8(SyntheticTestFunction):
     _optimizers = [tuple(0.0 for _ in range(8))]
 
     def evaluate_true(self, X: Tensor) -> Tensor:
-        return torch.sum(0.1 * torch.cos(5 * math.pi * X) - X ** 2, dim=-1)
+        return torch.sum(0.1 * torch.cos(5 * math.pi * X) - X**2, dim=-1)
 
 
 class DropWave(SyntheticTestFunction):
@@ -232,7 +232,7 @@ class Griewank(SyntheticTestFunction):
         super().__init__(noise_std=noise_std, negate=negate)
 
     def evaluate_true(self, X: Tensor) -> Tensor:
-        part1 = torch.sum(X ** 2 / 4000.0, dim=-1)
+        part1 = torch.sum(X**2 / 4000.0, dim=-1)
         d = X.shape[-1]
         part2 = -(torch.prod(torch.cos(X / torch.sqrt(X.new(range(1, d + 1)))), dim=-1))
         return part1 + part2 + 1.0
@@ -432,7 +432,7 @@ class Michalewicz(SyntheticTestFunction):
         m = 10
         return -(
             torch.sum(
-                torch.sin(X) * torch.sin(self.i * X ** 2 / math.pi) ** (2 * m), dim=-1
+                torch.sin(X) * torch.sin(self.i * X**2 / math.pi) ** (2 * m), dim=-1
             )
         )
 
@@ -475,7 +475,7 @@ class Rastrigin(SyntheticTestFunction):
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         return 10.0 * self.dim + torch.sum(
-            X ** 2 - 10.0 * torch.cos(2.0 * math.pi * X), dim=-1
+            X**2 - 10.0 * torch.cos(2.0 * math.pi * X), dim=-1
         )
 
 
@@ -564,9 +564,9 @@ class SixHumpCamel(SyntheticTestFunction):
     def evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2 = X[..., 0], X[..., 1]
         return (
-            (4 - 2.1 * x1 ** 2 + x1 ** 4 / 3) * x1 ** 2
+            (4 - 2.1 * x1**2 + x1**4 / 3) * x1**2
             + x1 * x2
-            + (4 * x2 ** 2 - 4) * x2 ** 2
+            + (4 * x2**2 - 4) * x2**2
         )
 
 
@@ -590,7 +590,7 @@ class StyblinskiTang(SyntheticTestFunction):
         super().__init__(noise_std=noise_std, negate=negate)
 
     def evaluate_true(self, X: Tensor) -> Tensor:
-        return 0.5 * (X ** 4 - 16 * X ** 2 + 5 * X).sum(dim=-1)
+        return 0.5 * (X**4 - 16 * X**2 + 5 * X).sum(dim=-1)
 
 
 class ThreeHumpCamel(SyntheticTestFunction):
@@ -602,4 +602,4 @@ class ThreeHumpCamel(SyntheticTestFunction):
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2 = X[..., 0], X[..., 1]
-        return 2.0 * x1 ** 2 - 1.05 * x1 ** 4 + x1 ** 6 / 6.0 + x1 * x2 + x2 ** 2
+        return 2.0 * x1**2 - 1.05 * x1**4 + x1**6 / 6.0 + x1 * x2 + x2**2

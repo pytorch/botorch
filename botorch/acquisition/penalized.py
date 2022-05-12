@@ -102,7 +102,7 @@ class GaussianPenalty(torch.nn.Module):
             A tensor of size "batch_shape" representing the acqfn for each q-batch.
         """
         sq_diff = torch.norm((X - self.init_point), p=2, dim=-1) ** 2
-        pdf = torch.exp(sq_diff / 2 / self.sigma ** 2)
+        pdf = torch.exp(sq_diff / 2 / self.sigma**2)
         regularization_term = pdf.max(dim=-1).values
         return regularization_term
 

@@ -24,7 +24,7 @@ from torch import Tensor
 
 
 def generic_obj(samples: Tensor, X=None) -> Tensor:
-    return torch.log(torch.sum(samples ** 2, dim=-1))
+    return torch.log(torch.sum(samples**2, dim=-1))
 
 
 class TestL2Penalty(BotorchTestCase):
@@ -77,7 +77,7 @@ class TestGaussianPenalty(BotorchTestCase):
                 torch.norm((sample_point - init_point), p=2, dim=-1) ** 2
             )
             max_l2_distance = diff_norm_squared.max(dim=-1).values
-            real_value = torch.exp(max_l2_distance / 2 / sigma ** 2)
+            real_value = torch.exp(max_l2_distance / 2 / sigma**2)
             computed_value = gaussian_module(sample_point)
             self.assertEqual(computed_value.item(), real_value.item())
 

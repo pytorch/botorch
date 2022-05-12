@@ -288,7 +288,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             self.assertEqual(new_posterior.variance.shape, exp_size)
             new_covar = new_posterior.mvn.covariance_matrix
             if m == 1:
-                self.assertTrue(torch.allclose(new_covar, weights ** 2 * covar))
+                self.assertTrue(torch.allclose(new_covar, weights**2 * covar))
             else:
                 w = weights.unsqueeze(0)
                 covar00_exp = (w * covar[..., :m, :m] * w.t()).sum(-1).sum(-1)
@@ -316,7 +316,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
                 self.assertEqual(new_posterior.variance.shape, exp_size)
                 new_covar = new_posterior.mvn.covariance_matrix
                 if m == 1:
-                    self.assertTrue(torch.allclose(new_covar, weights ** 2 * covar))
+                    self.assertTrue(torch.allclose(new_covar, weights**2 * covar))
                 else:
                     # construct the indices manually
                     cs = list(itertools.combinations_with_replacement(range(m), 2))

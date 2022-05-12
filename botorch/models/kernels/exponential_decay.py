@@ -47,7 +47,7 @@ class ExponentialDecayKernel(Kernel):
         offset_prior: Optional[Prior] = None,
         power_constraint: Optional[Interval] = None,
         offset_constraint: Optional[Interval] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
 

@@ -16,8 +16,10 @@ from botorch.acquisition.objective import (
     MCAcquisitionObjective,
 )
 from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
+from botorch.models.model import Model
 from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors import GPyTorchPosterior
+from botorch.utils import apply_constraints
 from botorch.utils.transforms import normalize_indices
 from torch import Tensor
 
@@ -144,6 +146,73 @@ class WeightedMCMultiOutputObjective(IdentityMCMultiOutputObjective):
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         samples = super().forward(samples=samples)
         return samples * self.weights.to(samples)
+
+
+class FeasibilityWeightedMCMultiOutputObjective(MCMultiOutputObjective):
+    def __init__(
+        self,
+        model: Model,
+        X_baseline: Tensor,
+        constraint_idcs: List[int],
+        objective: Optional[MCMultiOutputObjective] = None,
+    ) -> None:
+        r"""Construct a feasibility weighted objective.
+
+        This applies feasibility weighting before calculating the objective value.
+        Defaults to identity if no constraints or objective is present.
+
+        NOTE: By passing in a single-output `MCAcquisitionObjective` as the `objective`,
+        this can be used as a single-output `MCAcquisitionObjective` as well.
+
+        Args:
+            model: A fitted Model.
+            X_baseline: An `n x d`-dim tensor of points already observed.
+            constraint_idcs: The outcome indices of the constraints. Constraints are
+                handled by weighting the samples according to a sigmoid approximation
+                of feasibility. A positive constraint outcome implies feasibility.
+            objective: An optional objective to apply after feasibility-weighting
+                the samples.
+        """
+        super().__init__()
+        num_outputs = model.num_outputs
+        # Get the non-negative indices.
+        constraint_idcs = [
+            num_outputs + idx if idx < 0 else idx for idx in constraint_idcs
+        ]
+        if len(constraint_idcs) != len(set(constraint_idcs)):
+            raise ValueError("Received duplicate entries for `constraint_idcs`.")
+        # Extract the indices for objective outcomes.
+        objective_idcs = [i for i in range(num_outputs) if i not in constraint_idcs]
+        if len(constraint_idcs) > 0:
+            # Import locally to avoid circular import.
+            from botorch.acquisition.utils import get_infeasible_cost
+
+            inf_cost = get_infeasible_cost(
+                X=X_baseline, model=model, objective=lambda y: y
+            )[objective_idcs]
+
+            def apply_feasibility_weights(
+                Y: Tensor, X: Optional[Tensor] = None
+            ) -> Tensor:
+                return apply_constraints(
+                    obj=Y[..., objective_idcs],
+                    constraints=[lambda Y: -Y[..., i] for i in constraint_idcs],
+                    samples=Y,
+                    # This ensures that the dtype/device is set properly.
+                    infeasible_cost=inf_cost.to(Y),
+                )
+
+            self.apply_feasibility_weights = apply_feasibility_weights
+        else:
+            self.apply_feasibility_weights = lambda Y: Y
+        if objective is None:
+            self.objective = lambda Y, X: Y
+        else:
+            self.objective = objective
+            self._verify_output_shape = objective._verify_output_shape
+
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+        return self.objective(self.apply_feasibility_weights(samples), X=X)
 
 
 class UnstandardizeMCMultiOutputObjective(IdentityMCMultiOutputObjective):

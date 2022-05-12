@@ -38,7 +38,7 @@ from botorch.models.fully_bayesian import (
 from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors.fully_bayesian import batched_bisect, FullyBayesianPosterior
 from botorch.sampling.samplers import IIDNormalSampler
-from botorch.utils.containers import TrainingData
+from botorch.utils.datasets import FixedNoiseDataset, SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
@@ -68,7 +68,9 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             train_X = torch.rand(10, 4, **tkwargs)
             train_Y = torch.sin(train_X[:, :1])
             train_Yvar = (
-                None if infer_noise else 0.1 * torch.arange(10, **tkwargs).unsqueeze(-1)
+                None
+                if infer_noise
+                else torch.arange(0.1, 1.1, 0.1, **tkwargs).unsqueeze(-1)
             )
             model = SaasFullyBayesianSingleTaskGP(
                 train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar
@@ -332,7 +334,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 gp1 = SaasFullyBayesianSingleTaskGP(
                     train_X=(train_X - lb) / (ub - lb),
                     train_Y=(train_Y - mu) / sigma,
-                    train_Yvar=train_Yvar / sigma ** 2
+                    train_Yvar=train_Yvar / sigma**2
                     if train_Yvar is not None
                     else train_Yvar,
                 )
@@ -341,7 +343,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 )
                 posterior1 = gp1.posterior((test_X - lb) / (ub - lb))
                 pred_mean1 = mu + sigma * posterior1.mean
-                pred_var1 = (sigma ** 2) * posterior1.variance
+                pred_var1 = (sigma**2) * posterior1.variance
 
             # Fit with transforms
             with torch.random.fork_rng():
@@ -473,21 +475,21 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             (True, False), (torch.float, torch.double)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            train_X, train_Y, train_Yvar, model = self._get_data_and_model(
+            X, Y, Yvar, model = self._get_data_and_model(
                 infer_noise=infer_noise, **tkwargs
             )
-            training_data = TrainingData.from_block_design(
-                X=train_X,
-                Y=train_Y,
-                Yvar=train_Yvar,
-            )
+            if infer_noise:
+                training_data = SupervisedDataset(X, Y)
+            else:
+                training_data = FixedNoiseDataset(X, Y, Yvar)
+
             data_dict = model.construct_inputs(training_data)
+            self.assertTrue(X.equal(data_dict["train_X"]))
+            self.assertTrue(Y.equal(data_dict["train_Y"]))
             if infer_noise:
                 self.assertTrue("train_Yvar" not in data_dict)
             else:
-                self.assertTrue(torch.equal(data_dict["train_Yvar"], train_Yvar))
-            self.assertTrue(torch.equal(data_dict["train_X"], train_X))
-            self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
+                self.assertTrue(Yvar.equal(data_dict["train_Yvar"]))
 
     def test_custom_pyro_model(self):
         for infer_noise, dtype in itertools.product(
@@ -537,7 +539,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 self.assertTrue(
                     torch.allclose(
                         model.pyro_model.train_Yvar,
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL) / (sigma ** 2),
+                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL) / (sigma**2),
                         atol=1e-4,
                     )
                 )

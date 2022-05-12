@@ -20,6 +20,7 @@ from botorch.acquisition.analytic import (
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.input_constructors import (
     _deprecate_objective_arg,
+    _field_is_shared,
     acqf_input_constructor,
     construct_inputs_mf_base,
     get_acqf_input_constructor,
@@ -65,7 +66,7 @@ from botorch.acquisition.utils import (
 from botorch.exceptions.errors import UnsupportedError
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.constraints import get_outcome_constraint_transforms
-from botorch.utils.containers import TrainingData
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
     NondominatedPartitioning,
@@ -83,51 +84,66 @@ class DummyObjective(AcquisitionObjective):
 
 class InputConstructorBaseTestCase:
     def setUp(self):
-        X = torch.rand(3, 2)
-        Y = torch.rand(3, 1)
-        self.bd_td = TrainingData.from_block_design(X=X, Y=Y)
-        self.bd_td_mo = TrainingData.from_block_design(X=X, Y=torch.rand(3, 2))
-        Xs = [torch.rand(2, 2), torch.rand(2, 2)]
-        Ys = [torch.rand(2, 1), torch.rand(2, 1)]
-        self.nbd_td = TrainingData(Xs=Xs, Ys=Ys)
+        X1 = torch.rand(3, 2)
+        X2 = torch.rand(3, 2)
+        Y1 = torch.rand(3, 1)
+        Y2 = torch.rand(3, 1)
+
+        self.blockX_blockY = SupervisedDataset.dict_from_iter(X1, Y1)
+        self.blockX_multiY = SupervisedDataset.dict_from_iter(X1, (Y1, Y2))
+        self.multiX_multiY = SupervisedDataset.dict_from_iter((X1, X2), (Y1, Y2))
         self.bounds = 2 * [(0.0, 1.0)]
 
 
 class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
+    def test_field_is_shared(self):
+        self.assertTrue(_field_is_shared(self.blockX_multiY, "X"))
+        self.assertFalse(_field_is_shared(self.blockX_multiY, "Y"))
+        with self.assertRaisesRegex(AttributeError, "has no field"):
+            self.assertFalse(_field_is_shared(self.blockX_multiY, "foo"))
+
     def test_get_best_f_analytic(self):
         with self.assertRaises(NotImplementedError):
-            get_best_f_analytic(training_data=self.nbd_td)
-        best_f = get_best_f_analytic(training_data=self.bd_td)
-        best_f_expected = self.bd_td.Y.squeeze().max()
+            get_best_f_analytic(training_data=self.multiX_multiY)
+        best_f = get_best_f_analytic(training_data=self.blockX_blockY)
+        best_f_expected = self.blockX_blockY[0].Y().squeeze().max()
         self.assertEqual(best_f, best_f_expected)
         with self.assertRaises(NotImplementedError):
-            get_best_f_analytic(training_data=self.bd_td_mo)
+            get_best_f_analytic(training_data=self.blockX_multiY)
         weights = torch.rand(2)
         obj = ScalarizedObjective(weights=weights)
-        best_f_obj = get_best_f_analytic(training_data=self.bd_td_mo, objective=obj)
+        best_f_obj = get_best_f_analytic(
+            training_data=self.blockX_multiY, objective=obj
+        )
         post_tf = ScalarizedPosteriorTransform(weights=weights)
         best_f_tf = get_best_f_analytic(
-            training_data=self.bd_td_mo, posterior_transform=post_tf
+            training_data=self.blockX_multiY, posterior_transform=post_tf
         )
-        best_f_expected = post_tf.evaluate(self.bd_td_mo.Y).max()
+
+        multi_Y = torch.cat([d.Y() for d in self.blockX_multiY.values()], dim=-1)
+        best_f_expected = post_tf.evaluate(multi_Y).max()
         self.assertEqual(best_f_obj, best_f_expected)
         self.assertEqual(best_f_tf, best_f_expected)
 
     def test_get_best_f_mc(self):
         with self.assertRaises(NotImplementedError):
-            get_best_f_mc(training_data=self.nbd_td)
-        best_f = get_best_f_mc(training_data=self.bd_td)
-        best_f_expected = self.bd_td.Y.squeeze().max()
+            get_best_f_mc(training_data=self.multiX_multiY)
+        best_f = get_best_f_mc(training_data=self.blockX_blockY)
+        best_f_expected = self.blockX_blockY[0].Y().squeeze().max()
         self.assertEqual(best_f, best_f_expected)
-        with self.assertRaises(UnsupportedError):
-            get_best_f_mc(training_data=self.bd_td_mo)
+        with self.assertRaisesRegex(UnsupportedError, "require an objective"):
+            get_best_f_mc(training_data=self.blockX_multiY)
         obj = LinearMCObjective(weights=torch.rand(2))
-        best_f = get_best_f_mc(training_data=self.bd_td_mo, objective=obj)
-        best_f_expected = (self.bd_td_mo.Y @ obj.weights).max()
+        best_f = get_best_f_mc(training_data=self.blockX_multiY, objective=obj)
+
+        multi_Y = torch.cat([d.Y() for d in self.blockX_multiY.values()], dim=-1)
+        best_f_expected = (multi_Y @ obj.weights).max()
         self.assertEqual(best_f, best_f_expected)
         post_tf = ScalarizedPosteriorTransform(weights=torch.ones(2))
-        best_f = get_best_f_mc(training_data=self.bd_td_mo, posterior_transform=post_tf)
-        best_f_expected = (self.bd_td_mo.Y.sum(dim=-1)).max()
+        best_f = get_best_f_mc(
+            training_data=self.blockX_multiY, posterior_transform=post_tf
+        )
+        best_f_expected = (multi_Y.sum(dim=-1)).max()
         self.assertEqual(best_f, best_f_expected)
 
     def test_deprecate_objective_arg(self):
@@ -213,12 +229,14 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
     def test_construct_inputs_analytic_base(self):
         c = get_acqf_input_constructor(PosteriorMean)
         mock_model = mock.Mock()
-        kwargs = c(model=mock_model, training_data=self.bd_td)
+        kwargs = c(model=mock_model, training_data=self.blockX_blockY)
         self.assertEqual(kwargs["model"], mock_model)
         self.assertIsNone(kwargs["posterior_transform"])
         mock_obj = mock.Mock()
         kwargs = c(
-            model=mock_model, training_data=self.bd_td, posterior_transform=mock_obj
+            model=mock_model,
+            training_data=self.blockX_blockY,
+            posterior_transform=mock_obj,
         )
         self.assertEqual(kwargs["model"], mock_model)
         self.assertEqual(kwargs["posterior_transform"], mock_obj)
@@ -226,13 +244,13 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
     def test_construct_inputs_best_f(self):
         c = get_acqf_input_constructor(ExpectedImprovement)
         mock_model = mock.Mock()
-        kwargs = c(model=mock_model, training_data=self.bd_td)
-        best_f_expected = self.bd_td.Y.squeeze().max()
+        kwargs = c(model=mock_model, training_data=self.blockX_blockY)
+        best_f_expected = self.blockX_blockY[0].Y().squeeze().max()
         self.assertEqual(kwargs["model"], mock_model)
         self.assertIsNone(kwargs["posterior_transform"])
         self.assertEqual(kwargs["best_f"], best_f_expected)
         self.assertTrue(kwargs["maximize"])
-        kwargs = c(model=mock_model, training_data=self.bd_td, best_f=0.1)
+        kwargs = c(model=mock_model, training_data=self.blockX_blockY, best_f=0.1)
         self.assertEqual(kwargs["model"], mock_model)
         self.assertIsNone(kwargs["posterior_transform"])
         self.assertEqual(kwargs["best_f"], 0.1)
@@ -241,12 +259,14 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
     def test_construct_inputs_ucb(self):
         c = get_acqf_input_constructor(UpperConfidenceBound)
         mock_model = mock.Mock()
-        kwargs = c(model=mock_model, training_data=self.bd_td)
+        kwargs = c(model=mock_model, training_data=self.blockX_blockY)
         self.assertEqual(kwargs["model"], mock_model)
         self.assertIsNone(kwargs["posterior_transform"])
         self.assertEqual(kwargs["beta"], 0.2)
         self.assertTrue(kwargs["maximize"])
-        kwargs = c(model=mock_model, training_data=self.bd_td, beta=0.1, maximize=False)
+        kwargs = c(
+            model=mock_model, training_data=self.blockX_blockY, beta=0.1, maximize=False
+        )
         self.assertEqual(kwargs["model"], mock_model)
         self.assertIsNone(kwargs["posterior_transform"])
         self.assertEqual(kwargs["beta"], 0.1)
@@ -259,20 +279,23 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
     def test_construct_inputs_noisy_ei(self):
         c = get_acqf_input_constructor(NoisyExpectedImprovement)
         mock_model = mock.Mock()
-        kwargs = c(model=mock_model, training_data=self.bd_td)
+        kwargs = c(model=mock_model, training_data=self.blockX_blockY)
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertTrue(torch.equal(kwargs["X_observed"], self.bd_td.X))
+        self.assertTrue(torch.equal(kwargs["X_observed"], self.blockX_blockY[0].X()))
         self.assertEqual(kwargs["num_fantasies"], 20)
         self.assertTrue(kwargs["maximize"])
         kwargs = c(
-            model=mock_model, training_data=self.bd_td, num_fantasies=10, maximize=False
+            model=mock_model,
+            training_data=self.blockX_blockY,
+            num_fantasies=10,
+            maximize=False,
         )
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertTrue(torch.equal(kwargs["X_observed"], self.bd_td.X))
+        self.assertTrue(torch.equal(kwargs["X_observed"], self.blockX_blockY[0].X()))
         self.assertEqual(kwargs["num_fantasies"], 10)
         self.assertFalse(kwargs["maximize"])
-        with self.assertRaisesRegex(NotImplementedError, "only block designs"):
-            c(model=mock_model, training_data=self.nbd_td)
+        with self.assertRaisesRegex(ValueError, "Field `X` must be shared"):
+            c(model=mock_model, training_data=self.multiX_multiY)
 
 
 class TestMCAcquisitionFunctionInputConstructors(
@@ -281,7 +304,7 @@ class TestMCAcquisitionFunctionInputConstructors(
     def test_construct_inputs_mc_base(self):
         c = get_acqf_input_constructor(qSimpleRegret)
         mock_model = mock.Mock()
-        kwargs = c(model=mock_model, training_data=self.bd_td)
+        kwargs = c(model=mock_model, training_data=self.blockX_blockY)
         self.assertEqual(kwargs["model"], mock_model)
         self.assertIsNone(kwargs["objective"])
         self.assertIsNone(kwargs["X_pending"])
@@ -290,7 +313,7 @@ class TestMCAcquisitionFunctionInputConstructors(
         objective = LinearMCObjective(torch.rand(2))
         kwargs = c(
             model=mock_model,
-            training_data=self.bd_td,
+            training_data=self.blockX_blockY,
             objective=objective,
             X_pending=X_pending,
         )
@@ -303,7 +326,7 @@ class TestMCAcquisitionFunctionInputConstructors(
     def test_construct_inputs_qEI(self):
         c = get_acqf_input_constructor(qExpectedImprovement)
         mock_model = mock.Mock()
-        kwargs = c(model=mock_model, training_data=self.bd_td)
+        kwargs = c(model=mock_model, training_data=self.blockX_blockY)
         self.assertEqual(kwargs["model"], mock_model)
         self.assertIsNone(kwargs["objective"])
         self.assertIsNone(kwargs["X_pending"])
@@ -312,7 +335,7 @@ class TestMCAcquisitionFunctionInputConstructors(
         objective = LinearMCObjective(torch.rand(2))
         kwargs = c(
             model=mock_model,
-            training_data=self.bd_td_mo,
+            training_data=self.blockX_multiY,
             objective=objective,
             X_pending=X_pending,
         )
@@ -320,13 +343,14 @@ class TestMCAcquisitionFunctionInputConstructors(
         self.assertTrue(torch.equal(kwargs["objective"].weights, objective.weights))
         self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
         self.assertIsNone(kwargs["sampler"])
-        best_f_expected = objective(self.bd_td_mo.Y).max()
+        multi_Y = torch.cat([d.Y() for d in self.blockX_multiY.values()], dim=-1)
+        best_f_expected = objective(multi_Y).max()
         self.assertEqual(kwargs["best_f"], best_f_expected)
         # Check explicitly specifying `best_f`.
         best_f_expected = best_f_expected - 1  # Random value.
         kwargs = c(
             model=mock_model,
-            training_data=self.bd_td_mo,
+            training_data=self.blockX_multiY,
             objective=objective,
             X_pending=X_pending,
             best_f=best_f_expected,
@@ -336,19 +360,19 @@ class TestMCAcquisitionFunctionInputConstructors(
     def test_construct_inputs_qNEI(self):
         c = get_acqf_input_constructor(qNoisyExpectedImprovement)
         mock_model = mock.Mock()
-        kwargs = c(model=mock_model, training_data=self.bd_td)
+        kwargs = c(model=mock_model, training_data=self.blockX_blockY)
         self.assertEqual(kwargs["model"], mock_model)
         self.assertIsNone(kwargs["objective"])
         self.assertIsNone(kwargs["X_pending"])
         self.assertIsNone(kwargs["sampler"])
         self.assertFalse(kwargs["prune_baseline"])
-        self.assertTrue(torch.equal(kwargs["X_baseline"], self.bd_td.X))
-        with self.assertRaises(NotImplementedError):
-            c(model=mock_model, training_data=self.nbd_td)
+        self.assertTrue(torch.equal(kwargs["X_baseline"], self.blockX_blockY[0].X()))
+        with self.assertRaisesRegex(ValueError, "Field `X` must be shared"):
+            c(model=mock_model, training_data=self.multiX_multiY)
         X_baseline = torch.rand(2, 2)
         kwargs = c(
             model=mock_model,
-            training_data=self.bd_td,
+            training_data=self.blockX_blockY,
             X_baseline=X_baseline,
             prune_baseline=True,
         )
@@ -362,7 +386,7 @@ class TestMCAcquisitionFunctionInputConstructors(
     def test_construct_inputs_qPI(self):
         c = get_acqf_input_constructor(qProbabilityOfImprovement)
         mock_model = mock.Mock()
-        kwargs = c(model=mock_model, training_data=self.bd_td)
+        kwargs = c(model=mock_model, training_data=self.blockX_blockY)
         self.assertEqual(kwargs["model"], mock_model)
         self.assertIsNone(kwargs["objective"])
         self.assertIsNone(kwargs["X_pending"])
@@ -372,7 +396,7 @@ class TestMCAcquisitionFunctionInputConstructors(
         objective = LinearMCObjective(torch.rand(2))
         kwargs = c(
             model=mock_model,
-            training_data=self.bd_td_mo,
+            training_data=self.blockX_multiY,
             objective=objective,
             X_pending=X_pending,
             tau=1e-2,
@@ -382,13 +406,14 @@ class TestMCAcquisitionFunctionInputConstructors(
         self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
         self.assertIsNone(kwargs["sampler"])
         self.assertEqual(kwargs["tau"], 1e-2)
-        best_f_expected = objective(self.bd_td_mo.Y).max()
+        multi_Y = torch.cat([d.Y() for d in self.blockX_multiY.values()], dim=-1)
+        best_f_expected = objective(multi_Y).max()
         self.assertEqual(kwargs["best_f"], best_f_expected)
         # Check explicitly specifying `best_f`.
         best_f_expected = best_f_expected - 1  # Random value.
         kwargs = c(
             model=mock_model,
-            training_data=self.bd_td_mo,
+            training_data=self.blockX_multiY,
             objective=objective,
             X_pending=X_pending,
             tau=1e-2,
@@ -399,7 +424,7 @@ class TestMCAcquisitionFunctionInputConstructors(
     def test_construct_inputs_qUCB(self):
         c = get_acqf_input_constructor(qUpperConfidenceBound)
         mock_model = mock.Mock()
-        kwargs = c(model=mock_model, training_data=self.bd_td)
+        kwargs = c(model=mock_model, training_data=self.blockX_blockY)
         self.assertEqual(kwargs["model"], mock_model)
         self.assertIsNone(kwargs["objective"])
         self.assertIsNone(kwargs["X_pending"])
@@ -409,7 +434,7 @@ class TestMCAcquisitionFunctionInputConstructors(
         objective = LinearMCObjective(torch.rand(2))
         kwargs = c(
             model=mock_model,
-            training_data=self.bd_td,
+            training_data=self.blockX_blockY,
             objective=objective,
             X_pending=X_pending,
             beta=0.1,
@@ -429,11 +454,19 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         mock_model = mock.Mock()
         objective_thresholds = torch.rand(6)
 
+        # test error on non-block designs
+        with self.assertRaisesRegex(ValueError, "Field `X` must be shared"):
+            c(
+                model=mock_model,
+                training_data=self.multiX_multiY,
+                objective_thresholds=objective_thresholds,
+            )
+
         # test error on unsupported outcome constraints
         with self.assertRaises(NotImplementedError):
             c(
                 model=mock_model,
-                training_data=self.bd_td,
+                training_data=self.blockX_blockY,
                 objective_thresholds=objective_thresholds,
                 outcome_constraints=mock.Mock(),
             )
@@ -442,7 +475,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         Y_pmean = torch.rand(3, 6)
         kwargs = c(
             model=mock_model,
-            training_data=self.bd_td,
+            training_data=self.blockX_blockY,
             objective_thresholds=objective_thresholds,
             Y_pmean=Y_pmean,
         )
@@ -459,7 +492,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         objective_thresholds = torch.rand(2)
         kwargs = c(
             model=mock_model,
-            training_data=self.bd_td,
+            training_data=self.blockX_blockY,
             objective_thresholds=objective_thresholds,
             Y_pmean=Y_pmean,
         )
@@ -472,7 +505,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         obj = WeightedMCMultiOutputObjective(weights=weights)
         kwargs = c(
             model=mock_model,
-            training_data=self.bd_td,
+            training_data=self.blockX_blockY,
             objective_thresholds=objective_thresholds,
             objective=obj,
             Y_pmean=Y_pmean,
@@ -493,7 +526,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         mm = MockModel(MockPosterior(mean=mean, variance=variance))
         kwargs = c(
             model=mm,
-            training_data=self.bd_td,
+            training_data=self.blockX_blockY,
             objective_thresholds=objective_thresholds,
         )
         self.assertIsInstance(kwargs["objective"], IdentityAnalyticMultiOutputObjective)
@@ -513,7 +546,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         mm = MockModel(MockPosterior(mean=mean, variance=variance))
         kwargs = c(
             model=mm,
-            training_data=self.bd_td,
+            training_data=self.blockX_blockY,
             objective_thresholds=objective_thresholds,
         )
         self.assertIsInstance(kwargs["objective"], IdentityMCMultiOutputObjective)
@@ -540,7 +573,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         X_pending = torch.rand(1, 2)
         kwargs = c(
             model=mm,
-            training_data=self.bd_td,
+            training_data=self.blockX_blockY,
             objective_thresholds=objective_thresholds,
             objective=obj,
             outcome_constraints=outcome_constraints,
@@ -570,11 +603,26 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertTrue(torch.equal(cons_eval, cons_eval_expected))
         self.assertEqual(kwargs["eta"], 1e-2)
 
+        # Test check for block designs
+        with self.assertRaisesRegex(ValueError, "Field `X` must be shared"):
+            c(
+                model=mm,
+                training_data=self.multiX_multiY,
+                objective_thresholds=objective_thresholds,
+                objective=obj,
+                outcome_constraints=outcome_constraints,
+                X_pending=X_pending,
+                alpha=0.05,
+                eta=1e-2,
+                qmc=False,
+                mc_samples=64,
+            )
+
         # Test custom sampler
         custom_sampler = SobolQMCNormalSampler(num_samples=16, seed=1234)
         kwargs = c(
             model=mm,
-            training_data=self.bd_td,
+            training_data=self.blockX_blockY,
             objective_thresholds=objective_thresholds,
             sampler=custom_sampler,
         )
@@ -591,12 +639,12 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         # Test defaults
         kwargs = c(
             model=mock_model,
-            training_data=self.bd_td,
+            training_data=self.blockX_blockY,
             objective_thresholds=objective_thresholds,
         )
         ref_point_expected = objective_thresholds
         self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
-        self.assertTrue(torch.equal(kwargs["X_baseline"], self.bd_td.X))
+        self.assertTrue(torch.equal(kwargs["X_baseline"], self.blockX_blockY[0].X()))
         self.assertIsInstance(kwargs["sampler"], SobolQMCNormalSampler)
         self.assertEqual(kwargs["sampler"].sample_shape, torch.Size([128]))
         self.assertIsInstance(kwargs["objective"], IdentityMCMultiOutputObjective)
@@ -609,6 +657,14 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertEqual(kwargs["max_iep"], 0)
         self.assertTrue(kwargs["incremental_nehvi"])
 
+        # Test check for block designs
+        with self.assertRaisesRegex(ValueError, "Field `X` must be shared"):
+            c(
+                model=mock_model,
+                training_data=self.multiX_multiY,
+                objective_thresholds=objective_thresholds,
+            )
+
         # Test custom inputs
         weights = torch.rand(2)
         objective = WeightedMCMultiOutputObjective(weights=weights)
@@ -618,7 +674,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         X_pending = torch.rand(1, 2)
         kwargs = c(
             model=mock_model,
-            training_data=self.bd_td,
+            training_data=self.blockX_blockY,
             objective_thresholds=objective_thresholds,
             objective=objective,
             X_baseline=X_baseline,
@@ -663,7 +719,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             func = input_constructors.get_acqf_input_constructor(qKnowledgeGradient)
             kwargs = func(
                 model=mock.Mock(),
-                training_data=self.bd_td,
+                training_data=self.blockX_blockY,
                 objective=LinearMCObjective(torch.rand(2)),
                 bounds=self.bounds,
                 num_fantasies=33,
@@ -676,7 +732,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         func = get_acqf_input_constructor(qMaxValueEntropy)
         kwargs = func(
             model=mock.Mock(),
-            training_data=self.bd_td,
+            training_data=self.blockX_blockY,
             objective=LinearMCObjective(torch.rand(2)),
             bounds=self.bounds,
             candidate_size=17,
@@ -699,7 +755,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         with self.subTest("test_fully_specified"):
             kwargs = construct_inputs_mf_base(
                 model=mock.Mock(),
-                training_data=self.bd_td,
+                training_data=self.blockX_blockY,
                 objective=LinearMCObjective(torch.rand(2)),
                 target_fidelities=target_fidelities,
                 fidelity_weights=fidelity_weights,
@@ -738,7 +794,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         with self.subTest("test_missing_fidelity_weights"):
             kwargs = construct_inputs_mf_base(
                 model=mock.Mock(),
-                training_data=self.bd_td,
+                training_data=self.blockX_blockY,
                 objective=LinearMCObjective(torch.rand(2)),
                 target_fidelities=target_fidelities,
                 cost_intercept=cost_intercept,
@@ -752,7 +808,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             ):
                 _ = construct_inputs_mf_base(
                     model=mock.Mock(),
-                    training_data=self.bd_td,
+                    training_data=self.blockX_blockY,
                     objective=LinearMCObjective(torch.rand(2)),
                     target_fidelities={0: 1.0},
                     fidelity_weights={1: 0.5},
@@ -762,7 +818,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
     def test_construct_inputs_mfkg(self):
         constructor_args = {
             "model": None,
-            "training_data": self.bd_td,
+            "training_data": self.blockX_blockY,
             "objective": None,
             "bounds": self.bounds,
             "num_fantasies": 123,
@@ -789,7 +845,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
     def test_construct_inputs_mfmes(self):
         constructor_args = {
             "model": None,
-            "training_data": self.bd_td,
+            "training_data": self.blockX_blockY,
             "objective": None,
             "bounds": self.bounds,
             "num_fantasies": 123,

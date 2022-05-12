@@ -234,7 +234,7 @@ def _get_test_posterior(
     interleaved: bool = True,
     lazy: bool = False,
     independent: bool = False,
-    **tkwargs
+    **tkwargs,
 ) -> GPyTorchPosterior:
     r"""Generate a Posterior for testing purposes.
 

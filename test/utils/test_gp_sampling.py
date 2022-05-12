@@ -430,7 +430,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                     w = w.expand(*sample_shape, *input_batch_shape, input_dim)
                     Y_true = (X @ w.unsqueeze(-1)).squeeze(-1)
                     Y = Y_true + sigma * torch.randn_like(Y_true)
-                    posterior = get_weights_posterior(X=X, y=Y, sigma_sq=sigma ** 2)
+                    posterior = get_weights_posterior(X=X, y=Y, sigma_sq=sigma**2)
                     self.assertIsInstance(posterior, MultivariateNormal)
                     self.assertTrue(torch.allclose(w, posterior.mean, atol=1e-1))
                     w_samp = posterior.sample()

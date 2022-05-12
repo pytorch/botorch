@@ -585,12 +585,11 @@ class TestGetAcquisitionFunction(BotorchTestCase):
 class TestGetInfeasibleCost(BotorchTestCase):
     def test_get_infeasible_cost(self):
         for dtype in (torch.float, torch.double):
-            X = torch.zeros(5, 1, device=self.device, dtype=dtype)
-            means = torch.tensor(
-                [1.0, 2.0, 3.0, 4.0, 5.0], device=self.device, dtype=dtype
-            )
-            variances = torch.tensor(
-                [0.09, 0.25, 0.36, 0.25, 0.09], device=self.device, dtype=dtype
+            tkwargs = {"dtype": dtype, "device": self.device}
+            X = torch.zeros(5, 1, **tkwargs)
+            means = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0], **tkwargs).view(-1, 1)
+            variances = torch.tensor([0.09, 0.25, 0.36, 0.25, 0.09], **tkwargs).view(
+                -1, 1
             )
             mm = MockModel(MockPosterior(mean=means, variance=variances))
             # means - 6 * std = [-0.8, -1, -0.6, 1, 3.2]. After applying the
@@ -598,10 +597,22 @@ class TestGetInfeasibleCost(BotorchTestCase):
             M = get_infeasible_cost(
                 X=X, model=mm, objective=lambda Y: Y.squeeze(-1) - 5.0
             )
-            self.assertEqual(M, 6.0)
-            # test default objective (squeeze last dim)
+            self.assertTrue(torch.allclose(M, torch.tensor([6.0], **tkwargs)))
+            # Test default objective (squeeze last dim).
             M2 = get_infeasible_cost(X=X, model=mm)
-            self.assertEqual(M2, 1.0)
+            self.assertTrue(torch.allclose(M2, torch.tensor([1.0], **tkwargs)))
+            # Test multi-output.
+            m_ = means.repeat(1, 2)
+            m_[:, 1] -= 10
+            mm = MockModel(MockPosterior(mean=m_, variance=variances.expand(-1, 2)))
+            M3 = get_infeasible_cost(X=X, model=mm)
+            self.assertTrue(torch.allclose(M3, torch.tensor([1.0, 11.0], **tkwargs)))
+            # With a batched model.
+            means = means.expand(2, 4, -1, -1)
+            variances = variances.expand(2, 4, -1, -1)
+            mm = MockModel(MockPosterior(mean=means, variance=variances))
+            M4 = get_infeasible_cost(X=X, model=mm)
+            self.assertTrue(torch.allclose(M4, torch.tensor([1.0], **tkwargs)))
 
 
 class TestPruneInferiorPoints(BotorchTestCase):
@@ -706,7 +717,7 @@ class TestFidelityUtils(BotorchTestCase):
             # test gradients
             X.requires_grad_(True)
             X_proj = project_to_target_fidelity(X, target_fidelities=target_fids)
-            out = (X_proj ** 2).sum()
+            out = (X_proj**2).sum()
             out.backward()
             self.assertTrue(torch.all(X.grad[..., [0, 2]] == 0))
             self.assertTrue(torch.equal(X.grad[..., [1, 3]], 2 * X[..., [1, 3]]))

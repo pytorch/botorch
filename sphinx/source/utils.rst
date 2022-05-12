@@ -17,6 +17,11 @@ Containers
 .. automodule:: botorch.utils.containers
 		:members:
 
+Datasets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.datasets
+		:members:
+
 Dispatcher
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.dispatcher

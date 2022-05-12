@@ -17,6 +17,7 @@ import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import ModelListGP
+from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.model import Model
 from botorch.models.transforms.input import InputTransform
 from botorch.utils import t_batch_mode_transform
@@ -47,6 +48,7 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
         self,
         acq_function: AcquisitionFunction,
         proximal_weights: Tensor,
+        transformed_weighting: bool = True,
     ) -> None:
         r"""Derived Acquisition Function weighted by proximity to recently
         observed point.
@@ -56,6 +58,10 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
                 of feature dimension `d`.
             proximal_weights: A `d` dim tensor used to bias locality
                 along each axis.
+            transformed_weighting: If True, the proximal weights are applied in
+                the transformed input space given by
+                `acq_function.model.input_transform` (if available), otherwise
+                proximal weights are applied in real input space.
         """
         Module.__init__(self)
 
@@ -70,6 +76,9 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
             self.X_pending = acq_function.X_pending
 
         self.register_buffer("proximal_weights", proximal_weights)
+        self.register_buffer(
+            "transformed_weighting", torch.tensor(transformed_weighting)
+        )
         _validate_model(model, proximal_weights)
 
     @t_batch_mode_transform(expected_q=1, assert_output_shape=False)
@@ -87,21 +96,36 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
 
         train_inputs = model.train_inputs[0]
 
+        # if the model is ModelListGP then get the first model
         if isinstance(model, ModelListGP):
             train_inputs = train_inputs[0]
             model = model.models[0]
+
+        # if the model has more than one output get the first copy of training inputs
+        if isinstance(model, BatchedMultiOutputGPyTorchModel) and model.num_outputs > 1:
+            train_inputs = train_inputs[0]
 
         input_transform = _get_input_transform(model)
 
         last_X = train_inputs[-1].reshape(1, 1, -1)
 
-        # un-transform last_X
+        # if transformed_weighting, transform X to calculate diff
+        # (proximal weighting in transformed space)
+        # otherwise,un-transform the last observed point to real space
+        # (proximal weighting in real space)
         if input_transform is not None:
-            last_X = input_transform.untransform(last_X)
+            if self.transformed_weighting:
+                # transformed space weighting
+                diff = input_transform.transform(X) - last_X
+            else:
+                # real space weighting
+                diff = X - input_transform.untransform(last_X)
 
-        diff = X - last_X
+        else:
+            # no transformation
+            diff = X - last_X
+
         M = torch.linalg.norm(diff / self.proximal_weights, dim=-1) ** 2
-
         proximal_acq_weight = torch.exp(-0.5 * M)
         return self.acq_func(X) * proximal_acq_weight.flatten()
 

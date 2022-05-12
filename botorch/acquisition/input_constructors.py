@@ -12,7 +12,20 @@ constructors programmatically from a consistent input format.
 from __future__ import annotations
 
 import warnings
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Hashable,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -71,7 +84,8 @@ from botorch.models.model import Model
 from botorch.optim.optimize import optimize_acqf
 from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
 from botorch.utils.constraints import get_outcome_constraint_transforms
-from botorch.utils.containers import TrainingData
+from botorch.utils.containers import BotorchContainer
+from botorch.utils.datasets import BotorchDataset, SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
     NondominatedPartitioning,
@@ -80,6 +94,56 @@ from torch import Tensor
 
 
 ACQF_INPUT_CONSTRUCTOR_REGISTRY = {}
+
+T = TypeVar("T")
+MaybeDict = Union[T, Dict[Hashable, T]]
+
+
+def _field_is_shared(
+    datasets: Union[Dict[Hashable, BotorchDataset], Iterable[BotorchDataset]],
+    fieldname: Hashable,
+) -> bool:
+    r"""Determines whether or not a given field is shared by all datasets."""
+    if isinstance(datasets, dict):
+        datasets = datasets.values()
+
+    base = None
+    for dataset in datasets:
+        if not hasattr(dataset, fieldname):
+            raise AttributeError(f"{type(dataset)} object has no field `{fieldname}`.")
+
+        obj = getattr(dataset, fieldname)
+        if base is None:
+            base = obj
+        elif base != obj:
+            return False
+
+    return True
+
+
+def _get_dataset_field(
+    dataset: MaybeDict[BotorchDataset],
+    fieldname: str,
+    transform: Optional[Callable[[BotorchContainer], Any]] = None,
+    join_rule: Optional[Callable[[Sequence[Any]], Any]] = None,
+    first_only: bool = False,
+    assert_shared: bool = False,
+) -> Any:
+    r"""Convenience method for extracting a given field from one or more datasets."""
+    if isinstance(dataset, dict):
+        if assert_shared and not _field_is_shared(dataset, fieldname):
+            raise ValueError(f"Field `{fieldname}` must be shared.")
+
+        if not first_only:
+            fields = (
+                _get_dataset_field(d, fieldname, transform) for d in dataset.values()
+            )
+            return join_rule(tuple(fields)) if join_rule else tuple(fields)
+
+        dataset = next(iter(dataset.values()))
+
+    field = getattr(dataset, fieldname)
+    return transform(field) if transform else field
 
 
 def get_acqf_input_constructor(
@@ -178,7 +242,7 @@ def _deprecate_objective_arg(
 @acqf_input_constructor(PosteriorMean)
 def construct_inputs_analytic_base(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     posterior_transform: Optional[PosteriorTransform] = None,
     **kwargs: Any,
 ) -> Dict[str, Any]:
@@ -186,8 +250,7 @@ def construct_inputs_analytic_base(
 
     Args:
         model: The model to be used in the acquisition function.
-        training_data: A TrainingData object contraining the model's
-            training data. `best_f` is extracted from here.
+        training_data: Dataset(s) used to train the model.
         posterior_transform: The posterior transform to be used in the
             acquisition function.
 
@@ -206,8 +269,9 @@ def construct_inputs_analytic_base(
 @acqf_input_constructor(ExpectedImprovement, ProbabilityOfImprovement)
 def construct_inputs_best_f(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     posterior_transform: Optional[PosteriorTransform] = None,
+    best_f: Optional[Union[float, Tensor]] = None,
     maximize: bool = True,
     **kwargs: Any,
 ) -> Dict[str, Any]:
@@ -215,8 +279,9 @@ def construct_inputs_best_f(
 
     Args:
         model: The model to be used in the acquisition function.
-        training_data: A TrainingData object contraining the model's
-            training data. `best_f` is extracted from here.
+        training_data: Dataset(s) used to train the model.
+            Used to determine default value for `best_f`.
+        best_f: Threshold above (or below) which improvement is defined.
         posterior_transform: The posterior transform to be used in the
             acquisition function.
         maximize: If True, consider the problem a maximization problem.
@@ -230,21 +295,20 @@ def construct_inputs_best_f(
         posterior_transform=posterior_transform,
         **kwargs,
     )
-    best_f = kwargs.get(
-        "best_f",
-        get_best_f_analytic(
+    if best_f is None:
+        best_f = get_best_f_analytic(
             training_data=training_data,
             objective=kwargs.get("objective"),
             posterior_transform=posterior_transform,
-        ),
-    )
+        )
+
     return {**base_inputs, "best_f": best_f, "maximize": maximize}
 
 
 @acqf_input_constructor(UpperConfidenceBound)
 def construct_inputs_ucb(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     posterior_transform: Optional[PosteriorTransform] = None,
     beta: Union[float, Tensor] = 0.2,
     maximize: bool = True,
@@ -254,8 +318,7 @@ def construct_inputs_ucb(
 
     Args:
         model: The model to be used in the acquisition function.
-        training_data: A TrainingData object contraining the model's
-            training data. `best_f` is extracted from here.
+        training_data: Dataset(s) used to train the model.
         posterior_transform: The posterior transform to be used in the
             acquisition function.
         beta: Either a scalar or a one-dim tensor with `b` elements (batch mode)
@@ -277,7 +340,7 @@ def construct_inputs_ucb(
 @acqf_input_constructor(ConstrainedExpectedImprovement)
 def construct_inputs_constrained_ei(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     objective_index: int,
     constraints: Dict[int, Tuple[Optional[float], Optional[float]]],
     maximize: bool = True,
@@ -287,8 +350,7 @@ def construct_inputs_constrained_ei(
 
     Args:
         model: The model to be used in the acquisition function.
-        training_data: A TrainingData object contraining the model's
-            training data. `best_f` is extracted from here.
+        training_data: Dataset(s) used to train the model.
         objective_index: The index of the objective.
         constraints: A dictionary of the form `{i: [lower, upper]}`, where
             `i` is the output index, and `lower` and `upper` are lower and upper
@@ -313,7 +375,7 @@ def construct_inputs_constrained_ei(
 @acqf_input_constructor(NoisyExpectedImprovement)
 def construct_inputs_noisy_ei(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     num_fantasies: int = 20,
     maximize: bool = True,
     **kwargs: Any,
@@ -322,8 +384,7 @@ def construct_inputs_noisy_ei(
 
     Args:
         model: The model to be used in the acquisition function.
-        training_data: A TrainingData object contraining the model's
-            training data. `best_f` is extracted from here.
+        training_data: Dataset(s) used to train the model.
         num_fantasies: The number of fantasies to generate. The higher this
             number the more accurate the model (at the expense of model
             complexity and performance).
@@ -333,11 +394,10 @@ def construct_inputs_noisy_ei(
         A dict mapping kwarg names of the constructor to values.
     """
     # TODO: Add prune_baseline functionality as for qNEI
-    if not training_data.is_block_design:
-        raise NotImplementedError("Currently only block designs are supported")
+    X = _get_dataset_field(training_data, "X", first_only=True, assert_shared=True)
     return {
         "model": model,
-        "X_observed": training_data.X,
+        "X_observed": X(),
         "num_fantasies": num_fantasies,
         "maximize": maximize,
     }
@@ -346,7 +406,7 @@ def construct_inputs_noisy_ei(
 @acqf_input_constructor(qSimpleRegret)
 def construct_inputs_mc_base(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
     X_pending: Optional[Tensor] = None,
@@ -357,9 +417,7 @@ def construct_inputs_mc_base(
 
     Args:
         model: The model to be used in the acquisition function.
-        training_data: A TrainingData object contraining the model's
-            training data. Used e.g. to extract inputs such as `best_f`
-            for expected improvement acquisition functions.
+        training_data: Dataset(s) used to train the model.
         objective: The objective to be used in the acquisition function.
         posterior_transform: The posterior transform to be used in the
             acquisition function.
@@ -384,20 +442,19 @@ def construct_inputs_mc_base(
 @acqf_input_constructor(qExpectedImprovement)
 def construct_inputs_qEI(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
     X_pending: Optional[Tensor] = None,
     sampler: Optional[MCSampler] = None,
+    best_f: Optional[Union[float, Tensor]] = None,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the `qExpectedImprovement` constructor.
 
     Args:
         model: The model to be used in the acquisition function.
-        training_data: A TrainingData object contraining the model's
-            training data. Used e.g. to extract inputs such as `best_f`
-            for expected improvement acquisition functions.
+        training_data: Dataset(s) used to train the model.
         objective: The objective to be used in the acquisition function.
         posterior_transform: The posterior transform to be used in the
             acquisition function.
@@ -406,7 +463,7 @@ def construct_inputs_qEI(
             Concatenated into X upon forward call.
         sampler: The sampler used to draw base samples. If omitted, uses
             the acquisition functions's default sampler.
-
+        best_f: Threshold above (or below) which improvement is defined.
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
@@ -418,23 +475,20 @@ def construct_inputs_qEI(
         sampler=sampler,
         X_pending=X_pending,
     )
-    # TODO: Dedup handling of this here and in the constructor (maybe via a
-    # shared classmethod doing this)
-    best_f = kwargs.get(
-        "best_f",
-        get_best_f_mc(
+    if best_f is None:
+        best_f = get_best_f_mc(
             training_data=training_data,
             objective=objective,
             posterior_transform=posterior_transform,
-        ),
-    )
+        )
+
     return {**base_inputs, "best_f": best_f}
 
 
 @acqf_input_constructor(qNoisyExpectedImprovement)
 def construct_inputs_qNEI(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
     X_pending: Optional[Tensor] = None,
@@ -447,10 +501,7 @@ def construct_inputs_qNEI(
 
     Args:
         model: The model to be used in the acquisition function.
-        training_data: A TrainingData object contraining the model's
-            training data. Used e.g. to extract inputs such as `best_f`
-            for expected improvement acquisition functions. Only block-
-            design training data currently supported.
+        training_data: Dataset(s) used to train the model.
         objective: The objective to be used in the acquisition function.
         posterior_transform: The posterior transform to be used in the
             acquisition function.
@@ -461,7 +512,8 @@ def construct_inputs_qNEI(
             the acquisition functions's default sampler.
         X_baseline: A `batch_shape x r x d`-dim Tensor of `r` design points
             that have already been observed. These points are considered as
-            the potential best design point. If omitted, use `training_data.X`.
+            the potential best design point. If omitted, checks that all
+            training_data have the same input features and take the first `X`.
         prune_baseline: If True, remove points in `X_baseline` that are
             highly unlikely to be the best point. This can significantly
             improve performance and is generally recommended.
@@ -478,9 +530,14 @@ def construct_inputs_qNEI(
         X_pending=X_pending,
     )
     if X_baseline is None:
-        if not training_data.is_block_design:
-            raise NotImplementedError("Currently only block designs are supported.")
-        X_baseline = training_data.X
+        X_baseline = _get_dataset_field(
+            training_data,
+            fieldname="X",
+            transform=lambda field: field(),
+            assert_shared=True,
+            first_only=True,
+        )
+
     return {
         **base_inputs,
         "X_baseline": X_baseline,
@@ -491,7 +548,7 @@ def construct_inputs_qNEI(
 @acqf_input_constructor(qProbabilityOfImprovement)
 def construct_inputs_qPI(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
     X_pending: Optional[Tensor] = None,
@@ -504,9 +561,7 @@ def construct_inputs_qPI(
 
     Args:
         model: The model to be used in the acquisition function.
-        training_data: A TrainingData object contraining the model's
-            training data. Used e.g. to extract inputs such as `best_f`
-            for expected improvement acquisition functions.
+        training_data: Dataset(s) used to train the model.
         objective: The objective to be used in the acquisition function.
         posterior_transform: The posterior transform to be used in the
             acquisition function.
@@ -525,6 +580,9 @@ def construct_inputs_qPI(
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
+    if best_f is None:
+        best_f = get_best_f_mc(training_data=training_data, objective=objective)
+
     base_inputs = construct_inputs_mc_base(
         model=model,
         training_data=training_data,
@@ -533,21 +591,14 @@ def construct_inputs_qPI(
         sampler=sampler,
         X_pending=X_pending,
     )
-    # TODO: Dedup handling of this here and in the constructor (maybe via a
-    # shared classmethod doing this)
-    if best_f is None:
-        best_f = get_best_f_mc(training_data=training_data, objective=objective)
-    return {
-        **base_inputs,
-        "tau": tau,
-        "best_f": best_f,
-    }
+
+    return {**base_inputs, "tau": tau, "best_f": best_f}
 
 
 @acqf_input_constructor(qUpperConfidenceBound)
 def construct_inputs_qUCB(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
     X_pending: Optional[Tensor] = None,
@@ -559,9 +610,7 @@ def construct_inputs_qUCB(
 
     Args:
         model: The model to be used in the acquisition function.
-        training_data: A TrainingData object contraining the model's
-            training data. Used e.g. to extract inputs such as `best_f`
-            for expected improvement acquisition functions.
+        training_data: Dataset(s) used to train the model.
         objective: The objective to be used in the acquisition function.
         posterior_transform: The posterior transform to be used in the
             acquisition function.
@@ -598,7 +647,7 @@ def _get_sampler(mc_samples: int, qmc: bool) -> MCSampler:
 @acqf_input_constructor(ExpectedHypervolumeImprovement)
 def construct_inputs_EHVI(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     objective_thresholds: Tensor,
     objective: Optional[AnalyticMultiOutputObjective] = None,
     **kwargs: Any,
@@ -608,7 +657,14 @@ def construct_inputs_EHVI(
     if kwargs.get("outcome_constraints") is not None:
         raise NotImplementedError("EHVI does not yet support outcome constraints.")
 
-    X_observed = training_data.X
+    X = _get_dataset_field(
+        training_data,
+        fieldname="X",
+        transform=lambda field: field(),
+        first_only=True,
+        assert_shared=True,
+    )
+
     alpha = kwargs.get(
         "alpha",
         get_default_partitioning_alpha(num_objectives=num_objectives),
@@ -624,7 +680,7 @@ def construct_inputs_EHVI(
     Y_pmean = kwargs.get("Y_pmean")
     if Y_pmean is None:
         with torch.no_grad():
-            Y_pmean = model.posterior(X_observed).mean
+            Y_pmean = model.posterior(X).mean
     if alpha > 0:
         partitioning = NondominatedPartitioning(
             ref_point=ref_point,
@@ -648,17 +704,23 @@ def construct_inputs_EHVI(
 @acqf_input_constructor(qExpectedHypervolumeImprovement)
 def construct_inputs_qEHVI(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     objective_thresholds: Tensor,
     objective: Optional[MCMultiOutputObjective] = None,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `qExpectedHypervolumeImprovement` constructor."""
-    X_observed = training_data.X
+    X = _get_dataset_field(
+        training_data,
+        fieldname="X",
+        transform=lambda field: field(),
+        first_only=True,
+        assert_shared=True,
+    )
 
     # compute posterior mean (for ref point computation ref pareto frontier)
     with torch.no_grad():
-        Y_pmean = model.posterior(X_observed).mean
+        Y_pmean = model.posterior(X).mean
 
     outcome_constraints = kwargs.pop("outcome_constraints", None)
     # For HV-based acquisition functions we pass the constraint transform directly
@@ -702,12 +764,22 @@ def construct_inputs_qEHVI(
 @acqf_input_constructor(qNoisyExpectedHypervolumeImprovement)
 def construct_inputs_qNEHVI(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     objective_thresholds: Tensor,
     objective: Optional[MCMultiOutputObjective] = None,
+    X_baseline: Optional[Tensor] = None,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for `qNoisyExpectedHypervolumeImprovement` constructor."""
+    if X_baseline is None:
+        X_baseline = _get_dataset_field(
+            training_data,
+            fieldname="X",
+            transform=lambda field: field(),
+            first_only=True,
+            assert_shared=True,
+        )
+
     # This selects the objectives (a subset of the outcomes) and set each
     # objective threhsold to have the proper optimization direction.
     if objective is None:
@@ -728,7 +800,7 @@ def construct_inputs_qNEHVI(
     return {
         "model": model,
         "ref_point": objective(objective_thresholds),
-        "X_baseline": kwargs.get("X_baseline", training_data.X),
+        "X_baseline": X_baseline,
         "sampler": sampler,
         "objective": objective,
         "constraints": cons_tfs,
@@ -745,7 +817,7 @@ def construct_inputs_qNEHVI(
 @acqf_input_constructor(qMaxValueEntropy)
 def construct_inputs_qMES(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     bounds: List[Tuple[float, float]],
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
@@ -760,7 +832,8 @@ def construct_inputs_qMES(
         **kwargs,
     )
 
-    _kw = {"dtype": training_data.X.dtype, "device": training_data.X.device}
+    X = _get_dataset_field(training_data, "X", first_only=True)
+    _kw = {"device": X.device, "dtype": X.dtype}
     _rvs = torch.rand(candidate_size, len(bounds), **_kw)
     _bounds = torch.tensor(bounds, **_kw).transpose(0, 1)
     return {
@@ -772,14 +845,14 @@ def construct_inputs_qMES(
 
 def construct_inputs_mf_base(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     target_fidelities: Dict[int, Union[int, float]],
     fidelity_weights: Optional[Dict[int, float]] = None,
     cost_intercept: float = 1.0,
     num_trace_observations: int = 0,
     **ignore: Any,
 ) -> Dict[str, Any]:
-    r"""Construct kwargs for a multifidetlity acquisition function's constructor."""
+    r"""Construct kwargs for a multifidelity acquisition function's constructor."""
     if fidelity_weights is None:
         fidelity_weights = {f: 1.0 for f in target_fidelities}
 
@@ -813,7 +886,7 @@ def construct_inputs_mf_base(
 @acqf_input_constructor(qKnowledgeGradient)
 def construct_inputs_qKG(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     bounds: List[Tuple[float, float]],
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
@@ -831,11 +904,8 @@ def construct_inputs_qKG(
         **kwargs,
     )
 
-    _bounds = torch.tensor(
-        data=bounds,
-        dtype=training_data.X.dtype,
-        device=training_data.X.device,
-    )
+    X = _get_dataset_field(training_data, "X", first_only=True)
+    _bounds = torch.tensor(bounds, dtype=X.dtype, device=X.device)
 
     _, current_value = optimize_objective(
         model=model,
@@ -857,7 +927,7 @@ def construct_inputs_qKG(
 @acqf_input_constructor(qMultiFidelityKnowledgeGradient)
 def construct_inputs_qMFKG(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     bounds: List[Tuple[float, float]],
     target_fidelities: Dict[int, Union[int, float]],
     objective: Optional[MCAcquisitionObjective] = None,
@@ -888,7 +958,7 @@ def construct_inputs_qMFKG(
 @acqf_input_constructor(qMultiFidelityMaxValueEntropy)
 def construct_inputs_qMFMES(
     model: Model,
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     bounds: List[Tuple[float, float]],
     target_fidelities: Dict[int, Union[int, float]],
     objective: Optional[MCAcquisitionObjective] = None,
@@ -912,12 +982,8 @@ def construct_inputs_qMFMES(
         **kwargs,
     )
 
-    _bounds = torch.tensor(
-        data=bounds,
-        dtype=training_data.X.dtype,
-        device=training_data.X.device,
-    )
-
+    X = _get_dataset_field(training_data, "X", first_only=True)
+    _bounds = torch.tensor(bounds, dtype=X.dtype, device=X.device)
     _, current_value = optimize_objective(
         model=model,
         bounds=_bounds.t(),
@@ -936,13 +1002,20 @@ def construct_inputs_qMFMES(
 
 
 def get_best_f_analytic(
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     posterior_transform: Optional[PosteriorTransform] = None,
     **kwargs,
 ) -> Tensor:
-    if not training_data.is_block_design:
+    if not _field_is_shared(training_data, fieldname="X"):
         raise NotImplementedError("Currently only block designs are supported.")
-    Y = training_data.Y
+
+    Y = _get_dataset_field(
+        training_data,
+        fieldname="Y",
+        transform=lambda field: field(),
+        join_rule=lambda field_tensors: torch.cat(field_tensors, dim=-1),
+    )
+
     posterior_transform = _deprecate_objective_arg(
         posterior_transform=posterior_transform, objective=kwargs.get("objective", None)
     )
@@ -957,13 +1030,20 @@ def get_best_f_analytic(
 
 
 def get_best_f_mc(
-    training_data: TrainingData,
+    training_data: MaybeDict[SupervisedDataset],
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
 ) -> Tensor:
-    if not training_data.is_block_design:
+    if not _field_is_shared(training_data, fieldname="X"):
         raise NotImplementedError("Currently only block designs are supported.")
-    Y = training_data.Y
+
+    Y = _get_dataset_field(
+        training_data,
+        fieldname="Y",
+        transform=lambda field: field(),
+        join_rule=lambda field_tensors: torch.cat(field_tensors, dim=-1),
+    )
+
     posterior_transform = _deprecate_objective_arg(
         posterior_transform=posterior_transform,
         objective=objective

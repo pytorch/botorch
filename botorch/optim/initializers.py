@@ -293,6 +293,7 @@ def gen_one_shot_kg_initial_conditions(
     value_function = _get_value_function(
         model=acq_function.model,
         objective=acq_function.objective,
+        posterior_transform=acq_function.posterior_transform,
         sampler=acq_function.inner_sampler,
         project=getattr(acq_function, "project", None),
     )

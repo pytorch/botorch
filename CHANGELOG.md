@@ -2,6 +2,33 @@
 
 The release log for BoTorch.
 
+## [0.6.4] - Apr 21, 2022
+
+#### New Features
+* Implement `ExpectationPosteriorTransform` (#903).
+* Add `PairwiseMCPosteriorVariance`, a cheap active learning acquisition function (#1125).
+* Support computing quantiles in the fully Bayesian posterior, add `FullyBayesianPosteriorList` (#1161).
+* Add expectation risk measures (#1173).
+* Implement Multi-Fidelity GIBBON (Lower Bound MES) acquisition function (#1185).
+
+#### Other Changes
+* Add an error message for one shot acquisition functions in `optimize_acqf_discrete` (#939).
+* Validate the shape of the `bounds` argument in `optimize_acqf` (#1142).
+* Minor tweaks to `SAASBO` (#1143, #1183).
+* Minor updates to tutorials (24f7fda7b40d4aabf502c1a67816ac1951af8c23, #1144, #1148, #1159, #1172, #1180).
+* Make it easier to specify a custom `PyroModel` (#1149).
+* Allow passing in a `mean_module` to `SingleTaskGP/FixedNoiseGP` (#1160).
+* Add a note about acquisitions using gradients to base class (#1168).
+* Remove deprecated `box_decomposition` module (#1175).
+
+#### Bug Fixes
+* Bug-fixes for `ProximalAcquisitionFunction` (#1122).
+* Fix missing warnings on failed optimization in `fit_gpytorch_scipy` (#1170).
+* Ignore data related buffers in `PairwiseGP.load_state_dict` (#1171).
+* Make `fit_gpytorch_model` properly honor the `debug` flag (#1178).
+* Fix missing `posterior_transform` in `gen_one_shot_kg_initial_conditions` (#1187).
+
+
 ## [0.6.3] - Mar 28, 2022
 
 #### New Features

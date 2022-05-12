@@ -4,10 +4,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List
+from typing import List
 
 import torch
-from botorch.acquisition import LinearMCObjective, ScalarizedObjective
+from botorch.acquisition import LinearMCObjective, ScalarizedPosteriorTransform
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.analytic import ExpectedImprovement
 from botorch.acquisition.monte_carlo import qExpectedImprovement
@@ -17,7 +17,6 @@ from botorch.models import ModelListGP, SingleTaskGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.models.transforms.input import Normalize
-from botorch.utils.containers import TrainingData
 from botorch.utils.testing import BotorchTestCase
 from torch.distributions.multivariate_normal import MultivariateNormal
 
@@ -27,12 +26,6 @@ class DummyModel(GPyTorchModel):
 
     def __init__(self):
         super(GPyTorchModel, self).__init__()
-
-    @classmethod
-    def construct_inputs(
-        cls, training_data: TrainingData, **kwargs: Any
-    ) -> Dict[str, Any]:
-        pass
 
     def subset_output(self, idcs: List[int]) -> Model:
         pass
@@ -54,60 +47,91 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                 3, bounds=torch.tensor(((0.0, 0.0, 0.0), (2.0, 2.0, 2.0)))
             )
             for input_transform in [None, normalize]:
-                model = (
-                    SingleTaskGP(train_X, train_Y, input_transform=input_transform)
-                    .to(device=self.device, dtype=dtype)
-                    .eval()
-                )
 
-                EI = ExpectedImprovement(model, best_f=0.0)
+                # test with and without transformed weights
+                for transformed_weighting in [True, False]:
+                    # test with single outcome model
+                    model = (
+                        SingleTaskGP(train_X, train_Y, input_transform=input_transform)
+                        .to(device=self.device, dtype=dtype)
+                        .eval()
+                    )
 
-                proximal_weights = torch.ones(3, device=self.device, dtype=dtype)
-                test_X = torch.rand(1, 3, device=self.device, dtype=dtype)
-                EI_prox = ProximalAcquisitionFunction(
-                    EI, proximal_weights=proximal_weights
-                )
+                    EI = ExpectedImprovement(model, best_f=0.0)
 
-                ei = EI(test_X)
-                mv_normal = MultivariateNormal(
-                    train_X[-1], torch.diag(proximal_weights)
-                )
-                test_prox_weight = torch.exp(mv_normal.log_prob(test_X)) / torch.exp(
-                    mv_normal.log_prob(train_X[-1])
-                )
+                    proximal_weights = torch.ones(3, device=self.device, dtype=dtype)
+                    last_X = train_X[-1]
+                    test_X = torch.rand(1, 3, device=self.device, dtype=dtype)
+                    EI_prox = ProximalAcquisitionFunction(
+                        EI,
+                        proximal_weights=proximal_weights,
+                        transformed_weighting=transformed_weighting,
+                    )
 
-                ei_prox = EI_prox(test_X)
-                self.assertTrue(torch.allclose(ei_prox, ei * test_prox_weight))
-                self.assertTrue(ei_prox.shape == torch.Size([1]))
+                    ei = EI(test_X)
 
-            # test t-batch with broadcasting
-            test_X = torch.rand(4, 1, 3, device=self.device, dtype=dtype)
-            ei = EI(test_X)
-            mv_normal = MultivariateNormal(train_X[-1], torch.diag(proximal_weights))
-            test_prox_weight = torch.exp(mv_normal.log_prob(test_X)) / torch.exp(
-                mv_normal.log_prob(train_X[-1])
-            )
+                    # modify last_X/test_X depending on transformed_weighting
+                    proximal_test_X = test_X.clone()
+                    if transformed_weighting:
+                        if input_transform is not None:
+                            last_X = input_transform(train_X[-1])
+                            proximal_test_X = input_transform(test_X)
 
-            ei_prox = EI_prox(test_X)
-            self.assertTrue(torch.allclose(ei_prox, ei * test_prox_weight.flatten()))
-            self.assertTrue(ei_prox.shape == torch.Size([4]))
+                    mv_normal = MultivariateNormal(last_X, torch.diag(proximal_weights))
+                    test_prox_weight = torch.exp(
+                        mv_normal.log_prob(proximal_test_X)
+                    ) / torch.exp(mv_normal.log_prob(last_X))
 
-            # test MC acquisition function
-            qEI = qExpectedImprovement(model, best_f=0.0)
-            test_X = torch.rand(4, 1, 3, device=self.device, dtype=dtype)
-            qEI_prox = ProximalAcquisitionFunction(
-                qEI, proximal_weights=proximal_weights
-            )
+                    ei_prox = EI_prox(test_X)
+                    self.assertTrue(torch.allclose(ei_prox, ei * test_prox_weight))
+                    self.assertTrue(ei_prox.shape == torch.Size([1]))
 
-            qei = qEI(test_X)
-            mv_normal = MultivariateNormal(train_X[-1], torch.diag(proximal_weights))
-            test_prox_weight = torch.exp(mv_normal.log_prob(test_X)) / torch.exp(
-                mv_normal.log_prob(train_X[-1])
-            )
+                    # test t-batch with broadcasting
+                    test_X = torch.rand(4, 1, 3, device=self.device, dtype=dtype)
+                    proximal_test_X = test_X.clone()
+                    if transformed_weighting:
+                        if input_transform is not None:
+                            last_X = input_transform(train_X[-1])
+                            proximal_test_X = input_transform(test_X)
 
-            qei_prox = qEI_prox(test_X)
-            self.assertTrue(torch.allclose(qei_prox, qei * test_prox_weight.flatten()))
-            self.assertTrue(qei_prox.shape == torch.Size([4]))
+                    ei = EI(test_X)
+                    mv_normal = MultivariateNormal(last_X, torch.diag(proximal_weights))
+                    test_prox_weight = torch.exp(
+                        mv_normal.log_prob(proximal_test_X)
+                    ) / torch.exp(mv_normal.log_prob(last_X))
+
+                    ei_prox = EI_prox(test_X)
+                    self.assertTrue(
+                        torch.allclose(ei_prox, ei * test_prox_weight.flatten())
+                    )
+                    self.assertTrue(ei_prox.shape == torch.Size([4]))
+
+                    # test q-based MC acquisition function
+                    qEI = qExpectedImprovement(model, best_f=0.0)
+                    test_X = torch.rand(4, 1, 3, device=self.device, dtype=dtype)
+                    proximal_test_X = test_X.clone()
+                    if transformed_weighting:
+                        if input_transform is not None:
+                            last_X = input_transform(train_X[-1])
+                            proximal_test_X = input_transform(test_X)
+
+                    qEI_prox = ProximalAcquisitionFunction(
+                        qEI,
+                        proximal_weights=proximal_weights,
+                        transformed_weighting=transformed_weighting,
+                    )
+
+                    qei = qEI(test_X)
+                    mv_normal = MultivariateNormal(last_X, torch.diag(proximal_weights))
+                    test_prox_weight = torch.exp(
+                        mv_normal.log_prob(proximal_test_X)
+                    ) / torch.exp(mv_normal.log_prob(last_X))
+
+                    qei_prox = qEI_prox(test_X)
+                    self.assertTrue(
+                        torch.allclose(qei_prox, qei * test_prox_weight.flatten())
+                    )
+                    self.assertTrue(qei_prox.shape == torch.Size([4]))
 
             # test gradient
             test_X = torch.rand(
@@ -155,6 +179,22 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     ExpectedImprovement(bad_single_task, 0.0), proximal_weights
                 )
 
+            # test a multi-output SingleTaskGP model
+            train_X = torch.rand(5, 3, device=self.device, dtype=dtype)
+            train_Y = torch.rand(5, 2, device=self.device, dtype=dtype)
+
+            multi_output_model = SingleTaskGP(train_X, train_Y).to(device=self.device)
+            ptransform = ScalarizedPosteriorTransform(
+                weights=torch.ones(2, dtype=dtype)
+            )
+            acq = ProximalAcquisitionFunction(
+                ExpectedImprovement(
+                    multi_output_model, 0.0, posterior_transform=ptransform
+                ),
+                proximal_weights,
+            )
+            acq(test_X)
+
     def test_proximal_model_list(self):
         for dtype in (torch.float, torch.double):
             proximal_weights = torch.ones(3, device=self.device, dtype=dtype)
@@ -166,14 +206,16 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             gp = SingleTaskGP(train_X, train_Y).to(device=self.device)
             model = ModelListGP(gp, gp)
 
-            scalarized_objective = ScalarizedObjective(
+            scalarized_posterior_transform = ScalarizedPosteriorTransform(
                 torch.ones(2, device=self.device, dtype=dtype)
             )
             mc_linear_objective = LinearMCObjective(
                 torch.ones(2, device=self.device, dtype=dtype)
             )
 
-            EI = ExpectedImprovement(model, best_f=0.0, objective=scalarized_objective)
+            EI = ExpectedImprovement(
+                model, best_f=0.0, posterior_transform=scalarized_posterior_transform
+            )
 
             test_X = torch.rand(1, 3, device=self.device, dtype=dtype)
             EI_prox = ProximalAcquisitionFunction(EI, proximal_weights=proximal_weights)
@@ -221,13 +263,17 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             )
             with self.assertRaisesRegex(ValueError, expected_err_msg):
                 ProximalAcquisitionFunction(
-                    ExpectedImprovement(model, 0.0, objective=scalarized_objective),
+                    ExpectedImprovement(
+                        model, 0.0, posterior_transform=scalarized_posterior_transform
+                    ),
                     proximal_weights[:1],
                 )
 
             with self.assertRaisesRegex(ValueError, expected_err_msg):
                 ProximalAcquisitionFunction(
-                    ExpectedImprovement(model, 0.0, objective=scalarized_objective),
+                    ExpectedImprovement(
+                        model, 0.0, posterior_transform=scalarized_posterior_transform
+                    ),
                     torch.rand(3, 3, device=self.device, dtype=dtype),
                 )
 
@@ -246,7 +292,11 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             )
             with self.assertRaises(UnsupportedError):
                 ProximalAcquisitionFunction(
-                    ExpectedImprovement(bad_model, 0.0, objective=scalarized_objective),
+                    ExpectedImprovement(
+                        bad_model,
+                        0.0,
+                        posterior_transform=scalarized_posterior_transform,
+                    ),
                     proximal_weights,
                 )
 
@@ -259,7 +309,11 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             )
             with self.assertRaises(UnsupportedError):
                 ProximalAcquisitionFunction(
-                    ExpectedImprovement(bad_model, 0.0, objective=scalarized_objective),
+                    ExpectedImprovement(
+                        bad_model,
+                        0.0,
+                        posterior_transform=scalarized_posterior_transform,
+                    ),
                     proximal_weights,
                 )
 
@@ -274,6 +328,10 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             )
             with self.assertRaises(UnsupportedError):
                 ProximalAcquisitionFunction(
-                    ExpectedImprovement(bad_model, 0.0, objective=scalarized_objective),
+                    ExpectedImprovement(
+                        bad_model,
+                        0.0,
+                        posterior_transform=scalarized_posterior_transform,
+                    ),
                     proximal_weights,
                 )

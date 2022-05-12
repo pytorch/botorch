@@ -83,15 +83,21 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 if isinstance(acqf, qKnowledgeGradient):
                     ics = ics.repeat(5, 1)
 
-                candidates, _ = gen_candidates(
-                    initial_conditions=ics,
-                    acquisition_function=acqf,
-                    lower_bounds=0,
-                    upper_bounds=1,
-                    options=options or {},
-                )
+                kwargs = {
+                    "initial_conditions": ics,
+                    "acquisition_function": acqf,
+                    "lower_bounds": 0,
+                    "upper_bounds": 1,
+                    "options": options or {},
+                }
+                if gen_candidates is gen_candidates_torch:
+                    kwargs["callback"] = mock.MagicMock()
+
+                candidates, _ = gen_candidates(**kwargs)
                 if isinstance(acqf, qKnowledgeGradient):
                     candidates = acqf.extract_candidates(candidates)
+                if gen_candidates is gen_candidates_torch:
+                    self.assertTrue(kwargs["callback"].call_count > 0)
 
                 self.assertTrue(-EPS <= candidates <= 1 + EPS)
 

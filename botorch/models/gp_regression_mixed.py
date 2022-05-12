@@ -13,7 +13,7 @@ from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
-from botorch.utils.containers import TrainingData
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.transforms import normalize_indices
 from gpytorch.constraints import GreaterThan
 from gpytorch.kernels.kernel import Kernel
@@ -187,18 +187,21 @@ class MixedSingleTaskGP(SingleTaskGP):
 
     @classmethod
     def construct_inputs(
-        cls, training_data: TrainingData, **kwargs: Any
+        cls,
+        training_data: SupervisedDataset,
+        categorical_features: List[int],
+        likelihood: Optional[Likelihood] = None,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
-        r"""Construct kwargs for the `Model` from `TrainingData` and other options.
+        r"""Construct `Model` keyword arguments from a dict of `BotorchDataset`.
 
         Args:
-            training_data: `TrainingData` container with data for single outcome
-                or for multiple outcomes for batched multi-output case.
-            **kwargs: None expected for this class.
+            training_data: A `SupervisedDataset` containing the training data.
+            categorical_features: Column indices of categorical features.
+            likelihood: Optional likelihood used to constuct the model.
         """
         return {
-            "train_X": training_data.X,
-            "train_Y": training_data.Y,
-            "cat_dims": kwargs["categorical_features"],
-            "likelihood": kwargs.get("likelihood"),
+            **super().construct_inputs(training_data=training_data, **kwargs),
+            "cat_dims": categorical_features,
+            "likelihood": likelihood,
         }

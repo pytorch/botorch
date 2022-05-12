@@ -34,6 +34,7 @@ from botorch.acquisition.knowledge_gradient import (
 from botorch.acquisition.max_value_entropy_search import (
     MaxValueBase,
     qLowerBoundMaxValueEntropy,
+    qMultiFidelityLowerBoundMaxValueEntropy,
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
 )
@@ -81,6 +82,7 @@ __all__ = [
     "MaxValueBase",
     "qMultiFidelityKnowledgeGradient",
     "qMaxValueEntropy",
+    "qMultiFidelityLowerBoundMaxValueEntropy",
     "qLowerBoundMaxValueEntropy",
     "qMultiFidelityMaxValueEntropy",
     "qMultiStepLookahead",
