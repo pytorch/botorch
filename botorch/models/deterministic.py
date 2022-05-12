@@ -49,7 +49,7 @@ class DeterministicModel(Model, ABC):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DeterministicPosterior:
         r"""Compute the (deterministic) posterior at X.
 

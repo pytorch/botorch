@@ -139,7 +139,7 @@ class TestOutcomeTransforms(BotorchTestCase):
                 self.assertEqual(p_utf.device.type, self.device.type)
                 self.assertTrue(p_utf.dtype == dtype)
                 mean_expected = tf.means + tf.stdvs * posterior.mean
-                variance_expected = tf.stdvs ** 2 * posterior.variance
+                variance_expected = tf.stdvs**2 * posterior.variance
                 self.assertTrue(torch.allclose(p_utf.mean, mean_expected))
                 self.assertTrue(torch.allclose(p_utf.variance, variance_expected))
                 samples = p_utf.rsample()
@@ -161,7 +161,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             self.assertEqual(p_utf2.device.type, self.device.type)
             self.assertTrue(p_utf2.dtype == dtype)
             mean_expected = tf.means + tf.stdvs * posterior.mean
-            variance_expected = tf.stdvs ** 2 * posterior.variance
+            variance_expected = tf.stdvs**2 * posterior.variance
             self.assertTrue(torch.allclose(p_utf2.mean, mean_expected))
             self.assertTrue(torch.allclose(p_utf2.variance, variance_expected))
             # TODO: Test expected covar (both interleaved and non-interleaved)

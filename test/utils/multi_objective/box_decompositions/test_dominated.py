@@ -67,7 +67,7 @@ class TestDominatedPartitioning(BotorchTestCase):
                         [8.0, 3.0],
                     ],
                 ],
-                **tkwargs
+                **tkwargs,
             )
             cell_bounds = partitioning.get_hypercell_bounds()
             self.assertTrue(torch.equal(cell_bounds, expected_cell_bounds))

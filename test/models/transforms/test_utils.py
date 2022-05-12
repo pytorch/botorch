@@ -89,7 +89,7 @@ class TestTransformUtils(BotorchTestCase):
             mu_ln_expected = torch.tensor(
                 [1.0, 2.0, 3.0], device=self.device, dtype=dtype
             )
-            var_ln_expected = (torch.exp(var) - 1) * mu_ln_expected ** 2
+            var_ln_expected = (torch.exp(var) - 1) * mu_ln_expected**2
             self.assertTrue(torch.allclose(mu_ln, mu_ln_expected))
             self.assertTrue(torch.allclose(var_ln, var_ln_expected))
 

@@ -334,7 +334,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 gp1 = SaasFullyBayesianSingleTaskGP(
                     train_X=(train_X - lb) / (ub - lb),
                     train_Y=(train_Y - mu) / sigma,
-                    train_Yvar=train_Yvar / sigma ** 2
+                    train_Yvar=train_Yvar / sigma**2
                     if train_Yvar is not None
                     else train_Yvar,
                 )
@@ -343,7 +343,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 )
                 posterior1 = gp1.posterior((test_X - lb) / (ub - lb))
                 pred_mean1 = mu + sigma * posterior1.mean
-                pred_var1 = (sigma ** 2) * posterior1.variance
+                pred_var1 = (sigma**2) * posterior1.variance
 
             # Fit with transforms
             with torch.random.fork_rng():
@@ -539,7 +539,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 self.assertTrue(
                     torch.allclose(
                         model.pyro_model.train_Yvar,
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL) / (sigma ** 2),
+                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL) / (sigma**2),
                         atol=1e-4,
                     )
                 )

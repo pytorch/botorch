@@ -717,7 +717,7 @@ class TestFidelityUtils(BotorchTestCase):
             # test gradients
             X.requires_grad_(True)
             X_proj = project_to_target_fidelity(X, target_fidelities=target_fids)
-            out = (X_proj ** 2).sum()
+            out = (X_proj**2).sum()
             out.backward()
             self.assertTrue(torch.all(X.grad[..., [0, 2]] == 0))
             self.assertTrue(torch.equal(X.grad[..., [1, 3]], 2 * X[..., [1, 3]]))

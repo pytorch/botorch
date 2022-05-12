@@ -53,7 +53,7 @@ def matern52_kernel(X: Tensor, lengthscale: Tensor) -> Tensor:
     nu = 5 / 2
     dist = compute_dists(X=X, lengthscale=lengthscale)
     exp_component = torch.exp(-math.sqrt(nu * 2) * dist)
-    constant_component = (math.sqrt(5) * dist).add(1).add(5.0 / 3.0 * (dist ** 2))
+    constant_component = (math.sqrt(5) * dist).add(1).add(5.0 / 3.0 * (dist**2))
     return constant_component * exp_component
 
 

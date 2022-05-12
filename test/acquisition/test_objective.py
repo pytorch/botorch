@@ -33,7 +33,7 @@ from torch import Tensor
 
 
 def generic_obj_deprecated(samples: Tensor) -> Tensor:
-    return torch.log(torch.sum(samples ** 2, dim=-1))
+    return torch.log(torch.sum(samples**2, dim=-1))
 
 
 def generic_obj(samples: Tensor, X=None) -> Tensor:

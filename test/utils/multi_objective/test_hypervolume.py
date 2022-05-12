@@ -125,7 +125,7 @@ class TestHypervolume(BotorchTestCase):
                     [0.0, 0.0, -1.0, 0.0],
                     [0.0, 0.0, 0.0, -1.0],
                 ],
-                **tkwargs
+                **tkwargs,
             )
             volume = hv.compute(pareto_Y=pareto_Y)
             self.assertTrue(abs(volume - 23.15) < EPS)
@@ -155,7 +155,7 @@ class TestGetReferencePoint(BotorchTestCase):
                     [-19.4244, -11.9158],
                     [-14.0806, -22.0004],
                 ],
-                **tkwargs
+                **tkwargs,
             )
 
             # test empty pareto_Y and no max_ref_point
