@@ -8,9 +8,9 @@ import itertools
 
 import torch
 from botorch.models.likelihoods.pairwise import (
+    PairwiseLikelihood,
     PairwiseLogitLikelihood,
     PairwiseProbitLikelihood,
-    PairwiseLikelihood,
 )
 from botorch.models.pairwise_gp import PairwiseGP
 from botorch.utils.testing import BotorchTestCase

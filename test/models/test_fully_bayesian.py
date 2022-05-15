@@ -23,18 +23,18 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 from botorch.acquisition.multi_objective import (
+    prune_inferior_points_multi_objective,
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
-    prune_inferior_points_multi_objective,
 )
-from botorch.models import ModelListGP, ModelList
+from botorch.models import ModelList, ModelListGP
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.fully_bayesian import (
+    MCMC_DIM,
     MIN_INFERRED_NOISE_LEVEL,
     PyroModel,
     SaasFullyBayesianSingleTaskGP,
     SaasPyroModel,
-    MCMC_DIM,
 )
 from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors.fully_bayesian import batched_bisect, FullyBayesianPosterior

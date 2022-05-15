@@ -5,8 +5,8 @@
 # LICENSE file in the root directory of this source tree.
 
 from botorch.models.likelihoods.pairwise import (
-    PairwiseProbitLikelihood,
     PairwiseLogitLikelihood,
+    PairwiseProbitLikelihood,
 )
 
 

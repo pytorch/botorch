@@ -13,11 +13,10 @@ from typing import Any, Dict, Hashable, Type, Union
 
 from botorch.exceptions import UnsupportedError
 from botorch.models.model import Model
-from botorch.models.multitask import MultiTaskGP, FixedNoiseMultiTaskGP
+from botorch.models.multitask import FixedNoiseMultiTaskGP, MultiTaskGP
 from botorch.utils.datasets import BotorchDataset, FixedNoiseDataset, SupervisedDataset
 from botorch.utils.dispatcher import Dispatcher
-from torch import Tensor
-from torch import cat
+from torch import cat, Tensor
 from torch.nn.functional import pad
 
 

@@ -22,7 +22,7 @@ from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.posteriors.transformed import TransformedPosterior
-from botorch.utils.datasets import SupervisedDataset, FixedNoiseDataset
+from botorch.utils.datasets import FixedNoiseDataset, SupervisedDataset
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import (

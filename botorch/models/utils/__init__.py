@@ -7,13 +7,13 @@
 from botorch.models.utils.assorted import (
     _make_X_full,
     add_output_dim,
-    check_no_nans,
     check_min_max_scaling,
+    check_no_nans,
     check_standardization,
     fantasize,
     gpt_posterior_settings,
-    multioutput_to_batch_mode_transform,
     mod_batch_shape,
+    multioutput_to_batch_mode_transform,
     validate_input_scaling,
 )
 
