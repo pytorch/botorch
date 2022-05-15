@@ -34,7 +34,7 @@ DEV_REQUIRES = TEST_REQUIRES + [
     "sphinx",
     "black==22.3.0",
     "libcst==0.3.19",
-    "usort==0.6.4",
+    "usort==1.0.2",
     "ufmt",
 ]
 
