@@ -13,7 +13,7 @@ from __future__ import annotations
 import inspect
 import warnings
 from abc import ABC, abstractmethod
-from typing import Union, Callable, List, Optional
+from typing import Callable, List, Optional, Union
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -22,7 +22,7 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
 from botorch.posteriors.posterior import Posterior
 from botorch.sampling import IIDNormalSampler, MCSampler
 from botorch.utils import apply_constraints
-from gpytorch.distributions import MultivariateNormal, MultitaskMultivariateNormal
+from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy import lazify
 from torch import Tensor
 from torch.nn import Module

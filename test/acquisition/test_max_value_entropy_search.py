@@ -14,8 +14,8 @@ from botorch.acquisition.max_value_entropy_search import (
     _sample_max_value_Thompson,
     qLowerBoundMaxValueEntropy,
     qMaxValueEntropy,
-    qMultiFidelityMaxValueEntropy,
     qMultiFidelityLowerBoundMaxValueEntropy,
+    qMultiFidelityMaxValueEntropy,
 )
 from botorch.acquisition.objective import (
     PosteriorTransform,

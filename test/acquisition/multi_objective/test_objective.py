@@ -12,8 +12,6 @@ from botorch.acquisition.multi_objective.multi_output_risk_measures import (
 )
 from botorch.acquisition.multi_objective.objective import (
     FeasibilityWeightedMCMultiOutputObjective,
-)
-from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
     UnstandardizeAnalyticMultiOutputObjective,
@@ -23,8 +21,7 @@ from botorch.acquisition.multi_objective.objective import (
 from botorch.acquisition.objective import IdentityMCObjective
 from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
 from botorch.models.transforms.outcome import Standardize
-from botorch.utils.testing import BotorchTestCase, MockPosterior
-from botorch.utils.testing import MockModel
+from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
 class TestMCMultiOutputObjective(BotorchTestCase):
