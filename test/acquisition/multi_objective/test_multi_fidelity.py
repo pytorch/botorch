@@ -10,9 +10,7 @@ from unittest import mock
 import torch
 from botorch import settings
 from botorch.acquisition.multi_objective.multi_fidelity import MOMF
-from botorch.acquisition.multi_objective.objective import (
-    IdentityMCMultiOutputObjective,
-)
+from botorch.acquisition.multi_objective.objective import IdentityMCMultiOutputObjective
 from botorch.exceptions.errors import BotorchError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
