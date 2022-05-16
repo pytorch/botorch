@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
-from typing import Tuple, Any
+from typing import Any, Tuple
 
 import torch
 from gpytorch.likelihoods import Likelihood

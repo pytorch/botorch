@@ -32,9 +32,9 @@ TEST_REQUIRES = ["pytest", "pytest-cov"]
 DEV_REQUIRES = TEST_REQUIRES + [
     "flake8",
     "sphinx",
-    "black==21.4b2",
+    "black==22.3.0",
     "libcst==0.3.19",
-    "usort==0.6.4",
+    "usort==1.0.2",
     "ufmt",
 ]
 

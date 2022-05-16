@@ -12,13 +12,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
 from typing import Any
 
-from torch import (
-    device as Device,
-    dtype as Dtype,
-    LongTensor,
-    Size,
-    Tensor,
-)
+from torch import device as Device, dtype as Dtype, LongTensor, Size, Tensor
 
 
 class BotorchContainer(ABC):

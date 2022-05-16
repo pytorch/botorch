@@ -23,17 +23,18 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 from botorch.acquisition.multi_objective import (
+    prune_inferior_points_multi_objective,
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
-from botorch.models import ModelListGP, ModelList
+from botorch.models import ModelList, ModelListGP
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.fully_bayesian import (
+    MCMC_DIM,
     MIN_INFERRED_NOISE_LEVEL,
     PyroModel,
     SaasFullyBayesianSingleTaskGP,
     SaasPyroModel,
-    MCMC_DIM,
 )
 from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors.fully_bayesian import batched_bisect, FullyBayesianPosterior
@@ -421,6 +422,15 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             for batch_shape in [[5], [6, 5, 2]]:
                 test_X = torch.rand(*batch_shape, 1, 4, **tkwargs)
                 self.assertEqual(acqf(test_X).shape, torch.Size(batch_shape))
+
+        # Test prune_inferior_points_multi_objective
+        for model_list in [ModelListGP(model, model), ModelList(deterministic, model)]:
+            X_pruned = prune_inferior_points_multi_objective(
+                model=model_list,
+                X=train_X,
+                ref_point=torch.zeros(2, **tkwargs),
+            )
+            self.assertTrue(X_pruned.ndim == 2 and X_pruned.shape[-1] == 4)
 
     def test_load_samples(self):
         for infer_noise, dtype in itertools.product(
