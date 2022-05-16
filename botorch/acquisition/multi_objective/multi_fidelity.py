@@ -69,7 +69,7 @@ class MOMF(qExpectedHypervolumeImprovement):
         Args:
             model: A fitted model. There are two default assumptions in the training
                 data. `train_X` should have fidelity parameter `s` as the last dimension
-                of the input and `train_Y` contains a trust objective as its last 
+                of the input and `train_Y` contains a trust objective as its last
                 dimension.
             ref_point: A list or tensor with `m+1` elements representing the reference
                 point (in the outcome space) w.r.t. to which compute the hypervolume.
@@ -95,7 +95,8 @@ class MOMF(qExpectedHypervolumeImprovement):
                 to have no gradient.
             cost_call: A callable cost function mapping a Tensor of dimension
                 `batch_shape x q x d` to a cost Tensor of dimension
-                `batch_shape x q x m`. Defaults to an AffineCostModel with `C(s) = 1 + s`.
+                `batch_shape x q x m`. Defaults to an AffineCostModel with
+                `C(s) = 1 + s`.
             eta: The temperature parameter for the sigmoid function used for the
                 differentiable approximation of the constraints.
         """
