@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Monte-Carlo Acquisition Functions for Multi-objective Bayesian optimization.
+Multi-Fidelity Acquisition Functions for Multi-objective Bayesian optimization.
 
 References
 
@@ -62,18 +62,17 @@ class MOMF(qExpectedHypervolumeImprovement):
         Example:
             >>> model = SingleTaskGP(train_X, train_Y)
             >>> ref_point = [0.0, 0.0, 0.0]
-            >>> cost_func = lambda X:5+X[...,-1]
-            >>> momf = MOMF(model, ref_point, partitioning,cost_func)
+            >>> cost_func = lambda X: 5 + X[..., -1]
+            >>> momf = MOMF(model, ref_point, partitioning, cost_func)
             >>> momf_val = momf(test_X)
 
         Args:
             model: A fitted model. There are two default assumptions in the training
-                data. train_X should have fidelity parameter `s` as the last dimension
-                of the input and train_Y contains a trust objective as its last
-                dimension.
+                data. `train_X` should have fidelity parameter `s` as the last dimension
+                of the input and `train_Y` contains a trust objective as its last dimension.
             ref_point: A list or tensor with `m+1` elements representing the reference
                 point (in the outcome space) w.r.t. to which compute the hypervolume.
-                The '+1' takes care of the trust objective appended to train_Y.
+                The '+1' takes care of the trust objective appended to `train_Y`.
                 This is a reference point for the objective values (i.e. after
                 applying`objective` to the samples).
             partitioning: A `NondominatedPartitioning` module that provides the non-
@@ -87,7 +86,7 @@ class MOMF(qExpectedHypervolumeImprovement):
             constraints: A list of callables, each mapping a Tensor of dimension
                 `sample_shape x batch-shape x q x m` to a Tensor of dimension
                 `sample_shape x batch-shape x q`, where negative values imply
-                feasibility. The acqusition function will compute expected feasible
+                feasibility. The acquisition function will compute expected feasible
                 hypervolume.
             X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have
                 points that have been submitted for function evaluation but have not yet
@@ -95,8 +94,7 @@ class MOMF(qExpectedHypervolumeImprovement):
                 to have no gradient.
             cost_call: A callable cost function mapping a Tensor of dimension
                 `batch_shape x q x d` to a cost Tensor of dimension
-                `batch_shape x q x m`.
-                Defaults to an AffineCostModel with C(s)=1+s.
+                `batch_shape x q x m`. Defaults to an AffineCostModel with `C(s) = 1 + s`.
             eta: The temperature parameter for the sigmoid function used for the
                 differentiable approximation of the constraints.
         """
@@ -121,9 +119,8 @@ class MOMF(qExpectedHypervolumeImprovement):
             constraints=constraints,
             X_pending=X_pending,
         )
-        self.cost_call = cost_call
 
-        if self.cost_call is None:
+        if cost_call is None:
             cost_model = AffineFidelityCostModel(
                 fidelity_weights={-1: 1.0}, fixed_cost=1.0
             )
