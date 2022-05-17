@@ -77,6 +77,11 @@ Multi-Objective Monte-Carlo Acquisition Functions
     :members:
     :exclude-members: MultiObjectiveMCAcquisitionFunction
 
+Multi-Objective Multi-Fidelity Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.multi_objective.multi_fidelity
+    :members:
+
 The One-Shot Knowledge Gradient
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.knowledge_gradient
