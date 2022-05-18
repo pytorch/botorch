@@ -13,7 +13,7 @@ from botorch.acquisition.acquisition import (
     AcquisitionFunction,
     OneShotAcquisitionFunction,
 )
-from botorch.exceptions import UnsupportedError
+from botorch.exceptions import InputDataError, UnsupportedError
 from botorch.optim.optimize import (
     _filter_infeasible,
     _filter_invalid,
@@ -879,6 +879,14 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
 
             mock_acq_function = SquaredAcquisitionFunction()
             mock_acq_function.set_X_pending(None)
+
+            # ensure proper raising of errors if no choices
+            with self.assertRaisesRegex(InputDataError, "`choices` must be non-emtpy."):
+                optimize_acqf_discrete(
+                    acq_function=mock_acq_function,
+                    q=q,
+                    choices=torch.empty(0, 2),
+                )
 
             choices = torch.rand(5, 2, **tkwargs)
             exp_acq_vals = mock_acq_function(choices)

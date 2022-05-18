@@ -18,7 +18,7 @@ from botorch.acquisition.acquisition import (
     OneShotAcquisitionFunction,
 )
 from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
-from botorch.exceptions import UnsupportedError
+from botorch.exceptions import InputDataError, UnsupportedError
 from botorch.generation.gen import gen_candidates_scipy
 from botorch.logging import logger
 from botorch.optim.initializers import (
@@ -600,6 +600,8 @@ def optimize_acqf_discrete(
             "Discrete optimization is not supported for"
             "one-shot acquisition functions."
         )
+    if choices.numel() == 0:
+        raise InputDataError("`choices` must be non-emtpy.")
     choices_batched = choices.unsqueeze(-2)
     if q > 1:
         candidate_list, acq_value_list = [], []
