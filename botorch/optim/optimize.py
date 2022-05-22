@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+import numpy as np
 import torch
 from botorch.acquisition.acquisition import (
     AcquisitionFunction,
@@ -26,6 +27,7 @@ from botorch.optim.initializers import (
     gen_one_shot_kg_initial_conditions,
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
+from scipy.optimize import linprog
 from torch import Tensor
 
 INIT_OPTION_KEYS = {
@@ -75,10 +77,10 @@ def optimize_acqf(
         raw_samples: The number of samples for initialization. This is required
             if `batch_initial_conditions` is not specified.
         options: Options for candidate generation.
-        inequality constraints: A list of tuples (indices, coefficients, rhs),
+        inequality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
-        equality constraints: A list of tuples (indices, coefficients, rhs),
+        equality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
         nonlinear_inequality_constraints: A list of callables with that represent
@@ -125,10 +127,11 @@ def optimize_acqf(
         >>>     qEI, bounds, 3, 15, 256, sequential=True
         >>> )
     """
-    if not (bounds.ndim == 2 and bounds.shape[0] == 2):
-        raise ValueError(
-            f"bounds should be a `2 x d` tensor, current shape: {list(bounds.shape)}."
-        )
+    _validate_constraints(
+        bounds=bounds,
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
+    )
 
     if sequential and q > 1:
         if not return_best_only:
@@ -705,6 +708,93 @@ def _gen_batch_initial_conditions_local_search(
         if len(X) >= min_points:
             return X
     raise RuntimeError(f"Failed to generate at least {min_points} initial conditions")
+
+
+def _validate_constraints(
+    bounds: Tensor,
+    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+) -> None:
+    r"""Validate constraints for acquisition function optimization.
+
+    Checks that the constraints define a bounded, non-empty polytope.
+
+    Args:
+        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
+            If there are no box constraints, bounds should be an empty `0 x d`-dim
+            tensor.
+        inequality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
+        equality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
+    """
+    # We solve the following Linear Program to ensure that he constraint set
+    # is non-empty and bounded:
+    #
+    #   max_x |x|_1 s.t. bounds, inequality_constraints, constraints
+    #
+    # To do this we can introduce auxiliary variables s and solve the
+    # following standard formulation:
+    #
+    #   min_(x, s) - sum_i(s_i)
+    #     s.t. -x <= s <= x
+    #          bounds(x)
+    #          inequality_constraints(x)
+    #          equality_constraints(x)
+    #
+    if bounds.numel() == 0:
+        if inequality_constraints is None:
+            raise UnsupportedError(
+                "Must provide either `bounds` or `inequality_constraints` (or both)."
+            )
+    elif not (bounds.ndim == 2 and bounds.shape[0] == 2):
+        raise ValueError(
+            f"bounds should be a `2 x d` tensor, current shape: {list(bounds.shape)}."
+        )
+    d = bounds.shape[-1]
+    bounds_lp, A_ub, b_ub, A_eq, b_eq = None, None, None, None, None
+    if bounds.numel() > 0:
+        bounds_lp = [tuple(b_i) for b_i in bounds.t()] + [(None, None)] * d
+    A_ub = np.zeros((2 * d, 2 * d))
+    b_ub = np.zeros(2 * d)
+    A_ub[:d, :d] = -1.0
+    A_ub[:d, d : 2 * d] = -1.0
+    A_ub[d : 2 * d, :d] = -1.0
+    A_ub[d : 2 * d, d : 2 * d] = 1.0
+    if inequality_constraints is not None:
+        A_ineq = np.zeros((len(inequality_constraints), 2 * d))
+        b_ineq = np.zeros(len(inequality_constraints))
+        for i, (indices, coefficients, rhs) in enumerate(inequality_constraints):
+            A_ineq[i, indices] = -coefficients
+            b_ineq[i] = -rhs
+        A_ub = np.concatenate((A_ub, A_ineq))
+        b_ub = np.concatenate((b_ub, b_ineq))
+    if equality_constraints is not None:
+        A_eq = np.zeros((len(equality_constraints), 2 * d))
+        b_eq = np.zeros(len(equality_constraints))
+        for i, (indices, coefficients, rhs) in enumerate(equality_constraints):
+            A_eq[i, indices] = coefficients
+            b_eq[i] = rhs
+    c = np.concatenate((np.zeros(d), -np.ones(d)))
+    result = linprog(
+        c=c,
+        bounds=bounds_lp,
+        A_ub=A_ub,
+        b_ub=b_ub,
+        A_eq=A_eq,
+        b_eq=b_eq,
+    )
+    if not result.success:
+        if result.status == 2:
+            raise ValueError("Feasible set non-empty. Check your constraints")
+        if result.status == 3:
+            raise ValueError("Feasible set unbounded.")
+        warnings.warn(
+            "Ran into issus when checking for boundedness of feasible set. "
+            f"Optimizer message: {result.message}."
+        )
 
 
 def optimize_acqf_discrete_local_search(
