@@ -733,7 +733,10 @@ def _validate_constraints(
     # We solve the following Linear Program to ensure that he constraint set
     # is non-empty and bounded:
     #
-    #   max_x |x|_1 s.t. bounds, inequality_constraints, constraints
+    #   max_x |x|_1
+    #     s.t. bounds(x)
+    #          inequality_constraints(x)
+    #          equality_constraints(x)
     #
     # To do this we can introduce auxiliary variables s and solve the
     # following standard formulation:

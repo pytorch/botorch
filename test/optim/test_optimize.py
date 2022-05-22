@@ -109,7 +109,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                 )
             ],
         )
-        # Check hat added equality constraint resolves this
+        # Check that added equality constraint resolves this
         _validate_constraints(
             bounds=bounds,
             equality_constraints=[
