@@ -751,18 +751,22 @@ def _validate_constraints(
             )
     elif not (bounds.ndim == 2 and bounds.shape[0] == 2):
         raise ValueError(
-            f"bounds should be a `2 x d` tensor, current shape: {list(bounds.shape)}."
+            f"bounds should be a `2 x d` tensor, current shape: {tuple(bounds.shape)}."
         )
     d = bounds.shape[-1]
     bounds_lp, A_ub, b_ub, A_eq, b_eq = None, None, None, None, None
+    # The first `d` variables are `x`, the last `d` are the auxiliary `s`
     if bounds.numel() > 0:
+        # `s` is unbounded
         bounds_lp = [tuple(b_i) for b_i in bounds.t()] + [(None, None)] * d
+    # Encode the constraint `-x <= s <= x`
     A_ub = np.zeros((2 * d, 2 * d))
     b_ub = np.zeros(2 * d)
     A_ub[:d, :d] = -1.0
     A_ub[:d, d : 2 * d] = -1.0
     A_ub[d : 2 * d, :d] = -1.0
     A_ub[d : 2 * d, d : 2 * d] = 1.0
+    # Convet and add additional inequality constraints if present
     if inequality_constraints is not None:
         A_ineq = np.zeros((len(inequality_constraints), 2 * d))
         b_ineq = np.zeros(len(inequality_constraints))
@@ -771,13 +775,16 @@ def _validate_constraints(
             b_ineq[i] = -rhs
         A_ub = np.concatenate((A_ub, A_ineq))
         b_ub = np.concatenate((b_ub, b_ineq))
+    # Convert equality constraints if present
     if equality_constraints is not None:
         A_eq = np.zeros((len(equality_constraints), 2 * d))
         b_eq = np.zeros(len(equality_constraints))
         for i, (indices, coefficients, rhs) in enumerate(equality_constraints):
             A_eq[i, indices] = coefficients
             b_eq[i] = rhs
+    # Objective is `- sum_i s_i` (note: the `s_i` are guaranteed to be positive)
     c = np.concatenate((np.zeros(d), -np.ones(d)))
+    # Solve the problem
     result = linprog(
         c=c,
         bounds=bounds_lp,
@@ -786,13 +793,14 @@ def _validate_constraints(
         A_eq=A_eq,
         b_eq=b_eq,
     )
+    # Check what's going on if unsuccessful
     if not result.success:
         if result.status == 2:
-            raise ValueError("Feasible set non-empty. Check your constraints")
+            raise ValueError("Feasible set non-empty. Check your constraints.")
         if result.status == 3:
             raise ValueError("Feasible set unbounded.")
         warnings.warn(
-            "Ran into issus when checking for boundedness of feasible set. "
+            "Ran into issues when checking for boundedness of feasible set. "
             f"Optimizer message: {result.message}."
         )
 

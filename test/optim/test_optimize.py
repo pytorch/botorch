@@ -19,6 +19,7 @@ from botorch.optim.optimize import (
     _filter_invalid,
     _gen_batch_initial_conditions_local_search,
     _generate_neighbors,
+    _validate_constraints,
     optimize_acqf,
     optimize_acqf_cyclic,
     optimize_acqf_discrete,
@@ -72,6 +73,66 @@ def rounding_func(X: Tensor) -> Tensor:
 
 
 class TestOptimizeAcqf(BotorchTestCase):
+    def test_validate_constraints(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+        with self.assertRaisesRegex(
+            UnsupportedError, "Must provide either `bounds` or `inequality_constraints`"
+        ):
+            _validate_constraints(bounds=torch.empty(0, 2, **tkwargs))
+        with self.assertRaisesRegex(
+            # TODO: Figure out why the full rendered string doesn't regex-match
+            ValueError,
+            f"bounds should be a `2 x d` tensor, current shape:",  # {(3, 2)}."
+        ):
+            _validate_constraints(bounds=torch.zeros(3, 2), inequality_constraints=[])
+        # Check standard box bounds
+        bounds = torch.stack((torch.zeros(2, **tkwargs), torch.ones(2, **tkwargs)))
+        _validate_constraints(bounds=bounds)
+        # Check failure on empty box
+        with self.assertRaisesRegex(
+            ValueError, "Feasible set non-empty. Check your constraints."
+        ):
+            _validate_constraints(bounds=bounds.flip(0))
+        # Check failure on unbounded "box"
+        bounds[1, 1] = float("inf")
+        with self.assertRaisesRegex(ValueError, "Feasible set unbounded."):
+            _validate_constraints(bounds=bounds)
+        # Check that added inequality constraint resolve this
+        _validate_constraints(
+            bounds=bounds,
+            inequality_constraints=[
+                (
+                    torch.tensor([1], device=self.device),
+                    torch.tensor([-1.0], **tkwargs),
+                    -2.0,
+                )
+            ],
+        )
+        # Check hat added equality constraint resolves this
+        _validate_constraints(
+            bounds=bounds,
+            equality_constraints=[
+                (
+                    torch.tensor([0, 1], device=self.device),
+                    torch.tensor([1.0, -1.0], **tkwargs),
+                    0.0,
+                )
+            ],
+        )
+        # Check that inequality constraints alone work
+        zero = torch.tensor([0], device=self.device)
+        one = torch.tensor([1], device=self.device)
+        inequality_constraints = [
+            (zero, torch.tensor([1.0], **tkwargs), 0.0),
+            (zero, torch.tensor([-1.0], **tkwargs), -1.0),
+            (one, torch.tensor([1.0], **tkwargs), 0.0),
+            (one, torch.tensor([-1.0], **tkwargs), -1.0),
+        ]
+        _validate_constraints(
+            bounds=bounds, inequality_constraints=inequality_constraints
+        )
+
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
     def test_optimize_acqf_joint(
