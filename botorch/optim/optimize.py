@@ -10,6 +10,8 @@ Methods for optimizing acquisition functions.
 
 from __future__ import annotations
 
+import warnings
+
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -19,7 +21,7 @@ from botorch.acquisition.acquisition import (
     OneShotAcquisitionFunction,
 )
 from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
-from botorch.exceptions import InputDataError, UnsupportedError
+from botorch.exceptions import InputDataError, OptimizationWarning, UnsupportedError
 from botorch.generation.gen import gen_candidates_scipy
 from botorch.logging import logger
 from botorch.optim.initializers import (
@@ -29,6 +31,7 @@ from botorch.optim.initializers import (
 from botorch.optim.stopping import ExpMAStoppingCriterion
 from scipy.optimize import linprog
 from torch import Tensor
+
 
 INIT_OPTION_KEYS = {
     # set of options for initialization that we should
@@ -804,7 +807,8 @@ def _validate_constraints(
             raise ValueError("Feasible set unbounded.")
         warnings.warn(
             "Ran into issues when checking for boundedness of feasible set. "
-            f"Optimizer message: {result.message}."
+            f"Optimizer message: {result.message}.",
+            OptimizationWarning,
         )
 
 

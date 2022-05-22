@@ -5,15 +5,18 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+
+import warnings
 from unittest import mock
 
 import numpy as np
 import torch
+from botorch import settings
 from botorch.acquisition.acquisition import (
     AcquisitionFunction,
     OneShotAcquisitionFunction,
 )
-from botorch.exceptions import InputDataError, UnsupportedError
+from botorch.exceptions import InputDataError, OptimizationWarning, UnsupportedError
 from botorch.optim.optimize import (
     _filter_infeasible,
     _filter_invalid,
@@ -81,9 +84,7 @@ class TestOptimizeAcqf(BotorchTestCase):
         ):
             _validate_constraints(bounds=torch.empty(0, 2, **tkwargs))
         with self.assertRaisesRegex(
-            # TODO: Figure out why the full rendered string doesn't regex-match
-            ValueError,
-            f"bounds should be a `2 x d` tensor, current shape:",  # {(3, 2)}."
+            ValueError, r"bounds should be a `2 x d` tensor, current shape: \(3, 2\)."
         ):
             _validate_constraints(bounds=torch.zeros(3, 2), inequality_constraints=[])
         # Check standard box bounds
@@ -132,6 +133,18 @@ class TestOptimizeAcqf(BotorchTestCase):
         _validate_constraints(
             bounds=bounds, inequality_constraints=inequality_constraints
         )
+        # Check that other messages are surfaced as warnings
+        bounds = torch.stack((torch.zeros(2, **tkwargs), torch.ones(2, **tkwargs)))
+        mock_result = OptimizeResult(success=False, status=-1, message="foo")
+        with mock.patch("botorch.optim.optimize.linprog", return_value=mock_result):
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                _validate_constraints(bounds=bounds)
+        self.assertTrue(any(issubclass(w.category, OptimizationWarning)) for w in ws)
+        expected_msg = (
+            "Ran into issues when checking for boundedness of feasible set. "
+            "Optimizer message: foo."
+        )
+        self.assertTrue(any(expected_msg in str(w.message) for w in ws))
 
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
