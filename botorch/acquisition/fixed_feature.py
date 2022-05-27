@@ -12,7 +12,7 @@ This is useful e.g. for performing contextual optimization.
 from __future__ import annotations
 
 from numbers import Number
-from typing import List, Sequence, Union
+from typing import List, Optional, Sequence, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -123,6 +123,25 @@ class FixedFeatureAcquisitionFunction(AcquisitionFunction):
         """
         X_full = self._construct_X_full(X)
         return self.acq_func(X_full)
+
+    @property
+    def X_pending(self):
+        r"""Return the `X_pending` of the base acquisition function."""
+        try:
+            return self.acq_func.X_pending
+        except (ValueError, AttributeError):
+            raise ValueError(
+                f"Base acquisition function {type(self.acq_func).__name__} "
+                "does not have an `X_pending` attribute."
+            )
+
+    @X_pending.setter
+    def X_pending(self, X_pending: Optional[Tensor]):
+        r"""Sets the `X_pending` of the base acquisition function."""
+        if X_pending is not None:
+            self.acq_func.X_pending = self._construct_X_full(X_pending)
+        else:
+            self.acq_func.X_pending = X_pending
 
     def _construct_X_full(self, X: Tensor) -> Tensor:
         r"""Constructs the full input for the base acquisition function.

@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
+from botorch.acquisition.analytic import ExpectedImprovement
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.models import SingleTaskGP
@@ -16,8 +17,9 @@ class TestFixedFeatureAcquisitionFunction(BotorchTestCase):
         train_X = torch.rand(5, 3, device=self.device)
         train_Y = train_X.norm(dim=-1, keepdim=True)
         model = SingleTaskGP(train_X, train_Y).to(device=self.device).eval()
-        qEI = qExpectedImprovement(model, best_f=0.0)
         for q in [1, 2]:
+            qEI = qExpectedImprovement(model, best_f=0.0)
+
             # test single point
             test_X = torch.rand(q, 3, device=self.device)
             qEI_ff = FixedFeatureAcquisitionFunction(
@@ -63,6 +65,25 @@ class TestFixedFeatureAcquisitionFunction(BotorchTestCase):
             qei_ff = qEI_ff(test_X[..., [1]])
             self.assertTrue(torch.allclose(qei, qei_ff))
 
+            # test X_pending
+            X_pending = torch.rand(2, 3, device=self.device)
+            qEI.set_X_pending(X_pending)
+            qEI_ff = FixedFeatureAcquisitionFunction(
+                qEI, d=3, columns=[2], values=test_X[..., -1:]
+            )
+            self.assertTrue(torch.allclose(qEI.X_pending, qEI_ff.X_pending))
+
+            # test setting X_pending from qEI_ff
+            # (set target value to be last dim of X_pending and check if the
+            # constructed X_pending on qEI is the full X_pending)
+            X_pending = torch.rand(2, 3, device=self.device)
+            qEI.X_pending = None
+            qEI_ff = FixedFeatureAcquisitionFunction(
+                qEI, d=3, columns=[2], values=X_pending[..., -1:]
+            )
+            qEI_ff.set_X_pending(X_pending[..., :-1])
+            self.assertTrue(torch.allclose(qEI.X_pending, X_pending))
+
         # test gradient
         test_X = torch.rand(1, 3, device=self.device, requires_grad=True)
         test_X_ff = test_X[..., :-1].detach().clone().requires_grad_(True)
@@ -92,3 +113,12 @@ class TestFixedFeatureAcquisitionFunction(BotorchTestCase):
         # test error b/c of incompatible input shapes
         with self.assertRaises(ValueError):
             qEI_ff(test_X)
+
+        # test error when there is no X_pending (analytic EI)
+        test_X = torch.rand(q, 3, device=self.device)
+        analytic_EI = ExpectedImprovement(model, best_f=0.0)
+        EI_ff = FixedFeatureAcquisitionFunction(
+            analytic_EI, d=3, columns=[2], values=test_X[..., -1:]
+        )
+        with self.assertRaises(ValueError):
+            EI_ff.X_pending
