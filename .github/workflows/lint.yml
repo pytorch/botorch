@@ -24,9 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         # pin dependencies to match Meta-internal versions
-        pip install black==22.3.0
-        pip install usort==1.0.2
-        pip install libcst==0.3.19
+        pip install -r requirements-fmt.txt
         pip install ufmt
     - name: ufmt
       run: |
