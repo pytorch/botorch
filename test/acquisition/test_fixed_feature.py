@@ -83,6 +83,9 @@ class TestFixedFeatureAcquisitionFunction(BotorchTestCase):
             )
             qEI_ff.set_X_pending(X_pending[..., :-1])
             self.assertTrue(torch.allclose(qEI.X_pending, X_pending))
+            # test setting to None
+            qEI_ff.X_pending = None
+            self.assertIsNone(qEI_ff.X_pending)
 
         # test gradient
         test_X = torch.rand(1, 3, device=self.device, requires_grad=True)
