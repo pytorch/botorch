@@ -25,6 +25,7 @@ IGNORE = {  # ignored in smoke tests and full runs
 IGNORE_SMOKE_TEST_ONLY = {  # only used in smoke tests
     "thompson_sampling.ipynb",  # very slow without KeOps + GPU
     "composite_mtbo.ipynb",  # TODO: very slow, figure out if we can make it faster
+    "Multi_objective_multi_fidelity_BO.ipynb",  # TODO: very slow, speed up
 }
 
 
