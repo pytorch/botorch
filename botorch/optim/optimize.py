@@ -67,6 +67,7 @@ def optimize_acqf(
     batch_initial_conditions: Optional[Tensor] = None,
     return_best_only: bool = True,
     sequential: bool = False,
+    validate_constraints: bool = True,
     **kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of candidates via multi-start optimization.
@@ -105,6 +106,8 @@ def optimize_acqf(
             random restart initializations of the optimization.
         sequential: If False, uses joint optimization, otherwise uses sequential
             optimization.
+        validate_constraints: If True, validate that the constraint set is
+            non-empty and bounded by solving a Linear Program.
         kwargs: Additonal keyword arguments.
 
     Returns:
@@ -130,11 +133,12 @@ def optimize_acqf(
         >>>     qEI, bounds, 3, 15, 256, sequential=True
         >>> )
     """
-    _validate_constraints(
-        bounds=bounds,
-        inequality_constraints=inequality_constraints,
-        equality_constraints=equality_constraints,
-    )
+    if validate_constraints:
+        _validate_constraints(
+            bounds=bounds,
+            inequality_constraints=inequality_constraints,
+            equality_constraints=equality_constraints,
+        )
 
     if sequential and q > 1:
         if not return_best_only:
@@ -164,6 +168,7 @@ def optimize_acqf(
                 batch_initial_conditions=None,
                 return_best_only=True,
                 sequential=False,
+                validate_constraints=False,
             )
             candidate_list.append(candidate)
             acq_value_list.append(acq_value)
@@ -273,6 +278,7 @@ def optimize_acqf_cyclic(
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
     cyclic_options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
+    validate_constraints: bool = True,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of `q` candidates via cyclic optimization.
 
@@ -300,6 +306,8 @@ def optimize_acqf_cyclic(
             If no initial conditions are provided, the default initialization will
             be used.
         cyclic_options: Options for stopping criterion for outer cyclic optimization.
+        validate_constraints: If True, validate that the constraint set is
+            non-empty and bounded by solving a Linear Program.
 
     Returns:
         A two-element tuple containing
@@ -334,6 +342,7 @@ def optimize_acqf_cyclic(
         batch_initial_conditions=batch_initial_conditions,
         return_best_only=True,
         sequential=True,
+        validate_constraints=validate_constraints,
     )
     if q > 1:
         cyclic_options = cyclic_options or {}
@@ -364,6 +373,7 @@ def optimize_acqf_cyclic(
                     batch_initial_conditions=candidates[i].unsqueeze(0),
                     return_best_only=True,
                     sequential=True,
+                    validate_constraints=False,
                 )
                 candidates[i] = candidate_i
                 acq_vals[i] = acq_val_i
@@ -383,6 +393,7 @@ def optimize_acqf_list(
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
+    validate_constraints: bool = True,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a list of candidates from a list of acquisition functions.
 
@@ -408,6 +419,8 @@ def optimize_acqf_list(
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
+        validate_constraints: If True, validate that the constraint set is
+            non-empty and bounded by solving a Linear Program.
 
     Returns:
         A two-element tuple containing
@@ -419,6 +432,13 @@ def optimize_acqf_list(
     """
     if not acq_function_list:
         raise ValueError("acq_function_list must be non-empty.")
+    if validate_constraints:
+        _validate_constraints(
+            bounds=bounds,
+            inequality_constraints=inequality_constraints,
+            equality_constraints=equality_constraints,
+        )
+
     candidate_list, acq_value_list = [], []
     candidates = torch.tensor([], device=bounds.device, dtype=bounds.dtype)
     base_X_pending = acq_function_list[0].X_pending
@@ -442,6 +462,7 @@ def optimize_acqf_list(
             post_processing_func=post_processing_func,
             return_best_only=True,
             sequential=False,
+            validate_constraints=False,
         )
         candidate_list.append(candidate)
         acq_value_list.append(acq_value)
@@ -461,6 +482,7 @@ def optimize_acqf_mixed(
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
+    validate_constraints: bool = True,
     **kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
     r"""Optimize over a list of fixed_features and returns the best solution.
@@ -491,6 +513,8 @@ def optimize_acqf_mixed(
             transformations).
         batch_initial_conditions: A tensor to specify the initial conditions. Set
             this if you do not want to use default initialization strategy.
+        validate_constraints: If True, validate that the constraint set is
+            non-empty and bounded by solving a Linear Program.
 
     Returns:
         A two-element tuple containing
@@ -508,6 +532,12 @@ def optimize_acqf_mixed(
                 "are currently not supported when `q > 1`. This is needed to "
                 "compute the joint acquisition value."
             )
+    if validate_constraints:
+        _validate_constraints(
+            bounds=bounds,
+            inequality_constraints=inequality_constraints,
+            equality_constraints=equality_constraints,
+        )
 
     if q == 1:
         ff_candidate_list, ff_acq_value_list = [], []
@@ -525,6 +555,7 @@ def optimize_acqf_mixed(
                 post_processing_func=post_processing_func,
                 batch_initial_conditions=batch_initial_conditions,
                 return_best_only=True,
+                validate_constraints=False,
             )
             ff_candidate_list.append(candidate)
             ff_acq_value_list.append(acq_value)

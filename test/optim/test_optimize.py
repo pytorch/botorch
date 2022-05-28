@@ -663,11 +663,19 @@ class TestOptimizeAcqfCyclic(BotorchTestCase):
                 if i == 0:
                     # first cycle
                     expected_call_args.update(
-                        {"batch_initial_conditions": None, "q": q}
+                        {
+                            "batch_initial_conditions": None,
+                            "q": q,
+                            "validate_constraints": True,
+                        }
                     )
                 else:
                     expected_call_args.update(
-                        {"batch_initial_conditions": orig_candidates[i - 1 : i], "q": 1}
+                        {
+                            "batch_initial_conditions": orig_candidates[i - 1 : i],
+                            "q": 1,
+                            "validate_constraints": False,
+                        }
                     )
                     orig_candidates[i - 1] = candidate_rvs[i]
                 for k, v in call_args_list[i][1].items():
@@ -689,9 +697,6 @@ class TestOptimizeAcqfList(BotorchTestCase):
         options = {}
         tkwargs = {"device": self.device}
         bounds = torch.stack([torch.zeros(3), 4 * torch.ones(3)])
-        inequality_constraints = [
-            [torch.tensor([3]), torch.tensor([4]), torch.tensor(5)]
-        ]
         # reinitialize so that dtype
         mock_acq_function_1 = MockAcquisitionFunction()
         mock_acq_function_2 = MockAcquisitionFunction()
@@ -701,8 +706,8 @@ class TestOptimizeAcqfList(BotorchTestCase):
                 # clear previous X_pending
                 m.set_X_pending(None)
             tkwargs["dtype"] = dtype
-            inequality_constraints[0] = [
-                t.to(**tkwargs) for t in inequality_constraints[0]
+            inequality_constraints = [
+                [torch.tensor([3]), torch.tensor([4.0], **tkwargs), 5.0]
             ]
             mock_optimize_acqf.reset_mock()
             bounds = bounds.to(**tkwargs)
@@ -775,6 +780,7 @@ class TestOptimizeAcqfList(BotorchTestCase):
                 "batch_initial_conditions": None,
                 "return_best_only": True,
                 "sequential": False,
+                "validate_constraints": False,
             }
             for i in range(len(call_args_list)):
                 expected_call_args["acq_function"] = mock_acq_function_list[i]
@@ -855,6 +861,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 "batch_initial_conditions": None,
                 "return_best_only": True,
                 "sequential": False,
+                "validate_constraints": False,
             }
             for i in range(len(call_args_list)):
                 expected_call_args["fixed_features"] = fixed_features_list[i]
