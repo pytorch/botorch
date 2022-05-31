@@ -27,16 +27,19 @@ if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR):
     sys.exit(error)
 
 
+# Requirements
 TEST_REQUIRES = ["pytest", "pytest-cov"]
 
-DEV_REQUIRES = TEST_REQUIRES + [
-    "flake8",
-    "sphinx",
-    "black==22.3.0",
-    "libcst==0.3.19",
-    "usort==1.0.2",
-    "ufmt",
-]
+FMT_REQUIRES = ["flake8", "ufmt"]
+
+# Read in the pinned versions of the formatting tools
+root_dir = os.path.dirname(__file__)
+with open(os.path.join(root_dir, "requirements-fmt.txt"), "r") as fh:
+    FMT_REQUIRES += [
+        line.strip() for line in fh.readlines() if not line.startswith("#")
+    ]
+
+DEV_REQUIRES = TEST_REQUIRES + FMT_REQUIRES + ["sphinx"]
 
 TUTORIALS_REQUIRES = [
     "ax-platform",
@@ -48,8 +51,6 @@ TUTORIALS_REQUIRES = [
     "pykeops",
     "torchvision",
 ]
-
-root_dir = os.path.dirname(__file__)
 
 # read in README.md as the long description
 with open(os.path.join(root_dir, "README.md"), "r") as fh:
