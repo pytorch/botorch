@@ -8,10 +8,12 @@ from botorch.exceptions import UnsupportedError
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.model import Model
 from botorch.models.multitask import MultiTaskGP
+from botorch.models.pairwise_gp import PairwiseGP
 from botorch.models.utils.parse_training_data import parse_training_data
-from botorch.utils.datasets import FixedNoiseDataset, SupervisedDataset
+from botorch.utils.containers import SliceContainer
+from botorch.utils.datasets import FixedNoiseDataset, RankingDataset, SupervisedDataset
 from botorch.utils.testing import BotorchTestCase
-from torch import cat, rand
+from torch import cat, long, rand, Size, tensor
 
 
 class TestParseTrainingData(BotorchTestCase):
@@ -42,6 +44,20 @@ class TestParseTrainingData(BotorchTestCase):
         self.assertTrue(dataset.X().equal(parse["train_X"]))
         self.assertTrue(dataset.Y().equal(parse["train_Y"]))
         self.assertTrue(dataset.Yvar().equal(parse["train_Yvar"]))
+
+    def test_pairwiseGP_ranking(self):
+        # Test parsing Ranking Dataset for PairwiseGP
+        datapoints = rand(3, 2)
+        indices = tensor([[0, 1], [1, 2]], dtype=long)
+        event_shape = Size([2 * datapoints.shape[-1]])
+        dataset_X = SliceContainer(datapoints, indices, event_shape=event_shape)
+        dataset_Y = tensor([[0, 1], [1, 0]]).expand(indices.shape)
+        dataset = RankingDataset(X=dataset_X, Y=dataset_Y)
+        parse = parse_training_data(PairwiseGP, dataset)
+        self.assertTrue(dataset.X.values.equal(parse["datapoints"]))
+
+        comparisons = tensor([[0, 1], [2, 1]], dtype=long)
+        self.assertTrue(comparisons.equal(parse["comparisons"]))
 
     def test_dict(self):
         n = 3

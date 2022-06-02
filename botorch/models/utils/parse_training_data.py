@@ -11,10 +11,17 @@ from __future__ import annotations
 
 from typing import Any, Dict, Hashable, Type, Union
 
+import torch
 from botorch.exceptions import UnsupportedError
 from botorch.models.model import Model
 from botorch.models.multitask import FixedNoiseMultiTaskGP, MultiTaskGP
-from botorch.utils.datasets import BotorchDataset, FixedNoiseDataset, SupervisedDataset
+from botorch.models.pairwise_gp import PairwiseGP
+from botorch.utils.datasets import (
+    BotorchDataset,
+    FixedNoiseDataset,
+    RankingDataset,
+    SupervisedDataset,
+)
 from botorch.utils.dispatcher import Dispatcher
 from torch import cat, Tensor
 from torch.nn.functional import pad
@@ -60,6 +67,21 @@ def _parse_model_fixedNoise(
         "train_X": dataset.X(),
         "train_Y": dataset.Y(),
         "train_Yvar": dataset.Yvar(),
+    }
+
+
+@dispatcher.register(PairwiseGP, RankingDataset)
+def _parse_pairwiseGP_ranking(
+    consumer: PairwiseGP, dataset: RankingDataset, **ignore: Any
+) -> Dict[Hashable, Tensor]:
+    datapoints = dataset.X.values
+    comparisons = dataset.X.indices
+    comp_order = dataset.Y()
+    comparisons = torch.gather(input=comparisons, dim=-1, index=comp_order)
+
+    return {
+        "datapoints": datapoints,
+        "comparisons": comparisons,
     }
 
 
