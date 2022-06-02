@@ -59,11 +59,13 @@ from botorch.acquisition.objective import (
     ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
+from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
 from botorch.acquisition.utils import (
     expand_trace_observations,
     project_to_target_fidelity,
 )
 from botorch.exceptions.errors import UnsupportedError
+from botorch.models.deterministic import FixedSingleSampleModel
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.datasets import SupervisedDataset
@@ -302,6 +304,25 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
         self.assertFalse(kwargs["maximize"])
         with self.assertRaisesRegex(ValueError, "Field `X` must be shared"):
             c(model=mock_model, training_data=self.multiX_multiY)
+
+    def test_construct_inputs_constrained_analytic_eubo(self):
+        c = get_acqf_input_constructor(AnalyticExpectedUtilityOfBestOption)
+        mock_model = mock.Mock()
+        mock_model.num_outputs = 3
+        mock_model.train_inputs = [None]
+        mock_pref_model = mock.Mock()
+        kwargs = c(model=mock_model, pref_model=mock_pref_model)
+        self.assertTrue(isinstance(kwargs["outcome_model"], FixedSingleSampleModel))
+        self.assertTrue(kwargs["pref_model"] is mock_pref_model)
+        self.assertTrue(kwargs["previous_winner"] is None)
+
+        previous_winner = torch.randn(3)
+        kwargs = c(
+            model=mock_model,
+            pref_model=mock_pref_model,
+            previous_winner=previous_winner,
+        )
+        self.assertTrue(torch.equal(kwargs["previous_winner"], previous_winner))
 
 
 class TestMCAcquisitionFunctionInputConstructors(

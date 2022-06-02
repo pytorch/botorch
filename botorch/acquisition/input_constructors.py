@@ -74,12 +74,14 @@ from botorch.acquisition.objective import (
     ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
+from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
 from botorch.acquisition.utils import (
     expand_trace_observations,
     project_to_target_fidelity,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.cost import AffineFidelityCostModel
+from botorch.models.deterministic import FixedSingleSampleModel
 from botorch.models.model import Model
 from botorch.optim.optimize import optimize_acqf
 from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
@@ -494,7 +496,8 @@ def construct_inputs_qNEI(
     X_pending: Optional[Tensor] = None,
     sampler: Optional[MCSampler] = None,
     X_baseline: Optional[Tensor] = None,
-    prune_baseline: bool = False,
+    prune_baseline: Optional[bool] = False,
+    cache_root: Optional[bool] = True,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the `qNoisyExpectedImprovement` constructor.
@@ -542,6 +545,7 @@ def construct_inputs_qNEI(
         **base_inputs,
         "X_baseline": X_baseline,
         "prune_baseline": prune_baseline,
+        "cache_root": cache_root,
     }
 
 
@@ -998,6 +1002,34 @@ def construct_inputs_qMFMES(
         **inputs_mf,
         **inputs_qmes,
         "current_value": current_value.detach().cpu().max(),
+    }
+
+
+@acqf_input_constructor(AnalyticExpectedUtilityOfBestOption)
+def construct_inputs_analytic_eubo(
+    model: Model,
+    pref_model: Model,
+    previous_winner: Optional[Tensor] = None,
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    r"""Construct kwargs for the `AnalyticExpectedUtilityOfBestOption` constructor.
+
+    Args:
+        model: The outcome model to be used in the acquisition function.
+        pref_model: The preference model to be used in preference exploration
+
+    Returns:
+        A dict mapping kwarg names of the constructor to values.
+    """
+    # construct a deterministic fixed single sample model from `model`
+    # i.e., performing EUBO-zeta by default as described
+    # in https://arxiv.org/abs/2203.11382
+    one_sample_outcome_model = FixedSingleSampleModel(model=model)
+
+    return {
+        "pref_model": pref_model,
+        "outcome_model": one_sample_outcome_model,
+        "previous_winner": previous_winner,
     }
 
 
