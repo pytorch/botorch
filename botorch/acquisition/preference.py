@@ -6,9 +6,9 @@
 
 r"""
 Preference acquisition functions. This includes:
-Analytical EUBO acquisition function as introduced in [Lin2020preference]_.
+Analytical EUBO acquisition function as introduced in [Lin2022preference]_.
 
-.. [Lin2020preference]
+.. [Lin2022preference]
     Lin, Z.J., Astudillo, R., Frazier, P.I. and Bakshy, E. Preference Exploration
     for Efficient Bayesian Optimization with Multiple Outcomes. International
     Conference on Artificial Intelligence and Statistics (AISTATS), 2022.
@@ -38,7 +38,7 @@ class AnalyticExpectedUtilityOfBestOption(AnalyticAcquisitionFunction):
     ) -> None:
         r"""Analytic implementation of Expected Utility of the Best Option under the
         Laplace model (assumes a PairwiseGP is used as the preference model) as
-        proposed in [Lin2020preference]_.
+        proposed in [Lin2022preference]_.
 
         Args:
             pref_model: The preference model that maps the outcomes (i.e., Y) to
@@ -47,7 +47,7 @@ class AnalyticExpectedUtilityOfBestOption(AnalyticAcquisitionFunction):
                 (i.e., Y). The outcome model f defines the search space of Y = f(X).
                 If model is None, we are directly calculating EUBO on the parameter
                 space. When used with `OneSamplePosteriorDrawModel`, we are obtaining
-                EUBO-zeta as described in [Lin2020preference].
+                EUBO-zeta as described in [Lin2022preference].
             previous_winner: Tensor representing the previous winner in the Y space.
                 Defaults to None.
         """
