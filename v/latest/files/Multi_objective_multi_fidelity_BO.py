@@ -16,38 +16,31 @@
 # In[1]:
 
 
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-
-print(torch.__version__)
 
 
 # ### Set dtype and device 
 # Setting up the global variable that determine the device to run the optimization. The optimization is much faster when it runs on GPU.
 
-# In[ ]:
+# In[2]:
 
 
-gpu_number = 4  # Setting the GPU number if a cluster is present
-if torch.cuda.is_available():
-    torch.cuda.set_device(gpu_number)
-    tkwargs = {
+tkwargs = (
+    {  # Tkwargs is a dictionary contaning data about data type and data device
         "dtype": torch.double,
-        "device": torch.cuda.current_device(),
+        "device": torch.device("cuda" if torch.cuda.is_available() else "cpu"),
     }
-else:
-    tkwargs = (
-        {  # Tkwargs is a dictionary contaning data about data type and data device
-            "dtype": torch.double,
-            "device": torch.device("cpu"),
-        }
-    )
+)
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
 # ### Here we define different variables that define the problem setting and optimization settings
 
-# In[ ]:
+# In[3]:
 
 
 ##############################-----------------------------------------------------##############################################
@@ -64,13 +57,14 @@ dim_y = dim_yMO + 1  # Output Dimesnion for MOMF optimization
 ref_pointMO = [0] * dim_xMO  # Reference point for MO only Hypervolume calculation
 ref_point = [0] * dim_x  # Reference point for MOMF Hypervolume calculation
 
-
+n_TRIALS = 3
 BATCH_SIZE = 2  # For Batch-optimization BATCH_SIZE should be greater than 1
-n_TRIALS = 3  # Number of trials for optimization with random initial points start
-n_BATCH = 30  # Number of iterations within one optimization loop
+n_BATCH = 5 if SMOKE_TEST else 30  # Number of iterations within one optimization loop
 n_INIT = 5  # Number of initial points for MOMF
 n_INITMO = 1  # Number of initial points for MO only optimization
-MC_SAMPLES = 128  # Number of Monte Carlo samples
+MC_SAMPLES = 8 if SMOKE_TEST else 128  # Number of Monte Carlo samples
+NUM_RESTARTS = 2 if SMOKE_TEST else 10  # Number of restart points for multi-start optimization
+RAW_SAMPLES = 4 if SMOKE_TEST else 512  # Number of raw samples for initial point selection heuristic
 
 standard_boundsMO = torch.tensor(
     [[0.0] * dim_xMO, [1.0] * dim_xMO], **tkwargs
@@ -85,7 +79,7 @@ verbose = True
 # The problem as described before is a modified multi-fidelity version of Branin-Currin (BC) function that results in a 3 x 2 problem. A simple fidelity objective is also defined here which is a linear function of the input fidelity. We also design a wrapper function around the BC that takes care of interfacing torch with numpy and appends the fidelity objective with the BC functions.
 # 
 
-# In[ ]:
+# In[4]:
 
 
 def fid_obj(X):
@@ -110,7 +104,7 @@ def problem(x, dim_y):
 # 
 # The cost_func function returns an exponential cost from the fidelity. The cost_callable is a wrapper around it that takes care of the input output shapes. This is given as a callable function to MOMF that internally divides the hypervolume by cost.
 
-# In[ ]:
+# In[5]:
 
 
 exp_arg = torch.tensor(4,**tkwargs)
@@ -149,7 +143,7 @@ def cost_callable(X):
 # We use a multi-output SingleTaskGP to model the problem with a homoskedastic Gaussian likelihood with an inferred noise level. 
 # The model is initialized with 5 random points where the fidelity dimension of the initial points is sampled from a probability distribution : $p(s)=C(s)^{-1}$ 
 
-# In[ ]:
+# In[6]:
 
 
 from botorch.models.gp_regression import SingleTaskGP
@@ -190,7 +184,7 @@ def initialize_model(train_x, train_obj):
 # 
 # A simple initialization heuristic is used to select the 20 restart initial locations from a set of 1024 random points. Multi-start optimization of the acquisition function is performed using LBFGS-B with exact gradients computed via auto-differentiation.
 
-# In[ ]:
+# In[7]:
 
 
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
@@ -227,8 +221,8 @@ def optimize_MOMF_and_get_obs(
         acq_function=acq_func,
         bounds=standard_bounds,
         q=BATCH_SIZE,
-        num_restarts=20,
-        raw_samples=1024,  # used for intialization heuristic
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,  # used for intialization heuristic
         options={"batch_limit": 5, "maxiter": 200, "nonnegative": True},
         sequential=True,
     )
@@ -279,8 +273,7 @@ for iteration in range(0, n_BATCH):
         cost_call=cost_callable,
     )
     if verbose:
-        print("----------------------------")
-        print("Iteration Number is ", iteration + 1)
+        print(f"Iteration: {iteration + 1}")
     # Updating train_x and train_obj
     train_x[lower_index : upper_index, :] = new_x
     train_obj[lower_index : upper_index, :] = new_obj
@@ -427,8 +420,8 @@ def optimize_MO_and_get_obs(
         acq_function=acq_func,
         bounds=standard_bounds,
         q=BATCH_SIZE_MO,
-        num_restarts=20,
-        raw_samples=1024,  # used for intialization heuristic
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,  # used for intialization heuristic
         options={"batch_limit": 5, "maxiter": 200, "nonnegative": True},
         sequential=True,
     )
@@ -459,7 +452,7 @@ train_obj = torch.zeros(n_INIT + n_BATCH * BATCH_SIZE, dim_y, n_TRIALS,**tkwargs
 
 train_xMO = torch.zeros(n_INITMO + n_BATCH * BATCH_SIZE, dim_xMO, n_TRIALS,**tkwargs)    # Intializing train_xMO to zero
 train_objMO = torch.zeros(n_INITMO + n_BATCH * BATCH_SIZE, dim_yMO, n_TRIALS,**tkwargs)  # Intializing train_objMO to zero
-# for trial in range(0, n_TRIALS):
+
 for trial in range(0, n_TRIALS):
     torch.manual_seed(trial)
     print("***************************************************************************")
@@ -520,8 +513,7 @@ for trial in range(0, n_TRIALS):
             train_objMO[: upper_indexMO, :, trial],
         )
         if verbose:
-            print("----------------------------")
-            print("Iteration Number is ", _iter)
+            print(f"Iteration: {_iter + 1}")
 
 
 # ### Evaluating the hypervolume for each iteration for MOMF
@@ -556,7 +548,7 @@ for trial in range(0, n_TRIALS):
             train_x[:i, :, trial], train_obj[:i, :-1, trial], test_x, ref_point
         )
         if verbose:
-            print("Iteration", num)
+            print(f"Iteration: {num + 1}")
 
 
 # For the qEHVI the hypervolume calculation is more straightforward. We calculated at each iteration the set of non-dominated points from the training data and use that to estimate the hypervolume.
