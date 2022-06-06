@@ -62,12 +62,14 @@ def _gen_datasets(yvar: Optional[float] = None, **tkwargs):
     return datasets, (train_X, train_Y, train_Yvar)
 
 
-def _gen_model_and_data(input_transform=None, outcome_transform=None, **tkwargs):
+def _gen_model_and_data(
+    task_feature: int = 0, input_transform=None, outcome_transform=None, **tkwargs
+):
     datasets, (train_X, train_Y) = _gen_datasets(**tkwargs)
     model = MultiTaskGP(
         train_X,
         train_Y,
-        task_feature=0,
+        task_feature=task_feature,
         input_transform=input_transform,
         outcome_transform=outcome_transform,
     )
@@ -80,10 +82,16 @@ def _gen_model_single_output(**tkwargs):
     return model.to(**tkwargs)
 
 
-def _gen_fixed_noise_model_and_data(input_transform=None, **tkwargs):
+def _gen_fixed_noise_model_and_data(
+    task_feature: int = 0, input_transform=None, **tkwargs
+):
     datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(yvar=0.05, **tkwargs)
     model = FixedNoiseMultiTaskGP(
-        train_X, train_Y, train_Yvar, task_feature=0, input_transform=input_transform
+        train_X,
+        train_Y,
+        train_Yvar,
+        task_feature=task_feature,
+        input_transform=input_transform,
     )
     return model.to(**tkwargs), datasets, (train_X, train_Y, train_Yvar)
 
@@ -488,7 +496,10 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
     def test_MultiTaskGP_construct_inputs(self):
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
-            model, datasets, (train_X, train_Y) = _gen_model_and_data(**tkwargs)
+            task_feature = 0
+            model, datasets, (train_X, train_Y) = _gen_model_and_data(
+                task_feature=task_feature, **tkwargs
+            )
 
             # Validate prior config.
             with self.assertRaisesRegex(
@@ -496,12 +507,14 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             ):
                 data_dict = model.construct_inputs(
                     datasets,
+                    task_feature=task_feature,
                     prior_config={"use_LKJ_prior": False},
                 )
             # Validate eta.
             with self.assertRaisesRegex(ValueError, "eta must be a real number"):
                 data_dict = model.construct_inputs(
                     datasets,
+                    task_feature=task_feature,
                     prior_config={"use_LKJ_prior": True, "eta": "not_number"},
                 )
             # Test that presence of `prior` and `prior_config` kwargs at the
@@ -509,31 +522,39 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             with self.assertRaisesRegex(ValueError, "Only one of"):
                 data_dict = model.construct_inputs(
                     datasets,
+                    task_feature=task_feature,
                     task_covar_prior=1,
                     prior_config={"use_LKJ_prior": True, "eta": "not_number"},
                 )
             data_dict = model.construct_inputs(
                 datasets,
+                task_feature=task_feature,
                 prior_config={"use_LKJ_prior": True, "eta": 0.6},
             )
             self.assertTrue(torch.equal(data_dict["train_X"], train_X))
             self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
-            self.assertEqual(data_dict["task_feature"], 0)
+            self.assertEqual(data_dict["task_feature"], task_feature)
             self.assertIsInstance(data_dict["task_covar_prior"], LKJCovariancePrior)
 
     def test_FixedNoiseMultiTaskGP_construct_inputs(self):
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
+            task_feature = 0
 
             (
                 model,
                 datasets,
                 (train_X, train_Y, train_Yvar),
-            ) = _gen_fixed_noise_model_and_data(**tkwargs)
+            ) = _gen_fixed_noise_model_and_data(task_feature=task_feature, **tkwargs)
 
             #  Test only one of `task_covar_prior` and  `prior_config` can be passed.
             with self.assertRaisesRegex(ValueError, "Only one of"):
-                model.construct_inputs(datasets, task_covar_prior=1, prior_config=1)
+                model.construct_inputs(
+                    datasets,
+                    task_feature=task_feature,
+                    task_covar_prior=1,
+                    prior_config=1,
+                )
 
             # Validate prior config.
             with self.assertRaisesRegex(
@@ -541,16 +562,18 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             ):
                 data_dict = model.construct_inputs(
                     datasets,
+                    task_feature=task_feature,
                     prior_config={"use_LKJ_prior": False},
                 )
             data_dict = model.construct_inputs(
                 datasets,
+                task_feature=task_feature,
                 prior_config={"use_LKJ_prior": True, "eta": 0.6},
             )
             self.assertTrue(torch.equal(data_dict["train_X"], train_X))
             self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
             self.assertTrue(torch.allclose(data_dict["train_Yvar"], train_Yvar))
-            self.assertEqual(data_dict["task_feature"], 0)
+            self.assertEqual(data_dict["task_feature"], task_feature)
             self.assertIsInstance(data_dict["task_covar_prior"], LKJCovariancePrior)
 
 
