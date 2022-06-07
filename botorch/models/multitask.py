@@ -239,7 +239,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
     def construct_inputs(
         cls,
         training_data: Dict[str, SupervisedDataset],
-        task_feature: int = 0,
+        task_feature: int,
         task_covar_prior: Optional[Prior] = None,
         prior_config: Optional[dict] = None,
         rank: Optional[int] = None,
