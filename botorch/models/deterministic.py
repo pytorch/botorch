@@ -215,10 +215,7 @@ class FixedSingleSampleModel(DeterministicModel):
         self.model = model
         self._num_outputs = model.num_outputs
         self.w = torch.randn(model.num_outputs)
-        # Check since Model doesn't guarantee a train_inputs attribute
-        if hasattr(model, "train_inputs"):
-            self.w = self.w.to(model.train_inputs[0])
 
     def forward(self, X: Tensor) -> Tensor:
         post = self.model.posterior(X)
-        return post.mean + post.variance.sqrt() * self.w
+        return post.mean + post.variance.sqrt() * self.w.to(X)
