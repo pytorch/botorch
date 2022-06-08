@@ -115,7 +115,13 @@ def fit_gpytorch_model(
             return fit_gpytorch_model(
                 mll=mll, optimizer=optimizer, sequential=False, max_retries=max_retries
             )
-    # retry with random samples from the priors upon failure
+    # Skip training if there's no training data.
+    if mll.model.train_targets.numel() == 0:
+        logging.log(
+            logging.DEBUG, "Skipping model training due to empty training data."
+        )
+        return mll
+    # Retry with random samples from the priors upon failure.
     mll.train()
     original_state_dict = deepcopy(mll.model.state_dict())
     retry = 0

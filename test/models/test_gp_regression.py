@@ -37,6 +37,8 @@ from gpytorch.priors import GammaPrior
 
 
 class TestSingleTaskGP(BotorchTestCase):
+    model_class = SingleTaskGP
+
     def _get_model_and_data(
         self,
         batch_shape,
@@ -372,8 +374,33 @@ class TestSingleTaskGP(BotorchTestCase):
             tf_X = intf(X)
             self.assertEqual(X.shape, tf_X.shape)
 
+    def test_empty_inputs(self):
+        empty_inputs = torch.ones(0, 2)
+        kwargs = {
+            "train_X": empty_inputs,
+            "train_Y": empty_inputs,
+        }
+        if self.model_class is not SingleTaskGP:
+            kwargs["train_Yvar"] = empty_inputs
+        model = self.model_class(**kwargs)
+        mll = ExactMarginalLogLikelihood(model.likelihood, model)
+        fit_gpytorch_model(mll)
+        X_prediction = torch.rand(3, 4, 2)
+        with torch.no_grad():
+            posterior = model.posterior(X_prediction)
+        samples = posterior.rsample(sample_shape=torch.Size([5]))
+        self.assertEqual(samples.shape, torch.Size([5, 3, 4, 2]))
+        expected_mean = torch.zeros_like(posterior.mean)
+        expected_var = torch.full_like(
+            posterior.variance, fill_value=model.covar_module.outputscale[0].detach()
+        )
+        assert torch.equal(posterior.mean, expected_mean)
+        assert torch.equal(posterior.variance, expected_var)
+
 
 class TestFixedNoiseGP(TestSingleTaskGP):
+    model_class = FixedNoiseGP
+
     def _get_model_and_data(
         self,
         batch_shape,
@@ -436,6 +463,8 @@ class TestFixedNoiseGP(TestSingleTaskGP):
 
 
 class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
+    model_class = HeteroskedasticSingleTaskGP
+
     def _get_model_and_data(
         self, batch_shape, m, outcome_transform=None, input_transform=None, **tkwargs
     ):
