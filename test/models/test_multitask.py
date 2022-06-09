@@ -83,7 +83,7 @@ def _gen_model_single_output(**tkwargs):
 
 
 def _gen_fixed_noise_model_and_data(
-    task_feature: int = 0, input_transform=None, **tkwargs
+    task_feature: int = 0, input_transform=None, outcome_transform=None, **tkwargs
 ):
     datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(yvar=0.05, **tkwargs)
     model = FixedNoiseMultiTaskGP(
@@ -92,6 +92,7 @@ def _gen_fixed_noise_model_and_data(
         train_Yvar,
         task_feature=task_feature,
         input_transform=input_transform,
+        outcome_transform=outcome_transform,
     )
     return model.to(**tkwargs), datasets, (train_X, train_Y, train_Yvar)
 
@@ -345,17 +346,18 @@ class TestMultiTaskGP(BotorchTestCase):
 class TestFixedNoiseMultiTaskGP(BotorchTestCase):
     def test_FixedNoiseMultiTaskGP(self):
         bounds = torch.tensor([[-1.0, 0.0], [1.0, 1.0]])
-        for dtype, use_intf in itertools.product(
-            (torch.float, torch.double), (False, True)
+        for dtype, use_intf, use_octf in itertools.product(
+            (torch.float, torch.double), (False, True), (False, True)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
+            octf = Standardize(m=1) if use_octf else None
             intf = (
                 Normalize(d=2, bounds=bounds.to(**tkwargs), transform_on_train=True)
                 if use_intf
                 else None
             )
             model, _, (train_X, _, _) = _gen_fixed_noise_model_and_data(
-                input_transform=intf, **tkwargs
+                input_transform=intf, outcome_transform=octf, **tkwargs
             )
             self.assertIsInstance(model, FixedNoiseMultiTaskGP)
             self.assertEqual(model.num_outputs, 2)
@@ -370,6 +372,8 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             self.assertEqual(
                 model.task_covar_module.covar_factor.shape[-1], model._rank
             )
+            if use_octf:
+                self.assertIsInstance(model.outcome_transform, Standardize)
             if use_intf:
                 self.assertIsInstance(model.input_transform, Normalize)
 
@@ -393,6 +397,16 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
+
+            # check posterior transform is applied
+            if use_octf:
+                posterior_pred = model.posterior(test_x)
+                tmp_tf = model.outcome_transform
+                del model.outcome_transform
+                pp_tf = model.posterior(test_x)
+                model.outcome_transform = tmp_tf
+                expected_var = tmp_tf.untransform_posterior(pp_tf).variance
+                self.assertTrue(torch.allclose(posterior_pred.variance, expected_var))
 
             # test that posterior w/ observation noise raises appropriate error
             with self.assertRaises(NotImplementedError):
