@@ -75,10 +75,10 @@ def optimize_acqf(
         raw_samples: The number of samples for initialization. This is required
             if `batch_initial_conditions` is not specified.
         options: Options for candidate generation.
-        inequality constraints: A list of tuples (indices, coefficients, rhs),
+        inequality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
-        equality constraints: A list of tuples (indices, coefficients, rhs),
+        equality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
         nonlinear_inequality_constraints: A list of callables with that represent
