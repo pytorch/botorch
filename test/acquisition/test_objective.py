@@ -133,7 +133,7 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
                 [0.2, 0.15, 0.2, 0.7, 1.0, 0.7],
                 [0.1, 0.1, 0.05, 0.6, 0.7, 1.0],
             ],
-            **tkwargs
+            **tkwargs,
         )
         org_mvn = MultivariateNormal(org_loc, lazify(org_covar))
         org_post = GPyTorchPosterior(mvn=org_mvn)
@@ -168,7 +168,7 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
                 [0.0, 0.0, 0.0, 0.0, 0.4, 0.3, 1.4, 0.5],
                 [0.0, 0.0, 0.0, 0.0, 0.3, 0.2, 0.5, 1.2],
             ],
-            **tkwargs
+            **tkwargs,
         )
         # Making it batched by adding two more batches, mostly the same.
         org_loc = org_loc.repeat(3, 1)
@@ -217,7 +217,7 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
                 [0.0, 0.0, 0.875, 0.35],
                 [0.0, 0.0, 0.35, 1.05],
             ],
-            **tkwargs
+            **tkwargs,
         ).repeat(3, 1, 1)
         self.assertTrue(torch.allclose(tf_mvn.loc, expected_loc, atol=1e-3))
         self.assertTrue(

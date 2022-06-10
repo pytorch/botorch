@@ -76,7 +76,7 @@ class TestFeasibilityWeightedMCMultiOutputObjective(BotorchTestCase):
                     [4.0, 1.0],
                     [5.0, 1.0],
                 ],
-                **tkwargs
+                **tkwargs,
             )
             variances = torch.zeros(5, 2, **tkwargs)
             mm = MockModel(MockPosterior(mean=means, variance=variances))
