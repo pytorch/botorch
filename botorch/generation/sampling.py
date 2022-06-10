@@ -258,6 +258,7 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
         >>> X = torch.rand(2, 100, 3)
         >>> sampled_X = CMPS(X, num_samples=5)
     """
+
     def __init__(
         self,
         model: Model,
@@ -286,10 +287,7 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
         self.constraint_model = constraint_model
 
     def forward(
-        self,
-        X: Tensor,
-        num_samples: int = 1,
-        observation_noise: bool = False
+        self, X: Tensor, num_samples: int = 1, observation_noise: bool = False
     ) -> Tensor:
         r"""Sample from the model posterior.
 
@@ -306,16 +304,13 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
             Tensor of samples from `X`, where
             `X[..., i, :]` is the `i`-th sample.
         """
-        posterior = self.model.posterior(
-            X,
-            observation_noise=observation_noise
-        )
+        posterior = self.model.posterior(X, observation_noise=observation_noise)
         samples = posterior.rsample(sample_shape=torch.Size([num_samples]))
 
         c_posterior = self.constraint_model.posterior(
-            X, observation_noise=observation_noise)
-        constraint_samples = c_posterior.rsample(
-            sample_shape=torch.Size([num_samples]))
+            X, observation_noise=observation_noise
+        )
+        constraint_samples = c_posterior.rsample(sample_shape=torch.Size([num_samples]))
         valid_samples = constraint_samples <= 0
         if valid_samples.shape[-1] > 1:  # if more than one constraint
             valid_samples = torch.all(valid_samples, dim=-1).unsqueeze(-1)
@@ -327,8 +322,9 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
             min_violators = X[min_idxs, :]  # (bsz,d)
             return min_violators
         # replace all violators with -infinty so it will never choose them
-        replacement_infs = -torch.inf * \
-            torch.ones(samples.shape).to(X.device).to(X.dtype)
+        replacement_infs = -torch.inf * torch.ones(samples.shape).to(X.device).to(
+            X.dtype
+        )
         samples = torch.where(valid_samples, samples, replacement_infs)
 
         return self.maximize_samples(X, samples, num_samples)
