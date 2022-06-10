@@ -215,6 +215,13 @@ class TestGPyTorchModel(BotorchTestCase):
                     BotorchTensorDimensionWarning
                 ):
                     GPyTorchModel._validate_tensor_args(X, Y[0], strict=False)
+            # with Yvar
+            if len(output_dim_shape) > 0:
+                Yvar = torch.empty(torch.Size([n]) + output_dim_shape, **tkwargs)
+                GPyTorchModel._validate_tensor_args(X, Y, Yvar)
+                Yvar = torch.empty(n, 5, **tkwargs)
+                with self.assertRaises(BotorchTensorDimensionError):
+                    GPyTorchModel._validate_tensor_args(X, Y, Yvar)
 
     def test_fantasize_flag(self):
         train_X = torch.rand(5, 1)

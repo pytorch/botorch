@@ -49,15 +49,15 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
         super().__init__(*gp_models)
 
     def condition_on_observations(
-        self, X: Tensor, Y: Tensor, **kwargs: Any
+        self, X: List[Tensor], Y: Tensor, **kwargs: Any
     ) -> ModelListGP:
         r"""Condition the model on new observations.
 
         Args:
-            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of
-                the feature space, `n'` is the number of points per batch, and
-                `batch_shape` is the batch shape (must be compatible with the
-                batch shape of the model).
+            X: A `m`-list of `batch_shape x n' x d`-dim Tensors, where `d` is the
+                dimension of the feature space, `n'` is the number of points
+                per batch, and `batch_shape` is the batch shape (must be compatible
+                with the batch shape of the model).
             Y: A `batch_shape' x n' x m`-dim Tensor, where `m` is the number of
                 model outputs, `n'` is the number of points per batch, and
                 `batch_shape'` is the batch shape of the observations.
@@ -73,10 +73,6 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
             `n_i + n'` training examples, where the `n'` training examples have
             been added and all test-time caches have been updated.
         """
-        self._validate_tensor_args(
-            X=X, Y=Y, Yvar=kwargs.get("noise", None), strict=False
-        )
-        inputs = [X] * self.num_outputs
         if Y.shape[-1] != self.num_outputs:
             raise BotorchTensorDimensionError(
                 "Incorrect number of outputs for observations. Received "
@@ -84,13 +80,19 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
                 f"{self.num_outputs} outputs."
             )
         targets = [Y[..., i] for i in range(Y.shape[-1])]
+        # This should never trigger, posterior call would fail.
+        assert len(targets) == len(X)
         if "noise" in kwargs:
             noise = kwargs.pop("noise")
-            # Note: dimension checks were performed in _validate_tensor_args
+            if noise.shape != Y.shape[-noise.dim() :]:
+                raise BotorchTensorDimensionError(
+                    "The shape of observation noise does not agree with the outcomes. "
+                    f"Received {noise.shape} noise with {Y.shape} outcomes."
+                )
             kwargs_ = {**kwargs, "noise": [noise[..., i] for i in range(Y.shape[-1])]}
         else:
             kwargs_ = kwargs
-        return super().get_fantasy_model(inputs, targets, **kwargs_)
+        return super().get_fantasy_model(X, targets, **kwargs_)
 
     def subset_output(self, idcs: List[int]) -> ModelListGP:
         r"""Subset the model along the output dimension.

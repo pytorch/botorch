@@ -113,6 +113,10 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
                 on p.s.d. matrices. A common prior for this is the `LKJ` prior.
             input_transform: An input transform that is applied in the model's
                 forward pass.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
 
         Example:
             >>> X1, X2 = torch.rand(10, 2), torch.rand(20, 2)
@@ -239,7 +243,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
     def construct_inputs(
         cls,
         training_data: Dict[str, SupervisedDataset],
-        task_feature: int = 0,
+        task_feature: int,
         task_covar_prior: Optional[Prior] = None,
         prior_config: Optional[dict] = None,
         rank: Optional[int] = None,
@@ -308,6 +312,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
         input_transform: Optional[InputTransform] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
         r"""Multi-Task GP model using an ICM kernel and known observation noise.
 
@@ -328,6 +333,10 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
                 full rank (i.e. number of tasks) kernel.
             input_transform: An input transform that is applied in the model's
                 forward pass.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
 
         Example:
             >>> X1, X2 = torch.rand(10, 2), torch.rand(20, 2)
@@ -344,6 +353,10 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
                 X=train_X, input_transform=input_transform
             )
         self._validate_tensor_args(X=transformed_X, Y=train_Y, Yvar=train_Yvar)
+
+        if outcome_transform is not None:
+            train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
+
         # We'll instatiate a MultiTaskGP and simply override the likelihood
         super().__init__(
             train_X=train_X,
@@ -354,7 +367,11 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             rank=rank,
             task_covar_prior=task_covar_prior,
             input_transform=input_transform,
+            outcome_transform=None,  # outcome_transform is applied already
         )
+
+        if outcome_transform is not None:
+            self.outcome_transform = outcome_transform
         self.likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar.squeeze(-1))
         self.to(train_X)
 

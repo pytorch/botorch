@@ -335,12 +335,18 @@ def get_weights_posterior(X: Tensor, y: Tensor, sigma_sq: float) -> Multivariate
 
 
 def get_gp_samples(
-    model: Model, num_outputs: int, n_samples: int, num_rff_features: int = 500
+    model: Model, num_outputs: int, n_samples: int, num_rff_features: int = 512
 ) -> GenericDeterministicModel:
     r"""Sample functions from GP posterior using RFFs. The returned
     `GenericDeterministicModel` effectively wraps `num_outputs` models,
     each of which has a batch shape of `n_samples`. Refer
     `get_deterministic_model_multi_samples` for more details.
+
+    NOTE: If using input / outcome transforms, the gp samples must be accessed via
+    the `gp_sample.posterior(X)` call. Otherwise, `gp_sample(X)` will produce bogus
+    values that do not agree with the underlying `model`. It is also highly recommended
+    to use outcome transforms to standardize the input data, since the gp samples do
+    not work well when training outcomes are not zero-mean.
 
     Args:
         model: The model.
@@ -349,9 +355,16 @@ def get_gp_samples(
         num_rff_features: The number of random Fourier features.
 
     Returns:
-        A batched `GenericDeterministicModel` that batch evaluates `n_samples`
-        sampled functions.
+        A `GenericDeterministicModel` that evaluates `n_samples` sampled functions.
+        If `n_samples > 1`, this will be a batched model.
     """
+    # Get transforms from the model.
+    intf = getattr(model, "input_transform", None)
+    octf = getattr(model, "outcome_transform", None)
+    # Remove the outcome transform - leads to buggy draws.
+    if octf is not None:
+        del model.outcome_transform
+
     if num_outputs > 1:
         if not isinstance(model, ModelListGP):
             models = batched_to_model_list(model).models
@@ -373,7 +386,7 @@ def get_gp_samples(
             kernel=models[m].covar_module,
             input_dim=train_X.shape[-1],
             num_rff_features=num_rff_features,
-            sample_shape=torch.Size([n_samples]),
+            sample_shape=torch.Size([n_samples] if n_samples > 1 else []),
         )
         bases.append(basis)
         # TODO: when batched kernels are supported in RandomFourierFeatures,
@@ -404,4 +417,20 @@ def get_gp_samples(
 
     # TODO: Ideally support RFFs for multi-outputs instead of having to
     # generate a basis for each output serially.
-    return get_deterministic_model_multi_samples(weights=weights, bases=bases)
+    if n_samples > 1:
+        base_gp_samples = get_deterministic_model_multi_samples(
+            weights=weights,
+            bases=bases,
+        )
+    else:
+        base_gp_samples = get_deterministic_model(
+            weights=weights,
+            bases=bases,
+        )
+    # Load the transforms on the models.
+    if intf is not None:
+        base_gp_samples.input_transform = intf
+    if octf is not None:
+        base_gp_samples.outcome_transform = octf
+        model.outcome_transform = octf
+    return base_gp_samples

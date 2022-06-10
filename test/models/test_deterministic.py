@@ -168,4 +168,7 @@ class TestDeterministicModels(BotorchTestCase):
         train_Y_double = torch.rand(2, 2, dtype=torch.double)
         model_double = SingleTaskGP(train_X=train_X_double, train_Y=train_Y_double)
         fss_model_double = FixedSingleSampleModel(model=model_double)
-        self.assertTrue(fss_model_double.w.dtype == train_X_double.dtype)
+        test_X_float = torch.rand(2, 3, dtype=torch.float)
+
+        # the following line should execute fine
+        fss_model_double.posterior(test_X_float)
