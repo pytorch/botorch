@@ -125,9 +125,11 @@ class MaxPosteriorSampling(SamplingStrategy):
             observation_noise=observation_noise,
             posterior_transform=self.posterior_transform,
         )
-
         # num_samples x batch_shape x N x m
         samples = posterior.rsample(sample_shape=torch.Size([num_samples]))
+        return self.maximize_samples(X, samples, num_samples)
+
+    def maximize_samples(self, X: Tensor, samples: Tensor, num_samples: int = 1):
         obj = self.objective(samples, X=X)  # num_samples x batch_shape x N
         if self.replacement:
             # if we allow replacement then things are simple(r)
@@ -259,9 +261,9 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
     def __init__(
         self,
         model: Model,
+        constraint_model: Union[ModelListGP, MultiTaskGP],
         objective: Optional[MCAcquisitionObjective] = None,
         replacement: bool = True,
-        constraint_model: Union[ModelListGP, MultiTaskGP] = None,
     ) -> None:
         r"""Constructor for the SamplingStrategy base class.
 
@@ -309,66 +311,24 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
             observation_noise=observation_noise
         )
         samples = posterior.rsample(sample_shape=torch.Size([num_samples]))
-        # If we have constraints
-        if self.constraint_model is not None:
-            c_posterior = self.constraint_model.posterior(
-                X, observation_noise=observation_noise)
-            constraint_samples = c_posterior.rsample(
-                sample_shape=torch.Size([num_samples]))
-            valid_samples = constraint_samples <= 0
-            if valid_samples.shape[-1] > 1:  # if more than one constraint
-                valid_samples = torch.all(valid_samples, dim=-1).unsqueeze(-1)
-            if valid_samples.sum() == 0:
-                # if none of the samples meet the constraints
-                # we pick the one that minimizes total violation
-                constraint_samples = constraint_samples.sum(dim=-1)
-                min_idxs = torch.argmin(constraint_samples, dim=-1)
-                min_violators = X[min_idxs, :]  # (bsz,d)
-                return min_violators
-            # replace all violators with -infinty so it will never choose them
-            replacement_infs = -torch.inf * torch.ones(samples.shape).cuda()
-            samples = torch.where(valid_samples, samples, replacement_infs)
-        obj = self.objective(samples, X=X)  # num_samples x batch_shape x N
-        if self.replacement:
-            # if we allow replacement then
-            # things are simple(r)
-            idcs = torch.argmax(obj, dim=-1)
-        else:
-            # if we need to deduplicate we have to do some
-            # tensor acrobatics, first we get the indices
-            # associated w/ the num_samples top samples
-            _, idcs_full = torch.topk(obj, num_samples, dim=-1)
-            # generate some indices to smartly index into the lower triangle of
-            # idcs_full (broadcasting across batch dimensions)
-            ridx, cindx = torch.tril_indices(num_samples, num_samples)
-            # pick the unique indices in order - since we
-            # look at the lower triangle of the index matrix
-            # and we don't sort, this achieves deduplication
-            sub_idcs = idcs_full[ridx, ..., cindx]
-            if sub_idcs.ndim == 1:
-                idcs = _flip_sub_unique(sub_idcs, num_samples)
-            elif sub_idcs.ndim == 2:
-                # TODO: Find a better way to do this
-                n_b = sub_idcs.size(-1)
-                idcs = torch.stack(
-                    [_flip_sub_unique(sub_idcs[:, i], num_samples)
-                        for i in range(n_b)], dim=-1,
-                )
-            else:
-                # TODO: Find a general way to do this efficiently.
-                raise NotImplementedError(
-                    "MaxPosteriorSampling without replacement"
-                    "for more than a single batch dimension"
-                    "is not yet implemented."
-                )
-        # idcs is num_samples x batch_shape, to index into X we need
-        # to permute for it to have shape batch_shape x num_samples
-        if idcs.ndim > 1:
-            idcs = idcs.permute(*range(1, idcs.ndim), 0)
-        # in order to use gather, we need to repeat the index tensor d times
-        idcs = idcs.unsqueeze(-1).expand(*idcs.shape, X.size(-1))
-        # now if the model is batched batch_shape will not necessarily be the
-        # batch_shape of X, so we expand X to the proper shape
-        Xe = X.expand(*obj.shape[1:], X.size(-1))
-        # finally we can gather along the N dimension
-        return torch.gather(Xe, -2, idcs)
+
+        c_posterior = self.constraint_model.posterior(
+            X, observation_noise=observation_noise)
+        constraint_samples = c_posterior.rsample(
+            sample_shape=torch.Size([num_samples]))
+        valid_samples = constraint_samples <= 0
+        if valid_samples.shape[-1] > 1:  # if more than one constraint
+            valid_samples = torch.all(valid_samples, dim=-1).unsqueeze(-1)
+        if valid_samples.sum() == 0:
+            # if none of the samples meet the constraints
+            # we pick the one that minimizes total violation
+            constraint_samples = constraint_samples.sum(dim=-1)
+            min_idxs = torch.argmin(constraint_samples, dim=-1)
+            min_violators = X[min_idxs, :]  # (bsz,d)
+            return min_violators
+        # replace all violators with -infinty so it will never choose them
+        replacement_infs = -torch.inf * \
+            torch.ones(samples.shape).to(X.device).to(X.dtype)
+        samples = torch.where(valid_samples, samples, replacement_infs)
+
+        return self.maximize_samples(X, samples, num_samples)
