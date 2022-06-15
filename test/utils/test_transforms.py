@@ -8,11 +8,19 @@ import warnings
 from typing import Any
 
 import torch
+from botorch.models import (
+    GenericDeterministicModel,
+    ModelList,
+    ModelListGP,
+    SaasFullyBayesianSingleTaskGP,
+    SingleTaskGP,
+)
 from botorch.models.model import Model
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from botorch.utils.transforms import (
     _verify_output_shape,
     concatenate_pending_points,
+    is_fully_bayesian,
     match_batch_shape,
     normalize,
     normalize_indices,
@@ -278,3 +286,23 @@ class TestSqueezeLastDim(BotorchTestCase):
             Y_squeezed = squeeze_last_dim(Y=Y)
             self.assertTrue(any(issubclass(w.category, DeprecationWarning) for w in ws))
         self.assertTrue(torch.equal(Y_squeezed, Y.squeeze(-1)))
+
+
+class TestIsFullyBayesian(BotorchTestCase):
+    def test_is_fully_bayesian(self):
+        X, Y = torch.rand(3, 2), torch.randn(3, 1)
+        saas = SaasFullyBayesianSingleTaskGP(train_X=X, train_Y=Y)
+        vanilla_gp = SingleTaskGP(train_X=X, train_Y=Y)
+        deterministic = GenericDeterministicModel(f=lambda x: x)
+        # Single model
+        self.assertTrue(is_fully_bayesian(model=saas))
+        self.assertFalse(is_fully_bayesian(model=vanilla_gp))
+        self.assertFalse(is_fully_bayesian(model=deterministic))
+        # ModelListGP
+        self.assertTrue(is_fully_bayesian(model=ModelListGP(saas, saas)))
+        self.assertTrue(is_fully_bayesian(model=ModelListGP(saas, vanilla_gp)))
+        self.assertFalse(is_fully_bayesian(model=ModelListGP(vanilla_gp, vanilla_gp)))
+        # ModelList
+        self.assertTrue(is_fully_bayesian(model=ModelList(saas, saas)))
+        self.assertTrue(is_fully_bayesian(model=ModelList(saas, deterministic)))
+        self.assertFalse(is_fully_bayesian(model=ModelList(vanilla_gp, deterministic)))

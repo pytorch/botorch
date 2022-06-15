@@ -183,12 +183,12 @@ def is_fully_bayesian(model: Model) -> bool:
     Returns:
         True if at least one model is a `SaasFullyBayesianSingleTaskGP`
     """
-    from botorch.models import ModelList
+    from botorch.models import ModelList, ModelListGP
     from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 
     if isinstance(model, SaasFullyBayesianSingleTaskGP):
         return True
-    elif isinstance(model, ModelList) and any(
+    elif isinstance(model, (ModelList, ModelListGP)) and any(
         isinstance(m, SaasFullyBayesianSingleTaskGP) for m in model.models
     ):
         return True
