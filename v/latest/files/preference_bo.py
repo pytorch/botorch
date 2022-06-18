@@ -37,10 +37,10 @@ import numpy as np
 import torch
 
 
-SMOKE_TEST = os.environ.get("SMOKE_TEST")
-
 # suppress warnings from potential numerical issues
 warnings.filterwarnings("ignore")
+
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
 # In[2]:
@@ -141,9 +141,9 @@ kt_correlation = eval_kt_cor(model, test_X, test_y)
 print(f"Test Kendall-Tau rank correlation: {kt_correlation:.4f}")
 
 
-# ### Perform Bayesian Optimization loop with qNEI
+# ### Perform Bayesian Optimization loop with EUBO
 # 
-# Now, we demonstrate how to implement a full Bayesian optimization with `qNoisyExpectedImprovement` (qNEI) acquisition function.
+# Now, we demonstrate how to implement a full Bayesian optimization with `AnalyticExpectedUtilityOfBestOption` (EUBO) acquisition function [4].
 # 
 # The Bayesian optimization loop for a batch size of `q` simply iterates the following steps:
 # 1. given a surrogate model, choose a batch of points $X_{next} = \{x_1, x_2, ..., x_q\}$
@@ -155,7 +155,7 @@ print(f"Test Kendall-Tau rank correlation: {kt_correlation:.4f}")
 # In[5]:
 
 
-from botorch.acquisition.monte_carlo import qNoisyExpectedImprovement
+from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
 from botorch.optim import optimize_acqf
 
 
@@ -186,16 +186,16 @@ def make_new_data(X, next_X, comps, q_comp):
 # In[6]:
 
 
-algos = ["qNEI", "rand"]
+algos = ["EUBO", "rand"]
 
 NUM_TRIALS = 5 if not SMOKE_TEST else 2
-NUM_BATCHES = 10 if not SMOKE_TEST else 2
+NUM_BATCHES = 30 if not SMOKE_TEST else 2
 
 dim = 5
 NUM_RESTARTS = 3
-RAW_SAMPLES = 128 if not SMOKE_TEST else 8
-q = 3  # number of points per query
-q_comp = 3  # number of comparisons per query
+RAW_SAMPLES = 256 if not SMOKE_TEST else 8
+q = 2  # number of points per query
+q_comp = 1  # number of comparisons per query
 
 # initial evals
 best_vals = {}  # best observed values
@@ -204,16 +204,18 @@ for algo in algos:
 
 # average over multiple trials
 for i in range(NUM_TRIALS):
+    torch.manual_seed(i)
+    np.random.seed(i)
     data = {}
     models = {}
-    
+
     # Create initial data
     init_X, init_y = generate_data(q, dim=dim)
     comparisons = generate_comparisons(init_y, q_comp, noise=noise)
     test_X, test_y = generate_data(1000, dim=dim)
     # X are within the unit cube
     bounds = torch.stack([torch.zeros(dim), torch.ones(dim)])
-    
+
     for algo in algos:
         best_vals[algo].append([])
         data[algo] = (init_X, comparisons)
@@ -226,12 +228,9 @@ for i in range(NUM_TRIALS):
     # we make additional NUM_BATCHES comparison queries after the initial observation
     for j in range(1, NUM_BATCHES + 1):
         for algo in algos:
-            if algo == "qNEI":
+            if algo == "EUBO":
                 # create the acquisition function object
-                acq_func = qNoisyExpectedImprovement(
-                    model=model,
-                    X_baseline=data["qNEI"][0].float()
-                )
+                acq_func = AnalyticExpectedUtilityOfBestOption(pref_model=model)
                 # optimize and get new observation
                 next_X, acq_val = optimize_acqf(
                     acq_function=acq_func,
@@ -268,13 +267,14 @@ for i in range(NUM_TRIALS):
 
 from matplotlib import pyplot as plt
 
+
 get_ipython().run_line_magic('matplotlib', 'inline')
 
-plt.rcParams.update({'font.size': 14})
+plt.rcParams.update({"font.size": 14})
 
 algo_labels = {
     "rand": "Random Exploration",
-    "qNEI": "Noisy Expected Improvement",
+    "EUBO": "EUBO",
 }
 
 
@@ -296,19 +296,21 @@ for algo in algos:
     ax.errorbar(iters, ys.mean(axis=0), yerr=ci(ys), label=algo_labels[algo], linewidth=1.5)
 
 ax.set(
-    xlabel=f'Number of queries (q = {q}, num_comparisons = {q_comp})', 
-    ylabel='Best observed value',
-    title=f"{dim}-dim weighted vector sum"
+    xlabel=f"Number of queries (q = {q}, num_comparisons = {q_comp})",
+    ylabel="Best observed value",
+    title=f"{dim}-dim weighted vector sum",
 )
-ax.legend(loc='best')
+ax.legend(loc="best")
 
 
 # ### References
 # 
-# Chu, Wei, and Zoubin Ghahramani. 2005. “Preference Learning with Gaussian Processes.” In Proceedings of the 22Nd International Conference on Machine Learning, 137–44. ICML ’05. New York, NY, USA: ACM.
+# [1] Chu, Wei, and Zoubin Ghahramani. 2005. “Preference Learning with Gaussian Processes.” In Proceedings of the 22Nd International Conference on Machine Learning, 137–44. ICML ’05. New York, NY, USA: ACM.
 # 
-# Brochu, Eric, Vlad M. Cora, and Nando de Freitas. 2010. “A Tutorial on Bayesian Optimization of Expensive Cost Functions, with Application to Active User Modeling and Hierarchical Reinforcement Learning.” arXiv [cs.LG]. arXiv. http://arxiv.org/abs/1012.2599.
+# [2] Brochu, Eric, Vlad M. Cora, and Nando de Freitas. 2010. “A Tutorial on Bayesian Optimization of Expensive Cost Functions, with Application to Active User Modeling and Hierarchical Reinforcement Learning.” arXiv [cs.LG]. arXiv.
 # 
-# González, Javier, Zhenwen Dai, Andreas Damianou, and Neil D. Lawrence. 2017. “Preferential Bayesian Optimization.” In Proceedings of the 34th International Conference on Machine Learning, edited by Doina Precup and Yee Whye Teh, 70:1282–91. Proceedings of Machine Learning Research. International Convention Centre, Sydney, Australia: PMLR.
+# [3] González, Javier, Zhenwen Dai, Andreas Damianou, and Neil D. Lawrence. 2017. “Preferential Bayesian Optimization.” In Proceedings of the 34th International Conference on Machine Learning, edited by Doina Precup and Yee Whye Teh, 70:1282–91. Proceedings of Machine Learning Research. International Convention Centre, Sydney, Australia: PMLR.
+# 
+# [4] Lin, Zhiyuan Jerry, Raul Astudillo, Peter I. Frazier, and Eytan Bakshy, Preference Exploration for Efficient Bayesian Optimization with Multiple Outcomes. AISTATS, 2022. https://arxiv.org/abs/2203.11382
 # 
 # 
