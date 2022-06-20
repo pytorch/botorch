@@ -285,7 +285,7 @@ class TestMVaR(BotorchTestCase):
                     [4, 1],
                     [3.5, 3.5],
                 ],
-                **tkwargs
+                **tkwargs,
             )
             cpu_mvar = mvar.get_mvar_set_cpu(Y)
             gpu_mvar = mvar.get_mvar_set_gpu(Y)[0]
@@ -299,7 +299,7 @@ class TestMVaR(BotorchTestCase):
                     [3, 3.5],
                     [4, 2],
                 ],
-                **tkwargs
+                **tkwargs,
             )
             self.assertTrue(set_equals(cpu_mvar, expected_w_dominated))
             expected_non_dominated = expected_w_dominated[

@@ -60,7 +60,7 @@ class TestPairwiseGP(BotorchTestCase):
                 batch_shape=batch_shape,
                 X_dim=X_dim,
                 likelihood_cls=likelihood_cls,
-                **tkwargs
+                **tkwargs,
             )
             train_X = model_kwargs["datapoints"]
             train_comp = model_kwargs["comparisons"]
@@ -201,7 +201,7 @@ class TestPairwiseGP(BotorchTestCase):
                 batch_shape=batch_shape,
                 X_dim=X_dim,
                 likelihood_cls=likelihood_cls,
-                **tkwargs
+                **tkwargs,
             )
             train_X = model_kwargs["datapoints"]
             train_comp = model_kwargs["comparisons"]
@@ -304,7 +304,7 @@ class TestPairwiseGP(BotorchTestCase):
                 batch_shape=batch_shape,
                 X_dim=X_dim,
                 likelihood_cls=likelihood_cls,
-                **tkwargs
+                **tkwargs,
             )
 
             # fantasize
