@@ -11,6 +11,7 @@ from unittest import mock
 
 import torch
 from botorch.acquisition.analytic import PosteriorMean
+from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.acquisition.objective import (
     IdentityMCObjective,
     LinearMCObjective,
@@ -21,6 +22,7 @@ from botorch.generation.sampling import (
     BoltzmannSampling,
     MaxPosteriorSampling,
     SamplingStrategy,
+    ConstrainedMaxPosteriorSampling
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
@@ -190,3 +192,144 @@ class TestBoltzmannSampling(BotorchTestCase):
             BS = BoltzmannSampling(acqf, eta=10.0)
             samples = BS(X, num_samples=1)
             self.assertTrue(torch.equal(samples, X[max_idx, :]))
+
+
+class TestConstrainedMaxPosteriorSampling(BotorchTestCase):
+    def test_init(self):
+        mm = MockModel(MockPosterior(mean=None))
+        cm1 = MockModel(MockPosterior(mean=None))
+        cm2 = MockModel(MockPosterior(mean=None))
+        cmms = ModelListGP(cm1, cm2)
+        MPS = ConstrainedMaxPosteriorSampling(mm, cmms)
+        self.assertEqual(MPS.model, mm)
+        self.assertTrue(MPS.replacement)
+        self.assertIsInstance(MPS.objective, IdentityMCObjective)
+        obj = LinearMCObjective(torch.rand(2))
+        MPS = ConstrainedMaxPosteriorSampling(
+            mm, cmms, objective=obj, replacement=False
+        )
+        self.assertEqual(MPS.objective, obj)
+        self.assertFalse(MPS.replacement)
+
+    def test_max_posterior_sampling(self):
+        batch_shapes = (torch.Size(), torch.Size([3]), torch.Size([3, 2]))
+        dtypes = (torch.float, torch.double)
+        for batch_shape, dtype, N, num_samples, d in itertools.product(
+            batch_shapes, dtypes, (5, 6), (1, 2), (1, 2)
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            # X is `batch_shape x N x d` = batch_shape x N x 1.
+            X = torch.randn(*batch_shape, N, d, **tkwargs)
+            # the event shape is `num_samples x batch_shape x N x m`
+            psamples = torch.zeros(num_samples, *batch_shape, N, 1, **tkwargs)
+            psamples[..., 0, :] = 1.0
+
+            # IdentityMCObjective, with replacement
+            with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
+                mp = MockPosterior(None)
+                with mock.patch.object(MockModel, "posterior", return_value=mp):
+                    mm = MockModel(None)
+                    cm1 = MockModel(MockPosterior(mean=None))
+                    cm2 = MockModel(MockPosterior(mean=None))
+                    cmms = ModelListGP(cm1, cm2)
+                    MPS = ConstrainedMaxPosteriorSampling(mm, cmms)
+                    s = MPS(X, num_samples=num_samples)
+                    self.assertTrue(torch.equal(s, X[..., [0] * num_samples, :]))
+
+            # ScalarizedObjective, with replacement
+            with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
+                mp = MockPosterior(None)
+                with mock.patch.object(MockModel, "posterior", return_value=mp):
+                    mm = MockModel(None)
+                    cm1 = MockModel(MockPosterior(mean=None))
+                    cm2 = MockModel(MockPosterior(mean=None))
+                    cmms = ModelListGP(cm1, cm2)
+                    with mock.patch.object(
+                        ScalarizedObjective, "forward", return_value=mp
+                    ):
+                        obj = ScalarizedObjective(torch.rand(2, **tkwargs))
+                        MPS = ConstrainedMaxPosteriorSampling(mm, cmms, objective=obj)
+                        s = MPS(X, num_samples=num_samples)
+                        self.assertTrue(torch.equal(s, X[..., [0] * num_samples, :]))
+
+            # ScalarizedPosteriorTransform w/ replacement
+            with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
+                mp = MockPosterior(None)
+                with mock.patch.object(MockModel, "posterior", return_value=mp):
+                    mm = MockModel(None)
+                    cm1 = MockModel(MockPosterior(mean=None))
+                    cm2 = MockModel(MockPosterior(mean=None))
+                    cmms = ModelListGP(cm1, cm2)
+                    with mock.patch.object(
+                        ScalarizedPosteriorTransform, "forward", return_value=mp
+                    ):
+                        post_tf = ScalarizedPosteriorTransform(torch.rand(2, **tkwargs))
+                        MPS = ConstrainedMaxPosteriorSampling(
+                            mm, cmms,
+                            posterior_transform=post_tf
+                        )
+                        s = MPS(X, num_samples=num_samples)
+                        self.assertTrue(torch.equal(s, X[..., [0] * num_samples, :]))
+
+            # ScalarizedPosteriorTransform and Scalarized obj
+            mp = MockPosterior(None)
+            mm = MockModel(posterior=mp)
+            cm1 = MockModel(MockPosterior(mean=None))
+            cm2 = MockModel(MockPosterior(mean=None))
+            cmms = ModelListGP(cm1, cm2)
+            obj = ScalarizedObjective(torch.rand(2, **tkwargs))
+            post_tf = ScalarizedPosteriorTransform(torch.rand(2, **tkwargs))
+            with self.assertRaises(RuntimeError):
+                ConstrainedMaxPosteriorSampling(
+                    mm, cmms, posterior_transform=post_tf, objective=obj
+                )
+
+            # without replacement
+            psamples[..., 1, 0] = 1e-6
+            with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
+                mp = MockPosterior(None)
+                with mock.patch.object(MockModel, "posterior", return_value=mp):
+                    mm = MockModel(None)
+                    cm1 = MockModel(MockPosterior(mean=None))
+                    cm2 = MockModel(MockPosterior(mean=None))
+                    cmms = ModelListGP(cm1, cm2)
+                    MPS = ConstrainedMaxPosteriorSampling(mm, cmms, replacement=False)
+                    if len(batch_shape) > 1:
+                        with self.assertRaises(NotImplementedError):
+                            MPS(X, num_samples=num_samples)
+                    else:
+                        s = MPS(X, num_samples=num_samples)
+                        # order is not guaranteed, need to sort
+                        self.assertTrue(
+                            torch.equal(
+                                torch.sort(s, dim=-2).values,
+                                torch.sort(X[..., :num_samples, :], dim=-2).values,
+                            )
+                        )
+
+            # ScalarizedMCObjective, without replacement
+            with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
+                mp = MockPosterior(None)
+                with mock.patch.object(MockModel, "posterior", return_value=mp):
+                    mm = MockModel(None)
+                    cm1 = MockModel(MockPosterior(mean=None))
+                    cm2 = MockModel(MockPosterior(mean=None))
+                    cmms = ModelListGP(cm1, cm2)
+                    with mock.patch.object(
+                        ScalarizedObjective, "forward", return_value=mp
+                    ):
+                        obj = ScalarizedObjective(torch.rand(2, **tkwargs))
+                        MPS = ConstrainedMaxPosteriorSampling(mm, cmms, objective=obj,
+                                                              replacement=False)
+                        if len(batch_shape) > 1:
+                            with self.assertRaises(NotImplementedError):
+                                MPS(X, num_samples=num_samples)
+                        else:
+                            s = MPS(X, num_samples=num_samples)
+                            # order is not guaranteed, need to sort
+                            self.assertTrue(
+                                torch.equal(
+                                    torch.sort(s, dim=-2).values,
+                                    torch.sort(X[..., :num_samples, :], dim=-2).values,
+                                )
+                            )
