@@ -264,6 +264,7 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
         model: Model,
         constraint_model: Union[ModelListGP, MultiTaskGP],
         objective: Optional[MCAcquisitionObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         replacement: bool = True,
     ) -> None:
         r"""Constructor for the SamplingStrategy base class.
@@ -283,7 +284,12 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
                 If None, equivalent to regular MaxPosteriorSampling
                 with no constraints
         """
-        super().__init__(model, objective, replacement)
+        super().__init__(
+            model=model,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            replacement=replacement,
+        )
         self.constraint_model = constraint_model
 
     def forward(
