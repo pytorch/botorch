@@ -26,12 +26,14 @@ from botorch.acquisition.objective import (
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import SamplingWarning
+from botorch.models.fully_bayesian import MCMC_DIM
 from botorch.models.model import Model
 from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
     NondominatedPartitioning,
 )
+from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
 from torch.quasirandom import SobolEngine
 
@@ -320,6 +322,10 @@ def prune_inferior_points(
         with `N_nz` the number of points in `X` that have non-zero (empirical,
         under `num_samples` samples) probability of being the best point.
     """
+    if marginalize_dim is None and is_fully_bayesian(model):
+        # TODO: Properly deal with marginalizing fully Bayesian models
+        marginalize_dim = MCMC_DIM
+
     if X.ndim > 2:
         # TODO: support batched inputs (req. dealing with ragged tensors)
         raise UnsupportedError(

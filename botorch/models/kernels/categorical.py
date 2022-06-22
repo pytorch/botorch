@@ -28,7 +28,7 @@ class CategoricalKernel(Kernel):
         x2: Tensor,
         diag: bool = False,
         last_dim_is_batch: bool = False,
-        **kwargs
+        **kwargs,
     ) -> Tensor:
         delta = x1.unsqueeze(-2) != x2.unsqueeze(-3)
         dists = delta / self.lengthscale.unsqueeze(-2)

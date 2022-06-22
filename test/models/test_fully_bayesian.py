@@ -27,6 +27,7 @@ from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
+from botorch.acquisition.utils import prune_inferior_points
 from botorch.models import ModelList, ModelListGP
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.fully_bayesian import (
@@ -422,6 +423,10 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             for batch_shape in [[5], [6, 5, 2]]:
                 test_X = torch.rand(*batch_shape, 1, 4, **tkwargs)
                 self.assertEqual(acqf(test_X).shape, torch.Size(batch_shape))
+
+        # Test prune_inferior_points
+        X_pruned = prune_inferior_points(model=model, X=train_X)
+        self.assertTrue(X_pruned.ndim == 2 and X_pruned.shape[-1] == 4)
 
         # Test prune_inferior_points_multi_objective
         for model_list in [ModelListGP(model, model), ModelList(deterministic, model)]:
