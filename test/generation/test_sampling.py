@@ -11,7 +11,6 @@ from unittest import mock
 
 import torch
 from botorch.acquisition.analytic import PosteriorMean
-from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.acquisition.objective import (
     IdentityMCObjective,
     LinearMCObjective,
@@ -20,10 +19,11 @@ from botorch.acquisition.objective import (
 )
 from botorch.generation.sampling import (
     BoltzmannSampling,
+    ConstrainedMaxPosteriorSampling,
     MaxPosteriorSampling,
     SamplingStrategy,
-    ConstrainedMaxPosteriorSampling
 )
+from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
@@ -265,8 +265,7 @@ class TestConstrainedMaxPosteriorSampling(BotorchTestCase):
                     ):
                         post_tf = ScalarizedPosteriorTransform(torch.rand(2, **tkwargs))
                         MPS = ConstrainedMaxPosteriorSampling(
-                            mm, cmms,
-                            posterior_transform=post_tf
+                            mm, cmms, posterior_transform=post_tf
                         )
                         s = MPS(X, num_samples=num_samples)
                         self.assertTrue(torch.equal(s, X[..., [0] * num_samples, :]))
@@ -319,8 +318,9 @@ class TestConstrainedMaxPosteriorSampling(BotorchTestCase):
                         ScalarizedObjective, "forward", return_value=mp
                     ):
                         obj = ScalarizedObjective(torch.rand(2, **tkwargs))
-                        MPS = ConstrainedMaxPosteriorSampling(mm, cmms, objective=obj,
-                                                              replacement=False)
+                        MPS = ConstrainedMaxPosteriorSampling(
+                            mm, cmms, objective=obj, replacement=False
+                        )
                         if len(batch_shape) > 1:
                             with self.assertRaises(NotImplementedError):
                                 MPS(X, num_samples=num_samples)
