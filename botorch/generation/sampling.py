@@ -283,6 +283,8 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
                 All constraints are of the form c(x) <= 0.
                 If None, equivalent to regular MaxPosteriorSampling
                 with no constraints
+            test_special_case: set to true to test the case where we
+                pick the min violators
         """
         super().__init__(
             model=model,
