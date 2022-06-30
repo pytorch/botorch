@@ -266,6 +266,7 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
         objective: Optional[MCAcquisitionObjective] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
         replacement: bool = True,
+        minimize_constraints_only: bool = False,
     ) -> None:
         r"""Constructor for the SamplingStrategy base class.
 
@@ -281,10 +282,14 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
                 or a MultiTaskGP model where each task is one
                 constraint function
                 All constraints are of the form c(x) <= 0.
-                If None, equivalent to regular MaxPosteriorSampling
-                with no constraints
-            test_special_case: set to true to test the case where we
-                pick the min violators
+                In the case when the constraint model predicts
+                that all candidates violate constraints,
+                we pick the candidates with minimum violation.
+            minimize_constraints_only: False by default, if true,
+                we will automatically return the candidates
+                with minimum posterior constraint values,
+                (minimum predicted c(x) summed over all constraints)
+                reguardless of predicted objective values.
         """
         super().__init__(
             model=model,
@@ -293,6 +298,7 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
             replacement=replacement,
         )
         self.constraint_model = constraint_model
+        self.minimize_constraints_only = minimize_constraints_only
 
     def forward(
         self, X: Tensor, num_samples: int = 1, observation_noise: bool = False
@@ -322,7 +328,8 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
         valid_samples = constraint_samples <= 0
         if valid_samples.shape[-1] > 1:  # if more than one constraint
             valid_samples = torch.all(valid_samples, dim=-1).unsqueeze(-1)
-        if valid_samples.sum() == 0:
+        # print(constraint_samples)
+        if (valid_samples.sum() == 0) or self.minimize_constraints_only:
             # if none of the samples meet the constraints
             # we pick the one that minimizes total violation
             constraint_samples = constraint_samples.sum(dim=-1)

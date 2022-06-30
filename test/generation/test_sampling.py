@@ -229,15 +229,10 @@ class TestConstrainedMaxPosteriorSampling(BotorchTestCase):
                     cmms = MockModel(MockPosterior(mean=None))
                     MPS = ConstrainedMaxPosteriorSampling(mm, cmms)
                     s = MPS(X, num_samples=num_samples)
-
-            # Repeat above but have constraint model predict all invalid
-            with mock.patch.object(MockPosterior, "rsample", return_value=psamples):
-                mp = MockPosterior(None)
-                with mock.patch.object(MockModel, "posterior", return_value=mp):
-                    mm = MockModel(None)
-                    # cmms low mean --> all will be invalid (less than 0)
-                    cmms = MockModel(MockPosterior(mean=-1e100))
-                    MPS = ConstrainedMaxPosteriorSampling(mm, cmms)
+                    # run again with minimize_constraints_only
+                    MPS = ConstrainedMaxPosteriorSampling(
+                        mm, cmms, minimize_constraints_only=True
+                    )
                     s = MPS(X, num_samples=num_samples)
 
             # ScalarizedObjective, with replacement
