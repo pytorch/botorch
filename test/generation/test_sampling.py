@@ -23,6 +23,8 @@ from botorch.generation.sampling import (
     MaxPosteriorSampling,
     SamplingStrategy,
 )
+from botorch.models import SingleTaskGP
+from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
@@ -226,14 +228,21 @@ class TestConstrainedMaxPosteriorSampling(BotorchTestCase):
                 mp = MockPosterior(None)
                 with mock.patch.object(MockModel, "posterior", return_value=mp):
                     mm = MockModel(None)
-                    cmms = MockModel(MockPosterior(mean=None))
-                    MPS = ConstrainedMaxPosteriorSampling(mm, cmms)
-                    s = MPS(X, num_samples=num_samples)
-                    # run again with minimize_constraints_only
-                    MPS = ConstrainedMaxPosteriorSampling(
-                        mm, cmms, minimize_constraints_only=True
-                    )
-                    s = MPS(X, num_samples=num_samples)
+                    c_model1 = SingleTaskGP(X, torch.randn(X.shape[0:-1]).unsqueeze(-1))
+                    c_model2 = SingleTaskGP(X, torch.randn(X.shape[0:-1]).unsqueeze(-1))
+                    c_model3 = SingleTaskGP(X, torch.randn(X.shape[0:-1]).unsqueeze(-1))
+                    cmms1 = MockModel(MockPosterior(mean=None))
+                    cmms2 = ModelListGP(c_model1, c_model2)
+                    cmms3 = ModelListGP(c_model1, c_model2, c_model3)
+                    for cmms in [cmms1, cmms2, cmms3]:
+                        MPS = ConstrainedMaxPosteriorSampling(mm, cmms)
+                        s1 = MPS(X, num_samples=num_samples)
+                        # run again with minimize_constraints_only
+                        MPS = ConstrainedMaxPosteriorSampling(
+                            mm, cmms, minimize_constraints_only=True
+                        )
+                        s2 = MPS(X, num_samples=num_samples)
+                        assert s1.shape == s2.shape
 
             # ScalarizedObjective, with replacement
             with mock.patch.object(MockPosterior, "rsample", return_value=psamples):

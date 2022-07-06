@@ -328,14 +328,16 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
         valid_samples = constraint_samples <= 0
         if valid_samples.shape[-1] > 1:  # if more than one constraint
             valid_samples = torch.all(valid_samples, dim=-1).unsqueeze(-1)
-        # print(constraint_samples)
         if (valid_samples.sum() == 0) or self.minimize_constraints_only:
             # if none of the samples meet the constraints
             # we pick the one that minimizes total violation
             constraint_samples = constraint_samples.sum(dim=-1)
-            min_idxs = torch.argmin(constraint_samples, dim=-1)
-            min_violators = X[min_idxs, :]  # (bsz,d)
-            return min_violators
+            idcs = torch.argmin(constraint_samples, dim=-1)
+            if idcs.ndim > 1:
+                idcs = idcs.permute(*range(1, idcs.ndim), 0)
+            idcs = idcs.unsqueeze(-1).expand(*idcs.shape, X.size(-1))
+            Xe = X.expand(*constraint_samples.shape[1:], X.size(-1))
+            return torch.gather(Xe, -2, idcs)
         # replace all violators with -infinty so it will never choose them
         replacement_infs = -torch.inf * torch.ones(samples.shape).to(X.device).to(
             X.dtype
