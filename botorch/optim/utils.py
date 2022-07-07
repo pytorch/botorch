@@ -276,12 +276,12 @@ def get_X_baseline(acq_function: AcquisitionFunction) -> Optional[Tensor]:
                 warnings.warn("Failed to extract X_baseline.", BotorchWarning)
                 return
         try:
-            # make sure input transforms are not applied
-            model.train()
-            if isinstance(model, ModelListGPyTorchModel):
-                X = model.models[0].train_inputs[0]
+            # Make sure we get the original train inputs.
+            m = model.models[0] if isinstance(model, ModelListGPyTorchModel) else model
+            if m._has_transformed_inputs:
+                X = m._original_train_inputs
             else:
-                X = model.train_inputs[0]
+                X = m.train_inputs[0]
         except (BotorchError, AttributeError):
             warnings.warn("Failed to extract X_baseline.", BotorchWarning)
             return
