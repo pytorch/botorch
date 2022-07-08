@@ -79,7 +79,6 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     python_requires=">=3.7",
-    setup_requires=["setuptools-scm"],
     packages=find_packages(exclude=["test", "test.*"]),
     install_requires=[
         "torch>=1.9",

@@ -53,7 +53,7 @@ jobs:
         pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
-        pip install --upgrade setuptools wheel
+        pip install --upgrade setuptools setuptools_scm wheel
     - name: Build packages (wheel and source distribution)
       run: |
         # set a pseudo version that strips the commit hash to enable upload to pypi
