@@ -27,6 +27,10 @@
       "title": "Trust Region Bayesian Optimization (TuRBO)"
     },
     {
+      "id": "scalable_constrained_bo",
+      "title": "Scalable Constrained Bayesian Optimization (SCBO)"
+    },
+    {
       "id": "saasbo",
       "title": "High-dimensional Bayesian optimization with SAASBO"
     },
