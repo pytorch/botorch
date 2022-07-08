@@ -14,7 +14,7 @@ build:
 requirements:
   host:
     - python>=3.7
-    - setuptools<48  # setup_requires was deprecated in v48.0.0
+    - setuptools
     - setuptools-scm
   run:
     - pytorch >=1.9

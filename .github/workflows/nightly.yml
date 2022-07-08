@@ -53,16 +53,16 @@ jobs:
         pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
-        pip install --upgrade setuptools wheel
+        pip install --upgrade setuptools setuptools_scm wheel
     - name: Build packages (wheel and source distribution)
-      env:
-        SCM_NO_LOCAL_VERSION: true
       run: |
+        # set a pseudo version that strips the commit hash to enable upload to pypi
+        no_local_version=$(python -m setuptools_scm | cut -d "+" -f 1)
+        echo "SETUPTOOLS_SCM_PRETEND_VERSION=${no_local_version}" >> $GITHUB_ENV
         python setup.py sdist bdist_wheel
     - name: Verify packages
-      env:
-        SCM_NO_LOCAL_VERSION: true
       run: |
+        # env var SETUPTOOLS_SCM_PRETEND_VERSION persists from previous step
         ./scripts/build_and_verify_py_packages.sh
     - name: Deploy to Test PyPI
       uses: pypa/gh-action-pypi-publish@master
