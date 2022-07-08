@@ -92,8 +92,8 @@ setup(
     },
     packages=find_packages(exclude=["test", "test.*"]),
     install_requires=[
-        "torch>=1.9",
-        "gpytorch>=1.6",
+        "torch>=1.10",
+        "gpytorch>=1.7",
         "scipy",
         "multipledispatch",
         "pyro-ppl==1.8.0",
