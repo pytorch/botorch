@@ -85,7 +85,7 @@ setup(
         "gpytorch>=1.6",
         "scipy",
         "multipledispatch",
-        "pyro-ppl==1.8.0",
+        "pyro-ppl>=1.8.0",
     ],
     extras_require={
         "dev": DEV_REQUIRES,

@@ -4,12 +4,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-cd .conda || exit
-
 # Get version number (created dynamically via setuptools-scm)
-BOTORCH_VERSION=$(python ../setup.py --version)
+BOTORCH_VERSION=$(python setup.py --version)
 # Export env var (this is used in .conda/meta.yaml)
 export BOTORCH_VERSION
+
+cd .conda || exit
 
 # build package
 cur_dir="$(pwd)"
