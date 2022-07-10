@@ -91,13 +91,13 @@ jobs:
       run: git fetch --prune --unshallow
     - name: Install dependencies
       shell: bash -l {0}
-      # Don't need deps for conda build, but need them for testing
+      # Don't need most deps for conda build, but need them for testing
+      # We do need setuptools_scm though to properly parse the version
       run: |
-        conda install -y conda-build
+        conda install -y scipy setuptools_scm conda-build conda-verify
         conda config --set anaconda_upload no
         conda install -y -c pytorch-nightly pytorch cpuonly
-        conda install -y scipy
-        conda install -y -c conda-forge pyro-ppl==1.8.0
+        conda install -y -c conda-forge pyro-ppl>=1.8.0
         pip install git+https://github.com/cornellius-gp/gpytorch.git
     - name: Build and verify conda package
       shell: bash -l {0}

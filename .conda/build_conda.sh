@@ -4,7 +4,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-BOTORCH_VERSION="$(python ../setup.py --version)"
+# we cannot use relative paths here, since setuptools_scm options in
+# pyproject.toml cannot dynamically determine the root dir
+cd .. || exit
+BOTORCH_VERSION="$(python setup.py --version)"
 export BOTORCH_VERSION
+cd .conda || exit
 
 conda build .
