@@ -5,20 +5,24 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+
+import warnings
 from unittest import mock
 
 import numpy as np
 import torch
+from botorch import settings
 from botorch.acquisition.acquisition import (
     AcquisitionFunction,
     OneShotAcquisitionFunction,
 )
-from botorch.exceptions import InputDataError, UnsupportedError
+from botorch.exceptions import InputDataError, OptimizationWarning, UnsupportedError
 from botorch.optim.optimize import (
     _filter_infeasible,
     _filter_invalid,
     _gen_batch_initial_conditions_local_search,
     _generate_neighbors,
+    _validate_constraints,
     optimize_acqf,
     optimize_acqf_cyclic,
     optimize_acqf_discrete,
@@ -72,6 +76,76 @@ def rounding_func(X: Tensor) -> Tensor:
 
 
 class TestOptimizeAcqf(BotorchTestCase):
+    def test_validate_constraints(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+        with self.assertRaisesRegex(
+            UnsupportedError, "Must provide either `bounds` or `inequality_constraints`"
+        ):
+            _validate_constraints(bounds=torch.empty(0, 2, **tkwargs))
+        with self.assertRaisesRegex(
+            ValueError, r"bounds should be a `2 x d` tensor, current shape: \(3, 2\)."
+        ):
+            _validate_constraints(bounds=torch.zeros(3, 2), inequality_constraints=[])
+        # Check standard box bounds
+        bounds = torch.stack((torch.zeros(2, **tkwargs), torch.ones(2, **tkwargs)))
+        _validate_constraints(bounds=bounds)
+        # Check failure on empty box
+        with self.assertRaisesRegex(
+            ValueError, "Feasible set non-empty. Check your constraints."
+        ):
+            _validate_constraints(bounds=bounds.flip(0))
+        # Check failure on unbounded "box"
+        bounds[1, 1] = float("inf")
+        with self.assertRaisesRegex(ValueError, "Feasible set unbounded."):
+            _validate_constraints(bounds=bounds)
+        # Check that added inequality constraint resolve this
+        _validate_constraints(
+            bounds=bounds,
+            inequality_constraints=[
+                (
+                    torch.tensor([1], device=self.device),
+                    torch.tensor([-1.0], **tkwargs),
+                    -2.0,
+                )
+            ],
+        )
+        # Check that added equality constraint resolves this
+        _validate_constraints(
+            bounds=bounds,
+            equality_constraints=[
+                (
+                    torch.tensor([0, 1], device=self.device),
+                    torch.tensor([1.0, -1.0], **tkwargs),
+                    0.0,
+                )
+            ],
+        )
+        # Check that inequality constraints alone work
+        zero = torch.tensor([0], device=self.device)
+        one = torch.tensor([1], device=self.device)
+        inequality_constraints = [
+            (zero, torch.tensor([1.0], **tkwargs), 0.0),
+            (zero, torch.tensor([-1.0], **tkwargs), -1.0),
+            (one, torch.tensor([1.0], **tkwargs), 0.0),
+            (one, torch.tensor([-1.0], **tkwargs), -1.0),
+        ]
+        _validate_constraints(
+            bounds=bounds, inequality_constraints=inequality_constraints
+        )
+        # Check that other messages are surfaced as warnings
+        bounds = torch.stack((torch.zeros(2, **tkwargs), torch.ones(2, **tkwargs)))
+        mock_result = OptimizeResult(success=False, status=-1, message="foo")
+        with mock.patch("botorch.optim.optimize.linprog", return_value=mock_result):
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                _validate_constraints(bounds=bounds)
+        self.assertTrue(any(issubclass(w.category, OptimizationWarning)) for w in ws)
+        expected_msg = (
+            "Ran into issues when checking for boundedness of feasible set. "
+            "Optimizer message: foo."
+        )
+        self.assertTrue(any(expected_msg in str(w.message) for w in ws))
+
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
     def test_optimize_acqf_joint(
@@ -589,11 +663,19 @@ class TestOptimizeAcqfCyclic(BotorchTestCase):
                 if i == 0:
                     # first cycle
                     expected_call_args.update(
-                        {"batch_initial_conditions": None, "q": q}
+                        {
+                            "batch_initial_conditions": None,
+                            "q": q,
+                            "validate_constraints": True,
+                        }
                     )
                 else:
                     expected_call_args.update(
-                        {"batch_initial_conditions": orig_candidates[i - 1 : i], "q": 1}
+                        {
+                            "batch_initial_conditions": orig_candidates[i - 1 : i],
+                            "q": 1,
+                            "validate_constraints": False,
+                        }
                     )
                     orig_candidates[i - 1] = candidate_rvs[i]
                 for k, v in call_args_list[i][1].items():
@@ -615,9 +697,6 @@ class TestOptimizeAcqfList(BotorchTestCase):
         options = {}
         tkwargs = {"device": self.device}
         bounds = torch.stack([torch.zeros(3), 4 * torch.ones(3)])
-        inequality_constraints = [
-            [torch.tensor([3]), torch.tensor([4]), torch.tensor(5)]
-        ]
         # reinitialize so that dtype
         mock_acq_function_1 = MockAcquisitionFunction()
         mock_acq_function_2 = MockAcquisitionFunction()
@@ -627,8 +706,8 @@ class TestOptimizeAcqfList(BotorchTestCase):
                 # clear previous X_pending
                 m.set_X_pending(None)
             tkwargs["dtype"] = dtype
-            inequality_constraints[0] = [
-                t.to(**tkwargs) for t in inequality_constraints[0]
+            inequality_constraints = [
+                [torch.tensor([3]), torch.tensor([4.0], **tkwargs), 5.0]
             ]
             mock_optimize_acqf.reset_mock()
             bounds = bounds.to(**tkwargs)
@@ -701,6 +780,7 @@ class TestOptimizeAcqfList(BotorchTestCase):
                 "batch_initial_conditions": None,
                 "return_best_only": True,
                 "sequential": False,
+                "validate_constraints": False,
             }
             for i in range(len(call_args_list)):
                 expected_call_args["acq_function"] = mock_acq_function_list[i]
@@ -781,6 +861,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 "batch_initial_conditions": None,
                 "return_best_only": True,
                 "sequential": False,
+                "validate_constraints": False,
             }
             for i in range(len(call_args_list)):
                 expected_call_args["fixed_features"] = fixed_features_list[i]
