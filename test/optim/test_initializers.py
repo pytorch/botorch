@@ -710,12 +710,12 @@ class TestSampleAroundBest(BotorchTestCase):
                     self.assertEqual(eq_mask[idcs].sum(), 4)
                 self.assertTrue((X_rnd >= 1).all())
                 self.assertTrue((X_rnd <= 2).all())
-            # test that subset_dims is called if d>=21
-            X_train = 1 + torch.rand(20, 21, **tkwargs)
+            # test that subset_dims is called if d>=20
+            X_train = 1 + torch.rand(10, 20, **tkwargs)
             model = MockModel(
                 MockPosterior(mean=(2 * X_train + 1).sum(dim=-1, keepdim=True))
             )
-            bounds = torch.ones(2, 21, **tkwargs)
+            bounds = torch.ones(2, 20, **tkwargs)
             bounds[1] = 2
             # test NEI with X_baseline
             acqf = qNoisyExpectedImprovement(
@@ -728,7 +728,7 @@ class TestSampleAroundBest(BotorchTestCase):
                 X_rnd = sample_points_around_best(
                     acq_function=acqf, n_discrete_points=5, sigma=1e-3, bounds=bounds
                 )
-            self.assertTrue(X_rnd.shape, torch.Size([5, 2]))
+            self.assertEqual(X_rnd.shape, torch.Size([5, 20]))
             self.assertTrue((X_rnd >= 1).all())
             self.assertTrue((X_rnd <= 2).all())
             mock_subset_dims.assert_called_once()
