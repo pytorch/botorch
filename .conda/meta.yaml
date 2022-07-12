@@ -17,8 +17,8 @@ requirements:
     - setuptools
     - setuptools-scm
   run:
-    - pytorch >=1.9
-    - gpytorch >=1.6
+    - pytorch >=1.10
+    - gpytorch >=1.7
     - scipy
     - pyro-ppl >=1.8.0
 
