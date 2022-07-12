@@ -18,7 +18,7 @@ Before jumping the gun, we recommend you start with the high-level
 - gpytorch >= 1.7
 - scipy
 - multiple-dispatch
-- pyro-ppl == 1.8.0
+- pyro-ppl >= 1.8.0
 
 BoTorch is easily installed via
 [Anaconda](https://www.anaconda.com/distribution/#download-section) (recommended)

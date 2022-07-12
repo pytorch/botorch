@@ -1,8 +1,10 @@
-[tool.setuptools_scm]
-
 [build-system]
-requires = ["setuptools<48", "wheel", "setuptools-scm"]
+requires = ["setuptools", "setuptools-scm", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+local_scheme = "node-and-date"
+write_to = "./botorch/version.py"
 
 [tool.usort]
 first_party_detection = false

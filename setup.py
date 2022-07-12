@@ -79,24 +79,13 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     python_requires=">=3.7",
-    setup_requires=["setuptools-scm"],
-    use_scm_version={
-        "root": ".",
-        "relative_to": __file__,
-        "write_to": os.path.join(root_dir, "botorch", "version.py"),
-        "local_scheme": (
-            "no-local-version"
-            if os.environ.get("SCM_NO_LOCAL_VERSION", False)
-            else "node-and-date"
-        ),
-    },
     packages=find_packages(exclude=["test", "test.*"]),
     install_requires=[
         "torch>=1.10",
         "gpytorch>=1.7",
         "scipy",
         "multipledispatch",
-        "pyro-ppl==1.8.0",
+        "pyro-ppl>=1.8.0",
     ],
     extras_require={
         "dev": DEV_REQUIRES,

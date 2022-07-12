@@ -683,8 +683,9 @@ def sample_points_around_best(
             # the view() is to ensure that best_idcs is not a scalar tensor
             best_idcs = torch.topk(f_pred, n_best).indices.view(-1)
             best_X = X[best_idcs]
+    use_perturbed_sampling = best_X.shape[-1] >= 20 or prob_perturb is not None
     n_trunc_normal_points = (
-        n_discrete_points // 2 if best_X.shape[-1] >= 20 else n_discrete_points
+        n_discrete_points // 2 if use_perturbed_sampling else n_discrete_points
     )
     perturbed_X = sample_truncated_normal_perturbations(
         X=best_X,
@@ -692,7 +693,7 @@ def sample_points_around_best(
         sigma=sigma,
         bounds=bounds,
     )
-    if best_X.shape[-1] > 20 or prob_perturb is not None:
+    if use_perturbed_sampling:
         perturbed_subset_dims_X = sample_perturbed_subset_dims(
             X=best_X,
             bounds=bounds,
