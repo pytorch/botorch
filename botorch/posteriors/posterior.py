@@ -137,6 +137,10 @@ class PosteriorList(Posterior):
                 "`PosteriorList` only supported if the constituent posteriors "
                 f"all have the same `batch_shape`. Batch shapes: {batch_shapes}."
             )
+        elif len(set(batch_shapes)) == 0:
+            # batch shapes are all zero if and only if the models
+            # are determinisitic
+            return torch.Size([])
         return batch_shapes[0] + torch.Size(
             [sum(bss[-1] for bss in base_sample_shapes)]
         )
@@ -173,7 +177,8 @@ class PosteriorList(Posterior):
                 "`PosteriorList` only supported if the constituent posteriors "
                 f"all have the same `batch_shape`. Batch shapes: {batch_shapes}."
             )
-        return batch_shapes[0] + torch.Size([es[-1] for es in event_shapes])
+        # last dimension is the output dimension (concatenation dimension)
+        return batch_shapes[0] + torch.Size([sum(es[-1] for es in event_shapes)])
 
     @property
     def mean(self) -> Tensor:
@@ -190,18 +195,24 @@ class PosteriorList(Posterior):
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
     ) -> List[Tensor]:
+        # handle the case where all posteriors have empty
+        # base_sample_shape
+        split_bss = False
+        base_sample_splits = [None] * len(self.posteriors)
         if base_samples is not None:
-            split_sizes = [
-                p.base_sample_shape[-1] if p.base_sample_shape else 0
-                for p in self.posteriors
-            ]
-            base_sample_splits = torch.split(base_samples, split_sizes, dim=-1)
-            base_sample_splits = [
-                bss if ss > 0 else None
-                for ss, bss in zip(split_sizes, base_sample_splits)
-            ]
-        else:
-            base_sample_splits = [None] * len(self.posteriors)
+            split_sizes = []
+            for p in self.posteriors:
+                if p.base_sample_shape:
+                    split_sizes.append(p.base_sample_shape[-1])
+                    split_bss = True
+                else:
+                    split_sizes.append(0)
+            if split_bss:
+                base_sample_splits = torch.split(base_samples, split_sizes, dim=-1)
+                base_sample_splits = [
+                    bss if ss > 0 else None
+                    for ss, bss in zip(split_sizes, base_sample_splits)
+                ]
         return [
             p.rsample(sample_shape=sample_shape, base_samples=bss)
             for p, bss in zip(self.posteriors, base_sample_splits)
