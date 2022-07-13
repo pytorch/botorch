@@ -129,7 +129,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
         with self.assertRaisesRegex(
             NotImplementedError,
             r"Currently only finite values in `bounds` are supported for "
-            r"generating initial conditions for optimization."
+            r"generating initial conditions for optimization.",
         ):
             gen_batch_initial_conditions(
                 acq_function=mock.Mock(),
