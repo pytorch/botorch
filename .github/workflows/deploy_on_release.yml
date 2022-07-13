@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: [3.7, 3.10]
+        python-version: ["3.7", "3.10"]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -46,7 +46,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: "3.7"
     - name: Install dependencies
       run: |
         pip install .[test]
@@ -111,7 +111,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: "3.7"
     - name: Install dependencies
       # there may not be a compatible Ax pip version, so we use the development version
       run: |

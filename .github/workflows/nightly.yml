@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: [3.7, 3.10]
+        python-version: ["3.7", "3.10"]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -47,7 +47,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: "3.7"
     - name: Install dependencies
       run: |
         pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
@@ -115,7 +115,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: "3.7"
     - name: Fetch all history for all tags and branches
       run: git fetch --prune --unshallow
     - name: Install dependencies
