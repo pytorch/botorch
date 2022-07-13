@@ -7,14 +7,13 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from functools import partial
 from math import pi
 from typing import List, Optional
 
 import torch
 from botorch.models.converter import batched_to_model_list
 from botorch.models.deterministic import GenericDeterministicModel
-from botorch.models.model import Model
+from botorch.models.model import Model, ModelList
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.multitask import MultiTaskGP
 from botorch.utils.sampling import manual_seed
@@ -259,10 +258,24 @@ def get_deterministic_model_multi_samples(
         A batched `GenericDeterministicModel`s that batch evaluates `n_samples`
         function samples.
     """
+    eval_callables = [
+        get_eval_gp_sample_callable(w=w, basis=basis)
+        for w, basis in zip(weights, bases)
+    ]
 
-    def evaluate_gps_X(X, weights, bases):
-        list_of_outputs = []
-        for w, basis in zip(weights, bases):
+    def evaluate_gps_X(X):
+        return torch.cat([_f(X) for _f in eval_callables], dim=-1)
+
+    return GenericDeterministicModel(
+        f=evaluate_gps_X,
+        num_outputs=len(weights),
+    )
+
+
+def get_eval_gp_sample_callable(w: Tensor, basis: RandomFourierFeatures) -> Tensor:
+    if w.ndim > 1:
+        # multiple samples
+        def _f(X):
             # This ensures that the outermost batch dimension is the sample dimension
             # via basis._check_forward_X_shape_compatibility.
             phi_X = basis(X)
@@ -275,14 +288,14 @@ def get_deterministic_model_multi_samples(
             # the below view operation is inserting batch_shape_X_minus_n_samples
             # dimensions in w to enable broadcasted matmul.
             w_unsqueezed = w.view(*w.shape[:-2], *pending_dims, *w.shape[-2:], 1)
-            list_of_outputs.append((phi_X @ w_unsqueezed).squeeze(-1))
+            return phi_X @ w_unsqueezed
 
-        return torch.stack(list_of_outputs, dim=-1)
+    else:
+        # single sample
+        def _f(X):
+            return (basis(X) @ w).unsqueeze(-1)
 
-    return GenericDeterministicModel(
-        f=partial(evaluate_gps_X, weights=weights, bases=bases),
-        num_outputs=len(weights),
-    )
+    return _f
 
 
 def get_deterministic_model(
@@ -302,6 +315,29 @@ def get_deterministic_model(
         return torch.stack([basis(X) @ w for w, basis in zip(weights, bases)], dim=-1)
 
     return GenericDeterministicModel(f=evaluate_gp_sample, num_outputs=len(weights))
+
+
+def get_deterministic_model_list(
+    weights: List[Tensor],
+    bases: List[RandomFourierFeatures],
+) -> ModelList:
+    """Get a deterministic model list using the provided weights and bases for each output.
+
+    Args:
+        weights: a list of weights with `m` elements
+        bases: a list of RandomFourierFeatures with `m` elements.
+
+    Returns:
+        A deterministic model.
+    """
+    samples = []
+    for w, basis in zip(weights, bases):
+        sample = GenericDeterministicModel(
+            f=get_eval_gp_sample_callable(w=w, basis=basis),
+            num_outputs=1,
+        )
+        samples.append(sample)
+    return ModelList(*samples)
 
 
 def get_weights_posterior(X: Tensor, y: Tensor, sigma_sq: float) -> MultivariateNormal:
@@ -364,6 +400,8 @@ def get_gp_samples(
     # Remove the outcome transform - leads to buggy draws.
     if octf is not None:
         del model.outcome_transform
+    if intf is not None:
+        del model.input_transform
 
     if num_outputs > 1:
         if not isinstance(model, ModelListGP):
@@ -377,13 +415,24 @@ def get_gp_samples(
 
     weights = []
     bases = []
+    octfs = []
+    intfs = []
     for m in range(num_outputs):
         train_X = models[m].train_inputs[0]
         train_targets = models[m].train_targets
+        _model = models[m]
+        _intf = getattr(_model, "input_transform", None)
+        _octf = getattr(_model, "outcome_transform", None)
+        # Remove the outcome transform - leads to buggy draws.
+        if _octf is not None:
+            del _model.outcome_transform
+
+        octfs.append(_octf)
+        intfs.append(_intf)
         # get random fourier features
         # sample_shape controls the number of iid functions.
         basis = RandomFourierFeatures(
-            kernel=models[m].covar_module,
+            kernel=_model.covar_module,
             input_dim=train_X.shape[-1],
             num_rff_features=num_rff_features,
             sample_shape=torch.Size([n_samples] if n_samples > 1 else []),
@@ -411,13 +460,29 @@ def get_gp_samples(
         mvn = get_weights_posterior(
             X=phi_X,
             y=train_targets,
-            sigma_sq=models[m].likelihood.noise.mean().item(),
+            sigma_sq=_model.likelihood.noise.mean().item(),
         )
         weights.append(mvn.sample())
 
     # TODO: Ideally support RFFs for multi-outputs instead of having to
     # generate a basis for each output serially.
-    if n_samples > 1:
+    if any(_octf is not None for _octf in octfs) or any(
+        _intf is not None for _intf in intfs
+    ):
+        base_gp_samples = get_deterministic_model_list(
+            weights=weights,
+            bases=bases,
+        )
+        for m in range(len(weights)):
+            _octf = octfs[m]
+            _intf = intfs[m]
+            if _octf is not None:
+                base_gp_samples.models[m].outcome_transform = _octf
+                models[m].outcome_transform = _octf
+            if _intf is not None:
+                base_gp_samples.models[m].input_transform = _intf
+        return base_gp_samples
+    elif n_samples > 1:
         base_gp_samples = get_deterministic_model_multi_samples(
             weights=weights,
             bases=bases,
@@ -430,6 +495,7 @@ def get_gp_samples(
     # Load the transforms on the models.
     if intf is not None:
         base_gp_samples.input_transform = intf
+        model.input_transform = intf
     if octf is not None:
         base_gp_samples.outcome_transform = octf
         model.outcome_transform = octf

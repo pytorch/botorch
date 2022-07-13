@@ -12,11 +12,13 @@ import torch
 from botorch.models.converter import batched_to_model_list
 from botorch.models.deterministic import DeterministicModel
 from botorch.models.gp_regression import SingleTaskGP
+from botorch.models.model import ModelList
 from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.utils.gp_sampling import (
     get_deterministic_model,
+    get_deterministic_model_list,
     get_deterministic_model_multi_samples,
     get_gp_samples,
     get_weights_posterior,
@@ -363,37 +365,46 @@ class TestRandomFourierFeatures(BotorchTestCase):
         tkwargs = {"device": self.device}
         for dtype, m in product((torch.float, torch.double), (1, 2)):
             tkwargs["dtype"] = dtype
-            weights = []
-            bases = []
-            for i in range(m):
-                num_rff = 2 * (i + 2)
-                weights.append(torch.rand(num_rff, **tkwargs))
-                kernel = ScaleKernel(RBFKernel(ard_num_dims=2)).to(**tkwargs)
-                kernel.outputscale = 0.3 + torch.rand(1, **tkwargs).view(
-                    kernel.outputscale.shape
-                )
-                kernel.base_kernel.lengthscale = 0.3 + torch.rand(2, **tkwargs).view(
-                    kernel.base_kernel.lengthscale.shape
-                )
-                bases.append(
-                    RandomFourierFeatures(
-                        kernel=kernel,
-                        input_dim=2,
-                        num_rff_features=num_rff,
+            use_model_list_vals = [False]
+            if m == 2:
+                use_model_list_vals.append(True)
+            for use_model_list in use_model_list_vals:
+                weights = []
+                bases = []
+                get_model = get_deterministic_model
+                if use_model_list:
+                    get_model = get_deterministic_model_list
+                for i in range(m):
+                    num_rff = 2 * (i + 2)
+                    weights.append(torch.rand(num_rff, **tkwargs))
+                    kernel = ScaleKernel(RBFKernel(ard_num_dims=2)).to(**tkwargs)
+                    kernel.outputscale = 0.3 + torch.rand(1, **tkwargs).view(
+                        kernel.outputscale.shape
                     )
-                )
+                    kernel.base_kernel.lengthscale = 0.3 + torch.rand(
+                        2, **tkwargs
+                    ).view(kernel.base_kernel.lengthscale.shape)
+                    bases.append(
+                        RandomFourierFeatures(
+                            kernel=kernel,
+                            input_dim=2,
+                            num_rff_features=num_rff,
+                        )
+                    )
 
-            model = get_deterministic_model(weights=weights, bases=bases)
-            self.assertIsInstance(model, DeterministicModel)
-            self.assertEqual(model.num_outputs, m)
-            for batch_shape in (torch.Size([]), torch.Size([3])):
-                X = torch.rand(*batch_shape, 1, 2, **tkwargs)
-                Y = model(X)
-                expected_Y = torch.stack(
-                    [basis(X) @ w for w, basis in zip(weights, bases)], dim=-1
+                model = get_model(weights=weights, bases=bases)
+                self.assertIsInstance(
+                    model, DeterministicModel if not use_model_list else ModelList
                 )
-                self.assertTrue(torch.equal(Y, expected_Y))
-                self.assertEqual(Y.shape, torch.Size([*batch_shape, 1, m]))
+                self.assertEqual(model.num_outputs, m)
+                for batch_shape in (torch.Size([]), torch.Size([3])):
+                    X = torch.rand(*batch_shape, 1, 2, **tkwargs)
+                    Y = model.posterior(X).mean
+                    expected_Y = torch.stack(
+                        [basis(X) @ w for w, basis in zip(weights, bases)], dim=-1
+                    )
+                    self.assertTrue(torch.equal(Y, expected_Y))
+                    self.assertEqual(Y.shape, torch.Size([*batch_shape, 1, m]))
 
     def test_get_deterministic_model_multi_samples(self):
         tkwargs = {"device": self.device}
@@ -488,6 +499,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
         tkwargs = {"device": self.device}
         for dtype, m, use_tf, use_batch_model, n_samples in (
             (torch.float, 1, True, False, 20),
+            (torch.float, 1, False, True, 20),
             (torch.double, 2, False, True, 10),
             (torch.double, 2, True, False, 30),
         ):
@@ -498,43 +510,86 @@ class TestRandomFourierFeatures(BotorchTestCase):
             with torch.random.fork_rng():
                 torch.manual_seed(0)
                 gp_samples = get_gp_samples(
-                    model=batched_to_model_list(model) if use_batch_model else model,
+                    model=batched_to_model_list(model)
+                    if ((not use_batch_model) and (m > 1))
+                    else model,
                     num_outputs=m,
                     n_samples=n_samples,
                     num_rff_features=512,
                 )
             self.assertEqual(len(gp_samples.posterior(X).mean), n_samples)
-            self.assertIsInstance(gp_samples, DeterministicModel)
+            self.assertIsInstance(
+                gp_samples,
+                ModelList
+                if ((not use_batch_model) and (m > 1))
+                else DeterministicModel,
+            )
             Y_hat_rff = gp_samples.posterior(X).mean.mean(dim=0)
             with torch.no_grad():
                 Y_hat = model.posterior(X).mean
-            self.assertTrue(torch.allclose(Y_hat_rff, Y_hat, atol=3e-1))
+            self.assertTrue(torch.allclose(Y_hat_rff, Y_hat, atol=5e-1))
 
             # test batched evaluation
-            Y_batched = gp_samples(
+            Y_batched = gp_samples.posterior(
                 torch.randn(13, n_samples, 3, X.shape[-1], **tkwargs)
-            )
+            ).mean
             self.assertEqual(Y_batched.shape, torch.Size([13, n_samples, 3, m]))
+
+            if use_tf:
+                # check transforms on sample
+                if isinstance(gp_samples, DeterministicModel):
+                    self.assertEqual(
+                        model.outcome_transform, gp_samples.outcome_transform
+                    )
+                    self.assertEqual(model.input_transform, gp_samples.input_transform)
+                elif isinstance(gp_samples, ModelList):
+                    model_list = batched_to_model_list(model)
+                    for i in range(model_list.num_outputs):
+                        self.assertTrue(
+                            torch.equal(
+                                model_list.models[i].outcome_transform.means,
+                                gp_samples.models[i].outcome_transform.means,
+                            )
+                        )
+                        self.assertTrue(
+                            torch.equal(
+                                model_list.models[i].outcome_transform.stdvs,
+                                gp_samples.models[i].outcome_transform.stdvs,
+                            )
+                        )
+                        self.assertEqual(
+                            model_list.models[i].input_transform,
+                            gp_samples.models[i].input_transform,
+                        )
 
         # test incorrect batch shape check
         with self.assertRaises(ValueError):
-            gp_samples(torch.randn(13, 23, 3, X.shape[-1], **tkwargs))
-
-        # test single sample
+            gp_samples.posterior(torch.randn(13, 23, 3, X.shape[-1], **tkwargs)).mean
+        # test single samples
+        means = []
         with torch.random.fork_rng():
             torch.manual_seed(28)
-            gp_samples = get_gp_samples(
-                model=model,
-                num_outputs=m,
-                n_samples=1,
-                num_rff_features=512,
-            )
+            for _ in range(10):
+                gp_samples = get_gp_samples(
+                    model=batched_to_model_list(model)
+                    if ((not use_batch_model) and (m > 1))
+                    else model,
+                    num_outputs=m,
+                    n_samples=1,
+                    num_rff_features=512,
+                )
+                with torch.no_grad():
+                    means.append(model.posterior(X).mean)
         self.assertEqual(len(gp_samples.posterior(X).mean), X.shape[0])
-        self.assertIsInstance(gp_samples, DeterministicModel)
-        Y_hat_rff = gp_samples.posterior(X).mean
+        self.assertIsInstance(gp_samples, ModelList) if (
+            (not use_batch_model) and (m > 1)
+        ) else DeterministicModel
+        Y_hat_rff = torch.stack(means, dim=0).mean(dim=0)
         with torch.no_grad():
             Y_hat = model.posterior(X).mean
         self.assertTrue(torch.allclose(Y_hat_rff, Y_hat, atol=5e-1))
         # test batched evaluation
-        Y_batched = gp_samples(torch.randn(13, 5, 3, X.shape[-1], **tkwargs))
+        Y_batched = gp_samples.posterior(
+            torch.randn(13, 5, 3, X.shape[-1], **tkwargs)
+        ).mean
         self.assertEqual(Y_batched.shape, torch.Size([13, 5, 3, m]))
