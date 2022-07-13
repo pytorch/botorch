@@ -5,10 +5,12 @@
 # LICENSE file in the root directory of this source tree.
 
 
+from itertools import product
 from unittest.mock import Mock
 
 import torch
 from botorch.posteriors import GPyTorchPosterior, Posterior, PosteriorList
+from botorch.posteriors.deterministic import DeterministicPosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.lazy.non_lazy_tensor import lazify
@@ -52,15 +54,28 @@ class TestPosteriorList(BotorchTestCase):
         mvn = MultivariateNormal(mean, lazify(covar))
         return GPyTorchPosterior(mvn=mvn)
 
-    def test_posterior_list(self):
-        for dtype in (torch.float, torch.double):
-            shape = torch.Size([3])
-            p_1 = self._make_gpytorch_posterior(shape, dtype)
-            p_2 = self._make_gpytorch_posterior(shape, dtype)
-            p = PosteriorList(p_1, p_2)
+    def _make_deterministic_posterior(self, shape, dtype):
+        mean = torch.rand(*shape, 1, dtype=dtype, device=self.device)
+        return DeterministicPosterior(values=mean)
 
-            self.assertEqual(p.base_sample_shape, shape + torch.Size([2]))
-            self.assertEqual(p.event_shape, shape + torch.Size([1, 1]))
+    def test_posterior_list(self):
+        for dtype, use_deterministic in product(
+            (torch.float, torch.double), (False, True)
+        ):
+            shape = torch.Size([3])
+            make_posterior = (
+                self._make_deterministic_posterior
+                if use_deterministic
+                else self._make_gpytorch_posterior
+            )
+            p_1 = make_posterior(shape, dtype)
+            p_2 = make_posterior(shape, dtype)
+            p = PosteriorList(p_1, p_2)
+            expected_shape = (
+                torch.Size([]) if use_deterministic else shape + torch.Size([2])
+            )
+            self.assertEqual(p.base_sample_shape, expected_shape)
+            self.assertEqual(p.event_shape, shape + torch.Size([2]))
             self.assertEqual(p.device.type, self.device.type)
             self.assertEqual(p.dtype, dtype)
             self.assertTrue(
@@ -78,7 +93,11 @@ class TestPosteriorList(BotorchTestCase):
                 sample_shape + p.base_sample_shape, device=self.device, dtype=dtype
             )
             samples = p.sample(sample_shape=sample_shape, base_samples=base_samples)
-            bs_1, bs_2 = torch.split(base_samples, 1, dim=-1)
+            if use_deterministic:
+                bs_1 = base_samples
+                bs_2 = base_samples
+            else:
+                bs_1, bs_2 = torch.split(base_samples, 1, dim=-1)
             samples_1 = p_1.sample(sample_shape=sample_shape, base_samples=bs_1)
             samples_2 = p_2.sample(sample_shape=sample_shape, base_samples=bs_2)
             samples_expected = torch.cat([samples_1, samples_2], dim=-1)
