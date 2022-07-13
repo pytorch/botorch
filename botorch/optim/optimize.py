@@ -68,7 +68,9 @@ def optimize_acqf(
 
     Args:
         acq_function: An AcquisitionFunction.
-        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
+        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`
+            (if inequality_constraints is provided, these bounds can be -inf and
+            +inf, respectively).
         q: The number of candidates.
         num_restarts: The number of starting points for multistart acquisition
             function optimization.
@@ -229,8 +231,8 @@ def optimize_acqf(
         batch_candidates_curr, batch_acq_values_curr = gen_candidates_scipy(
             initial_conditions=batched_ics_,
             acquisition_function=acq_function,
-            lower_bounds=bounds[0],
-            upper_bounds=bounds[1],
+            lower_bounds=None if bounds[0].isinf().all() else bounds[0],
+            upper_bounds=None if bounds[1].isinf().all() else bounds[1],
             options={k: v for k, v in options.items() if k not in INIT_OPTION_KEYS},
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
@@ -276,7 +278,9 @@ def optimize_acqf_cyclic(
 
     Args:
         acq_function: An AcquisitionFunction
-        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
+        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`
+            (if inequality_constraints is provided, these bounds can be -inf and
+            +inf, respectively).
         q: The number of candidates.
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.
@@ -389,7 +393,9 @@ def optimize_acqf_list(
 
     Args:
         acq_function_list: A list of acquisition functions.
-        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
+        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`
+            (if inequality_constraints is provided, these bounds can be -inf and
+            +inf, respectively).
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.
         raw_samples: Number of samples for initialization. This is required
@@ -469,7 +475,9 @@ def optimize_acqf_mixed(
 
     Args:
         acq_function: An AcquisitionFunction
-        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
+        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`
+            (if inequality_constraints is provided, these bounds can be -inf and
+            +inf, respectively).
         q: The number of candidates.
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.

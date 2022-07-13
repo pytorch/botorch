@@ -98,6 +98,11 @@ def gen_batch_initial_conditions(
         >>>     qEI, bounds, q=3, num_restarts=25, raw_samples=500
         >>> )
     """
+    if bounds.isinf().any():
+        raise NotImplementedError(
+            "Currently only finite values in `bounds` are supported "
+            "for generating initial conditions for optimization."
+        )
     options = options or {}
     seed: Optional[int] = options.get("seed")
     batch_limit: Optional[int] = options.get(

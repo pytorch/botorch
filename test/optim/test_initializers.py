@@ -123,6 +123,22 @@ class TestInitializeQBatch(BotorchTestCase):
 
 
 class TestGenBatchInitialCandidates(BotorchTestCase):
+    def test_gen_batch_initial_inf_bounds(self):
+        bounds = torch.rand(2, 2)
+        bounds[0, 1] = float("inf")
+        with self.assertRaisesRegex(
+            NotImplementedError,
+            r"Currently only finite values in `bounds` are supported for "
+            r"generating initial conditions for optimization.",
+        ):
+            gen_batch_initial_conditions(
+                acq_function=mock.Mock(),
+                bounds=bounds,
+                q=1,
+                num_restarts=2,
+                raw_samples=2,
+            )
+
     def test_gen_batch_initial_conditions(self):
         bounds = torch.stack([torch.zeros(2), torch.ones(2)])
         mock_acqf = MockAcquisitionFunction()
