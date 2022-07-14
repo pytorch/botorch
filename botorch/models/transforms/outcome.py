@@ -33,7 +33,7 @@ from botorch.models.transforms.utils import (
 )
 from botorch.posteriors import GPyTorchPosterior, Posterior, TransformedPosterior
 from botorch.utils.transforms import normalize_indices
-from gpytorch.lazy import CholLazyTensor, DiagLazyTensor
+from gpytorch.lazy import BlockDiagLazyTensor, CholLazyTensor, DiagLazyTensor
 from torch import Tensor
 from torch.nn import Module, ModuleDict
 
@@ -377,9 +377,20 @@ class Standardize(OutcomeTransform):
             covar_tf = CholLazyTensor(mvn.scale_tril * scale_fac.unsqueeze(-1))
         else:
             lcv = mvn.lazy_covariance_matrix
-            # allow batch-evaluation of the model
-            scale_mat = DiagLazyTensor(scale_fac.expand(lcv.shape[:-1]))
-            covar_tf = scale_mat @ lcv @ scale_mat
+            scale_fac = scale_fac.expand(lcv.shape[:-1])
+            # TODO: Remove the custom logic with next GPyTorch release (T126095032).
+            if isinstance(lcv, BlockDiagLazyTensor):
+                # Keep the block diag structure of lcv.
+                base_lcv = lcv.base_lazy_tensor
+                scale_mat = DiagLazyTensor(
+                    scale_fac.view(*scale_fac.shape[:-1], lcv.num_blocks, -1)
+                )
+                base_lcv_tf = scale_mat @ base_lcv @ scale_mat
+                covar_tf = BlockDiagLazyTensor(base_lazy_tensor=base_lcv_tf)
+            else:
+                # allow batch-evaluation of the model
+                scale_mat = DiagLazyTensor(scale_fac)
+                covar_tf = scale_mat @ lcv @ scale_mat
 
         kwargs = {"interleaved": mvn._interleaved} if posterior._is_mt else {}
         mvn_tf = mvn.__class__(mean=mean_tf, covariance_matrix=covar_tf, **kwargs)

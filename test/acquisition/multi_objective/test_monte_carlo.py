@@ -36,6 +36,7 @@ from botorch.models import (
 )
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.transforms.input import InputPerturbation
+from botorch.models.transforms.outcome import Standardize
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
 from botorch.utils.multi_objective.box_decompositions.dominated import (
@@ -1416,6 +1417,22 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                         acqf(test_X)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+
+    def test_cache_root_w_standardize(self):
+        # Test caching with standardize transform.
+        train_x = torch.rand(3, 2)
+        train_y = torch.randn(3, 2)
+        model = SingleTaskGP(train_x, train_y, outcome_transform=Standardize(m=2))
+        acqf = qNoisyExpectedHypervolumeImprovement(
+            model=model,
+            X_baseline=train_x,
+            ref_point=torch.ones(2),
+            sampler=IIDNormalSampler(num_samples=1),
+            cache_root=True,
+        )
+        self.assertIsNotNone(acqf._baseline_L)
+        self.assertEqual(acqf(train_x[:1]).shape, torch.Size([1]))
+        self.assertEqual(acqf(train_x.unsqueeze(-2)).shape, torch.Size([3]))
 
     def test_with_set_valued_objectives(self):
         for dtype in (torch.float, torch.double):

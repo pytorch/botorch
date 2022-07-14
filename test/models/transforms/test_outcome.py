@@ -23,7 +23,7 @@ from botorch.models.transforms.utils import (
 from botorch.posteriors import GPyTorchPosterior, TransformedPosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy import NonLazyTensor
+from gpytorch.lazy import BlockDiagLazyTensor, DiagLazyTensor, NonLazyTensor
 
 
 def _get_test_posterior(shape, device, dtype, interleaved=True, lazy=False):
@@ -60,7 +60,6 @@ class TestOutcomeTransforms(BotorchTestCase):
             oct.untransform_posterior(None)
 
     def test_standardize(self):
-
         # test error on incompatible dim
         tf = Standardize(m=1)
         with self.assertRaises(RuntimeError):
@@ -75,7 +74,6 @@ class TestOutcomeTransforms(BotorchTestCase):
 
         # test transform, untransform, untransform_posterior
         for m, batch_shape, dtype in itertools.product(ms, batch_shapes, dtypes):
-
             # test init
             tf = Standardize(m=m, batch_shape=batch_shape)
             self.assertTrue(tf.training)
@@ -149,6 +147,36 @@ class TestOutcomeTransforms(BotorchTestCase):
                 samples2 = p_utf.rsample(sample_shape=torch.Size([4, 2]))
                 self.assertEqual(samples2.shape, torch.Size([4, 2]) + shape)
                 # TODO: Test expected covar (both interleaved and non-interleaved)
+
+            # Untransform BlockDiagLazyTensor.
+            if m > 1:
+                base_lcv = DiagLazyTensor(
+                    torch.rand(*batch_shape, m, 3, device=self.device, dtype=dtype)
+                )
+                lcv = BlockDiagLazyTensor(base_lcv)
+                mvn = MultitaskMultivariateNormal(
+                    mean=torch.rand(
+                        *batch_shape, 3, m, device=self.device, dtype=dtype
+                    ),
+                    covariance_matrix=lcv,
+                    interleaved=False,
+                )
+                posterior = GPyTorchPosterior(mvn=mvn)
+                p_utf = tf.untransform_posterior(posterior)
+                self.assertEqual(p_utf.device.type, self.device.type)
+                self.assertTrue(p_utf.dtype == dtype)
+                mean_expected = tf.means + tf.stdvs * posterior.mean
+                variance_expected = tf.stdvs**2 * posterior.variance
+                self.assertTrue(torch.allclose(p_utf.mean, mean_expected))
+                self.assertTrue(torch.allclose(p_utf.variance, variance_expected))
+                self.assertIsInstance(
+                    p_utf.mvn.lazy_covariance_matrix, BlockDiagLazyTensor
+                )
+                samples2 = p_utf.rsample(sample_shape=torch.Size([4, 2]))
+                self.assertEqual(
+                    samples2.shape,
+                    torch.Size([4, 2]) + batch_shape + torch.Size([3, m]),
+                )
 
             # untransform_posterior for non-GPyTorch posterior
             posterior2 = TransformedPosterior(
@@ -239,7 +267,6 @@ class TestOutcomeTransforms(BotorchTestCase):
                 tf.untransform_posterior(None)
 
     def test_log(self):
-
         ms = (1, 2)
         batch_shapes = (torch.Size(), torch.Size([2]))
         dtypes = (torch.float, torch.double)
@@ -357,7 +384,6 @@ class TestOutcomeTransforms(BotorchTestCase):
             self.assertIsNone(Yvar_tf_subset)
 
     def test_chained_outcome_transform(self):
-
         ms = (1, 2)
         batch_shapes = (torch.Size(), torch.Size([2]))
         dtypes = (torch.float, torch.double)
@@ -427,7 +453,6 @@ class TestOutcomeTransforms(BotorchTestCase):
 
         # test transforming a subset of outcomes
         for batch_shape, dtype in itertools.product(batch_shapes, dtypes):
-
             m = 2
             outputs = [-1]
 
@@ -536,7 +561,6 @@ class TestOutcomeTransforms(BotorchTestCase):
 
         # test transforming a subset of outcomes
         for batch_shape, dtype in itertools.product(batch_shapes, dtypes):
-
             m = 2
             outputs = [-1]
 
@@ -593,7 +617,6 @@ class TestOutcomeTransforms(BotorchTestCase):
 
         # test transform and untransform
         for m, batch_shape, dtype in itertools.product(ms, batch_shapes, dtypes):
-
             # test init
             tf = Bilog()
             self.assertTrue(tf.training)
@@ -649,7 +672,6 @@ class TestOutcomeTransforms(BotorchTestCase):
 
         # test transforming a subset of outcomes
         for batch_shape, dtype in itertools.product(batch_shapes, dtypes):
-
             m = 2
             outputs = [-1]
 

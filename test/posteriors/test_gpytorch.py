@@ -261,6 +261,9 @@ class TestGPyTorchPosterior(BotorchTestCase):
             tkwargs = {"device": self.device, "dtype": dtype}
             offset = torch.rand(1).item()
             weights = torch.randn(m, **tkwargs)
+            # Make sure the weights are not too small.
+            while torch.any(weights.abs() < 0.1):
+                weights = torch.randn(m, **tkwargs)
             # test q=1
             posterior = _get_test_posterior(batch_shape, m=m, lazy=lazy, **tkwargs)
             mean, covar = posterior.mvn.mean, posterior.mvn.covariance_matrix
