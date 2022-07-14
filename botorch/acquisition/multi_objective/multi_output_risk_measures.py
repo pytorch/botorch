@@ -19,17 +19,28 @@ References
 .. [Cousin2013MVaR]
     A. Cousin and E. Di Bernardino. On multivariate extensions of Value-at-Risk.
     Journal of Multivariate Analysis, 2013.
+
+.. [Daulton2022MARS]
+    S. Daulton, S, Cakmak, M. Balandat, M. Osborne, E. Zhou, and E. Bakshy.
+    Robust multi-objective Bayesian optimization under input noise.
+    Proceedings of the 39th International Conference on Machine Learning, 2022.
 """
 
 import warnings
 from abc import ABC, abstractmethod
 from math import ceil
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import torch
-from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
-from botorch.acquisition.risk_measures import CVaR, RiskMeasureMCObjective
+from botorch.acquisition.multi_objective.objective import (
+    IdentityMCMultiOutputObjective,
+    MCMultiOutputObjective,
+)
+from botorch.acquisition.risk_measures import CVaR, RiskMeasureMCObjective, VaR
+from botorch.exceptions.errors import UnsupportedError
+from botorch.models.model import Model
 from botorch.utils.multi_objective.pareto import is_non_dominated
+from botorch.utils.transforms import normalize
 from torch import Tensor
 
 
@@ -499,3 +510,228 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
                 )
         mvars = torch.stack(padded_mvar_list, dim=0)
         return mvars.view(*batch_shape, -1, m)
+
+
+class MARS(VaR, MultiOutputRiskMeasureMCObjective):
+    r"""MVaR Approximation based on Random Scalarizations as introduced
+    in [Daulton2022MARS]_.
+
+    This approximates MVaR via VaR of Chebyshev scalarizations, where each
+    scalarization corresponds to a point in the MVaR set. As implemented,
+    this uses one set of scalarization weights to approximate a single MVaR value.
+    Note that due to the normalization within the Chebyshev scalarization,
+    the output of this risk measure may not be on the same scale as its inputs.
+    """
+
+    _is_mo: bool = False
+
+    def __init__(
+        self,
+        alpha: float,
+        n_w: int,
+        chebyshev_weights: Union[Tensor, List[float]],
+        baseline_Y: Optional[Tensor] = None,
+        ref_point: Optional[Union[Tensor, List[float]]] = None,
+        preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
+    ) -> None:
+        r"""Transform the posterior samples to samples of a risk measure.
+
+        Args:
+            alpha: The risk level, float in `(0.0, 1.0]`.
+            n_w: The size of the perturbation set to calculate the risk measure over.
+            chebyshev_weights: The weights to use in the Chebyshev scalarization.
+                The Chebyshev scalarization is applied before computing VaR.
+                The weights must be non-negative. See `preprocessing_function` to
+                support minimization objectives.
+            baseline_Y: An `n' x d`-dim tensor of baseline outcomes to use in
+                determining the normalization bounds for Chebyshev scalarization.
+                It is recommended to set this via `set_baseline_Y` helper.
+            ref_point: An optional MVaR reference point to use in determining
+                the normalization bounds for Chebyshev scalarization.
+            preprocessing_function: A preprocessing function to apply to the
+                samples before computing the risk measure. This can be used to
+                remove non-objective outcomes or to align all outcomes for
+                maximization. For constrained optimization, this should also
+                apply feasibility-weighting to samples.
+        """
+        super().__init__(alpha=alpha, n_w=n_w)
+        self.chebyshev_weights = chebyshev_weights
+        self.baseline_Y = baseline_Y
+        self.register_buffer(
+            "ref_point", torch.as_tensor(ref_point) if ref_point is not None else None
+        )
+        if preprocessing_function is None:
+            preprocessing_function = IdentityMCMultiOutputObjective()
+        self.preprocessing_function = preprocessing_function
+        self.mvar = MVaR(n_w=self.n_w, alpha=self.alpha)
+        self._chebyshev_objective = None
+
+    def set_baseline_Y(self, model: Model, X_baseline: Tensor) -> None:
+        r"""Set the `baseline_Y` based on the MVaR predictions of the `model`
+        for `X_baseline`.
+
+        Args:
+            model: The model being used for MARS optimization. Must have a compatible
+                `InputPerturbation` transform attached.
+            X_baseline: An `n x d`-dim tensor of previously evaluated points.
+        """
+        with torch.no_grad():
+            Y = model.posterior(X_baseline).mean
+        Y = self.preprocessing_function(Y)
+        Y = self.mvar(Y).view(-1, Y.shape[-1])
+        Y = Y[is_non_dominated(Y)]
+        self.baseline_Y = Y
+
+    @property
+    def chebyshev_weights(self) -> Tensor:
+        r"""The weights used in Chebyshev scalarization."""
+        return self._chebyshev_weights
+
+    @chebyshev_weights.setter
+    def chebyshev_weights(self, chebyshev_weights: Union[Tensor, List[float]]) -> None:
+        r"""Update the Chebyshev weights.
+
+        Invalidates the cached Chebyshev objective.
+
+        Args:
+            chebyshev_weights: The weights to use in the Chebyshev scalarization.
+                The Chebyshev scalarization is applied before computing VaR.
+                The weights must be non-negative. See `preprocessing_function` to
+                support minimization objectives.
+        """
+        self._chebyshev_objective = None
+        chebyshev_weights = torch.as_tensor(chebyshev_weights)
+        if torch.any(chebyshev_weights < 0):
+            raise UnsupportedError("Negative weights are not supported in MARS.")
+        if chebyshev_weights.dim() != 1:
+            raise UnsupportedError("Batched weights are not supported in MARS.")
+        self.register_buffer("_chebyshev_weights", chebyshev_weights)
+
+    @property
+    def baseline_Y(self) -> Optional[Tensor]:
+        r"""Baseline outcomes used indetermining the normalization bounds."""
+        return self._baseline_Y
+
+    @baseline_Y.setter
+    def baseline_Y(self, baseline_Y: Optional[Tensor]) -> None:
+        r"""Update the baseline outcomes.
+
+        Invalidates the cached Chebyshev objective.
+
+        Args:
+            baseline_Y: An `n' x d`-dim tensor of baseline outcomes to use in
+                determining the normalization bounds for Chebyshev scalarization.
+                It is recommended to set this via `set_baseline_Y` helper.
+        """
+        self._chebyshev_objective = None
+        self.register_buffer("_baseline_Y", baseline_Y)
+
+    @property
+    def chebyshev_objective(self) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
+        r"""The objective for applying the Chebyshev scalarization."""
+        if self._chebyshev_objective is None:
+            self._construct_chebyshev_objective()
+        return self._chebyshev_objective
+
+    def _construct_chebyshev_objective(self) -> None:
+        r"""Construct a Chebyshev scalarization. Outcomes are first normalized to [0,1],
+        then the Chebyshev scalarization is applied.
+
+        NOTE: This is a modified version of the `get_chebyshev_scalarization` helper.
+        It doesn't support negative weights. All objectives should be aligned for
+        maximization using `preprocessing_function`.
+        """
+        if self.baseline_Y is None:
+            raise RuntimeError(
+                "baseline_Y must be set before constructing the Chebyshev objective."
+            )
+        ref_point = self.ref_point
+        if ref_point is not None:
+            ref_point = ref_point.to(self.baseline_Y)
+        Y_bounds = self._get_Y_normalization_bounds(
+            Y=self.baseline_Y, ref_point=ref_point
+        )
+        if ref_point is not None:
+            ref_point = normalize(ref_point.unsqueeze(0), bounds=Y_bounds).squeeze(0)
+
+        def chebyshev_obj(Y: Tensor, X: Optional[Tensor] = None) -> Tensor:
+            Y = self.preprocessing_function(Y)
+            Y = normalize(Y, bounds=Y_bounds)
+            if ref_point is not None:
+                Y = Y - ref_point
+            product = torch.einsum("...m,m->...m", Y, self.chebyshev_weights)
+            return product.min(dim=-1).values
+
+        self._chebyshev_objective = chebyshev_obj
+
+    def _prepare_samples(self, samples: Tensor) -> Tensor:
+        r"""Prepare samples for VaR computation by applying the Chebyshev scalarization
+        and separating out the q-batch dimension.
+
+        Args:
+            samples: A `sample_shape x batch_shape x (q * n_w) x m`-dim tensor of
+                posterior samples. The q-batches should be ordered so that each
+                `n_w` block of samples correspond to the same input.
+
+        Returns:
+            A `sample_shape x batch_shape x q x n_w`-dim tensor of prepared samples.
+        """
+        return VaR._prepare_samples(
+            self, self.chebyshev_objective(samples).unsqueeze(-1)
+        )
+
+    @staticmethod
+    def _get_Y_normalization_bounds(
+        Y: Tensor,
+        ref_point: Optional[Tensor] = None,
+    ) -> Tensor:
+        r"""Get normalization bounds for scalarizations.
+
+        Args:
+            Y: A `n x m`-dim tensor of outcomes.
+            ref_point: The reference point.
+
+        Returns:
+            A `2 x m`-dim tensor containing the normalization bounds.
+        """
+        if ref_point is not None:
+            ref_point = ref_point.to(Y)
+
+        if Y.ndim != 2:
+            raise UnsupportedError("Batched Y is not supported.")
+
+        if Y.shape[-2] == 0:
+            # If there are no observations, return standard bounds.
+            Y_bounds = torch.zeros(2, Y.shape[-1], dtype=Y.dtype, device=Y.device)
+            Y_bounds[1] = 1.0
+            return Y_bounds
+
+        pareto_Y = Y[is_non_dominated(Y)]
+        if pareto_Y.shape[-2] == 1:
+            if ref_point is not None and (pareto_Y > ref_point).all():
+                Y_bounds = torch.cat([ref_point.unsqueeze(0), pareto_Y], dim=0)
+            else:
+                # If there is only one observation, set the bounds to be [Y_m, Y_m + 1]
+                # for each objective m. This ensures we do not divide by zero.
+                Y_bounds = torch.cat([pareto_Y, pareto_Y + 1], dim=0)
+        else:
+            if ref_point is None:
+                better_than_ref = torch.ones(
+                    pareto_Y.shape[0], device=pareto_Y.device, dtype=torch.long
+                )
+            else:
+                better_than_ref = (pareto_Y > ref_point).all(dim=-1)
+            if ref_point is not None and better_than_ref.any():
+                nadir = ref_point
+                pareto_Y = pareto_Y[better_than_ref]
+            else:
+                nadir = pareto_Y.min(dim=-2).values
+            ideal = pareto_Y.max(dim=-2).values
+            Y_bounds = torch.stack([nadir, ideal])
+
+        # If any of the lower bounds is equal to the upper bound, increase the
+        # upper bound to prevent division by zero.
+        Y_range = Y_bounds.max(dim=0).values - Y_bounds.min(dim=0).values
+        mask = Y_range <= 0
+        Y_bounds[1, mask] = Y_bounds[1, mask] + 1.0
+        return Y_bounds
