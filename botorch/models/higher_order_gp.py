@@ -63,6 +63,12 @@ class FlattenedStandardize(Standardize):
         batch_shape: torch.Size = None,
         min_stdv: float = 1e-8,
     ):
+        """
+        Args:
+            output_shape
+            batch_shape: Defaults to None.
+            min_stdv: Defaults to 1e-8.
+        """
         if batch_shape is None:
             batch_shape = torch.Size()
 

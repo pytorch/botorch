@@ -116,8 +116,7 @@ class BraninCurrin(MultiObjectiveTestProblem):
     _max_hv = 59.36011874867746  # this is approximated using NSGA-II
 
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
-        r"""Constructor for Branin-Currin.
-
+        r"""
         Args:
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the objectives.
@@ -177,6 +176,15 @@ class DH(MultiObjectiveTestProblem, ABC):
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:
+        """
+        Args:
+            dim (int)
+            noise_std (Optional[float], optional): Defaults to None.
+            negate (bool, optional): Defaults to False.
+
+        Raises:
+            ValueError
+        """
         if dim < self._min_dim:
             raise ValueError(f"dim must be >= {self._min_dim}, but got dim={dim}!")
         self.dim = dim
@@ -331,6 +339,16 @@ class DTLZ(MultiObjectiveTestProblem):
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:
+        """
+        Args:
+            dim (int)
+            num_objectives (int, optional): Defaults to 2.
+            noise_std (Optional[float], optional): Defaults to None.
+            negate (bool, optional): Defaults to False.
+
+        Raises:
+            ValueError
+        """
         if dim <= num_objectives:
             raise ValueError(
                 f"dim must be > num_objectives, but got {dim} and {num_objectives}."
@@ -591,8 +609,7 @@ class GMM(MultiObjectiveTestProblem):
         negate: bool = False,
         num_objectives: int = 2,
     ) -> None:
-        r"""Constructor.
-
+        r"""
         Args:
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the objectives.
@@ -917,6 +934,13 @@ class ZDT(MultiObjectiveTestProblem):
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:
+        """
+        Args:
+            dim
+            num_objectives: Defaults to 2.
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         if num_objectives != 2:
             raise NotImplementedError(
                 f"{type(self).__name__} currently only supports 2 objectives."
@@ -1216,6 +1240,11 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
     _max_hv = 608.4004237022673  # from NSGA-II with 90k evaluations
 
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+        """
+        Args:
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         super().__init__(noise_std=noise_std, negate=negate)
         con_bounds = torch.tensor(self._con_bounds, dtype=torch.float).transpose(-1, -2)
         self.register_buffer("con_bounds", con_bounds)
@@ -1316,6 +1345,12 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:
+        """
+        Args:
+            dim
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         if dim < 2:
             raise ValueError("dim must be greater than or equal to 2.")
         self.dim = dim

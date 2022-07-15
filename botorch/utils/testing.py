@@ -98,6 +98,12 @@ class MockPosterior(Posterior):
     r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
     def __init__(self, mean=None, variance=None, samples=None):
+        """
+        Args:
+            mean: Defaults to None.
+            variance: Defaults to None.
+            samples: Defaults to None.
+        """
         self._mean = mean
         self._variance = variance
         self._samples = samples
@@ -154,6 +160,10 @@ class MockModel(Model):
     r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
     def __init__(self, posterior: MockPosterior) -> None:
+        """
+        Args:
+            posterior
+        """
         super(Model, self).__init__()
         self._posterior = posterior
 
@@ -191,7 +201,7 @@ class MockModel(Model):
 class MockAcquisitionFunction:
     r"""Mock acquisition function object that implements dummy methods."""
 
-    def __init__(self):
+    def __init__(self):  # noqa: D107
         self.model = None
         self.X_pending = None
 

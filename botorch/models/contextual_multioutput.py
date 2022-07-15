@@ -22,22 +22,6 @@ from torch.nn import ModuleList
 class LCEMGP(MultiTaskGP):
     r"""The Multi-Task GP with the latent context embedding multioutput
     (LCE-M) kernel.
-
-    Args:
-        train_X: (n x d) X training data.
-        train_Y: (n x 1) Y training data.
-        task_feature: column index of train_X to get context indices.
-        context_cat_feature: (n_contexts x k) one-hot encoded context
-            features. Rows are ordered by context indices. k equals to
-            number of categorical variables. If None, task indices will
-            be used and k = 1
-        context_emb_feature: (n_contexts x m) pre-given continuous
-            embedding features. Rows are ordered by context indices.
-        embs_dim_list: Embedding dimension for each categorical variable.
-            The length equals to k. If None, emb dim is set to 1 for each
-            categorical variable.
-        output_tasks: A list of task indices for which to compute model
-            outputs for. If omitted, return outputs for all task indices.
     """
 
     def __init__(
@@ -52,6 +36,23 @@ class LCEMGP(MultiTaskGP):
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
+        """
+        Args:
+            train_X: (n x d) X training data.
+            train_Y: (n x 1) Y training data.
+            task_feature: column index of train_X to get context indices.
+            context_cat_feature: (n_contexts x k) one-hot encoded context
+                features. Rows are ordered by context indices. k equals to
+                number of categorical variables. If None, task indices will
+                be used and k = 1
+            context_emb_feature: (n_contexts x m) pre-given continuous
+                embedding features. Rows are ordered by context indices.
+            embs_dim_list: Embedding dimension for each categorical variable.
+                The length equals to k. If None, emb dim is set to 1 for each
+                categorical variable.
+            output_tasks: A list of task indices for which to compute model
+                outputs for. If omitted, return outputs for all task indices.
+        """
         super().__init__(
             train_X=train_X,
             train_Y=train_Y,
@@ -149,25 +150,7 @@ class LCEMGP(MultiTaskGP):
 class FixedNoiseLCEMGP(LCEMGP):
     r"""The Multi-Task GP the latent context embedding multioutput
     (LCE-M) kernel, with known observation noise.
-
-    Args:
-        train_X: (n x d) X training data.
-        train_Y: (n x 1) Y training data.
-        train_Yvar: (n x 1) Noise variances of each training Y.
-        task_feature: column index of train_X to get context indices.
-        context_cat_feature: (n_contexts x k) one-hot encoded context
-            features. Rows are ordered by context indices. k equals to
-            number of categorical variables. If None, task indices will
-            be used and k = 1.
-        context_emb_feature: (n_contexts x m) pre-given continuous
-            embedding features. Rows are ordered by context indices.
-        embs_dim_list: Embedding dimension for each categorical variable.
-            The length equals to k. If None, emb dim is set to 1 for each
-            categorical variable.
-        output_tasks: A list of task indices for which to compute model
-            outputs for. If omitted, return outputs for all task indices.
     """
-
     def __init__(
         self,
         train_X: Tensor,
@@ -179,6 +162,24 @@ class FixedNoiseLCEMGP(LCEMGP):
         embs_dim_list: Optional[List[int]] = None,
         output_tasks: Optional[List[int]] = None,
     ) -> None:
+        """
+        Args:
+            train_X: (n x d) X training data.
+            train_Y: (n x 1) Y training data.
+            train_Yvar: (n x 1) Noise variances of each training Y.
+            task_feature: column index of train_X to get context indices.
+            context_cat_feature: (n_contexts x k) one-hot encoded context
+                features. Rows are ordered by context indices. k equals to
+                number of categorical variables. If None, task indices will
+                be used and k = 1.
+            context_emb_feature: (n_contexts x m) pre-given continuous
+                embedding features. Rows are ordered by context indices.
+            embs_dim_list: Embedding dimension for each categorical variable.
+                The length equals to k. If None, emb dim is set to 1 for each
+                categorical variable.
+            output_tasks: A list of task indices for which to compute model
+                outputs for. If omitted, return outputs for all task indices.
+        """
         self._validate_tensor_args(X=train_X, Y=train_Y, Yvar=train_Yvar)
         super().__init__(
             train_X=train_X,

@@ -33,6 +33,11 @@ class MESMockModel(MockModel):
     r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
     def __init__(self, num_outputs=1, batch_shape=None):
+        """
+        Args:
+            num_outputs: Defaults to 1.
+            batch_shape: Defaults to None.
+        """
         super().__init__(None)
         self._num_outputs = num_outputs
         self._batch_shape = torch.Size() if batch_shape is None else batch_shape

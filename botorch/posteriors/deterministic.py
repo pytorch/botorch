@@ -22,6 +22,10 @@ class DeterministicPosterior(Posterior):
     r"""Deterministic posterior."""
 
     def __init__(self, values: Tensor) -> None:
+        """
+        Args:
+            values
+        """
         self.values = values
 
     @property

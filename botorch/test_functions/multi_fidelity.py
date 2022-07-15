@@ -76,6 +76,11 @@ class AugmentedHartmann(SyntheticTestFunction):
     _check_grad_at_opt = False
 
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+        """
+        Args:
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         super().__init__(noise_std=noise_std, negate=negate)
         self.register_buffer("ALPHA", torch.tensor([1.0, 1.2, 3.0, 3.2]))
         A = [
@@ -124,6 +129,12 @@ class AugmentedRosenbrock(SyntheticTestFunction):
     def __init__(
         self, dim=3, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
+        """
+        Args:
+            dim: Defaults to 3.
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         if dim < 3:
             raise ValueError(
                 "AugmentedRosenbrock must be defined it at least 3 dimensions"

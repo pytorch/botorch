@@ -49,6 +49,12 @@ class NotSoAbstractInputTransform(InputTransform, Module):
         transform_on_eval,
         transform_on_fantasize=True,
     ):
+        """
+        Args:
+            transform_on_train
+            transform_on_eval
+            transform_on_fantasize: Defaults to True.
+        """
         super().__init__()
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
