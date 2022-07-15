@@ -16,6 +16,7 @@ The release log for BoTorch.
 * Add outcome_transform to `FixedNoiseMultiTaskGP` (#1255).
 * Support Scalable Constrained Bayesian Optimization (#1257).
 * Support `SaasFullyBayesianSingleTaskGP` in `prune_inferior_points` (#1260).
+* Implement MARS as a risk measure (#1303).
 * Add MARS tutorial (#1305).
 
 #### Other Changes
@@ -29,15 +30,19 @@ The release log for BoTorch.
 * Handle `X_pending` properly in `FixedFeatureAcquisition` (#1233, #1234).
 * PE and PLBO support in Ax (#1240, #1241).
 * Remove `model.train` call from `get_X_baseline` for better caching (#1289).
+* Support `inf` values in `bounds` argument of `optimize_acqf` (#1302).
 
 #### Bug Fixes
 * Update `get_gp_samples` to support input / outcome transforms (#1201).
+* Fix cached Cholesky sampling in `qNEHVI` when using `Standardize` outcome transform (#1215).
 * Make `task_feature` as required input in `MultiTaskGP.construct_inputs` (#1246).
 * Fix CUDA tests (#1253).
 * Fix `FixedSingleSampleModel` dtype/device conversion (#1254).
 * Prevent inappropriate transforms by putting input transforms into train mode before converting models (#1283).
 * Fix `sample_points_around_best` when using 20 dimensional inputs or `prob_perturb` (#1290).
 * Skip bound validation in `optimize_acqf` if inequality constraints are specified (#1297).
+* Properly handle RFFs when used with a `ModelList` with individual transforms (#1299).
+* Update `PosteriorList` to support deterministic-only models and fix `event_shape` (#1300).
 
 #### Documentation
 * Add a note about observation noise in the posterior in `fit_model_with_torch_optimizer` notebook (#1196).
