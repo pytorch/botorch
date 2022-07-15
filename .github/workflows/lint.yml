@@ -43,7 +43,7 @@ jobs:
         python-version: 3.7
     - name: Install dependencies
       run: |
-        pip install flake8
+        pip install flake8 flake8-docstrings
     - name: Flake8
       run: |
         flake8
