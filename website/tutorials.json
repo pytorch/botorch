@@ -55,6 +55,10 @@
     {
       "id": "constrained_multi_objective_bo",
       "title": "Constrained multi-objective optimization with qNEHVI and qParEGO"
+    },
+    {
+      "id": "robust_multi_objective_bo",
+      "title": "Robust multi-objective Bayesian optimization under input noise"
     }
   ],
   "Bite-Sized Tutorials": [
