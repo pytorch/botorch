@@ -1,0 +1,810 @@
+<!DOCTYPE html><html lang=""><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.6.2/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.6.2/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.6.2/img/botorch.png"/><link rel="shortcut icon" href="/v/0.6.2/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.6.2/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.6.2/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.6.2/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.6.2/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.6.2/css/main.css"/><script src="/v/0.6.2/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.6.2/"><img class="logo" src="/v/0.6.2/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.6.2/versions"><h3>0.6.2</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.6.2/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.6.2/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.6.2/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.6.2/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span></span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Tutorials</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/">Overview</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Using BoTorch with Ax</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/custom_botorch_model_in_ax">Using a custom BoTorch model</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/v/0.6.2/tutorials/custom_acquisition">Writing a custom acquisition function</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Full Optimization Loops</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/closed_loop_botorch_only">q-Noisy Constrained EI</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/preference_bo">Bayesian optimization with pairwise comparison data</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/turbo_1">Trust Region Bayesian Optimization (TuRBO)</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/bo_with_warped_gp">Bayesian optimization with input warping</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/thompson_sampling">Bayesian optimization with large-scale Thompson sampling</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Multi-Objective Bayesian Optimization</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/multi_objective_bo">Multi-objective optimization with qEHVI, qNEHVI, and qNParEGO</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/constrained_multi_objective_bo">Constrained multi-objective optimization with qNEHVI and qParEGO</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Bite-Sized Tutorials</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/fit_model_with_torch_optimizer">Fitting a model using torch.optim</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/compare_mc_analytic_acquisition">Comparing analytic and MC Expected Improvement</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/optimize_with_cmaes">Acquisition function optimization with CMA-ES</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/optimize_stochastic">Acquisition function optimization with torch.optim</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/batch_mode_cross_validation">Using batch evaluation for fast cross-validation</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/one_shot_kg">The one-shot Knowledge Gradient acquisition function</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/max_value_entropy">The max-value entropy search acquisition function</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/GIBBON_for_efficient_batch_entropy_search">The GIBBON acquisition function for efficient batch entropy search</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/risk_averse_bo_with_environmental_variables">Risk averse Bayesian optimization with environmental variables</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/risk_averse_bo_with_input_perturbations">Risk averse Bayesian optimization with input perturbations</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/constraint_active_search">Constraint Active Search for Multiobjective Experimental Design</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Advanced Usage</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/meta_learning_with_rgpe">Meta-learning with RGPE</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/vae_mnist">High-dimensional optimization with VAEs</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/multi_fidelity_bo">Multi-fidelity Bayesian optimization using KG</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/discrete_multi_fidelity_bo">Multi-fidelity Bayesian optimization with discrete fidelities using KG</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/composite_bo_with_hogp">Composite Bayesian optimization with the High Order Gaussian Process</a></li><li class="navListItem"><a class="navItem" href="/v/0.6.2/tutorials/composite_mtbo">Composite Bayesian Optimization with Multi-Task Gaussian Processes</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="tutorialBody">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<div class="notebook">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Upper-Confidence-Bound-(UCB)">Upper Confidence Bound (UCB)<a class="anchor-link" href="#Upper-Confidence-Bound-(UCB)">¶</a></h3><p>The Upper Confidence Bound (UCB) acquisition function balances exploration and exploitation by assigning a score of $\mu + \sqrt{\beta} \cdot \sigma$ if the posterior distribution is normal with mean $\mu$ and variance $\sigma^2$. This "analytic" version is implemented in the <code>UpperConfidenceBound</code> class. The Monte Carlo version of UCB is implemented in the <code>qUpperConfidenceBound</code> class, which also allows for q-batches of size greater than one. (The derivation of q-UCB is given in Appendix A of <a href="https://arxiv.org/pdf/1712.00424.pdf">Wilson et. al., 2017</a>).</p>
+<h3 id="A-scalarized-version-of-q-UCB">A scalarized version of q-UCB<a class="anchor-link" href="#A-scalarized-version-of-q-UCB">¶</a></h3><p>Suppose now that we are in a multi-output setting, where, e.g., we model the effects of a design on multiple metrics. We first show a simple extension of the q-UCB acquisition function that accepts a multi-output model and performs q-UCB on a scalarized version of the multiple outputs, achieved via a vector of weights. Implementing a new acquisition function in botorch is easy; one simply needs to implement the constructor and a <code>forward</code> method.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [1]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">plotly.io</span> <span class="k">as</span> <span class="nn">pio</span>
+<span class="c1"># Ax uses Plotly to produce interactive plots. These are great for viewing and analysis,</span>
+<span class="c1"># though they also lead to large file sizes, which is not ideal for files living in GH.</span>
+<span class="c1"># Changing the default to `png` strips the interactive components to get around this.</span>
+<span class="n">pio</span><span class="o">.</span><span class="n">renderers</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="s2">"png"</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [2]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">MCAcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.utils</span> <span class="kn">import</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+
+
+<span class="k">class</span> <span class="nc">qScalarizedUpperConfidenceBound</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># we use the AcquisitionFunction constructor, since that of</span>
+        <span class="c1"># MCAcquisitionFunction performs some validity checks that we don't want here</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">collapse_batch_dims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">sampler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"beta"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">beta</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"weights"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">weights</span><span class="p">))</span>
+
+    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">"""Evaluate scalarized qUCB on the candidate set `X`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim</span>
+<span class="sd">                design points each.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tensor: A `(b)`-dim Tensor of Upper Confidence Bound values at the</span>
+<span class="sd">                given design points `X`.</span>
+<span class="sd">        """</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>  <span class="c1"># n x b x q x o</span>
+        <span class="n">scalarized_samples</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">)</span>  <span class="c1"># n x b x q</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span>  <span class="c1"># b x q x o</span>
+        <span class="n">scalarized_mean</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">)</span>  <span class="c1"># b x q</span>
+        <span class="n">ucb_samples</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">scalarized_mean</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">scalarized_samples</span> <span class="o">-</span> <span class="n">scalarized_mean</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ucb_samples</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[pyKeOps]: Warning, no cuda detected. Switching to cpu only.
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Note that <code>qScalarizedUpperConfidenceBound</code> is very similar to <code>qUpperConfidenceBound</code> and only requires a few lines of new code to accomodate scalarization of multiple outputs. The <code>@t_batch_mode_transform</code> decorator ensures that the input <code>X</code> has an explicit t-batch dimension (code comments are added with shapes for clarity).</p>
+<p>See the end of this tutorial for a quick and easy way of achieving the same scalarization effect using <code>ScalarizedPosteriorTransform</code>.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Ad-hoc-testing-q-Scalarized-UCB">Ad-hoc testing q-Scalarized-UCB<a class="anchor-link" href="#Ad-hoc-testing-q-Scalarized-UCB">¶</a></h4><p>Before hooking the newly defined acquisition function into a Bayesian Optimization loop, we should test it. For this we'll just make sure that it properly evaluates on a compatible multi-output model. Here we just define a basic multi-output <code>SingleTaskGP</code> model trained on synthetic data.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [3]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_model</span>
+<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.utils</span> <span class="kn">import</span> <span class="n">standardize</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+
+
+<span class="c1"># generate synthetic data</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]),</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">standardize</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>  <span class="c1"># standardize to zero mean unit variance</span>
+
+<span class="c1"># construct and fit the multi-output model</span>
+<span class="n">gp</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+<span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">gp</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">gp</span><span class="p">)</span>
+<span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+
+<span class="c1"># construct the acquisition function</span>
+<span class="n">qSUCB</span> <span class="o">=</span> <span class="n">qScalarizedUpperConfidenceBound</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]))</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [4]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># evaluate on single q-batch with q=3</span>
+<span class="n">qSUCB</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt output_prompt">Out[4]:</div>
+<div class="output_text output_subarea output_execute_result">
+<pre>tensor([0.5977], grad_fn=&lt;MeanBackward1&gt;)</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [5]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># batch-evaluate on two q-batches with q=3</span>
+<span class="n">qSUCB</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt output_prompt">Out[5]:</div>
+<div class="output_text output_subarea output_execute_result">
+<pre>tensor([0.3397, 0.7385], grad_fn=&lt;MeanBackward1&gt;)</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="A-scalarized-version-of-analytic-UCB-(q=1-only)">A scalarized version of analytic UCB (<code>q=1</code> only)<a class="anchor-link" href="#A-scalarized-version-of-analytic-UCB-(q=1-only)">¶</a></h3><p>We can also write an <em>analytic</em> version of UCB for a multi-output model, assuming a multivariate normal posterior and <code>q=1</code>. The new class <code>ScalarizedUpperConfidenceBound</code> subclasses <code>AnalyticAcquisitionFunction</code> instead of <code>MCAcquisitionFunction</code>. In contrast to the MC version, instead of using the weights on the MC samples, we directly scalarize the mean vector $\mu$ and covariance matrix $\Sigma$ and apply standard UCB on the univariate normal distribution, which has mean $w^T \mu$ and variance $w^T \Sigma w$. In addition to the <code>@t_batch_transform</code> decorator, here we are also using <code>expected_q=1</code> to ensure the input <code>X</code> has a <code>q=1</code>.</p>
+<p><em>Note:</em> BoTorch also provides a <code>ScalarizedObjective</code> abstraction that can be used with any existing analytic acqusition functions and automatically performs the scalarization we implement manually below. See the end of this tutorial for a usage example.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [6]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AnalyticAcquisitionFunction</span>
+
+
+<span class="k">class</span> <span class="nc">ScalarizedUpperConfidenceBound</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">beta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># we use the AcquisitionFunction constructor, since that of </span>
+        <span class="c1"># AnalyticAcquisitionFunction performs some validity checks that we don't want here</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="o">=</span> <span class="n">maximize</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"beta"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">beta</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"weights"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">weights</span><span class="p">))</span>
+
+    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">"""Evaluate the Upper Confidence Bound on the candidate set X using scalarization</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `(b) x d`-dim Tensor of `(b)` t-batches of `d`-dim design</span>
+<span class="sd">                points each.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `(b)`-dim Tensor of Upper Confidence Bound values at the given</span>
+<span class="sd">                design points `X`.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># b x o</span>
+        <span class="n">scalarized_mean</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">)</span>  <span class="c1"># b</span>
+        <span class="n">covs</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">covariance_matrix</span>  <span class="c1"># b x o x o</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># 1 x o x 1 (assume single batch dimension)</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>  <span class="c1"># b x o x 1</span>
+        <span class="n">weights_transpose</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># b x 1 x o</span>
+        <span class="n">scalarized_variance</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">bmm</span><span class="p">(</span>
+            <span class="n">weights_transpose</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">bmm</span><span class="p">(</span><span class="n">covs</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span>  <span class="c1"># b</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">expand_as</span><span class="p">(</span><span class="n">scalarized_mean</span><span class="p">)</span> <span class="o">*</span> <span class="n">scalarized_variance</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">scalarized_mean</span> <span class="o">+</span> <span class="n">delta</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">scalarized_mean</span> <span class="o">-</span> <span class="n">delta</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Ad-hoc-testing-Scalarized-UCB">Ad-hoc testing Scalarized-UCB<a class="anchor-link" href="#Ad-hoc-testing-Scalarized-UCB">¶</a></h4><p>Notice that we pass in an explicit q-batch dimension for consistency, even though <code>q=1</code>.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [7]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># construct the acquisition function</span>
+<span class="n">SUCB</span> <span class="o">=</span> <span class="n">ScalarizedUpperConfidenceBound</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]))</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [8]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># evaluate on single point</span>
+<span class="n">SUCB</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt output_prompt">Out[8]:</div>
+<div class="output_text output_subarea output_execute_result">
+<pre>tensor([0.2210], grad_fn=&lt;AddBackward0&gt;)</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [9]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># batch-evaluate on 3 points</span>
+<span class="n">SUCB</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt output_prompt">Out[9]:</div>
+<div class="output_text output_subarea output_execute_result">
+<pre>tensor([-0.4028,  0.3191, -0.2814], grad_fn=&lt;AddBackward0&gt;)</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Using-the-custom-acquisition-function-with-Ax's-Service-API">Using the custom acquisition function with Ax's Service API<a class="anchor-link" href="#Using-the-custom-acquisition-function-with-Ax's-Service-API">¶</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Registering-the-new-acquisition-function">Registering the new acquisition function<a class="anchor-link" href="#Registering-the-new-acquisition-function">¶</a></h3><p>In order to use an acquisition function, Ax needs to know how to generate inputs to construct the acquisition function.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [10]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
+
+<span class="kn">from</span> <span class="nn">botorch.acquisition.input_constructors</span> <span class="kn">import</span> <span class="n">acqf_input_constructor</span>
+
+
+<span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">ScalarizedUpperConfidenceBound</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">construct_inputs_scalarized_ucb</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
+        <span class="s2">"beta"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">),</span>
+        <span class="s2">"weights"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">),</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Setting-up-a-GenerationStrategy-using-BOTORCH_MODULAR-with-our-custom-acquistion-function.">Setting up a <code>GenerationStrategy</code> using <code>BOTORCH_MODULAR</code> with our custom acquistion function.<a class="anchor-link" href="#Setting-up-a-GenerationStrategy-using-BOTORCH_MODULAR-with-our-custom-acquistion-function.">¶</a></h3><p><code>BOTORCH_MODULAR</code> is a convenient wrapper implemented in Ax that facilitates the use of custom BoTorch models and acquisition functions in Ax experiments. In order to customize the way the candidates are generated, we need to construct a new <code>GenerationStrategy</code> and pass it into the <code>AxClient</code>.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [11]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ax.modelbridge.generation_strategy</span> <span class="kn">import</span> <span class="n">GenerationStep</span><span class="p">,</span> <span class="n">GenerationStrategy</span>
+<span class="kn">from</span> <span class="nn">ax.modelbridge.registry</span> <span class="kn">import</span> <span class="n">Models</span>
+
+
+<span class="n">gs</span> <span class="o">=</span> <span class="n">GenerationStrategy</span><span class="p">(</span>
+    <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+        <span class="c1"># Quasi-random initialization step</span>
+        <span class="n">GenerationStep</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">Models</span><span class="o">.</span><span class="n">SOBOL</span><span class="p">,</span>
+            <span class="n">num_trials</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>  <span class="c1"># How many trials should be produced from this generation step</span>
+            <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"seed"</span><span class="p">:</span> <span class="mi">999</span><span class="p">},</span>  <span class="c1"># Any kwargs you want passed into the model</span>
+        <span class="p">),</span>
+        <span class="c1"># Bayesian optimization step using the custom acquisition function</span>
+        <span class="n">GenerationStep</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">Models</span><span class="o">.</span><span class="n">BOTORCH_MODULAR</span><span class="p">,</span>
+            <span class="n">num_trials</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># No limitation on how many trials should be produced from this step</span>
+            <span class="c1"># For `BOTORCH_MODULAR`, we pass in kwargs to specify what surrogate or acquisition function to use.</span>
+            <span class="c1"># `acquisition_options` specifies the set of additional arguments to pass into the input constructor.</span>
+            <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"botorch_acqf_class"</span><span class="p">:</span> <span class="n">ScalarizedUpperConfidenceBound</span><span class="p">,</span>
+                <span class="s2">"acquisition_options"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"beta"</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="s2">"weights"</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]},</span>
+            <span class="p">},</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Setting-up-the-experiment">Setting up the experiment<a class="anchor-link" href="#Setting-up-the-experiment">¶</a></h3><p>We will set up a simple experiment to optimize a simple scalarization of the BraninCurrin function (per the weights above). A detailed tutorial on Service API can be found <a href="https://ax.dev/tutorials/gpei_hartmann_service.html">here</a>.</p>
+<p>In order to use the <code>GenerationStrategy</code> we just created, we will pass it into the <code>AxClient</code>.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [12]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ax.service.ax_client</span> <span class="kn">import</span> <span class="n">AxClient</span>
+<span class="kn">from</span> <span class="nn">ax.service.utils.instantiation</span> <span class="kn">import</span> <span class="n">ObjectiveProperties</span>
+<span class="kn">from</span> <span class="nn">botorch.test_functions</span> <span class="kn">import</span> <span class="n">BraninCurrin</span>
+
+
+<span class="c1"># Initialize the client - AxClient offers a convenient API to control the experiment</span>
+<span class="n">ax_client</span> <span class="o">=</span> <span class="n">AxClient</span><span class="p">(</span><span class="n">generation_strategy</span><span class="o">=</span><span class="n">gs</span><span class="p">)</span>
+<span class="c1"># Setup the experiment</span>
+<span class="n">ax_client</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"branincurrin_test_experiment"</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">"name"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"x</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"range"</span><span class="p">,</span>
+            <span class="c1"># It is crucial to use floats for the bounds, i.e., 0.0 rather than 0.</span>
+            <span class="c1"># Otherwise, the parameter would </span>
+            <span class="s2">"bounds"</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="p">],</span>
+    <span class="n">objectives</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">"branin"</span><span class="p">:</span> <span class="n">ObjectiveProperties</span><span class="p">(</span><span class="n">minimize</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="s2">"currin"</span><span class="p">:</span> <span class="n">ObjectiveProperties</span><span class="p">(</span><span class="n">minimize</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+<span class="c1"># Setup a function to evaluate the trials</span>
+<span class="n">branincurrin</span> <span class="o">=</span> <span class="n">BraninCurrin</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">parameters</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">"x</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]])</span>
+    <span class="n">bc_eval</span> <span class="o">=</span> <span class="n">branincurrin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="c1"># In our case, standard error is 0, since we are computing a synthetic function.</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"branin"</span><span class="p">:</span> <span class="p">(</span><span class="n">bc_eval</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">),</span> <span class="s2">"currin"</span><span class="p">:</span> <span class="p">(</span><span class="n">bc_eval</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>[INFO 03-10 14:54:47] ax.service.ax_client: Starting optimization with verbose logging. To disable logging, set the `verbose_logging` argument to `False`. Note that float values in the logs are rounded to 6 decimal points.
+[INFO 03-10 14:54:47] ax.service.utils.instantiation: Due to non-specification, we will use the heuristic for selecting objective thresholds.
+[INFO 03-10 14:54:47] ax.service.utils.instantiation: Inferred value type of ParameterType.FLOAT for parameter x1. If that is not the expected value type, you can explicity specify 'value_type' ('int', 'float', 'bool' or 'str') in parameter dict.
+[INFO 03-10 14:54:47] ax.service.utils.instantiation: Inferred value type of ParameterType.FLOAT for parameter x2. If that is not the expected value type, you can explicity specify 'value_type' ('int', 'float', 'bool' or 'str') in parameter dict.
+[INFO 03-10 14:54:47] ax.service.utils.instantiation: Created search space: SearchSpace(parameters=[RangeParameter(name='x1', parameter_type=FLOAT, range=[0.0, 1.0]), RangeParameter(name='x2', parameter_type=FLOAT, range=[0.0, 1.0])], parameter_constraints=[]).
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Running-the-BO-loop">Running the BO loop<a class="anchor-link" href="#Running-the-BO-loop">¶</a></h3><p>Ax makes this part super simple!</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [13]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">parameters</span><span class="p">,</span> <span class="n">trial_index</span> <span class="o">=</span> <span class="n">ax_client</span><span class="o">.</span><span class="n">get_next_trial</span><span class="p">()</span>
+    <span class="c1"># Local evaluation here can be replaced with deployment to external system.</span>
+    <span class="n">ax_client</span><span class="o">.</span><span class="n">complete_trial</span><span class="p">(</span><span class="n">trial_index</span><span class="o">=</span><span class="n">trial_index</span><span class="p">,</span> <span class="n">raw_data</span><span class="o">=</span><span class="n">evaluate</span><span class="p">(</span><span class="n">parameters</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>[INFO 03-10 14:54:47] ax.service.ax_client: Generated new trial 0 with parameters {'x1': 0.62873, 'x2': 0.51481}.
+[INFO 03-10 14:54:47] ax.service.ax_client: Completed trial 0 with data: {'branin': (46.244598, 0.0), 'currin': (6.842319, 0.0)}.
+[INFO 03-10 14:54:47] ax.service.ax_client: Generated new trial 1 with parameters {'x1': 0.434883, 'x2': 0.396266}.
+[INFO 03-10 14:54:47] ax.service.ax_client: Completed trial 1 with data: {'branin': (14.735401, 0.0), 'currin': (8.740173, 0.0)}.
+[INFO 03-10 14:54:47] ax.service.ax_client: Generated new trial 2 with parameters {'x1': 0.075645, 'x2': 0.934926}.
+[INFO 03-10 14:54:47] ax.service.ax_client: Completed trial 2 with data: {'branin': (2.808084, 0.0), 'currin': (4.10731, 0.0)}.
+[INFO 03-10 14:54:47] ax.service.ax_client: Generated new trial 3 with parameters {'x1': 0.863245, 'x2': 0.038764}.
+[INFO 03-10 14:54:47] ax.service.ax_client: Completed trial 3 with data: {'branin': (9.956846, 0.0), 'currin': (10.342199, 0.0)}.
+[INFO 03-10 14:54:47] ax.service.ax_client: Generated new trial 4 with parameters {'x1': 0.953918, 'x2': 0.808236}.
+[INFO 03-10 14:54:47] ax.service.ax_client: Completed trial 4 with data: {'branin': (95.420815, 0.0), 'currin': (4.715139, 0.0)}.
+[INFO 03-10 14:54:47] ax.service.ax_client: Generated new trial 5 with parameters {'x1': 1.0, 'x2': 0.343958}.
+[INFO 03-10 14:54:47] ax.service.ax_client: Completed trial 5 with data: {'branin': (6.59323, 0.0), 'currin': (7.800423, 0.0)}.
+[INFO 03-10 14:54:47] ax.service.ax_client: Generated new trial 6 with parameters {'x1': 0.545884, 'x2': 0.0}.
+[INFO 03-10 14:54:47] ax.service.ax_client: Completed trial 6 with data: {'branin': (5.420973, 0.0), 'currin': (11.428982, 0.0)}.
+[INFO 03-10 14:54:48] ax.service.ax_client: Generated new trial 7 with parameters {'x1': 0.123583, 'x2': 0.0}.
+[INFO 03-10 14:54:48] ax.service.ax_client: Completed trial 7 with data: {'branin': (151.348923, 0.0), 'currin': (12.425909, 0.0)}.
+[INFO 03-10 14:54:48] ax.service.ax_client: Generated new trial 8 with parameters {'x1': 0.04517, 'x2': 0.0}.
+[INFO 03-10 14:54:48] ax.service.ax_client: Completed trial 8 with data: {'branin': (240.225937, 0.0), 'currin': (7.476871, 0.0)}.
+[INFO 03-10 14:54:48] ax.service.ax_client: Generated new trial 9 with parameters {'x1': 0.120646, 'x2': 0.032784}.
+[INFO 03-10 14:54:49] ax.service.ax_client: Completed trial 9 with data: {'branin': (142.034164, 0.0), 'currin': (12.316961, 0.0)}.
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Viewing-trials-and-plotting-the-Pareto-frontier">Viewing trials and plotting the Pareto frontier<a class="anchor-link" href="#Viewing-trials-and-plotting-the-Pareto-frontier">¶</a></h3><p>View the trials attached to the experiment.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [14]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">ax_client</span><span class="o">.</span><span class="n">generation_strategy</span><span class="o">.</span><span class="n">trials_as_df</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>[INFO 03-10 14:54:49] ax.modelbridge.generation_strategy: Note that parameter values in dataframe are rounded to 2 decimal points; the values in the dataframe are thus not the exact ones suggested by Ax in trials.
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="prompt output_prompt">Out[14]:</div>
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>Generation Step</th>
+<th>Generation Model</th>
+<th>Trial Index</th>
+<th>Trial Status</th>
+<th>Arm Parameterizations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>0</td>
+<td>Sobol</td>
+<td>0</td>
+<td>COMPLETED</td>
+<td>{'0_0': {'x1': 0.63, 'x2': 0.51}}</td>
+</tr>
+<tr>
+<th>1</th>
+<td>0</td>
+<td>Sobol</td>
+<td>1</td>
+<td>COMPLETED</td>
+<td>{'1_0': {'x1': 0.43, 'x2': 0.4}}</td>
+</tr>
+<tr>
+<th>2</th>
+<td>0</td>
+<td>Sobol</td>
+<td>2</td>
+<td>COMPLETED</td>
+<td>{'2_0': {'x1': 0.08, 'x2': 0.93}}</td>
+</tr>
+<tr>
+<th>3</th>
+<td>0</td>
+<td>Sobol</td>
+<td>3</td>
+<td>COMPLETED</td>
+<td>{'3_0': {'x1': 0.86, 'x2': 0.04}}</td>
+</tr>
+<tr>
+<th>4</th>
+<td>0</td>
+<td>Sobol</td>
+<td>4</td>
+<td>COMPLETED</td>
+<td>{'4_0': {'x1': 0.95, 'x2': 0.81}}</td>
+</tr>
+<tr>
+<th>5</th>
+<td>1</td>
+<td>BoTorch</td>
+<td>5</td>
+<td>COMPLETED</td>
+<td>{'5_0': {'x1': 1.0, 'x2': 0.34}}</td>
+</tr>
+<tr>
+<th>6</th>
+<td>1</td>
+<td>BoTorch</td>
+<td>6</td>
+<td>COMPLETED</td>
+<td>{'6_0': {'x1': 0.55, 'x2': 0.0}}</td>
+</tr>
+<tr>
+<th>7</th>
+<td>1</td>
+<td>BoTorch</td>
+<td>7</td>
+<td>COMPLETED</td>
+<td>{'7_0': {'x1': 0.12, 'x2': 0.0}}</td>
+</tr>
+<tr>
+<th>8</th>
+<td>1</td>
+<td>BoTorch</td>
+<td>8</td>
+<td>COMPLETED</td>
+<td>{'8_0': {'x1': 0.05, 'x2': 0.0}}</td>
+</tr>
+<tr>
+<th>9</th>
+<td>1</td>
+<td>BoTorch</td>
+<td>9</td>
+<td>COMPLETED</td>
+<td>{'9_0': {'x1': 0.12, 'x2': 0.03}}</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Plot the Pareto frontier.</p>
+<p>Note that we do not expect a good coverage of the Pareto frontier since we use very small number of evaluations and our acquisition function naively optimizes the sum of the two objectives.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [15]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ax.plot.pareto_frontier</span> <span class="kn">import</span> <span class="n">plot_pareto_frontier</span>
+<span class="kn">from</span> <span class="nn">ax.plot.pareto_utils</span> <span class="kn">import</span> <span class="n">compute_posterior_pareto_frontier</span>
+<span class="kn">from</span> <span class="nn">ax.utils.notebook.plotting</span> <span class="kn">import</span> <span class="n">render</span>
+
+
+<span class="n">objectives</span> <span class="o">=</span> <span class="n">ax_client</span><span class="o">.</span><span class="n">experiment</span><span class="o">.</span><span class="n">optimization_config</span><span class="o">.</span><span class="n">objective</span><span class="o">.</span><span class="n">objectives</span>
+<span class="n">frontier</span> <span class="o">=</span> <span class="n">compute_posterior_pareto_frontier</span><span class="p">(</span>
+    <span class="n">experiment</span><span class="o">=</span><span class="n">ax_client</span><span class="o">.</span><span class="n">experiment</span><span class="p">,</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">ax_client</span><span class="o">.</span><span class="n">experiment</span><span class="o">.</span><span class="n">fetch_data</span><span class="p">(),</span>
+    <span class="n">primary_objective</span><span class="o">=</span><span class="n">objectives</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span>
+    <span class="n">secondary_objective</span><span class="o">=</span><span class="n">objectives</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span>
+    <span class="n">absolute_metrics</span><span class="o">=</span><span class="p">[</span><span class="s2">"branin"</span><span class="p">,</span> <span class="s2">"currin"</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">render</span><span class="p">(</span><span class="n">plot_pareto_frontier</span><span class="p">(</span><span class="n">frontier</span><span class="p">,</span> <span class="n">CI_level</span><span class="o">=</span><span class="mf">0.90</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_png output_subarea">
+<img src="data:image/png;base64,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"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Appendix:-Using-ScalarizedPosteriorTransform">Appendix: Using <code>ScalarizedPosteriorTransform</code><a class="anchor-link" href="#Appendix:-Using-ScalarizedPosteriorTransform">¶</a></h3><p>Using the <code>ScalarizedPosteriorTransform</code> abstraction, the functionality of <code>ScalarizedUpperConfidenceBound</code> implemented above can be easily achieved in just a few lines of code. <code>PosteriorTransform</code>s can be used with both the MC and analytic acquisition functions.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [16]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">ScalarizedPosteriorTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.analytic</span> <span class="kn">import</span> <span class="n">UpperConfidenceBound</span>
+
+<span class="n">pt</span> <span class="o">=</span> <span class="n">ScalarizedPosteriorTransform</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]))</span>
+<span class="n">SUCB</span> <span class="o">=</span> <span class="n">UpperConfidenceBound</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">pt</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div></div><div class="tutorialButtonWrapper buttonWrapper"><a class="tutorialButton button" download="" href="/v/0.6.2/files/custom_acquisition.ipynb" target="_blank"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-download" class="svg-inline--fa fa-file-download fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm76.45 211.36l-96.42 95.7c-6.65 6.61-17.39 6.61-24.04 0l-96.42-95.7C73.42 337.29 80.54 320 94.82 320H160v-80c0-8.84 7.16-16 16-16h32c8.84 0 16 7.16 16 16v80h65.18c14.28 0 21.4 17.29 11.27 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>Download Tutorial Jupyter Notebook</a></div><div class="tutorialButtonWrapper buttonWrapper"><a class="tutorialButton button" download="" href="/v/0.6.2/files/custom_acquisition.py" target="_blank"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-download" class="svg-inline--fa fa-file-download fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm76.45 211.36l-96.42 95.7c-6.65 6.61-17.39 6.61-24.04 0l-96.42-95.7C73.42 337.29 80.54 320 94.82 320H160v-80c0-8.84 7.16-16 16-16h32c8.84 0 16 7.16 16 16v80h65.18c14.28 0 21.4 17.29 11.27 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>Download Tutorial Source Code</a></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.6.2/" class="nav-home"><img src="/v/0.6.2/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.6.2/docs/introduction">Introduction</a><a href="/v/0.6.2/docs/getting_started">Getting Started</a><a href="/v/0.6.2/tutorials/">Tutorials</a><a href="/v/0.6.2/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.6.2/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms Inc.</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.6.2/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

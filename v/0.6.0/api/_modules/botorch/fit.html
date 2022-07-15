@@ -1,0 +1,236 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.6.0/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.6.0/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.6.0/img/botorch.png"/><link rel="shortcut icon" href="/v/0.6.0/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.6.0/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.6.0/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.6.0/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.6.0/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.6.0/css/main.css"/><script src="/v/0.6.0/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.6.0/"><img class="logo" src="/v/0.6.0/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.6.0/versions"><h3>0.6.0</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.6.0/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.6.0/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.6.0/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.6.0/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.fit</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Utilities for model fitting.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
+
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span><span class="p">,</span> <span class="n">OptimizationWarning</span>
+<span class="kn">from</span> <span class="nn">botorch.models.converter</span> <span class="kn">import</span> <span class="n">batched_to_model_list</span><span class="p">,</span> <span class="n">model_list_to_batched</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_scipy</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="n">sample_all_priors</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls.marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls.sum_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">SumMarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.utils.errors</span> <span class="kn">import</span> <span class="n">NotPSDError</span>
+
+
+<span class="n">FAILED_CONVERSION_MSG</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Failed to convert ModelList to batched model. "</span>
+    <span class="s2">"Performing joint instead of sequential fitting."</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="fit_gpytorch_model"><a class="viewcode-back" href="../../fit.html#botorch.fit.fit_gpytorch_model">[docs]</a><span class="k">def</span> <span class="nf">fit_gpytorch_model</span><span class="p">(</span>
+    <span class="n">mll</span><span class="p">:</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">fit_gpytorch_scipy</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MarginalLogLikelihood</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Fit hyperparameters of a GPyTorch model.</span>
+
+<span class="sd">    On optimizer failures, a new initial condition is sampled from the</span>
+<span class="sd">    hyperparameter priors and optimization is retried. The maximum number of</span>
+<span class="sd">    retries can be passed in as a `max_retries` kwarg (default is 5).</span>
+
+<span class="sd">    Optimizer functions are in botorch.optim.fit.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mll: MarginalLogLikelihood to be maximized.</span>
+<span class="sd">        optimizer: The optimizer function.</span>
+<span class="sd">        kwargs: Arguments passed along to the optimizer function, including</span>
+<span class="sd">            `max_retries` and `sequential` (controls the fitting of `ModelListGP`</span>
+<span class="sd">            and `BatchedMultiOutputGPyTorchModel` models) or `approx_mll`</span>
+<span class="sd">            (whether to use gpytorch's approximate MLL computation).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        MarginalLogLikelihood with optimized parameters.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; gp = SingleTaskGP(train_X, train_Y)</span>
+<span class="sd">        &gt;&gt;&gt; mll = ExactMarginalLogLikelihood(gp.likelihood, gp)</span>
+<span class="sd">        &gt;&gt;&gt; fit_gpytorch_model(mll)</span>
+<span class="sd">    """</span>
+    <span class="n">sequential</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"sequential"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">max_retries</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"max_retries"</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">SumMarginalLogLikelihood</span><span class="p">)</span> <span class="ow">and</span> <span class="n">sequential</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">mll_</span> <span class="ow">in</span> <span class="n">mll</span><span class="o">.</span><span class="n">mlls</span><span class="p">:</span>
+            <span class="n">fit_gpytorch_model</span><span class="p">(</span>
+                <span class="n">mll</span><span class="o">=</span><span class="n">mll_</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="n">max_retries</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">mll</span>
+    <span class="k">elif</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="ow">and</span> <span class="n">sequential</span>
+    <span class="p">):</span>
+        <span class="n">tf</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>  <span class="c1"># check if backwards-conversion is possible</span>
+            <span class="c1"># remove the outcome transform since the training targets are already</span>
+            <span class="c1"># transformed and the outcome transform cannot currently be split.</span>
+            <span class="c1"># TODO: support splitting outcome transforms.</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+                <span class="n">tf</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span>
+                <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">model_list</span> <span class="o">=</span> <span class="n">batched_to_model_list</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+            <span class="n">mll_</span> <span class="o">=</span> <span class="n">SumMarginalLogLikelihood</span><span class="p">(</span><span class="n">model_list</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model_list</span><span class="p">)</span>
+            <span class="n">fit_gpytorch_model</span><span class="p">(</span>
+                <span class="n">mll</span><span class="o">=</span><span class="n">mll_</span><span class="p">,</span>
+                <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+                <span class="n">sequential</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">max_retries</span><span class="o">=</span><span class="n">max_retries</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">model_</span> <span class="o">=</span> <span class="n">model_list_to_batched</span><span class="p">(</span><span class="n">mll_</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+            <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">model_</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+            <span class="c1"># setting the transformed inputs is necessary because gpytorch</span>
+            <span class="c1"># stores the raw training inputs on the ExactGP in the</span>
+            <span class="c1"># ExactGP.__init__ call. At evaluation time, the test inputs will</span>
+            <span class="c1"># already be in the transformed space if some transforms have</span>
+            <span class="c1"># transform_on_eval set to False. ExactGP.__call__ will</span>
+            <span class="c1"># concatenate the test points with the training inputs. Therefore,</span>
+            <span class="c1"># it is important to set the ExactGP's train_inputs to also be</span>
+            <span class="c1"># transformed data using all transforms (including the transforms</span>
+            <span class="c1"># with transform_on_train set to True).</span>
+            <span class="n">mll</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">tf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">tf</span>
+            <span class="k">return</span> <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="c1"># NotImplementedError is omitted since it derives from RuntimeError</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">UnsupportedError</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">FAILED_CONVERSION_MSG</span><span class="p">,</span> <span class="n">BotorchWarning</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">tf</span>
+            <span class="k">return</span> <span class="n">fit_gpytorch_model</span><span class="p">(</span>
+                <span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">sequential</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="n">max_retries</span>
+            <span class="p">)</span>
+    <span class="c1"># retry with random samples from the priors upon failure</span>
+    <span class="n">mll</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="n">original_state_dict</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+    <span class="n">retry</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">retry</span> <span class="o">&lt;</span> <span class="n">max_retries</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">ws</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">retry</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># use normal initial conditions on first try</span>
+                <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">original_state_dict</span><span class="p">)</span>
+                <span class="n">sample_all_priors</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">mll</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimizer</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">track_iterations</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">NotPSDError</span><span class="p">:</span>
+                <span class="n">retry</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"Fitting failed on try </span><span class="si">{</span><span class="n">retry</span><span class="si">}</span><span class="s2"> due to a NotPSDError."</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+        <span class="n">has_optwarning</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">:</span>
+            <span class="c1"># Do not count reaching `maxiter` as an optimization failure.</span>
+            <span class="k">if</span> <span class="s2">"ITERATIONS REACHED LIMIT"</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">message</span><span class="p">):</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
+                    <span class="s2">"Fitting ended early due to reaching the iteration limit."</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">has_optwarning</span> <span class="o">|=</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_optwarning</span><span class="p">:</span>
+            <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">mll</span>
+        <span class="n">retry</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Fitting failed on try </span><span class="si">{</span><span class="n">retry</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Fitting failed on all retries."</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span></div>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../distributions.html">botorch.distributions</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../index.html">Documentation overview</a><ul>
+<li><a href="../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.6.0/" class="nav-home"><img src="/v/0.6.0/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.6.0/docs/introduction">Introduction</a><a href="/v/0.6.0/docs/getting_started">Getting Started</a><a href="/v/0.6.0/tutorials/">Tutorials</a><a href="/v/0.6.0/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.6.0/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Meta Platforms Inc.</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.6.0/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

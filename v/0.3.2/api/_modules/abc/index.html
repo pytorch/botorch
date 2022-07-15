@@ -1,0 +1,254 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.3.2/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.3.2/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.3.2/img/botorch.png"/><link rel="shortcut icon" href="/v/0.3.2/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.3.2/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.3.2/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.3.2/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.3.2/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.3.2/css/main.css"/><script src="/v/0.3.2/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.3.2/"><img class="logo" src="/v/0.3.2/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.3.2/versions"><h3>0.3.2</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.3.2/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.3.2/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.3.2/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for abc</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2007 Google, Inc. All Rights Reserved.</span>
+<span class="c1"># Licensed to PSF under a Contributor Agreement.</span>
+
+<span class="sd">"""Abstract Base Classes (ABCs) according to PEP 3119."""</span>
+
+
+<span class="k">def</span> <span class="nf">abstractmethod</span><span class="p">(</span><span class="n">funcobj</span><span class="p">):</span>
+    <span class="sd">"""A decorator indicating abstract methods.</span>
+
+<span class="sd">    Requires that the metaclass is ABCMeta or derived from it.  A</span>
+<span class="sd">    class that has a metaclass derived from ABCMeta cannot be</span>
+<span class="sd">    instantiated unless all of its abstract methods are overridden.</span>
+<span class="sd">    The abstract methods can be called using any of the normal</span>
+<span class="sd">    'super' call mechanisms.</span>
+
+<span class="sd">    Usage:</span>
+
+<span class="sd">        class C(metaclass=ABCMeta):</span>
+<span class="sd">            @abstractmethod</span>
+<span class="sd">            def my_abstract_method(self, ...):</span>
+<span class="sd">                ...</span>
+<span class="sd">    """</span>
+    <span class="n">funcobj</span><span class="o">.</span><span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">funcobj</span>
+
+
+<span class="k">class</span> <span class="nc">abstractclassmethod</span><span class="p">(</span><span class="nb">classmethod</span><span class="p">):</span>
+    <span class="sd">"""A decorator indicating abstract classmethods.</span>
+
+<span class="sd">    Similar to abstractmethod.</span>
+
+<span class="sd">    Usage:</span>
+
+<span class="sd">        class C(metaclass=ABCMeta):</span>
+<span class="sd">            @abstractclassmethod</span>
+<span class="sd">            def my_abstract_classmethod(cls, ...):</span>
+<span class="sd">                ...</span>
+
+<span class="sd">    'abstractclassmethod' is deprecated. Use 'classmethod' with</span>
+<span class="sd">    'abstractmethod' instead.</span>
+<span class="sd">    """</span>
+
+    <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callable</span><span class="p">):</span>
+        <span class="n">callable</span><span class="o">.</span><span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">abstractstaticmethod</span><span class="p">(</span><span class="nb">staticmethod</span><span class="p">):</span>
+    <span class="sd">"""A decorator indicating abstract staticmethods.</span>
+
+<span class="sd">    Similar to abstractmethod.</span>
+
+<span class="sd">    Usage:</span>
+
+<span class="sd">        class C(metaclass=ABCMeta):</span>
+<span class="sd">            @abstractstaticmethod</span>
+<span class="sd">            def my_abstract_staticmethod(...):</span>
+<span class="sd">                ...</span>
+
+<span class="sd">    'abstractstaticmethod' is deprecated. Use 'staticmethod' with</span>
+<span class="sd">    'abstractmethod' instead.</span>
+<span class="sd">    """</span>
+
+    <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callable</span><span class="p">):</span>
+        <span class="n">callable</span><span class="o">.</span><span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">abstractproperty</span><span class="p">(</span><span class="nb">property</span><span class="p">):</span>
+    <span class="sd">"""A decorator indicating abstract properties.</span>
+
+<span class="sd">    Requires that the metaclass is ABCMeta or derived from it.  A</span>
+<span class="sd">    class that has a metaclass derived from ABCMeta cannot be</span>
+<span class="sd">    instantiated unless all of its abstract properties are overridden.</span>
+<span class="sd">    The abstract properties can be called using any of the normal</span>
+<span class="sd">    'super' call mechanisms.</span>
+
+<span class="sd">    Usage:</span>
+
+<span class="sd">        class C(metaclass=ABCMeta):</span>
+<span class="sd">            @abstractproperty</span>
+<span class="sd">            def my_abstract_property(self):</span>
+<span class="sd">                ...</span>
+
+<span class="sd">    This defines a read-only property; you can also define a read-write</span>
+<span class="sd">    abstract property using the 'long' form of property declaration:</span>
+
+<span class="sd">        class C(metaclass=ABCMeta):</span>
+<span class="sd">            def getx(self): ...</span>
+<span class="sd">            def setx(self, value): ...</span>
+<span class="sd">            x = abstractproperty(getx, setx)</span>
+
+<span class="sd">    'abstractproperty' is deprecated. Use 'property' with 'abstractmethod'</span>
+<span class="sd">    instead.</span>
+<span class="sd">    """</span>
+
+    <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">_abc</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_cache_token</span><span class="p">,</span> <span class="n">_abc_init</span><span class="p">,</span> <span class="n">_abc_register</span><span class="p">,</span>
+                      <span class="n">_abc_instancecheck</span><span class="p">,</span> <span class="n">_abc_subclasscheck</span><span class="p">,</span> <span class="n">_get_dump</span><span class="p">,</span>
+                      <span class="n">_reset_registry</span><span class="p">,</span> <span class="n">_reset_caches</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">_py_abc</span> <span class="kn">import</span> <span class="n">ABCMeta</span><span class="p">,</span> <span class="n">get_cache_token</span>
+    <span class="n">ABCMeta</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">=</span> <span class="s1">'abc'</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">ABCMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+        <span class="sd">"""Metaclass for defining Abstract Base Classes (ABCs).</span>
+
+<span class="sd">        Use this metaclass to create an ABC.  An ABC can be subclassed</span>
+<span class="sd">        directly, and then acts as a mix-in class.  You can also register</span>
+<span class="sd">        unrelated concrete classes (even built-in classes) and unrelated</span>
+<span class="sd">        ABCs as 'virtual subclasses' -- these and their descendants will</span>
+<span class="sd">        be considered subclasses of the registering ABC by the built-in</span>
+<span class="sd">        issubclass() function, but the registering ABC won't show up in</span>
+<span class="sd">        their MRO (Method Resolution Order) nor will method</span>
+<span class="sd">        implementations defined by the registering ABC be callable (not</span>
+<span class="sd">        even via super()).</span>
+<span class="sd">        """</span>
+        <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="bp">cls</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">_abc_init</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">cls</span>
+
+        <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
+            <span class="sd">"""Register a virtual subclass of an ABC.</span>
+
+<span class="sd">            Returns the subclass, to allow usage as a class decorator.</span>
+<span class="sd">            """</span>
+            <span class="k">return</span> <span class="n">_abc_register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+            <span class="sd">"""Override for isinstance(instance, cls)."""</span>
+            <span class="k">return</span> <span class="n">_abc_instancecheck</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
+            <span class="sd">"""Override for issubclass(subclass, cls)."""</span>
+            <span class="k">return</span> <span class="n">_abc_subclasscheck</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_dump_registry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="sd">"""Debug helper to print the ABC registry."""</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Class: </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Inv. counter: </span><span class="si">{</span><span class="n">get_cache_token</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">_abc_registry</span><span class="p">,</span> <span class="n">_abc_cache</span><span class="p">,</span> <span class="n">_abc_negative_cache</span><span class="p">,</span>
+             <span class="n">_abc_negative_cache_version</span><span class="p">)</span> <span class="o">=</span> <span class="n">_get_dump</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"_abc_registry: </span><span class="si">{</span><span class="n">_abc_registry</span><span class="si">!r}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"_abc_cache: </span><span class="si">{</span><span class="n">_abc_cache</span><span class="si">!r}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"_abc_negative_cache: </span><span class="si">{</span><span class="n">_abc_negative_cache</span><span class="si">!r}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"_abc_negative_cache_version: </span><span class="si">{</span><span class="n">_abc_negative_cache_version</span><span class="si">!r}</span><span class="s2">"</span><span class="p">,</span>
+                  <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_abc_registry_clear</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+            <span class="sd">"""Clear the registry (for debugging or testing)."""</span>
+            <span class="n">_reset_registry</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_abc_caches_clear</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+            <span class="sd">"""Clear the caches (for debugging or testing)."""</span>
+            <span class="n">_reset_caches</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ABC</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">ABCMeta</span><span class="p">):</span>
+    <span class="sd">"""Helper class that provides a standard way to create an ABC using</span>
+<span class="sd">    inheritance.</span>
+<span class="sd">    """</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../index.html">Documentation overview</a><ul>
+<li><a href="index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" name="q" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.3.2/" class="nav-home"><img src="/v/0.3.2/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.3.2/docs/introduction">Introduction</a><a href="/v/0.3.2/docs/getting_started">Getting Started</a><a href="/v/0.3.2/tutorials/">Tutorials</a><a href="/v/0.3.2/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.3.2/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.3.2/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

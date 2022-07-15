@@ -1,0 +1,210 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Batching · BoTorch</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="BoTorch makes frequent use of &quot;batching&quot;, both in the sense of batch acquisition"/><meta name="docsearch:version" content="0.1.3"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Batching · BoTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.1.3/"/><meta property="og:description" content="BoTorch makes frequent use of &quot;batching&quot;, both in the sense of batch acquisition"/><meta property="og:image" content="https://botorch.org/v/0.1.3/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.1.3/img/botorch.png"/><link rel="shortcut icon" href="/v/0.1.3/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.1.3/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.1.3/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.1.3/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.1.3/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.1.3/css/main.css"/><script src="/v/0.1.3/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.1.3/"><img class="logo" src="/v/0.1.3/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.1.3/versions"><h3>0.1.3</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/v/0.1.3/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.1.3/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.1.3/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Advanced Topics</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.1.3/docs/introduction">Introduction</a></li><li class="navListItem"><a class="navItem" href="/v/0.1.3/docs/design_philosophy">Design Philosophy</a></li><li class="navListItem"><a class="navItem" href="/v/0.1.3/docs/botorch_and_ax">Using BoTorch with Ax</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">General</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.1.3/docs/getting_started">Getting Started</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Basic Concepts</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.1.3/docs/overview">Overview</a></li><li class="navListItem"><a class="navItem" href="/v/0.1.3/docs/models">Models</a></li><li class="navListItem"><a class="navItem" href="/v/0.1.3/docs/posteriors">Posteriors</a></li><li class="navListItem"><a class="navItem" href="/v/0.1.3/docs/acquisition">Acquisition Functions</a></li><li class="navListItem"><a class="navItem" href="/v/0.1.3/docs/optimization">Optimization</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Advanced Topics</h3><ul class=""><li class="navListItem navListItemActive"><a class="navItem" href="/v/0.1.3/docs/batching">Batching</a></li><li class="navListItem"><a class="navItem" href="/v/0.1.3/docs/objectives">Objectives</a></li><li class="navListItem"><a class="navItem" href="/v/0.1.3/docs/samplers">Monte Carlo Samplers</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"><a class="edit-page-link button" href="https://github.com/pytorch/botorch/edit/master/docs/batching.md" target="_blank" rel="noreferrer noopener">Edit</a><h1 class="postHeaderTitle">Batching</h1></header><article><div><span><p>BoTorch makes frequent use of &quot;batching&quot;, both in the sense of batch acquisition
+functions for multiple candidates as well as in the sense of parallel or batch
+computation (neither of these should be confused with mini-batch training).
+Here we explain some of the common patterns you will see in BoTorch for
+exploiting parallelism, including common shapes and decorators for more
+conveniently handling these shapes.</p>
+<h2><a class="anchor" aria-hidden="true" id="batch-acquisition-functions"></a><a href="#batch-acquisition-functions" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Batch Acquisition Functions</h2>
+<p>BoTorch supports batch acquisition functions that assign a joint utility to a
+set of $q$ design points in the parameter space. These are, for obvious reasons,
+referred to as q-Acquisition Functions. For instance, BoTorch ships with support
+for q-EI, q-UCB, and a few others.</p>
+<p>As discussed in the
+<a href="design_philosophy#batching-batching-batching">design philosophy</a>,
+BoTorch has adopted the convention of referring to batches in the
+batch-acquisition sense as &quot;q-batches&quot;, and to batches in the torch
+batch-evaluation sense as &quot;t-batches&quot;.</p>
+<p>Internally, q-batch acquisition functions operate on input tensors of shape
+$b \times q \times d$, where $b$ is the number of t-batches, $q$ is the number
+of design points to be considered concurrently, and $d$ is the dimension of the
+parameter space. Their output is a one-dimensional tensor with $b$ elements,
+with the $i$-th element corresponding to the $i$-th t-batch. Always requiring
+explicit t-batch and q-batch dimensions makes it easier and less ambiguous to work
+with samples from the posterior in a consistent fashion.</p>
+<h4><a class="anchor" aria-hidden="true" id="batch-mode-decorator"></a><a href="#batch-mode-decorator" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Batch-Mode Decorator</h4>
+<p>In order to simplify the user-facing API for evaluating acquisition functions,<br>
+BoTorch implements the
+<a href="../api/utils.html#botorch.utils.transforms.t_batch_mode_transform"><code>@t_batch_mode_transform</code></a>
+decorator, which allows the use of non-batch mode inputs. If applied to an
+instance method with a single <code>Tensor</code> argument, an input tensor to that method
+without a t-batch dimension (i.e. tensors of shape $q \times d$) will automatically
+be converted to a t-batch of size 1 (i.e. of <code>batch_shape</code> <code>torch.Size([1])</code>),
+This is typically used on the <code>forward</code> method of an <code>AcquisitionFunction</code>.
+The <code>@t_batch_mode_transform</code> decorator takes an <code>expected_q</code> argument that, if
+specified, checks that the number of q-batches in the input is equal to the
+one specified in the decorator. This is typically used for acquisition functions
+that can only handle the case $q=1$ (e.g. any <code>AnalyticAcqusitionFunction</code>).</p>
+<h2><a class="anchor" aria-hidden="true" id="batching-sample-shapes"></a><a href="#batching-sample-shapes" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Batching Sample Shapes</h2>
+<p>BoTorch evaluates Monte-Carlo acquisition functions using (quasi-) Monte-Carlo
+sampling from the posterior at the input features $X$. Hence, on top of the
+existing q-batch and t-batch dimensions, we also end up with another batch
+dimension corresponding to the MC samples we draw. We use the PyTorch notions of
+<code>sample_shape</code> and <code>event_shape</code>.</p>
+<p><code>event_shape</code> is the shape of a single sample drawn from the underlying
+distribution:</p>
+<ul>
+<li>Evaluating a single-output model at a $1 \times n \times d$ tensor,
+representing $n$ data points in $d$ dimensions each, yields a posterior with
+<code>event_shape</code> being $1 \times n \times 1$. Evaluating the same model at a
+$b_1 \times \cdots \times b_k \times n \times d$ tensor (representing a t-batch-shape
+of $b_1 \times \cdots \times b_k$, with $n$ data points of $d$-dimensions each in every batch)
+yields a posterior with <code>event_shape</code> being $b_1 \times \cdots \times b_k \times n \times 1$.
+In most cases, the t-batch-shape will be single-dimensional (i.e., $k=1$).</li>
+<li>Evaluating a multi-output model with $o$ outputs at a $b_1 \times \cdots \times b_k<br>
+\times n \times d$ tensor yields a posterior with <code>event_shape</code> equal to
+$b_1 \times \cdots \times b_k \times n \times o$.</li>
+<li>Recall from the previous section that internally, with the help of the
+<code>@t_batch_mode_transform</code> decorator, all acquisition functions are evaluated using
+at least one t-batch dimension.</li>
+</ul>
+<p><code>sample_shape</code> is the shape (possibly multi-dimensional) of the samples drawn
+<em>independently</em> from the distribution with <code>event_shape</code>, resulting in a tensor
+of samples of shape <code>sample_shape</code> + <code>event_shape</code>:</p>
+<ul>
+<li>Drawing a sample with <code>sample_shape</code> being $s_1 \times s_2$ from a posterior with <code>event_shape</code>
+equal to $b_1 \times \cdots \times b_k \times n \times o$ results in a tensor of shape
+$s_1 \times s_2 \times b_1 \times \cdots \times b_k \times n \times o$, where each of
+the $s_1 \times s_2$ tensors of shape $b_1 \times \cdots \times b_k \times n \times o$ are
+independent draws.</li>
+</ul>
+<h2><a class="anchor" aria-hidden="true" id="batched-evaluation-of-models-and-acquisition-functions"></a><a href="#batched-evaluation-of-models-and-acquisition-functions" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Batched Evaluation of Models and Acquisition Functions</h2>
+<p>The GPyTorch models implemented in BoTorch support t-batched evaluation with
+arbitrary t-batch shapes.</p>
+<h5><a class="anchor" aria-hidden="true" id="non-batched-models"></a><a href="#non-batched-models" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Non-Batched Models</h5>
+<p>In the simplest case, a model is fit to non-batched training points with shape
+$n \times d$. We use $\textit{batch_shape}$ to represent an arbitrary batch shape
+of the form $b_1 \times \cdots \times b_k$.</p>
+<ul>
+<li><em>Non-batched evaluation</em> on a set of test points with shape $m \times d$
+yields a joint posterior over the $m$ points.</li>
+<li><em>Batched evaluation</em> on a set of test points with shape
+$\textit{batch_shape} \times m \times d$ yields $\textit{batch_shape}$
+joint posteriors over the $m$ points in each respective batch.</li>
+</ul>
+<h5><a class="anchor" aria-hidden="true" id="batched-models"></a><a href="#batched-models" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Batched Models</h5>
+<p>GPyTorch models can also be
+<a href="https://github.com/cornellius-gp/gpytorch/blob/master/examples/01_Simple_GP_Regression/Simple_Batch_Mode_GP_Regression.ipynb">fit on batched training points</a>
+with shape $\textit{batch_shape} \times n \times d$. Here, each batch is modeled
+independently (i.e., each batch has its own hyperparameters).
+For example, if the training points have shape $b_1 \times b_2 \times n \times d$
+(two batch dimensions), the batched GPyTorch model is effectively $b_1 \times b_2$
+independent models. More generally, suppose we fit a model to training points
+with shape $\textit{batch_shape} \times n \times d$.
+The shape of the test points must support broadcasting to the $\textit{batch_shape}$.</p>
+<ul>
+<li><p><em>Non-batched evaluation</em> on test points with shape
+$\textit{batch_shape'} \times m \times d$, where each dimension of
+$\textit{batch_shape'}$ either matches the corresponding dimension of
+$\textit{batch_shape}$ or is 1 to support broadcasting, yields
+$\textit{batch_shape}$ joint posteriors over the $m$ points.</p></li>
+<li><p><em>Batched evaluation</em> on test points with shape
+$\textit{new_batch_shape} \times \textit{batch_shape'} \times m \times d$,
+where $\textit{new_batch_shape}$ is the batch shape for batched evaluation,
+yields $\textit{new_batch_shape} \times \textit{batch_shape'}$ joint
+posteriors over the $m$ points in each respective batch (broadcasting as
+necessary over $\textit{batch_shape}$)</p></li>
+</ul>
+<h4><a class="anchor" aria-hidden="true" id="batched-multi-output-models"></a><a href="#batched-multi-output-models" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Batched Multi-Output Models</h4>
+<p>The <a href="../api/models.html#batchedmultioutputgpytorchmodel"><code>BatchedMultiOutputGPyTorchModel</code></a>
+class implements a fast multi-output model (assuming conditional independence of
+the outputs given the input) by batching over the outputs.</p>
+<h5><a class="anchor" aria-hidden="true" id="training-inputs-targets"></a><a href="#training-inputs-targets" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Training Inputs/Targets</h5>
+<p>Given training inputs with shape $\textit{batch_shape} \times n \times d$
+and training outputs with shape $\textit{batch_shape} \times n \times o$,
+the <code>BatchedMultiOutputGPyTorchModel</code> permutes the training outputs to make the
+output $o$-dimension a batch dimension such that the augmented training inputs
+have shape $o \times \textit{batch_shape} \times n$. The training inputs
+(which are required to be the same for all outputs) are expanded to be
+$o \times \textit{batch_shape} \times n \times d$.</p>
+<h5><a class="anchor" aria-hidden="true" id="evaluation"></a><a href="#evaluation" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Evaluation</h5>
+<p>When evaluating test points with shape
+$\textit{new_batch_shape} \times \textit{batch_shape} \times m \times d$
+via the <code>posterior</code> method, the test points are broadcasted to the model(s) for
+each output. This results in the batched posterior where the mean has shape
+$\textit{new_batch_shape} \times o \times \textit{batch_shape} \times m$
+which then is permuted back to the original multi-output shape
+$\textit{new_batch_shape} \times \textit{batch_shape} \times m \times o$.</p>
+<h4><a class="anchor" aria-hidden="true" id="batched-optimization-of-random-restarts"></a><a href="#batched-optimization-of-random-restarts" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Batched Optimization of Random Restarts</h4>
+<p>BoTorch uses random restarts to optimize an acquisition function from multiple
+starting points. To efficiently optimize an acquisition function for a $q$-batch
+of candidate points using $r$ random restarts, BoTorch uses batched
+evaluation on a $r \times q \times d$ set of candidate points to independently
+evaluate and optimize each random restart in parallel.
+In order to optimize the $r$ acquisition functions using gradient information,
+the acquisition values of the $r$ random restarts are summed before
+back-propagating.</p>
+<h4><a class="anchor" aria-hidden="true" id="batched-cross-validation"></a><a href="#batched-cross-validation" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Batched Cross Validation</h4>
+<p>See the
+<a href="../tutorials/batch_mode_cross_validation">Using batch evaluation for fast cross validation</a>
+tutorial for details on using batching for fast cross validation.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/v/0.1.3/docs/optimization"><span class="arrow-prev">← </span><span>Optimization</span></a><a class="docs-next button" href="/v/0.1.3/docs/objectives"><span>Objectives</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#batch-acquisition-functions">Batch Acquisition Functions</a></li><li><a href="#batching-sample-shapes">Batching Sample Shapes</a></li><li><a href="#batched-evaluation-of-models-and-acquisition-functions">Batched Evaluation of Models and Acquisition Functions</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.1.3/" class="nav-home"><img src="/v/0.1.3/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.1.3/docs/introduction">Introduction</a><a href="/v/0.1.3/docs/getting_started">Getting Started</a><a href="/v/0.1.3/tutorials">Tutorials</a><a href="/v/0.1.3/api">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.1.3/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div></body></html>

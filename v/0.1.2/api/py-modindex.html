@@ -1,0 +1,232 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.1.2/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.1.2/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.1.2/img/botorch.png"/><link rel="shortcut icon" href="/v/0.1.2/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.1.2/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.1.2/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.1.2/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.1.2/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.1.2/css/main.css"/><script src="/v/0.1.2/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.1.2/"><img class="logo" src="/v/0.1.2/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.1.2/versions"><h3>0.1.2</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.1.2/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.1.2/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.1.2/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Python Module Index</h1>
+<div class="modindex-jumpbox">
+<a href="#cap-b"><strong>b</strong></a>
+</div>
+<table class="indextable modindextable">
+<tr class="pcap"><td></td><td> </td><td></td></tr>
+<tr class="cap" id="cap-b"><td></td><td>
+<strong>b</strong></td><td></td></tr>
+<tr>
+<td><img alt="-" class="toggler" id="toggle-1" src="_static/minus.png" style="display: none"/></td>
+<td>
+<code class="xref">botorch</code></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="acquisition.html#module-botorch.acquisition.acquisition"><code class="xref">botorch.acquisition.acquisition</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="acquisition.html#module-botorch.acquisition.analytic"><code class="xref">botorch.acquisition.analytic</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="acquisition.html#module-botorch.acquisition.monte_carlo"><code class="xref">botorch.acquisition.monte_carlo</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="acquisition.html#module-botorch.acquisition.objective"><code class="xref">botorch.acquisition.objective</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="acquisition.html#module-botorch.acquisition.utils"><code class="xref">botorch.acquisition.utils</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="exceptions.html#module-botorch.exceptions"><code class="xref">botorch.exceptions</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="exceptions.html#module-botorch.exceptions.errors"><code class="xref">botorch.exceptions.errors</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="exceptions.html#module-botorch.exceptions.warnings"><code class="xref">botorch.exceptions.warnings</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="fit.html#module-botorch.fit"><code class="xref">botorch.fit</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="gen.html#module-botorch.gen"><code class="xref">botorch.gen</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="models.html#module-botorch.models"><code class="xref">botorch.models</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="optim.html#module-botorch.optim"><code class="xref">botorch.optim</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="optim.html#module-botorch.optim.fit"><code class="xref">botorch.optim.fit</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="optim.html#module-botorch.optim.initializers"><code class="xref">botorch.optim.initializers</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="optim.html#module-botorch.optim.numpy_converter"><code class="xref">botorch.optim.numpy_converter</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="optim.html#module-botorch.optim.optimize"><code class="xref">botorch.optim.optimize</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="optim.html#module-botorch.optim.parameter_constraints"><code class="xref">botorch.optim.parameter_constraints</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="optim.html#module-botorch.optim.utils"><code class="xref">botorch.optim.utils</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="posteriors.html#module-botorch.posteriors"><code class="xref">botorch.posteriors</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="posteriors.html#module-botorch.posteriors.gpytorch"><code class="xref">botorch.posteriors.gpytorch</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="posteriors.html#module-botorch.posteriors.posterior"><code class="xref">botorch.posteriors.posterior</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="sampling.html#module-botorch.sampling"><code class="xref">botorch.sampling</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="sampling.html#module-botorch.sampling.qmc"><code class="xref">botorch.sampling.qmc</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="sampling.html#module-botorch.sampling.samplers"><code class="xref">botorch.sampling.samplers</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="test_functions.html#module-botorch.test_functions"><code class="xref">botorch.test_functions</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="utils.html#module-botorch.utils"><code class="xref">botorch.utils</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="utils.html#module-botorch.utils.constraints"><code class="xref">botorch.utils.constraints</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="utils.html#module-botorch.utils.objective"><code class="xref">botorch.utils.objective</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="utils.html#module-botorch.utils.sampling"><code class="xref">botorch.utils.sampling</code></a></td><td>
+<em></em></td></tr>
+<tr class="cg-1">
+<td></td>
+<td>   
+       <a href="utils.html#module-botorch.utils.transforms"><code class="xref">botorch.utils.transforms</code></a></td><td>
+<em></em></td></tr>
+</table>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gen.html">botorch.gen</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="index.html">Documentation overview</a><ul>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3>Quick search</h3>
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input name="q" type="text"/>
+<input type="submit" value="Go"/>
+<input name="check_keywords" type="hidden" value="yes"/>
+<input name="area" type="hidden" value="default"/>
+</form>
+</div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.1.2/" class="nav-home"><img src="/v/0.1.2/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.1.2/docs/introduction">Introduction</a><a href="/v/0.1.2/docs/getting_started">Getting Started</a><a href="/v/0.1.2/tutorials">Tutorials</a><a href="/v/0.1.2/api">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.1.2/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div></body></html>
