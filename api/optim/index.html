@@ -38,17 +38,19 @@
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – An AcquisitionFunction.</p></li>
-<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>
+(if inequality_constraints is provided, these bounds can be -inf and
++inf, respectively).</p></li>
 <li><p><strong>q</strong> (<em>int</em>) – The number of candidates.</p></li>
 <li><p><strong>num_restarts</strong> (<em>int</em>) – The number of starting points for multistart acquisition
 function optimization.</p></li>
 <li><p><strong>raw_samples</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The number of samples for initialization. This is required
 if <cite>batch_initial_conditions</cite> is not specified.</p></li>
 <li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – Options for candidate generation.</p></li>
-<li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
+<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
-<li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
+<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
 <li><p><strong>nonlinear_inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>]</em><em>]</em>) – A list of callables with that represent
@@ -71,8 +73,6 @@ random restart initializations of the optimization.</p></li>
 <li><p><strong>sequential</strong> (<em>bool</em>) – If False, uses joint optimization, otherwise uses sequential
 optimization.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – Additonal keyword arguments.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -118,7 +118,9 @@ values conditional on having observed canidates <cite>0,1,…,i-1</cite>.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – An AcquisitionFunction</p></li>
-<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>
+(if inequality_constraints is provided, these bounds can be -inf and
++inf, respectively).</p></li>
 <li><p><strong>q</strong> (<em>int</em>) – The number of candidates.</p></li>
 <li><p><strong>num_restarts</strong> (<em>int</em>) – Number of starting points for multistart acquisition
 function optimization.</p></li>
@@ -183,7 +185,9 @@ set as <cite>X_pending</cite>. This is also known as sequential greedy optimizat
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>acq_function_list</strong> (<em>List</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a><em>]</em>) – A list of acquisition functions.</p></li>
-<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>
+(if inequality_constraints is provided, these bounds can be -inf and
++inf, respectively).</p></li>
 <li><p><strong>num_restarts</strong> (<em>int</em>) – Number of starting points for multistart acquisition
 function optimization.</p></li>
 <li><p><strong>raw_samples</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Number of samples for initialization. This is required
@@ -233,7 +237,9 @@ proper conditioning on generated candidates).</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – An AcquisitionFunction</p></li>
-<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>
+(if inequality_constraints is provided, these bounds can be -inf and
++inf, respectively).</p></li>
 <li><p><strong>q</strong> (<em>int</em>) – The number of candidates.</p></li>
 <li><p><strong>num_restarts</strong> (<em>int</em>) – Number of starting points for multistart acquisition
 function optimization.</p></li>

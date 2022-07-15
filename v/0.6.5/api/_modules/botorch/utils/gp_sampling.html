@@ -1,0 +1,604 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/versions"><h3>0.6.5</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.utils.gp_sampling</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.models.converter</span> <span class="kn">import</span> <span class="n">batched_to_model_list</span>
+<span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">GenericDeterministicModel</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ModelList</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">MultiTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">manual_seed</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">RBFKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.utils.cholesky</span> <span class="kn">import</span> <span class="n">psd_safe_cholesky</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
+
+
+<div class="viewcode-block" id="GPDraw"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.GPDraw">[docs]</a><span class="k">class</span> <span class="nc">GPDraw</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Convenience wrapper for sampling a function from a GP prior.</span>
+
+<span class="sd">    This wrapper implicitly defines the GP sample as a self-updating function by keeping</span>
+<span class="sd">    track of the evaluated points and respective base samples used during the</span>
+<span class="sd">    evaluation.</span>
+
+<span class="sd">    This does not yet support multi-output models.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Construct a GP function sampler.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: The Model defining the GP prior.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">seed</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="n">seed</span> <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1000000</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"_seed"</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Xs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">"""A `(batch_shape) x n_eval x d`-dim tensor of locations at which the GP was</span>
+<span class="sd">        evaluated (or `None` if the sample has never been evaluated).</span>
+<span class="sd">        """</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Xs</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Ys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">"""A `(batch_shape) x n_eval x d`-dim tensor of associated function values (or</span>
+<span class="sd">        `None` if the sample has never been evaluated).</span>
+<span class="sd">        """</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Ys</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="GPDraw.forward"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.GPDraw.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate the GP sample function at a set of points X.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of points</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The value of the GP sample at the `n` points.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Xs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">X_eval</span> <span class="o">=</span> <span class="n">X</span>  <span class="c1"># first time, no previous evaluation points</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">X_eval</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">Xs</span><span class="p">,</span> <span class="n">X</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X_eval</span><span class="p">)</span>
+        <span class="n">base_sample_shape</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">base_sample_shape</span>
+        <span class="c1"># re-use old samples</span>
+        <span class="n">bs_shape</span> <span class="o">=</span> <span class="n">base_sample_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">base_sample_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">with</span> <span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_seed</span><span class="p">)):</span>
+            <span class="n">new_base_samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">bs_shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">seed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_seed</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Xs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">base_samples</span> <span class="o">=</span> <span class="n">new_base_samples</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">base_samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_samples</span><span class="p">,</span> <span class="n">new_base_samples</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># TODO: Deduplicate repeated evaluations / deal with numerical degeneracies</span>
+        <span class="c1"># that could lead to non-determinsitic evaluations. We could use SVD- or</span>
+        <span class="c1"># eigendecomposition-based sampling, but we probably don't want to use this</span>
+        <span class="c1"># by default for performance reasonse.</span>
+        <span class="n">Ys</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">(),</span> <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"_Xs"</span><span class="p">,</span> <span class="n">X_eval</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"_Ys"</span><span class="p">,</span> <span class="n">Ys</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"_seed"</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"_base_samples"</span><span class="p">,</span> <span class="n">base_samples</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ys</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span> <span class="p">:,</span> <span class="p">:]</span></div></div>
+
+
+<div class="viewcode-block" id="RandomFourierFeatures"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.RandomFourierFeatures">[docs]</a><span class="k">class</span> <span class="nc">RandomFourierFeatures</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sd">"""A class that represents Random Fourier Features."""</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">,</span>
+        <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_rff_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Initialize RandomFourierFeatures.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            kernel: The GP kernel.</span>
+<span class="sd">            input_dim: The input dimension to the GP kernel.</span>
+<span class="sd">            num_rff_features: The number of fourier features.</span>
+<span class="sd">            sample_shape: The shape of a single sample. For a single-element</span>
+<span class="sd">                `torch.Size` object, this is simply the number of RFF draws.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">ScaleKernel</span><span class="p">):</span>
+            <span class="n">base_kernel</span> <span class="o">=</span> <span class="n">kernel</span>
+            <span class="n">outputscale</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                <span class="mf">1.0</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">base_kernel</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">base_kernel</span>
+            <span class="n">outputscale</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">outputscale</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_kernel</span><span class="p">,</span> <span class="p">(</span><span class="n">MaternKernel</span><span class="p">,</span> <span class="n">RBFKernel</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Only Matern and RBF kernels are supported."</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Batched kernels are not supported."</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"outputscale"</span><span class="p">,</span> <span class="n">outputscale</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"lengthscale"</span><span class="p">,</span> <span class="n">base_kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span> <span class="k">if</span> <span class="n">sample_shape</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">sample_shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+            <span class="s2">"weights"</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_weights</span><span class="p">(</span>
+                <span class="n">base_kernel</span><span class="o">=</span><span class="n">base_kernel</span><span class="p">,</span>
+                <span class="n">input_dim</span><span class="o">=</span><span class="n">input_dim</span><span class="p">,</span>
+                <span class="n">num_rff_features</span><span class="o">=</span><span class="n">num_rff_features</span><span class="p">,</span>
+                <span class="n">sample_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="c1"># initialize uniformly in [0, 2 * pi]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+            <span class="s2">"bias"</span><span class="p">,</span>
+            <span class="mi">2</span>
+            <span class="o">*</span> <span class="n">pi</span>
+            <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
+                <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">,</span>
+                <span class="n">num_rff_features</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_weights</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">base_kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">,</span>
+        <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_rff_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Sample weights for RFF.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            kernel: The GP base kernel.</span>
+<span class="sd">            input_dim: The input dimension to the GP kernel.</span>
+<span class="sd">            num_rff_features: The number of fourier features.</span>
+<span class="sd">            sample_shape: The sample shape of weights.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            A `(sample_shape) x input_dim x num_rff_features`-dim tensor of weights</span>
+<span class="sd">        """</span>
+        <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span> <span class="k">if</span> <span class="n">sample_shape</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">sample_shape</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span>
+            <span class="o">*</span><span class="n">sample_shape</span><span class="p">,</span>
+            <span class="n">input_dim</span><span class="p">,</span>
+            <span class="n">num_rff_features</span><span class="p">,</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_kernel</span><span class="p">,</span> <span class="n">MaternKernel</span><span class="p">):</span>
+            <span class="n">gamma_dist</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">nu</span><span class="p">,</span> <span class="n">base_kernel</span><span class="o">.</span><span class="n">nu</span><span class="p">)</span>
+            <span class="n">gamma_samples</span> <span class="o">=</span> <span class="n">gamma_dist</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_rff_features</span><span class="p">]))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+                <span class="n">weights</span>
+            <span class="p">)</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rsqrt</span><span class="p">(</span><span class="n">gamma_samples</span><span class="p">)</span> <span class="o">*</span> <span class="n">weights</span>
+        <span class="k">return</span> <span class="n">weights</span>
+
+<div class="viewcode-block" id="RandomFourierFeatures.forward"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.RandomFourierFeatures.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">"""</span>
+<span class="sd">        Get fourier basis features for the provided inputs.</span>
+<span class="sd">        Note that if `sample_shape` has been passed, then the rightmost</span>
+<span class="sd">        subset of the batch shape of the input should be `sample_shape`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: input tensor of shape `(batch_shape) x n x input_dim`</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A Tensor of shape `(batch_shape) x n x rff`</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_forward_X_shape_compatibility</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="c1"># X is of shape (batch_shape_minus_sample_shape) x (sample_shape) x n x d</span>
+        <span class="c1"># weights is of shape (sample_shape) x d x num_rff</span>
+        <span class="n">X_scaled</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lengthscale</span><span class="p">)</span>
+        <span class="n">batchmatmul</span> <span class="o">=</span> <span class="n">X_scaled</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span>
+        <span class="n">bias</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span>
+        <span class="c1"># bias is of shape (sample_shape) x num_rff</span>
+        <span class="c1"># batchmatmul is of shape</span>
+        <span class="c1"># (batch_shape_minus_sample_shape) x (sample_shape) x n x num_rff</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">batchmatmul</span> <span class="o">+</span> <span class="n">bias</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputscale</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">outputs</span></div>
+
+    <span class="k">def</span> <span class="nf">_check_forward_X_shape_compatibility</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">len_sample_shape</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">)</span>
+        <span class="n">full_batch_shape_X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">len_full_batch_shape_X</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">full_batch_shape_X</span><span class="p">)</span>
+        <span class="n">num_trail_dims</span> <span class="o">=</span> <span class="n">len_full_batch_shape_X</span> <span class="o">-</span> <span class="n">len_sample_shape</span>
+        <span class="c1"># if there is no batch dimension, then we forward pass through every RFF sample</span>
+        <span class="c1"># otherwise, we check if the rightmost subset matches sample_shape</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">len_full_batch_shape_X</span>
+            <span class="ow">and</span> <span class="n">full_batch_shape_X</span><span class="p">[</span><span class="n">num_trail_dims</span><span class="p">:]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"the batch shape of X is expected to follow the pattern: "</span>
+                <span class="sa">f</span><span class="s2">"`... x </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">)</span><span class="si">}</span><span class="s2">`"</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_deterministic_model_multi_samples"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_deterministic_model_multi_samples">[docs]</a><span class="k">def</span> <span class="nf">get_deterministic_model_multi_samples</span><span class="p">(</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">bases</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenericDeterministicModel</span><span class="p">:</span>
+    <span class="sd">"""</span>
+<span class="sd">    Get a batched deterministic model that batch evaluates `n_samples` function</span>
+<span class="sd">    samples. This supports multi-output models as well.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        weights: a list of weights with `num_outputs` elements. Each weight is of</span>
+<span class="sd">            shape `(batch_shape_input) x n_samples x num_rff_features`, where</span>
+<span class="sd">            `(batch_shape_input)` is the batch shape of the inputs used to obtain the</span>
+<span class="sd">            posterior weights.</span>
+<span class="sd">        bases: a list of RandomFourierFeatures with `num_outputs` elements. Each</span>
+<span class="sd">            basis has a sample shape of `n_samples`.</span>
+<span class="sd">        n_samples: the number of function samples.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A batched `GenericDeterministicModel`s that batch evaluates `n_samples`</span>
+<span class="sd">        function samples.</span>
+<span class="sd">    """</span>
+    <span class="n">eval_callables</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">get_eval_gp_sample_callable</span><span class="p">(</span><span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">basis</span><span class="o">=</span><span class="n">basis</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">w</span><span class="p">,</span> <span class="n">basis</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">bases</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">evaluate_gps_X</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">_f</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="k">for</span> <span class="n">_f</span> <span class="ow">in</span> <span class="n">eval_callables</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">GenericDeterministicModel</span><span class="p">(</span>
+        <span class="n">f</span><span class="o">=</span><span class="n">evaluate_gps_X</span><span class="p">,</span>
+        <span class="n">num_outputs</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_eval_gp_sample_callable"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_eval_gp_sample_callable">[docs]</a><span class="k">def</span> <span class="nf">get_eval_gp_sample_callable</span><span class="p">(</span><span class="n">w</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">basis</span><span class="p">:</span> <span class="n">RandomFourierFeatures</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># multiple samples</span>
+        <span class="k">def</span> <span class="nf">_f</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+            <span class="c1"># This ensures that the outermost batch dimension is the sample dimension</span>
+            <span class="c1"># via basis._check_forward_X_shape_compatibility.</span>
+            <span class="n">phi_X</span> <span class="o">=</span> <span class="n">basis</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="c1"># X.shape == (batch_shape_X_minus_n_samples) x n_samples x n x d</span>
+            <span class="c1"># phi_X.shape == (batch_shape_X_minus_n_samples) x n_samples x n x num_rff</span>
+            <span class="c1"># weights[0].shape == (batch_shape_input) x n_samples x num_rff</span>
+            <span class="c1"># if X doesn't have a batch shape,</span>
+            <span class="c1"># then phi_X.shape == n_samples x n x num_rff</span>
+            <span class="n">pending_dims</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="c1"># the below view operation is inserting batch_shape_X_minus_n_samples</span>
+            <span class="c1"># dimensions in w to enable broadcasted matmul.</span>
+            <span class="n">w_unsqueezed</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">w</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">*</span><span class="n">pending_dims</span><span class="p">,</span> <span class="o">*</span><span class="n">w</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:],</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">phi_X</span> <span class="o">@</span> <span class="n">w_unsqueezed</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># single sample</span>
+        <span class="k">def</span> <span class="nf">_f</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">basis</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">@</span> <span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_f</span></div>
+
+
+<div class="viewcode-block" id="get_deterministic_model"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_deterministic_model">[docs]</a><span class="k">def</span> <span class="nf">get_deterministic_model</span><span class="p">(</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">bases</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenericDeterministicModel</span><span class="p">:</span>
+    <span class="sd">"""Get a deterministic model using the provided weights and bases for each output.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        weights: a list of weights with `m` elements</span>
+<span class="sd">        bases: a list of RandomFourierFeatures with `m` elements.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A deterministic model.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="nf">evaluate_gp_sample</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">basis</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">@</span> <span class="n">w</span> <span class="k">for</span> <span class="n">w</span><span class="p">,</span> <span class="n">basis</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">bases</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">GenericDeterministicModel</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="n">evaluate_gp_sample</span><span class="p">,</span> <span class="n">num_outputs</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="get_deterministic_model_list"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_deterministic_model_list">[docs]</a><span class="k">def</span> <span class="nf">get_deterministic_model_list</span><span class="p">(</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">bases</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelList</span><span class="p">:</span>
+    <span class="sd">"""Get a deterministic model list using the provided weights and bases for each output.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        weights: a list of weights with `m` elements</span>
+<span class="sd">        bases: a list of RandomFourierFeatures with `m` elements.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A deterministic model.</span>
+<span class="sd">    """</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">w</span><span class="p">,</span> <span class="n">basis</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">bases</span><span class="p">):</span>
+        <span class="n">sample</span> <span class="o">=</span> <span class="n">GenericDeterministicModel</span><span class="p">(</span>
+            <span class="n">f</span><span class="o">=</span><span class="n">get_eval_gp_sample_callable</span><span class="p">(</span><span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">basis</span><span class="o">=</span><span class="n">basis</span><span class="p">),</span>
+            <span class="n">num_outputs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ModelList</span><span class="p">(</span><span class="o">*</span><span class="n">samples</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_weights_posterior"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_weights_posterior">[docs]</a><span class="k">def</span> <span class="nf">get_weights_posterior</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma_sq</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Sample bayesian linear regression weights.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: a `(batch_shape) x n x num_rff_features`-dim tensor of inputs</span>
+<span class="sd">        y: a `(batch_shape) x n`-dim tensor of outputs</span>
+<span class="sd">        sigma_sq: the noise variance</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The posterior distribution over the weights.</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">X_trans</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">X_trans</span> <span class="o">@</span> <span class="n">X</span> <span class="o">+</span> <span class="n">sigma_sq</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span>
+        <span class="c1"># mean is given by: m = S @ x.T @ y, where S = A_inv</span>
+        <span class="c1"># compute inverse of A using solves</span>
+        <span class="c1"># covariance is A_inv * sigma</span>
+        <span class="n">L_A</span> <span class="o">=</span> <span class="n">psd_safe_cholesky</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+        <span class="c1"># solve L_A @ u = I</span>
+        <span class="n">Iw</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">L_A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">triangular_solve</span><span class="p">(</span><span class="n">Iw</span><span class="p">,</span> <span class="n">L_A</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">solution</span>
+        <span class="c1"># solve L_A^T @ S = u</span>
+        <span class="n">A_inv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">triangular_solve</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">L_A</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">solution</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">A_inv</span> <span class="o">@</span> <span class="n">X_trans</span> <span class="o">@</span> <span class="n">y</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">psd_safe_cholesky</span><span class="p">(</span><span class="n">A_inv</span> <span class="o">*</span> <span class="n">sigma_sq</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">scale_tril</span><span class="o">=</span><span class="n">L</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_gp_samples"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_gp_samples">[docs]</a><span class="k">def</span> <span class="nf">get_gp_samples</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">num_rff_features</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenericDeterministicModel</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Sample functions from GP posterior using RFFs. The returned</span>
+<span class="sd">    `GenericDeterministicModel` effectively wraps `num_outputs` models,</span>
+<span class="sd">    each of which has a batch shape of `n_samples`. Refer</span>
+<span class="sd">    `get_deterministic_model_multi_samples` for more details.</span>
+
+<span class="sd">    NOTE: If using input / outcome transforms, the gp samples must be accessed via</span>
+<span class="sd">    the `gp_sample.posterior(X)` call. Otherwise, `gp_sample(X)` will produce bogus</span>
+<span class="sd">    values that do not agree with the underlying `model`. It is also highly recommended</span>
+<span class="sd">    to use outcome transforms to standardize the input data, since the gp samples do</span>
+<span class="sd">    not work well when training outcomes are not zero-mean.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: The model.</span>
+<span class="sd">        num_outputs: The number of outputs.</span>
+<span class="sd">        n_samples: The number of functions to be sampled IID.</span>
+<span class="sd">        num_rff_features: The number of random Fourier features.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `GenericDeterministicModel` that evaluates `n_samples` sampled functions.</span>
+<span class="sd">        If `n_samples &gt; 1`, this will be a batched model.</span>
+<span class="sd">    """</span>
+    <span class="c1"># Get transforms from the model.</span>
+    <span class="n">intf</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">octf</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="c1"># Remove the outcome transform - leads to buggy draws.</span>
+    <span class="k">if</span> <span class="n">octf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span>
+    <span class="k">if</span> <span class="n">intf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">model</span><span class="o">.</span><span class="n">input_transform</span>
+
+    <span class="k">if</span> <span class="n">num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelListGP</span><span class="p">):</span>
+            <span class="n">models</span> <span class="o">=</span> <span class="n">batched_to_model_list</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">models</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">models</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">models</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">models</span> <span class="o">=</span> <span class="p">[</span><span class="n">model</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">MultiTaskGP</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="n">weights</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">bases</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">octfs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">intfs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">):</span>
+        <span class="n">train_X</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">train_targets</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">train_targets</span>
+        <span class="n">_model</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+        <span class="n">_intf</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">_model</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">_octf</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">_model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># Remove the outcome transform - leads to buggy draws.</span>
+        <span class="k">if</span> <span class="n">_octf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">_model</span><span class="o">.</span><span class="n">outcome_transform</span>
+
+        <span class="n">octfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_octf</span><span class="p">)</span>
+        <span class="n">intfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_intf</span><span class="p">)</span>
+        <span class="c1"># get random fourier features</span>
+        <span class="c1"># sample_shape controls the number of iid functions.</span>
+        <span class="n">basis</span> <span class="o">=</span> <span class="n">RandomFourierFeatures</span><span class="p">(</span>
+            <span class="n">kernel</span><span class="o">=</span><span class="n">_model</span><span class="o">.</span><span class="n">covar_module</span><span class="p">,</span>
+            <span class="n">input_dim</span><span class="o">=</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">num_rff_features</span><span class="o">=</span><span class="n">num_rff_features</span><span class="p">,</span>
+            <span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">n_samples</span><span class="p">]</span> <span class="k">if</span> <span class="n">n_samples</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">[]),</span>
+        <span class="p">)</span>
+        <span class="n">bases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">basis</span><span class="p">)</span>
+        <span class="c1"># TODO: when batched kernels are supported in RandomFourierFeatures,</span>
+        <span class="c1"># the following code can be uncommented.</span>
+        <span class="c1"># if train_X.ndim &gt; 2:</span>
+        <span class="c1">#    batch_shape_train_X = train_X.shape[:-2]</span>
+        <span class="c1">#    dataset_shape = train_X.shape[-2:]</span>
+        <span class="c1">#    train_X = train_X.unsqueeze(-3).expand(</span>
+        <span class="c1">#        *batch_shape_train_X, n_samples, *dataset_shape</span>
+        <span class="c1">#    )</span>
+        <span class="c1">#    train_targets = train_targets.unsqueeze(-2).expand(</span>
+        <span class="c1">#        *batch_shape_train_X, n_samples, dataset_shape[0]</span>
+        <span class="c1">#    )</span>
+        <span class="n">phi_X</span> <span class="o">=</span> <span class="n">basis</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
+        <span class="c1"># Sample weights from bayesian linear model</span>
+        <span class="c1"># 1. When inputs are not batched, train_X.shape == (n, d)</span>
+        <span class="c1"># weights.sample().shape == (n_samples, num_rff_features)</span>
+        <span class="c1"># 2. When inputs are batched, train_X.shape == (batch_shape_input, n, d)</span>
+        <span class="c1"># This is expanded to (batch_shape_input, n_samples, n, d)</span>
+        <span class="c1"># to maintain compatibility with RFF forward semantics</span>
+        <span class="c1"># weights.sample().shape == (batch_shape_input, n_samples, num_rff_features)</span>
+        <span class="n">mvn</span> <span class="o">=</span> <span class="n">get_weights_posterior</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">phi_X</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">train_targets</span><span class="p">,</span>
+            <span class="n">sigma_sq</span><span class="o">=</span><span class="n">_model</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mvn</span><span class="o">.</span><span class="n">sample</span><span class="p">())</span>
+
+    <span class="c1"># TODO: Ideally support RFFs for multi-outputs instead of having to</span>
+    <span class="c1"># generate a basis for each output serially.</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">_octf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">_octf</span> <span class="ow">in</span> <span class="n">octfs</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="n">_intf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">_intf</span> <span class="ow">in</span> <span class="n">intfs</span>
+    <span class="p">):</span>
+        <span class="n">base_gp_samples</span> <span class="o">=</span> <span class="n">get_deterministic_model_list</span><span class="p">(</span>
+            <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
+            <span class="n">bases</span><span class="o">=</span><span class="n">bases</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)):</span>
+            <span class="n">_octf</span> <span class="o">=</span> <span class="n">octfs</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+            <span class="n">_intf</span> <span class="o">=</span> <span class="n">intfs</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">_octf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">base_gp_samples</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">_octf</span>
+                <span class="n">models</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">_octf</span>
+            <span class="k">if</span> <span class="n">_intf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">base_gp_samples</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">_intf</span>
+        <span class="k">return</span> <span class="n">base_gp_samples</span>
+    <span class="k">elif</span> <span class="n">n_samples</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">base_gp_samples</span> <span class="o">=</span> <span class="n">get_deterministic_model_multi_samples</span><span class="p">(</span>
+            <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
+            <span class="n">bases</span><span class="o">=</span><span class="n">bases</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">base_gp_samples</span> <span class="o">=</span> <span class="n">get_deterministic_model</span><span class="p">(</span>
+            <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span>
+            <span class="n">bases</span><span class="o">=</span><span class="n">bases</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="c1"># Load the transforms on the models.</span>
+    <span class="k">if</span> <span class="n">intf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">base_gp_samples</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">intf</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">intf</span>
+    <span class="k">if</span> <span class="n">octf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">base_gp_samples</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">octf</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">octf</span>
+    <span class="k">return</span> <span class="n">base_gp_samples</span></div>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'botorch',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

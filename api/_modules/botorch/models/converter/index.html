@@ -178,6 +178,8 @@
 
     <span class="c1"># construct the batched GP model</span>
     <span class="n">input_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">input_transform</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
     <span class="n">batch_gp</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="n">adjusted_batch_keys</span><span class="p">,</span> <span class="n">non_adjusted_batch_keys</span> <span class="o">=</span> <span class="n">_get_adjusted_batch_keys</span><span class="p">(</span>
         <span class="n">batch_state_dict</span><span class="o">=</span><span class="n">batch_gp</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
@@ -246,6 +248,8 @@
             <span class="s2">"Conversion of MixedSingleTaskGP is currently not supported."</span>
         <span class="p">)</span>
     <span class="n">input_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch_model</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">input_transform</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
     <span class="n">outcome_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch_model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">batch_sd</span> <span class="o">=</span> <span class="n">batch_model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
 
@@ -350,6 +354,8 @@
             <span class="s2">"Conversion of models with custom likelihoods is currently unsupported."</span>
         <span class="p">)</span>
     <span class="n">input_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">input_transform</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
     <span class="n">batch_sd</span> <span class="o">=</span> <span class="n">batch_mo_model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
 
     <span class="c1"># TODO: add support for outcome transforms.</span>

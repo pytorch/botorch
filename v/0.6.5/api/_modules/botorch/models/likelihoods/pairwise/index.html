@@ -1,0 +1,306 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/versions"><h3>0.6.5</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.models.likelihoods.pairwise</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Pairwise likelihood for pairwise preference model (e.g., PairwiseGP).</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="n">Likelihood</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Bernoulli</span>
+
+
+<div class="viewcode-block" id="PairwiseLikelihood"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLikelihood">[docs]</a><span class="k">class</span> <span class="nc">PairwiseLikelihood</span><span class="p">(</span><span class="n">Likelihood</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">"""Pairwise likelihood base class for pairwise preference GP (e.g., PairwiseGP)"""</span>
+
+<div class="viewcode-block" id="PairwiseLikelihood.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLikelihood.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bernoulli</span><span class="p">:</span>
+        <span class="sd">"""Given the difference in (estimated) utility util_diff = f(v) - f(u),</span>
+<span class="sd">        return a Bernoulli distribution object representing the likelihood of</span>
+<span class="sd">        the user prefer v over u.</span>
+
+<span class="sd">        Note that this is not used by the `PairwiseGP` model,</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">Bernoulli</span><span class="p">(</span><span class="n">probs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">(</span><span class="n">utility</span><span class="o">=</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="PairwiseLikelihood.p"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLikelihood.p">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">p</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">"""Given the difference in (estimated) utility util_diff = f(v) - f(u),</span>
+<span class="sd">        return the probability of the user prefer v over u.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            utility: A Tensor of shape `(batch_size) x n`, the utility at MAP point</span>
+<span class="sd">            D: D is `(batch_size x) m x n` matrix with all elements being zero in last</span>
+<span class="sd">                dimension except at two positions D[..., i] = 1 and D[..., j] = -1</span>
+<span class="sd">                respectively, representing item i is preferred over item j.</span>
+<span class="sd">            log: if true, return log probability</span>
+<span class="sd">        """</span></div>
+
+<div class="viewcode-block" id="PairwiseLikelihood.log_p"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLikelihood.log_p">[docs]</a>    <span class="k">def</span> <span class="nf">log_p</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">"""return the log of p"""</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">(</span><span class="n">utility</span><span class="o">=</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="PairwiseLikelihood.negative_log_gradient_sum"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLikelihood.negative_log_gradient_sum">[docs]</a>    <span class="k">def</span> <span class="nf">negative_log_gradient_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">"""Calculate the sum of negative log gradient with respect to each item's latent</span>
+<span class="sd">            utility values. Useful for models using laplace approximation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            utility: A Tensor of shape `(batch_size x) n`, the utility at MAP point</span>
+<span class="sd">            D: D is `(batch_size x) m x n` matrix with all elements being zero in last</span>
+<span class="sd">                dimension except at two positions D[..., i] = 1 and D[..., j] = -1</span>
+<span class="sd">                respectively, representing item i is preferred over item j.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `(batch_size x) n` Tensor representing the sum of negative log gradient</span>
+<span class="sd">            values of the likelihood over all comparisons (i.e., the m dimension)</span>
+<span class="sd">            with respect to each item.</span>
+<span class="sd">        """</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="PairwiseLikelihood.negative_log_hessian_sum"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLikelihood.negative_log_hessian_sum">[docs]</a>    <span class="k">def</span> <span class="nf">negative_log_hessian_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">"""Calculate the sum of negative log hessian with respect to each item's latent</span>
+<span class="sd">            utility values. Useful for models using laplace approximation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            utility: A Tensor of shape `(batch_size) x n`, the utility at MAP point</span>
+<span class="sd">            D: D is `(batch_size x) m x n` matrix with all elements being zero in last</span>
+<span class="sd">                dimension except at two positions D[..., i] = 1 and D[..., j] = -1</span>
+<span class="sd">                respectively, representing item i is preferred over item j.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `(batch_size x) n x n` Tensor representing the sum of negative log hessian</span>
+<span class="sd">            values of the likelihood over all comparisons (i.e., the m dimension) with</span>
+<span class="sd">            respect to each item.</span>
+<span class="sd">        """</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
+
+
+<div class="viewcode-block" id="PairwiseProbitLikelihood"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseProbitLikelihood">[docs]</a><span class="k">class</span> <span class="nc">PairwiseProbitLikelihood</span><span class="p">(</span><span class="n">PairwiseLikelihood</span><span class="p">):</span>
+    <span class="sd">"""Pairwise likelihood using probit function</span>
+
+<span class="sd">    Given two items v and u with utilities f(v) and f(u), the probability that we</span>
+<span class="sd">    prefer v over u with probability std_normal_cdf((f(v) - f(u))/sqrt(2)). Note</span>
+<span class="sd">    that this formulation implicitly assume the noise term is fixed at 1.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># Clamping z values for better numerical stability. See self._calc_z for detail</span>
+    <span class="c1"># norm_cdf(z=3) ~= 0.999, top 0.1% percent</span>
+    <span class="n">_zlim</span> <span class="o">=</span> <span class="mi">3</span>
+
+    <span class="k">def</span> <span class="nf">_calc_z</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">"""Calculate the z score given estimated utility values and</span>
+<span class="sd">        the comparison matrix D.</span>
+<span class="sd">        """</span>
+        <span class="n">scaled_util</span> <span class="o">=</span> <span class="p">(</span><span class="n">utility</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">D</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">scaled_util</span><span class="p">)</span> <span class="o">@</span> <span class="n">scaled_util</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">z</span>
+
+    <span class="k">def</span> <span class="nf">_calc_z_derived</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">"""Calculate auxiliary statistics derived from z, including log pdf,</span>
+<span class="sd">        log cdf, and the hazard function (pdf divided by cdf)"""</span>
+        <span class="n">std_norm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">normal</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">z_logpdf</span> <span class="o">=</span> <span class="n">std_norm</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">z_cdf</span> <span class="o">=</span> <span class="n">std_norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">z_logcdf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z_cdf</span><span class="p">)</span>
+        <span class="n">hazard</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">z_logpdf</span> <span class="o">-</span> <span class="n">z_logcdf</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">z_logpdf</span><span class="p">,</span> <span class="n">z_logcdf</span><span class="p">,</span> <span class="n">hazard</span>
+
+<div class="viewcode-block" id="PairwiseProbitLikelihood.p"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseProbitLikelihood.p">[docs]</a>    <span class="k">def</span> <span class="nf">p</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_z</span><span class="p">(</span><span class="n">utility</span><span class="o">=</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">)</span>
+        <span class="n">std_norm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">normal</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">std_norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">z</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PairwiseProbitLikelihood.negative_log_gradient_sum"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseProbitLikelihood.negative_log_gradient_sum">[docs]</a>    <span class="k">def</span> <span class="nf">negative_log_gradient_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="c1"># Compute the sum over of grad. of negative Log-LH wrt utility f.</span>
+        <span class="c1"># Original grad should be of dimension m x n, as in (6) from</span>
+        <span class="c1"># [Chu2005preference]_. The sum over the m dimension of grad. of</span>
+        <span class="c1"># negative log likelihood with respect to the utility</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_z</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_z_derived</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">h_factor</span> <span class="o">=</span> <span class="n">h</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">grad</span> <span class="o">=</span> <span class="p">(</span><span class="n">h_factor</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">@</span> <span class="p">(</span><span class="o">-</span><span class="n">D</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">grad</span></div>
+
+<div class="viewcode-block" id="PairwiseProbitLikelihood.negative_log_hessian_sum"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseProbitLikelihood.negative_log_hessian_sum">[docs]</a>    <span class="k">def</span> <span class="nf">negative_log_hessian_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="c1"># Original hess should be of dimension m x n x n, as in (7) from</span>
+        <span class="c1"># [Chu2005preference]_ Sum over the first dimension and return a tensor of</span>
+        <span class="c1"># shape n x n.</span>
+        <span class="c1"># The sum over the m dimension of hessian of negative log likelihood</span>
+        <span class="c1"># with respect to the utility</span>
+        <span class="n">DT</span> <span class="o">=</span> <span class="n">D</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_z</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_z_derived</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">mul_factor</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">z</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">mul_factor</span> <span class="o">=</span> <span class="n">mul_factor</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">DT</span><span class="o">.</span><span class="n">size</span><span class="p">())</span>
+        <span class="c1"># multiply the hessian value by preference signs</span>
+        <span class="c1"># (+1 if preferred or -1 otherwise) and sum over the m dimension</span>
+        <span class="n">hess</span> <span class="o">=</span> <span class="n">DT</span> <span class="o">*</span> <span class="n">mul_factor</span> <span class="o">@</span> <span class="n">D</span>
+        <span class="k">return</span> <span class="n">hess</span></div></div>
+
+
+<div class="viewcode-block" id="PairwiseLogitLikelihood"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLogitLikelihood">[docs]</a><span class="k">class</span> <span class="nc">PairwiseLogitLikelihood</span><span class="p">(</span><span class="n">PairwiseLikelihood</span><span class="p">):</span>
+    <span class="sd">"""Pairwise likelihood using logistic (i.e., sigmoid) function</span>
+
+<span class="sd">    Given two items v and u with utilities f(v) and f(u), the probability that we</span>
+<span class="sd">    prefer v over u with probability sigmoid(f(v) - f(u)). Note</span>
+<span class="sd">    that this formulation implicitly assume the beta term in logistic function is</span>
+<span class="sd">    fixed at 1.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># Clamping logit values for better numerical stability.</span>
+    <span class="c1"># See self._calc_logit for detail logistic(8) ~= 0.9997, top 0.03% percent</span>
+    <span class="n">_logit_lim</span> <span class="o">=</span> <span class="mi">8</span>
+
+    <span class="k">def</span> <span class="nf">_calc_logit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">logit</span> <span class="o">=</span> <span class="n">D</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">utility</span><span class="p">)</span> <span class="o">@</span> <span class="n">utility</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">logit</span> <span class="o">=</span> <span class="n">logit</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_logit_lim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logit_lim</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">logit</span>
+
+<div class="viewcode-block" id="PairwiseLogitLikelihood.log_p"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLogitLikelihood.log_p">[docs]</a>    <span class="k">def</span> <span class="nf">log_p</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">logit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_logit</span><span class="p">(</span><span class="n">utility</span><span class="o">=</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">logsigmoid</span><span class="p">(</span><span class="n">logit</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PairwiseLogitLikelihood.p"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLogitLikelihood.p">[docs]</a>    <span class="k">def</span> <span class="nf">p</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">logit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_logit</span><span class="p">(</span><span class="n">utility</span><span class="o">=</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">logit</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PairwiseLogitLikelihood.negative_log_gradient_sum"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLogitLikelihood.negative_log_gradient_sum">[docs]</a>    <span class="k">def</span> <span class="nf">negative_log_gradient_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">indices_shape</span> <span class="o">=</span> <span class="n">utility</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,)</span>
+        <span class="n">winner_indices</span> <span class="o">=</span> <span class="p">(</span><span class="n">D</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">as_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">indices_shape</span><span class="p">)</span>
+        <span class="n">loser_indices</span> <span class="o">=</span> <span class="p">(</span><span class="n">D</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">as_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">indices_shape</span><span class="p">)</span>
+        <span class="n">ex</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">winner_indices</span><span class="p">))</span>
+        <span class="n">ey</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">loser_indices</span><span class="p">))</span>
+        <span class="n">unsigned_grad</span> <span class="o">=</span> <span class="n">ey</span> <span class="o">/</span> <span class="p">(</span><span class="n">ex</span> <span class="o">+</span> <span class="n">ey</span><span class="p">)</span>
+        <span class="n">grad</span> <span class="o">=</span> <span class="p">(</span><span class="n">unsigned_grad</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">@</span> <span class="p">(</span><span class="o">-</span><span class="n">D</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">grad</span></div>
+
+<div class="viewcode-block" id="PairwiseLogitLikelihood.negative_log_hessian_sum"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLogitLikelihood.negative_log_hessian_sum">[docs]</a>    <span class="k">def</span> <span class="nf">negative_log_hessian_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">DT</span> <span class="o">=</span> <span class="n">D</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># calculating f(v) - f(u) given u &gt; v information in D</span>
+        <span class="n">neg_logit</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">D</span> <span class="o">@</span> <span class="n">utility</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">term</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">neg_logit</span><span class="p">)</span>
+        <span class="n">mul_factor</span> <span class="o">=</span> <span class="n">term</span> <span class="o">-</span> <span class="p">(</span><span class="n">term</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">mul_factor</span> <span class="o">=</span> <span class="n">mul_factor</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">DT</span><span class="o">.</span><span class="n">size</span><span class="p">())</span>
+        <span class="c1"># multiply the hessian value by preference signs</span>
+        <span class="c1"># (+1 if preferred or -1 otherwise) and sum over the m dimension</span>
+        <span class="n">hess</span> <span class="o">=</span> <span class="n">DT</span> <span class="o">*</span> <span class="n">mul_factor</span> <span class="o">@</span> <span class="n">D</span>
+        <span class="k">return</span> <span class="n">hess</span></div></div>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../../index.html">Documentation overview</a><ul>
+<li><a href="../../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'botorch',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

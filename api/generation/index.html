@@ -278,6 +278,19 @@ dimension) according to the maximum posterior value under the objective.</p></li
 </dd>
 </dl>
 </dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.generation.sampling.MaxPosteriorSampling.maximize_samples">
+<span class="sig-name descname"><span class="pre">maximize_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#MaxPosteriorSampling.maximize_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.MaxPosteriorSampling.maximize_samples" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – </p></li>
+<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – </p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.generation.sampling.MaxPosteriorSampling.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.generation.sampling.MaxPosteriorSampling.training" title="Permalink to this definition">¶</a></dt>
@@ -346,6 +359,87 @@ function, then its batch shape must be broadcastable to <cite>batch_shape</cite>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.generation.sampling.BoltzmannSampling.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.generation.sampling.BoltzmannSampling.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.generation.sampling.ConstrainedMaxPosteriorSampling">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.generation.sampling.</span></span><span class="sig-name descname"><span class="pre">ConstrainedMaxPosteriorSampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacement</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimize_constraints_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#ConstrainedMaxPosteriorSampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.ConstrainedMaxPosteriorSampling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.generation.sampling.MaxPosteriorSampling" title="botorch.generation.sampling.MaxPosteriorSampling"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.generation.sampling.MaxPosteriorSampling</span></code></a></p>
+<p>Sample from a set of points according to
+their max posterior value,
+which also likely meet a set of constraints
+c1(x) &lt;= 0, c2(x) &lt;= 0, …, cm(x) &lt;= 0
+c1, c2, …, cm are black-box constraint functions
+Each constraint function is modeled by a seperate
+surrogate GP constraint model
+We sample points for which the posterior value
+for each constraint model &lt;= 0,
+as described in <a class="reference external" href="https://doi.org/10.48550/arxiv.2002.08526">https://doi.org/10.48550/arxiv.2002.08526</a></p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">CMPS</span> <span class="o">=</span> <span class="n">ConstrainedMaxPosteriorSampling</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
+<span class="go">            constraint_model=ModelListGP(cmodel1, cmodel2,</span>
+<span class="go">            ..., cmodelm)  # models w/ feature dim d=3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sampled_X</span> <span class="o">=</span> <span class="n">CMPS</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Constructor for the SamplingStrategy base class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
+<li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em>]</em>) – The MCAcquisitionObjective under
+which the samples are evaluated.
+Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em>]</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>replacement</strong> (<em>bool</em>) – If True, sample with replacement.</p></li>
+<li><p><strong>constraint_model</strong> (<em>Union</em><em>[</em><a class="reference internal" href="models.html#botorch.models.model_list_gp_regression.ModelListGP" title="botorch.models.model_list_gp_regression.ModelListGP"><em>ModelListGP</em></a><em>, </em><a class="reference internal" href="models.html#botorch.models.multitask.MultiTaskGP" title="botorch.models.multitask.MultiTaskGP"><em>MultiTaskGP</em></a><em>]</em>) – either a ModelListGP where each submodel
+is a GP model for one constraint function,
+or a MultiTaskGP model where each task is one
+constraint function
+All constraints are of the form c(x) &lt;= 0.
+In the case when the constraint model predicts
+that all candidates violate constraints,
+we pick the candidates with minimum violation.</p></li>
+<li><p><strong>minimize_constraints_only</strong> (<em>bool</em>) – False by default, if true,
+we will automatically return the candidates
+with minimum posterior constraint values,
+(minimum predicted c(x) summed over all constraints)
+reguardless of predicted objective values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.generation.sampling.ConstrainedMaxPosteriorSampling.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#ConstrainedMaxPosteriorSampling.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.ConstrainedMaxPosteriorSampling.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample from the model posterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x N x d</cite>-dim Tensor
+from which to sample (in the <cite>N</cite>
+dimension) according to the maximum
+posterior value under the objective.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – The number of samples to draw.</p></li>
+<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, sample with observation noise.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>batch_shape x num_samples x d</cite>-dim
+Tensor of samples from <cite>X</cite>, where
+<cite>X[…, i, :]</cite> is the <cite>i</cite>-th sample.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.generation.sampling.ConstrainedMaxPosteriorSampling.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.generation.sampling.ConstrainedMaxPosteriorSampling.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 </section>

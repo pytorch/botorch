@@ -52,12 +52,14 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">SamplingWarning</span>
+<span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">MCMC_DIM</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">FastNondominatedPartitioning</span><span class="p">,</span>
     <span class="n">NondominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
 
@@ -235,22 +237,22 @@
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Get infeasible cost for a model and objective.</span>
 
-<span class="sd">    Computes an infeasible cost `M` such that `-M &lt; min_x f(x)` almost always,</span>
-<span class="sd">        so that feasible points are preferred.</span>
+<span class="sd">    For each outcome, computes an infeasible cost `M` such that</span>
+<span class="sd">    `-M &lt; min_x f(x)` almost always, so that feasible points are preferred.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: A `n x d` Tensor of `n` design points to use in evaluating the</span>
 <span class="sd">            minimum. These points should cover the design space well. The more</span>
 <span class="sd">            points the better the estimate, at the expense of added computation.</span>
-<span class="sd">        model: A fitted botorch model.</span>
+<span class="sd">        model: A fitted botorch model with `m` outcomes.</span>
 <span class="sd">        objective: The objective with which to evaluate the model output.</span>
 <span class="sd">        posterior_transform: A PosteriorTransform (optional).</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        The infeasible cost `M` value.</span>
+<span class="sd">        An `m`-dim tensor of infeasible cost values.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
@@ -263,9 +265,13 @@
             <span class="k">return</span> <span class="n">Y</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="n">posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">)</span>
-    <span class="n">lb</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">mean</span> <span class="o">-</span> <span class="mi">6</span> <span class="o">*</span> <span class="n">posterior</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">())</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
-    <span class="n">M</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">lb</span><span class="o">.</span><span class="n">clamp_max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">M</span><span class="o">.</span><span class="n">item</span><span class="p">()</span></div>
+    <span class="n">lb</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">mean</span> <span class="o">-</span> <span class="mi">6</span> <span class="o">*</span> <span class="n">posterior</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">lb</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">ndim</span><span class="p">:</span>
+        <span class="n">lb</span> <span class="o">=</span> <span class="n">lb</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># Take outcome-wise min. Looping in to handle batched models.</span>
+    <span class="k">while</span> <span class="n">lb</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">lb</span> <span class="o">=</span> <span class="n">lb</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="n">lb</span><span class="o">.</span><span class="n">clamp_max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="is_nonnegative"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.is_nonnegative">[docs]</a><span class="k">def</span> <span class="nf">is_nonnegative</span><span class="p">(</span><span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -342,6 +348,10 @@
 <span class="sd">        with `N_nz` the number of points in `X` that have non-zero (empirical,</span>
 <span class="sd">        under `num_samples` samples) probability of being the best point.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">marginalize_dim</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">is_fully_bayesian</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+        <span class="c1"># TODO: Properly deal with marginalizing fully Bayesian models</span>
+        <span class="n">marginalize_dim</span> <span class="o">=</span> <span class="n">MCMC_DIM</span>
+
     <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="c1"># TODO: support batched inputs (req. dealing with ragged tensors)</span>
         <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>

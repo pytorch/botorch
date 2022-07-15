@@ -36,7 +36,7 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
@@ -45,7 +45,6 @@
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Log</span><span class="p">,</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">fantasize</span> <span class="k">as</span> <span class="n">fantasize_flag</span><span class="p">,</span> <span class="n">validate_input_scaling</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">TrainingData</span>
 <span class="kn">from</span> <span class="nn">gpytorch.constraints.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.matern_kernel</span> <span class="kn">import</span> <span class="n">MaternKernel</span>
@@ -181,20 +180,7 @@
             <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">mean_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">covar_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar_x</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="SingleTaskGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.SingleTaskGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Construct kwargs for the `Model` from `TrainingData` and other options.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            training_data: `TrainingData` container with data for single outcome</span>
-<span class="sd">                or for multiple outcomes for batched multi-output case.</span>
-<span class="sd">            **kwargs: None expected for this class.</span>
-<span class="sd">        """</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">"train_X"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Y</span><span class="p">}</span></div></div>
+        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar_x</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="FixedNoiseGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.FixedNoiseGP">[docs]</a><span class="k">class</span> <span class="nc">FixedNoiseGP</span><span class="p">(</span><span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">):</span>
@@ -359,26 +345,7 @@
         <span class="n">full_noise</span> <span class="o">=</span> <span class="n">new_model</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span><span class="o">.</span><span class="n">noise</span>
         <span class="n">new_noise</span> <span class="o">=</span> <span class="n">full_noise</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idcs</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idcs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">idcs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">:]</span>
         <span class="n">new_model</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span><span class="o">.</span><span class="n">noise</span> <span class="o">=</span> <span class="n">new_noise</span>
-        <span class="k">return</span> <span class="n">new_model</span></div>
-
-<div class="viewcode-block" id="FixedNoiseGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.FixedNoiseGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Construct kwargs for the `Model` from `TrainingData` and other options.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            training_data: `TrainingData` container with data for single outcome</span>
-<span class="sd">                or for multiple outcomes for batched multi-output case.</span>
-<span class="sd">            **kwargs: None expected for this class.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Yvar required for </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">"train_X"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="p">,</span>
-            <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span>
-            <span class="s2">"train_Yvar"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Yvar</span><span class="p">,</span>
-        <span class="p">}</span></div></div>
+        <span class="k">return</span> <span class="n">new_model</span></div></div>
 
 
 <div class="viewcode-block" id="HeteroskedasticSingleTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP">[docs]</a><span class="k">class</span> <span class="nc">HeteroskedasticSingleTaskGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>

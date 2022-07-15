@@ -75,15 +75,15 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">gp_models</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ModelListGP.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.model_list_gp_regression.ModelListGP.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelListGP</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of</span>
-<span class="sd">                the feature space, `n'` is the number of points per batch, and</span>
-<span class="sd">                `batch_shape` is the batch shape (must be compatible with the</span>
-<span class="sd">                batch shape of the model).</span>
+<span class="sd">            X: A `m`-list of `batch_shape x n' x d`-dim Tensors, where `d` is the</span>
+<span class="sd">                dimension of the feature space, `n'` is the number of points</span>
+<span class="sd">                per batch, and `batch_shape` is the batch shape (must be compatible</span>
+<span class="sd">                with the batch shape of the model).</span>
 <span class="sd">            Y: A `batch_shape' x n' x m`-dim Tensor, where `m` is the number of</span>
 <span class="sd">                model outputs, `n'` is the number of points per batch, and</span>
 <span class="sd">                `batch_shape'` is the batch shape of the observations.</span>
@@ -99,10 +99,6 @@
 <span class="sd">            `n_i + n'` training examples, where the `n'` training examples have</span>
 <span class="sd">            been added and all test-time caches have been updated.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span>
-            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"noise"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span>
-        <span class="p">)</span>
-        <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span>
         <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
                 <span class="s2">"Incorrect number of outputs for observations. Received "</span>
@@ -110,13 +106,19 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="si">}</span><span class="s2"> outputs."</span>
             <span class="p">)</span>
         <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
+        <span class="c1"># This should never trigger, posterior call would fail.</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">if</span> <span class="s2">"noise"</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="n">noise</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"noise"</span><span class="p">)</span>
-            <span class="c1"># Note: dimension checks were performed in _validate_tensor_args</span>
+            <span class="k">if</span> <span class="n">noise</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">noise</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="p">:]:</span>
+                <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
+                    <span class="s2">"The shape of observation noise does not agree with the outcomes. "</span>
+                    <span class="sa">f</span><span class="s2">"Received </span><span class="si">{</span><span class="n">noise</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> noise with </span><span class="si">{</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> outcomes."</span>
+                <span class="p">)</span>
             <span class="n">kwargs_</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">kwargs</span><span class="p">,</span> <span class="s2">"noise"</span><span class="p">:</span> <span class="p">[</span><span class="n">noise</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]}</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">kwargs_</span> <span class="o">=</span> <span class="n">kwargs</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_fantasy_model</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs_</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_fantasy_model</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs_</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ModelListGP.subset_output"><a class="viewcode-back" href="../../../models.html#botorch.models.model_list_gp_regression.ModelListGP.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ModelListGP</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Subset the model along the output dimension.</span>

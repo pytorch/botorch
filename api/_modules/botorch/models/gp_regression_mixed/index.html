@@ -39,7 +39,7 @@
 <span class="kn">from</span> <span class="nn">botorch.models.kernels.categorical</span> <span class="kn">import</span> <span class="n">CategoricalKernel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">TrainingData</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize_indices</span>
 <span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.kernel</span> <span class="kn">import</span> <span class="n">Kernel</span>
@@ -213,20 +213,23 @@
 
 <div class="viewcode-block" id="MixedSingleTaskGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">training_data</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
+        <span class="n">categorical_features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">likelihood</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Likelihood</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Construct kwargs for the `Model` from `TrainingData` and other options.</span>
+        <span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dict of `BotorchDataset`.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            training_data: `TrainingData` container with data for single outcome</span>
-<span class="sd">                or for multiple outcomes for batched multi-output case.</span>
-<span class="sd">            **kwargs: None expected for this class.</span>
+<span class="sd">            training_data: A `SupervisedDataset` containing the training data.</span>
+<span class="sd">            categorical_features: Column indices of categorical features.</span>
+<span class="sd">            likelihood: Optional likelihood used to constuct the model.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">"train_X"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="p">,</span>
-            <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span>
-            <span class="s2">"cat_dims"</span><span class="p">:</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"categorical_features"</span><span class="p">],</span>
-            <span class="s2">"likelihood"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"likelihood"</span><span class="p">),</span>
+            <span class="o">**</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span><span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+            <span class="s2">"cat_dims"</span><span class="p">:</span> <span class="n">categorical_features</span><span class="p">,</span>
+            <span class="s2">"likelihood"</span><span class="p">:</span> <span class="n">likelihood</span><span class="p">,</span>
         <span class="p">}</span></div></div>
 </pre></div>
 </div>

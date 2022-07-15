@@ -59,32 +59,41 @@ Negative values imply feasibility. The callables support broadcasting
 </section>
 <section id="module-botorch.utils.containers">
 <span id="containers"></span><h2>Containers<a class="headerlink" href="#module-botorch.utils.containers" title="Permalink to this headline">¶</a></h2>
-<p>Containers to standardize inputs into models and acquisition functions.</p>
+<p>Representations for different kinds of data.</p>
 <dl class="py class">
-<dt class="sig sig-object py" id="botorch.utils.containers.TrainingData">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.containers.</span></span><span class="sig-name descname"><span class="pre">TrainingData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Xs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/containers.html#TrainingData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.containers.TrainingData" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Standardized container of model training data for models.</p>
-<dl class="simple">
-<dt>Properties:</dt><dd><dl class="simple">
-<dt>Xs: A list of tensors, each of shape <cite>batch_shape x n_i x d</cite>,</dt><dd><p>where <cite>n_i</cite> is the number of training inputs for the i-th model.</p>
-</dd>
-<dt>Ys: A list of tensors, each of shape <cite>batch_shape x n_i x 1</cite>,</dt><dd><p>where <cite>n_i</cite> is the number of training observations for the i-th
-(single-output) model.</p>
-</dd>
-<dt>Yvars: A list of tensors, each of shape <cite>batch_shape x n_i x 1</cite>,</dt><dd><p>where <cite>n_i</cite> is the number of training observations of the
-observation noise for the i-th  (single-output) model.
-If <cite>None</cite>, the observation noise level is unobserved.</p>
-</dd>
-</dl>
-</dd>
-</dl>
+<dt class="sig sig-object py" id="botorch.utils.containers.BotorchContainer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.containers.</span></span><span class="sig-name descname"><span class="pre">BotorchContainer</span></span><a class="reference internal" href="_modules/botorch/utils/containers.html#BotorchContainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.containers.BotorchContainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Abstract base class for BoTorch’s data containers.</p>
+<p>A BotorchContainer represents a tensor, which should be the sole object
+returned by its <cite>__call__</cite> method. Said tensor is expected to consist of
+one or more “events” (e.g. data points or feature vectors), whose shape is
+given by the required <cite>event_shape</cite> field.</p>
+<p>Notice: Once version 3.10 becomes standard, this class should
+be reworked to take advantage of dataclasses’ <cite>kw_only</cite> flag.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.containers.BotorchContainer.shape">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.utils.containers.BotorchContainer.shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.containers.BotorchContainer.device">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.device</span></em><a class="headerlink" href="#botorch.utils.containers.BotorchContainer.device" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.containers.BotorchContainer.dtype">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.dtype</span></em><a class="headerlink" href="#botorch.utils.containers.BotorchContainer.dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.containers.DenseContainer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.containers.</span></span><span class="sig-name descname"><span class="pre">DenseContainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_shape</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/containers.html#DenseContainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.containers.DenseContainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.containers.BotorchContainer</span></code></a></p>
+<p>Basic representation of data stored as a dense Tensor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>Xs</strong> (<em>List</em><em>[</em><em>torch.Tensor</em><em>]</em>) – </p></li>
-<li><p><strong>Ys</strong> (<em>List</em><em>[</em><em>torch.Tensor</em><em>]</em>) – </p></li>
-<li><p><strong>Yvars</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>torch.Tensor</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>values</strong> (<em>torch.Tensor</em>) – </p></li>
+<li><p><strong>event_shape</strong> (<em>torch.Size</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -92,61 +101,228 @@ If <cite>None</cite>, the observation noise level is unobserved.</p>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.Xs">
-<span class="sig-name descname"><span class="pre">Xs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Xs" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.utils.containers.DenseContainer.values">
+<span class="sig-name descname"><span class="pre">values</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.utils.containers.DenseContainer.values" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.Ys">
-<span class="sig-name descname"><span class="pre">Ys</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Ys" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.utils.containers.DenseContainer.event_shape">
+<span class="sig-name descname"><span class="pre">event_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.utils.containers.DenseContainer.event_shape" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.Yvars">
-<span class="sig-name descname"><span class="pre">Yvars</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Yvars" title="Permalink to this definition">¶</a></dt>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.containers.DenseContainer.shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.utils.containers.DenseContainer.shape" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.from_block_design">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_block_design</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/containers.html#TrainingData.from_block_design"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.containers.TrainingData.from_block_design" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construct a TrainingData object from a block design description.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.containers.DenseContainer.device">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.device</span></em><a class="headerlink" href="#botorch.utils.containers.DenseContainer.device" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.containers.DenseContainer.dtype">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.dtype</span></em><a class="headerlink" href="#botorch.utils.containers.DenseContainer.dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.containers.SliceContainer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.containers.</span></span><span class="sig-name descname"><span class="pre">SliceContainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_shape</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/containers.html#SliceContainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.containers.SliceContainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.containers.BotorchContainer</span></code></a></p>
+<p>Represent data points formed by concatenating (n-1)-dimensional slices
+taken from the leading dimension of an n-dimensional source tensor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x n x d</cite> tensor of training points (shared across
-all outcomes).</p></li>
-<li><p><strong>Y</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite> tensor of training noise variance
-observations, or <cite>None</cite>.</p></li>
+<li><p><strong>values</strong> (<em>torch.Tensor</em>) – </p></li>
+<li><p><strong>indices</strong> (<em>torch.LongTensor</em>) – </p></li>
+<li><p><strong>event_shape</strong> (<em>torch.Size</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The <cite>TrainingData</cite> object (with <cite>is_block_design=True</cite>).</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.containers.SliceContainer.values">
+<span class="sig-name descname"><span class="pre">values</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.utils.containers.SliceContainer.values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.containers.SliceContainer.indices">
+<span class="sig-name descname"><span class="pre">indices</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.LongTensor</span></em><a class="headerlink" href="#botorch.utils.containers.SliceContainer.indices" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.containers.SliceContainer.event_shape">
+<span class="sig-name descname"><span class="pre">event_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.utils.containers.SliceContainer.event_shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.containers.SliceContainer.shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.utils.containers.SliceContainer.shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.containers.SliceContainer.device">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.device</span></em><a class="headerlink" href="#botorch.utils.containers.SliceContainer.device" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.containers.SliceContainer.dtype">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.dtype</span></em><a class="headerlink" href="#botorch.utils.containers.SliceContainer.dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
+<section id="module-botorch.utils.datasets">
+<span id="datasets"></span><h2>Datasets<a class="headerlink" href="#module-botorch.utils.datasets" title="Permalink to this headline">¶</a></h2>
+<p>Representations for different kinds of datasets.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.datasets.BotorchDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">BotorchDataset</span></span><a class="reference internal" href="_modules/botorch/utils/datasets.html#BotorchDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.BotorchDataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.is_block_design">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_block_design</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.is_block_design" title="Permalink to this definition">¶</a></dt>
-<dd><p>Indicates whether training data is a “block design”.</p>
-<p>Block designs are designs in which all outcomes are observed
-at the same training inputs.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDatasetMeta">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">SupervisedDatasetMeta</span></span><a class="reference internal" href="_modules/botorch/utils/datasets.html#SupervisedDatasetMeta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.SupervisedDatasetMeta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
 </dd></dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.X">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.X" title="Permalink to this definition">¶</a></dt>
-<dd><p>The training inputs (block-design only).</p>
-<p>This raises an <cite>UnsupportedError</cite> in the non-block-design case.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">SupervisedDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#SupervisedDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.datasets.BotorchDataset" title="botorch.utils.datasets.BotorchDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.datasets.BotorchDataset</span></code></a></p>
+<p>Base class for datasets consisting of labelled pairs <cite>(x, y)</cite>.</p>
+<p>This class object’s <cite>__call__</cite> method converts Tensors <cite>src</cite> to
+DenseContainers under the assumption that <cite>event_shape=src.shape[-1:]</cite>.</p>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">SupervisedDataset</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+<span class="n">B</span> <span class="o">=</span> <span class="n">SupervisedDataset</span><span class="p">(</span>
+    <span class="n">DenseContainer</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">event_shape</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]),</span>
+    <span class="n">DenseContainer</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">event_shape</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]),</span>
+<span class="p">)</span>
+<span class="k">assert</span> <span class="n">A</span> <span class="o">==</span> <span class="n">B</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset.X">
+<span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><span class="pre">botorch.utils.containers.BotorchContainer</span></a></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.X" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset.Y">
+<span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><span class="pre">botorch.utils.containers.BotorchContainer</span></a></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.Y" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset.dict_from_iter">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dict_from_iter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#SupervisedDataset.dict_from_iter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.dict_from_iter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of <cite>SupervisedDataset</cite> from iterables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>botorch.utils.containers.BotorchContainer</em></a><em>, </em><em>torch.Tensor</em><em>, </em><em>Iterable</em><em>[</em><em>Union</em><em>[</em><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>botorch.utils.containers.BotorchContainer</em></a><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>Y</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>botorch.utils.containers.BotorchContainer</em></a><em>, </em><em>torch.Tensor</em><em>, </em><em>Iterable</em><em>[</em><em>Union</em><em>[</em><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>botorch.utils.containers.BotorchContainer</em></a><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>keys</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><em>Hashable</em><em>]</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Dict[Hashable, <a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset">botorch.utils.datasets.SupervisedDataset</a>]</p>
+</dd>
+</dl>
 </dd></dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.Y">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Y" title="Permalink to this definition">¶</a></dt>
-<dd><p>The training observations (block-design only).</p>
-<p>This raises an <cite>UnsupportedError</cite> in the non-block-design case.</p>
 </dd></dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.Yvar">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Yvar" title="Permalink to this definition">¶</a></dt>
-<dd><p>The training observations’s noise variance (block-design only).</p>
-<p>This raises an <cite>UnsupportedError</cite> in the non-block-design case.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.datasets.FixedNoiseDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">FixedNoiseDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#FixedNoiseDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.FixedNoiseDataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.datasets.SupervisedDataset</span></code></a></p>
+<p>A SupervisedDataset with an additional field <cite>Yvar</cite> that stipulates
+observations variances so that <cite>Y[i] ~ N(f(X[i]), Yvar[i])</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.datasets.FixedNoiseDataset.X">
+<span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><span class="pre">botorch.utils.containers.BotorchContainer</span></a></em><a class="headerlink" href="#botorch.utils.datasets.FixedNoiseDataset.X" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.datasets.FixedNoiseDataset.Y">
+<span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><span class="pre">botorch.utils.containers.BotorchContainer</span></a></em><a class="headerlink" href="#botorch.utils.datasets.FixedNoiseDataset.Y" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.datasets.FixedNoiseDataset.Yvar">
+<span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><span class="pre">botorch.utils.containers.BotorchContainer</span></a></em><a class="headerlink" href="#botorch.utils.datasets.FixedNoiseDataset.Yvar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.datasets.FixedNoiseDataset.dict_from_iter">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dict_from_iter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#FixedNoiseDataset.dict_from_iter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.FixedNoiseDataset.dict_from_iter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of <cite>FixedNoiseDataset</cite> from iterables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>botorch.utils.containers.BotorchContainer</em></a><em>, </em><em>torch.Tensor</em><em>, </em><em>Iterable</em><em>[</em><em>Union</em><em>[</em><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>botorch.utils.containers.BotorchContainer</em></a><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>Y</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>botorch.utils.containers.BotorchContainer</em></a><em>, </em><em>torch.Tensor</em><em>, </em><em>Iterable</em><em>[</em><em>Union</em><em>[</em><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>botorch.utils.containers.BotorchContainer</em></a><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>botorch.utils.containers.BotorchContainer</em></a><em>, </em><em>torch.Tensor</em><em>, </em><em>Iterable</em><em>[</em><em>Union</em><em>[</em><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>botorch.utils.containers.BotorchContainer</em></a><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>keys</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><em>Hashable</em><em>]</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Dict[Hashable, <a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset">botorch.utils.datasets.SupervisedDataset</a>]</p>
+</dd>
+</dl>
 </dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.datasets.RankingDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">RankingDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#RankingDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.RankingDataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.datasets.SupervisedDataset</span></code></a></p>
+<p>A SupervisedDataset whose labelled pairs <cite>(x, y)</cite> consist of m-ary combinations
+<cite>x ∈ Z^{m}</cite> of elements from a ground set <cite>Z = (z_1, …)</cite> and ranking vectors
+<cite>y {0, …, m - 1}^{m}</cite> with properties:</p>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li><p>Ranks start at zero, i.e. min(y) = 0.</p></li>
+<li><p>Sorted ranks are contiguous unless one or more ties are present.</p></li>
+<li><p><cite>k</cite> ranks are skipped after a <cite>k</cite>-way tie.</p></li>
+</ol>
+</div></blockquote>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">SliceContainer</span><span class="p">(</span>
+    <span class="n">values</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="n">indices</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="mi">16</span><span class="p">)[:</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)]),</span>
+    <span class="n">event_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">3</span> <span class="o">*</span> <span class="mi">2</span><span class="p">]),</span>
+<span class="p">)</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">DenseContainer</span><span class="p">(</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)]),</span>
+    <span class="n">event_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">3</span><span class="p">])</span>
+<span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">RankingDataset</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.datasets.RankingDataset.X">
+<span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#botorch.utils.containers.SliceContainer" title="botorch.utils.containers.SliceContainer"><span class="pre">botorch.utils.containers.SliceContainer</span></a></em><a class="headerlink" href="#botorch.utils.datasets.RankingDataset.X" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.datasets.RankingDataset.Y">
+<span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><span class="pre">botorch.utils.containers.BotorchContainer</span></a></em><a class="headerlink" href="#botorch.utils.datasets.RankingDataset.Y" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.dispatcher">
@@ -1124,6 +1300,21 @@ function samples.</p>
 </dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.gp_sampling.get_eval_gp_sample_callable">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.gp_sampling.</span></span><span class="sig-name descname"><span class="pre">get_eval_gp_sample_callable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/gp_sampling.html#get_eval_gp_sample_callable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.gp_sampling.get_eval_gp_sample_callable" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>w</strong> (<em>torch.Tensor</em>) – </p></li>
+<li><p><strong>basis</strong> (<a class="reference internal" href="#botorch.utils.gp_sampling.RandomFourierFeatures" title="botorch.utils.gp_sampling.RandomFourierFeatures"><em>botorch.utils.gp_sampling.RandomFourierFeatures</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.gp_sampling.get_deterministic_model">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.gp_sampling.</span></span><span class="sig-name descname"><span class="pre">get_deterministic_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bases</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/gp_sampling.html#get_deterministic_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.gp_sampling.get_deterministic_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a deterministic model using the provided weights and bases for each output.</p>
@@ -1139,6 +1330,25 @@ function samples.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><a class="reference internal" href="models.html#botorch.models.deterministic.GenericDeterministicModel" title="botorch.models.deterministic.GenericDeterministicModel">botorch.models.deterministic.GenericDeterministicModel</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.gp_sampling.get_deterministic_model_list">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.gp_sampling.</span></span><span class="sig-name descname"><span class="pre">get_deterministic_model_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bases</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/gp_sampling.html#get_deterministic_model_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.gp_sampling.get_deterministic_model_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a deterministic model list using the provided weights and bases for each output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weights</strong> (<em>List</em><em>[</em><em>torch.Tensor</em><em>]</em>) – a list of weights with <cite>m</cite> elements</p></li>
+<li><p><strong>bases</strong> (<em>List</em><em>[</em><a class="reference internal" href="#botorch.utils.gp_sampling.RandomFourierFeatures" title="botorch.utils.gp_sampling.RandomFourierFeatures"><em>botorch.utils.gp_sampling.RandomFourierFeatures</em></a><em>]</em>) – a list of RandomFourierFeatures with <cite>m</cite> elements.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A deterministic model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="models.html#botorch.models.model.ModelList" title="botorch.models.model.ModelList">botorch.models.model.ModelList</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1164,11 +1374,16 @@ function samples.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.gp_sampling.get_gp_samples">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.gp_sampling.</span></span><span class="sig-name descname"><span class="pre">get_gp_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_outputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_rff_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/gp_sampling.html#get_gp_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.gp_sampling.get_gp_samples" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.gp_sampling.</span></span><span class="sig-name descname"><span class="pre">get_gp_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_outputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_rff_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/gp_sampling.html#get_gp_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.gp_sampling.get_gp_samples" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample functions from GP posterior using RFFs. The returned
 <cite>GenericDeterministicModel</cite> effectively wraps <cite>num_outputs</cite> models,
 each of which has a batch shape of <cite>n_samples</cite>. Refer
 <cite>get_deterministic_model_multi_samples</cite> for more details.</p>
+<p>NOTE: If using input / outcome transforms, the gp samples must be accessed via
+the <cite>gp_sample.posterior(X)</cite> call. Otherwise, <cite>gp_sample(X)</cite> will produce bogus
+values that do not agree with the underlying <cite>model</cite>. It is also highly recommended
+to use outcome transforms to standardize the input data, since the gp samples do
+not work well when training outcomes are not zero-mean.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1179,8 +1394,8 @@ each of which has a batch shape of <cite>n_samples</cite>. Refer
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A batched <cite>GenericDeterministicModel</cite> that batch evaluates <cite>n_samples</cite>
-sampled functions.</p>
+<dd class="field-even"><p>A <cite>GenericDeterministicModel</cite> that evaluates <cite>n_samples</cite> sampled functions.
+If <cite>n_samples &gt; 1</cite>, this will be a batched model.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><a class="reference internal" href="models.html#botorch.models.deterministic.GenericDeterministicModel" title="botorch.models.deterministic.GenericDeterministicModel">botorch.models.deterministic.GenericDeterministicModel</a></p>
@@ -1362,12 +1577,38 @@ shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
 <p>Both parameters and persistent buffers (e.g. running averages) are
 included. Keys are corresponding parameter and buffer names.
 Parameters and buffers set to <code class="docutils literal notranslate"><span class="pre">None</span></code> are not included.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Currently <code class="docutils literal notranslate"><span class="pre">state_dict()</span></code> also accepts positional arguments for
+<code class="docutils literal notranslate"><span class="pre">destination</span></code>, <code class="docutils literal notranslate"><span class="pre">prefix</span></code> and <code class="docutils literal notranslate"><span class="pre">keep_vars</span></code> in order. However,
+this is being deprecated and keyword arguments will be enforced in
+future releases.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Please avoid the use of argument <code class="docutils literal notranslate"><span class="pre">destination</span></code> as it is not
+designed for end-users.</p>
+</div>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>a dictionary containing a whole state of the module</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>destination</strong> (<em>dict</em><em>, </em><em>optional</em>) – If provided, the state of module will
+be updated into the dict and the same object is returned.
+Otherwise, an <code class="docutils literal notranslate"><span class="pre">OrderedDict</span></code> will be created and returned.
+Default: <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>prefix</strong> (<em>str</em><em>, </em><em>optional</em>) – a prefix added to parameter and buffer
+names to compose the keys in state_dict. Default: <code class="docutils literal notranslate"><span class="pre">''</span></code>.</p></li>
+<li><p><strong>keep_vars</strong> (<em>bool</em><em>, </em><em>optional</em>) – by default the <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code> s
+returned in the state dict are detached from autograd. If it’s
+set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, detaching will not be performed.
+Default: <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>dict</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a dictionary containing a whole state of the module</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 <p>Example:</p>

@@ -1,0 +1,660 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/versions"><h3>0.6.5</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.models.higher_order_gp</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">References</span>
+
+<span class="sd">.. [Zhe2019hogp]</span>
+<span class="sd">    S. Zhe, W. Xing, and R. M. Kirby. Scalable high-order gaussian process regression.</span>
+<span class="sd">    Proceedings of Machine Learning Research, volume 89, Apr 2019.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">ExitStack</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span><span class="p">,</span> <span class="n">Standardize</span>
+<span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">gpt_posterior_settings</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GPyTorchPosterior</span><span class="p">,</span>
+    <span class="n">HigherOrderGPPosterior</span><span class="p">,</span>
+    <span class="n">TransformedPosterior</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
+<span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">MaternKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BatchRepeatLazyTensor</span><span class="p">,</span>
+    <span class="n">DiagLazyTensor</span><span class="p">,</span>
+    <span class="n">KroneckerProductLazyTensor</span><span class="p">,</span>
+    <span class="n">LazyTensor</span><span class="p">,</span>
+    <span class="n">ZeroLazyTensor</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="n">GaussianLikelihood</span><span class="p">,</span> <span class="n">Likelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.models</span> <span class="kn">import</span> <span class="n">ExactGP</span>
+<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span><span class="p">,</span> <span class="n">MultivariateNormalPrior</span>
+<span class="kn">from</span> <span class="nn">gpytorch.settings</span> <span class="kn">import</span> <span class="n">fast_pred_var</span><span class="p">,</span> <span class="n">skip_posterior_variances</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleList</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">ParameterList</span>
+
+
+<span class="n">MIN_INFERRED_NOISE_LEVEL</span> <span class="o">=</span> <span class="mf">1e-4</span>
+
+
+<div class="viewcode-block" id="FlattenedStandardize"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.FlattenedStandardize">[docs]</a><span class="k">class</span> <span class="nc">FlattenedStandardize</span><span class="p">(</span><span class="n">Standardize</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Standardize outcomes in a structured multi-output settings by reshaping the</span>
+<span class="sd">    batched output dimensions to be a vector. Specifically, an output dimension</span>
+<span class="sd">    of [a x b x c] will be squeezed to be a vector of [a * b * c].</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">output_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+        <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_stdv</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">batch_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">FlattenedStandardize</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">m</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">outputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">min_stdv</span><span class="o">=</span><span class="n">min_stdv</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_shape</span> <span class="o">=</span> <span class="n">output_shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
+
+    <span class="k">def</span> <span class="nf">_squeeze_to_single_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tsr</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">dim_ct</span> <span class="o">=</span> <span class="n">tsr</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_shape</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">tsr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">tsr</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="n">dim_ct</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_return_to_output_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tsr</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">tsr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">tsr</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+<div class="viewcode-block" id="FlattenedStandardize.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.FlattenedStandardize.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_squeeze_to_single_output</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">Yvar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_squeeze_to_single_output</span><span class="p">(</span><span class="n">Yvar</span><span class="p">)</span>
+
+        <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">)</span>
+        <span class="n">Y_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_return_to_output_shape</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">Yvar_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_return_to_output_shape</span><span class="p">(</span><span class="n">Yvar</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Yvar_out</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">Y_out</span><span class="p">,</span> <span class="n">Yvar_out</span></div>
+
+<div class="viewcode-block" id="FlattenedStandardize.untransform"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.FlattenedStandardize.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_squeeze_to_single_output</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">Yvar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_squeeze_to_single_output</span><span class="p">(</span><span class="n">Yvar</span><span class="p">)</span>
+
+        <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">)</span>
+
+        <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_return_to_output_shape</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">Yvar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_return_to_output_shape</span><span class="p">(</span><span class="n">Yvar</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span></div>
+
+<div class="viewcode-block" id="FlattenedStandardize.untransform_posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.FlattenedStandardize.untransform_posterior">[docs]</a>    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">HigherOrderGPPosterior</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
+        <span class="c1"># TODO: return a HigherOrderGPPosterior once rescaling constant</span>
+        <span class="c1"># muls * LazyTensors won't force a dense decomposition rather than a</span>
+        <span class="c1"># Kronecker structured one.</span>
+        <span class="k">return</span> <span class="n">TransformedPosterior</span><span class="p">(</span>
+            <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span>
+            <span class="n">sample_transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_return_to_output_shape</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">means</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdvs</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_squeeze_to_single_output</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">mean_transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_return_to_output_shape</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">means</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdvs</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_squeeze_to_single_output</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">variance_transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_return_to_output_shape</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_stdvs_sq</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_squeeze_to_single_output</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="HigherOrderGP"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP">[docs]</a><span class="k">class</span> <span class="nc">HigherOrderGP</span><span class="p">(</span><span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    A Higher order Gaussian process model (HOGP) (predictions are matrices/tensors) as</span>
+<span class="sd">    described in [Zhe2019hogp]_. The posterior uses Matheron's rule [Doucet2010sampl]_</span>
+<span class="sd">    as described in [Maddox2021bohdo]_.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">likelihood</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Likelihood</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">covar_modules</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Kernel</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">num_latent_dims</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">learn_latent_pars</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">latent_init</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"default"</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sa">r</span><span class="sd">"""A HigherOrderGP model for high-dim output regression.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            train_X: A `batch_shape x n x d`-dim tensor of training inputs.</span>
+<span class="sd">            train_Y: A `batch_shape x n x output_shape`-dim tensor of training targets.</span>
+<span class="sd">            likelihood: Gaussian likelihood for the model.</span>
+<span class="sd">            covar_modules: List of kernels for each output structure.</span>
+<span class="sd">            num_latent_dims: Sizes for the latent dimensions.</span>
+<span class="sd">            learn_latent_pars: If true, learn the latent parameters.</span>
+<span class="sd">            latent_init: [default or gp] how to initialize the latent parameters.</span>
+<span class="sd">        """</span>
+
+        <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">input_transform</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
+
+        <span class="c1"># infer the dimension of `output_shape`.</span>
+        <span class="n">num_output_dims</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">-</span> <span class="n">train_X</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"HigherOrderGP currently only supports 1-dim `batch_shape`."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome_transform</span><span class="p">,</span> <span class="n">Standardize</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">outcome_transform</span><span class="p">,</span> <span class="n">FlattenedStandardize</span>
+            <span class="p">):</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">"HigherOrderGP does not support the outcome_transform "</span>
+                    <span class="s2">"`Standardize`! Using `FlattenedStandardize` with `output_shape="</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span> <span class="n">num_output_dims</span><span class="p">:]</span><span class="si">}</span><span class="s2"> and batch_shape="</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">batch_shape</span><span class="si">}</span><span class="s2"> instead."</span><span class="p">,</span>
+                    <span class="ne">RuntimeWarning</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">FlattenedStandardize</span><span class="p">(</span>
+                    <span class="n">output_shape</span><span class="o">=</span><span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">num_output_dims</span><span class="p">:],</span>
+                    <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="n">train_Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_dimensions</span> <span class="o">=</span> <span class="n">num_output_dims</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">batch_shape</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">num_output_dims</span><span class="p">:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
+
+        <span class="k">if</span> <span class="n">likelihood</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+
+            <span class="n">noise_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+            <span class="n">noise_prior_mode</span> <span class="o">=</span> <span class="p">(</span><span class="n">noise_prior</span><span class="o">.</span><span class="n">concentration</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">noise_prior</span><span class="o">.</span><span class="n">rate</span>
+            <span class="n">likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">(</span>
+                <span class="n">noise_prior</span><span class="o">=</span><span class="n">noise_prior</span><span class="p">,</span>
+                <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
+                <span class="n">noise_constraint</span><span class="o">=</span><span class="n">GreaterThan</span><span class="p">(</span>
+                    <span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">,</span>
+                    <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">initial_value</span><span class="o">=</span><span class="n">noise_prior_mode</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_is_custom_likelihood</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">train_X</span><span class="p">,</span>
+            <span class="n">train_Y</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">covar_modules</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">covar_modules</span> <span class="o">=</span> <span class="n">ModuleList</span><span class="p">(</span><span class="n">covar_modules</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">covar_modules</span> <span class="o">=</span> <span class="n">ModuleList</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">MaternKernel</span><span class="p">(</span>
+                        <span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span>
+                        <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
+                        <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
+                        <span class="n">ard_num_dims</span><span class="o">=</span><span class="mi">1</span> <span class="k">if</span> <span class="n">dim</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_dimensions</span><span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">num_latent_dims</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">num_latent_dims</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_dimensions</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_latents</span><span class="p">(</span>
+            <span class="n">latent_init</span><span class="o">=</span><span class="n">latent_init</span><span class="p">,</span>
+            <span class="n">num_latent_dims</span><span class="o">=</span><span class="n">num_latent_dims</span><span class="p">,</span>
+            <span class="n">learn_latent_pars</span><span class="o">=</span><span class="n">learn_latent_pars</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">train_Y</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">train_Y</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
+        <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">input_transform</span>
+
+    <span class="k">def</span> <span class="nf">_initialize_latents</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">latent_init</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">num_latent_dims</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">learn_latent_pars</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">latent_parameters</span> <span class="o">=</span> <span class="n">ParameterList</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">latent_init</span> <span class="o">==</span> <span class="s2">"default"</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">dim_num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_modules</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">latent_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Parameter</span><span class="p">(</span>
+                        <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
+                            <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span><span class="p">[</span><span class="n">dim_num</span><span class="p">],</span>
+                            <span class="n">num_latent_dims</span><span class="p">[</span><span class="n">dim_num</span><span class="p">],</span>
+                            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+                            <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+                        <span class="p">),</span>
+                        <span class="n">requires_grad</span><span class="o">=</span><span class="n">learn_latent_pars</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">latent_init</span> <span class="o">==</span> <span class="s2">"gp"</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">dim_num</span><span class="p">,</span> <span class="n">covar</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_modules</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+                <span class="n">latent_covar</span> <span class="o">=</span> <span class="n">covar</span><span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span>
+                        <span class="mf">0.0</span><span class="p">,</span>
+                        <span class="mf">1.0</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span><span class="p">[</span><span class="n">dim_num</span><span class="p">],</span>
+                        <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+                        <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">add_jitter</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">)</span>
+                <span class="n">latent_dist</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                        <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span><span class="p">[</span><span class="n">dim_num</span><span class="p">],</span>
+                        <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+                        <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="n">latent_covar</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">((</span><span class="n">num_latent_dims</span><span class="p">[</span><span class="n">dim_num</span><span class="p">],))</span>
+                <span class="n">latent_sample</span> <span class="o">=</span> <span class="n">latent_dist</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">)</span>
+                <span class="n">latent_sample</span> <span class="o">=</span> <span class="n">latent_sample</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                    <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span><span class="p">[</span><span class="n">dim_num</span><span class="p">],</span>
+                    <span class="n">num_latent_dims</span><span class="p">[</span><span class="n">dim_num</span><span class="p">],</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">latent_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Parameter</span><span class="p">(</span>
+                        <span class="n">latent_sample</span><span class="p">,</span>
+                        <span class="n">requires_grad</span><span class="o">=</span><span class="n">learn_latent_pars</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">register_prior</span><span class="p">(</span>
+                    <span class="s2">"latent_parameters_"</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">dim_num</span><span class="p">),</span>
+                    <span class="n">MultivariateNormalPrior</span><span class="p">(</span>
+                        <span class="n">latent_dist</span><span class="o">.</span><span class="n">loc</span><span class="p">,</span>
+                        <span class="n">latent_dist</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+                        <span class="n">transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="k">lambda</span> <span class="n">module</span><span class="p">,</span> <span class="n">dim_num</span><span class="o">=</span><span class="n">dim_num</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">latent_parameters</span><span class="p">[</span><span class="n">dim_num</span><span class="p">],</span>
+                <span class="p">)</span>
+
+<div class="viewcode-block" id="HigherOrderGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="n">covariance_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">covariance_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_modules</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">X</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">cm</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_modules</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="bp">self</span><span class="o">.</span><span class="n">latent_parameters</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+                    <span class="n">covariance_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cm</span><span class="p">(</span><span class="n">param</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">covariance_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cm</span><span class="p">(</span><span class="n">param</span><span class="p">))</span>
+
+        <span class="c1"># check batch_shapes</span>
+        <span class="k">if</span> <span class="n">covariance_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">!=</span> <span class="n">covariance_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">covariance_list</span><span class="p">)):</span>
+                <span class="n">cm</span> <span class="o">=</span> <span class="n">covariance_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">covariance_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">BatchRepeatLazyTensor</span><span class="p">(</span>
+                    <span class="n">cm</span><span class="p">,</span> <span class="n">covariance_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">batch_shape</span>
+                <span class="p">)</span>
+        <span class="n">kronecker_covariance</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span><span class="o">*</span><span class="n">covariance_list</span><span class="p">)</span>
+
+        <span class="c1"># TODO: expand options for the mean module via batch shaping?</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="o">*</span><span class="n">covariance_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">,</span>
+            <span class="n">kronecker_covariance</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">kronecker_covariance</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">kronecker_covariance</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">kronecker_covariance</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HigherOrderGP.get_fantasy_model"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.get_fantasy_model">[docs]</a>    <span class="k">def</span> <span class="nf">get_fantasy_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># we need to squeeze the targets in order to preserve the shaping</span>
+        <span class="n">inputs_batch_dims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">target_shape</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">inputs_batch_dims</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_dimensions</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">targets</span><span class="o">.</span><span class="n">ndim</span><span class="p">:</span>
+            <span class="n">target_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="n">target_shape</span><span class="p">)</span>
+        <span class="n">reshaped_targets</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">target_shape</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_fantasy_model</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">reshaped_targets</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HigherOrderGP.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HigherOrderGP</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of</span>
+<span class="sd">                the feature space, `m` is the number of points per batch, and</span>
+<span class="sd">                `batch_shape` is the batch shape (must be compatible with the</span>
+<span class="sd">                batch shape of the model).</span>
+<span class="sd">            Y: A `batch_shape' x n' x m_d`-dim Tensor, where `m_d` is the shaping</span>
+<span class="sd">                of the model outputs, `n'` is the number of points per batch, and</span>
+<span class="sd">                `batch_shape'` is the batch shape of the observations.</span>
+<span class="sd">                `batch_shape'` must be broadcastable to `batch_shape` using</span>
+<span class="sd">                standard broadcasting semantics. If `Y` has fewer batch dimensions</span>
+<span class="sd">                than `X`, its is assumed that the missing batch dimensions are</span>
+<span class="sd">                the same for all `Y`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `BatchedMultiOutputGPyTorchModel` object of the same type with</span>
+<span class="sd">            `n + n'` training examples, representing the original model</span>
+<span class="sd">            conditioned on the new observations `(X, Y)` (and possibly noise</span>
+<span class="sd">            observations passed in via kwargs).</span>
+<span class="sd">        """</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"noise"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+            <span class="c1"># we need to apply transforms before shifting batch indices around</span>
+            <span class="n">Y</span><span class="p">,</span> <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">noise</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">noise</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># we don't need to do un-squeezing because Y already is batched</span>
+        <span class="c1"># we don't support fixed noise here yet</span>
+        <span class="c1"># if noise is not None:</span>
+        <span class="c1">#     kwargs.update({"noise": noise})</span>
+        <span class="n">fantasy_model</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span>
+            <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span> <span class="bp">self</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">fantasy_model</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">=</span> <span class="n">fantasy_model</span><span class="o">.</span><span class="n">train_targets</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span>
+            <span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">fantasy_model</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">fantasy_model</span><span class="o">.</span><span class="n">train_targets</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">fantasy_model</span></div>
+
+<div class="viewcode-block" id="HigherOrderGP.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">output_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">observation_noise</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>  <span class="c1"># make sure we're calling a posterior</span>
+
+        <span class="k">if</span> <span class="n">posterior_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># this could be very costly, disallow for now</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Posterior transforms currently not supported for "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+        <span class="c1"># input transforms are applied at `posterior` in `eval` mode, and at</span>
+        <span class="c1"># `model.forward()` at the training time</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">no_pred_variance</span> <span class="o">=</span> <span class="n">skip_posterior_variances</span><span class="o">.</span><span class="n">_state</span>
+
+        <span class="k">with</span> <span class="n">ExitStack</span><span class="p">()</span> <span class="k">as</span> <span class="n">es</span><span class="p">:</span>
+            <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">gpt_posterior_settings</span><span class="p">())</span>
+            <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">fast_pred_var</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span>
+
+            <span class="c1"># we need to skip posterior variances here</span>
+            <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">skip_posterior_variances</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span>
+            <span class="n">mvn</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="c1"># TODO: ensure that this still works for structured noise solves.</span>
+                <span class="n">mvn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+
+            <span class="c1"># lazy covariance matrix includes the interpolated version of the full</span>
+            <span class="c1"># covariance matrix so we can actually grab that instead.</span>
+            <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ndimension</span><span class="p">():</span>
+                <span class="n">X_batch_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+                <span class="n">train_inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                    <span class="o">*</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_batch_shape</span><span class="p">),</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+                <span class="p">)</span>
+                <span class="n">train_inputs</span> <span class="o">=</span> <span class="n">train_inputs</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
+                    <span class="o">*</span><span class="n">X_batch_shape</span><span class="p">,</span> <span class="o">*</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">train_inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># we now compute the data covariances for the training data, the testing</span>
+            <span class="c1"># data, the joint covariances, and the test train cross-covariance</span>
+            <span class="n">train_train_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction_strategy</span><span class="o">.</span><span class="n">lik_train_train_covar</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="n">base_train_train_covar</span> <span class="o">=</span> <span class="n">train_train_covar</span><span class="o">.</span><span class="n">lazy_tensor</span>
+
+            <span class="n">data_train_covar</span> <span class="o">=</span> <span class="n">base_train_train_covar</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">data_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_modules</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">data_train_test_covar</span> <span class="o">=</span> <span class="n">data_covar</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">train_inputs</span><span class="p">)</span>
+            <span class="n">data_test_test_covar</span> <span class="o">=</span> <span class="n">data_covar</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="n">data_joint_covar</span> <span class="o">=</span> <span class="n">data_train_covar</span><span class="o">.</span><span class="n">cat_rows</span><span class="p">(</span>
+                <span class="n">cross_mat</span><span class="o">=</span><span class="n">data_train_test_covar</span><span class="p">,</span>
+                <span class="n">new_mat</span><span class="o">=</span><span class="n">data_test_test_covar</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># we detach the latents so that they don't cause gradient errors</span>
+            <span class="c1"># TODO: Can we enable backprop through the latent covariances?</span>
+            <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">data_train_test_covar</span><span class="o">.</span><span class="n">batch_shape</span>
+            <span class="n">latent_covar_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">latent_covar</span> <span class="ow">in</span> <span class="n">base_train_train_covar</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                <span class="k">if</span> <span class="n">latent_covar</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">!=</span> <span class="n">batch_shape</span><span class="p">:</span>
+                    <span class="n">latent_covar</span> <span class="o">=</span> <span class="n">BatchRepeatLazyTensor</span><span class="p">(</span><span class="n">latent_covar</span><span class="p">,</span> <span class="n">batch_shape</span><span class="p">)</span>
+                <span class="n">latent_covar_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">latent_covar</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
+
+            <span class="n">joint_covar</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span>
+                <span class="n">data_joint_covar</span><span class="p">,</span> <span class="o">*</span><span class="n">latent_covar_list</span>
+            <span class="p">)</span>
+            <span class="n">test_train_covar</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span>
+                <span class="n">data_train_test_covar</span><span class="p">,</span> <span class="o">*</span><span class="n">latent_covar_list</span>
+            <span class="p">)</span>
+
+            <span class="c1"># compute the posterior variance if necessary</span>
+            <span class="k">if</span> <span class="n">no_pred_variance</span><span class="p">:</span>
+                <span class="n">pred_variance</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">variance</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pred_variance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_posterior_variances</span><span class="p">(</span><span class="n">joint_covar</span><span class="p">)</span>
+
+            <span class="c1"># mean and variance get reshaped into the target shape</span>
+            <span class="n">new_mean</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">no_pred_variance</span><span class="p">:</span>
+                <span class="n">new_variance</span> <span class="o">=</span> <span class="n">pred_variance</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span><span class="p">)</span>
+                <span class="n">new_variance</span> <span class="o">=</span> <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">new_variance</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_variance</span> <span class="o">=</span> <span class="n">ZeroLazyTensor</span><span class="p">(</span>
+                    <span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="p">)</span>
+
+            <span class="n">mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">new_mean</span><span class="p">,</span> <span class="n">new_variance</span><span class="p">)</span>
+
+            <span class="c1"># return a specialized Posterior to allow for sampling</span>
+            <span class="c1"># cloning the full covar allows backpropagation through it</span>
+            <span class="n">posterior</span> <span class="o">=</span> <span class="n">HigherOrderGPPosterior</span><span class="p">(</span>
+                <span class="n">mvn</span><span class="o">=</span><span class="n">mvn</span><span class="p">,</span>
+                <span class="n">train_targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_targets</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                <span class="n">train_train_covar</span><span class="o">=</span><span class="n">train_train_covar</span><span class="p">,</span>
+                <span class="n">test_train_covar</span><span class="o">=</span><span class="n">test_train_covar</span><span class="p">,</span>
+                <span class="n">joint_covariance_matrix</span><span class="o">=</span><span class="n">joint_covar</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+                <span class="n">output_shape</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span><span class="p">,</span>
+                <span class="n">num_outputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+                <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">posterior</span></div>
+
+<div class="viewcode-block" id="HigherOrderGP.make_posterior_variances"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.make_posterior_variances">[docs]</a>    <span class="k">def</span> <span class="nf">make_posterior_variances</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">joint_covariance_matrix</span><span class="p">:</span> <span class="n">LazyTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Computes the posterior variances given the data points X. As currently</span>
+<span class="sd">        implemented, it computes another forwards call with the stacked data to get out</span>
+<span class="sd">        the joint covariance across all data points.</span>
+<span class="sd">        """</span>
+        <span class="c1"># TODO: use the exposed joint covariances from the prediction strategy</span>
+        <span class="n">data_joint_covariance</span> <span class="o">=</span> <span class="n">joint_covariance_matrix</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span>
+            <span class="mi">0</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">evaluate_kernel</span><span class="p">()</span>
+        <span class="n">num_train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">test_train_covar</span> <span class="o">=</span> <span class="n">data_joint_covariance</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">num_train</span><span class="p">:,</span> <span class="p">:</span><span class="n">num_train</span><span class="p">]</span>
+        <span class="n">train_train_covar</span> <span class="o">=</span> <span class="n">data_joint_covariance</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">num_train</span><span class="p">,</span> <span class="p">:</span><span class="n">num_train</span><span class="p">]</span>
+        <span class="n">test_test_covar</span> <span class="o">=</span> <span class="n">data_joint_covariance</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">num_train</span><span class="p">:,</span> <span class="n">num_train</span><span class="p">:]</span>
+
+        <span class="n">full_train_train_covar</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span>
+            <span class="n">train_train_covar</span><span class="p">,</span> <span class="o">*</span><span class="n">joint_covariance_matrix</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="p">)</span>
+        <span class="n">full_test_test_covar</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span>
+            <span class="n">test_test_covar</span><span class="p">,</span> <span class="o">*</span><span class="n">joint_covariance_matrix</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="p">)</span>
+        <span class="n">full_test_train_covar_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">test_train_covar</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="o">*</span><span class="n">joint_covariance_matrix</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="p">]</span>
+
+        <span class="n">train_evals</span><span class="p">,</span> <span class="n">train_evecs</span> <span class="o">=</span> <span class="n">full_train_train_covar</span><span class="o">.</span><span class="n">symeig</span><span class="p">(</span><span class="n">eigenvectors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># (\kron \Lambda_i + \sigma^2 I)^{-1}</span>
+        <span class="n">train_inv_evals</span> <span class="o">=</span> <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">train_evals</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span><span class="p">))</span>
+
+        <span class="c1"># compute K_i S_i \hadamard K_i S_i</span>
+        <span class="n">test_train_hadamard</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span>
+            <span class="o">*</span><span class="p">[</span>
+                <span class="n">lt1</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">lt2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span>
+                <span class="k">for</span> <span class="n">lt1</span><span class="p">,</span> <span class="n">lt2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                    <span class="n">full_test_train_covar_list</span><span class="p">,</span> <span class="n">train_evecs</span><span class="o">.</span><span class="n">lazy_tensors</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># and compute the column sums of</span>
+        <span class="c1">#  (\kron K_i S_i * K_i S_i) \tilde{\Lambda}^{-1}</span>
+        <span class="n">test_train_pred_covar</span> <span class="o">=</span> <span class="n">test_train_hadamard</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">train_inv_evals</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">pred_variances</span> <span class="o">=</span> <span class="n">full_test_test_covar</span><span class="o">.</span><span class="n">diag</span><span class="p">()</span> <span class="o">-</span> <span class="n">test_train_pred_covar</span>
+        <span class="k">return</span> <span class="n">pred_variances</span></div></div>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'botorch',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

@@ -49,10 +49,11 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span><span class="p">,</span> <span class="n">SamplingWarning</span>
+<span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">MCMC_DIM</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.pareto</span> <span class="kn">import</span> <span class="n">is_non_dominated</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize_indices</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span><span class="p">,</span> <span class="n">normalize_indices</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
 
@@ -123,6 +124,10 @@
 <span class="sd">        with `N_nz` the number of points in `X` that have non-zero (empirical,</span>
 <span class="sd">        under `num_samples` samples) probability of being pareto optimal.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">marginalize_dim</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">is_fully_bayesian</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+        <span class="c1"># TODO: Properly deal with marginalizing fully Bayesian models</span>
+        <span class="n">marginalize_dim</span> <span class="o">=</span> <span class="n">MCMC_DIM</span>
+
     <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="c1"># TODO: support batched inputs (req. dealing with ragged tensors)</span>
         <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>

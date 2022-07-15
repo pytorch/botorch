@@ -3186,6 +3186,142 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
+<section id="module-botorch.test_functions.multi_objective_multi_fidelity">
+<span id="multi-objective-multi-fidelity-synthetic-test-functions"></span><h2>Multi-Objective Multi-Fidelity Synthetic Test Functions<a class="headerlink" href="#module-botorch.test_functions.multi_objective_multi_fidelity" title="Permalink to this headline">¶</a></h2>
+<p>Multi-objective multi-fidelity optimization benchmark problems.</p>
+<p>References</p>
+<dl class="citation">
+<dt class="label" id="irshad2021"><span class="brackets">Irshad2021</span><span class="fn-backref">(<a href="#id26">1</a>,<a href="#id27">2</a>)</span></dt>
+<dd><p>F. Irshad, S. Karsch, and A. Döpp. Expected hypervolume improvement for
+simultaneous multi-objective and multi-fidelity optimization.
+arXiv preprint arXiv:2112.13901, 2021.</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective_multi_fidelity.</span></span><span class="sig-name descname"><span class="pre">MOMFBraninCurrin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective_multi_fidelity.html#MOMFBraninCurrin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a></p>
+<p>Branin-Currin problem for multi-objective-multi-fidelity optimization.</p>
+<p>(2+1)-dimensional function with domain <cite>[0,1]^3</cite> where the last dimension
+is the fidelity parameter <cite>s</cite>.
+Both functions assume minimization. See <a class="reference internal" href="#irshad2021" id="id26"><span>[Irshad2021]</span></a> for more details.</p>
+<p>Modified Branin function:</p>
+<blockquote>
+<div><p>B(x,s) = 21-((
+15*x_2 - b(s) * (15 * x_1 - 5) ** 2 + c(s) * (15 * x_1 - 5) - 6 ) ** 2
++ 10 * (1 - t(s)) * cos(15 * x_1 - 5)+10)/22</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Here <cite>b</cite>, <cite>c</cite>, <cite>r</cite> and <cite>t</cite> are constants and <cite>s</cite> is the fidelity parameter:</dt><dd><p>where <cite>b = 5.1 / (4 * math.pi ** 2) - 0.01(1-s)</cite>,
+<cite>c = 5 / math.pi - 0.1*(1 - s)</cite>,
+<cite>r = 6</cite>,
+<cite>t = 1 / (8 * math.pi) + 0.05*(1-s)</cite></p>
+</dd>
+</dl>
+<p>Modified Currin function:</p>
+<blockquote>
+<div><p>C(x) = 14-((1 - 0.1(1-s)exp(-1 / (2 * x_2))) * (
+2300 * x_1 ** 3 + 1900 * x_1 ** 2 + 2092 * x_1 + 60
+) / 100 * x_1 ** 3 + 500 * x_1 ** 2 + 4 * x_2 + 20)/15</p>
+</div></blockquote>
+<p>Base constructor for multi-objective test functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.dim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.num_objectives">
+<span class="sig-name descname"><span class="pre">num_objectives</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.num_objectives" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.evaluate_true">
+<span class="sig-name descname"><span class="pre">evaluate_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective_multi_fidelity.html#MOMFBraninCurrin.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.evaluate_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFPark">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective_multi_fidelity.</span></span><span class="sig-name descname"><span class="pre">MOMFPark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective_multi_fidelity.html#MOMFPark"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFPark" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a></p>
+<p>Modified Park test functions for multi-objective multi-fidelity optimization.</p>
+<p>(4+1)-dimensional function with domain <cite>[0,1]^5</cite> where the last dimension
+is the fidelity parameter <cite>s</cite>. See <a class="reference internal" href="#irshad2021" id="id27"><span>[Irshad2021]</span></a> for more details.</p>
+<p>The first modified Park function is</p>
+<blockquote>
+<div><p>P1(x, s)=A*(T1(x,s)+T2(x,s)-B)/22-0.8</p>
+</div></blockquote>
+<p>The second modified Park function is</p>
+<blockquote>
+<div><p>P2(x,s)=A*(5-2/3*exp(x1+x2)-x4*sin(x3)*A+x3-B)/4 - 0.7</p>
+</div></blockquote>
+<p>Here</p>
+<blockquote>
+<div><p>T_1(x,s) = (x1+0.001*(1-s))/2*sqrt(1+(x2+x3**2)*x4/(x1**2))</p>
+<p>T_2(x, s) = (x1+3*x4)*exp(1+sin(x3))</p>
+</div></blockquote>
+<p>and <cite>A(s)=(0.9+0.1*s)</cite>, <cite>B(s)=0.1*(1-s)</cite>.</p>
+<p>Base constructor for multi-objective test functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.dim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.num_objectives">
+<span class="sig-name descname"><span class="pre">num_objectives</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.num_objectives" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.evaluate_true">
+<span class="sig-name descname"><span class="pre">evaluate_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective_multi_fidelity.html#MOMFPark.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.evaluate_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
 </section>
 </div>
 </div>
