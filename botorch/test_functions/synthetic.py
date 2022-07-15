@@ -27,8 +27,7 @@ class SyntheticTestFunction(BaseTestProblem):
     num_objectives: int = 1
 
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
-        r"""Base constructor for synthetic test functions.
-
+        r"""
         Args:
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
@@ -63,6 +62,12 @@ class Ackley(SyntheticTestFunction):
     def __init__(
         self, dim: int = 2, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
+        """
+        Args:
+            dim: Defaults to 2.
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         self.dim = dim
         self._bounds = [(-32.768, 32.768) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
@@ -178,6 +183,12 @@ class DixonPrice(SyntheticTestFunction):
     def __init__(
         self, dim=2, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
+        """
+        Args:
+            dim: Defaults to 2.
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         self.dim = dim
         self._bounds = [(-10.0, 10.0) for _ in range(self.dim)]
         self._optimizers = [
@@ -226,6 +237,12 @@ class Griewank(SyntheticTestFunction):
     def __init__(
         self, dim=2, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
+        """
+        Args:
+            dim: Defaults to 2.
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         self.dim = dim
         self._bounds = [(-600.0, 600.0) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
@@ -256,6 +273,12 @@ class Hartmann(SyntheticTestFunction):
     def __init__(
         self, dim=6, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
+        """
+        Args:
+            dim: Defaults to 6.
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         if dim not in (3, 4, 6):
             raise ValueError(f"Hartmann with dim {dim} not defined")
         self.dim = dim
@@ -380,6 +403,12 @@ class Levy(SyntheticTestFunction):
     def __init__(
         self, dim=2, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
+        """
+        Args:
+            dim: Defaults to 2.
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         self.dim = dim
         self._bounds = [(-10.0, 10.0) for _ in range(self.dim)]
         self._optimizers = [tuple(1.0 for _ in range(self.dim))]
@@ -410,6 +439,12 @@ class Michalewicz(SyntheticTestFunction):
     def __init__(
         self, dim=2, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
+        """
+        Args:
+            dim: Defaults to 2.
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         self.dim = dim
         self._bounds = [(0.0, math.pi) for _ in range(self.dim)]
         optvals = {2: -1.80130341, 5: -4.687658, 10: -9.66015}
@@ -444,6 +479,12 @@ class Powell(SyntheticTestFunction):
     def __init__(
         self, dim=4, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
+        """
+        Args:
+            dim: Defaults to 4.
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         self.dim = dim
         self._bounds = [(-4.0, 5.0) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
@@ -468,6 +509,12 @@ class Rastrigin(SyntheticTestFunction):
     def __init__(
         self, dim=2, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
+        """
+        Args:
+            dim: Defaults to 2.
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         self.dim = dim
         self._bounds = [(-5.12, 5.12) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
@@ -495,6 +542,12 @@ class Rosenbrock(SyntheticTestFunction):
     def __init__(
         self, dim=2, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
+        """
+        Args:
+            dim: Defaults to 2.
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         self.dim = dim
         self._bounds = [(-5.0, 10.0) for _ in range(self.dim)]
         self._optimizers = [tuple(1.0 for _ in range(self.dim))]
@@ -525,6 +578,12 @@ class Shekel(SyntheticTestFunction):
     def __init__(
         self, m: int = 10, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
+        """
+        Args:
+            m: Defaults to 10.
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         self.m = m
         optvals = {5: -10.1532, 7: -10.4029, 10: -10.536443}
         self._optimal_value = optvals[self.m]
@@ -583,6 +642,12 @@ class StyblinskiTang(SyntheticTestFunction):
     def __init__(
         self, dim=2, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
+        """
+        Args:
+            dim: Defaults to 2.
+            noise_std: Defaults to None.
+            negate: Defaults to False.
+        """
         self.dim = dim
         self._bounds = [(-5.0, 5.0) for _ in range(self.dim)]
         self._optimal_value = -39.166166 * self.dim

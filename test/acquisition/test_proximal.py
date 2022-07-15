@@ -24,7 +24,7 @@ from torch.distributions.multivariate_normal import MultivariateNormal
 class DummyModel(GPyTorchModel):
     num_outputs = 1
 
-    def __init__(self):
+    def __init__(self):  # noqa: D107
         super(GPyTorchModel, self).__init__()
 
     def subset_output(self, idcs: List[int]) -> Model:

@@ -503,6 +503,11 @@ class ProjectedAcquisitionFunction(AcquisitionFunction):
         base_value_function: AcquisitionFunction,
         project: Callable[[Tensor], Tensor],
     ) -> None:
+        """
+        Args:
+            base_value_function
+            project
+        """
         super().__init__(base_value_function.model)
         self.base_value_function = base_value_function
         self.project = project

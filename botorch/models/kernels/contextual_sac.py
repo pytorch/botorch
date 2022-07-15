@@ -38,12 +38,6 @@ class SACKernel(Kernel):
     same number of parameters d. Each kernel `k_i` acts only on d parameters of ith
     partition i.e. `\mathbf{x}_(i)`. Each kernel `k_i` is a scaled Matern kernel
     with same lengthscales but different outputscales.
-
-    Args:
-        decomposition: Keys are context names. Values are the indexes of parameters
-            belong to the context. The parameter indexes are in the same order across
-            contexts.
-        batch_shape: Batch shape as usual for gpytorch kernels.
     """
 
     def __init__(
@@ -52,6 +46,15 @@ class SACKernel(Kernel):
         batch_shape: torch.Size,
         device: Optional[torch.device] = None,
     ) -> None:
+        """
+        Args:
+            decomposition: Keys are context names. Values are the indexes of parameters
+                belong to the context. The parameter indexes are in the same order
+                across contexts.
+            batch_shape: Batch shape as usual for gpytorch kernels.
+            device: Defaults to None.
+        """
+
         super().__init__(batch_shape=batch_shape)
         self.decomposition = decomposition
         self.device = device

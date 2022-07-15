@@ -17,12 +17,15 @@ from torch import Tensor
 
 
 class PairwiseMCSampler(MCSampler):
+    """
+    Abstract class for Pairwise MC Sampler.
+
+    This sampler will sample pairwise comparisons. It is to be used together
+    with PairwiseGP and BoTorch acquisition functions (e.g., qKnowledgeGradient)
+
+    """
     def __init__(self, max_num_comparisons: int = None, seed: int = None) -> None:
-        r"""Abstract class for Pairwise MC Sampler.
-
-        This sampler will sample pairwise comparisons. It is to be used together
-        with PairwiseGP and BoTorch acquisition functions (e.g., qKnowledgeGradient)
-
+        r"""
         Args:
             max_num_comparisons: Max number of comparisons drawn within samples.
                 If None, use all possible pairwise comparisons
@@ -81,6 +84,14 @@ class PairwiseIIDNormalSampler(PairwiseMCSampler, IIDNormalSampler):
         collapse_batch_dims: bool = True,
         max_num_comparisons: int = None,
     ) -> None:
+        """
+        Args:
+            num_samples
+            resample: Defaults to False.
+            seed: Defaults to None.
+            collapse_batch_dims: Defaults to True.
+            max_num_comparisons: Defaults to None.
+        """
         PairwiseMCSampler.__init__(
             self, max_num_comparisons=max_num_comparisons, seed=seed
         )
@@ -102,6 +113,14 @@ class PairwiseSobolQMCNormalSampler(PairwiseMCSampler, SobolQMCNormalSampler):
         collapse_batch_dims: bool = True,
         max_num_comparisons: int = None,
     ) -> None:
+        """
+        Args:
+            num_samples
+            resample: Defaults to False.
+            seed: Defaults to None.
+            collapse_batch_dims: Defaults to True.
+            max_num_comparisons: Defaults to None.
+        """
         PairwiseMCSampler.__init__(
             self, max_num_comparisons=max_num_comparisons, seed=seed
         )

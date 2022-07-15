@@ -27,6 +27,11 @@ class DummyDeterministicModel(DeterministicModel):
     r"""A dummy deterministic model that uses transforms."""
 
     def __init__(self, outcome_transform, input_transform):
+        """
+        Args:
+            outcome_transform
+            input_transform
+        """
         super().__init__()
         self.input_transform = input_transform
         self.outcome_transform = outcome_transform

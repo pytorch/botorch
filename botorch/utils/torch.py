@@ -54,6 +54,10 @@ class BufferDict(Module):
     """
 
     def __init__(self, buffers=None):
+        """
+        Args:
+            buffers: Defaults to None.
+        """
         super(BufferDict, self).__init__()
         if buffers is not None:
             self.update(buffers)

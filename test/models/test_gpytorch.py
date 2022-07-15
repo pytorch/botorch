@@ -36,6 +36,10 @@ from torch import Tensor
 
 class SimpleInputTransform(InputTransform, torch.nn.Module):
     def __init__(self, transform_on_train: bool) -> None:
+        """
+        Args:
+            transform_on_train
+        """
         super().__init__()
         self.transform_on_train = transform_on_train
         self.transform_on_eval = True
@@ -51,6 +55,13 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
     last_fantasize_flag: bool = False
 
     def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
+        """
+        Args:
+            train_X
+            train_Y
+            outcome_transform: Defaults to None.
+            input_transform: Defaults to None.
+        """
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
@@ -83,6 +94,13 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
 
 class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, ExactGP):
     def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
+        """
+        Args:
+            train_X
+            train_Y
+            outcome_transform: Defaults to None.
+            input_transform: Defaults to None.
+        """
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
@@ -115,6 +133,10 @@ class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, Exa
 
 class SimpleModelListGPyTorchModel(IndependentModelList, ModelListGPyTorchModel):
     def __init__(self, *gp_models: GPyTorchModel):
+        """
+        Args:
+            gp_models: Arbitrary number of GPyTorchModels
+        """
         super().__init__(*gp_models)
 
 
