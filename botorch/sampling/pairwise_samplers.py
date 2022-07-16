@@ -24,6 +24,7 @@ class PairwiseMCSampler(MCSampler):
     with PairwiseGP and BoTorch acquisition functions (e.g., qKnowledgeGradient)
 
     """
+
     def __init__(self, max_num_comparisons: int = None, seed: int = None) -> None:
         r"""
         Args:

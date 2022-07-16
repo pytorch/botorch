@@ -47,6 +47,7 @@ class LCEAGP(FixedNoiseGP):
     Note that the model does not support batch training. Input training
     data sets should have dim = 2.
     """
+
     def __init__(
         self,
         train_X: Tensor,
