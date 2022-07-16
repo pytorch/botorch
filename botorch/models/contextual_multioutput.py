@@ -151,6 +151,7 @@ class FixedNoiseLCEMGP(LCEMGP):
     r"""The Multi-Task GP the latent context embedding multioutput
     (LCE-M) kernel, with known observation noise.
     """
+
     def __init__(
         self,
         train_X: Tensor,
