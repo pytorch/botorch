@@ -53,7 +53,7 @@ function Versions(props) {
                 </td>
                 <td>
                   <code>
-                    pip install git+ssh://git@github.com/pytorch/botorch.git
+                    pip install https://github.com/pytorch/botorch.git
                   </code>
                 </td>
                 <td>
