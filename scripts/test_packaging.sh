@@ -11,13 +11,13 @@ conda update -y -n base -c defaults conda
 conda install -y pip
 
 # install python packaging deps
-pip install --upgrade setuptools wheel twine
+pip install --upgrade setuptools build wheel twine
 
 # install conda-build
 conda install -y conda-build
 
 # test python packaging
-python setup.py sdist bdist_wheel
+python -m build --sdist --wheel
 
 # test conda packaging
 conda config --show

@@ -53,7 +53,7 @@ jobs:
         pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
-        pip install --upgrade setuptools setuptools_scm wheel
+        pip install --upgrade build setuptools setuptools_scm wheel
     - name: Extract reduced version and save to env var
       # strip the commit hash from the version to enable upload to pypi
       # env var will persist for subsequent steps
@@ -62,7 +62,7 @@ jobs:
         echo "SETUPTOOLS_SCM_PRETEND_VERSION=${no_local_version}" >> $GITHUB_ENV
     - name: Build packages (wheel and source distribution)
       run: |
-        python setup.py sdist bdist_wheel
+        python -m build --sdist --wheel
     - name: Verify packages
       run: |
         ./scripts/build_and_verify_py_packages.sh
