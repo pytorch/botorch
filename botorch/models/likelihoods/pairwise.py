@@ -21,7 +21,11 @@ from torch.distributions import Bernoulli
 
 
 class PairwiseLikelihood(Likelihood, ABC):
-    """Pairwise likelihood base class for pairwise preference GP (e.g., PairwiseGP)"""
+    """
+    Pairwise likelihood base class for pairwise preference GP (e.g., PairwiseGP).
+
+    :meta private:
+    """
 
     def forward(self, utility: Tensor, D: Tensor, **kwargs: Any) -> Bernoulli:
         """Given the difference in (estimated) utility util_diff = f(v) - f(u),

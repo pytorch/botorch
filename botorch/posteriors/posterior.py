@@ -18,7 +18,11 @@ from torch import Tensor
 
 
 class Posterior(ABC):
-    r"""Abstract base class for botorch posteriors."""
+    """
+    Abstract base class for botorch posteriors.
+
+    :meta private:
+    """
 
     @property
     def base_sample_shape(self) -> torch.Size:

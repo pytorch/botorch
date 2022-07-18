@@ -26,7 +26,11 @@ from torch.nn import Module
 
 
 class CostAwareUtility(Module, ABC):
-    r"""Abstract base class for cost-aware utilities."""
+    r"""
+    Abstract base class for cost-aware utilities.
+
+    :meta private:
+    """
 
     @abstractmethod
     def forward(self, X: Tensor, deltas: Tensor, **kwargs: Any) -> Tensor:

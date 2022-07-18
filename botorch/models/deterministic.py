@@ -24,7 +24,11 @@ from torch import Tensor
 
 
 class DeterministicModel(Model, ABC):
-    r"""Abstract base class for deterministic models."""
+    r"""
+    Abstract base class for deterministic models.
+
+    :meta private:
+    """
 
     @abstractmethod
     def forward(self, X: Tensor) -> Tensor:
@@ -91,20 +95,20 @@ class DeterministicModel(Model, ABC):
 
 
 class GenericDeterministicModel(DeterministicModel):
-    r"""A generic deterministic model constructed from a callable."""
+    r"""A generic deterministic model constructed from a callable.
+
+    Example:
+        >>> f = lambda x: x.sum(dim=-1, keep_dims=True)
+        >>> model = GenericDeterministicModel(f)
+    """
 
     def __init__(self, f: Callable[[Tensor], Tensor], num_outputs: int = 1) -> None:
-        r"""A generic deterministic model constructed from a callable.
-
+        r"""
         Args:
             f: A callable mapping a `batch_shape x n x d`-dim input tensor `X`
                 to a `batch_shape x n x m`-dimensional output tensor (the
                 outcome dimension `m` must be explicit, even if `m=1`).
             num_outputs: The number of outputs `m`.
-
-        Example:
-            >>> f = lambda x: x.sum(dim=-1, keep_dims=True)
-            >>> model = GenericDeterministicModel(f)
         """
         super().__init__()
         self._f = f

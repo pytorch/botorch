@@ -4,9 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-r"""
-Abstract base module for all botorch acquisition functions.
-"""
+"""Abstract base module for all botorch acquisition functions."""
 
 from __future__ import annotations
 
@@ -27,6 +25,8 @@ class AcquisitionFunction(Module, ABC):
     Please note that if your acquisition requires a backwards call,
     you will need to wrap the backwards call inside of an enable_grad
     context to be able to optimize the acquisition. See #1164.
+
+    :meta private:
     """
 
     def __init__(self, model: Model) -> None:
@@ -101,7 +101,11 @@ class AcquisitionFunction(Module, ABC):
 
 
 class OneShotAcquisitionFunction(AcquisitionFunction, ABC):
-    r"""Abstract base class for acquisition functions using one-shot optimization"""
+    r"""
+    Abstract base class for acquisition functions using one-shot optimization
+
+    :meta private:
+    """
 
     @abstractmethod
     def get_augmented_q_batch_size(self, q: int) -> int:

@@ -40,6 +40,8 @@ class MCSampler(Module, ABC):
         `__call__` method:
         >>> posterior = model.posterior(test_X)
         >>> samples = sampler(posterior)
+
+    :meta private:
     """
 
     def __init__(self, batch_range: Tuple[int, int] = (0, -2)) -> None:

@@ -6,6 +6,8 @@
 
 r"""
 Abstract base module for all BoTorch models.
+
+:meta private:
 """
 
 from __future__ import annotations

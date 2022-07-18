@@ -9,6 +9,8 @@ Abstract model class for all GPyTorch-based botorch models.
 
 To implement your own, simply inherit from both the provided classes and a
 GPyTorch Model class such as an ExactGP.
+
+:meta private:
 """
 
 from __future__ import annotations

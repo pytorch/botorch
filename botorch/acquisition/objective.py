@@ -4,9 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-r"""
-Objective Modules to be used with acquisition functions.
-"""
+"""Objective Modules to be used with acquisition functions."""
 
 from __future__ import annotations
 
@@ -32,12 +30,18 @@ class AcquisitionObjective(Module, ABC):
     r"""Abstract base class for objectives.
 
     DEPRECATED - This will be removed in the next version.
+
+    :meta private:
     """
     ...
 
 
 class PosteriorTransform(Module, ABC):
-    r"""Abstract base class for objectives that transform the posterior."""
+    r"""
+    Abstract base class for objectives that transform the posterior.
+
+    :meta private:
+    """
 
     scalarize: bool  # True if the transform reduces to single-output
 
@@ -251,6 +255,8 @@ class MCAcquisitionObjective(Module, ABC):
         _verify_output_shape: If True and `X` is given, check that the q-batch
             shape of the objectives agrees with that of X.
         _is_mo: A boolean denoting whether the objectives are multi-output.
+
+    :meta private:
     """
 
     _verify_output_shape: bool = True

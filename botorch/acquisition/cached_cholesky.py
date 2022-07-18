@@ -39,6 +39,8 @@ class CachedCholeskyMCAcquisitionFunction(ABC):
     Specifically, this is for acquisition functions that require sampling from
     the posterior P(f(X_baseline, X) | D). The Cholesky of the posterior
     covariance over f(X_baseline) is cached.
+
+    :meta private:
     """
 
     def _check_sampler(self) -> None:

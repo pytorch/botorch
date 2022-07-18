@@ -36,6 +36,8 @@ class BoxDecomposition(Module, ABC):
     r"""An abstract class for box decompositions.
 
     Note: Internally, we store the negative reference point (minimization).
+
+    :meta private:
     """
 
     def __init__(
@@ -222,6 +224,8 @@ class FastPartitioning(BoxDecomposition, ABC):
     [Lacour17]_: 1) partitioning the space that is dominated by the Pareto
     frontier and 2) partitioning the space that is not dominated by the
     Pareto frontier.
+
+    :meta private:
     """
 
     def __init__(
@@ -229,8 +233,7 @@ class FastPartitioning(BoxDecomposition, ABC):
         ref_point: Tensor,
         Y: Optional[Tensor] = None,
     ) -> None:
-        """Initialize FastPartitioning.
-
+        """
         Args:
             ref_point: A `m`-dim tensor containing the reference point.
             Y: A `(batch_shape) x n x m`-dim tensor
