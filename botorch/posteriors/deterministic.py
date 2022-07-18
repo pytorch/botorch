@@ -24,7 +24,7 @@ class DeterministicPosterior(Posterior):
     def __init__(self, values: Tensor) -> None:
         """
         Args:
-            values
+            values: Values to deterministically sample from.
         """
         self.values = values
 

@@ -38,7 +38,8 @@ class SimpleInputTransform(InputTransform, torch.nn.Module):
     def __init__(self, transform_on_train: bool) -> None:
         """
         Args:
-            transform_on_train
+            transform_on_train: A boolean indicating whether to apply the
+                transform in train() mode.
         """
         super().__init__()
         self.transform_on_train = transform_on_train
@@ -57,10 +58,11 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
     def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
         """
         Args:
-            train_X
-            train_Y
-            outcome_transform: Defaults to None.
-            input_transform: Defaults to None.
+            train_X: A tensor of inputs, passed to self.transform_inputs.
+            train_Y: Passed to outcome_transform.
+            outcome_transform: Transform applied to train_Y. Defaults to None.
+            input_transform: A Module that performs the input transformation, passed to
+                self.transform_inputs. Defaults to None.
         """
         with torch.no_grad():
             transformed_X = self.transform_inputs(
@@ -96,10 +98,11 @@ class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, Exa
     def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
         """
         Args:
-            train_X
-            train_Y
-            outcome_transform: Defaults to None.
-            input_transform: Defaults to None.
+            train_X: A tensor of inputs, passed to self.transform_inputs.
+            train_Y: Passed to outcome_transform.
+            outcome_transform: Transform applied to train_Y. Defaults to None.
+            input_transform: A Module that performs the input transformation, passed to
+                self.transform_inputs. Defaults to None.
         """
         with torch.no_grad():
             transformed_X = self.transform_inputs(

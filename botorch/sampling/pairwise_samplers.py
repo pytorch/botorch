@@ -87,11 +87,17 @@ class PairwiseIIDNormalSampler(PairwiseMCSampler, IIDNormalSampler):
     ) -> None:
         """
         Args:
-            num_samples
-            resample: Defaults to False.
-            seed: Defaults to None.
-            collapse_batch_dims: Defaults to True.
-            max_num_comparisons: Defaults to None.
+            num_samples: The number of samples to use.
+            resample: If `True`, re-draw samples in each `forward` evaluation -
+                this results in stochastic acquisition functions (and thus should
+                not be used with deterministic optimization algorithms). Defaults to
+                False.
+            seed: The seed for the RNG. If omitted, use a random seed. Defaults to None.
+            collapse_batch_dims: If True, collapse the t-batch dimensions to
+                size 1. This is useful for preventing sampling variance across
+                t-batches. Defaults to True.
+            max_num_comparisons:  Max number of comparisons drawn within samples.
+                If None, use all possible pairwise comparisons. Defaults to None.
         """
         PairwiseMCSampler.__init__(
             self, max_num_comparisons=max_num_comparisons, seed=seed
@@ -116,11 +122,17 @@ class PairwiseSobolQMCNormalSampler(PairwiseMCSampler, SobolQMCNormalSampler):
     ) -> None:
         """
         Args:
-            num_samples
-            resample: Defaults to False.
-            seed: Defaults to None.
-            collapse_batch_dims: Defaults to True.
-            max_num_comparisons: Defaults to None.
+            num_samples: The number of samples to use.
+            resample: If `True`, re-draw samples in each `forward` evaluation -
+                this results in stochastic acquisition functions (and thus should
+                not be used with deterministic optimization algorithms). Defaults to
+                False.
+            seed: The seed for the RNG. If omitted, use a random seed. Defaults to None.
+            collapse_batch_dims: If True, collapse the t-batch dimensions to
+                size 1. This is useful for preventing sampling variance across
+                t-batches. Defaults to True.
+            max_num_comparisons:  Max number of comparisons drawn within samples.
+                If None, use all possible pairwise comparisons. Defaults to None.
         """
         PairwiseMCSampler.__init__(
             self, max_num_comparisons=max_num_comparisons, seed=seed

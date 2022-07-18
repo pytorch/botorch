@@ -29,8 +29,14 @@ class DummyDeterministicModel(DeterministicModel):
     def __init__(self, outcome_transform, input_transform):
         """
         Args:
-            outcome_transform
-            input_transform
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
+            input_transform: An input transform that is applied in the model's
+                forward pass. Only input transforms are allowed which do not
+                transform the categorical dimensions. This can be achieved
+                by using the `indices` argument when constructing the transform.
         """
         super().__init__()
         self.input_transform = input_transform

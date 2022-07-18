@@ -64,9 +64,9 @@ class Ackley(SyntheticTestFunction):
     ) -> None:
         """
         Args:
-            dim: Defaults to 2.
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            dim: Dimension. Defaults to 2.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         self.dim = dim
         self._bounds = [(-32.768, 32.768) for _ in range(self.dim)]
@@ -185,9 +185,9 @@ class DixonPrice(SyntheticTestFunction):
     ) -> None:
         """
         Args:
-            dim: Defaults to 2.
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            dim: Dimension. Defaults to 2.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         self.dim = dim
         self._bounds = [(-10.0, 10.0) for _ in range(self.dim)]
@@ -239,9 +239,9 @@ class Griewank(SyntheticTestFunction):
     ) -> None:
         """
         Args:
-            dim: Defaults to 2.
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            dim: Dimension. Defaults to 2.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         self.dim = dim
         self._bounds = [(-600.0, 600.0) for _ in range(self.dim)]
@@ -275,9 +275,9 @@ class Hartmann(SyntheticTestFunction):
     ) -> None:
         """
         Args:
-            dim: Defaults to 6.
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            dim: Dimension. Defaults to 6.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         if dim not in (3, 4, 6):
             raise ValueError(f"Hartmann with dim {dim} not defined")
@@ -405,9 +405,9 @@ class Levy(SyntheticTestFunction):
     ) -> None:
         """
         Args:
-            dim: Defaults to 2.
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            dim: Dimension. Defaults to 2.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         self.dim = dim
         self._bounds = [(-10.0, 10.0) for _ in range(self.dim)]
@@ -441,9 +441,9 @@ class Michalewicz(SyntheticTestFunction):
     ) -> None:
         """
         Args:
-            dim: Defaults to 2.
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            dim: Dimension. Defaults to 2.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         self.dim = dim
         self._bounds = [(0.0, math.pi) for _ in range(self.dim)]
@@ -481,9 +481,9 @@ class Powell(SyntheticTestFunction):
     ) -> None:
         """
         Args:
-            dim: Defaults to 4.
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            dim: Dimension. Defaults to 4.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         self.dim = dim
         self._bounds = [(-4.0, 5.0) for _ in range(self.dim)]
@@ -511,9 +511,9 @@ class Rastrigin(SyntheticTestFunction):
     ) -> None:
         """
         Args:
-            dim: Defaults to 2.
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            dim: Dimension. Defaults to 2.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         self.dim = dim
         self._bounds = [(-5.12, 5.12) for _ in range(self.dim)]
@@ -544,9 +544,9 @@ class Rosenbrock(SyntheticTestFunction):
     ) -> None:
         """
         Args:
-            dim: Defaults to 2.
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            dim: Dimension. Defaults to 2.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         self.dim = dim
         self._bounds = [(-5.0, 10.0) for _ in range(self.dim)]
@@ -581,8 +581,8 @@ class Shekel(SyntheticTestFunction):
         """
         Args:
             m: Defaults to 10.
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         self.m = m
         optvals = {5: -10.1532, 7: -10.4029, 10: -10.536443}
@@ -644,9 +644,9 @@ class StyblinskiTang(SyntheticTestFunction):
     ) -> None:
         """
         Args:
-            dim: Defaults to 2.
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            dim: Dimension. Defaults to 2.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         self.dim = dim
         self._bounds = [(-5.0, 5.0) for _ in range(self.dim)]

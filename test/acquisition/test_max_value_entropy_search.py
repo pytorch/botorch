@@ -35,8 +35,10 @@ class MESMockModel(MockModel):
     def __init__(self, num_outputs=1, batch_shape=None):
         """
         Args:
-            num_outputs: Defaults to 1.
-            batch_shape: Defaults to None.
+            num_outputs: Number of outputs. Defaults to 1.
+            batch_shape: The batch shape of the model. See
+                `botorch.models.model.Model.batch_shape` for a full description.
+                Defaults to None.
         """
         super().__init__(None)
         self._num_outputs = num_outputs

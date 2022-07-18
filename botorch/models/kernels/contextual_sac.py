@@ -52,7 +52,7 @@ class SACKernel(Kernel):
                 belong to the context. The parameter indexes are in the same order
                 across contexts.
             batch_shape: Batch shape as usual for gpytorch kernels.
-            device: Defaults to None.
+            device: The torch device. Defaults to None.
         """
 
         super().__init__(batch_shape=batch_shape)

@@ -41,7 +41,7 @@ class MockOneShotAcquisitionFunction(
     def __init__(self, num_fantasies=2):
         """
         Args:
-            num_fantasies: Defaults to 2.
+            num_fantasies: Number of fantasies. Defaults to 2.
         """
         super().__init__()
         self.num_fantasies = num_fantasies
@@ -60,7 +60,7 @@ class SquaredAcquisitionFunction(AcquisitionFunction):
     def __init__(self, model=None):
         """
         Args:
-            model: Defaults to None.
+            model: A fitted model. Defaults to None.
         """
         super().__init__(model=model)
 
