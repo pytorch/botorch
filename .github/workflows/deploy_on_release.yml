@@ -95,7 +95,7 @@ jobs:
     - name: Deploy to anaconda.org
       shell: bash -l {0}
       run: |
-        botorch_version=$(python setup.py --version)
+        botorch_version=$(python -m setuptools_scm)
         build_dir="$(pwd)/.conda/conda_build/noarch"
         pkg_file="${build_dir}/botorch-${botorch_version}-0.tar.bz2"
         anaconda -t ${{ secrets.ANACONDA_UPLOAD_TOKEN }} upload -u pytorch $pkg_file

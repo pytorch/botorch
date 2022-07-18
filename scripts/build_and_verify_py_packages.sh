@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # Get version number (created dynamically via setuptools-scm)
-version=$(python setup.py --version)
+version=$(python -m setuptools_scm)
 cur_dir=$(pwd)
 
 # set up temporary working directory

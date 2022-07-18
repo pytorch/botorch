@@ -80,7 +80,6 @@ setup(
     long_description_content_type="text/markdown",
     python_requires=">=3.7",
     packages=find_packages(exclude=["test", "test.*"]),
-    setup_requires=["setuptools", "setuptools_scm", "wheel"],
     install_requires=[
         "torch>=1.10",
         "gpytorch>=1.7",

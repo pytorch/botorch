@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # Get version number (created dynamically via setuptools-scm)
-BOTORCH_VERSION=$(python setup.py --version)
+BOTORCH_VERSION=$(python -m setuptools_scm)
 # Export env var (this is used in .conda/meta.yaml)
 export BOTORCH_VERSION
 
