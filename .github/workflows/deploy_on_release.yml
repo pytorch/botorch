@@ -50,10 +50,10 @@ jobs:
     - name: Install dependencies
       run: |
         pip install .[test]
-        pip install --upgrade setuptools setuptools_scm wheel
+        pip install --upgrade build setuptools setuptools_scm wheel
     - name: Build packages (wheel and source distribution)
       run: |
-        python setup.py sdist bdist_wheel
+        python -m build --sdist --wheel
     - name: Verify packages
       run: |
         ./scripts/build_and_verify_py_packages.sh
