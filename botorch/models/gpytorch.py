@@ -9,8 +9,6 @@ Abstract model class for all GPyTorch-based botorch models.
 
 To implement your own, simply inherit from both the provided classes and a
 GPyTorch Model class such as an ExactGP.
-
-:meta private:
 """
 
 from __future__ import annotations
@@ -47,6 +45,8 @@ class GPyTorchModel(Model, ABC):
 
     The easiest way to use this is to subclass a model from a GPyTorch model
     class (e.g. an `ExactGP`) and this `GPyTorchModel`. See e.g. `SingleTaskGP`.
+
+    :meta private:
     """
 
     @staticmethod
@@ -216,6 +216,8 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
 
     This model should be used when the same training data is used for all outputs.
     Outputs are modeled independently by using a different batch for each output.
+
+    :meta private:
     """
 
     _num_outputs: int
@@ -493,6 +495,8 @@ class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
 
     This is meant to be used with a gpytorch ModelList wrapper for independent
     evaluation of submodels.
+
+    :meta private:
     """
 
     @property
@@ -622,6 +626,8 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
 
     This class provides the `posterior` method to models that implement a
     "long-format" multi-task GP in the style of `MultiTaskGP`.
+
+    :meta private:
     """
 
     def posterior(

@@ -4,11 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-r"""
-Abstract base module for all BoTorch models.
-
-:meta private:
-"""
+"""Abstract base module for all BoTorch models."""
 
 from __future__ import annotations
 
@@ -41,6 +37,8 @@ class Model(Module, ABC):
             `_revert_to_original_inputs`. Note that this is necessary since
             transform / untransform cycle introduces numerical errors which lead
             to upstream errors during training.
+
+    :meta private:
     """
 
     _has_transformed_inputs: bool = False

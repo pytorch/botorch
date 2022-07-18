@@ -27,6 +27,15 @@ class PairwiseLikelihood(Likelihood, ABC):
     :meta private:
     """
 
+    def __init__(self, max_plate_nesting: int = 1):
+        """
+        Initialized like a `gpytorch.likelihoods.Likelihood`.
+
+        Args:
+            max_plate_nesting: Defaults to 1.
+        """
+        super().__init__(max_plate_nesting)
+
     def forward(self, utility: Tensor, D: Tensor, **kwargs: Any) -> Bernoulli:
         """Given the difference in (estimated) utility util_diff = f(v) - f(u),
         return a Bernoulli distribution object representing the likelihood of

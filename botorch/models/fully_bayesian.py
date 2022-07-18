@@ -70,7 +70,11 @@ def reshape_and_detach(target: Tensor, new_value: Tensor) -> None:
 
 
 class PyroModel:
-    r"""Abstract base class for a Pyro model."""
+    r"""
+    Base class for a Pyro model.
+
+    :meta ignore:
+    """
 
     def set_inputs(
         self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
