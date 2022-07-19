@@ -39,7 +39,7 @@ from torch.nn import Module, ModuleDict
 
 
 class OutcomeTransform(Module, ABC):
-    """
+    r"""
     Abstract base class for outcome transforms.
 
     :meta private:

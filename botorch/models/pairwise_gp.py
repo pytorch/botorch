@@ -946,8 +946,8 @@ class PairwiseLaplaceMarginalLogLikelihood(MarginalLogLikelihood):
     def __init__(self, likelihood, model: GP):
         """
         Args:
-            likelihood
-            model
+            likelihood: Used as in args to GPyTorch MarginalLogLikelihood
+            model: Used as in args to GPyTorch MarginalLogLikelihood
         """
         super().__init__(likelihood, model)
 

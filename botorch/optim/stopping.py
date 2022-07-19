@@ -14,7 +14,7 @@ from torch import Tensor
 
 
 class StoppingCriterion(ABC):
-    """Base class for evaluating optimization convergence.
+    r"""Base class for evaluating optimization convergence.
 
     Stopping criteria are implemented as a objects rather than a function, so that they
     can keep track of past function values between optimization steps.
