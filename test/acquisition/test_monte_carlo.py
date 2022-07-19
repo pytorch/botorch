@@ -93,6 +93,14 @@ class TestQExpectedImprovement(BotorchTestCase):
 
             # TODO: Test batched best_f, batched model, batched evaluation
 
+            # basic test for maximize
+            sampler = IIDNormalSampler(num_samples=2)
+            acqf = qExpectedImprovement(
+                model=mm, best_f=0, sampler=sampler, maximize=False
+            )
+            res = acqf(X)
+            self.assertEqual(res.item(), 0.0)
+
             # basic test, no resample
             sampler = IIDNormalSampler(num_samples=2, seed=12345)
             acqf = qExpectedImprovement(model=mm, best_f=0, sampler=sampler)
@@ -210,6 +218,18 @@ class TestQExpectedImprovement(BotorchTestCase):
             bs = acqf.sampler.base_samples.clone()
             acqf(X.expand(2, 2, 1))
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
+
+            # test batch mode, maximize
+            samples = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
+            samples[0, 0, 0] = -1.0
+            mm = MockModel(MockPosterior(samples=samples))
+            sampler = SobolQMCNormalSampler(num_samples=2)
+            acqf = qExpectedImprovement(
+                model=mm, best_f=0, sampler=sampler, maximize=False
+            )
+            res = acqf(X)
+            self.assertEqual(res[0].item(), 1.0)
+            self.assertEqual(res[1].item(), 0.0)
 
     # TODO: Test different objectives (incl. constraints)
 
@@ -598,6 +618,14 @@ class TestQProbabilityOfImprovement(BotorchTestCase):
             res = acqf(X)
             self.assertEqual(res.item(), 0.5)
 
+            # basic test for maximize
+            sampler = SobolQMCNormalSampler(num_samples=2)
+            acqf = qProbabilityOfImprovement(
+                model=mm, best_f=0, sampler=sampler, maximize=False
+            )
+            res = acqf(X)
+            self.assertEqual(res.item(), 0.5)
+
             # basic test, no resample
             sampler = IIDNormalSampler(num_samples=2, seed=12345)
             acqf = qProbabilityOfImprovement(model=mm, best_f=0, sampler=sampler)
@@ -712,6 +740,18 @@ class TestQProbabilityOfImprovement(BotorchTestCase):
             acqf(X.expand(2, -1, 1))
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
 
+            # test batch model, maximize
+            samples = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
+            samples[0, 0, 0] = -1.0
+            mm = MockModel(MockPosterior(samples=samples))
+            sampler = SobolQMCNormalSampler(num_samples=2)
+            acqf = qProbabilityOfImprovement(
+                model=mm, best_f=0, sampler=sampler, maximize=False
+            )
+            res = acqf(X)
+            self.assertEqual(res[0].item(), 1.0)
+            self.assertEqual(res[1].item(), 0.5)
+
     # TODO: Test different objectives (incl. constraints)
 
 
@@ -727,6 +767,12 @@ class TestQSimpleRegret(BotorchTestCase):
             # basic test
             sampler = IIDNormalSampler(num_samples=2)
             acqf = qSimpleRegret(model=mm, sampler=sampler)
+            res = acqf(X)
+            self.assertEqual(res.item(), 0.0)
+
+            # basic test for maximize
+            sampler = IIDNormalSampler(num_samples=2)
+            acqf = qSimpleRegret(model=mm, sampler=sampler, maximize=False)
             res = acqf(X)
             self.assertEqual(res.item(), 0.0)
 
@@ -843,6 +889,23 @@ class TestQSimpleRegret(BotorchTestCase):
             acqf(X.expand(2, -1, 1))
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
 
+            # test batch mode
+            sampler = IIDNormalSampler(num_samples=2)
+            acqf = qSimpleRegret(model=mm, sampler=sampler)
+            res = acqf(X)
+            self.assertEqual(res[0].item(), 1.0)
+            self.assertEqual(res[1].item(), 0.0)
+
+            # test batch model, maximize
+            samples = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
+            samples[0, 0, 0] = -1.0
+            mm = MockModel(MockPosterior(samples=samples))
+            sampler = IIDNormalSampler(num_samples=2)
+            acqf = qSimpleRegret(model=mm, sampler=sampler, maximize=False)
+            res = acqf(X)
+            self.assertEqual(res[0].item(), 1.0)
+            self.assertEqual(res[1].item(), 0.0)
+
     # TODO: Test different objectives (incl. constraints)
 
 
@@ -870,6 +933,14 @@ class TestQUpperConfidenceBound(BotorchTestCase):
             bs = acqf.sampler.base_samples.clone()
             res = acqf(X)
             self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
+
+            # basic test, maximize
+            sampler = IIDNormalSampler(num_samples=2)
+            acqf = qUpperConfidenceBound(
+                model=mm, beta=0.5, sampler=sampler, maximize=False
+            )
+            res = acqf(X)
+            self.assertEqual(res.item(), 0.0)
 
             # basic test, qmc, no resample
             sampler = SobolQMCNormalSampler(num_samples=2)
@@ -993,5 +1064,17 @@ class TestQUpperConfidenceBound(BotorchTestCase):
                 self.assertEqual(acqf.X_pending, X2)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+
+            # test batch mode, maximize
+            samples = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
+            samples[0, 0, 0] = -1.0
+            mm = MockModel(MockPosterior(samples=samples))
+            sampler = SobolQMCNormalSampler(num_samples=2)
+            acqf = qExpectedImprovement(
+                model=mm, best_f=0, sampler=sampler, maximize=False
+            )
+            res = acqf(X)
+            self.assertEqual(res[0].item(), 1.0)
+            self.assertEqual(res[1].item(), 0.0)
 
     # TODO: Test different objectives (incl. constraints)

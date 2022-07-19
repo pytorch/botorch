@@ -129,6 +129,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
         objective: Optional[MCAcquisitionObjective] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
+        maximize: bool = True,
         **kwargs: Any,
     ) -> None:
         r"""q-Expected Improvement.
@@ -147,6 +148,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
                 submitted for function evaluation but have not yet been evaluated.
                 Concatenated into X upon forward call. Copied and set to have no
                 gradient.
+            maximize: If True, consider the problem a maximization problem.
         """
         super().__init__(
             model=model,
@@ -155,6 +157,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
             posterior_transform=posterior_transform,
             X_pending=X_pending,
         )
+        self.maximize = maximize
         self.register_buffer("best_f", torch.as_tensor(best_f, dtype=float))
 
     @concatenate_pending_points
@@ -176,7 +179,10 @@ class qExpectedImprovement(MCAcquisitionFunction):
         )
         samples = self.sampler(posterior)
         obj = self.objective(samples, X=X)
-        obj = (obj - self.best_f.unsqueeze(-1).to(obj)).clamp_min(0)
+        obj = obj - self.best_f.unsqueeze(-1).to(obj)
+        if not self.maximize:
+            obj = -obj
+        obj = obj.clamp_min(0)
         q_ei = obj.max(dim=-1)[0].mean(dim=0)
         return q_ei
 
@@ -409,6 +415,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
         posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
         tau: float = 1e-3,
+        maximize: bool = True,
     ) -> None:
         r"""q-Probability of Improvement.
 
@@ -430,6 +437,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
                 of the step function. Smaller values yield more accurate
                 approximations of the function, but result in gradients
                 estimates with higher variance.
+            maximize: If True, consider the problem a maximization problem.
         """
         super().__init__(
             model=model,
@@ -438,6 +446,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
             posterior_transform=posterior_transform,
             X_pending=X_pending,
         )
+        self.maximize = maximize
         self.register_buffer("best_f", torch.as_tensor(best_f, dtype=float))
         self.register_buffer("tau", torch.as_tensor(tau, dtype=float))
 
@@ -460,8 +469,12 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
         )
         samples = self.sampler(posterior)
         obj = self.objective(samples, X=X)
-        max_obj = obj.max(dim=-1)[0]
-        impr = max_obj - self.best_f.unsqueeze(-1).to(max_obj)
+        if self.maximize:
+            max_obj = obj.max(dim=-1)[0]
+            impr = max_obj - self.best_f.unsqueeze(-1).to(max_obj)
+        else:
+            min_obj = obj.min(dim=-1)[0]
+            impr = self.best_f.unsqueeze(-1).to(min_obj) - min_obj
         val = torch.sigmoid(impr / self.tau).mean(dim=0)
         return val
 
@@ -479,6 +492,36 @@ class qSimpleRegret(MCAcquisitionFunction):
         >>> qSR = qSimpleRegret(model, sampler)
         >>> qsr = qSR(test_X)
     """
+
+    def __init__(
+        self,
+        model: Model,
+        sampler: Optional[MCSampler] = None,
+        objective: Optional[MCAcquisitionObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
+        X_pending: Optional[Tensor] = None,
+        maximize: bool = True,
+    ) -> None:
+        r"""q-Simple Regret.
+
+        Args:
+            model: A fitted model.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
+            maximize: If True, consider the problem a maximization problem. Note
+                that if `maximize=False`, the regret is negated. As a
+                consequence `optimize_acqf(qSimpleRegret(gp, maximize=False))`
+                does actually return -1 * minimum of the simple regret.
+        """
+        super().__init__(
+            model=model,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
+        )
+        self.maximize = maximize
 
     @concatenate_pending_points
     @t_batch_mode_transform()
@@ -499,7 +542,10 @@ class qSimpleRegret(MCAcquisitionFunction):
         )
         samples = self.sampler(posterior)
         obj = self.objective(samples, X=X)
-        val = obj.max(dim=-1)[0].mean(dim=0)
+        if self.maximize:
+            val = obj.max(dim=-1)[0].mean(dim=0)
+        else:
+            val = -1 * obj.min(dim=-1)[0].mean(dim=0)
         return val
 
 
@@ -527,6 +573,7 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
         objective: Optional[MCAcquisitionObjective] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
+        maximize: bool = True,
     ) -> None:
         r"""q-Upper Confidence Bound.
 
@@ -542,6 +589,8 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
                 points that have been submitted for function evaluation but have not yet
                 been evaluated. Concatenated into X upon forward call. Copied and set to
                 have no gradient.
+            maximize: If True, consider the problem a maximization problem.
+
         """
         super().__init__(
             model=model,
@@ -550,6 +599,7 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
             posterior_transform=posterior_transform,
             X_pending=X_pending,
         )
+        self.maximize = maximize
         self.beta_prime = math.sqrt(beta * math.pi / 2)
 
     @concatenate_pending_points
@@ -572,5 +622,8 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
         samples = self.sampler(posterior)
         obj = self.objective(samples, X=X)
         mean = obj.mean(dim=0)
-        ucb_samples = mean + self.beta_prime * (obj - mean).abs()
+        if self.maximize:
+            ucb_samples = mean + self.beta_prime * (obj - mean).abs()
+        else:
+            ucb_samples = -mean + self.beta_prime * (obj - mean).abs()
         return ucb_samples.max(dim=-1)[0].mean(dim=0)
