@@ -50,10 +50,10 @@ jobs:
     - name: Install dependencies
       run: |
         pip install .[test]
-        pip install --upgrade setuptools wheel
+        pip install --upgrade build setuptools setuptools_scm wheel
     - name: Build packages (wheel and source distribution)
       run: |
-        python setup.py sdist bdist_wheel
+        python -m build --sdist --wheel
     - name: Verify packages
       run: |
         ./scripts/build_and_verify_py_packages.sh
@@ -82,10 +82,10 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
+        conda install -y setuptools_scm conda-build conda-verify anaconda-client
         conda install -y -c pytorch pytorch cpuonly
         conda install -y scipy sphinx pytest flake8
         conda install -y -c gpytorch gpytorch
-        conda install -y conda-build anaconda-client
         conda install -y -c conda-forge pyro-ppl>=1.8.0
         conda config --set anaconda_upload no
     - name: Build and verify conda package

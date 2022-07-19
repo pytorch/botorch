@@ -62,8 +62,8 @@ if [[ $DOCUSAURUS_BOT == true ]]; then
   git clone https://docusaurus-bot@github.com/pytorch/botorch.git botorch-main
   git clone --branch gh-pages https://docusaurus-bot@github.com/pytorch/botorch.git botorch-gh-pages
 else
-  git clone git@github.com:pytorch/botorch.git botorch-main
-  git clone --branch gh-pages git@github.com:pytorch/botorch.git botorch-gh-pages
+  git clone https://github.com/pytorch/botorch.git botorch-main
+  git clone --branch gh-pages https://github.com/pytorch/botorch.git botorch-gh-pages
 fi
 
 # A few notes about the script below:
