@@ -138,8 +138,9 @@ class ScalarizedObjective(ScalarizedPosteriorTransform, AcquisitionObjective):
     def __init__(self, weights: Tensor, offset: float = 0.0) -> None:
         """
         Args:
-            weights
-            offset: Defaults to 0.0.
+            weights: A one-dimensional tensor with `m` elements representing the
+                linear weights on the outputs.
+            offset: An offset to be added to posterior mean. Defaults to 0.0.
         """
         warnings.warn(
             "ScalarizedObjective is deprecated and will be removed in the next "

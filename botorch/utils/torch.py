@@ -56,7 +56,9 @@ class BufferDict(Module):
     def __init__(self, buffers=None):
         """
         Args:
-            buffers: Defaults to None.
+            buffers: A mapping (dictionary) from string to :class:`~torch.Tensor`, or
+                an iterable of key-value pairs of type (string, :class:`~torch.Tensor`).
+                Defaults to None.
         """
         super(BufferDict, self).__init__()
         if buffers is not None:

@@ -78,8 +78,8 @@ class AugmentedHartmann(SyntheticTestFunction):
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
         """
         Args:
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         super().__init__(noise_std=noise_std, negate=negate)
         self.register_buffer("ALPHA", torch.tensor([1.0, 1.2, 3.0, 3.2]))
@@ -131,9 +131,9 @@ class AugmentedRosenbrock(SyntheticTestFunction):
     ) -> None:
         """
         Args:
-            dim: Defaults to 3.
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            dim: Dimension of the function. Must be at least 3 and defaults to 3.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         if dim < 3:
             raise ValueError(

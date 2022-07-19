@@ -178,12 +178,9 @@ class DH(MultiObjectiveTestProblem, ABC):
     ) -> None:
         """
         Args:
-            dim (int)
-            noise_std (Optional[float], optional): Defaults to None.
-            negate (bool, optional): Defaults to False.
-
-        Raises:
-            ValueError
+            dim: Dimension.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         if dim < self._min_dim:
             raise ValueError(f"dim must be >= {self._min_dim}, but got dim={dim}!")
@@ -341,13 +338,10 @@ class DTLZ(MultiObjectiveTestProblem):
     ) -> None:
         """
         Args:
-            dim (int)
-            num_objectives (int, optional): Defaults to 2.
-            noise_std (Optional[float], optional): Defaults to None.
-            negate (bool, optional): Defaults to False.
-
-        Raises:
-            ValueError
+            dim: Dimension of the function.
+            num_objectives: Must be smaller than dim. Defaults to 2.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         if dim <= num_objectives:
             raise ValueError(
@@ -936,10 +930,11 @@ class ZDT(MultiObjectiveTestProblem):
     ) -> None:
         """
         Args:
-            dim
-            num_objectives: Defaults to 2.
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            dim: Dimension of the function.
+            num_objectives: Number of objectives. Must not be larger than dim. Defaults
+                to 2.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         if num_objectives != 2:
             raise NotImplementedError(
@@ -1242,8 +1237,8 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
         """
         Args:
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False.
         """
         super().__init__(noise_std=noise_std, negate=negate)
         con_bounds = torch.tensor(self._con_bounds, dtype=torch.float).transpose(-1, -2)
@@ -1347,9 +1342,9 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     ) -> None:
         """
         Args:
-            dim
-            noise_std: Defaults to None.
-            negate: Defaults to False.
+            dim: Dimension of the function. Must be at least 2.
+            noise_std: Standard deviation of the observation noise. Defaults to None.
+            negate: If True, negate the function. Defaults to False
         """
         if dim < 2:
             raise ValueError("dim must be greater than or equal to 2.")

@@ -65,7 +65,7 @@ class FlattenedStandardize(Standardize):
     ):
         """
         Args:
-            output_shape
+            output_shape: A `n x output_shape`-dim tensor of training targets.
             batch_shape: Defaults to None.
             min_stdv: Defaults to 1e-8.
         """
