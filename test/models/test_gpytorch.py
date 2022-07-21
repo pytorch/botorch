@@ -96,13 +96,13 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
 
 class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, ExactGP):
     def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
-        """
+        r"""
         Args:
             train_X: A tensor of inputs, passed to self.transform_inputs.
             train_Y: Passed to outcome_transform.
-            outcome_transform: Transform applied to train_Y. Defaults to None.
+            outcome_transform: Transform applied to train_Y.
             input_transform: A Module that performs the input transformation, passed to
-                self.transform_inputs. Defaults to None.
+                self.transform_inputs.
         """
         with torch.no_grad():
             transformed_X = self.transform_inputs(

@@ -93,7 +93,8 @@ class PairwiseIIDNormalSampler(PairwiseMCSampler, IIDNormalSampler):
                 not be used with deterministic optimization algorithms).
             seed: The seed for the RNG. If omitted, use a random seed.
             collapse_batch_dims: If True, collapse the t-batch dimensions to
-                size 1. This is useful for preventing sampling variance across t-batches.
+                size 1. This is useful for preventing sampling variance across
+                t-batches.
             max_num_comparisons:  Max number of comparisons drawn within samples.
                 If None, use all possible pairwise comparisons.
         """
@@ -126,7 +127,8 @@ class PairwiseSobolQMCNormalSampler(PairwiseMCSampler, SobolQMCNormalSampler):
                 not be used with deterministic optimization algorithms).
             seed: The seed for the RNG. If omitted, use a random seed.
             collapse_batch_dims: If True, collapse the t-batch dimensions to
-                size 1. This is useful for preventing sampling variance across t-batches.
+                size 1. This is useful for preventing sampling variance across
+                t-batches.
             max_num_comparisons:  Max number of comparisons drawn within samples.
                 If None, use all possible pairwise comparisons.
         """

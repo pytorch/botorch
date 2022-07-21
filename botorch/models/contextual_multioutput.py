@@ -36,7 +36,7 @@ class LCEMGP(MultiTaskGP):
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
-        """
+        r"""
         Args:
             train_X: (n x d) X training data.
             train_Y: (n x 1) Y training data.
@@ -122,7 +122,7 @@ class LCEMGP(MultiTaskGP):
         return embeddings
 
     def task_covar_matrix(self, task_idcs: Tensor) -> Tensor:
-        """compute covariance matrix of a list of given context
+        r"""compute covariance matrix of a list of given context
 
         Args:
             task_idcs: (n x 1) or (b x n x 1) task indices tensor

@@ -176,9 +176,9 @@ class DH(MultiObjectiveTestProblem, ABC):
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:
-        """
+        r"""
         Args:
-            dim: The (input) dimension. 
+            dim: The (input) dimension.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
         """
@@ -928,7 +928,7 @@ class ZDT(MultiObjectiveTestProblem):
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:
-        """
+        r"""
         Args:
             dim: The (input) dimension of the function.
             num_objectives: Number of objectives. Must not be larger than dim.

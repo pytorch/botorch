@@ -131,7 +131,7 @@ class AugmentedRosenbrock(SyntheticTestFunction):
     ) -> None:
         r"""
         Args:
-            dim: Dimension of the function. Must be at least 3.
+            dim: The (input) dimension. Must be at least 3.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
         """

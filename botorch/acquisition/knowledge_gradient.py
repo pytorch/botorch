@@ -503,7 +503,7 @@ class ProjectedAcquisitionFunction(AcquisitionFunction):
         base_value_function: AcquisitionFunction,
         project: Callable[[Tensor], Tensor],
     ) -> None:
-        """
+        r"""
         Args:
             base_value_function: The wrapped `AcquisitionFunction`.
             project: A callable mapping a `batch_shape x q x d` tensor of design

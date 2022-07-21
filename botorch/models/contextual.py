@@ -13,7 +13,7 @@ from torch import Tensor
 
 
 class SACGP(FixedNoiseGP):
-    """A GP using a Structural Additive Contextual(SAC) kernel."""
+    r"""A GP using a Structural Additive Contextual(SAC) kernel."""
 
     def __init__(
         self,
@@ -42,7 +42,7 @@ class SACGP(FixedNoiseGP):
 
 
 class LCEAGP(FixedNoiseGP):
-    r"""A GP using a Latent Context Embedding Additive (LCE-A) kernel.
+    r"""A GP using a Latent Context Embedding Additive (LCE-A) Kernel.
 
     Note that the model does not support batch training. Input training
     data sets should have dim = 2.

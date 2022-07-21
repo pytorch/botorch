@@ -98,8 +98,8 @@ class MockPosterior(Posterior):
     r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
     def __init__(self, mean=None, variance=None, samples=None):
-        """
-        Args:
+        r"""
+        Args
             mean: The mean of the posterior.
             variance: The variance of the posterior.
             samples: Samples to return from `rsample`, unless `base_samples` is

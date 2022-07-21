@@ -57,11 +57,7 @@ class MockOneShotAcquisitionFunction(
 
 
 class SquaredAcquisitionFunction(AcquisitionFunction):
-    def __init__(self, model=None):
-        """
-        Args:
-            model: A fitted model. Defaults to None.
-        """
+    def __init__(self, model=None):  # noqa: D107
         super().__init__(model=model)
 
     def forward(self, X):
