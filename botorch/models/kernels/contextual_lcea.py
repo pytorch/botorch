@@ -37,7 +37,7 @@ class LCEAKernel(Kernel):
         context_weight_dict: Optional[Dict] = None,
         device: Optional[torch.device] = None,
     ) -> None:
-        """
+        r"""
         Args:
             decomposition: Keys index context names. Values are the indexes of
                 parameters belong to the context. The parameter indexes are in the same
@@ -45,17 +45,17 @@ class LCEAKernel(Kernel):
             batch_shape: Batch shape as usual for gpytorch kernels. Model does not
                 support batch training. When batch_shape is non-empty, it is used for
                 loading hyper-parameter values generated from MCMC sampling.
-            train_embedding: A boolean indictor of whether to learn context embeddings
+            train_embedding: A boolean indictor of whether to learn context embeddings.
             cat_feature_dict: Keys are context names and values are list of categorical
-                features i.e. {"context_name" : [cat_0, ..., cat_k]}. k equals to number
-                of categorical variables. If None, we use context names in the
-                decomposition as the only categorical feature i.e. k = 1
+                features i.e. {"context_name" : [cat_0, ..., cat_k]}. k equals the number
+                of categorical variables. If None, uses context names in the decomposition
+               as the only categorical feature, i.e., k = 1.
             embs_feature_dict: Pre-trained continuous embedding features of each
                 context.
             embs_dim_list: Embedding dimension for each categorical variable. The length
-                equals to num of categorical features k. If None, emb dim is set to 1
-                for each categorical variable.
-            context_weight_dict: Known population Weights of each context.
+                equals to num of categorical features k. If None, the embedding dimension
+                is set to 1 for each categorical variable.
+            context_weight_dict: Known population weights of each context.
         """
         super().__init__(batch_shape=batch_shape)
         self.decomposition = decomposition

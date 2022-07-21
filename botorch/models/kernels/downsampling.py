@@ -35,7 +35,7 @@ class DownsamplingKernel(Kernel):
         offset_constraint: Optional[Interval] = None,
         **kwargs,
     ):
-        """
+        r"""
         Args:
             power_constraint: Constraint to place on power parameter. Default is
                 `Positive`.
