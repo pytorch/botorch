@@ -33,6 +33,12 @@ from botorch.optim.parameter_constraints import (
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 from scipy.optimize import OptimizeResult
 from torch import Tensor
+from botorch.models import ModelListGP, SingleTaskGP
+from botorch.models.transforms.input import Normalize
+from botorch.models.transforms.outcome import Standardize
+from botorch.acquisition.multi_objective import qNoisyExpectedHypervolumeImprovement
+from botorch.fit import fit_gpytorch_model
+from gpytorch.mlls import ExactMarginalLogLikelihood
 
 
 class MockOneShotAcquisitionFunction(
@@ -488,6 +494,83 @@ class TestOptimizeAcqf(BotorchTestCase):
         # Call f_obj on the new input, should use the cache
         self.assertEqual(f_obj(x2), 2.0)
         self.assertEqual(f_np_wrapper.call_count, 2)
+
+    def test_equality_constraints(self):
+        torch.manual_seed(1)
+        tkwargs = {"dtype": torch.float64, "device": "cpu"}
+        lower = torch.tensor([0.1, 0.3, 0.1, 30.0])
+        upper = torch.tensor([0.6, 0.7, 0.7, 70.0])
+
+        bounds = torch.stack((lower, upper)).to(**tkwargs)
+
+        train_X = torch.DoubleTensor(
+            [
+                [0.22347546, 0.41236198, 0.36416257, 62.743104],
+                [0.11751007, 0.31980389, 0.56268603, 65.09468852],
+                [0.31034805, 0.41933353, 0.27031842, 62.47616762],
+                [0.22546985, 0.52813389, 0.24639626, 66.25628829],
+                [0.23545787, 0.38019625, 0.38434588, 65.71321295],
+                [0.15411492, 0.60007887, 0.24580621, 65.63475145],
+                [0.15300273, 0.38354175, 0.46345552, 64.05178203],
+                [0.39613777, 0.50084917, 0.10301306, 61.79073566],
+                [0.1691141, 0.54051772, 0.29036818, 62.65021831],
+                [0.1824886, 0.53542673, 0.28208467, 61.22475402],
+            ]
+        )
+
+        train_Y = torch.DoubleTensor(
+            [
+                [2921.533789, 94.98087478],
+                [4558.49969061, 99.99773415],
+                [2171.65077727, 94.95282934],
+                [1980.45534068, 94.99292337],
+                [3133.34085377, 99.99384112],
+                [2025.29912918, 99.9940916],
+                [3765.19452388, 99.99434451],
+                [834.38820692, 94.83186871],
+                [2381.26421617, 99.98216474],
+                [2314.92782344, 99.96635532],
+            ]
+        )
+        models = []
+        for i, feat in enumerate(["alpha", "beta"]):
+            gp = SingleTaskGP(
+                train_X,
+                train_Y[:, i].unsqueeze(-1),
+                input_transform=Normalize(d=4),
+                outcome_transform=Standardize(m=1),
+            )
+            mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+            fit_gpytorch_model(mll)
+            models.append(gp)
+
+        model = ModelListGP(*models)
+
+        acqf = qNoisyExpectedHypervolumeImprovement(
+            model=model,
+            ref_point=[834.3882069229232, 94.83186871069022],
+            X_baseline=train_X,
+        )
+        equality_constraint_value = 1.0
+        torch.manual_seed(5)
+
+        candidate, acq_value = optimize_acqf(
+            acqf,
+            bounds=bounds,
+            q=1,
+            num_restarts=8,
+            raw_samples=8,
+            equality_constraints=[
+                (
+                    torch.tensor([1, 2, 0]),
+                    torch.tensor([1.0, 1.0, 1.0]).to(**tkwargs),
+                    equality_constraint_value,
+                )
+            ],
+        )
+        np.testing.assert_allclose(
+            candidate[0, :3].sum().numpy(), equality_constraint_value
+        )
 
 
 class TestOptimizeAcqfCyclic(BotorchTestCase):

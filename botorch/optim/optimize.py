@@ -193,6 +193,7 @@ def optimize_acqf(
         return X, acq_value
 
     if batch_initial_conditions is None:
+        # we go through this branch
         if nonlinear_inequality_constraints:
             raise NotImplementedError(
                 "`batch_initial_conditions` must be given if there are non-linear "
@@ -203,6 +204,9 @@ def optimize_acqf(
                 "Must specify `raw_samples` when `batch_initial_conditions` is `None`."
             )
 
+        # in this case it's not a qKnowledgeGradient
+        # ic_gen = gen_batch_initial_conditions
+        # we could set batch_initial_conditions to simplify; it's a tensor
         ic_gen = (
             gen_one_shot_kg_initial_conditions
             if isinstance(acq_function, qKnowledgeGradient)
@@ -226,6 +230,7 @@ def optimize_acqf(
     batch_candidates_list: List[Tensor] = []
     batch_acq_values_list: List[Tensor] = []
     batched_ics = batch_initial_conditions.split(batch_limit)
+    # we only do one iteration
     for i, batched_ics_ in enumerate(batched_ics):
         # optimize using random restart optimization
         batch_candidates_curr, batch_acq_values_curr = gen_candidates_scipy(
@@ -239,16 +244,20 @@ def optimize_acqf(
             nonlinear_inequality_constraints=nonlinear_inequality_constraints,
             fixed_features=fixed_features,
         )
+        # This is the violated equality constraint
+        print(batch_candidates_curr[:, 0, :3].sum(1))
         batch_candidates_list.append(batch_candidates_curr)
         batch_acq_values_list.append(batch_acq_values_curr)
         logger.info(f"Generated candidate batch {i+1} of {len(batched_ics)}.")
     batch_candidates = torch.cat(batch_candidates_list)
     batch_acq_values = torch.cat(batch_acq_values_list)
 
+    # we don't go down this branch
     if post_processing_func is not None:
         batch_candidates = post_processing_func(batch_candidates)
 
     if return_best_only:
+        # best is 0 (seems legit)
         best = torch.argmax(batch_acq_values.view(-1), dim=0)
         batch_candidates = batch_candidates[best]
         batch_acq_values = batch_acq_values[best]
