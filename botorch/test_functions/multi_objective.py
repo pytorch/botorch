@@ -178,9 +178,9 @@ class DH(MultiObjectiveTestProblem, ABC):
     ) -> None:
         """
         Args:
-            dim: Dimension.
-            noise_std: Standard deviation of the observation noise. Defaults to None.
-            negate: If True, negate the function. Defaults to False.
+            dim: The (input) dimension. 
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
         """
         if dim < self._min_dim:
             raise ValueError(f"dim must be >= {self._min_dim}, but got dim={dim}!")
@@ -336,13 +336,12 @@ class DTLZ(MultiObjectiveTestProblem):
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:
-        """
+        r"""
         Args:
-            dim: Dimension of the function.
-            num_objectives: Must be smaller than dim. Defaults to 2.
-            noise_std: Standard deviation of the observation noise. Defaults to None.
-                Defaults to None.
-            negate: If True, negate the function. Defaults to False.
+            dim: The (input) dimension of the function.
+            num_objectives: Must be less than dim.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
         """
         if dim <= num_objectives:
             raise ValueError(
@@ -931,11 +930,10 @@ class ZDT(MultiObjectiveTestProblem):
     ) -> None:
         """
         Args:
-            dim: Dimension of the function.
-            num_objectives: Number of objectives. Must not be larger than dim. Defaults
-                to 2.
-            noise_std: Standard deviation of the observation noise. Defaults to None.
-            negate: If True, negate the function. Defaults to False.
+            dim: The (input) dimension of the function.
+            num_objectives: Number of objectives. Must not be larger than dim.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
         """
         if num_objectives != 2:
             raise NotImplementedError(
@@ -1236,10 +1234,10 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
     _max_hv = 608.4004237022673  # from NSGA-II with 90k evaluations
 
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
-        """
+        r"""
         Args:
-            noise_std: Standard deviation of the observation noise. Defaults to None.
-            negate: If True, negate the function. Defaults to False.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
         """
         super().__init__(noise_std=noise_std, negate=negate)
         con_bounds = torch.tensor(self._con_bounds, dtype=torch.float).transpose(-1, -2)
@@ -1341,11 +1339,11 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:
-        """
+        r"""
         Args:
-            dim: Dimension of the function. Must be at least 2.
-            noise_std: Standard deviation of the observation noise. Defaults to None.
-            negate: If True, negate the function. Defaults to False
+            dim: The (input) dimension of the function. Must be at least 2.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
         """
         if dim < 2:
             raise ValueError("dim must be greater than or equal to 2.")

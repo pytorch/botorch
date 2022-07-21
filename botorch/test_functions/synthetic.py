@@ -62,11 +62,11 @@ class Ackley(SyntheticTestFunction):
     def __init__(
         self, dim: int = 2, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
-        """
+        r"""
         Args:
-            dim: Dimension. Defaults to 2.
-            noise_std: Standard deviation of the observation noise. Defaults to None.
-            negate: If True, negate the function. Defaults to False.
+            dim: The (input) dimension.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
         """
         self.dim = dim
         self._bounds = [(-32.768, 32.768) for _ in range(self.dim)]

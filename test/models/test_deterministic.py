@@ -27,7 +27,7 @@ class DummyDeterministicModel(DeterministicModel):
     r"""A dummy deterministic model that uses transforms."""
 
     def __init__(self, outcome_transform, input_transform):
-        """
+        r"""
         Args:
             outcome_transform: An outcome transform that is applied to the
                 training data during instantiation and to the posterior during

@@ -39,9 +39,9 @@ class MockOneShotAcquisitionFunction(
     MockAcquisitionFunction, OneShotAcquisitionFunction
 ):
     def __init__(self, num_fantasies=2):
-        """
+        r"""
         Args:
-            num_fantasies: Number of fantasies. Defaults to 2.
+            num_fantasies: The number of fantasies.
         """
         super().__init__()
         self.num_fantasies = num_fantasies

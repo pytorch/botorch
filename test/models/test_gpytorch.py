@@ -36,7 +36,7 @@ from torch import Tensor
 
 class SimpleInputTransform(InputTransform, torch.nn.Module):
     def __init__(self, transform_on_train: bool) -> None:
-        """
+        r"""
         Args:
             transform_on_train: A boolean indicating whether to apply the
                 transform in train() mode.
@@ -56,13 +56,13 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
     last_fantasize_flag: bool = False
 
     def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
-        """
+        r"""
         Args:
             train_X: A tensor of inputs, passed to self.transform_inputs.
             train_Y: Passed to outcome_transform.
-            outcome_transform: Transform applied to train_Y. Defaults to None.
+            outcome_transform: Transform applied to train_Y.
             input_transform: A Module that performs the input transformation, passed to
-                self.transform_inputs. Defaults to None.
+                self.transform_inputs.
         """
         with torch.no_grad():
             transformed_X = self.transform_inputs(
@@ -136,9 +136,9 @@ class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, Exa
 
 class SimpleModelListGPyTorchModel(IndependentModelList, ModelListGPyTorchModel):
     def __init__(self, *gp_models: GPyTorchModel):
-        """
+        r"""
         Args:
-            gp_models: Arbitrary number of GPyTorchModels
+            gp_models: Arbitrary number of GPyTorchModels.
         """
         super().__init__(*gp_models)
 
