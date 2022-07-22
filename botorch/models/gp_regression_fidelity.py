@@ -62,7 +62,7 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
     ) -> None:
-        """
+        r"""
         Args:
             train_X: A `batch_shape x n x (d + s)` tensor of training features,
                 where `s` is the dimension of the fidelity parameters (either one
@@ -180,7 +180,7 @@ class FixedNoiseMultiFidelityGP(FixedNoiseGP):
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
     ) -> None:
-        """
+        r"""
         Args:
             train_X: A `batch_shape x n x (d + s)` tensor of training features,
                 where `s` is the dimension of the fidelity parameters (either one
@@ -200,7 +200,7 @@ class FixedNoiseMultiFidelityGP(FixedNoiseGP):
                 inference (that is, the `Posterior` obtained by calling
                 `.posterior` on the model will be on the original scale).
             input_transform: An input transform that is applied in the model's
-                    forward pass.
+                forward pass.
         """
         if iteration_fidelity is None and data_fidelity is None:
             raise UnsupportedError(

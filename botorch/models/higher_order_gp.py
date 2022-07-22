@@ -63,11 +63,12 @@ class FlattenedStandardize(Standardize):
         batch_shape: torch.Size = None,
         min_stdv: float = 1e-8,
     ):
-        """
+        r"""
         Args:
             output_shape: A `n x output_shape`-dim tensor of training targets.
-            batch_shape: Defaults to None.
-            min_stdv: Defaults to 1e-8.
+            batch_shape: The batch_shape of the training targets.
+            min_stddv: The minimum standard deviation for which to perform
+                standardization (if lower, only de-mean the data).
         """
         if batch_shape is None:
             batch_shape = torch.Size()

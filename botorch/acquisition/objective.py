@@ -136,7 +136,7 @@ class ScalarizedObjective(ScalarizedPosteriorTransform, AcquisitionObjective):
     """DEPRECATED - Use ScalarizedPosteriorTransform instead."""
 
     def __init__(self, weights: Tensor, offset: float = 0.0) -> None:
-        """
+        r"""
         Args:
             weights: A one-dimensional tensor with `m` elements representing the
                 linear weights on the outputs.

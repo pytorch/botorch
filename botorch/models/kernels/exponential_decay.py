@@ -37,7 +37,7 @@ class ExponentialDecayKernel(Kernel):
         offset_constraint: Optional[Interval] = None,
         **kwargs,
     ):
-        """
+        r"""
         Args:
             lengthscale_constraint: Constraint to place on lengthscale parameter.
                 Default is `Positive`.

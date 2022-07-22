@@ -33,12 +33,11 @@ class MESMockModel(MockModel):
     r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
     def __init__(self, num_outputs=1, batch_shape=None):
-        """
+        r"""
         Args:
-            num_outputs: Number of outputs. Defaults to 1.
-            batch_shape: The batch shape of the model. See
-                `botorch.models.model.Model.batch_shape` for a full description.
-                Defaults to None.
+            num_outputs: The number of outputs.
+            batch_shape: The batch shape of the model. For details see
+                `botorch.models.model.Model.batch_shape`.
         """
         super().__init__(None)
         self._num_outputs = num_outputs

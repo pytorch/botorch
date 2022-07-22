@@ -22,9 +22,9 @@ class DeterministicPosterior(Posterior):
     r"""Deterministic posterior."""
 
     def __init__(self, values: Tensor) -> None:
-        """
+        r"""
         Args:
-            values: Values to deterministically sample from.
+            values: Values of the samples produced by this posterior.
         """
         self.values = values
 

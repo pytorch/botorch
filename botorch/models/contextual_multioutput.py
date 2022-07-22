@@ -36,20 +36,20 @@ class LCEMGP(MultiTaskGP):
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
-        """
+        r"""
         Args:
             train_X: (n x d) X training data.
             train_Y: (n x 1) Y training data.
-            task_feature: column index of train_X to get context indices.
+            task_feature: Column index of train_X to get context indices.
             context_cat_feature: (n_contexts x k) one-hot encoded context
-                features. Rows are ordered by context indices. k equals to
+                features. Rows are ordered by context indices, where k is the
                 number of categorical variables. If None, task indices will
-                be used and k = 1
+                be used and k = 1.
             context_emb_feature: (n_contexts x m) pre-given continuous
                 embedding features. Rows are ordered by context indices.
             embs_dim_list: Embedding dimension for each categorical variable.
-                The length equals to k. If None, emb dim is set to 1 for each
-                categorical variable.
+                The length equals k. If None, the embedding dimension is set to 1
+                for each categorical variable.
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
         """
@@ -122,7 +122,7 @@ class LCEMGP(MultiTaskGP):
         return embeddings
 
     def task_covar_matrix(self, task_idcs: Tensor) -> Tensor:
-        """compute covariance matrix of a list of given context
+        r"""compute covariance matrix of a list of given context
 
         Args:
             task_idcs: (n x 1) or (b x n x 1) task indices tensor
@@ -163,21 +163,21 @@ class FixedNoiseLCEMGP(LCEMGP):
         embs_dim_list: Optional[List[int]] = None,
         output_tasks: Optional[List[int]] = None,
     ) -> None:
-        """
+        r"""
         Args:
             train_X: (n x d) X training data.
             train_Y: (n x 1) Y training data.
             train_Yvar: (n x 1) Noise variances of each training Y.
-            task_feature: column index of train_X to get context indices.
+            task_feature: Column index of train_X to get context indices.
             context_cat_feature: (n_contexts x k) one-hot encoded context
-                features. Rows are ordered by context indices. k equals to
+                features. Rows are ordered by context indices, where k is the
                 number of categorical variables. If None, task indices will
                 be used and k = 1.
             context_emb_feature: (n_contexts x m) pre-given continuous
                 embedding features. Rows are ordered by context indices.
             embs_dim_list: Embedding dimension for each categorical variable.
-                The length equals to k. If None, emb dim is set to 1 for each
-                categorical variable.
+                The length equals to k. If None, the embedding dimension is set to
+                1 for each categorical variable.
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
         """
