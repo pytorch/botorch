@@ -99,7 +99,7 @@ class MockPosterior(Posterior):
 
     def __init__(self, mean=None, variance=None, samples=None):
         r"""
-        Args
+        Args:
             mean: The mean of the posterior.
             variance: The variance of the posterior.
             samples: Samples to return from `rsample`, unless `base_samples` is
