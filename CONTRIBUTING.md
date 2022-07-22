@@ -28,6 +28,15 @@ from the repository root. No additional configuration should be needed (see the
 [black documentation](https://black.readthedocs.io/en/stable/installation_and_usage.html#usage)
 for advanced usage).
 
+Docstring formatting: We recommend [Google-style](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html) docstrings.
+To make sure documentation is rendered correctly, we require that every `__init__`
+function contains an "Args" block.
+We use `flake8-docstrings` to check this, as well as `flake8` to check code style. To use these tools, run
+`pip install flake8` and `pip install flake8-docstrings`, and then run
+```bash
+flake8 .
+```
+
 
 #### Import Sorting
 

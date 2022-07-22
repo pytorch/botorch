@@ -17,12 +17,16 @@ from torch import Tensor
 
 
 class PairwiseMCSampler(MCSampler):
+    r"""
+    Abstract class for Pairwise MC Sampler.
+
+    This sampler will sample pairwise comparisons. It is to be used together
+    with PairwiseGP and BoTorch acquisition functions (e.g., qKnowledgeGradient)
+
+    """
+
     def __init__(self, max_num_comparisons: int = None, seed: int = None) -> None:
-        r"""Abstract class for Pairwise MC Sampler.
-
-        This sampler will sample pairwise comparisons. It is to be used together
-        with PairwiseGP and BoTorch acquisition functions (e.g., qKnowledgeGradient)
-
+        r"""
         Args:
             max_num_comparisons: Max number of comparisons drawn within samples.
                 If None, use all possible pairwise comparisons
@@ -81,6 +85,19 @@ class PairwiseIIDNormalSampler(PairwiseMCSampler, IIDNormalSampler):
         collapse_batch_dims: bool = True,
         max_num_comparisons: int = None,
     ) -> None:
+        r"""
+        Args:
+            num_samples: The number of samples to use.
+            resample: If `True`, re-draw samples in each `forward` evaluation -
+                this results in stochastic acquisition functions (and thus should
+                not be used with deterministic optimization algorithms).
+            seed: The seed for the RNG. If omitted, use a random seed.
+            collapse_batch_dims: If True, collapse the t-batch dimensions to
+                size 1. This is useful for preventing sampling variance across
+                t-batches.
+            max_num_comparisons:  Max number of comparisons drawn within samples.
+                If None, use all possible pairwise comparisons.
+        """
         PairwiseMCSampler.__init__(
             self, max_num_comparisons=max_num_comparisons, seed=seed
         )
@@ -102,6 +119,19 @@ class PairwiseSobolQMCNormalSampler(PairwiseMCSampler, SobolQMCNormalSampler):
         collapse_batch_dims: bool = True,
         max_num_comparisons: int = None,
     ) -> None:
+        r"""
+        Args:
+            num_samples: The number of samples to use.
+            resample: If `True`, re-draw samples in each `forward` evaluation -
+                this results in stochastic acquisition functions (and thus should
+                not be used with deterministic optimization algorithms).
+            seed: The seed for the RNG. If omitted, use a random seed.
+            collapse_batch_dims: If True, collapse the t-batch dimensions to
+                size 1. This is useful for preventing sampling variance across
+                t-batches.
+            max_num_comparisons:  Max number of comparisons drawn within samples.
+                If None, use all possible pairwise comparisons.
+        """
         PairwiseMCSampler.__init__(
             self, max_num_comparisons=max_num_comparisons, seed=seed
         )

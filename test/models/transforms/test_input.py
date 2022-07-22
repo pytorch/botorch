@@ -43,7 +43,7 @@ def get_test_warp(indices, **kwargs):
 
 
 class NotSoAbstractInputTransform(InputTransform, Module):
-    def __init__(
+    def __init__(  # noqa: D107
         self,
         transform_on_train,
         transform_on_eval,

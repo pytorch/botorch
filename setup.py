@@ -30,7 +30,7 @@ if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR):
 # Requirements
 TEST_REQUIRES = ["pytest", "pytest-cov"]
 
-FMT_REQUIRES = ["flake8", "ufmt"]
+FMT_REQUIRES = ["flake8", "ufmt", "flake8-docstrings"]
 
 # Read in the pinned versions of the formatting tools
 root_dir = os.path.dirname(__file__)
