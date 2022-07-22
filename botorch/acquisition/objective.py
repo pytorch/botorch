@@ -140,7 +140,7 @@ class ScalarizedObjective(ScalarizedPosteriorTransform, AcquisitionObjective):
         Args:
             weights: A one-dimensional tensor with `m` elements representing the
                 linear weights on the outputs.
-            offset: An offset to be added to posterior mean. Defaults to 0.0.
+            offset: An offset to be added to posterior mean.
         """
         warnings.warn(
             "ScalarizedObjective is deprecated and will be removed in the next "
