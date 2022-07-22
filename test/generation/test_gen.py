@@ -200,6 +200,21 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             self.assertTrue(-EPS <= candidates[0] <= 1 + EPS)
             self.assertTrue(candidates[1].item() == 0.25)
 
+    def test_gen_candidates_scipy_warns_opt_failure(self):
+        options = {"maxls": 1}
+        with warnings.catch_warnings(record=True) as ws:
+            warnings.simplefilter("always", category=OptimizationWarning)
+            self.test_gen_candidates(options=options)
+        expected_msg = "Optimization failed within `scipy.optimize.minimize` with "
+        expected_warning_raised = any(
+            (
+                issubclass(w.category, OptimizationWarning)
+                and expected_msg in str(w.message)
+                for w in ws
+            )
+        )
+        self.assertTrue(expected_warning_raised)
+
     def test_gen_candidates_torch_with_fixed_features(self):
         self.test_gen_candidates_with_fixed_features(
             gen_candidates=gen_candidates_torch, options={"disp": False}

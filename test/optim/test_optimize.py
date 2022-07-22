@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import warnings
 from unittest import mock
 
 import numpy as np
@@ -13,7 +14,7 @@ from botorch.acquisition.acquisition import (
     AcquisitionFunction,
     OneShotAcquisitionFunction,
 )
-from botorch.exceptions import InputDataError, UnsupportedError
+from botorch.exceptions import InputDataError, OptimizationWarning, UnsupportedError
 from botorch.optim.optimize import (
     _filter_infeasible,
     _filter_invalid,
@@ -33,12 +34,6 @@ from botorch.optim.parameter_constraints import (
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 from scipy.optimize import OptimizeResult
 from torch import Tensor
-from botorch.models import ModelListGP, SingleTaskGP
-from botorch.models.transforms.input import Normalize
-from botorch.models.transforms.outcome import Standardize
-from botorch.acquisition.multi_objective import qNoisyExpectedHypervolumeImprovement
-from botorch.fit import fit_gpytorch_model
-from gpytorch.mlls import ExactMarginalLogLikelihood
 
 
 class MockOneShotAcquisitionFunction(
@@ -73,6 +68,19 @@ class SquaredAcquisitionFunction(AcquisitionFunction):
 class MockOneShotEvaluateAcquisitionFunction(MockOneShotAcquisitionFunction):
     def evaluate(self, X: Tensor, bounds: Tensor):
         return X.sum()
+
+
+class SinOneOverXAcqusitionFunction(MockAcquisitionFunction):
+    """
+    Acquisition function for sin(1/x).
+
+    This is useful for testing because it behaves pathologically only zero, so
+    optimization is likely to fail when initializing near zero but not
+    elsewhere.
+    """
+
+    def __call__(self, X):
+        return torch.sin(1 / X[..., 0].max(dim=-1).values)
 
 
 def rounding_func(X: Tensor) -> Tensor:
@@ -294,6 +302,65 @@ class TestOptimizeAcqf(BotorchTestCase):
                 sequential=True,
             )
 
+    def test_optimize_acqf_runs_given_batch_initial_conditions(self):
+        num_restarts, raw_samples, dim = 1, 1, 1
+
+        # start at the right answer
+        opt_x = 2 / np.pi
+        initial_conditions = opt_x * torch.ones((num_restarts, raw_samples, dim))
+        torch.manual_seed(0)
+        batch_candidates, acq_value_list = optimize_acqf(
+            acq_function=SinOneOverXAcqusitionFunction(),
+            bounds=torch.stack([-10 * torch.ones(dim), 10 * torch.ones(dim)]),
+            q=1,
+            num_restarts=num_restarts,
+            raw_samples=raw_samples,
+            batch_initial_conditions=initial_conditions,
+        )
+        self.assertAlmostEqual(batch_candidates.min(), opt_x)
+        self.assertAlmostEqual(acq_value_list.min(), 1)
+
+    def test_optimize_acqf_restarts_on_opt_failure(self):
+        """
+        Test error handling in `scipy.optimize.minimize`.
+
+        Expected behavior is that a warning is raised when optimization fails
+        in `scipy.optimize.minimize`, and then it restarts and tries again.
+
+        This is a test case cooked up to fail on the first time and succeed on
+        restart. It is trying to optimize sin(1/x), which is pathological near
+        zero. Given an initial condition near zero, it fails; with a better
+        initial condition, it should succeed.
+
+        Other ways to force failure for testing are to give incompatible
+        constraints and bounds, but those aren't likely to give a better answer
+        on retry.
+        """
+        num_restarts, raw_samples, dim = 1, 1, 1
+
+        initial_conditions = 1e-8 * torch.ones((num_restarts, raw_samples, dim))
+        torch.manual_seed(0)
+        with warnings.catch_warnings(record=True) as ws:
+            batch_candidates, acq_value_list = optimize_acqf(
+                acq_function=SinOneOverXAcqusitionFunction(),
+                bounds=torch.stack([-10 * torch.ones(dim), 10 * torch.ones(dim)]),
+                q=1,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                batch_initial_conditions=initial_conditions,
+            )
+
+        message = "Optimization failed within `scipy.optimize.minimize`."
+        expected_warning_raised = any(
+            (
+                issubclass(w.category, OptimizationWarning) and message in w.message
+                for w in ws
+            )
+        )
+        self.assertTrue(expected_warning_raised)
+        # after restarting, it should have gotten to the right answer
+        self.assertAlmostEqual(acq_value_list.min(), 1)
+
     def test_optimize_acqf_nonlinear_constraints(self):
         num_restarts = 2
         for dtype in (torch.float, torch.double):
@@ -498,83 +565,6 @@ class TestOptimizeAcqf(BotorchTestCase):
         # Call f_obj on the new input, should use the cache
         self.assertEqual(f_obj(x2), 2.0)
         self.assertEqual(f_np_wrapper.call_count, 2)
-
-    def test_equality_constraints(self):
-        torch.manual_seed(1)
-        tkwargs = {"dtype": torch.float64, "device": "cpu"}
-        lower = torch.tensor([0.1, 0.3, 0.1, 30.0])
-        upper = torch.tensor([0.6, 0.7, 0.7, 70.0])
-
-        bounds = torch.stack((lower, upper)).to(**tkwargs)
-
-        train_X = torch.DoubleTensor(
-            [
-                [0.22347546, 0.41236198, 0.36416257, 62.743104],
-                [0.11751007, 0.31980389, 0.56268603, 65.09468852],
-                [0.31034805, 0.41933353, 0.27031842, 62.47616762],
-                [0.22546985, 0.52813389, 0.24639626, 66.25628829],
-                [0.23545787, 0.38019625, 0.38434588, 65.71321295],
-                [0.15411492, 0.60007887, 0.24580621, 65.63475145],
-                [0.15300273, 0.38354175, 0.46345552, 64.05178203],
-                [0.39613777, 0.50084917, 0.10301306, 61.79073566],
-                [0.1691141, 0.54051772, 0.29036818, 62.65021831],
-                [0.1824886, 0.53542673, 0.28208467, 61.22475402],
-            ]
-        )
-
-        train_Y = torch.DoubleTensor(
-            [
-                [2921.533789, 94.98087478],
-                [4558.49969061, 99.99773415],
-                [2171.65077727, 94.95282934],
-                [1980.45534068, 94.99292337],
-                [3133.34085377, 99.99384112],
-                [2025.29912918, 99.9940916],
-                [3765.19452388, 99.99434451],
-                [834.38820692, 94.83186871],
-                [2381.26421617, 99.98216474],
-                [2314.92782344, 99.96635532],
-            ]
-        )
-        models = []
-        for i, feat in enumerate(["alpha", "beta"]):
-            gp = SingleTaskGP(
-                train_X,
-                train_Y[:, i].unsqueeze(-1),
-                input_transform=Normalize(d=4),
-                outcome_transform=Standardize(m=1),
-            )
-            mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-            fit_gpytorch_model(mll)
-            models.append(gp)
-
-        model = ModelListGP(*models)
-
-        acqf = qNoisyExpectedHypervolumeImprovement(
-            model=model,
-            ref_point=[834.3882069229232, 94.83186871069022],
-            X_baseline=train_X,
-        )
-        equality_constraint_value = 1.0
-        torch.manual_seed(5)
-
-        candidate, acq_value = optimize_acqf(
-            acqf,
-            bounds=bounds,
-            q=1,
-            num_restarts=8,
-            raw_samples=8,
-            equality_constraints=[
-                (
-                    torch.tensor([1, 2, 0]),
-                    torch.tensor([1.0, 1.0, 1.0]).to(**tkwargs),
-                    equality_constraint_value,
-                )
-            ],
-        )
-        np.testing.assert_allclose(
-            candidate[0, :3].sum().numpy(), equality_constraint_value
-        )
 
 
 class TestOptimizeAcqfCyclic(BotorchTestCase):
