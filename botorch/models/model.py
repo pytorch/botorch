@@ -37,8 +37,6 @@ class Model(Module, ABC):
             `_revert_to_original_inputs`. Note that this is necessary since
             transform / untransform cycle introduces numerical errors which lead
             to upstream errors during training.
-
-    :meta private:
     """
 
     _has_transformed_inputs: bool = False
