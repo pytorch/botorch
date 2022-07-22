@@ -90,8 +90,7 @@ class ScalarizedPosteriorTransform(PosteriorTransform):
     scalarize: bool = True
 
     def __init__(self, weights: Tensor, offset: float = 0.0) -> None:
-        r"""Affine posterior transform.
-
+        r"""
         Args:
             weights: A one-dimensional tensor with `m` elements representing the
                 linear weights on the outputs.
@@ -133,6 +132,12 @@ class ScalarizedObjective(ScalarizedPosteriorTransform, AcquisitionObjective):
     """DEPRECATED - Use ScalarizedPosteriorTransform instead."""
 
     def __init__(self, weights: Tensor, offset: float = 0.0) -> None:
+        r"""
+        Args:
+            weights: A one-dimensional tensor with `m` elements representing the
+                linear weights on the outputs.
+            offset: An offset to be added to posterior mean.
+        """
         warnings.warn(
             "ScalarizedObjective is deprecated and will be removed in the next "
             "version. Use ScalarizedPosteriorTransform instead."
@@ -329,8 +334,7 @@ class LinearMCObjective(MCAcquisitionObjective):
     """
 
     def __init__(self, weights: Tensor) -> None:
-        r"""Linear Objective.
-
+        r"""
         Args:
             weights: A one-dimensional tensor with `m` elements representing the
                 linear weights on the outputs.
@@ -373,8 +377,7 @@ class GenericMCObjective(MCAcquisitionObjective):
     """
 
     def __init__(self, objective: Callable[[Tensor, Optional[Tensor]], Tensor]) -> None:
-        r"""Objective generated from a generic callable.
-
+        r"""
         Args:
             objective: A callable `f(samples, X)` mapping a
                 `sample_shape x batch-shape x q x m`-dim Tensor `samples` and
@@ -444,8 +447,7 @@ class ConstrainedMCObjective(GenericMCObjective):
         infeasible_cost: Union[Tensor, float] = 0.0,
         eta: float = 1e-3,
     ) -> None:
-        r"""Feasibility-weighted objective.
-
+        r"""
         Args:
             objective: A callable `f(samples, X)` mapping a
                 `sample_shape x batch-shape x q x m`-dim Tensor `samples` and
@@ -508,8 +510,7 @@ class LearnedObjective(MCAcquisitionObjective):
         pref_model: Model,
         sampler: Optional[MCSampler] = None,
     ):
-        r"""Learned preference objective constructed from a preference model.
-
+        r"""
         Args:
             pref_model: A BoTorch model, which models the latent preference/utility
                 function. Given an input tensor of size

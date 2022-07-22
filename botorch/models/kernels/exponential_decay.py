@@ -25,18 +25,6 @@ class ExponentialDecayKernel(Kernel):
 
     where `w` is an offset parameter, `beta` is a lenthscale parameter, and
     `alpha` is a power parameter.
-
-    Args:
-        lengthscale_constraint: Constraint to place on lengthscale parameter.
-            Default is `Positive`.
-        lengthscale_prior: Prior over the lengthscale parameter.
-        power_constraint: Constraint to place on power parameter. Default is
-            `Positive`.
-        power_prior: Prior over the power parameter.
-        offset_constraint: Constraint to place on offset parameter. Default is
-            `Positive`.
-        active_dims: List of data dimensions to operate on. `len(active_dims)`
-            should equal `num_dimensions`.
     """
 
     has_lengthscale = True
@@ -49,6 +37,19 @@ class ExponentialDecayKernel(Kernel):
         offset_constraint: Optional[Interval] = None,
         **kwargs,
     ):
+        r"""
+        Args:
+            lengthscale_constraint: Constraint to place on lengthscale parameter.
+                Default is `Positive`.
+            lengthscale_prior: Prior over the lengthscale parameter.
+            power_constraint: Constraint to place on power parameter. Default is
+                `Positive`.
+            power_prior: Prior over the power parameter.
+            offset_constraint: Constraint to place on offset parameter. Default is
+                `Positive`.
+            active_dims: List of data dimensions to operate on. `len(active_dims)`
+                should equal `num_dimensions`.
+        """
         super().__init__(**kwargs)
 
         if power_constraint is None:

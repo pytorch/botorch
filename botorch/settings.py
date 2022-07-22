@@ -112,6 +112,10 @@ class log_level:
         logger.setLevel(level)
 
     def __init__(self, level: int = LOG_LEVEL_DEFAULT) -> None:
+        r"""
+        Args:
+            level: The log level. Defaults to LOG_LEVEL_DEFAULT.
+        """
         self.prev = self.__class__.level
         self.level = level
 

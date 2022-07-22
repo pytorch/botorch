@@ -49,7 +49,6 @@ class AnalyticExpectedUtilityOfBestOption(AnalyticAcquisitionFunction):
                 space. When used with `OneSamplePosteriorDrawModel`, we are obtaining
                 EUBO-zeta as described in [Lin2022preference].
             previous_winner: Tensor representing the previous winner in the Y space.
-                Defaults to None.
         """
         pref_model.eval()
         super().__init__(model=pref_model)

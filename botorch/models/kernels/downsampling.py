@@ -25,15 +25,6 @@ class DownsamplingKernel(Kernel):
             (1 - x_2)^(1 + delta).
 
     where `c` is an offset parameter, and `delta` is a power parameter.
-
-    Args:
-        power_constraint: Constraint to place on power parameter. Default is
-            `Positive`.
-        power_prior: Prior over the power parameter.
-        offset_constraint: Constraint to place on offset parameter. Default is
-            `Positive`.
-        active_dims: List of data dimensions to operate on. `len(active_dims)`
-            should equal `num_dimensions`.
     """
 
     def __init__(
@@ -44,6 +35,16 @@ class DownsamplingKernel(Kernel):
         offset_constraint: Optional[Interval] = None,
         **kwargs,
     ):
+        r"""
+        Args:
+            power_constraint: Constraint to place on power parameter. Default is
+                `Positive`.
+            power_prior: Prior over the power parameter.
+            offset_constraint: Constraint to place on offset parameter. Default is
+                `Positive`.
+            active_dims: List of data dimensions to operate on. `len(active_dims)`
+                should equal `num_dimensions`.
+        """
         super().__init__(**kwargs)
 
         if power_constraint is None:
