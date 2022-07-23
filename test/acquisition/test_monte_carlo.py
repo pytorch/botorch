@@ -156,6 +156,15 @@ class TestQExpectedImprovement(BotorchTestCase):
             self.assertEqual(res[0].item(), 1.0)
             self.assertEqual(res[1].item(), 0.0)
 
+            # test batch model, batched best_f values
+            sampler = IIDNormalSampler(num_samples=3)
+            acqf = qExpectedImprovement(
+                model=mm, best_f=torch.Tensor([0, 0]), sampler=sampler
+            )
+            res = acqf(X)
+            self.assertEqual(res[0].item(), 1.0)
+            self.assertEqual(res[1].item(), 0.0)
+
             # test shifting best_f value
             acqf = qExpectedImprovement(model=mm, best_f=-1, sampler=sampler)
             res = acqf(X)
@@ -659,6 +668,15 @@ class TestQProbabilityOfImprovement(BotorchTestCase):
             # test batch mode
             sampler = IIDNormalSampler(num_samples=2)
             acqf = qProbabilityOfImprovement(model=mm, best_f=0, sampler=sampler)
+            res = acqf(X)
+            self.assertEqual(res[0].item(), 1.0)
+            self.assertEqual(res[1].item(), 0.5)
+
+            # test batch model, batched best_f values
+            sampler = IIDNormalSampler(num_samples=3)
+            acqf = qProbabilityOfImprovement(
+                model=mm, best_f=torch.Tensor([0, 0]), sampler=sampler
+            )
             res = acqf(X)
             self.assertEqual(res[0].item(), 1.0)
             self.assertEqual(res[1].item(), 0.5)
