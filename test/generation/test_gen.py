@@ -201,11 +201,12 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             self.assertTrue(candidates[1].item() == 0.25)
 
     def test_gen_candidates_scipy_warns_opt_failure(self):
-        options = {"maxls": 1}
         with warnings.catch_warnings(record=True) as ws:
             warnings.simplefilter("always", category=OptimizationWarning)
-            self.test_gen_candidates(options=options)
-        expected_msg = "Optimization failed within `scipy.optimize.minimize` with "
+            self.test_gen_candidates(options={"maxls": 1})
+        expected_msg = (
+            "Optimization failed within `scipy.optimize.minimize` with status 2."
+        )
         expected_warning_raised = any(
             (
                 issubclass(w.category, OptimizationWarning)

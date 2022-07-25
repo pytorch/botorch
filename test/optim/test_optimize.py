@@ -305,61 +305,176 @@ class TestOptimizeAcqf(BotorchTestCase):
     def test_optimize_acqf_runs_given_batch_initial_conditions(self):
         num_restarts, raw_samples, dim = 1, 1, 1
 
-        # start at the right answer
         opt_x = 2 / np.pi
-        initial_conditions = opt_x * torch.ones((num_restarts, raw_samples, dim))
+        # start near one (of many) optima
+        initial_conditions = (opt_x * 1.01) * torch.ones(
+            (num_restarts, raw_samples, dim)
+        )
         torch.manual_seed(0)
         batch_candidates, acq_value_list = optimize_acqf(
             acq_function=SinOneOverXAcqusitionFunction(),
-            bounds=torch.stack([-10 * torch.ones(dim), 10 * torch.ones(dim)]),
+            bounds=torch.stack([-1 * torch.ones(dim), torch.ones(dim)]),
             q=1,
             num_restarts=num_restarts,
             raw_samples=raw_samples,
             batch_initial_conditions=initial_conditions,
         )
-        self.assertAlmostEqual(batch_candidates.min(), opt_x)
-        self.assertAlmostEqual(acq_value_list.min(), 1)
+        self.assertAlmostEqual(batch_candidates.item(), opt_x, delta=1e-5)
+        self.assertAlmostEqual(acq_value_list.item(), 1)
 
-    def test_optimize_acqf_restarts_on_opt_failure(self):
+    def test_optimize_acqf_warns_on_opt_failure(self):
         """
         Test error handling in `scipy.optimize.minimize`.
 
         Expected behavior is that a warning is raised when optimization fails
         in `scipy.optimize.minimize`, and then it restarts and tries again.
 
-        This is a test case cooked up to fail on the first time and succeed on
-        restart. It is trying to optimize sin(1/x), which is pathological near
-        zero. Given an initial condition near zero, it fails; with a better
-        initial condition, it should succeed.
-
-        Other ways to force failure for testing are to give incompatible
-        constraints and bounds, but those aren't likely to give a better answer
-        on retry.
+        This is a test case cooked up to fail. It is trying to optimize
+        sin(1/x), which is pathological near zero, given a starting point near
+        zero.
         """
         num_restarts, raw_samples, dim = 1, 1, 1
 
         initial_conditions = 1e-8 * torch.ones((num_restarts, raw_samples, dim))
         torch.manual_seed(0)
         with warnings.catch_warnings(record=True) as ws:
+            warnings.simplefilter("always", category=OptimizationWarning)
             batch_candidates, acq_value_list = optimize_acqf(
                 acq_function=SinOneOverXAcqusitionFunction(),
-                bounds=torch.stack([-10 * torch.ones(dim), 10 * torch.ones(dim)]),
+                bounds=torch.stack([-1 * torch.ones(dim), torch.ones(dim)]),
                 q=1,
                 num_restarts=num_restarts,
                 raw_samples=raw_samples,
                 batch_initial_conditions=initial_conditions,
             )
 
-        message = "Optimization failed within `scipy.optimize.minimize`."
+        message = (
+            "Optimization failed in `gen_candidates_scipy` with the following "
+            "warning(s):\n[OptimizationWarning('Optimization failed within "
+            "`scipy.optimize.minimize` with status 2.')]\nBecause you specified"
+            " `batch_initial_conditions`, optimization will not be retried with"
+            " new initial conditions and will proceed with the current "
+            "solution. Suggested remediation: Try again with different "
+            "`batch_initial_conditions`, or don't provide "
+            "`batch_initial_conditions.`"
+        )
         expected_warning_raised = any(
             (
-                issubclass(w.category, OptimizationWarning) and message in w.message
+                issubclass(w.category, OptimizationWarning)
+                and message in str(w.message)
                 for w in ws
             )
         )
         self.assertTrue(expected_warning_raised)
-        # after restarting, it should have gotten to the right answer
-        self.assertAlmostEqual(acq_value_list.min(), 1)
+
+    def test_optimize_acqf_successfully_restarts_on_opt_failure(self):
+        """
+        Test that `optimize_acqf` can succeed after restarting on opt failure.
+
+        With the given seed (5), `optimize_acqf` will choose an initial
+        condition that causes failure in the first run of
+        `gen_candidates_scipy`, then re-tries with a new starting point and
+        succeed.
+        """
+        num_restarts, raw_samples, dim = 1, 1, 1
+
+        bounds = torch.stack(
+            [
+                -1 * torch.ones(dim, dtype=torch.double),
+                torch.ones(dim, dtype=torch.double),
+            ]
+        )
+        torch.manual_seed(5)
+
+        with warnings.catch_warnings(record=True) as ws:
+            warnings.simplefilter("always", category=OptimizationWarning)
+            batch_candidates, acq_value_list = optimize_acqf(
+                acq_function=SinOneOverXAcqusitionFunction(),
+                bounds=bounds,
+                q=1,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                # shorten the line search to make it faster and make failure
+                # more likely
+                options={"maxls": 2},
+            )
+        message = (
+            "Optimization failed in `gen_candidates_scipy` with the following "
+            "warning(s):\n[OptimizationWarning('Optimization failed within "
+            "`scipy.optimize.minimize` with status 2.')]\nTrying again with a "
+            "new set of initial conditions."
+        )
+        expected_warning_raised = any(
+            (
+                issubclass(w.category, OptimizationWarning)
+                and message in str(w.message)
+                for w in ws
+            )
+        )
+        self.assertTrue(expected_warning_raised)
+        # check if it succeeded on restart -- the maximum value of sin(1/x) is 1
+        self.assertAlmostEqual(acq_value_list.item(), 1.0)
+
+    def test_optimize_acqf_warns_on_second_opt_failure(self):
+        """
+        Test that `optimize_acqf` warns if it fails on a second optimization try.
+
+        With the given seed (230), `optimize_acqf` will choose an initial
+        condition that causes failure in the first run of
+        `gen_candidates_scipy`, then re-tries and still does not succeed. Since
+        this doesn't happen with seeds 0 - 229, this test might be broken by
+        future refactorings affecting calls to `torch`.
+        """
+        num_restarts, raw_samples, dim = 1, 1, 1
+
+        bounds = torch.stack(
+            [
+                -1 * torch.ones(dim, dtype=torch.double),
+                torch.ones(dim, dtype=torch.double),
+            ]
+        )
+
+        with warnings.catch_warnings(record=True) as ws:
+            warnings.simplefilter("always", category=OptimizationWarning)
+            torch.manual_seed(230)
+            batch_candidates, acq_value_list = optimize_acqf(
+                acq_function=SinOneOverXAcqusitionFunction(),
+                bounds=bounds,
+                q=1,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                # shorten the line search to make it faster and make failure
+                # more likely
+                options={"maxls": 2},
+            )
+
+        message_1 = (
+            "Optimization failed in `gen_candidates_scipy` with the following "
+            "warning(s):\n[OptimizationWarning('Optimization failed within "
+            "`scipy.optimize.minimize` with status 2.')]\nTrying again with a "
+            "new set of initial conditions."
+        )
+
+        message_2 = (
+            "Optimization failed on the second try, after generating a new set "
+            "of initial conditions."
+        )
+        first_expected_warning_raised = any(
+            (
+                issubclass(w.category, OptimizationWarning)
+                and message_1 in str(w.message)
+                for w in ws
+            )
+        )
+        second_expected_warning_raised = any(
+            (
+                issubclass(w.category, OptimizationWarning)
+                and message_2 in str(w.message)
+                for w in ws
+            )
+        )
+        self.assertTrue(first_expected_warning_raised)
+        self.assertTrue(second_expected_warning_raised)
 
     def test_optimize_acqf_nonlinear_constraints(self):
         num_restarts = 2
