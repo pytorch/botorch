@@ -462,9 +462,9 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
             X=X, posterior_transform=self.posterior_transform
         )
         samples = self.sampler(posterior)
-        obj = self.objective(samples, X=X)
-        max_obj = obj.max(dim=-1)[0]
-        impr = max_obj - self.best_f.unsqueeze(-1).to(max_obj)
+        obj = self.objective(samples, X=X)  # `sample_shape x batch_shape x q`-dim
+        max_obj = obj.max(dim=-1)[0]  # `sample_shape x batch_shape`-dim
+        impr = max_obj - self.best_f.to(max_obj)
         val = torch.sigmoid(impr / self.tau).mean(dim=0)
         return val
 
