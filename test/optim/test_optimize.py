@@ -338,7 +338,6 @@ class TestOptimizeAcqf(BotorchTestCase):
         initial_conditions = 1e-8 * torch.ones((num_restarts, raw_samples, dim))
         torch.manual_seed(0)
         with warnings.catch_warnings(record=True) as ws:
-            warnings.simplefilter("always", category=OptimizationWarning)
             batch_candidates, acq_value_list = optimize_acqf(
                 acq_function=SinOneOverXAcqusitionFunction(),
                 bounds=torch.stack([-1 * torch.ones(dim), torch.ones(dim)]),
@@ -387,7 +386,6 @@ class TestOptimizeAcqf(BotorchTestCase):
         torch.manual_seed(5)
 
         with warnings.catch_warnings(record=True) as ws:
-            warnings.simplefilter("always", category=OptimizationWarning)
             batch_candidates, acq_value_list = optimize_acqf(
                 acq_function=SinOneOverXAcqusitionFunction(),
                 bounds=bounds,
@@ -435,7 +433,6 @@ class TestOptimizeAcqf(BotorchTestCase):
         )
 
         with warnings.catch_warnings(record=True) as ws:
-            warnings.simplefilter("always", category=OptimizationWarning)
             torch.manual_seed(230)
             batch_candidates, acq_value_list = optimize_acqf(
                 acq_function=SinOneOverXAcqusitionFunction(),
@@ -525,7 +522,12 @@ class TestOptimizeAcqf(BotorchTestCase):
             # Make sure we return the initial solution if SLSQP fails to return
             # a feasible point.
             with mock.patch("botorch.generation.gen.minimize") as mock_minimize:
-                mock_minimize.return_value = OptimizeResult(x=np.array([4, 4, 4]))
+                # By setting "success" to True and "status" to 0, we prevent a
+                # warning that `minimize` failed, which isn't the behavior
+                # we're looking to test here.
+                mock_minimize.return_value = OptimizeResult(
+                    x=np.array([4, 4, 4]), success=True, status=0
+                )
                 candidates, acq_value = optimize_acqf(
                     acq_function=mock_acq_function,
                     bounds=bounds,

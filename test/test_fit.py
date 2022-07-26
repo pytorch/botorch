@@ -148,7 +148,6 @@ class TestFitGPyTorchModel(BotorchTestCase):
             # because of different scipy OptimizeResult.message type
             if optimizer == fit_gpytorch_scipy:
                 with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-                    warnings.simplefilter("always", category=OptimizationWarning)
                     mll, info_dict = optimizer(
                         mll, options=options, track_iterations=False, method="slsqp"
                     )

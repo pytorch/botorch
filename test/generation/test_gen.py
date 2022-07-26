@@ -92,7 +92,6 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 }
                 if gen_candidates is gen_candidates_torch:
                     kwargs["callback"] = mock.MagicMock()
-
                 candidates, _ = gen_candidates(**kwargs)
                 if isinstance(acqf, qKnowledgeGradient):
                     candidates = acqf.extract_candidates(candidates)
@@ -125,15 +124,20 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 ics = self.initial_conditions
                 if isinstance(acqf, qKnowledgeGradient):
                     ics = ics.repeat(5, 1)
-
-                candidates, _ = gen_candidates(
-                    initial_conditions=ics,
-                    acquisition_function=acqf,
-                    lower_bounds=0,
-                    upper_bounds=1,
-                    fixed_features={1: None},
-                    options=options or {},
-                )
+                # we are getting a warning that this fails with status 1:
+                # 'STOP: TOTAL NO. of ITERATIONS REACHED LIMIT'
+                # This is expected since we have set "maxiter" low, so suppress
+                # the warning
+                with warnings.catch_warnings(record=True):
+                    warnings.simplefilter("ignore", category=OptimizationWarning)
+                    candidates, _ = gen_candidates(
+                        initial_conditions=ics,
+                        acquisition_function=acqf,
+                        lower_bounds=0,
+                        upper_bounds=1,
+                        fixed_features={1: None},
+                        options=options or {},
+                    )
                 if isinstance(acqf, qKnowledgeGradient):
                     candidates = acqf.extract_candidates(candidates)
                 candidates = candidates.squeeze(0)
@@ -162,15 +166,20 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 ics = self.initial_conditions
                 if isinstance(acqf, qKnowledgeGradient):
                     ics = ics.repeat(5, 1)
-
-                candidates, _ = gen_candidates(
-                    initial_conditions=ics,
-                    acquisition_function=acqf,
-                    lower_bounds=0,
-                    upper_bounds=1,
-                    fixed_features={1: 0.25},
-                    options=options,
-                )
+                # we are getting a warning that this fails with status 1:
+                # 'STOP: TOTAL NO. of ITERATIONS REACHED LIMIT'
+                # This is expected since we have set "maxiter" low, so suppress
+                # the warning
+                with warnings.catch_warnings(record=True):
+                    warnings.simplefilter("ignore", category=OptimizationWarning)
+                    candidates, _ = gen_candidates(
+                        initial_conditions=ics,
+                        acquisition_function=acqf,
+                        lower_bounds=0,
+                        upper_bounds=1,
+                        fixed_features={1: 0.25},
+                        options=options,
+                    )
 
                 if isinstance(acqf, qKnowledgeGradient):
                     candidates = acqf.extract_candidates(candidates)
@@ -184,16 +193,21 @@ class TestGenCandidates(TestBaseCandidateGeneration):
         for double in (True, False):
             self._setUp(double=double, expand=True)
             qEI = qExpectedImprovement(self.model, best_f=self.f_best)
-            candidates, _ = gen_candidates_scipy(
-                initial_conditions=self.initial_conditions.reshape(1, 1, -1),
-                acquisition_function=qEI,
-                inequality_constraints=[
-                    (torch.tensor([0]), torch.tensor([1]), 0),
-                    (torch.tensor([1]), torch.tensor([-1]), -1),
-                ],
-                fixed_features={1: 0.25},
-                options=options,
-            )
+            # we are getting a warning that this fails with status 9:
+            # "Iteration limit reached." This is expected since we have set
+            # "maxiter" low, so suppress the warning.
+            with warnings.catch_warnings(record=True):
+                warnings.simplefilter("ignore", category=OptimizationWarning)
+                candidates, _ = gen_candidates_scipy(
+                    initial_conditions=self.initial_conditions.reshape(1, 1, -1),
+                    acquisition_function=qEI,
+                    inequality_constraints=[
+                        (torch.tensor([0]), torch.tensor([1]), 0),
+                        (torch.tensor([1]), torch.tensor([-1]), -1),
+                    ],
+                    fixed_features={1: 0.25},
+                    options=options,
+                )
             # candidates is of dimension 1 x 1 x 2
             # so we are squeezing all the singleton dimensions
             candidates = candidates.squeeze()
@@ -202,7 +216,6 @@ class TestGenCandidates(TestBaseCandidateGeneration):
 
     def test_gen_candidates_scipy_warns_opt_failure(self):
         with warnings.catch_warnings(record=True) as ws:
-            warnings.simplefilter("always", category=OptimizationWarning)
             self.test_gen_candidates(options={"maxls": 1})
         expected_msg = (
             "Optimization failed within `scipy.optimize.minimize` with status 2."
