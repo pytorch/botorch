@@ -8,6 +8,7 @@ r"""
 Utilities for MC and qMC sampling.
 
 References
+
 .. [Trikalinos2014polytope]
     T. A. Trikalinos and G. van Valkenhoef. Efficient sampling from uniform
     density n-polytopes. Technical report, Brown University, 2014.
