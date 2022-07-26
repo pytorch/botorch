@@ -14,7 +14,7 @@ from botorch.acquisition.acquisition import (
     AcquisitionFunction,
     OneShotAcquisitionFunction,
 )
-from botorch.exceptions import InputDataError, OptimizationWarning, UnsupportedError
+from botorch.exceptions import InputDataError, UnsupportedError
 from botorch.optim.optimize import (
     _filter_infeasible,
     _filter_invalid,
@@ -359,8 +359,7 @@ class TestOptimizeAcqf(BotorchTestCase):
         )
         expected_warning_raised = any(
             (
-                issubclass(w.category, OptimizationWarning)
-                and message in str(w.message)
+                issubclass(w.category, RuntimeWarning) and message in str(w.message)
                 for w in ws
             )
         )
@@ -404,8 +403,7 @@ class TestOptimizeAcqf(BotorchTestCase):
         )
         expected_warning_raised = any(
             (
-                issubclass(w.category, OptimizationWarning)
-                and message in str(w.message)
+                issubclass(w.category, RuntimeWarning) and message in str(w.message)
                 for w in ws
             )
         )
@@ -458,15 +456,13 @@ class TestOptimizeAcqf(BotorchTestCase):
         )
         first_expected_warning_raised = any(
             (
-                issubclass(w.category, OptimizationWarning)
-                and message_1 in str(w.message)
+                issubclass(w.category, RuntimeWarning) and message_1 in str(w.message)
                 for w in ws
             )
         )
         second_expected_warning_raised = any(
             (
-                issubclass(w.category, OptimizationWarning)
-                and message_2 in str(w.message)
+                issubclass(w.category, RuntimeWarning) and message_2 in str(w.message)
                 for w in ws
             )
         )

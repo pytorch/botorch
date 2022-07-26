@@ -18,9 +18,10 @@ from botorch.generation.gen import (
     get_best_candidates,
 )
 from botorch.models import SingleTaskGP
-from botorch.utils.testing import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 from gpytorch import settings as gpt_settings
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+from scipy.optimize import OptimizeResult
 
 
 EPS = 1e-8
@@ -60,7 +61,6 @@ class TestBaseCandidateGeneration(BotorchTestCase):
         self.model = model.to(device=self.device, dtype=dtype)
         self.mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=OptimizationWarning)
             self.mll = fit_gpytorch_model(
                 self.mll, options={"maxiter": 1}, max_retries=1
             )
@@ -93,6 +93,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 if gen_candidates is gen_candidates_torch:
                     kwargs["callback"] = mock.MagicMock()
                 candidates, _ = gen_candidates(**kwargs)
+
                 if isinstance(acqf, qKnowledgeGradient):
                     candidates = acqf.extract_candidates(candidates)
                 if gen_candidates is gen_candidates_torch:
@@ -129,7 +130,6 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 # This is expected since we have set "maxiter" low, so suppress
                 # the warning
                 with warnings.catch_warnings(record=True):
-                    warnings.simplefilter("ignore", category=OptimizationWarning)
                     candidates, _ = gen_candidates(
                         initial_conditions=ics,
                         acquisition_function=acqf,
@@ -171,7 +171,6 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 # This is expected since we have set "maxiter" low, so suppress
                 # the warning
                 with warnings.catch_warnings(record=True):
-                    warnings.simplefilter("ignore", category=OptimizationWarning)
                     candidates, _ = gen_candidates(
                         initial_conditions=ics,
                         acquisition_function=acqf,
@@ -197,7 +196,6 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             # "Iteration limit reached." This is expected since we have set
             # "maxiter" low, so suppress the warning.
             with warnings.catch_warnings(record=True):
-                warnings.simplefilter("ignore", category=OptimizationWarning)
                 candidates, _ = gen_candidates_scipy(
                     initial_conditions=self.initial_conditions.reshape(1, 1, -1),
                     acquisition_function=qEI,
@@ -220,6 +218,32 @@ class TestGenCandidates(TestBaseCandidateGeneration):
         expected_msg = (
             "Optimization failed within `scipy.optimize.minimize` with status 2."
         )
+        expected_warning_raised = any(
+            (
+                issubclass(w.category, OptimizationWarning)
+                and expected_msg in str(w.message)
+                for w in ws
+            )
+        )
+        self.assertTrue(expected_warning_raised)
+
+    def test_gen_candidates_scipy_warns_opt_no_res(self):
+        ckwargs = {"dtype": torch.float, "device": self.device}
+
+        test_ics = torch.rand(3, 1, **ckwargs)
+        expected_msg = (
+            "Optimization failed within `scipy.optimize.minimize` with no "
+            "status returned to `res.`"
+        )
+        with mock.patch(
+            "botorch.generation.gen.minimize"
+        ) as mock_minimize, warnings.catch_warnings(record=True) as ws:
+            mock_minimize.return_value = OptimizeResult(x=test_ics.numpy())
+
+            gen_candidates_scipy(
+                initial_conditions=test_ics,
+                acquisition_function=MockAcquisitionFunction(),
+            )
         expected_warning_raised = any(
             (
                 issubclass(w.category, OptimizationWarning)

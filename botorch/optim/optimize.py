@@ -284,9 +284,7 @@ def optimize_acqf(
             f"warning(s):\n{[w.message for w in ws]}\nTrying again with a new "
             "set of initial conditions."
         )
-        with warnings.catch_warnings():
-            warnings.simplefilter("always", category=OptimizationWarning)
-            warnings.warn(first_warn_msg, OptimizationWarning)
+        warnings.warn(first_warn_msg, RuntimeWarning)
 
         if not initial_conditions_provided:
             batch_initial_conditions = _gen_initial_conditions()
@@ -297,13 +295,11 @@ def optimize_acqf(
                 (issubclass(w.category, OptimizationWarning) for w in ws)
             )
             if optimization_warning_raised:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("always", category=OptimizationWarning)
-                    warnings.warn(
-                        "Optimization failed on the second try, after generating a "
-                        "new set of initial conditions.",
-                        OptimizationWarning,
-                    )
+                warnings.warn(
+                    "Optimization failed on the second try, after generating a "
+                    "new set of initial conditions.",
+                    RuntimeWarning,
+                )
 
     if post_processing_func is not None:
         batch_candidates = post_processing_func(batch_candidates)
