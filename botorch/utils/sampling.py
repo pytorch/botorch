@@ -203,7 +203,7 @@ def draw_sobol_normal_samples(
     dtype: Optional[torch.dtype] = None,
     seed: Optional[int] = None,
 ) -> Tensor:
-    r"""Draw qMC samples from a multi-variate standard normal N(0, I_d)
+    r"""Draw qMC samples from a multi-variate standard normal N(0, I_d).
 
     A primary use-case for this functionality is to compute an QMC average
     of f(X) over X where each element of X is drawn N(0, 1).
@@ -504,7 +504,11 @@ def find_interior_point(
 
 
 class PolytopeSampler(ABC):
-    r"""Base class for samplers that sample points from a polytope."""
+    r"""
+    Base class for samplers that sample points from a polytope.
+
+    :meta private:
+    """
 
     def __init__(
         self,
@@ -513,8 +517,7 @@ class PolytopeSampler(ABC):
         bounds: Optional[Tensor] = None,
         interior_point: Optional[Tensor] = None,
     ) -> None:
-        r"""Initialize PolytopeSampler.
-
+        r"""
         Args:
             inequality_constraints: Tensors `(A, b)` describing inequality
                 constraints `A @ x <= b`, where `A` is a `n_ineq_con x d`-dim

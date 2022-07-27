@@ -4,9 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-r"""
-Abstract base module for all BoTorch models.
-"""
+r"""Abstract base module for all BoTorch models."""
 
 from __future__ import annotations
 

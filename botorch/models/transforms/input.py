@@ -47,6 +47,8 @@ class InputTransform(ABC):
             transform in eval() mode.
         transform_on_fantasize: A boolean indicating whether to apply
             the transform when called from within a `fantasize` call.
+
+    :meta private:
     """
 
     transform_on_eval: bool
@@ -247,6 +249,8 @@ class ReversibleInputTransform(InputTransform, ABC):
     Properties:
         reverse: A boolean indicating if the functionality of transform
             and untransform methods should be swapped.
+
+    :meta private:
     """
     reverse: bool
 

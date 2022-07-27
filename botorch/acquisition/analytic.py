@@ -29,7 +29,11 @@ from torch.distributions import Normal
 
 
 class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
-    r"""Base class for analytic acquisition functions."""
+    r"""
+    Base class for analytic acquisition functions.
+
+    :meta private:
+    """
 
     def __init__(
         self,

@@ -42,6 +42,8 @@ class RiskMeasureMCObjective(MCAcquisitionObjective, ABC):
     BoTorch by default assumes a maximization objective, so the default behavior here
     is to calculate the risk measures w.r.t. the lower tail of the distribution.
     This can be changed by passing `weights=torch.tensor([-1.0])`.
+
+    :meta private:
     """
 
     def __init__(

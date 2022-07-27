@@ -43,6 +43,16 @@ class MixedSingleTaskGP(SingleTaskGP):
     optimization of the acquisition function will need to be performed in
     a mixed fashion, i.e., treating the categorical features properly as
     discrete optimization variables.
+
+    Example:
+        >>> train_X = torch.cat(
+                [torch.rand(20, 2), torch.randint(3, (20, 1))], dim=-1)
+            )
+        >>> train_Y = (
+                torch.sin(train_X[..., :-1]).sum(dim=1, keepdim=True)
+                + train_X[..., -1:]
+            )
+        >>> model = MixedSingleTaskGP(train_X, train_Y, cat_dims=[-1])
     """
 
     def __init__(
@@ -77,16 +87,6 @@ class MixedSingleTaskGP(SingleTaskGP):
                 forward pass. Only input transforms are allowed which do not
                 transform the categorical dimensions. This can be achieved
                 by using the `indices` argument when constructing the transform.
-
-        Example:
-            >>> train_X = torch.cat(
-                    [torch.rand(20, 2), torch.randint(3, (20, 1))], dim=-1)
-                )
-            >>> train_Y = (
-                    torch.sin(train_X[..., :-1]).sum(dim=1, keepdim=True)
-                    + train_X[..., -1:]
-                )
-            >>> model = MixedSingleTaskGP(train_X, train_Y, cat_dims=[-1])
         """
         if input_transform is not None:
             if not hasattr(input_transform, "indices"):

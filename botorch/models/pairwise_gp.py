@@ -943,6 +943,14 @@ class PairwiseLaplaceMarginalLogLikelihood(MarginalLogLikelihood):
     See (12) from [Chu2005preference]_.
     """
 
+    def __init__(self, likelihood, model: GP):
+        """
+        Args:
+            likelihood: Used as in args to GPyTorch MarginalLogLikelihood
+            model: Used as in args to GPyTorch MarginalLogLikelihood
+        """
+        super().__init__(likelihood, model)
+
     def forward(self, post: Posterior, comp: Tensor) -> Tensor:
         r"""Calculate approximated log evidence, i.e., log(P(D|theta))
 

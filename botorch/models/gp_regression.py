@@ -58,6 +58,11 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     same training data. If outputs are independent and outputs have different
     training data, use the ModelListGP. When modeling correlations between
     outputs, use the MultiTaskGP.
+
+    Example:
+        >>> train_X = torch.rand(20, 2)
+        >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
+        >>> model = SingleTaskGP(train_X, train_Y)
     """
 
     def __init__(
@@ -70,8 +75,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
     ) -> None:
-        r"""A single-task exact GP model.
-
+        r"""
         Args:
             train_X: A `batch_shape x n x d` tensor of training features.
             train_Y: A `batch_shape x n x m` tensor of training observations.
@@ -87,11 +91,6 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 `.posterior` on the model will be on the original scale).
             input_transform: An input transform that is applied in the model's
                 forward pass.
-
-        Example:
-            >>> train_X = torch.rand(20, 2)
-            >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
-            >>> model = SingleTaskGP(train_X, train_Y)
         """
         with torch.no_grad():
             transformed_X = self.transform_inputs(
@@ -166,6 +165,12 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     standardized (zero mean, unit variance).
 
     This model works in batch mode (each batch having its own hyperparameters).
+
+    Example:
+        >>> train_X = torch.rand(20, 2)
+        >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
+        >>> train_Yvar = torch.full_like(train_Y, 0.2)
+        >>> model = FixedNoiseGP(train_X, train_Y, train_Yvar)
     """
 
     def __init__(
@@ -179,8 +184,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         input_transform: Optional[InputTransform] = None,
         **kwargs: Any,
     ) -> None:
-        r"""A single-task exact GP model using fixed noise levels.
-
+        r"""
         Args:
             train_X: A `batch_shape x n x d` tensor of training features.
             train_Y: A `batch_shape x n x m` tensor of training observations.
@@ -196,12 +200,6 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 `.posterior` on the model will be on the original scale).
             input_transform: An input transfrom that is applied in the model's
                 forward pass.
-
-        Example:
-            >>> train_X = torch.rand(20, 2)
-            >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
-            >>> train_Yvar = torch.full_like(train_Y, 0.2)
-            >>> model = FixedNoiseGP(train_X, train_Y, train_Yvar)
         """
         with torch.no_grad():
             transformed_X = self.transform_inputs(
@@ -328,6 +326,13 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
     This model internally wraps another GP (a SingleTaskGP) to model the
     observation noise. This allows the likelihood to make out-of-sample
     predictions for the observation noise levels.
+
+    Example:
+        >>> train_X = torch.rand(20, 2)
+        >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
+        >>> se = torch.norm(train_X, dim=1, keepdim=True)
+        >>> train_Yvar = 0.1 + se * torch.rand_like(train_Y)
+        >>> model = HeteroskedasticSingleTaskGP(train_X, train_Y, train_Yvar)
     """
 
     def __init__(
@@ -338,8 +343,7 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
     ) -> None:
-        r"""A single-task exact GP model using a heteroskedastic noise model.
-
+        r"""
         Args:
             train_X: A `batch_shape x n x d` tensor of training features.
             train_Y: A `batch_shape x n x m` tensor of training observations.
@@ -353,13 +357,6 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
                 variances, which will happen after this transform is applied.
             input_transform: An input transfrom that is applied in the model's
                 forward pass.
-
-        Example:
-            >>> train_X = torch.rand(20, 2)
-            >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
-            >>> se = torch.norm(train_X, dim=1, keepdim=True)
-            >>> train_Yvar = 0.1 + se * torch.rand_like(train_Y)
-            >>> model = HeteroskedasticSingleTaskGP(train_X, train_Y, train_Yvar)
         """
         if outcome_transform is not None:
             train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)

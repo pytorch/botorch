@@ -54,6 +54,8 @@ class MultiOutputRiskMeasureMCObjective(
     If the q-batch includes samples corresponding to multiple inputs, it is assumed
     that first `n_w` samples correspond to first input, second `n_w` samples
     correspond to second input, etc.
+
+    :meta private:
     """
 
     def __init__(

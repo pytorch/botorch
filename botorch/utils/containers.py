@@ -25,6 +25,8 @@ class BotorchContainer(ABC):
 
     Notice: Once version 3.10 becomes standard, this class should
     be reworked to take advantage of dataclasses' `kw_only` flag.
+
+    :meta private:
     """
 
     def __post_init__(self, validate_init: bool = True) -> None:

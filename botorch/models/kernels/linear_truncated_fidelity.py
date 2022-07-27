@@ -41,35 +41,6 @@ class LinearTruncatedFidelityKernel(Kernel):
         polynomial kernel between `x_1[..., [f_1, f_2]]` and
         `x_2[..., [f_1, f_2]]`.
 
-    Args:
-        fidelity_dims: A list containing either one or two indices specifying
-            the fidelity parameters of the input.
-        dimension: The dimension of `x`. Unused if `active_dims` is specified.
-        power_prior: Prior for the power parameter of the polynomial kernel.
-            Default is `None`.
-        power_constraint: Constraint on the power parameter of the polynomial
-            kernel. Default is `Positive`.
-        nu: The smoothness parameter for the Matern kernel: either 1/2, 3/2,
-            or 5/2. Unused if both `covar_module_unbiased` and
-            `covar_module_biased` are specified.
-        lengthscale_prior_unbiased: Prior on the lengthscale parameter of Matern
-            kernel `k_0`. Default is `Gamma(1.1, 1/20)`.
-        lengthscale_constraint_unbiased: Constraint on the lengthscale parameter
-            of the Matern kernel `k_0`. Default is `Positive`.
-        lengthscale_prior_biased: Prior on the lengthscale parameter of Matern
-            kernels `k_i(i>0)`. Default is `Gamma(5, 1/20)`.
-        lengthscale_constraint_biased: Constraint on the lengthscale parameter
-            of the Matern kernels `k_i(i>0)`. Default is `Positive`.
-        covar_module_unbiased: Specify a custom kernel for `k_0`. If omitted,
-            use a `MaternKernel`.
-        covar_module_biased: Specify a custom kernel for the biased parts
-            `k_i(i>0)`. If omitted, use a `MaternKernel`.
-        batch_shape: If specified, use a separate lengthscale for each batch of
-            input data. If `x1` is a `batch_shape x n x d` tensor, this should
-            be `batch_shape`.
-        active_dims: Compute the covariance of a subset of input dimensions. The
-            numbers correspond to the indices of the dimensions.
-
     Example:
         >>> x = torch.randn(10, 5)
         >>> # Non-batch: Simple option
@@ -97,6 +68,36 @@ class LinearTruncatedFidelityKernel(Kernel):
         covar_module_biased: Optional[Kernel] = None,
         **kwargs: Any,
     ) -> None:
+        """
+        Args:
+            fidelity_dims: A list containing either one or two indices specifying
+                the fidelity parameters of the input.
+            dimension: The dimension of `x`. Unused if `active_dims` is specified.
+            power_prior: Prior for the power parameter of the polynomial kernel.
+                Default is `None`.
+            power_constraint: Constraint on the power parameter of the polynomial
+                kernel. Default is `Positive`.
+            nu: The smoothness parameter for the Matern kernel: either 1/2, 3/2,
+                or 5/2. Unused if both `covar_module_unbiased` and
+                `covar_module_biased` are specified.
+            lengthscale_prior_unbiased: Prior on the lengthscale parameter of Matern
+                kernel `k_0`. Default is `Gamma(1.1, 1/20)`.
+            lengthscale_constraint_unbiased: Constraint on the lengthscale parameter
+                of the Matern kernel `k_0`. Default is `Positive`.
+            lengthscale_prior_biased: Prior on the lengthscale parameter of Matern
+                kernels `k_i(i>0)`. Default is `Gamma(5, 1/20)`.
+            lengthscale_constraint_biased: Constraint on the lengthscale parameter
+                of the Matern kernels `k_i(i>0)`. Default is `Positive`.
+            covar_module_unbiased: Specify a custom kernel for `k_0`. If omitted,
+                use a `MaternKernel`.
+            covar_module_biased: Specify a custom kernel for the biased parts
+                `k_i(i>0)`. If omitted, use a `MaternKernel`.
+            batch_shape: If specified, use a separate lengthscale for each batch of
+                input data. If `x1` is a `batch_shape x n x d` tensor, this should
+                be `batch_shape`.
+            active_dims: Compute the covariance of a subset of input dimensions. The
+                numbers correspond to the indices of the dimensions.
+        """
         if dimension is None and kwargs.get("active_dims") is None:
             raise UnsupportedError(
                 "Must specify dimension when not specifying active_dims."
