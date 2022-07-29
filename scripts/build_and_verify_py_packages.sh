@@ -5,7 +5,12 @@
 # LICENSE file in the root directory of this source tree.
 
 # Get version number (created dynamically via setuptools-scm)
-version=$(python setup.py --version)
+version=$(python -m setuptools_scm)
+if [[ $? != "0" ]]; then
+  echo "Determininig version via setuptools_scm failed."
+  echo "Make sure that setuptools_scm is installed in your python environment."
+  exit 1
+fi
 cur_dir=$(pwd)
 
 # set up temporary working directory
