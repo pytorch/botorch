@@ -293,8 +293,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
 class FixedNoiseMultiTaskGP(MultiTaskGP):
     r"""Multi-Task GP model using an ICM kernel, with known observation noise.
 
-    This is the fixed-noise version of `MultiTaskGP` -– that is, 
-    `FixedNoiseMultiTaskGP` is to `MultiTaskGP` as `FixedNoiseGP` is to 
+    This is the fixed-noise version of `MultiTaskGP` -– that is,
+    `FixedNoiseMultiTaskGP` is to `MultiTaskGP` as `FixedNoiseGP` is to
     `SingleTaskGP`. It can be single-output or
     multi-output. This model uses relatively strong priors on the base Kernel
     hyperparameters, which work best when covariates are normalized to the unit
