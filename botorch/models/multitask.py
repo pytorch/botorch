@@ -293,7 +293,9 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
 class FixedNoiseMultiTaskGP(MultiTaskGP):
     r"""Multi-Task GP model using an ICM kernel, with known observation noise.
 
-    Multi-task exact GP that uses a simple ICM kernel. Can be single-output or
+    This is the fixed-noise version of `MultiTaskGP` -– that is, 
+    `FixedNoiseMultiTaskGP` is to `MultiTaskGP` as `FixedNoiseGP` is to 
+    `SingleTaskGP`. It can be single-output or
     multi-output. This model uses relatively strong priors on the base Kernel
     hyperparameters, which work best when covariates are normalized to the unit
     cube and outcomes are standardized (zero mean, unit variance).
@@ -314,8 +316,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
-        r"""Multi-Task GP model using an ICM kernel and known observation noise.
-
+        r"""
         Args:
             train_X: A `n x (d + 1)` or `b x n x (d + 1)` (batch mode) tensor
                 of training data. One of the columns should contain the task
@@ -385,6 +386,26 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
     For posterior sampling, this model uses Matheron's rule [Doucet2010sampl] to compute
     the posterior over all tasks as in [Maddox2021bohdo] by exploiting Kronecker
     structure.
+
+    When a multi-fidelity model has Kronecker structure, this means there is one
+    covariance kernel over the fidelity features (call it `K_f`) and another over
+    the rest of the input parameters (call it `K_i`), and the resulting covariance
+    across inputs and fidelities is given by the Kronecker product of the two
+    covariance matrices. This is equivalent to saying the covariance between
+    two input and feature pairs is given by
+
+    K((parameter_1, fidelity_1), (parameter_2, fidelity_2))
+        = K_f(fidelity_1, fidelity_2) * K_i(parameter_1, parameter_2).
+
+    Then the covariance matrix of `n_i` parameters and `n_f` fidelities can be
+    codified as a Kronecker product of an `n_i x n_i` matrix and an
+    `n_f x n_f` matrix, which is far more parsimonious than specifying the
+    whole `(n_i * n_f) x (n_i * n_f)` covariance matrix.
+
+    Example:
+        >>> train_X = torch.rand(10, 2)
+        >>> train_Y = torch.cat([f_1(X), f_2(X)], dim=-1)
+        >>> model = KroneckerMultiTaskGP(train_X, train_Y)
     """
 
     def __init__(
@@ -399,8 +420,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
         outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs: Any,
     ) -> None:
-        r"""Multi-task GP with Kronecker structure, using a simple ICM kernel.
-
+        r"""
         Args:
             train_X: A `batch_shape x n x d` tensor of training features.
             train_Y: A `batch_shape x n x m` tensor of training observations.
@@ -423,11 +443,6 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
                 for the default LKJCovariancePrior task_covar_prior.
                 - likelihood_rank: The rank of the task covariance matrix to fit.
                 Defaults to 0 (which corresponds to a diagonal covariance matrix).
-
-        Example:
-            >>> train_X = torch.rand(10, 2)
-            >>> train_Y = torch.cat([f_1(X), f_2(X)], dim=-1)
-            >>> model = KroneckerMultiTaskGP(train_X, train_Y)
         """
         with torch.no_grad():
             transformed_X = self.transform_inputs(

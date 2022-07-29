@@ -28,7 +28,9 @@ from torch import Tensor
 class MixedSingleTaskGP(SingleTaskGP):
     r"""A single-task exact GP model for mixed search spaces.
 
-    This model uses a kernel that combines a CategoricalKernel (based on
+    This model is similar to SingleTaskGP, but supports mixed search spaces,
+    which combine discrete and continuous features, as well as solely discrete
+    spaces. It uses a kernel that combines a CategoricalKernel (based on
     Hamming distances) and a regular kernel into a kernel of the form
 
         K((x1, c1), (x2, c2)) =
@@ -42,7 +44,7 @@ class MixedSingleTaskGP(SingleTaskGP):
     Since this model does not provide gradients for the categorical features,
     optimization of the acquisition function will need to be performed in
     a mixed fashion, i.e., treating the categorical features properly as
-    discrete optimization variables.
+    discrete optimization variables. We recommend using `optimize_acqf_mixed.`
 
     Example:
         >>> train_X = torch.cat(
@@ -73,7 +75,7 @@ class MixedSingleTaskGP(SingleTaskGP):
             cat_dims: A list of indices corresponding to the columns of
                 the input `X` that should be considered categorical features.
             cont_kernel_factory: A method that accepts `ard_num_dims` and
-                `active_dims` arguments and returns an instatiated GPyTorch
+                `active_dims` arguments and returns an instantiated GPyTorch
                 `Kernel` object to be used as the ase kernel for the continuous
                 dimensions. If omitted, this model uses a Matern-2.5 kernel as
                 the kernel for the ordinal parameters.
