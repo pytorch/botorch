@@ -6,6 +6,12 @@
 
 r"""
 Cost models to be used with multi-fidelity optimization.
+
+Cost models are deterministic models, useful for defining known cost functions
+when the cost of an evaluation is heterogeneous in fidelity. For a full worked
+example, see the
+`tutorial <https://botorch.org/tutorials/multi_fidelity_bo>`_
+on continuous multi-fidelity Bayesian Optimization.
 """
 
 from __future__ import annotations
@@ -24,6 +30,14 @@ class AffineFidelityCostModel(DeterministicModel):
     cost of the form
 
         cost = fixed_cost + sum_j weights[j] * X[fidelity_dims[j]]
+
+    Example:
+        >>> from botorch.models import AffineFidelityCostModel
+        >>> from botorch.acquisition.cost_aware import InverseCostWeightedUtility
+        >>> cost_model = AffineFidelityCostModel(
+        >>>    fidelity_weights={6: 1.0}, fixed_cost=5.0
+        >>> )
+        >>> cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_model)
     """
 
     def __init__(
@@ -31,13 +45,12 @@ class AffineFidelityCostModel(DeterministicModel):
         fidelity_weights: Optional[Dict[int, float]] = None,
         fixed_cost: float = 0.01,
     ) -> None:
-        r"""Affine cost model operating on fidelity parameters.
-
+        r"""
         Args:
             fidelity_weights: A dictionary mapping a subset of columns of `X`
-                (the fidelity parameters) to it's associated weight in the
+                (the fidelity parameters) to its associated weight in the
                 affine cost expression. If omitted, assumes that the last
-                column of X is the fidelity parameter with a weight of 1.0.
+                column of `X` is the fidelity parameter with a weight of 1.0.
             fixed_cost: The fixed cost of running a single candidate point (i.e.
                 an element of a q-batch).
         """

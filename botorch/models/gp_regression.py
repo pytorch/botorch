@@ -6,6 +6,26 @@
 
 r"""
 Gaussian Process Regression models based on GPyTorch models.
+
+These models are often a good starting point and are further documented in the
+tutorials.
+
+`SingleTaskGP`, `FixedNoiseGP`, and `HeteroskedasticSingleTaskGP` are all
+single-task exact GP models, differing in how they treat noise. They use
+relatively strong priors on the Kernel hyperparameters, which work best when
+covariates are normalized to the unit cube and outcomes are standardized (zero
+mean, unit variance).
+
+These models all work in batch mode (each batch having its own hyperparameters).
+When the training observations include multiple outputs, these models use
+batching to model outputs independently.
+
+These models all support multiple outputs. However, as single-task models,
+`SingleTaskGP`, `FixedNoiseGP`, and `HeteroskedasticSingleTaskGP` should be
+used only when the output(s) are independent and all use the same training data.
+If outputs are independent and outputs have different training data, use the
+ModelListGP. When modeling correlations between outputs, use a multi-task
+model like MultiTaskGP.
 """
 
 from __future__ import annotations
@@ -159,12 +179,25 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
 class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     r"""A single-task exact GP model using fixed noise levels.
 
-    A single-task exact GP that uses fixed observation noise levels. This model
-    also uses relatively strong priors on the Kernel hyperparameters, which work
+    A single-task exact GP that uses fixed observation noise levels, differing from
+    `SingleTaskGP` only in that noise levels are provided rather than inferred.
+    This model also uses relatively strong priors on the Kernel
+    hyperparameters, which work
     best when covariates are normalized to the unit cube and outcomes are
     standardized (zero mean, unit variance).
 
     This model works in batch mode (each batch having its own hyperparameters).
+
+    An example of a case in which noise levels are known is online
+    experimentation, where noise can be measured using the variability of
+    different observations from the same arm, or provided by outside software.
+    Another use case is simulation optimization, where the evaluation can
+    provide variance estimates, perhaps from bootstrapping. In any case, these
+    noise levels must be provided to `FixedNoiseGP` as `train_Yvar`.
+
+    `FixedNoiseGP` cannot predict noise levels out of sample. If this is needed,
+    use `HeteroskedasticSingleTaskGP`, which will create another model for the
+    observation noise.
 
     Example:
         >>> train_X = torch.rand(20, 2)
@@ -182,7 +215,6 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         mean_module: Optional[Mean] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
-        **kwargs: Any,
     ) -> None:
         r"""
         Args:
@@ -321,11 +353,16 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
 
 
 class HeteroskedasticSingleTaskGP(SingleTaskGP):
-    r"""A single-task exact GP model using a heteroskeastic noise model.
+    r"""A single-task exact GP model using a heteroskedastic noise model.
 
-    This model internally wraps another GP (a SingleTaskGP) to model the
-    observation noise. This allows the likelihood to make out-of-sample
-    predictions for the observation noise levels.
+    This model differs from `SingleTaskGP` in that noise levels are provided
+    rather than inferred, and differs from `FixedNoiseGP` in that it can
+    predict noise levels out of sample, because it internally wraps another
+    GP (a SingleTaskGP) to model the observation noise.
+    Noise levels must be provided to `HeteroskedasticSingleTaskGP` as `train_Yvar`.
+
+    Examples of cases in which noise levels are known include online
+    experimentation and simulation optimization.
 
     Example:
         >>> train_X = torch.rand(20, 2)
