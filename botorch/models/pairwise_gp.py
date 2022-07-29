@@ -56,14 +56,29 @@ from torch.nn.modules.module import _IncompatibleKeys
 class PairwiseGP(Model, GP):
     r"""Probit GP for preference learning with Laplace approximation
 
+    A probit-likelihood GP that learns via pairwise comparison data, using a
+    Laplace approximation of the posterior of the estimated utility values. By
+    default it uses a scaled RBF kernel.
+
     Implementation is based on [Chu2005preference]_.
     Also see [Brochu2010tutorial]_ for additional reference.
 
     Note that in [Chu2005preference]_ the likelihood of a pairwise comparison
     is :math:`\left(\frac{f(x_1) - f(x_2)}{\sqrt{2}\sigma}\right)`, i.e. a scale is
     used in the denominator. To maintain consistency with usage of kernels
-    elsewhere in botorch, we instead do not include :math:`\sigma` in the code
+    elsewhere in BoTorch, we instead do not include :math:`\sigma` in the code
     (implicitly setting it to 1) and use ScaleKernel to scale the function.
+
+    In the example below, the user/decision maker has stated that they prefer
+    the first item over the second item and the third item over the first item,
+    generating comparisons [0, 1] and [2, 1].
+
+    Example:
+        >>> from botorch.models import PairwiseGP
+        >>> import torch
+        >>> datapoints = torch.Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        >>> comparisons = torch.Tensor([[0, 1], [2, 1]])
+        >>> model = PairwiseGP(datapoints, comparisons)
     """
 
     _buffer_names = [
@@ -88,9 +103,7 @@ class PairwiseGP(Model, GP):
         input_transform: Optional[InputTransform] = None,
         **kwargs,
     ) -> None:
-        r"""A probit-likelihood GP with Laplace approximation model that learns via
-            pairwise comparison data. By default it uses a scaled RBF kernel.
-
+        r"""
         Args:
             datapoints: A `batch_shape x n x d` tensor of training features.
             comparisons: A `batch_shape x m x 2` training comparisons;
