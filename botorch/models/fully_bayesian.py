@@ -6,6 +6,16 @@
 
 r"""Gaussian Process Regression models with fully Bayesian inference.
 
+Fully Bayesian models use Bayesian inference over model hyperparameters, such
+as length scales and noise variance, learning a posterior distribution for each
+hyperparameter using NUTS. When we predict and compute acquisition functions
+from a fully Bayesian model, we are using varying sets of hyperparameters
+drawn from this posterior. By contrast, our “standard” models (e.g.
+`SingleTaskGP`) learn only a single best value for each hyperparameter using
+MAP. The fully Bayesian method generally results in a better and more
+well-calibrated model, but is more computationally intensive. For a full
+description, see [Eriksson2021saasbo].
+
 We use a lightweight PyTorch implementation of a Matern-5/2 kernel as there are some
 performance issues with running NUTS on top of standard GPyTorch models. The resulting
 hyperparameter samples are loaded into a batched GPyTorch model after fitting.
@@ -71,9 +81,19 @@ def reshape_and_detach(target: Tensor, new_value: Tensor) -> None:
 
 class PyroModel:
     r"""
-    Base class for a Pyro model.
+    Base class for a Pyro model; used to assist in learning hyperparameters.
 
-    :meta ignore:
+    This class and its subclasses are not a standard BoTorch models; instead
+    the subclasses are used as inputs to a `SaasFullyBayesianSingleTaskGP`,
+    which should then have its hyperparameters fit with
+    `fit_fully_bayesian_model_nuts`. (By default, its subclass `SaasPyroModel`
+    is used).  A `PyroModel`’s `sample` method should specify lightweight
+    PyTorch functionality, which will be used for fast model fitting with NUTS.
+    The utility of `PyroModel` is in enabling fast fitting with NUTS, since we
+    would otherwise need to use GPyTorch, which is computationally infeasible
+    in combination with Pyro.
+
+    :meta private:
     """
 
     def set_inputs(
@@ -115,6 +135,12 @@ class SaasPyroModel(PyroModel):
     The SAAS model uses sparsity-inducing priors to identift the most important
     parameters. This model is suitable for high-dimensional BO with potentially
     hundreds of tunable parameters. See [Eriksson2021saasbo]_ for more details.
+
+    `SaasPyroModel` is not a standard BoTorch model; instead, it is used as
+    an input to `SaasFullyBayesianSingleTaskGP`. It is used as a default keyword
+    argument, and end users are not likely to need to instantiate or modify a
+    `SaasPyroModel` unless they want to customize its attributes (such as
+    `covar_module`).
     """
 
     def sample(self) -> None:
@@ -274,9 +300,9 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
     isn't compatible with `fit_gpytorch_model`.
 
     Example:
-    >>> saas_gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)
-    >>> fit_fully_bayesian_model_nuts(saas_gp)
-    >>> posterior = saas_gp.posterior(test_X)
+        >>> saas_gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)
+        >>> fit_fully_bayesian_model_nuts(saas_gp)
+        >>> posterior = saas_gp.posterior(test_X)
     """
 
     def __init__(
