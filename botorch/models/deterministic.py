@@ -8,7 +8,11 @@ r"""
 Deterministic Models: Simple wrappers that allow the usage of deterministic
 mappings via the BoTorch Model and Posterior APIs.
 
-Deterministic models are useful for defining known cost functions for
+Deterministic models are useful for expressing known input-output relationships
+within the BoTorch Model API. This is useful e.g. for multi-objective optimization
+with known objective functions (e.g. the number of parameters of a Neural Network
+in the context of Neural Architecture Search is usually a known function of the 
+architecture configuration), or to encode cost functions for
 cost-aware acquisition utilities. Cost-aware optimization is desirable when
 evaluations have a cost that is heterogeneous, either in the inputs `X` or in a
 particular fidelity parameter that directly encodes the fidelity of the

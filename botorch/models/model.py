@@ -255,9 +255,9 @@ class Model(Module, ABC):
 class ModelList(Model):
     r"""A multi-output Model represented by a list of independent models.
 
-    A multi-output Model represented by a list of independent models. Any
+    All
     BoTorch models are acceptable as inputs. The cost of this flexibility is
-    that ModelList does not support all methods that may be implemented by its
+    that `ModelList` does not support all methods that may be implemented by its
     component models. One use case for `ModelList` is combining a regression
     model and a deterministic model in one multi-output container model, e.g.
     for cost-aware or multi-objective optimization where one of the outcomes is

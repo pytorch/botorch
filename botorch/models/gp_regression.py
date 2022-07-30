@@ -22,10 +22,10 @@ batching to model outputs independently.
 
 These models all support multiple outputs. However, as single-task models,
 `SingleTaskGP`, `FixedNoiseGP`, and `HeteroskedasticSingleTaskGP` should be
-used only when the output(s) are independent and all use the same training data.
+used only when the outputs are independent and all use the same training data.
 If outputs are independent and outputs have different training data, use the
-ModelListGP. When modeling correlations between outputs, use a multi-task
-model like MultiTaskGP.
+`ModelListGP`. When modeling correlations between outputs, use a multi-task
+model like `MultiTaskGP`.
 """
 
 from __future__ import annotations
@@ -181,10 +181,9 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
 
     A single-task exact GP that uses fixed observation noise levels, differing from
     `SingleTaskGP` only in that noise levels are provided rather than inferred.
-    This model also uses relatively strong priors on the Kernel
-    hyperparameters, which work
-    best when covariates are normalized to the unit cube and outcomes are
-    standardized (zero mean, unit variance).
+    This model also uses relatively strong priors on the Kernel hyperparameters,
+    which work best when covariates are normalized to the unit cube and outcomes
+    are standardized (zero mean, unit variance).
 
     This model works in batch mode (each batch having its own hyperparameters).
 
@@ -194,6 +193,10 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     Another use case is simulation optimization, where the evaluation can
     provide variance estimates, perhaps from bootstrapping. In any case, these
     noise levels must be provided to `FixedNoiseGP` as `train_Yvar`.
+
+    `FixedNoiseGP` is also commonly used when the observations are known to be noise-free.
+    Noise-free observations can be modeled using arbitrarily small noise values, such as
+    `train_Yvar=torch.full_like(train_Y, 1e-6)`.
 
     `FixedNoiseGP` cannot predict noise levels out of sample. If this is needed,
     use `HeteroskedasticSingleTaskGP`, which will create another model for the
