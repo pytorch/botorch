@@ -28,7 +28,7 @@ from torch import Tensor
 class MixedSingleTaskGP(SingleTaskGP):
     r"""A single-task exact GP model for mixed search spaces.
 
-    This model is similar to SingleTaskGP, but supports mixed search spaces,
+    This model is similar to `SingleTaskGP`, but supports mixed search spaces,
     which combine discrete and continuous features, as well as solely discrete
     spaces. It uses a kernel that combines a CategoricalKernel (based on
     Hamming distances) and a regular kernel into a kernel of the form

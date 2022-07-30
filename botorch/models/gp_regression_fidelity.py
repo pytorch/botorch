@@ -12,7 +12,7 @@ For more on Multi-Fidelity BO, see the
 
 A common use case of multi-fidelity regression modeling is optimizing a
 "high-fidelity" function that is expensive to simulate when you have access to
-a cheaper "low-fidelity" version that is not fully accurate but is correlated
+one or more cheaper "lower-fidelity" version(s) that is not fully accurate but is correlated
 with the high-fidelity function. The multi-fidelity model models both the low-
 and high-fidelity functions together, including the correlation between them,
 which can help you predict and optimize the high-fidelity

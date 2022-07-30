@@ -142,7 +142,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     r"""
     A model for high-dimensional output regression.
 
-    As described in [Zhe2019hogp]. “Higher-order” means that the predictions
+    As described in [Zhe2019hogp]_. “Higher-order” means that the predictions
     are matrices (tensors) with at least two dimensions, such as images or
     grids of images, or measurements taken from a region of at least two
     dimensions.
