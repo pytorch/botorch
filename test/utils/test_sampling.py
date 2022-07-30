@@ -308,7 +308,7 @@ class TestSampleUtils(BotorchTestCase):
         A = np.array([[-1.0]])
         b = np.array([-3.0])
         x = find_interior_point(A=A, b=b)
-        self.assertAlmostEqual(x.item(), 6.201544, places=4)
+        self.assertAlmostEqual(x.item(), 5.0, places=4)
 
     def test_get_polytope_samples(self):
         tkwargs = {"device": self.device}
