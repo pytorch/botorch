@@ -321,7 +321,8 @@ def get_deterministic_model_list(
     weights: List[Tensor],
     bases: List[RandomFourierFeatures],
 ) -> ModelList:
-    """Get a deterministic model list using the provided weights and bases for each output.
+    """Get a deterministic model list using the provided weights and bases for
+    each output.
 
     Args:
         weights: a list of weights with `m` elements

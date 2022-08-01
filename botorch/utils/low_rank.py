@@ -86,7 +86,8 @@ def sample_cached_cholesky(
     sample_shape: torch.Size,
     max_tries: int = 6,
 ) -> Tensor:
-    r"""Get posterior samples at the `q` new points from the joint multi-output posterior.
+    r"""Get posterior samples at the `q` new points from the joint multi-output
+    posterior.
 
     Args:
         posterior: The joint posterior is over (X_baseline, X).
