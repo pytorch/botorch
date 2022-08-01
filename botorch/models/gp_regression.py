@@ -194,9 +194,9 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     provide variance estimates, perhaps from bootstrapping. In any case, these
     noise levels must be provided to `FixedNoiseGP` as `train_Yvar`.
 
-    `FixedNoiseGP` is also commonly used when the observations are known to be noise-free.
-    Noise-free observations can be modeled using arbitrarily small noise values, such as
-    `train_Yvar=torch.full_like(train_Y, 1e-6)`.
+    `FixedNoiseGP` is also commonly used when the observations are known to be
+    noise-free.  Noise-free observations can be modeled using arbitrarily small
+    noise values, such as `train_Yvar=torch.full_like(train_Y, 1e-6)`.
 
     `FixedNoiseGP` cannot predict noise levels out of sample. If this is needed,
     use `HeteroskedasticSingleTaskGP`, which will create another model for the

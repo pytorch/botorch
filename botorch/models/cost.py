@@ -7,11 +7,10 @@
 r"""
 Cost models to be used with multi-fidelity optimization.
 
-Cost models are deterministic models, useful for defining known cost functions
-when the cost of an evaluation is heterogeneous in fidelity. For a full worked
-example, see the
-`tutorial <https://botorch.org/tutorials/multi_fidelity_bo>`_
-on continuous multi-fidelity Bayesian Optimization.
+Cost are useful for defining known cost functions when the cost of an evaluation
+is heterogeneous in fidelity. For a full worked example, see the
+`tutorial <https://botorch.org/tutorials/multi_fidelity_bo>`_ on continuous
+multi-fidelity Bayesian Optimization.
 """
 
 from __future__ import annotations
@@ -24,12 +23,16 @@ from torch import Tensor
 
 
 class AffineFidelityCostModel(DeterministicModel):
-    r"""Affine cost model operating on fidelity parameters.
+    r"""Deterministic, affine cost model operating on fidelity parameters.
 
     For each (q-batch) element of a candidate set `X`, this module computes a
     cost of the form
 
         cost = fixed_cost + sum_j weights[j] * X[fidelity_dims[j]]
+
+    For a full worked example, see the
+    `tutorial <https://botorch.org/tutorials/multi_fidelity_bo>`_ on continuous
+    multi-fidelity Bayesian Optimization.
 
     Example:
         >>> from botorch.models import AffineFidelityCostModel
