@@ -476,7 +476,13 @@ def find_interior_point(
     A_ub[-1, -1] = -1.0
 
     result = scipy.optimize.linprog(
-        c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=(None, None)
+        c=c,
+        A_ub=A_ub,
+        b_ub=b_ub,
+        A_eq=A_eq,
+        b_eq=b_eq,
+        bounds=(None, None),
+        method="highs",
     )
 
     if result.status == 3:
@@ -486,7 +492,13 @@ def find_interior_point(
         A_ub = np.concatenate([A_ub, A_s], axis=0)
         b_ub = np.concatenate([b_ub, np.ones(1)], axis=-1)
         result = scipy.optimize.linprog(
-            c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=(None, None)
+            c=c,
+            A_ub=A_ub,
+            b_ub=b_ub,
+            A_eq=A_eq,
+            b_eq=b_eq,
+            bounds=(None, None),
+            method="highs",
         )
 
     if result.status == 2:
