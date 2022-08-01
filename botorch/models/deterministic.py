@@ -5,9 +5,23 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Deterministic Models. Simple wrappers that allow the usage of deterministic
-mappings via the BoTorch Model and Posterior APIs. Useful e.g. for defining
-known cost functions for cost-aware acquisition utilities.
+Deterministic Models: Simple wrappers that allow the usage of deterministic
+mappings via the BoTorch Model and Posterior APIs.
+
+Deterministic models are useful for expressing known input-output relationships
+within the BoTorch Model API. This is useful e.g. for multi-objective
+optimization with known objective functions (e.g. the number of parameters of a
+Neural Network in the context of Neural Architecture Search is usually a known
+function of the architecture configuration), or to encode cost functions for
+cost-aware acquisition utilities. Cost-aware optimization is desirable when
+evaluations have a cost that is heterogeneous, either in the inputs `X` or in a
+particular fidelity parameter that directly encodes the fidelity of the
+observation. `GenericDeterministicModel` supports arbitrary deterministic
+functions, while `AffineFidelityCostModel` is a particular cost model for
+multi-fidelity optimization. Other use cases of deterministic models include
+representing approximate GP sample paths, e.g. random Fourier features obtained
+with `get_gp_samples`, which allows them to be substituted in acquisition
+functions or in other places where a `Model` is expected.
 """
 
 from __future__ import annotations
