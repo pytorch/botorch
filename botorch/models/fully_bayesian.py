@@ -7,10 +7,11 @@
 r"""Gaussian Process Regression models with fully Bayesian inference.
 
 Fully Bayesian models use Bayesian inference over model hyperparameters, such
-as length scales and noise variance, learning a posterior distribution for each
-hyperparameter using NUTS. When we predict and compute acquisition functions
-from a fully Bayesian model, we are using varying sets of hyperparameters
-drawn from this posterior. By contrast, our “standard” models (e.g.
+as lengthscales and noise variance, learning a posterior distribution for the
+hyperparameters using the No-U-Turn-Sampler (NUTS). This is followed by
+sampling a small set of hyperparameters (often ~16) from the posterior
+that we will use for model predictions and for computing acquisition function 
+values. By contrast, our “standard” models (e.g.
 `SingleTaskGP`) learn only a single best value for each hyperparameter using
 MAP. The fully Bayesian method generally results in a better and more
 well-calibrated model, but is more computationally intensive. For a full
