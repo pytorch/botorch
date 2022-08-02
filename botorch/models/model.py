@@ -4,7 +4,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-r"""Abstract base module for all BoTorch models."""
+r"""Abstract base module for all BoTorch models.
+
+Contains `Model`, the abstract base class for all BoTorch models, and
+`ModelList`, a container for a list of Models.
+"""
 
 from __future__ import annotations
 
@@ -29,6 +33,9 @@ from torch.nn import Module, ModuleList
 
 class Model(Module, ABC):
     r"""Abstract base class for BoTorch models.
+
+    Model cannot be used directly; it only defines an API for other BoTorch
+    models.
 
     Args:
         _has_transformed_inputs: A boolean denoting whether `train_inputs` are currently
@@ -246,16 +253,24 @@ class Model(Module, ABC):
 
 
 class ModelList(Model):
-    r"""Container for a list of models."""
+    r"""A multi-output Model represented by a list of independent models.
+
+    All
+    BoTorch models are acceptable as inputs. The cost of this flexibility is
+    that `ModelList` does not support all methods that may be implemented by its
+    component models. One use case for `ModelList` is combining a regression
+    model and a deterministic model in one multi-output container model, e.g.
+    for cost-aware or multi-objective optimization where one of the outcomes is
+    a deterministic function of the inputs.
+    """
 
     def __init__(self, *models: Model) -> None:
-        r"""A multi-output Model represented by a list of independent models.
-
+        r"""
         Args:
             *models: A variable number of models.
 
         Example:
-            >>> m_1 = SingleTaskGP(train_X, train_Y
+            >>> m_1 = SingleTaskGP(train_X, train_Y)
             >>> m_2 = GenericDeterministicModel(lambda x: x.sum(dim=-1))
             >>> m_12 = ModelList(m_1, m_2)
             >>> m_12.predict(test_X)

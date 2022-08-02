@@ -140,9 +140,23 @@ class FlattenedStandardize(Standardize):
 
 class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     r"""
-    A Higher order Gaussian process model (HOGP) (predictions are matrices/tensors) as
-    described in [Zhe2019hogp]_. The posterior uses Matheron's rule [Doucet2010sampl]_
+    A model for high-dimensional output regression.
+
+    As described in [Zhe2019hogp]_. “Higher-order” means that the predictions
+    are matrices (tensors) with at least two dimensions, such as images or
+    grids of images, or measurements taken from a region of at least two
+    dimensions.
+    The posterior uses Matheron's rule [Doucet2010sampl]_
     as described in [Maddox2021bohdo]_.
+
+    `HigherOrderGP` differs from a "vector” multi-output model in that it uses
+    Kronecker algebra to obtain parsimonious covariance matrices for these
+    outputs (see `KroneckerMultiTaskGP` for more information). For example,
+    imagine a 10 x 20 x 30 grid of images. If we were to vectorize the
+    resulting 6,000 data points in order to use them in a non-higher-order GP,
+    they would have a 6,000 x 6,000 covariance matrix, with 36 million entries.
+    The Kronecker structure allows representing this as a product of 10x10,
+    20x20, and 30x30 covariance matrices, with only 1,400 entries.
     """
 
     def __init__(
@@ -157,8 +171,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
     ):
-        r"""A HigherOrderGP model for high-dim output regression.
-
+        r"""
         Args:
             train_X: A `batch_shape x n x d`-dim tensor of training inputs.
             train_Y: A `batch_shape x n x output_shape`-dim tensor of training targets.
