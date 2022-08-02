@@ -17,7 +17,8 @@ With the exception of some of the analytic acquisition functions in the
 module, BoTorch’s Monte Carlo-based acquisition functions are compatible with
 any model that conforms to the `Model` interface, whether user-implemented or provided.
  
-Under the hood, BoTorch models are PyTorch `Modules` that implement the that
+Under the hood,
+BoTorch models are PyTorch `Modules` that implement the that
 implement the light-weight
 [`Model`](../api/models.html#model) interface. When working with GPs,
 When working with GPs, [`GPyTorchModel`](../api/models.html#gpytorchmodel)
@@ -31,14 +32,13 @@ For more on implementing your own models, see
 ## Terminology
 
 ### Multi-Output and Multi-Task
-A `Model` -- as in the BoTorch object -- may have
+A `Model` (as in the BoTorch object) may have
 multiple outputs, multiple inputs, and may exploit correlation
 between different inputs. BoTorch uses the following terminology to
-distinguish these types of `Model`:
+distinguish these model types:
 
 * *Multi-Output Model*: a `Model` with multiple
-  outputs.
-  Most BoTorch `Model`s are multi-output.
+  outputs. Most BoTorch `Model`s are multi-output.
 * *Multi-Task Model*: a `Model` making use of a logical grouping of
   inputs/observations (as in the underlying process). For example, there could
   be multiple tasks where each task has a different fidelity.
@@ -79,26 +79,24 @@ required for each output, use a [`ModelListGP`](../api/models.html#modellistgp)
 instead.
 * [`SingleTaskGP`](../api/models.html#singletaskgp): a single-task
   exact GP that infers a homoskedastic noise level (no noise observations).
-  This is among the most commonly used models.
-* [`FixedNoiseGP`](../api/models.html#fixednoisegp): a single-task exact GP,
-  differing only from SingleTaskGP in that it that
-  uses fixed, observed noise levels, which the user must input.
-  `FixedNoiseGP` is also among the most commonly used models.
+* [`FixedNoiseGP`](../api/models.html#fixednoisegp): a single-task exact GP that
+uses fixed observation noise levels (requires noise observations).
 * [`HeteroskedasticSingleTaskGP`](../api/models.html#heteropskedasticsingletaskgp):
-  a single-task exact GP, 
-  differing from `FixedNoiseGP` in that it models heteroskedastic noise using an additional
-  internal GP model. Noise observations must be provided.
+  a single-task exact GP that models heteroskedastic noise using an additional
+  internal GP model (requires noise observations).
+* [`SaasFullyBayesianSingleTaskGP`](../api/models.html#saasfullybayesiansingletaskgp):
+  a fully Bayesian single-task GP with the SAAS prior. This model is suitable for
+  sample-efficient high-dimensional Bayesian optimization.
 
 ### Model List of Single-Task GPs
 * [`ModelListGP`](../api/models.html#modellistgp): A multi-output model in
   which outcomes are modeled independently, given a list of any type of
-  single-task GP. This model should be used rather than one of the above models when different outputs use different training
-  data.
+  single-task GP. This model should be used when the same training data is not
+  used for all outputs.
 
 ### Multi-Task GPs
 * [`MultiTaskGP`](../api/models.html#multitaskgp): a Hadamard multi-task,
-  multi-output GP using an ICM kernel, inferring a
-  homoskedastic noise level (does not
+  multi-output GP using an ICM kernel, inferring a homoskedastic noise level (does not
   require noise observations).
 * [`FixedNoiseMultiTaskGP`](../api/models.html#fixednoisemultitaskgp):
   a Hadamard multi-task, multi-output GP using an ICM kernel, with fixed
@@ -111,10 +109,6 @@ cube** and the **observations are standardized** (zero mean, unit variance).
 
 ## Other useful models
 
-* [`SaasFullyBayesianSingleTaskGP`](../api/models.html#saasfullybayesiansingletaskgp):
-  A fully Bayesian model, learning a posterior distribution over each hyperparameter.
-  The fully Bayesian method generally results in a better and more well-calibrated
-  model than `SingleTaskGP`, but is more computationally intensive.
 * [`SingleTaskMultiFidelityGP`](../api/models.html#singletaskmultifidelitygp) and 
   [`FixedNoiseMultiFidelityGP`](../api/models.html#fixednoisemultifidelitygp):
   Models for multi-fidelity optimization.  For more on Multi-Fidelity BO, see the
@@ -122,7 +116,7 @@ cube** and the **observations are standardized** (zero mean, unit variance).
 * [`HigherOrderGP`](../api/models.html#higherordergp): A GP model with
   matrix-valued predictions, such as images or grids of images.
 * [`PairwiseGP`](../api/models.html#pairwisegp): A probit-likelihood GP that
-  learns via pairwise comparison data.
+  learns via pairwise comparison data, useful for preference learning.
 
 ## Implementing Custom Models
 
@@ -140,9 +134,9 @@ tutorial for an example.
 
 The BoTorch `Model` interface is light-weight and easy to extend. The only
 requirement for using BoTorch's Monte-Carlo based acquisition functions is that
-the model has a `posterior` method. It takes in a Tensor X of design points, and
+the model has a `posterior` method. It takes in a Tensor `X` of design points, and
 returns a Posterior object describing the (joint) probability distribution of
-the model output(s) over the design points in X.  The `Posterior` object must
+the model output(s) over the design points in `X`.  The `Posterior` object must
 implement an `rsample()` method for sampling from the posterior of the model.
 If you wish to use gradient-based optimization algorithms, the model should
 allow back-propagating gradients through the samples to the model input.
