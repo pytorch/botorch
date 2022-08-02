@@ -16,7 +16,7 @@ With the exception of some of the analytic acquisition functions in the
 [`botorch.acquisition.analytic`](../api/acquisition.html#analytic-acquisition-function-api)
 module, BoTorch’s Monte Carlo-based acquisition functions are compatible with
 any model that conforms to the `Model` interface, whether user-implemented or provided.
- 
+
 Under the hood,
 BoTorch models are PyTorch `Modules` that implement the that
 implement the light-weight
@@ -24,8 +24,8 @@ implement the light-weight
 When working with GPs, [`GPyTorchModel`](../api/models.html#module-botorch.models.gp_regression)
 provides a base class for conveniently wrapping GPyTorch models.
 
-Users can extend `Model` and `GPyTorchModel` to generate their own models. 
-For more on implementing your own models, see 
+Users can extend `Model` and `GPyTorchModel` to generate their own models.
+For more on implementing your own models, see
 [Implementing Custom Models](#implementing-custom-models) below.
 
 
@@ -119,7 +119,7 @@ cube** and the **observations are standardized** (zero mean, unit variance).
 * [`ModelList`](../api/models.html#botorch.models.model.ModelList): a multi-output model in which outcomes
   are modeled independently, as in `ModelListGP`, but the component models do not all
   need to be GPyTorch models.
-* [`SingleTaskMultiFidelityGP`](../api/models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP) and 
+* [`SingleTaskMultiFidelityGP`](../api/models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP) and
   [`FixedNoiseMultiFidelityGP`](../api/models.html#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP):
   Models for multi-fidelity optimization.  For more on Multi-Fidelity BO, see the
   [tutorial](../tutorials/discrete_multi_fidelity_bo).
@@ -129,8 +129,8 @@ cube** and the **observations are standardized** (zero mean, unit variance).
   learns via pairwise comparison data, useful for preference learning.
 * [`ApproximateGPyTorchModel`](../api/models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel): for
   efficient computation when data is large or responses are non-Gaussian.
-* [Deterministic models](../api/models.html#module-botorch.models.deterministic), such as 
-  [`AffineDeterministicModel`](../api/models.html#botorch.models.deterministic.AffineDeterministicModel), 
+* [Deterministic models](../api/models.html#module-botorch.models.deterministic), such as
+  [`AffineDeterministicModel`](../api/models.html#botorch.models.deterministic.AffineDeterministicModel),
   [`AffineFidelityCostModel`](../api/models.html#botorch.models.cost.AffineFidelityCostModel),
   [`FixedSingleSampleModel`](../api/models.html#botorch.models.deterministic.FixedSingleSampleModel),
   [`GenericDeterministicModel`](../api/models.html#botorch.models.deterministic.GenericDeterministicModel),
@@ -138,7 +138,7 @@ cube** and the **observations are standardized** (zero mean, unit variance).
   [`PosteriorMeanModel`](../api/models.html#botorch.models.deterministic.PosteriorMeanModel)
   express known input-output relationships; they conform
   to the BoTorch `Model` API, so they can easily be used in conjunction with other
-  BoTorch models. Deterministic models are 
+  BoTorch models. Deterministic models are
   useful for multi-objective optimization with known objective
   functions and for encoding cost functions for cost-aware acquisition.
 * [`SingleTaskVariationalGP`](../api/models.html#botorch.models.approximate_gp.SingleTaskVariationalGP): an
