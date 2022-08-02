@@ -10,16 +10,17 @@ Fully Bayesian models use Bayesian inference over model hyperparameters, such
 as lengthscales and noise variance, learning a posterior distribution for the
 hyperparameters using the No-U-Turn-Sampler (NUTS). This is followed by
 sampling a small set of hyperparameters (often ~16) from the posterior
-that we will use for model predictions and for computing acquisition function 
+that we will use for model predictions and for computing acquisition function
 values. By contrast, our “standard” models (e.g.
 `SingleTaskGP`) learn only a single best value for each hyperparameter using
 MAP. The fully Bayesian method generally results in a better and more
 well-calibrated model, but is more computationally intensive. For a full
 description, see [Eriksson2021saasbo].
 
-We use a lightweight PyTorch implementation of a Matern-5/2 kernel as there are some
-performance issues with running NUTS on top of standard GPyTorch models. The resulting
-hyperparameter samples are loaded into a batched GPyTorch model after fitting.
+We use a lightweight PyTorch implementation of a Matern-5/2 kernel as there are
+some performance issues with running NUTS on top of standard GPyTorch models.
+The resulting hyperparameter samples are loaded into a batched GPyTorch model
+after fitting.
 
 References:
 
