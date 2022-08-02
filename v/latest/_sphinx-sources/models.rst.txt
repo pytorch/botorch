@@ -10,7 +10,7 @@ botorch.models
 Model APIs
 -------------------------------------------
 
-Abstract Model API
+Base Model API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.model
     :members:
