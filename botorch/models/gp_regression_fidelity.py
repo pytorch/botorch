@@ -5,7 +5,18 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Gaussian Process Regression models based on GPyTorch models.
+Multi-Fidelity Gaussian Process Regression models based on GPyTorch models.
+
+For more on Multi-Fidelity BO, see the
+`tutorial <https://botorch.org/tutorials/discrete_multi_fidelity_bo>`__.
+
+A common use case of multi-fidelity regression modeling is optimizing a
+"high-fidelity" function that is expensive to simulate when you have access to
+one or more cheaper "lower-fidelity" versions that are not fully accurate but
+are correlated with the high-fidelity function. The multi-fidelity model models
+both the low- and high-fidelity functions together, including the correlation
+between them, which can help you predict and optimize the high-fidelity function
+without having to do too many expensive high-fidelity evaluations.
 
 .. [Wu2019mf]
     J. Wu, S. Toscano-Palmerin, P. I. Frazier, and A. G. Wilson. Practical

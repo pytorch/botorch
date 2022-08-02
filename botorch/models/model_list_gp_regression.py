@@ -23,21 +23,24 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
     r"""A multi-output GP model with independent GPs for the outputs.
 
     This model supports different-shaped training inputs for each of its
-    sub-models. It can be used with any BoTorch models.
+    sub-models. It can be used with any number of single-output
+    `GPyTorchModel`\s and the models can be of different types. Use this model
+    when you have independent outputs with different training data. When
+    modeling correlations between outputs, use `MultiTaskGP`.
 
     Internally, this model is just a list of individual models, but it implements
     the same input/output interface as all other BoTorch models. This makes it
     very flexible and convenient to work with. The sequential evaluation comes
     at a performance cost though - if you are using a block design (i.e. the
     same number of training example for each output, and a similar model
-    structure, you should consider using a batched GP model instead).
+    structure, you should consider using a batched GP model instead, such as
+    `SingleTaskGP` with batched inputs).
     """
 
     def __init__(self, *gp_models: GPyTorchModel) -> None:
-        r"""A multi-output GP model with independent GPs for the outputs.
-
+        r"""
         Args:
-            *gp_models: An variable number of single-output BoTorch models.
+            *gp_models: A number of single-output `GPyTorchModel`\s.
                 If models have input/output transforms, these are honored
                 individually for each model.
 
