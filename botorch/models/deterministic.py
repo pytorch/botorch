@@ -216,7 +216,7 @@ class PosteriorMeanModel(DeterministicModel):
 
 
 class FixedSingleSampleModel(DeterministicModel):
-    """
+    r"""
     A deterministic model defined by a single sample `w`.
 
     Given a base model `f` and a fixed sample `w`, the model always outputs

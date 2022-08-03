@@ -17,10 +17,8 @@ With the exception of some of the analytic acquisition functions in the
 module, BoTorch’s Monte Carlo-based acquisition functions are compatible with
 any model that conforms to the `Model` interface, whether user-implemented or provided.
 
-Under the hood,
-BoTorch models are PyTorch `Modules` that implement the that
-implement the light-weight
-[`Model`](../api/models.html#model-apis) interface. When working with GPs,
+Under the hood, BoTorch models are PyTorch `Modules` that implement
+the light-weight [`Model`](../api/models.html#model-apis) interface. 
 When working with GPs, [`GPyTorchModel`](../api/models.html#module-botorch.models.gp_regression)
 provides a base class for conveniently wrapping GPyTorch models.
 
@@ -60,9 +58,16 @@ Noise can be treated in several different ways:
 
 * *Homoskedastic*: Noise is not provided as an input and is inferred, with a
 constant variance that does not depend on `X`. Many models, such as
-`SingleTaskGP`, take this approach.
+`SingleTaskGP`, take this approach. Use these models if you know that
+your observations are noisy, but not how noisy.
 
-* *Fixed*: Noise is provided as an input and is not fit. In “fixed” models like `FixedNoiseGP`, noise cannot be predicted out-of-sample because it has not been modeled.
+* *Fixed*: Noise is provided as an input and is not fit. In “fixed noise” models
+like `FixedNoiseGP`, noise cannot be predicted out-of-sample because it has
+not been modeled. Use these models if you have estimates of the noise in
+your observations (e.g. observations may be averages over individual samples
+in which case you would provide the mean as observation and the standard
+error of the mean as the noise estimate), or if you know your observations are
+noiseless (by passing a zero noise level). 
 
 * *Heteroskedastic*: Noise is provided as an input and is modeled to allow for
 predicting noise out-of-sample. Models like `HeteroskedasticSingleTaskGP`
@@ -116,9 +121,9 @@ cube** and the **observations are standardized** (zero mean, unit variance).
 
 ## Other useful models
 
-* [`ModelList`](../api/models.html#botorch.models.model.ModelList): a multi-output model in which outcomes
-  are modeled independently, as in `ModelListGP`, but the component models do not all
-  need to be GPyTorch models.
+* [`ModelList`](../api/models.html#botorch.models.model.ModelList): a multi-output model container
+  in which outcomes are modeled independently by individual `Model`s (as in `ModelListGP`, but the
+  component models do not all need to be GPyTorch models).
 * [`SingleTaskMultiFidelityGP`](../api/models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP) and
   [`FixedNoiseMultiFidelityGP`](../api/models.html#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP):
   Models for multi-fidelity optimization.  For more on Multi-Fidelity BO, see the
@@ -132,7 +137,6 @@ cube** and the **observations are standardized** (zero mean, unit variance).
 * [Deterministic models](../api/models.html#module-botorch.models.deterministic), such as
   [`AffineDeterministicModel`](../api/models.html#botorch.models.deterministic.AffineDeterministicModel),
   [`AffineFidelityCostModel`](../api/models.html#botorch.models.cost.AffineFidelityCostModel),
-  [`FixedSingleSampleModel`](../api/models.html#botorch.models.deterministic.FixedSingleSampleModel),
   [`GenericDeterministicModel`](../api/models.html#botorch.models.deterministic.GenericDeterministicModel),
   and
   [`PosteriorMeanModel`](../api/models.html#botorch.models.deterministic.PosteriorMeanModel)

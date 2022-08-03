@@ -67,7 +67,7 @@ NEG_INF = -(torch.tensor(float("inf")))
 
 
 class ApproximateGPyTorchModel(GPyTorchModel):
-    """
+    r"""
     Botorch wrapper class for various (variational) approximate GP models in
     GPyTorch.
 
