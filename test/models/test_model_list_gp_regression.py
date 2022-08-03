@@ -8,6 +8,8 @@ import itertools
 import warnings
 
 import torch
+from botorch.sampling import SobolQMCNormalSampler
+from botorch.utils import manual_seed
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import OptimizationWarning
@@ -312,3 +314,31 @@ class TestModelListGP(BotorchTestCase):
             self.assertIsInstance(fm_i, SingleTaskGP)
             self.assertEqual(fm_i.train_inputs[0].shape, torch.Size([2, 8, 2]))
             self.assertEqual(fm_i.train_targets.shape, torch.Size([2, 8]))
+
+    def test_fantasize_with_outcome_transform(self):
+        with manual_seed(1234):
+            X = torch.rand(20, 1)
+
+        Y = -100 * X
+
+        # GP model
+        for outcome_transform in [Standardize(m=1), None]:
+            with self.subTest(outcome_transform=outcome_transform):
+                models_1d = [
+                    SingleTaskGP(
+                        X, Y[:, i].unsqueeze(-1), outcome_transform=outcome_transform
+                    )
+                    for i in range(Y.shape[-1])
+                ]
+                model = ModelListGP(*models_1d)
+                model.eval()
+
+                # Fantasy models
+                target_x = torch.tensor([[0.5]])
+                # TODO: make this more efficient
+                sampler = SobolQMCNormalSampler(1000, seed=9876)
+                fantasy_models = model.fantasize(target_x, sampler=sampler)
+
+                orig_mean = model.posterior(target_x).mean.item()
+                fantasy_mean = fantasy_models.posterior(target_x).mean.mean().item()
+                self.assertAlmostEqual(orig_mean, fantasy_mean, delta=2e-3)

@@ -51,6 +51,7 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
         """
         super().__init__(*gp_models)
 
+    # TODO: annotated return type doesn't match docstring
     def condition_on_observations(
         self, X: List[Tensor], Y: Tensor, **kwargs: Any
     ) -> ModelListGP:
@@ -83,6 +84,11 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
                 f"{self.num_outputs} outputs."
             )
         targets = [Y[..., i] for i in range(Y.shape[-1])]
+        for i, model in enumerate(self.models):
+            if hasattr(model, "outcome_transform"):
+                noise = kwargs.get("noise")
+                targets[i], noise = model.outcome_transform(targets[i], noise)
+
         # This should never trigger, posterior call would fail.
         assert len(targets) == len(X)
         if "noise" in kwargs:
