@@ -51,7 +51,6 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
         """
         super().__init__(*gp_models)
 
-    # TODO: annotated return type doesn't match docstring
     def condition_on_observations(
         self, X: List[Tensor], Y: Tensor, **kwargs: Any
     ) -> ModelListGP:
@@ -69,9 +68,11 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
                 standard broadcasting semantics. If `Y` has fewer batch dimensions
                 than `X`, its is assumed that the missing batch dimensions are
                 the same for all `Y`.
+            kwargs: Keyword arguments passed to
+                `IndependentModelList.get_fantasy_model`.
 
         Returns:
-            A `ModelListGPyTorchModel` representing the original model
+            A `ModelListGP` representing the original model
             conditioned on the new observations `(X, Y)` (and possibly noise
             observations passed in via kwargs). Here the `i`-th model has
             `n_i + n'` training examples, where the `n'` training examples have

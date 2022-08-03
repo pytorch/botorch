@@ -8,8 +8,6 @@ import itertools
 import warnings
 
 import torch
-from botorch.sampling import SobolQMCNormalSampler
-from botorch.utils import manual_seed
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import OptimizationWarning
@@ -315,30 +313,68 @@ class TestModelListGP(BotorchTestCase):
             self.assertEqual(fm_i.train_inputs[0].shape, torch.Size([2, 8, 2]))
             self.assertEqual(fm_i.train_targets.shape, torch.Size([2, 8]))
 
-    def test_fantasize_with_outcome_transform(self):
-        with manual_seed(1234):
-            X = torch.rand(20, 1)
+    def test_fantasize_with_outcome_transform(self) -> None:
+        """
+        Check that fantasized posteriors from a `ModelListGP` with transforms
+        relate in a predictable way to posteriors from a `ModelListGP` when the
+        outputs have been manually transformed.
 
-        Y = -100 * X
+        We are essentially fitting "Y = 10 * X" with Y standardized.
+        - In the original space, we should predict a mean of ~5 at 0.5
+        - In the standardized space, we should predict ~0.
+        - If we untransform the result in the standardized space, we should recover
+        the prediction of ~5 we would have gotten in the original space.
+        """
+        X = torch.linspace(0, 1, 20)[:, None]
+        Y = 10 * torch.linspace(0, 1, 20)[:, None]
+        target_x = torch.tensor([[0.5]])
 
-        # GP model
-        for outcome_transform in [Standardize(m=1), None]:
-            with self.subTest(outcome_transform=outcome_transform):
-                models_1d = [
-                    SingleTaskGP(
-                        X, Y[:, i].unsqueeze(-1), outcome_transform=outcome_transform
-                    )
-                    for i in range(Y.shape[-1])
-                ]
-                model = ModelListGP(*models_1d)
-                model.eval()
+        model_with_transform = ModelListGP(
+            SingleTaskGP(X, Y, outcome_transform=Standardize(m=1))
+        )
+        y_standardized, _ = Standardize(m=1).forward(Y)
+        model_manually_transformed = ModelListGP(SingleTaskGP(X, y_standardized))
 
-                # Fantasy models
-                target_x = torch.tensor([[0.5]])
-                # TODO: make this more efficient
-                sampler = SobolQMCNormalSampler(1000, seed=9876)
-                fantasy_models = model.fantasize(target_x, sampler=sampler)
+        def _get_fant_mean(model: ModelListGP) -> float:
+            fant = model.fantasize(target_x, sampler=IIDNormalSampler(10, seed=0))
+            return fant.posterior(target_x).mean.mean().item()
 
-                orig_mean = model.posterior(target_x).mean.item()
-                fantasy_mean = fantasy_models.posterior(target_x).mean.mean().item()
-                self.assertAlmostEqual(orig_mean, fantasy_mean, delta=2e-3)
+        outcome_transform = model_with_transform.models[0].outcome_transform
+        fant_mean_with_manual_transform = _get_fant_mean(
+            model_manually_transformed
+        )  # ~0
+        manually_rescaled_mean, _ = outcome_transform.untransform(
+            fant_mean_with_manual_transform
+        )  # ~0.5
+        fant_mean_with_native_transform = _get_fant_mean(model_with_transform)  # 0.5
+
+        self.assertAlmostEqual(
+            manually_rescaled_mean.item(),
+            fant_mean_with_native_transform,
+        )
+
+    def test_fantasize_with_outcome_transform_fixed_noise(self) -> None:
+        """
+        Test that 'fantasize' on average recovers the true mean fn.
+
+        This uses a setup as close as possible to deterministic (low fixed
+        noise, fantasizing at points already seen).
+        """
+        n_fants = 20
+        y_at_low_x = 1.0
+        y_at_high_x = -0.3
+
+        X = torch.tensor([0.0, 1.0])[:, None]
+        Y = torch.tensor([y_at_low_x, y_at_high_x])[:, None]
+        yvar = torch.full_like(Y, 1e-4)
+        model = ModelListGP(
+            FixedNoiseGP(X, Y, yvar, outcome_transform=Standardize(m=1))
+        )
+
+        model.posterior(torch.zeros((1, 1)))
+
+        fant = model.fantasize(X, sampler=IIDNormalSampler(n_fants, seed=0), noise=yvar)
+
+        fant_mean = fant.posterior(X).mean.mean(0).detach().numpy().flatten()
+        self.assertAlmostEqual(fant_mean[0], y_at_low_x, delta=5e-4)
+        self.assertAlmostEqual(fant_mean[1], y_at_high_x, delta=1e-3)
