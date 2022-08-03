@@ -18,7 +18,7 @@ module, BoTorch’s Monte Carlo-based acquisition functions are compatible with
 any model that conforms to the `Model` interface, whether user-implemented or provided.
 
 Under the hood, BoTorch models are PyTorch `Modules` that implement
-the light-weight [`Model`](../api/models.html#model-apis) interface. 
+the light-weight [`Model`](../api/models.html#model-apis) interface.
 When working with GPs, [`GPyTorchModel`](../api/models.html#module-botorch.models.gp_regression)
 provides a base class for conveniently wrapping GPyTorch models.
 
@@ -67,7 +67,7 @@ not been modeled. Use these models if you have estimates of the noise in
 your observations (e.g. observations may be averages over individual samples
 in which case you would provide the mean as observation and the standard
 error of the mean as the noise estimate), or if you know your observations are
-noiseless (by passing a zero noise level). 
+noiseless (by passing a zero noise level).
 
 * *Heteroskedastic*: Noise is provided as an input and is modeled to allow for
 predicting noise out-of-sample. Models like `HeteroskedasticSingleTaskGP`
