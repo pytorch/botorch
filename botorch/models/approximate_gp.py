@@ -67,6 +67,14 @@ NEG_INF = -(torch.tensor(float("inf")))
 
 
 class ApproximateGPyTorchModel(GPyTorchModel):
+    r"""
+    Botorch wrapper class for various (variational) approximate GP models in
+    GPyTorch.
+
+    This can either include stochastic variational GPs (SVGPs) or
+    variational implementations of weight space approximate GPs.
+    """
+
     def __init__(
         self,
         model: Optional[ApproximateGP] = None,
@@ -76,14 +84,10 @@ class ApproximateGPyTorchModel(GPyTorchModel):
         **kwargs,
     ) -> None:
         r"""
-        Botorch wrapper class for various (variational) approximate GP models in
-        gpytorch. This can either include stochastic variational GPs (SVGPs) or
-        variational implementations of weight space approximate GPs.
-
         Args:
             model: Instance of gpytorch.approximate GP models. If omitted,
                 constructs a `_SingleTaskVariationalGP`.
-            likelihood: Instance of a GPyYorch likelihood. If omitted, uses a
+            likelihood: Instance of a GPyTorch likelihood. If omitted, uses a
                 either a `GaussianLikelihood` (if `num_outputs=1`) or a
                 `MultitaskGaussianLikelihood`(if `num_outputs>1`).
             num_outputs: Number of outputs expected for the GP model.
