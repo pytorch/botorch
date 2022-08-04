@@ -17,7 +17,7 @@ from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.models.transforms import Standardize
 from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
-from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.sampling.samplers import IIDNormalSampler
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -358,11 +358,15 @@ class TestModelListGP(BotorchTestCase):
         Test that 'fantasize' on average recovers the true mean fn.
 
         This uses a setup as close as possible to deterministic (low fixed
-        noise, fantasizing at points already seen).
+        noise, fantasizing at points already seen). Even so, numerical results
+        can vary on different machines (not on different runs on the same
+        machine.) So tolerances need to be pretty loose.
+        This is okay because if the transform were not being
+        applied, the error would be very large (~100).
         """
         n_fants = 20
-        y_at_low_x = 1.0
-        y_at_high_x = -0.3
+        y_at_low_x = 100.0
+        y_at_high_x = -40.0
 
         X = torch.tensor([[0.0], [1.0]])
         Y = torch.tensor([[y_at_low_x], [y_at_high_x]])
@@ -373,10 +377,9 @@ class TestModelListGP(BotorchTestCase):
 
         model.posterior(torch.zeros((1, 1)))
 
-        fant = model.fantasize(
-            X, sampler=SobolQMCNormalSampler(n_fants, seed=0), noise=yvar
-        )
+        fant = model.fantasize(X, sampler=IIDNormalSampler(n_fants, seed=0), noise=yvar)
 
         fant_mean = fant.posterior(X).mean.mean(0).flatten().tolist()
-        self.assertAlmostEqual(fant_mean[0], y_at_low_x, delta=5e-4)
-        self.assertAlmostEqual(fant_mean[1], y_at_high_x, delta=6e-4)
+        self.assertAlmostEqual(fant_mean[0], y_at_low_x, delta=1)
+        # delta=1 is a 1% error (since y_at_low_x = 100)
+        self.assertAlmostEqual(fant_mean[1], y_at_high_x, delta=1)
