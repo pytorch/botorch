@@ -201,9 +201,10 @@ class AffineDeterministicModel(DeterministicModel):
 
 
 class PosteriorMeanModel(DeterministicModel):
-    def __init__(self, model: Model) -> None:
-        r"""A deterministic model that always return the posterior mean.
+    """A deterministic model that always returns the posterior mean."""
 
+    def __init__(self, model: Model) -> None:
+        r"""
         Args:
             model: The base model.
         """
@@ -215,15 +216,18 @@ class PosteriorMeanModel(DeterministicModel):
 
 
 class FixedSingleSampleModel(DeterministicModel):
+    r"""
+    A deterministic model defined by a single sample `w`.
+
+    Given a base model `f` and a fixed sample `w`, the model always outputs
+
+        y = f_mean(x) + f_stddev(x) * w
+
+    We assume the outcomes are uncorrelated here.
+    """
+
     def __init__(self, model: Model, w: Optional[Tensor] = None) -> None:
-        r"""A deterministic model defined by a single sample w.
-
-        Given a base model f and a fixed sample w, the model always outputs
-
-            y = f_mean(x) + f_stddev(x) * w
-
-        We assume the outcomes are uncorrelated here.
-
+        r"""
         Args:
             model: The base model.
             w: A 1-d tensor with length model.num_outputs.
