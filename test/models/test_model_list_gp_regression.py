@@ -364,8 +364,8 @@ class TestModelListGP(BotorchTestCase):
         y_at_low_x = 1.0
         y_at_high_x = -0.3
 
-        X = torch.tensor([0.0, 1.0])[:, None]
-        Y = torch.tensor([y_at_low_x, y_at_high_x])[:, None]
+        X = torch.tensor([[0.0], [1.0]])
+        Y = torch.tensor([[y_at_low_x], [y_at_high_x]])
         yvar = torch.full_like(Y, 1e-4)
         model = ModelListGP(
             FixedNoiseGP(X, Y, yvar, outcome_transform=Standardize(m=1))
@@ -375,6 +375,6 @@ class TestModelListGP(BotorchTestCase):
 
         fant = model.fantasize(X, sampler=IIDNormalSampler(n_fants, seed=0), noise=yvar)
 
-        fant_mean = fant.posterior(X).mean.mean(0).detach().numpy().flatten()
+        fant_mean = fant.posterior(X).mean.mean(0).flatten().tolist()
         self.assertAlmostEqual(fant_mean[0], y_at_low_x, delta=5e-4)
         self.assertAlmostEqual(fant_mean[1], y_at_high_x, delta=1e-3)
