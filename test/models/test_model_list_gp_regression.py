@@ -17,7 +17,7 @@ from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.models.transforms import Standardize
 from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
-from botorch.sampling.samplers import IIDNormalSampler
+from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -373,8 +373,10 @@ class TestModelListGP(BotorchTestCase):
 
         model.posterior(torch.zeros((1, 1)))
 
-        fant = model.fantasize(X, sampler=IIDNormalSampler(n_fants, seed=0), noise=yvar)
+        fant = model.fantasize(
+            X, sampler=SobolQMCNormalSampler(n_fants, seed=0), noise=yvar
+        )
 
         fant_mean = fant.posterior(X).mean.mean(0).flatten().tolist()
         self.assertAlmostEqual(fant_mean[0], y_at_low_x, delta=5e-4)
-        self.assertAlmostEqual(fant_mean[1], y_at_high_x, delta=1e-3)
+        self.assertAlmostEqual(fant_mean[1], y_at_high_x, delta=6e-4)
