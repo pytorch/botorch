@@ -118,7 +118,7 @@ class RandomFourierFeatures(Module):
         Args:
             kernel: The GP kernel.
             input_dim: The input dimension to the GP kernel.
-            num_rff_features: The number of fourier features.
+            num_rff_features: The number of Fourier features.
             sample_shape: The shape of a single sample. For a single-element
                 `torch.Size` object, this is simply the number of RFF draws.
         """
@@ -134,9 +134,8 @@ class RandomFourierFeatures(Module):
             outputscale = kernel.outputscale.detach().clone()
         if not isinstance(base_kernel, (MaternKernel, RBFKernel)):
             raise NotImplementedError("Only Matern and RBF kernels are supported.")
-        elif len(base_kernel.batch_shape) > 0:
-            raise NotImplementedError("Batched kernels are not supported.")
         super().__init__()
+        self.kernel_batch_shape = base_kernel.batch_shape
         self.register_buffer("outputscale", outputscale)
 
         self.register_buffer("lengthscale", base_kernel.lengthscale.detach().clone())
@@ -157,6 +156,7 @@ class RandomFourierFeatures(Module):
             * pi
             * torch.rand(
                 *self.sample_shape,
+                *self.kernel_batch_shape,
                 num_rff_features,
                 dtype=base_kernel.lengthscale.dtype,
                 device=base_kernel.lengthscale.device,
@@ -175,14 +175,16 @@ class RandomFourierFeatures(Module):
         Args:
             kernel: The GP base kernel.
             input_dim: The input dimension to the GP kernel.
-            num_rff_features: The number of fourier features.
+            num_rff_features: The number of Fourier features.
             sample_shape: The sample shape of weights.
         Returns:
-            A `(sample_shape) x input_dim x num_rff_features`-dim tensor of weights
+            A tensor of weights with shape
+            `(*sample_shape, *kernel_batch_shape, input_dim, num_rff_features)`.
         """
         sample_shape = torch.Size() if sample_shape is None else sample_shape
         weights = torch.randn(
             *sample_shape,
+            *self.kernel_batch_shape,
             input_dim,
             num_rff_features,
             dtype=base_kernel.lengthscale.dtype,
@@ -197,44 +199,65 @@ class RandomFourierFeatures(Module):
         return weights
 
     def forward(self, X: Tensor) -> Tensor:
-        """
-        Get fourier basis features for the provided inputs.
-        Note that if `sample_shape` has been passed, then the rightmost
-        subset of the batch shape of the input should be `sample_shape`.
+        """Get Fourier basis features for the provided inputs.
+
+        Note that the right-most subset of the batch shape of `X` should
+        be `(sample_shape) x (kernel_batch_shape)` if using either the
+        `sample_shape` argument or a batched kernel. In other words,
+        `X` should be of shape `(added_batch_shape) x (sample_shape) x
+        (kernel_batch_shape) x n x input_dim`, where parantheses denote
+        that the given batch shape can be empty. `X` can always be
+        a tensor of shape `n x input_dim`, in which case broadcasting
+        will take care of the batch shape. This will raise a `ValueError`
+        if the batch shapes are not compatible.
 
         Args:
-            X: input tensor of shape `(batch_shape) x n x input_dim`
+            X: Input tensor of shape `(batch_shape) x n x input_dim`.
 
         Returns:
-            A Tensor of shape `(batch_shape) x n x rff`
+            A Tensor of shape `(batch_shape) x n x rff`. If `X` does not have
+            a `batch_shape`, the output `batch_shape` will be
+            `(sample_shape) x (kernel_batch_shape)`.
         """
         self._check_forward_X_shape_compatibility(X)
-        # X is of shape (batch_shape_minus_sample_shape) x (sample_shape) x n x d
-        # weights is of shape (sample_shape) x d x num_rff
+        # X is of shape (additional_batch_shape) x (sample_shape)
+        # x (kernel_batch_shape) x n x d.
+        # Weights is of shape (sample_shape) x (kernel_batch_shape) x d x num_rff.
         X_scaled = torch.div(X, self.lengthscale)
         batchmatmul = X_scaled @ self.weights
         bias = self.bias
-        # bias is of shape (sample_shape) x num_rff
-        # batchmatmul is of shape
-        # (batch_shape_minus_sample_shape) x (sample_shape) x n x num_rff
+        # Bias is of shape (sample_shape) x (kernel_batch_shape) x num_rff.
+        # Batchmatmul is of shape (additional_batch_shape) x (sample_shape)
+        # x (kernel_batch_shape) x n x num_rff.
         outputs = torch.cos(batchmatmul + bias.unsqueeze(-2))
-        return torch.sqrt(2.0 * self.outputscale / self.weights.shape[-1]) * outputs
+        # Make sure we divide at the correct (i.e., kernel's) batch dimension.
+        if len(self.kernel_batch_shape) > 0:
+            outputscale = self.outputscale.view(*self.kernel_batch_shape, 1, 1)
+        else:
+            outputscale = self.outputscale
+        return torch.sqrt(2.0 * outputscale / self.weights.shape[-1]) * outputs
 
     def _check_forward_X_shape_compatibility(self, X: Tensor) -> None:
-        len_sample_shape = len(self.sample_shape)
+        r"""Check that the `batch_shape` of X, if any, is compatible with the
+        `sample_shape` & `kernel_batch_shape`.
+        """
         full_batch_shape_X = X.shape[:-2]
         len_full_batch_shape_X = len(full_batch_shape_X)
-        num_trail_dims = len_full_batch_shape_X - len_sample_shape
-        # if there is no batch dimension, then we forward pass through every RFF sample
-        # otherwise, we check if the rightmost subset matches sample_shape
-        if (
-            len_full_batch_shape_X
-            and full_batch_shape_X[num_trail_dims:] != self.sample_shape
-        ):
-            raise ValueError(
-                "the batch shape of X is expected to follow the pattern: "
-                f"`... x {tuple(self.sample_shape)}`"
-            )
+        if len_full_batch_shape_X == 0:
+            # Non-batched X.
+            return
+        expected_batch_shape = self.sample_shape + self.kernel_batch_shape
+        # Check if they're broadcastable.
+        for b_idx in range(min(len(expected_batch_shape), len_full_batch_shape_X)):
+            neg_idx = -b_idx - 1
+            if (
+                full_batch_shape_X[neg_idx] != expected_batch_shape[neg_idx]
+                and full_batch_shape_X[neg_idx] != 1
+            ):
+                raise ValueError(
+                    "the batch shape of X is expected to follow the pattern: "
+                    f"`... x {tuple(expected_batch_shape)}`"
+                )
 
 
 def get_deterministic_model_multi_samples(
@@ -246,13 +269,13 @@ def get_deterministic_model_multi_samples(
     samples. This supports multi-output models as well.
 
     Args:
-        weights: a list of weights with `num_outputs` elements. Each weight is of
+        weights: A list of weights with `num_outputs` elements. Each weight is of
             shape `(batch_shape_input) x n_samples x num_rff_features`, where
             `(batch_shape_input)` is the batch shape of the inputs used to obtain the
             posterior weights.
-        bases: a list of RandomFourierFeatures with `num_outputs` elements. Each
+        bases: A list of `RandomFourierFeatures` with `num_outputs` elements. Each
             basis has a sample shape of `n_samples`.
-        n_samples: the number of function samples.
+        n_samples: The number of function samples.
 
     Returns:
         A batched `GenericDeterministicModel`s that batch evaluates `n_samples`
@@ -273,27 +296,8 @@ def get_deterministic_model_multi_samples(
 
 
 def get_eval_gp_sample_callable(w: Tensor, basis: RandomFourierFeatures) -> Tensor:
-    if w.ndim > 1:
-        # multiple samples
-        def _f(X):
-            # This ensures that the outermost batch dimension is the sample dimension
-            # via basis._check_forward_X_shape_compatibility.
-            phi_X = basis(X)
-            # X.shape == (batch_shape_X_minus_n_samples) x n_samples x n x d
-            # phi_X.shape == (batch_shape_X_minus_n_samples) x n_samples x n x num_rff
-            # weights[0].shape == (batch_shape_input) x n_samples x num_rff
-            # if X doesn't have a batch shape,
-            # then phi_X.shape == n_samples x n x num_rff
-            pending_dims = [1] * max(len(X.shape[:-2]) - 1, 0)
-            # the below view operation is inserting batch_shape_X_minus_n_samples
-            # dimensions in w to enable broadcasted matmul.
-            w_unsqueezed = w.view(*w.shape[:-2], *pending_dims, *w.shape[-2:], 1)
-            return phi_X @ w_unsqueezed
-
-    else:
-        # single sample
-        def _f(X):
-            return (basis(X) @ w).unsqueeze(-1)
+    def _f(X):
+        return basis(X) @ w.unsqueeze(-1)
 
     return _f
 
@@ -304,15 +308,19 @@ def get_deterministic_model(
     """Get a deterministic model using the provided weights and bases for each output.
 
     Args:
-        weights: a list of weights with `m` elements
-        bases: a list of RandomFourierFeatures with `m` elements.
+        weights: A list of weights with `m` elements.
+        bases: A list of `RandomFourierFeatures` with `m` elements.
 
     Returns:
         A deterministic model.
     """
+    callables = [
+        get_eval_gp_sample_callable(w=w, basis=basis)
+        for w, basis in zip(weights, bases)
+    ]
 
     def evaluate_gp_sample(X):
-        return torch.stack([basis(X) @ w for w, basis in zip(weights, bases)], dim=-1)
+        return torch.cat([c(X) for c in callables], dim=-1)
 
     return GenericDeterministicModel(f=evaluate_gp_sample, num_outputs=len(weights))
 
@@ -321,12 +329,12 @@ def get_deterministic_model_list(
     weights: List[Tensor],
     bases: List[RandomFourierFeatures],
 ) -> ModelList:
-    """Get a deterministic model list using the provided weights and bases for
-    each output.
+    """Get a deterministic model list using the provided weights and bases
+    for each output.
 
     Args:
-        weights: a list of weights with `m` elements
-        bases: a list of RandomFourierFeatures with `m` elements.
+        weights: A list of weights with `m` elements.
+        bases: A list of `RandomFourierFeatures` with `m` elements.
 
     Returns:
         A deterministic model.
@@ -341,13 +349,15 @@ def get_deterministic_model_list(
     return ModelList(*samples)
 
 
-def get_weights_posterior(X: Tensor, y: Tensor, sigma_sq: float) -> MultivariateNormal:
+def get_weights_posterior(X: Tensor, y: Tensor, sigma_sq: Tensor) -> MultivariateNormal:
     r"""Sample bayesian linear regression weights.
 
     Args:
-        X: a `(batch_shape) x n x num_rff_features`-dim tensor of inputs
-        y: a `(batch_shape) x n`-dim tensor of outputs
-        sigma_sq: the noise variance
+        X: A tensor of inputs with shape `(*batch_shape, n num_rff_features)`.
+        y: A tensor of outcomes with shape `(*batch_shape, n)`.
+        sigma_sq: The likelihood noise variance. This should be a tensor with
+            shape `kernel_batch_shape, 1, 1` if using a batched kernel.
+            Otherwise, it should be a scalar tensor.
 
     Returns:
         The posterior distribution over the weights.
@@ -430,7 +440,7 @@ def get_gp_samples(
 
         octfs.append(_octf)
         intfs.append(_intf)
-        # get random fourier features
+        # Get random Fourier features.
         # sample_shape controls the number of iid functions.
         basis = RandomFourierFeatures(
             kernel=_model.covar_module,
@@ -439,29 +449,16 @@ def get_gp_samples(
             sample_shape=torch.Size([n_samples] if n_samples > 1 else []),
         )
         bases.append(basis)
-        # TODO: when batched kernels are supported in RandomFourierFeatures,
-        # the following code can be uncommented.
-        # if train_X.ndim > 2:
-        #    batch_shape_train_X = train_X.shape[:-2]
-        #    dataset_shape = train_X.shape[-2:]
-        #    train_X = train_X.unsqueeze(-3).expand(
-        #        *batch_shape_train_X, n_samples, *dataset_shape
-        #    )
-        #    train_targets = train_targets.unsqueeze(-2).expand(
-        #        *batch_shape_train_X, n_samples, dataset_shape[0]
-        #    )
         phi_X = basis(train_X)
-        # Sample weights from bayesian linear model
-        # 1. When inputs are not batched, train_X.shape == (n, d)
-        # weights.sample().shape == (n_samples, num_rff_features)
-        # 2. When inputs are batched, train_X.shape == (batch_shape_input, n, d)
-        # This is expanded to (batch_shape_input, n_samples, n, d)
-        # to maintain compatibility with RFF forward semantics
-        # weights.sample().shape == (batch_shape_input, n_samples, num_rff_features)
+        # Sample weights from bayesian linear model.
+        # weights.sample().shape == (n_samples, batch_shape_input, num_rff_features)
+        sigma_sq = _model.likelihood.noise
+        if len(basis.kernel_batch_shape) > 0:
+            sigma_sq = sigma_sq.unsqueeze(-2)
         mvn = get_weights_posterior(
             X=phi_X,
             y=train_targets,
-            sigma_sq=_model.likelihood.noise.mean().item(),
+            sigma_sq=sigma_sq,
         )
         weights.append(mvn.sample())
 
