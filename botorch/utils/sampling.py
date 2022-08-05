@@ -672,9 +672,6 @@ class HitAndRunPolytopeSampler(PolytopeSampler):
                 automatically by solving a Linear Program.
             n_burnin: The number of burn in samples.
         """
-        print(bounds)
-        print(equality_constraints)
-        print(inequality_constraints)
         super().__init__(
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
