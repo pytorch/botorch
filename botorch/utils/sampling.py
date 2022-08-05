@@ -845,10 +845,14 @@ def normalize_linear_constraints(
     """
 
     new_constraints = []
-    for c in constraints:
-        lower, upper = bounds[:, index]
+    for index, coefficient, rhs in constraints:
+        # the index is cast to int64 since in some tests the index is
+        # given as a indexing incompatible dtype
+        lower, upper = bounds[:, index.to(dtype=torch.int64)]
         s = upper - lower
-        new_constraints.append((c[0], s * c[1], float(c[2] - torch.sum(c[1] * lower))))
+        new_constraints.append(
+            (index, s * coefficient, (rhs - torch.dot(coefficient, lower)).item())
+        )
     return new_constraints
 
 
@@ -860,7 +864,6 @@ def get_polytope_samples(
     seed: Optional[int] = None,
     thinning: int = 32,
     n_burnin: int = 10_000,
-    normalize_bounds: bool = True,
 ) -> Tensor:
     r"""Sample from polytope defined by box bounds and (in)equality constraints.
 
@@ -881,9 +884,6 @@ def get_polytope_samples(
         seed: The random seed.
         thinning: The amount of thinning.
         n_burnin: The number of burn-in samples for the Markov chain sampler.
-        normalize_bounds: transform the constraints to the [0,1] bounds
-            representing the unit cube, run the sampling and then transform
-            back to the original bounds. Defaults to True.
 
     Returns:
         A `n x d`-dim tensor of samples.
@@ -891,11 +891,11 @@ def get_polytope_samples(
     # create tensors representing linear inequality constraints
     # of the form Ax >= b.
     if inequality_constraints:
+        # normalize_linear_constraints is called to solve this issue:
+        # https://github.com/pytorch/botorch/issues/1225
         A, b = sparse_to_dense_constraints(
             d=bounds.shape[-1],
-            constraints=normalize_linear_constraints(bounds, inequality_constraints)
-            if normalize_bounds
-            else inequality_constraints,
+            constraints=normalize_linear_constraints(bounds, inequality_constraints),
         )
         # Note the inequality constraints are of the form Ax >= b,
         # but PolytopeSampler expects inequality constraints of the
@@ -904,28 +904,24 @@ def get_polytope_samples(
     else:
         dense_inequality_constraints = None
     if equality_constraints:
+        # normalize_linear_constraints is called to solve this issue:
+        # https://github.com/pytorch/botorch/issues/1225
         dense_equality_constraints = sparse_to_dense_constraints(
             d=bounds.shape[-1],
-            constraints=normalize_linear_constraints(bounds, equality_constraints)
-            if normalize_bounds
-            else equality_constraints,
+            constraints=normalize_linear_constraints(bounds, equality_constraints),
         )
     else:
         dense_equality_constraints = None
+    normalized_bounds = torch.zeros_like(bounds)
+    normalized_bounds[1, :] = 1.0
     polytope_sampler = HitAndRunPolytopeSampler(
+        bounds=normalized_bounds,
         inequality_constraints=dense_inequality_constraints,
-        bounds=torch.tensor(
-            [list(torch.zeros(bounds.shape[-1])), list(torch.ones(bounds.shape[-1]))]
-        ).to(bounds)
-        if normalize_bounds
-        else bounds,
         equality_constraints=dense_equality_constraints,
         n_burnin=n_burnin,
     )
     samples = polytope_sampler.draw(n=n * thinning, seed=seed)[::thinning]
-    return (
-        bounds[0] + samples * (bounds[1] - bounds[0]) if normalize_bounds else samples
-    )
+    return bounds[0] + samples * (bounds[1] - bounds[0])
 
 
 def sparse_to_dense_constraints(

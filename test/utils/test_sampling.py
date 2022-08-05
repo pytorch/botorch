@@ -296,7 +296,7 @@ class TestSampleUtils(BotorchTestCase):
             tkwargs["dtype"] = dtype
             constraints = [
                 (
-                    torch.tensor([1, 2, 0], **tkwargs),
+                    torch.tensor([1, 2, 0], dtype=torch.int64, device=self.device),
                     torch.tensor([1.0, 1.0, 1.0], **tkwargs),
                     1.0,
                 )
@@ -341,14 +341,14 @@ class TestSampleUtils(BotorchTestCase):
             bounds[1] = 1
             inequality_constraints = [
                 (
-                    torch.tensor([3], **tkwargs),
+                    torch.tensor([3], dtype=torch.int64, device=self.device),
                     torch.tensor([-4], **tkwargs),
                     -3,
                 )
             ]
             equality_constraints = [
                 (
-                    torch.tensor([0], **tkwargs),
+                    torch.tensor([0], dtype=torch.int64, device=self.device),
                     torch.tensor([1], **tkwargs),
                     0.5,
                 )
@@ -356,68 +356,64 @@ class TestSampleUtils(BotorchTestCase):
             dense_equality_constraints = sparse_to_dense_constraints(
                 d=4, constraints=equality_constraints
             )
-            for normalize_bounds in [True, False]:
-                with manual_seed(0):
-                    samps = get_polytope_samples(
-                        n=5,
-                        bounds=bounds,
-                        inequality_constraints=inequality_constraints,
-                        equality_constraints=equality_constraints,
-                        seed=0,
-                        thinning=3,
-                        n_burnin=2,
-                        normalize_bounds=normalize_bounds,
-                    )
-                (A, b) = sparse_to_dense_constraints(
-                    d=4, constraints=inequality_constraints
+            with manual_seed(0):
+                samps = get_polytope_samples(
+                    n=5,
+                    bounds=bounds,
+                    inequality_constraints=inequality_constraints,
+                    equality_constraints=equality_constraints,
+                    seed=0,
+                    thinning=3,
+                    n_burnin=2,
                 )
-                dense_inequality_constraints = (-A, -b)
-                with manual_seed(0):
-                    expected_samps = HitAndRunPolytopeSampler(
-                        bounds=bounds,
-                        inequality_constraints=dense_inequality_constraints,
-                        equality_constraints=dense_equality_constraints,
-                        n_burnin=2,
-                    ).draw(15, seed=0)[::3]
-                self.assertTrue(torch.equal(samps, expected_samps))
+            (A, b) = sparse_to_dense_constraints(
+                d=4, constraints=inequality_constraints
+            )
+            dense_inequality_constraints = (-A, -b)
+            with manual_seed(0):
+                expected_samps = HitAndRunPolytopeSampler(
+                    bounds=bounds,
+                    inequality_constraints=dense_inequality_constraints,
+                    equality_constraints=dense_equality_constraints,
+                    n_burnin=2,
+                ).draw(15, seed=0)[::3]
+            self.assertTrue(torch.equal(samps, expected_samps))
 
-                # test no equality constraints
-                with manual_seed(0):
-                    samps = get_polytope_samples(
-                        n=5,
-                        bounds=bounds,
-                        inequality_constraints=inequality_constraints,
-                        seed=0,
-                        thinning=3,
-                        n_burnin=2,
-                        normalize_bounds=normalize_bounds,
-                    )
-                with manual_seed(0):
-                    expected_samps = HitAndRunPolytopeSampler(
-                        bounds=bounds,
-                        inequality_constraints=dense_inequality_constraints,
-                        n_burnin=2,
-                    ).draw(15, seed=0)[::3]
-                self.assertTrue(torch.equal(samps, expected_samps))
+            # test no equality constraints
+            with manual_seed(0):
+                samps = get_polytope_samples(
+                    n=5,
+                    bounds=bounds,
+                    inequality_constraints=inequality_constraints,
+                    seed=0,
+                    thinning=3,
+                    n_burnin=2,
+                )
+            with manual_seed(0):
+                expected_samps = HitAndRunPolytopeSampler(
+                    bounds=bounds,
+                    inequality_constraints=dense_inequality_constraints,
+                    n_burnin=2,
+                ).draw(15, seed=0)[::3]
+            self.assertTrue(torch.equal(samps, expected_samps))
 
-                # test no inequality constraints
-                with manual_seed(0):
-                    samps = get_polytope_samples(
-                        n=5,
-                        bounds=bounds,
-                        equality_constraints=equality_constraints,
-                        seed=0,
-                        thinning=3,
-                        n_burnin=2,
-                        normalize_bounds=normalize_bounds,
-                    )
-                with manual_seed(0):
-                    expected_samps = HitAndRunPolytopeSampler(
-                        bounds=bounds,
-                        equality_constraints=dense_equality_constraints,
-                        n_burnin=2,
-                    ).draw(15, seed=0)[::3]
-                self.assertTrue(torch.equal(samps, expected_samps))
+            # test no inequality constraints
+            with manual_seed(0):
+                samps = get_polytope_samples(
+                    n=5,
+                    bounds=bounds,
+                    equality_constraints=equality_constraints,
+                    seed=0,
+                    thinning=3,
+                    n_burnin=2,
+                )
+            with manual_seed(0):
+                expected_samps = HitAndRunPolytopeSampler(
+                    bounds=bounds,
+                    equality_constraints=dense_equality_constraints,
+                    n_burnin=2,
+                ).draw(15, seed=0)[::3]
+            self.assertTrue(torch.equal(samps, expected_samps))
 
 
 class PolytopeSamplerTestBase:
