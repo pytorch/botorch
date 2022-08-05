@@ -846,8 +846,7 @@ def normalize_linear_constraints(
 
     new_constraints = []
     for c in constraints:
-        lower = bounds[0, c[0].to(torch.int64)]
-        upper = bounds[1, c[0].to(torch.int64)]
+        lower, upper = bounds[:, index]
         s = upper - lower
         new_constraints.append((c[0], s * c[1], float(c[2] - torch.sum(c[1] * lower))))
     return new_constraints
