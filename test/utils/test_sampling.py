@@ -310,7 +310,7 @@ class TestSampleUtils(BotorchTestCase):
                 torch.allclose(new_constraints[0][1], expected_coefficients)
             )
             expected_rhs = 0.5
-            self.assertTrue(np.allclose(new_constraints[0][-1], expected_rhs))
+            self.assertAlmostEqual(new_constraints[0][-1], expected_rhs)
 
     def test_find_interior_point(self):
         # basic problem: 1 <= x_1 <= 2, 2 <= x_2 <= 3
