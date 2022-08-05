@@ -832,7 +832,7 @@ class DelaunayPolytopeSampler(PolytopeSampler):
 
 def normalize_linear_constraints(
     bounds: Tensor, constraints: List[Tuple[Tensor, Tensor, float]]
-):
+) -> List[Tuple[Tensor, Tensor, float]]:
     r"""Normalize linear constraints to the unit cube.
 
     Args:
