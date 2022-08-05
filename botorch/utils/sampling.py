@@ -672,6 +672,9 @@ class HitAndRunPolytopeSampler(PolytopeSampler):
                 automatically by solving a Linear Program.
             n_burnin: The number of burn in samples.
         """
+        print(bounds)
+        print(equality_constraints)
+        print(inequality_constraints)
         super().__init__(
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
@@ -847,9 +850,9 @@ def normalize_linear_constraints(
     new_constraints = []
     for c in constraints:
         lower = bounds[0, c[0].to(torch.int64)]
-        upper = bounds[1, c[1].to(torch.int64)]
+        upper = bounds[1, c[0].to(torch.int64)]
         s = upper - lower
-        new_constraints.append((c[0], s * c[1], c[2] - torch.sum(c[1] * lower)))
+        new_constraints.append((c[0], s * c[1], float(c[2] - torch.sum(c[1] * lower))))
     return new_constraints
 
 
