@@ -830,6 +830,29 @@ class DelaunayPolytopeSampler(PolytopeSampler):
         return samples
 
 
+def normalize_linear_constraints(
+    bounds: Tensor, constraints: List[Tuple[Tensor, Tensor, float]]
+):
+    r"""Normalize linear constraints to the unit cube.
+
+    Args:
+        bounds (Tensor): A `2 x d`-dim tensor containing the box bounds.
+        constraints (List[Tuple[Tensor, Tensor, float]]): A list of
+            tuples (indices, coefficients, rhs), with each tuple encoding
+            an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs` or
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
+    """
+
+    new_constraints = []
+    for c in constraints:
+        lower = bounds[0, c[0].to(torch.int64)]
+        upper = bounds[1, c[1].to(torch.int64)]
+        s = upper - lower
+        new_constraints.append((c[0], s * c[1], c[2] - torch.sum(c[1] * lower)))
+    return new_constraints
+
+
 def get_polytope_samples(
     n: int,
     bounds: Tensor,
@@ -838,6 +861,7 @@ def get_polytope_samples(
     seed: Optional[int] = None,
     thinning: int = 32,
     n_burnin: int = 10_000,
+    normalize_bounds: bool = True,
 ) -> Tensor:
     r"""Sample from polytope defined by box bounds and (in)equality constraints.
 
@@ -858,6 +882,9 @@ def get_polytope_samples(
         seed: The random seed.
         thinning: The amount of thinning.
         n_burnin: The number of burn-in samples for the Markov chain sampler.
+        normalize_bounds: transform the constraints to the [0,1] bounds
+            representing the unit cube, run the sampling and then transform
+            back to the original bounds. Defaults to True.
 
     Returns:
         A `n x d`-dim tensor of samples.
@@ -867,7 +894,9 @@ def get_polytope_samples(
     if inequality_constraints:
         A, b = sparse_to_dense_constraints(
             d=bounds.shape[-1],
-            constraints=inequality_constraints,
+            constraints=normalize_linear_constraints(bounds, inequality_constraints)
+            if normalize_bounds
+            else inequality_constraints,
         )
         # Note the inequality constraints are of the form Ax >= b,
         # but PolytopeSampler expects inequality constraints of the
@@ -878,17 +907,26 @@ def get_polytope_samples(
     if equality_constraints:
         dense_equality_constraints = sparse_to_dense_constraints(
             d=bounds.shape[-1],
-            constraints=equality_constraints,
+            constraints=normalize_linear_constraints(bounds, equality_constraints)
+            if normalize_bounds
+            else equality_constraints,
         )
     else:
         dense_equality_constraints = None
     polytope_sampler = HitAndRunPolytopeSampler(
         inequality_constraints=dense_inequality_constraints,
-        bounds=bounds,
+        bounds=torch.tensor(
+            [list(torch.zeros(bounds.shape[-1])), list(torch.ones(bounds.shape[-1]))]
+        ).to(bounds)
+        if normalize_bounds
+        else bounds,
         equality_constraints=dense_equality_constraints,
         n_burnin=n_burnin,
     )
-    return polytope_sampler.draw(n=n * thinning, seed=seed)[::thinning]
+    samples = polytope_sampler.draw(n=n * thinning, seed=seed)[::thinning]
+    return (
+        bounds[0] + samples * (bounds[1] - bounds[0]) if normalize_bounds else samples
+    )
 
 
 def sparse_to_dense_constraints(
