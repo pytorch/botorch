@@ -28,11 +28,11 @@ from botorch.utils.sampling import (
     get_polytope_samples,
     HitAndRunPolytopeSampler,
     manual_seed,
+    normalize_linear_constraints,
     PolytopeSampler,
     sample_hypersphere,
     sample_simplex,
     sparse_to_dense_constraints,
-    normalize_linear_constraints,
 )
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
