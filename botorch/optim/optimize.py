@@ -10,6 +10,8 @@ Methods for optimizing acquisition functions.
 
 from __future__ import annotations
 
+import warnings
+
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import torch
@@ -19,6 +21,7 @@ from botorch.acquisition.acquisition import (
 )
 from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
 from botorch.exceptions import InputDataError, UnsupportedError
+from botorch.exceptions.warnings import OptimizationWarning
 from botorch.generation.gen import gen_candidates_scipy
 from botorch.logging import logger
 from botorch.optim.initializers import (
@@ -192,7 +195,8 @@ def optimize_acqf(
             acq_value = acq_function(X)
         return X, acq_value
 
-    if batch_initial_conditions is None:
+    initial_conditions_provided = batch_initial_conditions is not None
+    if not initial_conditions_provided:
         if nonlinear_inequality_constraints:
             raise NotImplementedError(
                 "`batch_initial_conditions` must be given if there are non-linear "
@@ -203,6 +207,7 @@ def optimize_acqf(
                 "Must specify `raw_samples` when `batch_initial_conditions` is `None`."
             )
 
+    def _gen_initial_conditions() -> Tensor:
         ic_gen = (
             gen_one_shot_kg_initial_conditions
             if isinstance(acq_function, qKnowledgeGradient)
@@ -219,17 +224,22 @@ def optimize_acqf(
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
         )
+        return batch_initial_conditions
+
+    if not initial_conditions_provided:
+        batch_initial_conditions = _gen_initial_conditions()
 
     batch_limit: int = options.get(
         "batch_limit", num_restarts if not nonlinear_inequality_constraints else 1
     )
-    batch_candidates_list: List[Tensor] = []
-    batch_acq_values_list: List[Tensor] = []
-    batched_ics = batch_initial_conditions.split(batch_limit)
-    for i, batched_ics_ in enumerate(batched_ics):
-        # optimize using random restart optimization
-        batch_candidates_curr, batch_acq_values_curr = gen_candidates_scipy(
-            initial_conditions=batched_ics_,
+
+    def _optimize_batch_candidates() -> Tuple[Tensor, Tensor, List[Warning]]:
+        batch_candidates_list: List[Tensor] = []
+        batch_acq_values_list: List[Tensor] = []
+        batched_ics = batch_initial_conditions.split(batch_limit)
+        opt_warnings = []
+
+        scipy_kws = dict(
             acquisition_function=acq_function,
             lower_bounds=None if bounds[0].isinf().all() else bounds[0],
             upper_bounds=None if bounds[1].isinf().all() else bounds[1],
@@ -239,11 +249,57 @@ def optimize_acqf(
             nonlinear_inequality_constraints=nonlinear_inequality_constraints,
             fixed_features=fixed_features,
         )
-        batch_candidates_list.append(batch_candidates_curr)
-        batch_acq_values_list.append(batch_acq_values_curr)
-        logger.info(f"Generated candidate batch {i+1} of {len(batched_ics)}.")
-    batch_candidates = torch.cat(batch_candidates_list)
-    batch_acq_values = torch.cat(batch_acq_values_list)
+
+        for i, batched_ics_ in enumerate(batched_ics):
+            # optimize using random restart optimization
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always", category=OptimizationWarning)
+                batch_candidates_curr, batch_acq_values_curr = gen_candidates_scipy(
+                    initial_conditions=batched_ics_, **scipy_kws
+                )
+            opt_warnings += ws
+            batch_candidates_list.append(batch_candidates_curr)
+            batch_acq_values_list.append(batch_acq_values_curr)
+            logger.info(f"Generated candidate batch {i+1} of {len(batched_ics)}.")
+
+        batch_candidates = torch.cat(batch_candidates_list)
+        batch_acq_values = torch.cat(batch_acq_values_list)
+        return batch_candidates, batch_acq_values, opt_warnings
+
+    batch_candidates, batch_acq_values, ws = _optimize_batch_candidates()
+
+    optimization_warning_raised = any(
+        (issubclass(w.category, OptimizationWarning) for w in ws)
+    )
+    if optimization_warning_raised:
+        first_warn_msg = (
+            "Optimization failed in `gen_candidates_scipy` with the following "
+            f"warning(s):\n{[w.message for w in ws]}\nBecause you specified "
+            "`batch_initial_conditions`, optimization will not be retried with "
+            "new initial conditions and will proceed with the current solution."
+            " Suggested remediation: Try again with different "
+            "`batch_initial_conditions`, or don't provide `batch_initial_conditions.`"
+            if initial_conditions_provided
+            else "Optimization failed in `gen_candidates_scipy` with the following "
+            f"warning(s):\n{[w.message for w in ws]}\nTrying again with a new "
+            "set of initial conditions."
+        )
+        warnings.warn(first_warn_msg, RuntimeWarning)
+
+        if not initial_conditions_provided:
+            batch_initial_conditions = _gen_initial_conditions()
+
+            batch_candidates, batch_acq_values, ws = _optimize_batch_candidates()
+
+            optimization_warning_raised = any(
+                (issubclass(w.category, OptimizationWarning) for w in ws)
+            )
+            if optimization_warning_raised:
+                warnings.warn(
+                    "Optimization failed on the second try, after generating a "
+                    "new set of initial conditions.",
+                    RuntimeWarning,
+                )
 
     if post_processing_func is not None:
         batch_candidates = post_processing_func(batch_candidates)

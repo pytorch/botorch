@@ -23,7 +23,7 @@ from botorch.acquisition.multi_objective.monte_carlo import (
     qNoisyExpectedHypervolumeImprovement,
 )
 from botorch.exceptions import BadInitialCandidatesWarning, SamplingWarning
-from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import SingleTaskGP
 from botorch.optim import initialize_q_batch, initialize_q_batch_nonneg
@@ -338,6 +338,32 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                             self.assertTrue(
                                 torch.all(batch_initial_conditions[..., idx] == val)
                             )
+
+    def test_error_equality_constraints_with_sample_around_best(self):
+        tkwargs = {"device": self.device, "dtype": torch.double}
+        # this will give something that does not respect the constraints
+        # TODO: it would be good to have a utils function to check if the
+        # constraints are obeyed
+        with self.assertRaises(UnsupportedError) as e:
+            gen_batch_initial_conditions(
+                MockAcquisitionFunction(),
+                bounds=torch.tensor([[0, 0], [1, 1]], **tkwargs),
+                q=1,
+                num_restarts=1,
+                raw_samples=1,
+                equality_constraints=[
+                    (
+                        torch.tensor([0], **tkwargs),
+                        torch.tensor([1], **tkwargs),
+                        torch.tensor(0.5, **tkwargs),
+                    )
+                ],
+                options={"sample_around_best": True},
+            )
+        self.assertTrue(
+            "Option 'sample_around_best' is not supported when equality"
+            "constraints are present." in str(e.exception)
+        )
 
 
 class TestGenOneShotKGInitialConditions(BotorchTestCase):

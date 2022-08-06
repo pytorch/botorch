@@ -26,7 +26,7 @@ from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
 )
 from botorch.acquisition.utils import is_nonnegative
-from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.exceptions.warnings import (
     BadInitialCandidatesWarning,
     BotorchWarning,
@@ -104,6 +104,12 @@ def gen_batch_initial_conditions(
             "for generating initial conditions for optimization."
         )
     options = options or {}
+    sample_around_best = options.get("sample_around_best", False)
+    if sample_around_best and equality_constraints:
+        raise UnsupportedError(
+            "Option 'sample_around_best' is not supported when equality"
+            "constraints are present."
+        )
     seed: Optional[int] = options.get("seed")
     batch_limit: Optional[int] = options.get(
         "init_batch_limit", options.get("batch_limit")
@@ -160,7 +166,7 @@ def gen_batch_initial_conditions(
                     .cpu()
                 )
             # sample points around best
-            if options.get("sample_around_best", False):
+            if sample_around_best:
                 X_best_rnd = sample_points_around_best(
                     acq_function=acq_function,
                     n_discrete_points=n * q,
