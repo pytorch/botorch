@@ -846,9 +846,7 @@ def normalize_linear_constraints(
 
     new_constraints = []
     for index, coefficient, rhs in constraints:
-        # the index is cast to int64 since in some tests the index is
-        # given as a indexing incompatible dtype
-        lower, upper = bounds[:, index.to(dtype=torch.int64)]
+        lower, upper = bounds[:, index]
         s = upper - lower
         new_constraints.append(
             (index, s * coefficient, (rhs - torch.dot(coefficient, lower)).item())
