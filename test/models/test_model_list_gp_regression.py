@@ -312,3 +312,91 @@ class TestModelListGP(BotorchTestCase):
             self.assertIsInstance(fm_i, SingleTaskGP)
             self.assertEqual(fm_i.train_inputs[0].shape, torch.Size([2, 8, 2]))
             self.assertEqual(fm_i.train_targets.shape, torch.Size([2, 8]))
+
+    def test_fantasize_with_outcome_transform(self) -> None:
+        """
+        Check that fantasized posteriors from a `ModelListGP` with transforms
+        relate in a predictable way to posteriors from a `ModelListGP` when the
+        outputs have been manually transformed.
+
+        We are essentially fitting "Y = 10 * X" with Y standardized.
+        - In the original space, we should predict a mean of ~5 at 0.5
+        - In the standardized space, we should predict ~0.
+        - If we untransform the result in the standardized space, we should recover
+        the prediction of ~5 we would have gotten in the original space.
+        """
+
+        for dtype in [torch.float, torch.double]:
+            with self.subTest(dtype=dtype):
+                tkwargs = {"device": self.device, "dtype": dtype}
+                X = torch.linspace(0, 1, 20, **tkwargs)[:, None]
+                Y = 10 * torch.linspace(0, 1, 20, **tkwargs)[:, None]
+                target_x = torch.tensor([[0.5]], **tkwargs)
+
+                model_with_transform = ModelListGP(
+                    SingleTaskGP(X, Y, outcome_transform=Standardize(m=1))
+                )
+                y_standardized, _ = Standardize(m=1).forward(Y)
+                model_manually_transformed = ModelListGP(
+                    SingleTaskGP(X, y_standardized)
+                )
+
+                def _get_fant_mean(model: ModelListGP) -> float:
+                    fant = model.fantasize(
+                        target_x, sampler=IIDNormalSampler(10, seed=0)
+                    )
+                    return fant.posterior(target_x).mean.mean().item()
+
+                outcome_transform = model_with_transform.models[0].outcome_transform
+                # ~0
+                fant_mean_with_manual_transform = _get_fant_mean(
+                    model_manually_transformed
+                )
+                # Inexact since this is an MC test and we don't want it flaky
+                self.assertAlmostEqual(fant_mean_with_manual_transform, 0.0, delta=0.1)
+                manually_rescaled_mean, _ = outcome_transform.untransform(
+                    fant_mean_with_manual_transform
+                )
+                fant_mean_with_native_transform = _get_fant_mean(model_with_transform)
+                # Inexact since this is an MC test and we don't want it flaky
+                self.assertAlmostEqual(fant_mean_with_native_transform, 5.0, delta=0.5)
+
+                # tighter tolerance here since the models should use the same samples
+                self.assertAlmostEqual(
+                    manually_rescaled_mean.item(),
+                    fant_mean_with_native_transform,
+                    delta=1e-6,
+                )
+
+    def test_fantasize_with_outcome_transform_fixed_noise(self) -> None:
+        """
+        Test that 'fantasize' on average recovers the true mean fn.
+
+        Loose tolerance to protect against flakiness. The true mean function is
+        100 at x=0. If transforms are not properly applied, we'll get answers
+        on the order of ~1. Answers between 99 and 101 are acceptable.
+        """
+        n_fants = 20
+        y_at_low_x = 100.0
+        y_at_high_x = -40.0
+
+        for dtype in [torch.float, torch.double]:
+            with self.subTest(dtype=dtype):
+                tkwargs = {"device": self.device, "dtype": dtype}
+                X = torch.tensor([[0.0], [1.0]], **tkwargs)
+                Y = torch.tensor([[y_at_low_x], [y_at_high_x]], **tkwargs)
+                yvar = torch.full_like(Y, 1e-4)
+                model = ModelListGP(
+                    FixedNoiseGP(X, Y, yvar, outcome_transform=Standardize(m=1))
+                )
+
+                model.posterior(torch.zeros((1, 1)))
+
+                fant = model.fantasize(
+                    X, sampler=IIDNormalSampler(n_fants, seed=0), noise=yvar
+                )
+
+                fant_mean = fant.posterior(X).mean.mean(0).flatten().tolist()
+                self.assertAlmostEqual(fant_mean[0], y_at_low_x, delta=1)
+                # delta=1 is a 1% error (since y_at_low_x = 100)
+                self.assertAlmostEqual(fant_mean[1], y_at_high_x, delta=1)
