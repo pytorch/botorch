@@ -443,8 +443,8 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             "likelihood.noise_covar.raw_noise": torch.tensor(
                 [[0.0895], [0.2594]], dtype=torch.float64
             ),
-            "mean_module.constant": torch.tensor(
-                [[-0.4545], [-0.1285]], dtype=torch.float64
+            "mean_module.raw_constant": torch.tensor(
+                [-0.4545, -0.1285], dtype=torch.float64
             ),
             "covar_module.raw_outputscale": torch.tensor(
                 [1.4876, 1.4897], dtype=torch.float64

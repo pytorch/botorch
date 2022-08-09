@@ -43,7 +43,7 @@ class TestModuleToArray(BotorchTestCase):
             expected_sizes = {
                 "likelihood.noise_covar.raw_noise": torch.Size([1]),
                 "model.covar_module.raw_lengthscale": torch.Size([1, 3]),
-                "model.mean_module.constant": torch.Size([1]),
+                "model.mean_module.raw_constant": torch.Size(),
             }
             self.assertEqual(set(pdict.keys()), set(expected_sizes.keys()))
             for pname, val in pdict.items():
@@ -65,7 +65,7 @@ class TestModuleToArray(BotorchTestCase):
             mll = ExactMarginalLogLikelihood(likelihood, model)
             # test the basic case
             x, pdict, bounds = module_to_array(
-                module=mll, exclude={"model.mean_module.constant"}
+                module=mll, exclude={"model.mean_module.raw_constant"}
             )
             self.assertTrue(np.array_equal(x, np.zeros(4)))
             expected_sizes = {
@@ -98,7 +98,7 @@ class TestModuleToArray(BotorchTestCase):
             expected_sizes = {
                 "likelihood.noise_covar.raw_noise": torch.Size([1]),
                 "model.covar_module.raw_lengthscale": torch.Size([1, 3]),
-                "model.mean_module.constant": torch.Size([1]),
+                "model.mean_module.raw_constant": torch.Size(),
             }
             self.assertEqual(set(pdict.keys()), set(expected_sizes.keys()))
             for pname, val in pdict.items():
@@ -106,7 +106,10 @@ class TestModuleToArray(BotorchTestCase):
                 self.assertEqual(val.shape, expected_sizes[pname])
                 self.assertEqual(val.device.type, self.device.type)
             lower_exp = np.full_like(x, 0.1)
-            for p in ("likelihood.noise_covar.raw_noise", "model.mean_module.constant"):
+            for p in (
+                "likelihood.noise_covar.raw_noise",
+                "model.mean_module.raw_constant",
+            ):
                 lower_exp[_get_index(pdict, p)] = -np.inf
             self.assertTrue(np.equal(bounds[0], lower_exp).all())
             self.assertTrue(np.equal(bounds[1], np.full_like(x, np.inf)).all())
@@ -132,7 +135,7 @@ class TestModuleToArray(BotorchTestCase):
             expected_sizes = {
                 "likelihood.noise_covar.raw_noise": torch.Size([1]),
                 "model.covar_module.raw_lengthscale": torch.Size([1, 3]),
-                "model.mean_module.constant": torch.Size([1]),
+                "model.mean_module.raw_constant": torch.Size(),
             }
             self.assertEqual(set(pdict.keys()), set(expected_sizes.keys()))
             for pname, val in pdict.items():
@@ -140,7 +143,7 @@ class TestModuleToArray(BotorchTestCase):
                 self.assertEqual(val.shape, expected_sizes[pname])
                 self.assertEqual(val.device.type, self.device.type)
             lower_exp = np.full_like(x, 0.1)
-            lower_exp[_get_index(pdict, "model.mean_module.constant")] = -np.inf
+            lower_exp[_get_index(pdict, "model.mean_module.raw_constant")] = -np.inf
             lower_exp[_get_index(pdict, "likelihood.noise_covar.raw_noise")] = 1e-5
             self.assertTrue(np.allclose(bounds[0], lower_exp))
             self.assertTrue(np.equal(bounds[1], np.full_like(x, np.inf)).all())
@@ -178,8 +181,8 @@ class TestSetParamsWithArray(BotorchTestCase):
             )
             self.assertTrue(
                 torch.equal(
-                    z["model.mean_module.constant"],
-                    torch.tensor([5.0], device=self.device, dtype=dtype),
+                    z["model.mean_module.raw_constant"],
+                    torch.tensor(5.0, device=self.device, dtype=dtype),
                 )
             )
 

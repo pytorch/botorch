@@ -105,7 +105,7 @@ class TestFitGPyTorchModel(BotorchTestCase):
             model = mll.model
             # Make sure all of the parameters changed
             self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
-            self.assertLess(model.mean_module.constant.abs().item(), 0.1)
+            self.assertLess(model.mean_module.raw_constant.abs().item(), 0.1)
             self.assertGreater(
                 model.covar_module.base_kernel.raw_lengthscale.abs().item(), 0.1
             )
@@ -123,7 +123,7 @@ class TestFitGPyTorchModel(BotorchTestCase):
 
             model = mll.model
             self.assertGreaterEqual(model.likelihood.raw_noise.abs().item(), 1e-1)
-            self.assertLess(model.mean_module.constant.abs().item(), 0.1)
+            self.assertLess(model.mean_module.raw_constant.abs().item(), 0.1)
             self.assertGreater(
                 model.covar_module.base_kernel.raw_lengthscale.abs().item(), 0.1
             )
@@ -176,10 +176,10 @@ class TestFitGPyTorchModel(BotorchTestCase):
 
             # test excluding a parameter
             mll = self._getModel(double=double)
-            original_raw_noise = mll.model.likelihood.noise_covar.raw_noise.item()
-            original_mean_module_constant = mll.model.mean_module.constant.item()
+            orig_raw_noise = mll.model.likelihood.noise_covar.raw_noise.item()
+            orig_mean_module_raw_constant = mll.model.mean_module.raw_constant.item()
             options["exclude"] = [
-                "model.mean_module.constant",
+                "model.mean_module.raw_constant",
                 "likelihood.noise_covar.raw_noise",
             ]
             mll = fit_gpytorch_model(
@@ -188,10 +188,10 @@ class TestFitGPyTorchModel(BotorchTestCase):
             model = mll.model
             # Make excluded params did not change
             self.assertEqual(
-                model.likelihood.noise_covar.raw_noise.item(), original_raw_noise
+                model.likelihood.noise_covar.raw_noise.item(), orig_raw_noise
             )
             self.assertEqual(
-                model.mean_module.constant.item(), original_mean_module_constant
+                model.mean_module.raw_constant.item(), orig_mean_module_raw_constant
             )
             # Make sure other params did change
             self.assertGreater(
@@ -212,7 +212,7 @@ class TestFitGPyTorchModel(BotorchTestCase):
             model = mll.model
             # Make sure all of the parameters changed
             self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
-            self.assertLess(model.mean_module.constant.abs().item(), 0.1)
+            self.assertLess(model.mean_module.raw_constant.abs().item(), 0.1)
             self.assertGreater(
                 model.covar_module.base_kernel.raw_lengthscale.abs().item(), 0.1
             )

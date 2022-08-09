@@ -74,7 +74,7 @@ def _get_model(
             1.1000, **tkwargs
         ),
         "likelihood.noise_covar.noise_prior.rate": torch.tensor(0.0500, **tkwargs),
-        "mean_module.constant": torch.tensor([0.1398], **tkwargs),
+        "mean_module.raw_constant": torch.tensor(0.1398, **tkwargs),
         "covar_module.raw_outputscale": torch.tensor(0.6933, **tkwargs),
         "covar_module.base_kernel.raw_lengthscale": torch.tensor(
             [[-0.0444]], **tkwargs
@@ -111,8 +111,8 @@ def _get_model(
                 torch.tensor([0.0745], **tkwargs),
             ]
         )
-        state_dict["mean_module.constant"] = torch.stack(
-            [state_dict["mean_module.constant"], torch.tensor([0.3276], **tkwargs)]
+        state_dict["mean_module.raw_constant"] = torch.stack(
+            [state_dict["mean_module.raw_constant"], torch.tensor(0.3276, **tkwargs)]
         )
         state_dict["covar_module.raw_outputscale"] = torch.stack(
             [
@@ -134,7 +134,7 @@ def _get_model(
         state_dict["likelihood.noise_covar.raw_noise"] = torch.tensor(
             [[0.0214], [0.001]], **tkwargs
         )
-        state_dict["mean_module.constant"] = torch.tensor([[0.1398], [0.5]], **tkwargs)
+        state_dict["mean_module.raw_constant"] = torch.tensor([0.1398, 0.5], **tkwargs)
         state_dict["covar_module.raw_outputscale"] = torch.tensor(
             [0.6933, 1.0], **tkwargs
         )
@@ -153,8 +153,8 @@ def _get_model(
         state_dict["likelihood.noise_covar.raw_noise"] = torch.tensor(
             [[0.1743], [0.3132]] if multi_output else [0.1743], **tkwargs
         )
-        state_dict["mean_module.constant"] = torch.tensor(
-            [[0.2560], [0.6714]] if multi_output else [0.2555], **tkwargs
+        state_dict["mean_module.raw_constant"] = torch.tensor(
+            [0.2560, 0.6714] if multi_output else 0.2555, **tkwargs
         )
         state_dict["covar_module.raw_outputscale"] = torch.tensor(
             [2.4396, 2.6821] if multi_output else 2.4398, **tkwargs
@@ -187,15 +187,15 @@ class TestGPDraw(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             model, _, _ = _get_model(**tkwargs)
-            mean = model.mean_module.constant.detach().clone()
+            mean = model.mean_module.raw_constant.detach().clone()
             gp = GPDraw(model)
             # test initialization
             self.assertIsNone(gp.Xs)
             self.assertIsNone(gp.Ys)
             self.assertIsNotNone(gp._seed)
             # make sure model is actually deepcopied
-            model.mean_module.constant = None
-            self.assertTrue(torch.equal(gp._model.mean_module.constant, mean))
+            model.mean_module.constant = float("inf")
+            self.assertTrue(torch.equal(gp._model.mean_module.raw_constant, mean))
             # test basic functionality
             test_X1 = torch.rand(1, 1, **tkwargs, requires_grad=True)
             Y1 = gp(test_X1)
@@ -234,14 +234,14 @@ class TestGPDraw(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             model, _, _ = _get_model(**tkwargs, multi_output=True)
-            mean = model.mean_module.constant.detach().clone()
+            mean = model.mean_module.raw_constant.detach().clone()
             gp = GPDraw(model)
             # test initialization
             self.assertIsNone(gp.Xs)
             self.assertIsNone(gp.Ys)
             # make sure model is actually deepcopied
-            model.mean_module.constant = None
-            self.assertTrue(torch.equal(gp._model.mean_module.constant, mean))
+            model.mean_module.constant = float("inf")
+            self.assertTrue(torch.equal(gp._model.mean_module.raw_constant, mean))
             # test basic functionality
             test_X1 = torch.rand(1, 1, **tkwargs, requires_grad=True)
             Y1 = gp(test_X1)
