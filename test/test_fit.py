@@ -105,7 +105,7 @@ class TestFitGPyTorchModel(BotorchTestCase):
             model = mll.model
             # Make sure all of the parameters changed
             self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
-            self.assertLess(model.mean_module.constant.abs().item(), 0.1)
+            self.assertLess(model.mean_module.raw_constant.abs().item(), 0.1)
             self.assertGreater(
                 model.covar_module.base_kernel.raw_lengthscale.abs().item(), 0.1
             )
@@ -123,7 +123,7 @@ class TestFitGPyTorchModel(BotorchTestCase):
 
             model = mll.model
             self.assertGreaterEqual(model.likelihood.raw_noise.abs().item(), 1e-1)
-            self.assertLess(model.mean_module.constant.abs().item(), 0.1)
+            self.assertLess(model.mean_module.raw_constant.abs().item(), 0.1)
             self.assertGreater(
                 model.covar_module.base_kernel.raw_lengthscale.abs().item(), 0.1
             )
@@ -212,7 +212,7 @@ class TestFitGPyTorchModel(BotorchTestCase):
             model = mll.model
             # Make sure all of the parameters changed
             self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
-            self.assertLess(model.mean_module.constant.abs().item(), 0.1)
+            self.assertLess(model.mean_module.raw_constant.abs().item(), 0.1)
             self.assertGreater(
                 model.covar_module.base_kernel.raw_lengthscale.abs().item(), 0.1
             )

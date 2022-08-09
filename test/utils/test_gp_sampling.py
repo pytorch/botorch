@@ -195,7 +195,7 @@ class TestGPDraw(BotorchTestCase):
             self.assertIsNotNone(gp._seed)
             # make sure model is actually deepcopied
             model.mean_module.constant = float("inf")
-            self.assertTrue(torch.equal(gp._model.mean_module.constant, mean))
+            self.assertTrue(torch.equal(gp._model.mean_module.raw_constant, mean))
             # test basic functionality
             test_X1 = torch.rand(1, 1, **tkwargs, requires_grad=True)
             Y1 = gp(test_X1)
@@ -234,14 +234,14 @@ class TestGPDraw(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             model, _, _ = _get_model(**tkwargs, multi_output=True)
-            mean = model.mean_module.constant.detach().clone()
+            mean = model.mean_module.raw_constant.detach().clone()
             gp = GPDraw(model)
             # test initialization
             self.assertIsNone(gp.Xs)
             self.assertIsNone(gp.Ys)
             # make sure model is actually deepcopied
             model.mean_module.constant = float("inf")
-            self.assertTrue(torch.equal(gp._model.mean_module.constant, mean))
+            self.assertTrue(torch.equal(gp._model.mean_module.raw_constant, mean))
             # test basic functionality
             test_X1 = torch.rand(1, 1, **tkwargs, requires_grad=True)
             Y1 = gp(test_X1)

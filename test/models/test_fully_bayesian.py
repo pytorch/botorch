@@ -190,7 +190,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 model, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
             )
             self.assertIsInstance(model.mean_module, ConstantMean)
-            self.assertEqual(model.mean_module.constant.shape, torch.Size([3]))
+            self.assertEqual(model.mean_module.raw_constant.shape, torch.Size([3]))
             self.assertIsInstance(model.covar_module, ScaleKernel)
             self.assertEqual(model.covar_module.outputscale.shape, torch.Size([3]))
             self.assertIsInstance(model.covar_module.base_kernel, MaternKernel)
@@ -465,7 +465,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             )
             self.assertTrue(
                 torch.allclose(
-                    model.mean_module.constant.data,
+                    model.mean_module.raw_constant.data,
                     mcmc_samples["mean"],
                 )
             )
