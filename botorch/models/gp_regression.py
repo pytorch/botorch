@@ -156,7 +156,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             )
             self._subset_batch_dict = {
                 "likelihood.noise_covar.raw_noise": -2,
-                "mean_module.constant": -2,
+                "mean_module.raw_constant": -1,
                 "covar_module.raw_outputscale": -1,
                 "covar_module.base_kernel.raw_lengthscale": -3,
             }
