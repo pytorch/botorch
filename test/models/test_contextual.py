@@ -17,7 +17,7 @@ from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
 
-class ContextualGPTest(BotorchTestCase):
+class TestContextualGP(BotorchTestCase):
     def test_SACGP(self):
         for dtype in (torch.float, torch.double):
             train_X = torch.tensor(
@@ -45,7 +45,7 @@ class ContextualGPTest(BotorchTestCase):
             num_of_lengthscales = 0
             num_of_outputscales = 0
             for param_name, param in model.named_parameters():
-                if param_name == "mean_module.constant":
+                if param_name == "mean_module.raw_constant":
                     num_of_mean += param.data.shape.numel()
                 elif "raw_lengthscale" in param_name:
                     num_of_lengthscales += param.data.shape.numel()
