@@ -28,6 +28,7 @@ from botorch.utils.sampling import (
     get_polytope_samples,
     HitAndRunPolytopeSampler,
     manual_seed,
+    normalize_linear_constraints,
     PolytopeSampler,
     sample_hypersphere,
     sample_simplex,
@@ -289,6 +290,28 @@ class TestSampleUtils(BotorchTestCase):
             expected_b = torch.tensor([[3.0]], **tkwargs)
             self.assertTrue(torch.equal(b, expected_b))
 
+    def test_normalize_linear_constraints(self):
+        tkwargs = {"device": self.device}
+        for dtype in (torch.float, torch.double):
+            tkwargs["dtype"] = dtype
+            constraints = [
+                (
+                    torch.tensor([1, 2, 0], dtype=torch.int64, device=self.device),
+                    torch.tensor([1.0, 1.0, 1.0], **tkwargs),
+                    1.0,
+                )
+            ]
+            bounds = torch.tensor(
+                [[0.1, 0.3, 0.1, 30.0], [0.6, 0.7, 0.7, 700.0]], **tkwargs
+            )
+            new_constraints = normalize_linear_constraints(bounds, constraints)
+            expected_coefficients = torch.tensor([0.4000, 0.6000, 0.5000], **tkwargs)
+            self.assertTrue(
+                torch.allclose(new_constraints[0][1], expected_coefficients)
+            )
+            expected_rhs = 0.5
+            self.assertAlmostEqual(new_constraints[0][-1], expected_rhs)
+
     def test_find_interior_point(self):
         # basic problem: 1 <= x_1 <= 2, 2 <= x_2 <= 3
         A = np.concatenate([np.eye(2), -np.eye(2)], axis=0)
@@ -318,14 +341,14 @@ class TestSampleUtils(BotorchTestCase):
             bounds[1] = 1
             inequality_constraints = [
                 (
-                    torch.tensor([3], **tkwargs),
+                    torch.tensor([3], dtype=torch.int64, device=self.device),
                     torch.tensor([-4], **tkwargs),
                     -3,
                 )
             ]
             equality_constraints = [
                 (
-                    torch.tensor([0], **tkwargs),
+                    torch.tensor([0], dtype=torch.int64, device=self.device),
                     torch.tensor([1], **tkwargs),
                     0.5,
                 )

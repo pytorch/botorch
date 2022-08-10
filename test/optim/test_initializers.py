@@ -275,14 +275,14 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
             bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
             inequality_constraints = [
                 (
-                    torch.tensor([1], device=self.device, dtype=dtype),
+                    torch.tensor([1], device=self.device, dtype=torch.int64),
                     torch.tensor([-4], device=self.device, dtype=dtype),
                     torch.tensor(-3, device=self.device, dtype=dtype),
                 )
             ]
             equality_constraints = [
                 (
-                    torch.tensor([0], device=self.device, dtype=dtype),
+                    torch.tensor([0], device=self.device, dtype=torch.int64),
                     torch.tensor([1], device=self.device, dtype=dtype),
                     torch.tensor(0.5, device=self.device, dtype=dtype),
                 )
