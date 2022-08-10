@@ -965,6 +965,7 @@ class AppendFeatures(InputTransform, Module):
     def __init__(
         self,
         feature_set: Tensor,
+        skip_expand: bool = False,
         transform_on_train: bool = False,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = False,
@@ -974,6 +975,10 @@ class AppendFeatures(InputTransform, Module):
         Args:
             feature_set: An `n_f x d_f`-dim tensor denoting the features to be
                 appended to the inputs.
+            skip_expand: A boolean indicating whether to expand the input tensor
+                before appending features. This is intended for use with an
+                `InputPerturbation`. If `True`, the input tensor will be expected
+                to be of shape `batch_shape x (q * n_f) x d`.
             transform_on_train: A boolean indicating whether to apply the
                 transforms in train() mode. Default: False.
             transform_on_eval: A boolean indicating whether to apply the
@@ -984,6 +989,7 @@ class AppendFeatures(InputTransform, Module):
         super().__init__()
         if feature_set.dim() != 2:
             raise ValueError("`feature_set` must be an `n_f x d_f`-dim tensor!")
+        self.skip_expand = skip_expand
         self.register_buffer("feature_set", feature_set)
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
@@ -1003,14 +1009,22 @@ class AppendFeatures(InputTransform, Module):
         sample paths.
 
         Args:
-            X: A `batch_shape x q x d`-dim tensor of inputs.
+            X: A `batch_shape x q x d`-dim tensor of inputs. If `self.skip_expand` is
+                `True`, then `X` should be of shape `batch_shape x (q * n_f) x d`,
+                typically obtained by passing a `batch_shape x q x d` shape input
+                through an `InputPerturbation` with `n_f` perturbation values.
 
         Returns:
             A `batch_shape x (q * n_f) x (d + d_f)`-dim tensor of appended inputs.
         """
-        expanded_X = X.unsqueeze(dim=-2).expand(
-            *X.shape[:-1], self.feature_set.shape[0], -1
-        )
+        if self.skip_expand:
+            expanded_X = X.view(
+                *X.shape[:-2], -1, self.feature_set.shape[0], X.shape[-1]
+            )
+        else:
+            expanded_X = X.unsqueeze(dim=-2).expand(
+                *X.shape[:-1], self.feature_set.shape[0], -1
+            )
         expanded_features = self.feature_set.expand(*expanded_X.shape[:-1], -1)
         appended_X = torch.cat([expanded_X, expanded_features], dim=-1)
         return appended_X.view(*X.shape[:-2], -1, appended_X.shape[-1])

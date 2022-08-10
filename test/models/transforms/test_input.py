@@ -823,6 +823,29 @@ class TestAppendFeatures(BotorchTestCase):
             self.assertEqual(transform.feature_set.device.type, "cpu")
             self.assertEqual(transform.feature_set.dtype, torch.half)
 
+    def test_w_skip_expand(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            feature_set = torch.tensor([[0.0], [1.0]], **tkwargs)
+            append_tf = AppendFeatures(feature_set=feature_set, skip_expand=True).eval()
+            perturbation_set = torch.tensor([[0.0, 0.5], [1.0, 1.5]], **tkwargs)
+            pert_tf = InputPerturbation(perturbation_set=perturbation_set).eval()
+            test_X = torch.tensor([[0.0, 0.0], [1.0, 1.0]], **tkwargs)
+            tf_X = append_tf(pert_tf(test_X))
+            expected_X = torch.tensor(
+                [
+                    [0.0, 0.5, 0.0],
+                    [1.0, 1.5, 1.0],
+                    [1.0, 1.5, 0.0],
+                    [2.0, 2.5, 1.0],
+                ],
+                **tkwargs,
+            )
+            self.assertTrue(torch.allclose(tf_X, expected_X))
+            # Batched evaluation.
+            tf_X = append_tf(pert_tf(test_X.expand(3, 5, -1, -1)))
+            self.assertTrue(torch.allclose(tf_X, expected_X.expand(3, 5, -1, -1)))
+
 
 class TestFilterFeatures(BotorchTestCase):
     def test_filter_features(self):
