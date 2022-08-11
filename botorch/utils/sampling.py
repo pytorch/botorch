@@ -888,6 +888,9 @@ def get_polytope_samples(
     """
     # create tensors representing linear inequality constraints
     # of the form Ax >= b.
+    # TODO: remove this error handling functionality in a few releases. 
+    # Context: BoTorch inadvertently supported indices with unusual dtypes. 
+    # This is now not supported.
     index_dtype_error = (
         "Normalizing {var_name} failed. Check that the first "
         "element of {var_name} is the correct dtype following "
@@ -899,14 +902,14 @@ def get_polytope_samples(
         try:
             # non-standard dtypes used to be supported for indices in constraints;
             # this is no longer true
-            constraints_ = normalize_linear_constraints(bounds, inequality_constraints)
+            constraints = normalize_linear_constraints(bounds, inequality_constraints)
         except IndexError as e:
             msg = index_dtype_error.format(var_name="`inequality_constraints`")
             raise ValueError(msg) from e
 
         A, b = sparse_to_dense_constraints(
             d=bounds.shape[-1],
-            constraints=constraints_,
+            constraints=constraints,
         )
         # Note the inequality constraints are of the form Ax >= b,
         # but PolytopeSampler expects inequality constraints of the
@@ -918,7 +921,7 @@ def get_polytope_samples(
         try:
             # non-standard dtypes used to be supported for indices in constraints;
             # this is no longer true
-            constraints_ = normalize_linear_constraints(bounds, equality_constraints)
+            constraints = normalize_linear_constraints(bounds, equality_constraints)
         except IndexError as e:
             msg = index_dtype_error.format(var_name="`equality_constraints`")
             raise ValueError(msg) from e
@@ -926,7 +929,7 @@ def get_polytope_samples(
         # normalize_linear_constraints is called to solve this issue:
         # https://github.com/pytorch/botorch/issues/1225
         dense_equality_constraints = sparse_to_dense_constraints(
-            d=bounds.shape[-1], constraints=constraints_
+            d=bounds.shape[-1], constraints=constraints
         )
     else:
         dense_equality_constraints = None
