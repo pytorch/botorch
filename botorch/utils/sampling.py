@@ -888,8 +888,8 @@ def get_polytope_samples(
     """
     # create tensors representing linear inequality constraints
     # of the form Ax >= b.
-    # TODO: remove this error handling functionality in a few releases. 
-    # Context: BoTorch inadvertently supported indices with unusual dtypes. 
+    # TODO: remove this error handling functionality in a few releases.
+    # Context: BoTorch inadvertently supported indices with unusual dtypes.
     # This is now not supported.
     index_dtype_error = (
         "Normalizing {var_name} failed. Check that the first "
