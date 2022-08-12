@@ -64,10 +64,14 @@
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ModuleDict</span>
 
 
-<div class="viewcode-block" id="OutcomeTransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform">[docs]</a><span class="k">class</span> <span class="nc">OutcomeTransform</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for outcome transforms."""</span>
+<span class="k">class</span> <span class="nc">OutcomeTransform</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Abstract base class for outcome transforms.</span>
 
-<div class="viewcode-block" id="OutcomeTransform.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
+<span class="sd">    :meta private:</span>
+<span class="sd">    """</span>
+
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
@@ -84,9 +88,9 @@
 <span class="sd">            - The transformed outcome observations.</span>
 <span class="sd">            - The transformed observation noise (if applicable).</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
-<div class="viewcode-block" id="OutcomeTransform.subset_output"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Subset the transform along the output dimension.</span>
 
 <span class="sd">        This functionality is used to properly treat outcome transformations</span>
@@ -101,9 +105,9 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not implement the "</span>
             <span class="s2">"`subset_output` method"</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
-<div class="viewcode-block" id="OutcomeTransform.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
         <span class="sa">r</span><span class="sd">"""Un-transform previously transformed outcomes</span>
@@ -121,9 +125,9 @@
 <span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not implement the `untransform` method"</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
-<div class="viewcode-block" id="OutcomeTransform.untransform_posterior"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform.untransform_posterior">[docs]</a>    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Un-transform a posterior</span>
 
 <span class="sd">        Args:</span>
@@ -135,7 +139,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not implement the "</span>
             <span class="s2">"`untransform_posterior` method"</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span>
 
 
 <div class="viewcode-block" id="ChainedOutcomeTransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform">[docs]</a><span class="k">class</span> <span class="nc">ChainedOutcomeTransform</span><span class="p">(</span><span class="n">OutcomeTransform</span><span class="p">,</span> <span class="n">ModuleDict</span><span class="p">):</span>

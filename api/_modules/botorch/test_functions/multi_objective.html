@@ -142,8 +142,7 @@
     <span class="n">_max_hv</span> <span class="o">=</span> <span class="mf">59.36011874867746</span>  <span class="c1"># this is approximated using NSGA-II</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Constructor for Branin-Currin.</span>
-
+        <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
 <span class="sd">            negate: If True, negate the objectives.</span>
@@ -203,6 +202,12 @@
         <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            dim: The (input) dimension.</span>
+<span class="sd">            noise_std: Standard deviation of the observation noise.</span>
+<span class="sd">            negate: If True, negate the function.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">dim</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min_dim</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"dim must be &gt;= </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_min_dim</span><span class="si">}</span><span class="s2">, but got dim=</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">!"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
@@ -357,6 +362,13 @@
         <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            dim: The (input) dimension of the function.</span>
+<span class="sd">            num_objectives: Must be less than dim.</span>
+<span class="sd">            noise_std: Standard deviation of the observation noise.</span>
+<span class="sd">            negate: If True, negate the function.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">dim</span> <span class="o">&lt;=</span> <span class="n">num_objectives</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"dim must be &gt; num_objectives, but got </span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">num_objectives</span><span class="si">}</span><span class="s2">."</span>
@@ -617,8 +629,7 @@
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">num_objectives</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Constructor.</span>
-
+        <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
 <span class="sd">            negate: If True, negate the objectives.</span>
@@ -943,6 +954,13 @@
         <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            dim: The (input) dimension of the function.</span>
+<span class="sd">            num_objectives: Number of objectives. Must not be larger than dim.</span>
+<span class="sd">            noise_std: Standard deviation of the observation noise.</span>
+<span class="sd">            negate: If True, negate the function.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">num_objectives</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> currently only supports 2 objectives."</span>
@@ -1242,6 +1260,11 @@
     <span class="n">_max_hv</span> <span class="o">=</span> <span class="mf">608.4004237022673</span>  <span class="c1"># from NSGA-II with 90k evaluations</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            noise_std: Standard deviation of the observation noise.</span>
+<span class="sd">            negate: If True, negate the function.</span>
+<span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
         <span class="n">con_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_con_bounds</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"con_bounds"</span><span class="p">,</span> <span class="n">con_bounds</span><span class="p">)</span>
@@ -1342,6 +1365,12 @@
         <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            dim: The (input) dimension of the function. Must be at least 2.</span>
+<span class="sd">            noise_std: Standard deviation of the observation noise.</span>
+<span class="sd">            negate: If True, negate the function.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">dim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"dim must be greater than or equal to 2."</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>

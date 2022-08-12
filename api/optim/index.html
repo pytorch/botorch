@@ -37,7 +37,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – An AcquisitionFunction.</p></li>
+<li><p><strong>acq_function</strong> (<em>botorch.acquisition.acquisition.AcquisitionFunction</em>) – An AcquisitionFunction.</p></li>
 <li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>
 (if inequality_constraints is provided, these bounds can be -inf and
 +inf, respectively).</p></li>
@@ -117,7 +117,7 @@ values conditional on having observed canidates <cite>0,1,…,i-1</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – An AcquisitionFunction</p></li>
+<li><p><strong>acq_function</strong> (<em>botorch.acquisition.acquisition.AcquisitionFunction</em>) – An AcquisitionFunction</p></li>
 <li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>
 (if inequality_constraints is provided, these bounds can be -inf and
 +inf, respectively).</p></li>
@@ -184,7 +184,7 @@ set as <cite>X_pending</cite>. This is also known as sequential greedy optimizat
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function_list</strong> (<em>List</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a><em>]</em>) – A list of acquisition functions.</p></li>
+<li><p><strong>acq_function_list</strong> (<em>List</em><em>[</em><em>botorch.acquisition.acquisition.AcquisitionFunction</em><em>]</em>) – A list of acquisition functions.</p></li>
 <li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>
 (if inequality_constraints is provided, these bounds can be -inf and
 +inf, respectively).</p></li>
@@ -236,7 +236,7 @@ proper conditioning on generated candidates).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – An AcquisitionFunction</p></li>
+<li><p><strong>acq_function</strong> (<em>botorch.acquisition.acquisition.AcquisitionFunction</em>) – An AcquisitionFunction</p></li>
 <li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>
 (if inequality_constraints is provided, these bounds can be -inf and
 +inf, respectively).</p></li>
@@ -288,7 +288,7 @@ evaluate quickly explodes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – An AcquisitionFunction.</p></li>
+<li><p><strong>acq_function</strong> (<em>botorch.acquisition.acquisition.AcquisitionFunction</em>) – An AcquisitionFunction.</p></li>
 <li><p><strong>q</strong> (<em>int</em>) – The number of candidates.</p></li>
 <li><p><strong>choices</strong> (<em>torch.Tensor</em>) – A <cite>num_choices x d</cite> tensor of possible choices.</p></li>
 <li><p><strong>max_batch_size</strong> (<em>int</em>) – The maximum number of choices to evaluate in batch.
@@ -325,7 +325,7 @@ the more general case.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – An AcquisitionFunction</p></li>
+<li><p><strong>acq_function</strong> (<em>botorch.acquisition.acquisition.AcquisitionFunction</em>) – An AcquisitionFunction</p></li>
 <li><p><strong>discrete_choices</strong> (<em>List</em><em>[</em><em>torch.Tensor</em><em>]</em>) – A list of possible discrete choices for each dimension.
 Each element in the list is expected to be a torch tensor.</p></li>
 <li><p><strong>q</strong> (<em>int</em>) – The number of candidates.</p></li>
@@ -481,7 +481,7 @@ expensive black-box optimization, Engineering Optimization, 2013.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – The acquisition function to be optimized.</p></li>
+<li><p><strong>acq_function</strong> (<em>botorch.acquisition.acquisition.AcquisitionFunction</em>) – The acquisition function to be optimized.</p></li>
 <li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
 <li><p><strong>q</strong> (<em>int</em>) – The number of candidates to consider.</p></li>
 <li><p><strong>num_restarts</strong> (<em>int</em>) – The number of starting points for multistart acquisition
@@ -612,7 +612,7 @@ conditions are selected according to the standard initialization strategy in
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – The value function instance to be optimized.</p></li>
+<li><p><strong>acq_function</strong> (<em>botorch.acquisition.acquisition.AcquisitionFunction</em>) – The value function instance to be optimized.</p></li>
 <li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of
 task features.</p></li>
 <li><p><strong>num_restarts</strong> (<em>int</em>) – The number of starting points for multistart acquisition
@@ -740,7 +740,7 @@ which to ignore samples. All input samples for which
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – The acquisition function.</p></li>
+<li><p><strong>acq_function</strong> (<em>botorch.acquisition.acquisition.AcquisitionFunction</em>) – The acquisition function.</p></li>
 <li><p><strong>n_discrete_points</strong> (<em>int</em>) – The number of points to sample.</p></li>
 <li><p><strong>sigma</strong> (<em>float</em>) – The standard deviation of the additive gaussian noise for
 perturbing the best points.</p></li>
@@ -822,36 +822,9 @@ defaults to <cite>min(20 / d, 1)</cite>.</p></li>
 <section id="module-botorch.optim.stopping">
 <span id="stopping-criteria"></span><h3>Stopping Criteria<a class="headerlink" href="#module-botorch.optim.stopping" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
-<dt class="sig sig-object py" id="botorch.optim.stopping.StoppingCriterion">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.stopping.</span></span><span class="sig-name descname"><span class="pre">StoppingCriterion</span></span><a class="reference internal" href="_modules/botorch/optim/stopping.html#StoppingCriterion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.stopping.StoppingCriterion" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
-<p>Base class for evaluating optimization convergence.</p>
-<p>Stopping criteria are implemented as a objects rather than a function, so that they
-can keep track of past function values between optimization steps.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.optim.stopping.StoppingCriterion.evaluate">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fvals</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/stopping.html#StoppingCriterion.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.stopping.StoppingCriterion.evaluate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evaluate the stopping criterion.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>fvals</strong> (<em>torch.Tensor</em>) – tensor containing function values for the current iteration. If
-<cite>fvals</cite> contains more than one element, then the stopping criterion is
-evaluated element-wise and True is returned if the stopping criterion is
-true for all elements.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Stopping indicator (if True, stop the optimziation).</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-</dd></dl>
-<dl class="py class">
 <dt class="sig sig-object py" id="botorch.optim.stopping.ExpMAStoppingCriterion">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.stopping.</span></span><span class="sig-name descname"><span class="pre">ExpMAStoppingCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">maxiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/stopping.html#ExpMAStoppingCriterion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.stopping.ExpMAStoppingCriterion" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.optim.stopping.StoppingCriterion" title="botorch.optim.stopping.StoppingCriterion"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.optim.stopping.StoppingCriterion</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.optim.stopping.StoppingCriterion</span></code></p>
 <p>Exponential moving average stopping criterion.</p>
 <p>Computes an exponentially weighted moving average over window length <cite>n_window</cite>
 and checks whether the relative decrease in this moving average between steps
@@ -1178,7 +1151,7 @@ type (“eq”, “ineq”), as expected by <cite>scipy.minimize</cite>.</p>
 <dd><p>Sample from hyperparameter priors (in-place).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><em>botorch.models.gpytorch.GPyTorchModel</em></a>) – A GPyTorchModel.</p>
+<dd class="field-odd"><p><strong>model</strong> (<em>botorch.models.gpytorch.GPyTorchModel</em>) – A GPyTorchModel.</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p>None</p>
@@ -1246,7 +1219,7 @@ acquisition function has an <cite>X_baseline</cite> attribute. If it does not,
 then this method attempts to use the model’s <cite>train_inputs</cite> as <cite>X_baseline</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – The acquisition function.</p>
+<dd class="field-odd"><p><strong>acq_function</strong> (<em>botorch.acquisition.acquisition.AcquisitionFunction</em>) – The acquisition function.</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p>Optional[torch.Tensor]</p>

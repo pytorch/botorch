@@ -73,7 +73,11 @@
 
 
 <div class="viewcode-block" id="MCAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">MCAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for Monte-Carlo based batch acquisition functions."""</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Abstract base class for Monte-Carlo based batch acquisition functions.</span>
+
+<span class="sd">    :meta private:</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -83,8 +87,7 @@
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Constructor for the MCAcquisitionFunction base class.</span>
-
+        <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
 <span class="sd">            sampler: The sampler used to draw base samples. Defaults to</span>
@@ -485,9 +488,9 @@
             <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
         <span class="p">)</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
-        <span class="n">max_obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">impr</span> <span class="o">=</span> <span class="n">max_obj</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">max_obj</span><span class="p">)</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># `sample_shape x batch_shape x q`-dim</span>
+        <span class="n">max_obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># `sample_shape x batch_shape`-dim</span>
+        <span class="n">impr</span> <span class="o">=</span> <span class="n">max_obj</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">max_obj</span><span class="p">)</span>
         <span class="n">val</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">impr</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">val</span></div></div>
 

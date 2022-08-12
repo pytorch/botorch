@@ -30,8 +30,10 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">Abstract base module for all BoTorch models.</span>
+<span class="sa">r</span><span class="sd">"""Abstract base module for all BoTorch models.</span>
+
+<span class="sd">Contains `Model`, the abstract base class for all BoTorch models, and</span>
+<span class="sd">`ModelList`, a container for a list of Models.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
@@ -57,6 +59,9 @@
 
 <div class="viewcode-block" id="Model"><a class="viewcode-back" href="../../../models.html#botorch.models.model.Model">[docs]</a><span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Abstract base class for BoTorch models.</span>
+
+<span class="sd">    Model cannot be used directly; it only defines an API for other BoTorch</span>
+<span class="sd">    models.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        _has_transformed_inputs: A boolean denoting whether `train_inputs` are currently</span>
@@ -274,16 +279,24 @@
 
 
 <div class="viewcode-block" id="ModelList"><a class="viewcode-back" href="../../../models.html#botorch.models.model.ModelList">[docs]</a><span class="k">class</span> <span class="nc">ModelList</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Container for a list of models."""</span>
+    <span class="sa">r</span><span class="sd">"""A multi-output Model represented by a list of independent models.</span>
+
+<span class="sd">    All</span>
+<span class="sd">    BoTorch models are acceptable as inputs. The cost of this flexibility is</span>
+<span class="sd">    that `ModelList` does not support all methods that may be implemented by its</span>
+<span class="sd">    component models. One use case for `ModelList` is combining a regression</span>
+<span class="sd">    model and a deterministic model in one multi-output container model, e.g.</span>
+<span class="sd">    for cost-aware or multi-objective optimization where one of the outcomes is</span>
+<span class="sd">    a deterministic function of the inputs.</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">models</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""A multi-output Model represented by a list of independent models.</span>
-
+        <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            *models: A variable number of models.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">            &gt;&gt;&gt; m_1 = SingleTaskGP(train_X, train_Y</span>
+<span class="sd">            &gt;&gt;&gt; m_1 = SingleTaskGP(train_X, train_Y)</span>
 <span class="sd">            &gt;&gt;&gt; m_2 = GenericDeterministicModel(lambda x: x.sum(dim=-1))</span>
 <span class="sd">            &gt;&gt;&gt; m_12 = ModelList(m_1, m_2)</span>
 <span class="sd">            &gt;&gt;&gt; m_12.predict(test_X)</span>

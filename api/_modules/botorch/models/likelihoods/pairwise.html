@@ -46,19 +46,32 @@
 <span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Bernoulli</span>
 
 
-<div class="viewcode-block" id="PairwiseLikelihood"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLikelihood">[docs]</a><span class="k">class</span> <span class="nc">PairwiseLikelihood</span><span class="p">(</span><span class="n">Likelihood</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sd">"""Pairwise likelihood base class for pairwise preference GP (e.g., PairwiseGP)"""</span>
+<span class="k">class</span> <span class="nc">PairwiseLikelihood</span><span class="p">(</span><span class="n">Likelihood</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Pairwise likelihood base class for pairwise preference GP (e.g., PairwiseGP).</span>
 
-<div class="viewcode-block" id="PairwiseLikelihood.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLikelihood.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bernoulli</span><span class="p">:</span>
+<span class="sd">    :meta private:</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_plate_nesting</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Initialized like a `gpytorch.likelihoods.Likelihood`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            max_plate_nesting: Defaults to 1.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">max_plate_nesting</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bernoulli</span><span class="p">:</span>
         <span class="sd">"""Given the difference in (estimated) utility util_diff = f(v) - f(u),</span>
 <span class="sd">        return a Bernoulli distribution object representing the likelihood of</span>
 <span class="sd">        the user prefer v over u.</span>
 
 <span class="sd">        Note that this is not used by the `PairwiseGP` model,</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">Bernoulli</span><span class="p">(</span><span class="n">probs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">(</span><span class="n">utility</span><span class="o">=</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">Bernoulli</span><span class="p">(</span><span class="n">probs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">(</span><span class="n">utility</span><span class="o">=</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">))</span>
 
-<div class="viewcode-block" id="PairwiseLikelihood.p"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLikelihood.p">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">p</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">"""Given the difference in (estimated) utility util_diff = f(v) - f(u),</span>
 <span class="sd">        return the probability of the user prefer v over u.</span>
@@ -69,13 +82,13 @@
 <span class="sd">                dimension except at two positions D[..., i] = 1 and D[..., j] = -1</span>
 <span class="sd">                respectively, representing item i is preferred over item j.</span>
 <span class="sd">            log: if true, return log probability</span>
-<span class="sd">        """</span></div>
+<span class="sd">        """</span>
 
-<div class="viewcode-block" id="PairwiseLikelihood.log_p"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLikelihood.log_p">[docs]</a>    <span class="k">def</span> <span class="nf">log_p</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">log_p</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">"""return the log of p"""</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">(</span><span class="n">utility</span><span class="o">=</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">(</span><span class="n">utility</span><span class="o">=</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">))</span>
 
-<div class="viewcode-block" id="PairwiseLikelihood.negative_log_gradient_sum"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLikelihood.negative_log_gradient_sum">[docs]</a>    <span class="k">def</span> <span class="nf">negative_log_gradient_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">negative_log_gradient_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">"""Calculate the sum of negative log gradient with respect to each item's latent</span>
 <span class="sd">            utility values. Useful for models using laplace approximation.</span>
 
@@ -90,9 +103,9 @@
 <span class="sd">            values of the likelihood over all comparisons (i.e., the m dimension)</span>
 <span class="sd">            with respect to each item.</span>
 <span class="sd">        """</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-<div class="viewcode-block" id="PairwiseLikelihood.negative_log_hessian_sum"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLikelihood.negative_log_hessian_sum">[docs]</a>    <span class="k">def</span> <span class="nf">negative_log_hessian_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">negative_log_hessian_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">"""Calculate the sum of negative log hessian with respect to each item's latent</span>
 <span class="sd">            utility values. Useful for models using laplace approximation.</span>
 
@@ -107,7 +120,7 @@
 <span class="sd">            values of the likelihood over all comparisons (i.e., the m dimension) with</span>
 <span class="sd">            respect to each item.</span>
 <span class="sd">        """</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 
 <div class="viewcode-block" id="PairwiseProbitLikelihood"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseProbitLikelihood">[docs]</a><span class="k">class</span> <span class="nc">PairwiseProbitLikelihood</span><span class="p">(</span><span class="n">PairwiseLikelihood</span><span class="p">):</span>

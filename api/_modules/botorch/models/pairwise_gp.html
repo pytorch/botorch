@@ -82,14 +82,29 @@
 <div class="viewcode-block" id="PairwiseGP"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP">[docs]</a><span class="k">class</span> <span class="nc">PairwiseGP</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">GP</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Probit GP for preference learning with Laplace approximation</span>
 
+<span class="sd">    A probit-likelihood GP that learns via pairwise comparison data, using a</span>
+<span class="sd">    Laplace approximation of the posterior of the estimated utility values. By</span>
+<span class="sd">    default it uses a scaled RBF kernel.</span>
+
 <span class="sd">    Implementation is based on [Chu2005preference]_.</span>
 <span class="sd">    Also see [Brochu2010tutorial]_ for additional reference.</span>
 
 <span class="sd">    Note that in [Chu2005preference]_ the likelihood of a pairwise comparison</span>
 <span class="sd">    is :math:`\left(\frac{f(x_1) - f(x_2)}{\sqrt{2}\sigma}\right)`, i.e. a scale is</span>
 <span class="sd">    used in the denominator. To maintain consistency with usage of kernels</span>
-<span class="sd">    elsewhere in botorch, we instead do not include :math:`\sigma` in the code</span>
+<span class="sd">    elsewhere in BoTorch, we instead do not include :math:`\sigma` in the code</span>
 <span class="sd">    (implicitly setting it to 1) and use ScaleKernel to scale the function.</span>
+
+<span class="sd">    In the example below, the user/decision maker has stated that they prefer</span>
+<span class="sd">    the first item over the second item and the third item over the first item,</span>
+<span class="sd">    generating comparisons [0, 1] and [2, 1].</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; from botorch.models import PairwiseGP</span>
+<span class="sd">        &gt;&gt;&gt; import torch</span>
+<span class="sd">        &gt;&gt;&gt; datapoints = torch.Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])</span>
+<span class="sd">        &gt;&gt;&gt; comparisons = torch.Tensor([[0, 1], [2, 1]])</span>
+<span class="sd">        &gt;&gt;&gt; model = PairwiseGP(datapoints, comparisons)</span>
 <span class="sd">    """</span>
 
     <span class="n">_buffer_names</span> <span class="o">=</span> <span class="p">[</span>
@@ -114,9 +129,7 @@
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""A probit-likelihood GP with Laplace approximation model that learns via</span>
-<span class="sd">            pairwise comparison data. By default it uses a scaled RBF kernel.</span>
-
+        <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            datapoints: A `batch_shape x n x d` tensor of training features.</span>
 <span class="sd">            comparisons: A `batch_shape x m x 2` training comparisons;</span>
@@ -968,6 +981,14 @@
 
 <span class="sd">    See (12) from [Chu2005preference]_.</span>
 <span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">GP</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            likelihood: Used as in args to GPyTorch MarginalLogLikelihood</span>
+<span class="sd">            model: Used as in args to GPyTorch MarginalLogLikelihood</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PairwiseLaplaceMarginalLogLikelihood.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">post</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">comp</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Calculate approximated log evidence, i.e., log(P(D|theta))</span>

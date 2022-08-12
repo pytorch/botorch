@@ -49,21 +49,24 @@
     <span class="sa">r</span><span class="sd">"""A multi-output GP model with independent GPs for the outputs.</span>
 
 <span class="sd">    This model supports different-shaped training inputs for each of its</span>
-<span class="sd">    sub-models. It can be used with any BoTorch models.</span>
+<span class="sd">    sub-models. It can be used with any number of single-output</span>
+<span class="sd">    `GPyTorchModel`\s and the models can be of different types. Use this model</span>
+<span class="sd">    when you have independent outputs with different training data. When</span>
+<span class="sd">    modeling correlations between outputs, use `MultiTaskGP`.</span>
 
 <span class="sd">    Internally, this model is just a list of individual models, but it implements</span>
 <span class="sd">    the same input/output interface as all other BoTorch models. This makes it</span>
 <span class="sd">    very flexible and convenient to work with. The sequential evaluation comes</span>
 <span class="sd">    at a performance cost though - if you are using a block design (i.e. the</span>
 <span class="sd">    same number of training example for each output, and a similar model</span>
-<span class="sd">    structure, you should consider using a batched GP model instead).</span>
+<span class="sd">    structure, you should consider using a batched GP model instead, such as</span>
+<span class="sd">    `SingleTaskGP` with batched inputs).</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">gp_models</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""A multi-output GP model with independent GPs for the outputs.</span>
-
+        <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
-<span class="sd">            *gp_models: An variable number of single-output BoTorch models.</span>
+<span class="sd">            *gp_models: A number of single-output `GPyTorchModel`\s.</span>
 <span class="sd">                If models have input/output transforms, these are honored</span>
 <span class="sd">                individually for each model.</span>
 
@@ -91,9 +94,11 @@
 <span class="sd">                standard broadcasting semantics. If `Y` has fewer batch dimensions</span>
 <span class="sd">                than `X`, its is assumed that the missing batch dimensions are</span>
 <span class="sd">                the same for all `Y`.</span>
+<span class="sd">            kwargs: Keyword arguments passed to</span>
+<span class="sd">                `IndependentModelList.get_fantasy_model`.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `ModelListGPyTorchModel` representing the original model</span>
+<span class="sd">            A `ModelListGP` representing the original model</span>
 <span class="sd">            conditioned on the new observations `(X, Y)` (and possibly noise</span>
 <span class="sd">            observations passed in via kwargs). Here the `i`-th model has</span>
 <span class="sd">            `n_i + n'` training examples, where the `n'` training examples have</span>
@@ -106,6 +111,11 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="si">}</span><span class="s2"> outputs."</span>
             <span class="p">)</span>
         <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+                <span class="n">noise</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"noise"</span><span class="p">)</span>
+                <span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">noise</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span><span class="p">(</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">noise</span><span class="p">)</span>
+
         <span class="c1"># This should never trigger, posterior call would fail.</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">if</span> <span class="s2">"noise"</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>

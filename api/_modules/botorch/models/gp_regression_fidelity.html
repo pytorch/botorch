@@ -31,7 +31,18 @@
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
 <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">Gaussian Process Regression models based on GPyTorch models.</span>
+<span class="sd">Multi-Fidelity Gaussian Process Regression models based on GPyTorch models.</span>
+
+<span class="sd">For more on Multi-Fidelity BO, see the</span>
+<span class="sd">`tutorial &lt;https://botorch.org/tutorials/discrete_multi_fidelity_bo&gt;`__.</span>
+
+<span class="sd">A common use case of multi-fidelity regression modeling is optimizing a</span>
+<span class="sd">"high-fidelity" function that is expensive to simulate when you have access to</span>
+<span class="sd">one or more cheaper "lower-fidelity" versions that are not fully accurate but</span>
+<span class="sd">are correlated with the high-fidelity function. The multi-fidelity model models</span>
+<span class="sd">both the low- and high-fidelity functions together, including the correlation</span>
+<span class="sd">between them, which can help you predict and optimize the high-fidelity function</span>
+<span class="sd">without having to do too many expensive high-fidelity evaluations.</span>
 
 <span class="sd">.. [Wu2019mf]</span>
 <span class="sd">    J. Wu, S. Toscano-Palmerin, P. I. Frazier, and A. G. Wilson. Practical</span>
@@ -70,28 +81,6 @@
 
 <span class="sd">    This kernel is described in [Wu2019mf]_.</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        train_X: A `batch_shape x n x (d + s)` tensor of training features,</span>
-<span class="sd">            where `s` is the dimension of the fidelity parameters (either one</span>
-<span class="sd">            or two).</span>
-<span class="sd">        train_Y: A `batch_shape x n x m` tensor of training observations.</span>
-<span class="sd">        iteration_fidelity: The column index for the training iteration fidelity</span>
-<span class="sd">            parameter (optional).</span>
-<span class="sd">        data_fidelity: The column index for the downsampling fidelity parameter</span>
-<span class="sd">            (optional).</span>
-<span class="sd">        linear_truncated: If True, use a `LinearTruncatedFidelityKernel` instead</span>
-<span class="sd">            of the default kernel.</span>
-<span class="sd">        nu: The smoothness parameter for the Matern kernel: either 1/2, 3/2, or</span>
-<span class="sd">            5/2. Only used when `linear_truncated=True`.</span>
-<span class="sd">        likelihood: A likelihood. If omitted, use a standard GaussianLikelihood</span>
-<span class="sd">            with inferred noise level.</span>
-<span class="sd">        outcome_transform: An outcome transform that is applied to the</span>
-<span class="sd">                training data during instantiation and to the posterior during</span>
-<span class="sd">                inference (that is, the `Posterior` obtained by calling</span>
-<span class="sd">                `.posterior` on the model will be on the original scale).</span>
-<span class="sd">        input_transform: An input transform that is applied in the model's</span>
-<span class="sd">                forward pass.</span>
-
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; train_X = torch.rand(20, 4)</span>
 <span class="sd">        &gt;&gt;&gt; train_Y = train_X.pow(2).sum(dim=-1, keepdim=True)</span>
@@ -110,6 +99,29 @@
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            train_X: A `batch_shape x n x (d + s)` tensor of training features,</span>
+<span class="sd">                where `s` is the dimension of the fidelity parameters (either one</span>
+<span class="sd">                or two).</span>
+<span class="sd">            train_Y: A `batch_shape x n x m` tensor of training observations.</span>
+<span class="sd">            iteration_fidelity: The column index for the training iteration fidelity</span>
+<span class="sd">                parameter (optional).</span>
+<span class="sd">            data_fidelity: The column index for the downsampling fidelity parameter</span>
+<span class="sd">                (optional).</span>
+<span class="sd">            linear_truncated: If True, use a `LinearTruncatedFidelityKernel` instead</span>
+<span class="sd">                of the default kernel.</span>
+<span class="sd">            nu: The smoothness parameter for the Matern kernel: either 1/2, 3/2, or</span>
+<span class="sd">                5/2. Only used when `linear_truncated=True`.</span>
+<span class="sd">            likelihood: A likelihood. If omitted, use a standard GaussianLikelihood</span>
+<span class="sd">                with inferred noise level.</span>
+<span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
+<span class="sd">                    training data during instantiation and to the posterior during</span>
+<span class="sd">                    inference (that is, the `Posterior` obtained by calling</span>
+<span class="sd">                    `.posterior` on the model will be on the original scale).</span>
+<span class="sd">            input_transform: An input transform that is applied in the model's</span>
+<span class="sd">                    forward pass.</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_args</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"iteration_fidelity"</span><span class="p">:</span> <span class="n">iteration_fidelity</span><span class="p">,</span>
             <span class="s2">"data_fidelity"</span><span class="p">:</span> <span class="n">data_fidelity</span><span class="p">,</span>
@@ -145,7 +157,7 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"likelihood.noise_covar.raw_noise"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
-            <span class="s2">"mean_module.constant"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+            <span class="s2">"mean_module.raw_constant"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
             <span class="s2">"covar_module.raw_outputscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
             <span class="o">**</span><span class="n">subset_batch_dict</span><span class="p">,</span>
         <span class="p">}</span>
@@ -181,28 +193,6 @@
 
 <span class="sd">    This kernel is described in [Wu2019mf]_.</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        train_X: A `batch_shape x n x (d + s)` tensor of training features,</span>
-<span class="sd">            where `s` is the dimension of the fidelity parameters (either one</span>
-<span class="sd">            or two).</span>
-<span class="sd">        train_Y: A `batch_shape x n x m` tensor of training observations.</span>
-<span class="sd">        train_Yvar: A `batch_shape x n x m` tensor of observed measurement noise.</span>
-<span class="sd">        iteration_fidelity: The column index for the training iteration fidelity</span>
-<span class="sd">            parameter (optional).</span>
-<span class="sd">        data_fidelity: The column index for the downsampling fidelity parameter</span>
-<span class="sd">            (optional).</span>
-<span class="sd">        linear_truncated: If True, use a `LinearTruncatedFidelityKernel` instead</span>
-<span class="sd">            of the default kernel.</span>
-<span class="sd">        nu: The smoothness parameter for the Matern kernel: either 1/2, 3/2, or</span>
-<span class="sd">            5/2. Only used when `linear_truncated=True`.</span>
-<span class="sd">        outcome_transform: An outcome transform that is applied to the</span>
-<span class="sd">            training data during instantiation and to the posterior during</span>
-<span class="sd">            inference (that is, the `Posterior` obtained by calling</span>
-<span class="sd">            `.posterior` on the model will be on the original scale).</span>
-<span class="sd">        input_transform: An input transform that is applied in the model's</span>
-<span class="sd">                forward pass.</span>
-
-
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; train_X = torch.rand(20, 4)</span>
 <span class="sd">        &gt;&gt;&gt; train_Y = train_X.pow(2).sum(dim=-1, keepdim=True)</span>
@@ -227,6 +217,28 @@
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            train_X: A `batch_shape x n x (d + s)` tensor of training features,</span>
+<span class="sd">                where `s` is the dimension of the fidelity parameters (either one</span>
+<span class="sd">                or two).</span>
+<span class="sd">            train_Y: A `batch_shape x n x m` tensor of training observations.</span>
+<span class="sd">            train_Yvar: A `batch_shape x n x m` tensor of observed measurement noise.</span>
+<span class="sd">            iteration_fidelity: The column index for the training iteration fidelity</span>
+<span class="sd">                parameter (optional).</span>
+<span class="sd">            data_fidelity: The column index for the downsampling fidelity parameter</span>
+<span class="sd">                (optional).</span>
+<span class="sd">            linear_truncated: If True, use a `LinearTruncatedFidelityKernel` instead</span>
+<span class="sd">                of the default kernel.</span>
+<span class="sd">            nu: The smoothness parameter for the Matern kernel: either 1/2, 3/2, or</span>
+<span class="sd">                5/2. Only used when `linear_truncated=True`.</span>
+<span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
+<span class="sd">                training data during instantiation and to the posterior during</span>
+<span class="sd">                inference (that is, the `Posterior` obtained by calling</span>
+<span class="sd">                `.posterior` on the model will be on the original scale).</span>
+<span class="sd">            input_transform: An input transform that is applied in the model's</span>
+<span class="sd">                forward pass.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data_fidelity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
                 <span class="s2">"FixedNoiseMultiFidelityGP requires at least one fidelity parameter."</span>
@@ -254,7 +266,7 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"likelihood.noise_covar.raw_noise"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
-            <span class="s2">"mean_module.constant"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+            <span class="s2">"mean_module.raw_constant"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
             <span class="s2">"covar_module.raw_outputscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
             <span class="o">**</span><span class="n">subset_batch_dict</span><span class="p">,</span>
         <span class="p">}</span>

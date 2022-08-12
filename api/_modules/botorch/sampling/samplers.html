@@ -48,7 +48,7 @@
 <span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
 
 
-<div class="viewcode-block" id="MCSampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.samplers.MCSampler">[docs]</a><span class="k">class</span> <span class="nc">MCSampler</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">MCSampler</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Abstract base class for Samplers.</span>
 
 <span class="sd">    Subclasses must implement the `_construct_base_samples` method.</span>
@@ -66,6 +66,8 @@
 <span class="sd">        `__call__` method:</span>
 <span class="sd">        &gt;&gt;&gt; posterior = model.posterior(test_X)</span>
 <span class="sd">        &gt;&gt;&gt; samples = sampler(posterior)</span>
+
+<span class="sd">    :meta private:</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_range</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -105,7 +107,7 @@
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"base_samples"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-<div class="viewcode-block" id="MCSampler.forward"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.samplers.MCSampler.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior.</span>
 
 <span class="sd">        Args:</span>
@@ -119,7 +121,7 @@
         <span class="n">samples</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span>
             <span class="n">sample_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">samples</span></div>
+        <span class="k">return</span> <span class="n">samples</span>
 
     <span class="k">def</span> <span class="nf">_get_base_sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Get the shape of the base samples.</span>
@@ -168,7 +170,7 @@
 <span class="sd">            posterior: The Posterior for which to generate base samples.</span>
 <span class="sd">            shape: The shape of the base samples to construct.</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
 <div class="viewcode-block" id="IIDNormalSampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.samplers.IIDNormalSampler">[docs]</a><span class="k">class</span> <span class="nc">IIDNormalSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">):</span>

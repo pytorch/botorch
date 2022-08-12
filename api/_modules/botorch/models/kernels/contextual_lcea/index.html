@@ -50,24 +50,6 @@
 <span class="sd">    across contexts. Rather than assuming independence, LCEAKernel models the</span>
 <span class="sd">    correlation in the latent functions for each context through learning context</span>
 <span class="sd">    embeddings.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        decomposition: Keys index context names. Values are the indexes of parameters</span>
-<span class="sd">            belong to the context. The parameter indexes are in the same order across</span>
-<span class="sd">            contexts.</span>
-<span class="sd">        batch_shape: Batch shape as usual for gpytorch kernels. Model does not support</span>
-<span class="sd">            batch training. When batch_shape is non-empty, it is used for loading</span>
-<span class="sd">            hyper-parameter values generated from MCMC sampling.</span>
-<span class="sd">        train_embedding: A boolean indictor of whether to learn context embeddings</span>
-<span class="sd">        cat_feature_dict: Keys are context names and values are list of categorical</span>
-<span class="sd">            features i.e. {"context_name" : [cat_0, ..., cat_k]}. k equals to number</span>
-<span class="sd">            of categorical variables. If None, we use context names in the</span>
-<span class="sd">            decomposition as the only categorical feature i.e. k = 1</span>
-<span class="sd">        embs_feature_dict: Pre-trained continuous embedding features of each context.</span>
-<span class="sd">        embs_dim_list: Embedding dimension for each categorical variable. The length</span>
-<span class="sd">            equals to num of categorical features k. If None, emb dim is set to 1</span>
-<span class="sd">            for each categorical variable.</span>
-<span class="sd">        context_weight_dict: Known population Weights of each context.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -81,7 +63,26 @@
         <span class="n">context_weight_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            decomposition: Keys index context names. Values are the indexes of</span>
+<span class="sd">                parameters belong to the context. The parameter indexes are in the same</span>
+<span class="sd">                order across contexts.</span>
+<span class="sd">            batch_shape: Batch shape as usual for gpytorch kernels. Model does not</span>
+<span class="sd">                support batch training. When batch_shape is non-empty, it is used for</span>
+<span class="sd">                loading hyper-parameter values generated from MCMC sampling.</span>
+<span class="sd">            train_embedding: A boolean indictor of whether to learn context embeddings.</span>
+<span class="sd">            cat_feature_dict: Keys are context names and values are list of categorical</span>
+<span class="sd">                features i.e. {"context_name" : [cat_0, ..., cat_k]}. k equals the</span>
+<span class="sd">                number of categorical variables. If None, uses context names in the</span>
+<span class="sd">                decomposition as the only categorical feature, i.e., k = 1.</span>
+<span class="sd">            embs_feature_dict: Pre-trained continuous embedding features of each</span>
+<span class="sd">                context.</span>
+<span class="sd">            embs_dim_list: Embedding dimension for each categorical variable. The length</span>
+<span class="sd">                equals to num of categorical features k. If None, the embedding</span>
+<span class="sd">                dimension is set to 1 for each categorical variable.</span>
+<span class="sd">            context_weight_dict: Known population weights of each context.</span>
+<span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">decomposition</span> <span class="o">=</span> <span class="n">decomposition</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>

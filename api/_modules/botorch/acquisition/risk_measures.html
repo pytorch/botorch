@@ -55,7 +55,7 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="RiskMeasureMCObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.RiskMeasureMCObjective">[docs]</a><span class="k">class</span> <span class="nc">RiskMeasureMCObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">RiskMeasureMCObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Objective transforming the posterior samples to samples of a risk measure.</span>
 
 <span class="sd">    The risk measure is calculated over joint q-batch samples from the posterior.</span>
@@ -68,6 +68,8 @@
 <span class="sd">    BoTorch by default assumes a maximization objective, so the default behavior here</span>
 <span class="sd">    is to calculate the risk measures w.r.t. the lower tail of the distribution.</span>
 <span class="sd">    This can be changed by passing `weights=torch.tensor([-1.0])`.</span>
+
+<span class="sd">    :meta private:</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -111,7 +113,7 @@
             <span class="n">samples</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">samples</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_w</span><span class="p">)</span>
 
-<div class="viewcode-block" id="RiskMeasureMCObjective.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.RiskMeasureMCObjective.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Calculate the risk measure corresponding to the given samples.</span>
 
@@ -124,7 +126,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `sample_shape x batch_shape x q`-dim tensor of risk measure samples.</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
 <div class="viewcode-block" id="CVaR"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.CVaR">[docs]</a><span class="k">class</span> <span class="nc">CVaR</span><span class="p">(</span><span class="n">RiskMeasureMCObjective</span><span class="p">):</span>

@@ -41,7 +41,7 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">device</span> <span class="k">as</span> <span class="n">Device</span><span class="p">,</span> <span class="n">dtype</span> <span class="k">as</span> <span class="n">Dtype</span><span class="p">,</span> <span class="n">LongTensor</span><span class="p">,</span> <span class="n">Size</span><span class="p">,</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="BotorchContainer"><a class="viewcode-back" href="../../../utils.html#botorch.utils.containers.BotorchContainer">[docs]</a><span class="k">class</span> <span class="nc">BotorchContainer</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">BotorchContainer</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Abstract base class for BoTorch's data containers.</span>
 
 <span class="sd">    A BotorchContainer represents a tensor, which should be the sole object</span>
@@ -51,6 +51,8 @@
 
 <span class="sd">    Notice: Once version 3.10 becomes standard, this class should</span>
 <span class="sd">    be reworked to take advantage of dataclasses' `kw_only` flag.</span>
+
+<span class="sd">    :meta private:</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -84,7 +86,7 @@
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"event_shape"</span><span class="p">:</span>
                 <span class="k">return</span>
-        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">"Missing required field `event_shape`."</span><span class="p">)</span></div>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">"Missing required field `event_shape`."</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="DenseContainer"><a class="viewcode-back" href="../../../utils.html#botorch.utils.containers.DenseContainer">[docs]</a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>

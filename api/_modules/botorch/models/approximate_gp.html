@@ -93,6 +93,14 @@
 
 
 <div class="viewcode-block" id="ApproximateGPyTorchModel"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel">[docs]</a><span class="k">class</span> <span class="nc">ApproximateGPyTorchModel</span><span class="p">(</span><span class="n">GPyTorchModel</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Botorch wrapper class for various (variational) approximate GP models in</span>
+<span class="sd">    GPyTorch.</span>
+
+<span class="sd">    This can either include stochastic variational GPs (SVGPs) or</span>
+<span class="sd">    variational implementations of weight space approximate GPs.</span>
+<span class="sd">    """</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ApproximateGP</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -102,14 +110,10 @@
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">        Botorch wrapper class for various (variational) approximate GP models in</span>
-<span class="sd">        gpytorch. This can either include stochastic variational GPs (SVGPs) or</span>
-<span class="sd">        variational implementations of weight space approximate GPs.</span>
-
 <span class="sd">        Args:</span>
 <span class="sd">            model: Instance of gpytorch.approximate GP models. If omitted,</span>
 <span class="sd">                constructs a `_SingleTaskVariationalGP`.</span>
-<span class="sd">            likelihood: Instance of a GPyYorch likelihood. If omitted, uses a</span>
+<span class="sd">            likelihood: Instance of a GPyTorch likelihood. If omitted, uses a</span>
 <span class="sd">                either a `GaussianLikelihood` (if `num_outputs=1`) or a</span>
 <span class="sd">                `MultitaskGaussianLikelihood`(if `num_outputs&gt;1`).</span>
 <span class="sd">            num_outputs: Number of outputs expected for the GP model.</span>
@@ -172,6 +176,13 @@
 
 
 <span class="k">class</span> <span class="nc">_SingleTaskVariationalGP</span><span class="p">(</span><span class="n">ApproximateGP</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Base class wrapper for a stochastic variational Gaussian Process (SVGP)</span>
+<span class="sd">    model [hensman2013svgp]_.</span>
+
+<span class="sd">    Uses pivoted Cholesky initialization for the inducing points.</span>
+<span class="sd">    """</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -185,10 +196,6 @@
         <span class="n">inducing_points</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">        Base class wrapper for a stochastic variational Gaussian Process (SVGP)</span>
-<span class="sd">        model [hensman2013svgp]_. Uses pivoted cholesky initialization for the</span>
-<span class="sd">        inducing points.</span>
-
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: Training inputs (due to the ability of the SVGP to sub-sample</span>
 <span class="sd">                this does not have to be all of the training inputs).</span>
@@ -281,7 +288,7 @@
 
 <div class="viewcode-block" id="SingleTaskVariationalGP"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.SingleTaskVariationalGP">[docs]</a><span class="k">class</span> <span class="nc">SingleTaskVariationalGP</span><span class="p">(</span><span class="n">ApproximateGPyTorchModel</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""A single-task variational GP model following [hensman2013svgp]_ with pivoted</span>
-<span class="sd">    cholesky initialization following [chen2018dpp]_ and [burt2020svgp]_.</span>
+<span class="sd">    Cholesky initialization following [chen2018dpp]_ and [burt2020svgp]_.</span>
 
 <span class="sd">    A single-task variational GP using relatively strong priors on the Kernel</span>
 <span class="sd">    hyperparameters, which work best when covariates are normalized to the unit</span>
@@ -295,11 +302,19 @@
 
 <span class="sd">    Use this model if you have a lot of data or if your responses are non-Gaussian.</span>
 
-<span class="sd">    To train this model, you should use `gpytorch.mlls.VariationalELBO` and not the</span>
-<span class="sd">    exact marginal log likelihood. Example mll:</span>
+<span class="sd">    To train this model, you should use gpytorch.mlls.VariationalELBO and not</span>
+<span class="sd">    the exact marginal log likelihood.</span>
 
-<span class="sd">        mll = VariationalELBO(model.likelihood, model.model, num_data=train_X.shape[-2])</span>
-
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; import torch</span>
+<span class="sd">        &gt;&gt;&gt; from botorch.models import SingleTaskVariationalGP</span>
+<span class="sd">        &gt;&gt;&gt; from gpytorch.mlls import VariationalELBO</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; train_X = torch.rand(20, 2)</span>
+<span class="sd">        &gt;&gt;&gt; model = SingleTaskVariationalGP(train_X)</span>
+<span class="sd">        &gt;&gt;&gt; mll = VariationalELBO(</span>
+<span class="sd">        &gt;&gt;&gt;     model.likelihood, model.model, num_data=train_X.shape[-2]</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -318,15 +333,11 @@
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">        A single task stochastic variational Gaussian process model (SVGP) as described</span>
-<span class="sd">        by [hensman2013svgp]_. We use pivoted cholesky initialization [burt2020svgp]_ to</span>
-<span class="sd">        initialize the inducing points of the model.</span>
-
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: Training inputs (due to the ability of the SVGP to sub-sample</span>
 <span class="sd">                this does not have to be all of the training inputs).</span>
 <span class="sd">            train_Y: Training targets (optional).</span>
-<span class="sd">            likelihood: Instance of a GPyYorch likelihood. If omitted, uses a</span>
+<span class="sd">            likelihood: Instance of a GPyTorch likelihood. If omitted, uses a</span>
 <span class="sd">                either a `GaussianLikelihood` (if `num_outputs=1`) or a</span>
 <span class="sd">                `MultitaskGaussianLikelihood`(if `num_outputs&gt;1`).</span>
 <span class="sd">            num_outputs: Number of output responses per input (default: 1).</span>

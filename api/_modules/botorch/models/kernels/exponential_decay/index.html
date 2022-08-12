@@ -51,18 +51,6 @@
 
 <span class="sd">    where `w` is an offset parameter, `beta` is a lenthscale parameter, and</span>
 <span class="sd">    `alpha` is a power parameter.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        lengthscale_constraint: Constraint to place on lengthscale parameter.</span>
-<span class="sd">            Default is `Positive`.</span>
-<span class="sd">        lengthscale_prior: Prior over the lengthscale parameter.</span>
-<span class="sd">        power_constraint: Constraint to place on power parameter. Default is</span>
-<span class="sd">            `Positive`.</span>
-<span class="sd">        power_prior: Prior over the power parameter.</span>
-<span class="sd">        offset_constraint: Constraint to place on offset parameter. Default is</span>
-<span class="sd">            `Positive`.</span>
-<span class="sd">        active_dims: List of data dimensions to operate on. `len(active_dims)`</span>
-<span class="sd">            should equal `num_dimensions`.</span>
 <span class="sd">    """</span>
 
     <span class="n">has_lengthscale</span> <span class="o">=</span> <span class="kc">True</span>
@@ -75,6 +63,19 @@
         <span class="n">offset_constraint</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Interval</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            lengthscale_constraint: Constraint to place on lengthscale parameter.</span>
+<span class="sd">                Default is `Positive`.</span>
+<span class="sd">            lengthscale_prior: Prior over the lengthscale parameter.</span>
+<span class="sd">            power_constraint: Constraint to place on power parameter. Default is</span>
+<span class="sd">                `Positive`.</span>
+<span class="sd">            power_prior: Prior over the power parameter.</span>
+<span class="sd">            offset_constraint: Constraint to place on offset parameter. Default is</span>
+<span class="sd">                `Positive`.</span>
+<span class="sd">            active_dims: List of data dimensions to operate on. `len(active_dims)`</span>
+<span class="sd">                should equal `num_dimensions`.</span>
+<span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">power_constraint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>

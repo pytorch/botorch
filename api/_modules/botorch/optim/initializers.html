@@ -52,7 +52,7 @@
     <span class="n">qKnowledgeGradient</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="n">is_nonnegative</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">BadInitialCandidatesWarning</span><span class="p">,</span>
     <span class="n">BotorchWarning</span><span class="p">,</span>
@@ -130,6 +130,12 @@
             <span class="s2">"for generating initial conditions for optimization."</span>
         <span class="p">)</span>
     <span class="n">options</span> <span class="o">=</span> <span class="n">options</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">sample_around_best</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sample_around_best"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sample_around_best</span> <span class="ow">and</span> <span class="n">equality_constraints</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="s2">"Option 'sample_around_best' is not supported when equality"</span>
+            <span class="s2">"constraints are present."</span>
+        <span class="p">)</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"seed"</span><span class="p">)</span>
     <span class="n">batch_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
         <span class="s2">"init_batch_limit"</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"batch_limit"</span><span class="p">)</span>
@@ -186,7 +192,7 @@
                     <span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
                 <span class="p">)</span>
             <span class="c1"># sample points around best</span>
-            <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sample_around_best"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">sample_around_best</span><span class="p">:</span>
                 <span class="n">X_best_rnd</span> <span class="o">=</span> <span class="n">sample_points_around_best</span><span class="p">(</span>
                     <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
                     <span class="n">n_discrete_points</span><span class="o">=</span><span class="n">n</span> <span class="o">*</span> <span class="n">q</span><span class="p">,</span>

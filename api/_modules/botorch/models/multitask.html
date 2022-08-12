@@ -319,7 +319,9 @@
 <div class="viewcode-block" id="FixedNoiseMultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.FixedNoiseMultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">FixedNoiseMultiTaskGP</span><span class="p">(</span><span class="n">MultiTaskGP</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel, with known observation noise.</span>
 
-<span class="sd">    Multi-task exact GP that uses a simple ICM kernel. Can be single-output or</span>
+<span class="sd">    This is the fixed-noise version of `MultiTaskGP` -– that is,</span>
+<span class="sd">    `FixedNoiseMultiTaskGP` is to `MultiTaskGP` as `FixedNoiseGP` is to</span>
+<span class="sd">    `SingleTaskGP`. It can be single-output or</span>
 <span class="sd">    multi-output. This model uses relatively strong priors on the base Kernel</span>
 <span class="sd">    hyperparameters, which work best when covariates are normalized to the unit</span>
 <span class="sd">    cube and outcomes are standardized (zero mean, unit variance).</span>
@@ -340,8 +342,7 @@
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel and known observation noise.</span>
-
+        <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: A `n x (d + 1)` or `b x n x (d + 1)` (batch mode) tensor</span>
 <span class="sd">                of training data. One of the columns should contain the task</span>
@@ -411,6 +412,26 @@
 <span class="sd">    For posterior sampling, this model uses Matheron's rule [Doucet2010sampl] to compute</span>
 <span class="sd">    the posterior over all tasks as in [Maddox2021bohdo] by exploiting Kronecker</span>
 <span class="sd">    structure.</span>
+
+<span class="sd">    When a multi-fidelity model has Kronecker structure, this means there is one</span>
+<span class="sd">    covariance kernel over the fidelity features (call it `K_f`) and another over</span>
+<span class="sd">    the rest of the input parameters (call it `K_i`), and the resulting covariance</span>
+<span class="sd">    across inputs and fidelities is given by the Kronecker product of the two</span>
+<span class="sd">    covariance matrices. This is equivalent to saying the covariance between</span>
+<span class="sd">    two input and feature pairs is given by</span>
+
+<span class="sd">    K((parameter_1, fidelity_1), (parameter_2, fidelity_2))</span>
+<span class="sd">        = K_f(fidelity_1, fidelity_2) * K_i(parameter_1, parameter_2).</span>
+
+<span class="sd">    Then the covariance matrix of `n_i` parameters and `n_f` fidelities can be</span>
+<span class="sd">    codified as a Kronecker product of an `n_i x n_i` matrix and an</span>
+<span class="sd">    `n_f x n_f` matrix, which is far more parsimonious than specifying the</span>
+<span class="sd">    whole `(n_i * n_f) x (n_i * n_f)` covariance matrix.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; train_X = torch.rand(10, 2)</span>
+<span class="sd">        &gt;&gt;&gt; train_Y = torch.cat([f_1(X), f_2(X)], dim=-1)</span>
+<span class="sd">        &gt;&gt;&gt; model = KroneckerMultiTaskGP(train_X, train_Y)</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -425,8 +446,7 @@
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Multi-task GP with Kronecker structure, using a simple ICM kernel.</span>
-
+        <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: A `batch_shape x n x d` tensor of training features.</span>
 <span class="sd">            train_Y: A `batch_shape x n x m` tensor of training observations.</span>
@@ -449,11 +469,6 @@
 <span class="sd">                for the default LKJCovariancePrior task_covar_prior.</span>
 <span class="sd">                - likelihood_rank: The rank of the task covariance matrix to fit.</span>
 <span class="sd">                Defaults to 0 (which corresponds to a diagonal covariance matrix).</span>
-
-<span class="sd">        Example:</span>
-<span class="sd">            &gt;&gt;&gt; train_X = torch.rand(10, 2)</span>
-<span class="sd">            &gt;&gt;&gt; train_Y = torch.cat([f_1(X), f_2(X)], dim=-1)</span>
-<span class="sd">            &gt;&gt;&gt; model = KroneckerMultiTaskGP(train_X, train_Y)</span>
 <span class="sd">        """</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span>

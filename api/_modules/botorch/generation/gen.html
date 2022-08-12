@@ -43,6 +43,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">OptimizationWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.generation.utils</span> <span class="kn">import</span> <span class="n">_remove_fixed_features_from_optimization</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.parameter_constraints</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_arrayify</span><span class="p">,</span>
@@ -236,6 +237,23 @@
         <span class="n">callback</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"callback"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
         <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"method"</span><span class="p">,</span> <span class="s2">"callback"</span><span class="p">]},</span>
     <span class="p">)</span>
+
+    <span class="k">if</span> <span class="s2">"success"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">"status"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"always"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">OptimizationWarning</span><span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"Optimization failed within `scipy.optimize.minimize` with no "</span>
+                <span class="s2">"status returned to `res.`"</span><span class="p">,</span>
+                <span class="n">OptimizationWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">res</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"always"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">OptimizationWarning</span><span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Optimization failed within `scipy.optimize.minimize` with status "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">."</span><span class="p">,</span>
+                <span class="n">OptimizationWarning</span><span class="p">,</span>
+            <span class="p">)</span>
     <span class="n">candidates</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span>
         <span class="n">X</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">initial_conditions</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shapeX</span><span class="p">),</span>
         <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>

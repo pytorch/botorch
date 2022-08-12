@@ -54,7 +54,9 @@
 <div class="viewcode-block" id="MixedSingleTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP">[docs]</a><span class="k">class</span> <span class="nc">MixedSingleTaskGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""A single-task exact GP model for mixed search spaces.</span>
 
-<span class="sd">    This model uses a kernel that combines a CategoricalKernel (based on</span>
+<span class="sd">    This model is similar to `SingleTaskGP`, but supports mixed search spaces,</span>
+<span class="sd">    which combine discrete and continuous features, as well as solely discrete</span>
+<span class="sd">    spaces. It uses a kernel that combines a CategoricalKernel (based on</span>
 <span class="sd">    Hamming distances) and a regular kernel into a kernel of the form</span>
 
 <span class="sd">        K((x1, c1), (x2, c2)) =</span>
@@ -68,7 +70,17 @@
 <span class="sd">    Since this model does not provide gradients for the categorical features,</span>
 <span class="sd">    optimization of the acquisition function will need to be performed in</span>
 <span class="sd">    a mixed fashion, i.e., treating the categorical features properly as</span>
-<span class="sd">    discrete optimization variables.</span>
+<span class="sd">    discrete optimization variables. We recommend using `optimize_acqf_mixed.`</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; train_X = torch.cat(</span>
+<span class="sd">                [torch.rand(20, 2), torch.randint(3, (20, 1))], dim=-1)</span>
+<span class="sd">            )</span>
+<span class="sd">        &gt;&gt;&gt; train_Y = (</span>
+<span class="sd">                torch.sin(train_X[..., :-1]).sum(dim=1, keepdim=True)</span>
+<span class="sd">                + train_X[..., -1:]</span>
+<span class="sd">            )</span>
+<span class="sd">        &gt;&gt;&gt; model = MixedSingleTaskGP(train_X, train_Y, cat_dims=[-1])</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -89,7 +101,7 @@
 <span class="sd">            cat_dims: A list of indices corresponding to the columns of</span>
 <span class="sd">                the input `X` that should be considered categorical features.</span>
 <span class="sd">            cont_kernel_factory: A method that accepts `ard_num_dims` and</span>
-<span class="sd">                `active_dims` arguments and returns an instatiated GPyTorch</span>
+<span class="sd">                `active_dims` arguments and returns an instantiated GPyTorch</span>
 <span class="sd">                `Kernel` object to be used as the ase kernel for the continuous</span>
 <span class="sd">                dimensions. If omitted, this model uses a Matern-2.5 kernel as</span>
 <span class="sd">                the kernel for the ordinal parameters.</span>
@@ -103,16 +115,6 @@
 <span class="sd">                forward pass. Only input transforms are allowed which do not</span>
 <span class="sd">                transform the categorical dimensions. This can be achieved</span>
 <span class="sd">                by using the `indices` argument when constructing the transform.</span>
-
-<span class="sd">        Example:</span>
-<span class="sd">            &gt;&gt;&gt; train_X = torch.cat(</span>
-<span class="sd">                    [torch.rand(20, 2), torch.randint(3, (20, 1))], dim=-1)</span>
-<span class="sd">                )</span>
-<span class="sd">            &gt;&gt;&gt; train_Y = (</span>
-<span class="sd">                    torch.sin(train_X[..., :-1]).sum(dim=1, keepdim=True)</span>
-<span class="sd">                    + train_X[..., -1:]</span>
-<span class="sd">                )</span>
-<span class="sd">            &gt;&gt;&gt; model = MixedSingleTaskGP(train_X, train_Y, cat_dims=[-1])</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">input_transform</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
