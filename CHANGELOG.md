@@ -2,6 +2,31 @@
 
 The release log for BoTorch.
 
+## [0.6.6] - Aug 12, 2022
+
+#### Compatibility
+* Require GPyTorch >= 1.8.1 (#1347).
+
+#### New Features
+* Support batched models in `RandomFourierFeatures` (#1336).
+* Add a `skip_expand` option to `AppendFeatures` (#1344).
+
+#### Other Changes
+* Allow `qProbabilityOfImprovement` to use batch-shaped `best_f` (#1324).
+* Make `optimize_acqf` re-attempt failed optimization runs and handle optimization
+errors in `optimize_acqf` and `gen_candidates_scipy` better (#1325).
+* Reduce memory overhead in `MARS.set_baseline_Y` (#1346).
+
+#### Bug Fixes
+* Fix bug where `outcome_transform` was ignored for `ModelListGP.fantasize` (#1338).
+* Fix bug causing `get_polytope_samples` to sample incorrectly when variables
+live in multiple dimensions (#1341).
+
+#### Documentation
+* Add more descriptive docstrings for models (#1327, #1328, #1329, #1330) and for other
+classes (#1313).
+* Expanded on the model documentation at [botorch.org/docs/models](https://botorch.org/docs/models) (#1337).
+
 ## [0.6.5] - Jul 15, 2022
 
 #### Compatibility
