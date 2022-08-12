@@ -505,7 +505,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             if self.expectation:
                 padded_mvar_list.append(mvar_.mean(dim=0))
             else:
-                # Repeat the last entry to make `mvar_set` `n_w x m`.
+                # Repeat the last entry to make `mvar_set` `pad_size x m`.
                 repeats_needed = pad_size - mvar_.shape[0]
                 padded_mvar_list.append(
                     torch.cat([mvar_, mvar_[-1].expand(repeats_needed, m)], dim=0)
@@ -578,7 +578,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
             X_baseline: An `n x d`-dim tensor of previously evaluated points.
         """
         with torch.no_grad():
-            Y = model.posterior(X_baseline).mean
+            Y = model.posterior(X_baseline.unsqueeze(-2)).mean.squeeze(-2)
         Y = self.preprocessing_function(Y)
         Y = self.mvar(Y).view(-1, Y.shape[-1])
         Y = Y[is_non_dominated(Y)]
