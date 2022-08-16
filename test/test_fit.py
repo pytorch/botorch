@@ -9,6 +9,8 @@ import warnings
 from itertools import product
 from unittest import mock
 
+import scipy
+
 import torch
 from botorch import fit_gpytorch_model, settings
 from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
@@ -217,6 +219,19 @@ class TestFitGPyTorchModel(BotorchTestCase):
                 model.covar_module.base_kernel.raw_lengthscale.abs().item(), 0.1
             )
             self.assertGreater(model.covar_module.raw_outputscale.abs().item(), 1e-3)
+
+            # end-to-end testing that fit_gpytorch_model passes the options to scipy minimize
+            if optimizer == fit_gpytorch_scipy:
+                options["maxiter"] = 3
+                scipy_minimize_mock = mock.Mock(wraps=scipy.optimize.minimize)
+                with mock.patch("botorch.optim.fit.minimize", scipy_minimize_mock):
+                    fit_gpytorch_model(
+                        mll, optimizer=optimizer, options=options, max_retries=1
+                    )
+                kwargs = scipy_minimize_mock.call_args.kwargs
+                # testing maxiter separately to give more informative failures
+                self.assertEqual(kwargs["options"]["maxiter"], options["maxiter"])
+                self.assertEqual(kwargs["options"], options)
 
     def test_fit_gpytorch_model_singular(self):
         options = {"disp": False, "maxiter": 5}
