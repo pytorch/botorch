@@ -36,6 +36,8 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span> <span class="nn">warnings</span>
+
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -44,7 +46,8 @@
     <span class="n">OneShotAcquisitionFunction</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.knowledge_gradient</span> <span class="kn">import</span> <span class="n">qKnowledgeGradient</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">InputDataError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">OptimizationWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.generation.gen</span> <span class="kn">import</span> <span class="n">gen_candidates_scipy</span>
 <span class="kn">from</span> <span class="nn">botorch.logging</span> <span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.initializers</span> <span class="kn">import</span> <span class="p">(</span>
@@ -94,17 +97,19 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        acq_function: An AcquisitionFunction.</span>
-<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.</span>
+<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`</span>
+<span class="sd">            (if inequality_constraints is provided, these bounds can be -inf and</span>
+<span class="sd">            +inf, respectively).</span>
 <span class="sd">        q: The number of candidates.</span>
 <span class="sd">        num_restarts: The number of starting points for multistart acquisition</span>
 <span class="sd">            function optimization.</span>
 <span class="sd">        raw_samples: The number of samples for initialization. This is required</span>
 <span class="sd">            if `batch_initial_conditions` is not specified.</span>
 <span class="sd">        options: Options for candidate generation.</span>
-<span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">        inequality_constraints: A list of tuples (indices, coefficients, rhs),</span>
 <span class="sd">            with each tuple encoding an inequality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`</span>
-<span class="sd">        equality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">        equality_constraints: A list of tuples (indices, coefficients, rhs),</span>
 <span class="sd">            with each tuple encoding an inequality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`</span>
 <span class="sd">        nonlinear_inequality_constraints: A list of callables with that represent</span>
@@ -151,10 +156,14 @@
 <span class="sd">        &gt;&gt;&gt;     qEI, bounds, 3, 15, 256, sequential=True</span>
 <span class="sd">        &gt;&gt;&gt; )</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">bounds</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"bounds should be a `2 x d` tensor, current shape: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
-        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">inequality_constraints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">bounds</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"bounds should be a `2 x d` tensor, current shape: "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+        <span class="c1"># TODO: Validate constraints if provided:</span>
+        <span class="c1"># https://github.com/pytorch/botorch/pull/1231</span>
 
     <span class="k">if</span> <span class="n">sequential</span> <span class="ow">and</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">return_best_only</span><span class="p">:</span>
@@ -212,7 +221,8 @@
             <span class="n">acq_value</span> <span class="o">=</span> <span class="n">acq_function</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">acq_value</span>
 
-    <span class="k">if</span> <span class="n">batch_initial_conditions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">initial_conditions_provided</span> <span class="o">=</span> <span class="n">batch_initial_conditions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">initial_conditions_provided</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                 <span class="s2">"`batch_initial_conditions` must be given if there are non-linear "</span>
@@ -223,6 +233,7 @@
                 <span class="s2">"Must specify `raw_samples` when `batch_initial_conditions` is `None`."</span>
             <span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">_gen_initial_conditions</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">ic_gen</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">gen_one_shot_kg_initial_conditions</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">qKnowledgeGradient</span><span class="p">)</span>
@@ -239,31 +250,82 @@
             <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
             <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="k">return</span> <span class="n">batch_initial_conditions</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">initial_conditions_provided</span><span class="p">:</span>
+        <span class="n">batch_initial_conditions</span> <span class="o">=</span> <span class="n">_gen_initial_conditions</span><span class="p">()</span>
 
     <span class="n">batch_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
         <span class="s2">"batch_limit"</span><span class="p">,</span> <span class="n">num_restarts</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">nonlinear_inequality_constraints</span> <span class="k">else</span> <span class="mi">1</span>
     <span class="p">)</span>
-    <span class="n">batch_candidates_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">batch_acq_values_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">batched_ics</span> <span class="o">=</span> <span class="n">batch_initial_conditions</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">batch_limit</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batched_ics_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">batched_ics</span><span class="p">):</span>
-        <span class="c1"># optimize using random restart optimization</span>
-        <span class="n">batch_candidates_curr</span><span class="p">,</span> <span class="n">batch_acq_values_curr</span> <span class="o">=</span> <span class="n">gen_candidates_scipy</span><span class="p">(</span>
-            <span class="n">initial_conditions</span><span class="o">=</span><span class="n">batched_ics_</span><span class="p">,</span>
+
+    <span class="k">def</span> <span class="nf">_optimize_batch_candidates</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="ne">Warning</span><span class="p">]]:</span>
+        <span class="n">batch_candidates_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">batch_acq_values_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">batched_ics</span> <span class="o">=</span> <span class="n">batch_initial_conditions</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">batch_limit</span><span class="p">)</span>
+        <span class="n">opt_warnings</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">scipy_kws</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
             <span class="n">acquisition_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
-            <span class="n">lower_bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-            <span class="n">upper_bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">lower_bounds</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isinf</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="k">else</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">upper_bounds</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">isinf</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="k">else</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
             <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">INIT_OPTION_KEYS</span><span class="p">},</span>
             <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
             <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
             <span class="n">nonlinear_inequality_constraints</span><span class="o">=</span><span class="n">nonlinear_inequality_constraints</span><span class="p">,</span>
             <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">batch_candidates_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_candidates_curr</span><span class="p">)</span>
-        <span class="n">batch_acq_values_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_acq_values_curr</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Generated candidate batch </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">batched_ics</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
-    <span class="n">batch_candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">batch_candidates_list</span><span class="p">)</span>
-    <span class="n">batch_acq_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">batch_acq_values_list</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batched_ics_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">batched_ics</span><span class="p">):</span>
+            <span class="c1"># optimize using random restart optimization</span>
+            <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">ws</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"always"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">OptimizationWarning</span><span class="p">)</span>
+                <span class="n">batch_candidates_curr</span><span class="p">,</span> <span class="n">batch_acq_values_curr</span> <span class="o">=</span> <span class="n">gen_candidates_scipy</span><span class="p">(</span>
+                    <span class="n">initial_conditions</span><span class="o">=</span><span class="n">batched_ics_</span><span class="p">,</span> <span class="o">**</span><span class="n">scipy_kws</span>
+                <span class="p">)</span>
+            <span class="n">opt_warnings</span> <span class="o">+=</span> <span class="n">ws</span>
+            <span class="n">batch_candidates_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_candidates_curr</span><span class="p">)</span>
+            <span class="n">batch_acq_values_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_acq_values_curr</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Generated candidate batch </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">batched_ics</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+
+        <span class="n">batch_candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">batch_candidates_list</span><span class="p">)</span>
+        <span class="n">batch_acq_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">batch_acq_values_list</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">batch_candidates</span><span class="p">,</span> <span class="n">batch_acq_values</span><span class="p">,</span> <span class="n">opt_warnings</span>
+
+    <span class="n">batch_candidates</span><span class="p">,</span> <span class="n">batch_acq_values</span><span class="p">,</span> <span class="n">ws</span> <span class="o">=</span> <span class="n">_optimize_batch_candidates</span><span class="p">()</span>
+
+    <span class="n">optimization_warning_raised</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">optimization_warning_raised</span><span class="p">:</span>
+        <span class="n">first_warn_msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"Optimization failed in `gen_candidates_scipy` with the following "</span>
+            <span class="sa">f</span><span class="s2">"warning(s):</span><span class="se">\n</span><span class="si">{</span><span class="p">[</span><span class="n">w</span><span class="o">.</span><span class="n">message</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">Because you specified "</span>
+            <span class="s2">"`batch_initial_conditions`, optimization will not be retried with "</span>
+            <span class="s2">"new initial conditions and will proceed with the current solution."</span>
+            <span class="s2">" Suggested remediation: Try again with different "</span>
+            <span class="s2">"`batch_initial_conditions`, or don't provide `batch_initial_conditions.`"</span>
+            <span class="k">if</span> <span class="n">initial_conditions_provided</span>
+            <span class="k">else</span> <span class="s2">"Optimization failed in `gen_candidates_scipy` with the following "</span>
+            <span class="sa">f</span><span class="s2">"warning(s):</span><span class="se">\n</span><span class="si">{</span><span class="p">[</span><span class="n">w</span><span class="o">.</span><span class="n">message</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">Trying again with a new "</span>
+            <span class="s2">"set of initial conditions."</span>
+        <span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">first_warn_msg</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">initial_conditions_provided</span><span class="p">:</span>
+            <span class="n">batch_initial_conditions</span> <span class="o">=</span> <span class="n">_gen_initial_conditions</span><span class="p">()</span>
+
+            <span class="n">batch_candidates</span><span class="p">,</span> <span class="n">batch_acq_values</span><span class="p">,</span> <span class="n">ws</span> <span class="o">=</span> <span class="n">_optimize_batch_candidates</span><span class="p">()</span>
+
+            <span class="n">optimization_warning_raised</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">optimization_warning_raised</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">"Optimization failed on the second try, after generating a "</span>
+                    <span class="s2">"new set of initial conditions."</span><span class="p">,</span>
+                    <span class="ne">RuntimeWarning</span><span class="p">,</span>
+                <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">post_processing_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">batch_candidates</span> <span class="o">=</span> <span class="n">post_processing_func</span><span class="p">(</span><span class="n">batch_candidates</span><span class="p">)</span>
@@ -298,7 +360,9 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        acq_function: An AcquisitionFunction</span>
-<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.</span>
+<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`</span>
+<span class="sd">            (if inequality_constraints is provided, these bounds can be -inf and</span>
+<span class="sd">            +inf, respectively).</span>
 <span class="sd">        q: The number of candidates.</span>
 <span class="sd">        num_restarts:  Number of starting points for multistart acquisition</span>
 <span class="sd">            function optimization.</span>
@@ -411,7 +475,9 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        acq_function_list: A list of acquisition functions.</span>
-<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.</span>
+<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`</span>
+<span class="sd">            (if inequality_constraints is provided, these bounds can be -inf and</span>
+<span class="sd">            +inf, respectively).</span>
 <span class="sd">        num_restarts:  Number of starting points for multistart acquisition</span>
 <span class="sd">            function optimization.</span>
 <span class="sd">        raw_samples: Number of samples for initialization. This is required</span>
@@ -491,7 +557,9 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        acq_function: An AcquisitionFunction</span>
-<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.</span>
+<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`</span>
+<span class="sd">            (if inequality_constraints is provided, these bounds can be -inf and</span>
+<span class="sd">            +inf, respectively).</span>
 <span class="sd">        q: The number of candidates.</span>
 <span class="sd">        num_restarts:  Number of starting points for multistart acquisition</span>
 <span class="sd">            function optimization.</span>
@@ -626,6 +694,8 @@
             <span class="s2">"Discrete optimization is not supported for"</span>
             <span class="s2">"one-shot acquisition functions."</span>
         <span class="p">)</span>
+    <span class="k">if</span> <span class="n">choices</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span><span class="s2">"`choices` must be non-emtpy."</span><span class="p">)</span>
     <span class="n">choices_batched</span> <span class="o">=</span> <span class="n">choices</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">candidate_list</span><span class="p">,</span> <span class="n">acq_value_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>

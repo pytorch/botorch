@@ -229,7 +229,7 @@
     <span class="n">dtype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Draw qMC samples from a multi-variate standard normal N(0, I_d)</span>
+    <span class="sa">r</span><span class="sd">"""Draw qMC samples from a multi-variate standard normal N(0, I_d).</span>
 
 <span class="sd">    A primary use-case for this functionality is to compute an QMC average</span>
 <span class="sd">    of f(X) over X where each element of X is drawn N(0, 1).</span>
@@ -502,7 +502,13 @@
     <span class="n">A_ub</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
 
     <span class="n">result</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">linprog</span><span class="p">(</span>
-        <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">A_ub</span><span class="o">=</span><span class="n">A_ub</span><span class="p">,</span> <span class="n">b_ub</span><span class="o">=</span><span class="n">b_ub</span><span class="p">,</span> <span class="n">A_eq</span><span class="o">=</span><span class="n">A_eq</span><span class="p">,</span> <span class="n">b_eq</span><span class="o">=</span><span class="n">b_eq</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
+        <span class="n">A_ub</span><span class="o">=</span><span class="n">A_ub</span><span class="p">,</span>
+        <span class="n">b_ub</span><span class="o">=</span><span class="n">b_ub</span><span class="p">,</span>
+        <span class="n">A_eq</span><span class="o">=</span><span class="n">A_eq</span><span class="p">,</span>
+        <span class="n">b_eq</span><span class="o">=</span><span class="n">b_eq</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">method</span><span class="o">=</span><span class="s2">"highs"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
@@ -512,7 +518,13 @@
         <span class="n">A_ub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">A_ub</span><span class="p">,</span> <span class="n">A_s</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">b_ub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">b_ub</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">optimize</span><span class="o">.</span><span class="n">linprog</span><span class="p">(</span>
-            <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">A_ub</span><span class="o">=</span><span class="n">A_ub</span><span class="p">,</span> <span class="n">b_ub</span><span class="o">=</span><span class="n">b_ub</span><span class="p">,</span> <span class="n">A_eq</span><span class="o">=</span><span class="n">A_eq</span><span class="p">,</span> <span class="n">b_eq</span><span class="o">=</span><span class="n">b_eq</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
+            <span class="n">A_ub</span><span class="o">=</span><span class="n">A_ub</span><span class="p">,</span>
+            <span class="n">b_ub</span><span class="o">=</span><span class="n">b_ub</span><span class="p">,</span>
+            <span class="n">A_eq</span><span class="o">=</span><span class="n">A_eq</span><span class="p">,</span>
+            <span class="n">b_eq</span><span class="o">=</span><span class="n">b_eq</span><span class="p">,</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"highs"</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
@@ -529,8 +541,12 @@
     <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="PolytopeSampler"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.PolytopeSampler">[docs]</a><span class="k">class</span> <span class="nc">PolytopeSampler</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Base class for samplers that sample points from a polytope."""</span>
+<span class="k">class</span> <span class="nc">PolytopeSampler</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Base class for samplers that sample points from a polytope.</span>
+
+<span class="sd">    :meta private:</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -539,8 +555,7 @@
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">interior_point</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initialize PolytopeSampler.</span>
-
+        <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            inequality_constraints: Tensors `(A, b)` describing inequality</span>
 <span class="sd">                constraints `A @ x &lt;= b`, where `A` is a `n_ineq_con x d`-dim</span>
@@ -603,7 +618,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_interior_point</span><span class="p">()</span>
 
-<div class="viewcode-block" id="PolytopeSampler.feasible"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.PolytopeSampler.feasible">[docs]</a>    <span class="k">def</span> <span class="nf">feasible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">feasible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Check whether a point is contained in the polytope.</span>
 
 <span class="sd">        Args:</span>
@@ -617,9 +632,9 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">equality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">eq</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">C</span> <span class="o">@</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">ineq</span> <span class="o">&amp;</span> <span class="n">eq</span>
-        <span class="k">return</span> <span class="n">ineq</span></div>
+        <span class="k">return</span> <span class="n">ineq</span>
 
-<div class="viewcode-block" id="PolytopeSampler.find_interior_point"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.PolytopeSampler.find_interior_point">[docs]</a>    <span class="k">def</span> <span class="nf">find_interior_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">find_interior_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Find an interior point of the polytope.</span>
 
 <span class="sd">        Returns:</span>
@@ -637,11 +652,11 @@
         <span class="n">x0</span> <span class="o">=</span> <span class="n">find_interior_point</span><span class="p">(</span>
             <span class="n">A</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">b</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">A_eq</span><span class="o">=</span><span class="n">A_eq</span><span class="p">,</span> <span class="n">b_eq</span><span class="o">=</span><span class="n">b_eq</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="c1"># -------- Abstract methods to be implemented by subclasses -------- #</span>
 
-<div class="viewcode-block" id="PolytopeSampler.draw"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.PolytopeSampler.draw">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Draw samples from the polytope.</span>
 
@@ -652,7 +667,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `n x d` Tensor of samples from the polytope.</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
 <div class="viewcode-block" id="HitAndRunPolytopeSampler"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.HitAndRunPolytopeSampler">[docs]</a><span class="k">class</span> <span class="nc">HitAndRunPolytopeSampler</span><span class="p">(</span><span class="n">PolytopeSampler</span><span class="p">):</span>
@@ -841,6 +856,30 @@
         <span class="k">return</span> <span class="n">samples</span></div></div>
 
 
+<div class="viewcode-block" id="normalize_linear_constraints"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.normalize_linear_constraints">[docs]</a><span class="k">def</span> <span class="nf">normalize_linear_constraints</span><span class="p">(</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+    <span class="sa">r</span><span class="sd">"""Normalize linear constraints to the unit cube.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        bounds (Tensor): A `2 x d`-dim tensor containing the box bounds.</span>
+<span class="sd">        constraints (List[Tuple[Tensor, Tensor, float]]): A list of</span>
+<span class="sd">            tuples (indices, coefficients, rhs), with each tuple encoding</span>
+<span class="sd">            an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs` or</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.</span>
+<span class="sd">    """</span>
+
+    <span class="n">new_constraints</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">coefficient</span><span class="p">,</span> <span class="n">rhs</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
+        <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[:,</span> <span class="n">index</span><span class="p">]</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">upper</span> <span class="o">-</span> <span class="n">lower</span>
+        <span class="n">new_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">s</span> <span class="o">*</span> <span class="n">coefficient</span><span class="p">,</span> <span class="p">(</span><span class="n">rhs</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">coefficient</span><span class="p">,</span> <span class="n">lower</span><span class="p">))</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_constraints</span></div>
+
+
 <div class="viewcode-block" id="get_polytope_samples"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.get_polytope_samples">[docs]</a><span class="k">def</span> <span class="nf">get_polytope_samples</span><span class="p">(</span>
     <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -875,10 +914,28 @@
 <span class="sd">    """</span>
     <span class="c1"># create tensors representing linear inequality constraints</span>
     <span class="c1"># of the form Ax &gt;= b.</span>
+    <span class="c1"># TODO: remove this error handling functionality in a few releases.</span>
+    <span class="c1"># Context: BoTorch inadvertently supported indices with unusual dtypes.</span>
+    <span class="c1"># This is now not supported.</span>
+    <span class="n">index_dtype_error</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Normalizing </span><span class="si">{var_name}</span><span class="s2"> failed. Check that the first "</span>
+        <span class="s2">"element of </span><span class="si">{var_name}</span><span class="s2"> is the correct dtype following "</span>
+        <span class="s2">"the previous IndexError."</span>
+    <span class="p">)</span>
     <span class="k">if</span> <span class="n">inequality_constraints</span><span class="p">:</span>
+        <span class="c1"># normalize_linear_constraints is called to solve this issue:</span>
+        <span class="c1"># https://github.com/pytorch/botorch/issues/1225</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># non-standard dtypes used to be supported for indices in constraints;</span>
+            <span class="c1"># this is no longer true</span>
+            <span class="n">constraints</span> <span class="o">=</span> <span class="n">normalize_linear_constraints</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">inequality_constraints</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">IndexError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">index_dtype_error</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var_name</span><span class="o">=</span><span class="s2">"`inequality_constraints`"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
         <span class="n">A</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">sparse_to_dense_constraints</span><span class="p">(</span>
             <span class="n">d</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="c1"># Note the inequality constraints are of the form Ax &gt;= b,</span>
         <span class="c1"># but PolytopeSampler expects inequality constraints of the</span>
@@ -887,19 +944,31 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">dense_inequality_constraints</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">equality_constraints</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># non-standard dtypes used to be supported for indices in constraints;</span>
+            <span class="c1"># this is no longer true</span>
+            <span class="n">constraints</span> <span class="o">=</span> <span class="n">normalize_linear_constraints</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">equality_constraints</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">IndexError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">index_dtype_error</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var_name</span><span class="o">=</span><span class="s2">"`equality_constraints`"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+        <span class="c1"># normalize_linear_constraints is called to solve this issue:</span>
+        <span class="c1"># https://github.com/pytorch/botorch/issues/1225</span>
         <span class="n">dense_equality_constraints</span> <span class="o">=</span> <span class="n">sparse_to_dense_constraints</span><span class="p">(</span>
-            <span class="n">d</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+            <span class="n">d</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">dense_equality_constraints</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">normalized_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
+    <span class="n">normalized_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mf">1.0</span>
     <span class="n">polytope_sampler</span> <span class="o">=</span> <span class="n">HitAndRunPolytopeSampler</span><span class="p">(</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">normalized_bounds</span><span class="p">,</span>
         <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">dense_inequality_constraints</span><span class="p">,</span>
-        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
         <span class="n">equality_constraints</span><span class="o">=</span><span class="n">dense_equality_constraints</span><span class="p">,</span>
         <span class="n">n_burnin</span><span class="o">=</span><span class="n">n_burnin</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="k">return</span> <span class="n">polytope_sampler</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span> <span class="o">*</span> <span class="n">thinning</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)[::</span><span class="n">thinning</span><span class="p">]</span></div>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">polytope_sampler</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span> <span class="o">*</span> <span class="n">thinning</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)[::</span><span class="n">thinning</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">samples</span> <span class="o">*</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
 
 
 <div class="viewcode-block" id="sparse_to_dense_constraints"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.sparse_to_dense_constraints">[docs]</a><span class="k">def</span> <span class="nf">sparse_to_dense_constraints</span><span class="p">(</span>

@@ -39,7 +39,7 @@
 <span class="kn">from</span> <span class="nn">botorch.models.kernels.categorical</span> <span class="kn">import</span> <span class="n">CategoricalKernel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">TrainingData</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize_indices</span>
 <span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.kernel</span> <span class="kn">import</span> <span class="n">Kernel</span>
@@ -54,7 +54,9 @@
 <div class="viewcode-block" id="MixedSingleTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP">[docs]</a><span class="k">class</span> <span class="nc">MixedSingleTaskGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""A single-task exact GP model for mixed search spaces.</span>
 
-<span class="sd">    This model uses a kernel that combines a CategoricalKernel (based on</span>
+<span class="sd">    This model is similar to `SingleTaskGP`, but supports mixed search spaces,</span>
+<span class="sd">    which combine discrete and continuous features, as well as solely discrete</span>
+<span class="sd">    spaces. It uses a kernel that combines a CategoricalKernel (based on</span>
 <span class="sd">    Hamming distances) and a regular kernel into a kernel of the form</span>
 
 <span class="sd">        K((x1, c1), (x2, c2)) =</span>
@@ -68,7 +70,17 @@
 <span class="sd">    Since this model does not provide gradients for the categorical features,</span>
 <span class="sd">    optimization of the acquisition function will need to be performed in</span>
 <span class="sd">    a mixed fashion, i.e., treating the categorical features properly as</span>
-<span class="sd">    discrete optimization variables.</span>
+<span class="sd">    discrete optimization variables. We recommend using `optimize_acqf_mixed.`</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; train_X = torch.cat(</span>
+<span class="sd">                [torch.rand(20, 2), torch.randint(3, (20, 1))], dim=-1)</span>
+<span class="sd">            )</span>
+<span class="sd">        &gt;&gt;&gt; train_Y = (</span>
+<span class="sd">                torch.sin(train_X[..., :-1]).sum(dim=1, keepdim=True)</span>
+<span class="sd">                + train_X[..., -1:]</span>
+<span class="sd">            )</span>
+<span class="sd">        &gt;&gt;&gt; model = MixedSingleTaskGP(train_X, train_Y, cat_dims=[-1])</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -89,7 +101,7 @@
 <span class="sd">            cat_dims: A list of indices corresponding to the columns of</span>
 <span class="sd">                the input `X` that should be considered categorical features.</span>
 <span class="sd">            cont_kernel_factory: A method that accepts `ard_num_dims` and</span>
-<span class="sd">                `active_dims` arguments and returns an instatiated GPyTorch</span>
+<span class="sd">                `active_dims` arguments and returns an instantiated GPyTorch</span>
 <span class="sd">                `Kernel` object to be used as the ase kernel for the continuous</span>
 <span class="sd">                dimensions. If omitted, this model uses a Matern-2.5 kernel as</span>
 <span class="sd">                the kernel for the ordinal parameters.</span>
@@ -103,16 +115,6 @@
 <span class="sd">                forward pass. Only input transforms are allowed which do not</span>
 <span class="sd">                transform the categorical dimensions. This can be achieved</span>
 <span class="sd">                by using the `indices` argument when constructing the transform.</span>
-
-<span class="sd">        Example:</span>
-<span class="sd">            &gt;&gt;&gt; train_X = torch.cat(</span>
-<span class="sd">                    [torch.rand(20, 2), torch.randint(3, (20, 1))], dim=-1)</span>
-<span class="sd">                )</span>
-<span class="sd">            &gt;&gt;&gt; train_Y = (</span>
-<span class="sd">                    torch.sin(train_X[..., :-1]).sum(dim=1, keepdim=True)</span>
-<span class="sd">                    + train_X[..., -1:]</span>
-<span class="sd">                )</span>
-<span class="sd">            &gt;&gt;&gt; model = MixedSingleTaskGP(train_X, train_Y, cat_dims=[-1])</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">input_transform</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
@@ -213,20 +215,23 @@
 
 <div class="viewcode-block" id="MixedSingleTaskGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">training_data</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
+        <span class="n">categorical_features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">likelihood</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Likelihood</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Construct kwargs for the `Model` from `TrainingData` and other options.</span>
+        <span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dict of `BotorchDataset`.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            training_data: `TrainingData` container with data for single outcome</span>
-<span class="sd">                or for multiple outcomes for batched multi-output case.</span>
-<span class="sd">            **kwargs: None expected for this class.</span>
+<span class="sd">            training_data: A `SupervisedDataset` containing the training data.</span>
+<span class="sd">            categorical_features: Column indices of categorical features.</span>
+<span class="sd">            likelihood: Optional likelihood used to constuct the model.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">"train_X"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="p">,</span>
-            <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span>
-            <span class="s2">"cat_dims"</span><span class="p">:</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"categorical_features"</span><span class="p">],</span>
-            <span class="s2">"likelihood"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"likelihood"</span><span class="p">),</span>
+            <span class="o">**</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span><span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+            <span class="s2">"cat_dims"</span><span class="p">:</span> <span class="n">categorical_features</span><span class="p">,</span>
+            <span class="s2">"likelihood"</span><span class="p">:</span> <span class="n">likelihood</span><span class="p">,</span>
         <span class="p">}</span></div></div>
 </pre></div>
 </div>

@@ -43,7 +43,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
@@ -55,16 +55,23 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.generation.utils</span> <span class="kn">import</span> <span class="n">_flip_sub_unique</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+
+<span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">MultiTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">batched_multinomial</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">standardize</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
 
-<div class="viewcode-block" id="SamplingStrategy"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.SamplingStrategy">[docs]</a><span class="k">class</span> <span class="nc">SamplingStrategy</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for sampling-based generation strategies."""</span>
+<span class="k">class</span> <span class="nc">SamplingStrategy</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Abstract base class for sampling-based generation strategies.</span>
 
-<div class="viewcode-block" id="SamplingStrategy.forward"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.SamplingStrategy.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
+<span class="sd">    :meta private:</span>
+<span class="sd">    """</span>
+
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Sample according to the SamplingStrategy.</span>
 
@@ -79,7 +86,7 @@
 <span class="sd">            `X[..., i, :]` is the `i`-th sample.</span>
 <span class="sd">        """</span>
 
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
 <div class="viewcode-block" id="MaxPosteriorSampling"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.MaxPosteriorSampling">[docs]</a><span class="k">class</span> <span class="nc">MaxPosteriorSampling</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
@@ -148,9 +155,11 @@
             <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">,</span>
             <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span><span class="p">,</span>
         <span class="p">)</span>
-
         <span class="c1"># num_samples x batch_shape x N x m</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_samples</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize_samples</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MaxPosteriorSampling.maximize_samples"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.MaxPosteriorSampling.maximize_samples">[docs]</a>    <span class="k">def</span> <span class="nf">maximize_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># num_samples x batch_shape x N</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">replacement</span><span class="p">:</span>
             <span class="c1"># if we allow replacement then things are simple(r)</span>
@@ -258,6 +267,114 @@
         <span class="p">)</span>
         <span class="c1"># now do some gathering acrobatics to select the right elements from X</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">idcs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">idcs</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)))</span></div></div>
+
+
+<div class="viewcode-block" id="ConstrainedMaxPosteriorSampling"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.ConstrainedMaxPosteriorSampling">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedMaxPosteriorSampling</span><span class="p">(</span><span class="n">MaxPosteriorSampling</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Sample from a set of points according to</span>
+<span class="sd">    their max posterior value,</span>
+<span class="sd">    which also likely meet a set of constraints</span>
+<span class="sd">    c1(x) &lt;= 0, c2(x) &lt;= 0, ..., cm(x) &lt;= 0</span>
+<span class="sd">    c1, c2, ..., cm are black-box constraint functions</span>
+<span class="sd">    Each constraint function is modeled by a seperate</span>
+<span class="sd">    surrogate GP constraint model</span>
+<span class="sd">    We sample points for which the posterior value</span>
+<span class="sd">    for each constraint model &lt;= 0,</span>
+<span class="sd">    as described in https://doi.org/10.48550/arxiv.2002.08526</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; CMPS = ConstrainedMaxPosteriorSampling(model,</span>
+<span class="sd">                    constraint_model=ModelListGP(cmodel1, cmodel2,</span>
+<span class="sd">                    ..., cmodelm)  # models w/ feature dim d=3</span>
+<span class="sd">        &gt;&gt;&gt; X = torch.rand(2, 100, 3)</span>
+<span class="sd">        &gt;&gt;&gt; sampled_X = CMPS(X, num_samples=5)</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">constraint_model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ModelListGP</span><span class="p">,</span> <span class="n">MultiTaskGP</span><span class="p">],</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">replacement</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">minimize_constraints_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Constructor for the SamplingStrategy base class.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A fitted model.</span>
+<span class="sd">            objective: The MCAcquisitionObjective under</span>
+<span class="sd">                which the samples are evaluated.</span>
+<span class="sd">                Defaults to `IdentityMCObjective()`.</span>
+<span class="sd">            posterior_transform: An optional PosteriorTransform.</span>
+<span class="sd">            replacement: If True, sample with replacement.</span>
+<span class="sd">            constraint_model: either a ModelListGP where each submodel</span>
+<span class="sd">                is a GP model for one constraint function,</span>
+<span class="sd">                or a MultiTaskGP model where each task is one</span>
+<span class="sd">                constraint function</span>
+<span class="sd">                All constraints are of the form c(x) &lt;= 0.</span>
+<span class="sd">                In the case when the constraint model predicts</span>
+<span class="sd">                that all candidates violate constraints,</span>
+<span class="sd">                we pick the candidates with minimum violation.</span>
+<span class="sd">            minimize_constraints_only: False by default, if true,</span>
+<span class="sd">                we will automatically return the candidates</span>
+<span class="sd">                with minimum posterior constraint values,</span>
+<span class="sd">                (minimum predicted c(x) summed over all constraints)</span>
+<span class="sd">                reguardless of predicted objective values.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">replacement</span><span class="o">=</span><span class="n">replacement</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraint_model</span> <span class="o">=</span> <span class="n">constraint_model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minimize_constraints_only</span> <span class="o">=</span> <span class="n">minimize_constraints_only</span>
+
+<div class="viewcode-block" id="ConstrainedMaxPosteriorSampling.forward"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.ConstrainedMaxPosteriorSampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Sample from the model posterior.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x N x d`-dim Tensor</span>
+<span class="sd">                from which to sample (in the `N`</span>
+<span class="sd">                dimension) according to the maximum</span>
+<span class="sd">                posterior value under the objective.</span>
+<span class="sd">            num_samples: The number of samples to draw.</span>
+<span class="sd">            observation_noise: If True, sample with observation noise.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x num_samples x d`-dim</span>
+<span class="sd">            Tensor of samples from `X`, where</span>
+<span class="sd">            `X[..., i, :]` is the `i`-th sample.</span>
+<span class="sd">        """</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_samples</span><span class="p">]))</span>
+
+        <span class="n">c_posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraint_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise</span>
+        <span class="p">)</span>
+        <span class="n">constraint_samples</span> <span class="o">=</span> <span class="n">c_posterior</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_samples</span><span class="p">]))</span>
+        <span class="n">valid_samples</span> <span class="o">=</span> <span class="n">constraint_samples</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">valid_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># if more than one constraint</span>
+            <span class="n">valid_samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">valid_samples</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">valid_samples</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">minimize_constraints_only</span><span class="p">:</span>
+            <span class="c1"># if none of the samples meet the constraints</span>
+            <span class="c1"># we pick the one that minimizes total violation</span>
+            <span class="n">constraint_samples</span> <span class="o">=</span> <span class="n">constraint_samples</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">idcs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">constraint_samples</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">idcs</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">idcs</span> <span class="o">=</span> <span class="n">idcs</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">idcs</span><span class="o">.</span><span class="n">ndim</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">idcs</span> <span class="o">=</span> <span class="n">idcs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">idcs</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">Xe</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">constraint_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">Xe</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">idcs</span><span class="p">)</span>
+        <span class="c1"># replace all violators with -infinty so it will never choose them</span>
+        <span class="n">replacement_infs</span> <span class="o">=</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">inf</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">valid_samples</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">replacement_infs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize_samples</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>

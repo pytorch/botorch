@@ -82,7 +82,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><em>botorch.models.gpytorch.GPyTorchModel</em></a>) – </p></li>
+<li><p><strong>model</strong> (<em>botorch.models.gpytorch.GPyTorchModel</em>) – </p></li>
 <li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>botorch.posteriors.gpytorch.GPyTorchPosterior</em></a>) – </p></li>
 <li><p><strong>observed_Y</strong> (<em>torch.Tensor</em>) – </p></li>
 <li><p><strong>observed_Yvar</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – </p></li>
@@ -160,7 +160,7 @@ measurement noise.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model_cls</strong> (<em>Type</em><em>[</em><a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><em>botorch.models.gpytorch.GPyTorchModel</em></a><em>]</em>) – A GPyTorchModel class. This class must initialize the likelihood
+<li><p><strong>model_cls</strong> (<em>Type</em><em>[</em><em>botorch.models.gpytorch.GPyTorchModel</em><em>]</em>) – A GPyTorchModel class. This class must initialize the likelihood
 internally. Note: Multi-task GPs are not currently supported.</p></li>
 <li><p><strong>mll_cls</strong> (<em>Type</em><em>[</em><em>gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood</em><em>]</em>) – A MarginalLogLikelihood class.</p></li>
 <li><p><strong>cv_folds</strong> (<a class="reference internal" href="#botorch.cross_validation.CVFolds" title="botorch.cross_validation.CVFolds"><em>botorch.cross_validation.CVFolds</em></a>) – A CVFolds tuple.</p></li>

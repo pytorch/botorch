@@ -529,6 +529,14 @@
         <span class="n">base_value_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
         <span class="n">project</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            base_value_function: The wrapped `AcquisitionFunction`.</span>
+<span class="sd">            project: A callable mapping a `batch_shape x q x d` tensor of design</span>
+<span class="sd">                points to a tensor with shape `batch_shape x q_term x d` projected</span>
+<span class="sd">                to the desired target set (e.g. the target fidelities in case of</span>
+<span class="sd">                multi-fidelity optimization). For the basic case, `q_term = q`.</span>
+<span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">base_value_function</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">base_value_function</span> <span class="o">=</span> <span class="n">base_value_function</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">project</span> <span class="o">=</span> <span class="n">project</span>

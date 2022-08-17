@@ -42,8 +42,10 @@
     <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span><span class="p">,</span> <span class="n">BotorchTensorDimensionError</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Standardize</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
+<span class="kn">from</span> <span class="nn">botorch.utils</span> <span class="kn">import</span> <span class="n">apply_constraints</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize_indices</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
@@ -170,6 +172,73 @@
 <div class="viewcode-block" id="WeightedMCMultiOutputObjective.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">samples</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="FeasibilityWeightedMCMultiOutputObjective"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.FeasibilityWeightedMCMultiOutputObjective">[docs]</a><span class="k">class</span> <span class="nc">FeasibilityWeightedMCMultiOutputObjective</span><span class="p">(</span><span class="n">MCMultiOutputObjective</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">X_baseline</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">constraint_idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Construct a feasibility weighted objective.</span>
+
+<span class="sd">        This applies feasibility weighting before calculating the objective value.</span>
+<span class="sd">        Defaults to identity if no constraints or objective is present.</span>
+
+<span class="sd">        NOTE: By passing in a single-output `MCAcquisitionObjective` as the `objective`,</span>
+<span class="sd">        this can be used as a single-output `MCAcquisitionObjective` as well.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A fitted Model.</span>
+<span class="sd">            X_baseline: An `n x d`-dim tensor of points already observed.</span>
+<span class="sd">            constraint_idcs: The outcome indices of the constraints. Constraints are</span>
+<span class="sd">                handled by weighting the samples according to a sigmoid approximation</span>
+<span class="sd">                of feasibility. A positive constraint outcome implies feasibility.</span>
+<span class="sd">            objective: An optional objective to apply after feasibility-weighting</span>
+<span class="sd">                the samples.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="n">num_outputs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span>
+        <span class="c1"># Get the non-negative indices.</span>
+        <span class="n">constraint_idcs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">num_outputs</span> <span class="o">+</span> <span class="n">idx</span> <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">constraint_idcs</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraint_idcs</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">constraint_idcs</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Received duplicate entries for `constraint_idcs`."</span><span class="p">)</span>
+        <span class="c1"># Extract the indices for objective outcomes.</span>
+        <span class="n">objective_idcs</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">constraint_idcs</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraint_idcs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Import locally to avoid circular import.</span>
+            <span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="n">get_infeasible_cost</span>
+
+            <span class="n">inf_cost</span> <span class="o">=</span> <span class="n">get_infeasible_cost</span><span class="p">(</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="k">lambda</span> <span class="n">y</span><span class="p">:</span> <span class="n">y</span>
+            <span class="p">)[</span><span class="n">objective_idcs</span><span class="p">]</span>
+
+            <span class="k">def</span> <span class="nf">apply_feasibility_weights</span><span class="p">(</span>
+                <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">apply_constraints</span><span class="p">(</span>
+                    <span class="n">obj</span><span class="o">=</span><span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">objective_idcs</span><span class="p">],</span>
+                    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="k">lambda</span> <span class="n">Y</span><span class="p">:</span> <span class="o">-</span><span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">constraint_idcs</span><span class="p">],</span>
+                    <span class="n">samples</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
+                    <span class="c1"># This ensures that the dtype/device is set properly.</span>
+                    <span class="n">infeasible_cost</span><span class="o">=</span><span class="n">inf_cost</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">Y</span><span class="p">),</span>
+                <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">apply_feasibility_weights</span> <span class="o">=</span> <span class="n">apply_feasibility_weights</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apply_feasibility_weights</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Y</span>
+        <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">Y</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Y</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">objective</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_verify_output_shape</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">_verify_output_shape</span>
+
+<div class="viewcode-block" id="FeasibilityWeightedMCMultiOutputObjective.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.FeasibilityWeightedMCMultiOutputObjective.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">apply_feasibility_weights</span><span class="p">(</span><span class="n">samples</span><span class="p">),</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="UnstandardizeMCMultiOutputObjective"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective">[docs]</a><span class="k">class</span> <span class="nc">UnstandardizeMCMultiOutputObjective</span><span class="p">(</span><span class="n">IdentityMCMultiOutputObjective</span><span class="p">):</span>

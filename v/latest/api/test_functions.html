@@ -232,7 +232,6 @@ Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/opti
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">SyntheticTestFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#SyntheticTestFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.BaseTestProblem</span></code></a></p>
 <p>Base class for synthetic test functions.</p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -268,13 +267,12 @@ Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/opti
 </div></blockquote>
 <p>f has one minimizer for its global minimum at <cite>z_1 = (0, 0, …, 0)</cite> with
 <cite>f(z_1) = 0</cite>.</p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -299,7 +297,6 @@ Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/opti
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.Beale">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">Beale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Beale"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Beale" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.synthetic.SyntheticTestFunction</span></code></a></p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -346,7 +343,6 @@ Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/opti
 <cite>c = 5 / math.pi</cite>, <cite>r = 6</cite>, <cite>t = 1 / (8 * math.pi)</cite>
 B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <cite>z_2 = (pi, 2.275)</cite>, <cite>z_3 = (9.42478, 2.475)</cite> with <cite>B(z_i) = 0.397887</cite>.</p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -384,7 +380,6 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.Bukin">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">Bukin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Bukin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Bukin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.synthetic.SyntheticTestFunction</span></code></a></p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -425,7 +420,6 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 </div></blockquote>
 <p>f has one maximizer for its global maximum at <cite>z_1 = (0, 0, …, 0)</cite> with
 <cite>f(z_1) = 0.8</cite></p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -463,7 +457,6 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.DropWave">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">DropWave</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#DropWave"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.DropWave" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.synthetic.SyntheticTestFunction</span></code></a></p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -501,10 +494,10 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.DixonPrice">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">DixonPrice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#DixonPrice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.DixonPrice" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.synthetic.SyntheticTestFunction</span></code></a></p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
@@ -545,7 +538,6 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <div><p>E(x) = (x_2 + 47) sin(R1(x)) - x_1 * sin(R2(x))</p>
 </div></blockquote>
 <p>where <cite>R1(x) = sqrt(|x_2 + x_1 / 2 + 47|)</cite>, <cite>R2(x) = sqrt|x_1 - (x_2 + 47)|)</cite>.</p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -579,10 +571,10 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.Griewank">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">Griewank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Griewank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Griewank" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.synthetic.SyntheticTestFunction</span></code></a></p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
@@ -628,10 +620,10 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <div><p>z = (0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573)</p>
 </div></blockquote>
 <p>with <cite>H(z) = -3.32237</cite>.</p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
@@ -687,7 +679,6 @@ z_2 = (-8.05502, -9.66459)
 z_3 = (-8.05502,  9.66459)
 z_4 = ( 8.05502, -9.66459)</p>
 </div></blockquote>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -737,10 +728,10 @@ z_4 = ( 8.05502, -9.66459)</p>
 <p>where <cite>w_i = 1 + (x_i - 1) / 4</cite> for all <cite>i</cite>.</p>
 <p>f has one minimizer for its global minimum at <cite>z_1 = (1, 1, …, 1)</cite> with
 <cite>f(z_1) = 0</cite>.</p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
@@ -780,10 +771,10 @@ z_4 = ( 8.05502, -9.66459)</p>
 <blockquote>
 <div><p>M(x) = sum_{i=1}^d sin(x_i) (sin(i x_i^2 / pi)^20)</p>
 </div></blockquote>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
@@ -822,10 +813,10 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.Powell">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">Powell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Powell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Powell" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.synthetic.SyntheticTestFunction</span></code></a></p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
@@ -860,10 +851,10 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.Rastrigin">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">Rastrigin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Rastrigin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Rastrigin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.synthetic.SyntheticTestFunction</span></code></a></p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
@@ -905,10 +896,10 @@ z_4 = ( 8.05502, -9.66459)</p>
 </div></blockquote>
 <p>f has one minimizer for its global minimum at <cite>z_1 = (1, 1, …, 1)</cite> with
 <cite>f(z_i) = 0.0</cite>.</p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
@@ -950,13 +941,12 @@ z_4 = ( 8.05502, -9.66459)</p>
 </div></blockquote>
 <p>f has one minimizer for its global minimum at <cite>z_1 = (4, 4, 4, 4)</cite> with
 <cite>f(z_1) = -10.5363</cite>.</p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<em>int</em>) – Defaults to 10.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
-<li><p><strong>m</strong> (<em>int</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -989,7 +979,6 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.SixHumpCamel">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">SixHumpCamel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#SixHumpCamel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.SixHumpCamel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.synthetic.SyntheticTestFunction</span></code></a></p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1033,10 +1022,10 @@ z_4 = ( 8.05502, -9.66459)</p>
 <div><p>H(x) = 0.5 * sum_{i=1}^d (x_i^4 - 16 * x_i^2 + 5 * x_i)</p>
 </div></blockquote>
 <p>H has a single global mininimum <cite>H(z) = -39.166166 * d</cite> at <cite>z = [-2.903534]^d</cite></p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
@@ -1071,7 +1060,6 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.ThreeHumpCamel">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">ThreeHumpCamel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#ThreeHumpCamel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.ThreeHumpCamel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.synthetic.SyntheticTestFunction</span></code></a></p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1126,7 +1114,6 @@ the last dimension of is the fidelity parameter:</p>
 <cite>c = 5 / math.pi</cite>, <cite>r = 6</cite>, <cite>t = 1 / (8 * math.pi)</cite>.
 B has infinitely many minimizers with <cite>x_1 = -pi, pi, 3pi</cite>
 and <cite>B_min = 0.397887</cite></p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1176,7 +1163,6 @@ dimension is the fidelity parameter.</p>
 <p>H has a unique global minimizer
 <cite>x = [0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573, 1.0]</cite></p>
 <p>with <cite>H_min = -3.32237</cite></p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1225,10 +1211,10 @@ where the last two dimensions are the fidelity parameters:</p>
 </div></blockquote>
 <p>f has one minimizer for its global minimum at <cite>z_1 = (1, 1, …, 1)</cite> with
 <cite>f(z_i) = 0.0</cite>.</p>
-<p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> – The (input) dimension. Must be at least 3.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
@@ -1344,7 +1330,6 @@ evolutionary algorithms: Empirical results. Evolutionary Computation, vol.
 2300 * x_0 ** 3 + 1900 * x_0 ** 2 + 2092 * x_0 + 60
 ) / 100 * x_0 ** 3 + 500 * x_0 ** 2 + 4 * x_0 + 20</p>
 </div></blockquote>
-<p>Constructor for Branin-Currin.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1399,13 +1384,12 @@ f_1(x) = h(x) * (g(x) + S(x)) for DH3 and DH4</p>
 </div></blockquote>
 <p>The goal is to minimize both objectives. See <a class="reference internal" href="#deb2005robust" id="id2"><span>[Deb2005robust]</span></a> for more details
 on DH. The reference points were set using <cite>infer_reference_point</cite>.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1433,13 +1417,12 @@ S(x_0) = alpha / (0.2 + x_0) + beta * x_0^2</p>
 <p>where alpha = 1 and beta = 1.</p>
 <p>The Pareto front corresponds to the equation <cite>f_1 = 1 - f_0^2</cite>, and it is found at
 <cite>x_i = 0</cite> for <cite>i &gt; 0</cite> and any value of <cite>x_0</cite> in <cite>(0, 1]</cite>.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1482,13 +1465,12 @@ S(x_0) = alpha / (0.2 + x_0) + beta * x_0^2</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.multi_objective.DH1" title="botorch.test_functions.multi_objective.DH1"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.multi_objective.DH1</span></code></a></p>
 <p>DH2 test problem.</p>
 <p>This is identical to DH1 except for having <cite>beta = 10.0</cite>.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1526,13 +1508,12 @@ Pareto front, which are found at <cite>x_1 = 0.35</cite> and <cite>x_1 = 0.85</c
 The approximate relationships between the objectives at local and global Pareto
 fronts are given by <cite>f_1 = 1.2 (1 - sqrt(f_0))</cite> and <cite>f_1 = 1 - f_0</cite>, respectively.
 The specific values on the Pareto fronts can be found by varying <cite>x_0</cite>.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1574,13 +1555,12 @@ The specific values on the Pareto fronts can be found by varying <cite>x_0</cite
 </div></blockquote>
 <p>The Pareto front is found at <cite>x_i = 0</cite> for <cite>i &gt; 2</cite>, with the local one being
 near <cite>x_0 + x_1 = 0.35</cite> and the global one near <cite>x_0 + x_1 = 0.85</cite>.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1602,14 +1582,13 @@ near <cite>x_0 + x_1 = 0.35</cite> and the global one near <cite>x_0 + x_1 = 0.8
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a></p>
 <p>Base class for DTLZ problems.</p>
 <p>See <a class="reference internal" href="#deb2005dtlz" id="id3"><span>[Deb2005dtlz]</span></a> for more details on DTLZ.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1645,14 +1624,13 @@ k + (x_i - 0.5)^2 - cos(20 * pi * (x_i - 0.5))
 <p>where k = d - m + 1.</p>
 <p>The pareto front is given by the line (or hyperplane) sum_i f_i(x) = 0.5.
 The goal is to minimize both objectives. The reference point comes from <a class="reference internal" href="acquisition.html#yang2019" id="id4"><span>[Yang2019]</span></a>.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1713,14 +1691,13 @@ g(x) = sum_{i=m}^{d-1} (x_i - 0.5)^2</p>
 <p>The pareto front is given by the unit hypersphere sum{i} f_i^2 = 1.
 Note: the pareto front is completely concave. The goal is to minimize
 both objectives.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1782,14 +1759,13 @@ g(x) = 100 * [k + sum_{i=m}^{n-1} (x_i - 0.5)^2 - cos(20 * pi * (x_i - 0.5))]</p
 <p><cite>g(x)</cite> introduces (<cite>3k−1</cite>) local Pareto fronts that are parallel to
 the one global Pareto-optimal front.</p>
 <p>The global Pareto-optimal front corresponds to x_i = 0.5 for x_i in X_m.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1830,14 +1806,13 @@ the one global Pareto-optimal front.</p>
 <p>This is the same as DTLZ2, but with alpha=100 as the exponent,
 resulting in dense solutions near the f_M-f_1 plane.</p>
 <p>The global Pareto-optimal front corresponds to x_i = 0.5 for x_i in X_m.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1870,14 +1845,13 @@ theta_i = pi / (4 * (1 + g(X_m)) * (1 + 2 * g(X_m) * x_i)) for i = 1, … , M-2
 g(x) = sum_{i=m}^{d-1} (x_i - 0.5)^2</p>
 </div></blockquote>
 <p>The global Pareto-optimal front corresponds to x_i = 0.5 for x_i in X_m.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1926,14 +1900,13 @@ M - sum_{i=0}^{M-2} f_i(x)/(1+g(x)) * (1 + sin(3 * pi * f_i(x)))</p>
 </dl>
 <p>This test problem has 2M-1 disconnected Pareto-optimal regions in the search space.</p>
 <p>The pareto frontier corresponds to X_m = 0.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1968,7 +1941,6 @@ M - sum_{i=0}^{M-2} f_i(x)/(1+g(x)) * (1 + sin(3 * pi * f_i(x)))</p>
 <a class="reference external" href="https://github.com/boschresearch/NoisyInputEntropySearch/blob/master/">https://github.com/boschresearch/NoisyInputEntropySearch/blob/master/</a>
 core/util/objectives.py.</p>
 <p>See <a class="reference internal" href="#daulton2022" id="id6"><span>[Daulton2022]</span></a> for details on this multi-objective problem.</p>
-<p>Constructor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -2301,14 +2273,13 @@ pareto front from <a class="reference internal" href="#tanabe2020" id="id11"><sp
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a></p>
 <p>Base class for ZDT problems.</p>
 <p>See <a class="reference internal" href="#zitzler2000" id="id12"><span>[Zitzler2000]</span></a> for more details on ZDT.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -2341,14 +2312,13 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 </div></blockquote>
 <p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id13"><span>[Yang2019a]</span></a>.</p>
 <p>The pareto front is convex.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -2407,14 +2377,13 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 </div></blockquote>
 <p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id14"><span>[Yang2019a]</span></a>.</p>
 <p>The pareto front is concave.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -2473,14 +2442,13 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 </div></blockquote>
 <p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id15"><span>[Yang2019a]</span></a>.</p>
 <p>The pareto front consists of several discontinuous convex parts.</p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – Number of objectives. Must not be larger than dim.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -2716,12 +2684,11 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.multi_objective.BraninCurrin" title="botorch.test_functions.multi_objective.BraninCurrin"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.multi_objective.BraninCurrin</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.ConstrainedBaseTestProblem</span></code></a></p>
 <p>Constrained Branin Currin Function.</p>
 <p>This uses the disk constraint from <a class="reference internal" href="#gelbart2014" id="id21"><span>[Gelbart2014]</span></a>.</p>
-<p>Constructor for Branin-Currin.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -2770,14 +2737,13 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dt class="sig sig-object py" id="botorch.test_functions.multi_objective.C2DTLZ2">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">C2DTLZ2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_objectives</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#C2DTLZ2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.C2DTLZ2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.multi_objective.DTLZ2" title="botorch.test_functions.multi_objective.DTLZ2"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.multi_objective.DTLZ2</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.ConstrainedBaseTestProblem</span></code></a></p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function.</p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – Must be less than dim.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -2905,13 +2871,12 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 frontier. It supports arbitrary input dimension &gt; 1. See <a class="reference internal" href="#ma2019" id="id23"><span>[Ma2019]</span></a> for details.</p>
 <p>This implementation is adapted from:
 <a class="reference external" href="https://github.com/anyoptimization/pymoo/blob/master/pymoo/problems/multi/mw.py">https://github.com/anyoptimization/pymoo/blob/master/pymoo/problems/multi/mw.py</a></p>
-<p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The (input) dimension of the function. Must be at least 2.</p></li>
 <li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
-<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -3186,8 +3151,141 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="multi-objective-multi-fidelity-synthetic-test-functions">
-<h2>Multi-Objective Multi-Fidelity Synthetic Test Functions<a class="headerlink" href="#multi-objective-multi-fidelity-synthetic-test-functions" title="Permalink to this headline">¶</a></h2>
+<section id="module-botorch.test_functions.multi_objective_multi_fidelity">
+<span id="multi-objective-multi-fidelity-synthetic-test-functions"></span><h2>Multi-Objective Multi-Fidelity Synthetic Test Functions<a class="headerlink" href="#module-botorch.test_functions.multi_objective_multi_fidelity" title="Permalink to this headline">¶</a></h2>
+<p>Multi-objective multi-fidelity optimization benchmark problems.</p>
+<p>References</p>
+<dl class="citation">
+<dt class="label" id="irshad2021"><span class="brackets">Irshad2021</span><span class="fn-backref">(<a href="#id26">1</a>,<a href="#id27">2</a>)</span></dt>
+<dd><p>F. Irshad, S. Karsch, and A. Döpp. Expected hypervolume improvement for
+simultaneous multi-objective and multi-fidelity optimization.
+arXiv preprint arXiv:2112.13901, 2021.</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective_multi_fidelity.</span></span><span class="sig-name descname"><span class="pre">MOMFBraninCurrin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective_multi_fidelity.html#MOMFBraninCurrin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a></p>
+<p>Branin-Currin problem for multi-objective-multi-fidelity optimization.</p>
+<p>(2+1)-dimensional function with domain <cite>[0,1]^3</cite> where the last dimension
+is the fidelity parameter <cite>s</cite>.
+Both functions assume minimization. See <a class="reference internal" href="#irshad2021" id="id26"><span>[Irshad2021]</span></a> for more details.</p>
+<p>Modified Branin function:</p>
+<blockquote>
+<div><p>B(x,s) = 21-((
+15*x_2 - b(s) * (15 * x_1 - 5) ** 2 + c(s) * (15 * x_1 - 5) - 6 ) ** 2
++ 10 * (1 - t(s)) * cos(15 * x_1 - 5)+10)/22</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Here <cite>b</cite>, <cite>c</cite>, <cite>r</cite> and <cite>t</cite> are constants and <cite>s</cite> is the fidelity parameter:</dt><dd><p>where <cite>b = 5.1 / (4 * math.pi ** 2) - 0.01(1-s)</cite>,
+<cite>c = 5 / math.pi - 0.1*(1 - s)</cite>,
+<cite>r = 6</cite>,
+<cite>t = 1 / (8 * math.pi) + 0.05*(1-s)</cite></p>
+</dd>
+</dl>
+<p>Modified Currin function:</p>
+<blockquote>
+<div><p>C(x) = 14-((1 - 0.1(1-s)exp(-1 / (2 * x_2))) * (
+2300 * x_1 ** 3 + 1900 * x_1 ** 2 + 2092 * x_1 + 60
+) / 100 * x_1 ** 3 + 500 * x_1 ** 2 + 4 * x_2 + 20)/15</p>
+</div></blockquote>
+<p>Base constructor for multi-objective test functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.dim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.num_objectives">
+<span class="sig-name descname"><span class="pre">num_objectives</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.num_objectives" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.evaluate_true">
+<span class="sig-name descname"><span class="pre">evaluate_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective_multi_fidelity.html#MOMFBraninCurrin.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.evaluate_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFPark">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective_multi_fidelity.</span></span><span class="sig-name descname"><span class="pre">MOMFPark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective_multi_fidelity.html#MOMFPark"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFPark" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a></p>
+<p>Modified Park test functions for multi-objective multi-fidelity optimization.</p>
+<p>(4+1)-dimensional function with domain <cite>[0,1]^5</cite> where the last dimension
+is the fidelity parameter <cite>s</cite>. See <a class="reference internal" href="#irshad2021" id="id27"><span>[Irshad2021]</span></a> for more details.</p>
+<p>The first modified Park function is</p>
+<blockquote>
+<div><p>P1(x, s)=A*(T1(x,s)+T2(x,s)-B)/22-0.8</p>
+</div></blockquote>
+<p>The second modified Park function is</p>
+<blockquote>
+<div><p>P2(x,s)=A*(5-2/3*exp(x1+x2)-x4*sin(x3)*A+x3-B)/4 - 0.7</p>
+</div></blockquote>
+<p>Here</p>
+<blockquote>
+<div><p>T_1(x,s) = (x1+0.001*(1-s))/2*sqrt(1+(x2+x3**2)*x4/(x1**2))</p>
+<p>T_2(x, s) = (x1+3*x4)*exp(1+sin(x3))</p>
+</div></blockquote>
+<p>and <cite>A(s)=(0.9+0.1*s)</cite>, <cite>B(s)=0.1*(1-s)</cite>.</p>
+<p>Base constructor for multi-objective test functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.dim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.num_objectives">
+<span class="sig-name descname"><span class="pre">num_objectives</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.num_objectives" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.evaluate_true">
+<span class="sig-name descname"><span class="pre">evaluate_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective_multi_fidelity.html#MOMFPark.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.evaluate_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
 </section>
 </section>
 </div>

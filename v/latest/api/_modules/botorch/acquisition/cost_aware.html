@@ -51,10 +51,14 @@
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
 
-<div class="viewcode-block" id="CostAwareUtility"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.CostAwareUtility">[docs]</a><span class="k">class</span> <span class="nc">CostAwareUtility</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for cost-aware utilities."""</span>
+<span class="k">class</span> <span class="nc">CostAwareUtility</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Abstract base class for cost-aware utilities.</span>
 
-<div class="viewcode-block" id="CostAwareUtility.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.CostAwareUtility.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
+<span class="sd">    :meta private:</span>
+<span class="sd">    """</span>
+
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">deltas</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Evaluate the cost-aware utility on the candidates and improvements.</span>
 
@@ -68,7 +72,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `num_fantasies x batch_shape`-dim Tensor of cost-transformed utilities.</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
 <div class="viewcode-block" id="GenericCostAwareUtility"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.GenericCostAwareUtility">[docs]</a><span class="k">class</span> <span class="nc">GenericCostAwareUtility</span><span class="p">(</span><span class="n">CostAwareUtility</span><span class="p">):</span>

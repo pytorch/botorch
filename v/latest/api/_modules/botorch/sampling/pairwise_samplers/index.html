@@ -43,12 +43,16 @@
 
 
 <div class="viewcode-block" id="PairwiseMCSampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.pairwise_samplers.PairwiseMCSampler">[docs]</a><span class="k">class</span> <span class="nc">PairwiseMCSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Abstract class for Pairwise MC Sampler.</span>
+
+<span class="sd">    This sampler will sample pairwise comparisons. It is to be used together</span>
+<span class="sd">    with PairwiseGP and BoTorch acquisition functions (e.g., qKnowledgeGradient)</span>
+
+<span class="sd">    """</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_num_comparisons</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Abstract class for Pairwise MC Sampler.</span>
-
-<span class="sd">        This sampler will sample pairwise comparisons. It is to be used together</span>
-<span class="sd">        with PairwiseGP and BoTorch acquisition functions (e.g., qKnowledgeGradient)</span>
-
+        <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            max_num_comparisons: Max number of comparisons drawn within samples.</span>
 <span class="sd">                If None, use all possible pairwise comparisons</span>
@@ -107,6 +111,19 @@
         <span class="n">collapse_batch_dims</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">max_num_comparisons</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            num_samples: The number of samples to use.</span>
+<span class="sd">            resample: If `True`, re-draw samples in each `forward` evaluation -</span>
+<span class="sd">                this results in stochastic acquisition functions (and thus should</span>
+<span class="sd">                not be used with deterministic optimization algorithms).</span>
+<span class="sd">            seed: The seed for the RNG. If omitted, use a random seed.</span>
+<span class="sd">            collapse_batch_dims: If True, collapse the t-batch dimensions to</span>
+<span class="sd">                size 1. This is useful for preventing sampling variance across</span>
+<span class="sd">                t-batches.</span>
+<span class="sd">            max_num_comparisons:  Max number of comparisons drawn within samples.</span>
+<span class="sd">                If None, use all possible pairwise comparisons.</span>
+<span class="sd">        """</span>
         <span class="n">PairwiseMCSampler</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">max_num_comparisons</span><span class="o">=</span><span class="n">max_num_comparisons</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span>
         <span class="p">)</span>
@@ -128,6 +145,19 @@
         <span class="n">collapse_batch_dims</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">max_num_comparisons</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            num_samples: The number of samples to use.</span>
+<span class="sd">            resample: If `True`, re-draw samples in each `forward` evaluation -</span>
+<span class="sd">                this results in stochastic acquisition functions (and thus should</span>
+<span class="sd">                not be used with deterministic optimization algorithms).</span>
+<span class="sd">            seed: The seed for the RNG. If omitted, use a random seed.</span>
+<span class="sd">            collapse_batch_dims: If True, collapse the t-batch dimensions to</span>
+<span class="sd">                size 1. This is useful for preventing sampling variance across</span>
+<span class="sd">                t-batches.</span>
+<span class="sd">            max_num_comparisons:  Max number of comparisons drawn within samples.</span>
+<span class="sd">                If None, use all possible pairwise comparisons.</span>
+<span class="sd">        """</span>
         <span class="n">PairwiseMCSampler</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">max_num_comparisons</span><span class="o">=</span><span class="n">max_num_comparisons</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span>
         <span class="p">)</span>

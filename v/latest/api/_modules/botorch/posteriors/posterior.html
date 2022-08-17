@@ -43,8 +43,12 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="Posterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.posterior.Posterior">[docs]</a><span class="k">class</span> <span class="nc">Posterior</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for botorch posteriors."""</span>
+<span class="k">class</span> <span class="nc">Posterior</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Abstract base class for botorch posteriors.</span>
+
+<span class="sd">    :meta private:</span>
+<span class="sd">    """</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">base_sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
@@ -85,7 +89,7 @@
             <span class="sa">f</span><span class="s2">"Property `variance` not implemented for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="Posterior.rsample"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.posterior.Posterior.rsample">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -104,9 +108,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `sample_shape x event`-dim Tensor of samples from the posterior.</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
-<div class="viewcode-block" id="Posterior.sample"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.posterior.Posterior.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">base_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -127,7 +131,7 @@
 <span class="sd">            A `sample_shape x event_shape`-dim Tensor of samples from the posterior.</span>
 <span class="sd">        """</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span><span class="p">)</span></div></div>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="PosteriorList"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.posterior.PosteriorList">[docs]</a><span class="k">class</span> <span class="nc">PosteriorList</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
@@ -163,6 +167,10 @@
                 <span class="s2">"`PosteriorList` only supported if the constituent posteriors "</span>
                 <span class="sa">f</span><span class="s2">"all have the same `batch_shape`. Batch shapes: </span><span class="si">{</span><span class="n">batch_shapes</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">batch_shapes</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># batch shapes are all zero if and only if the models</span>
+            <span class="c1"># are determinisitic</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([])</span>
         <span class="k">return</span> <span class="n">batch_shapes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">(</span>
             <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">bss</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">bss</span> <span class="ow">in</span> <span class="n">base_sample_shapes</span><span class="p">)]</span>
         <span class="p">)</span>
@@ -199,7 +207,8 @@
                 <span class="s2">"`PosteriorList` only supported if the constituent posteriors "</span>
                 <span class="sa">f</span><span class="s2">"all have the same `batch_shape`. Batch shapes: </span><span class="si">{</span><span class="n">batch_shapes</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">batch_shapes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">es</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">es</span> <span class="ow">in</span> <span class="n">event_shapes</span><span class="p">])</span>
+        <span class="c1"># last dimension is the output dimension (concatenation dimension)</span>
+        <span class="k">return</span> <span class="n">batch_shapes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="nb">sum</span><span class="p">(</span><span class="n">es</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">es</span> <span class="ow">in</span> <span class="n">event_shapes</span><span class="p">)])</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -216,18 +225,24 @@
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">base_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="c1"># handle the case where all posteriors have empty</span>
+        <span class="c1"># base_sample_shape</span>
+        <span class="n">split_bss</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">base_sample_splits</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">base_samples</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">split_sizes</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">p</span><span class="o">.</span><span class="n">base_sample_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">base_sample_shape</span> <span class="k">else</span> <span class="mi">0</span>
-                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span>
-            <span class="p">]</span>
-            <span class="n">base_sample_splits</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">base_samples</span><span class="p">,</span> <span class="n">split_sizes</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">base_sample_splits</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">bss</span> <span class="k">if</span> <span class="n">ss</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
-                <span class="k">for</span> <span class="n">ss</span><span class="p">,</span> <span class="n">bss</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">split_sizes</span><span class="p">,</span> <span class="n">base_sample_splits</span><span class="p">)</span>
-            <span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">base_sample_splits</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">)</span>
+            <span class="n">split_sizes</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">base_sample_shape</span><span class="p">:</span>
+                    <span class="n">split_sizes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">base_sample_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">split_bss</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">split_sizes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">split_bss</span><span class="p">:</span>
+                <span class="n">base_sample_splits</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">base_samples</span><span class="p">,</span> <span class="n">split_sizes</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">base_sample_splits</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">bss</span> <span class="k">if</span> <span class="n">ss</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+                    <span class="k">for</span> <span class="n">ss</span><span class="p">,</span> <span class="n">bss</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">split_sizes</span><span class="p">,</span> <span class="n">base_sample_splits</span><span class="p">)</span>
+                <span class="p">]</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">p</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">=</span><span class="n">bss</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">bss</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">,</span> <span class="n">base_sample_splits</span><span class="p">)</span>

@@ -32,9 +32,9 @@
 
 <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">Preference acquisition functions. This includes:</span>
-<span class="sd">Analytical EUBO acquisition function as introduced in [Lin2020preference]_.</span>
+<span class="sd">Analytical EUBO acquisition function as introduced in [Lin2022preference]_.</span>
 
-<span class="sd">.. [Lin2020preference]</span>
+<span class="sd">.. [Lin2022preference]</span>
 <span class="sd">    Lin, Z.J., Astudillo, R., Frazier, P.I. and Bakshy, E. Preference Exploration</span>
 <span class="sd">    for Efficient Bayesian Optimization with Multiple Outcomes. International</span>
 <span class="sd">    Conference on Artificial Intelligence and Statistics (AISTATS), 2022.</span>
@@ -64,7 +64,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Analytic implementation of Expected Utility of the Best Option under the</span>
 <span class="sd">        Laplace model (assumes a PairwiseGP is used as the preference model) as</span>
-<span class="sd">        proposed in [Lin2020preference]_.</span>
+<span class="sd">        proposed in [Lin2022preference]_.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            pref_model: The preference model that maps the outcomes (i.e., Y) to</span>
@@ -73,9 +73,8 @@
 <span class="sd">                (i.e., Y). The outcome model f defines the search space of Y = f(X).</span>
 <span class="sd">                If model is None, we are directly calculating EUBO on the parameter</span>
 <span class="sd">                space. When used with `OneSamplePosteriorDrawModel`, we are obtaining</span>
-<span class="sd">                EUBO-zeta as described in [Lin2020preference].</span>
+<span class="sd">                EUBO-zeta as described in [Lin2022preference].</span>
 <span class="sd">            previous_winner: Tensor representing the previous winner in the Y space.</span>
-<span class="sd">                Defaults to None.</span>
 <span class="sd">        """</span>
         <span class="n">pref_model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">pref_model</span><span class="p">)</span>

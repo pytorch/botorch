@@ -43,6 +43,7 @@
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.utils</span> <span class="kn">import</span> <span class="n">t_batch_mode_transform</span>
@@ -73,6 +74,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
         <span class="n">proximal_weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">transformed_weighting</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Derived Acquisition Function weighted by proximity to recently</span>
 <span class="sd">        observed point.</span>
@@ -82,6 +84,10 @@
 <span class="sd">                of feature dimension `d`.</span>
 <span class="sd">            proximal_weights: A `d` dim tensor used to bias locality</span>
 <span class="sd">                along each axis.</span>
+<span class="sd">            transformed_weighting: If True, the proximal weights are applied in</span>
+<span class="sd">                the transformed input space given by</span>
+<span class="sd">                `acq_function.model.input_transform` (if available), otherwise</span>
+<span class="sd">                proximal weights are applied in real input space.</span>
 <span class="sd">        """</span>
         <span class="n">Module</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
@@ -96,6 +102,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">X_pending</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"proximal_weights"</span><span class="p">,</span> <span class="n">proximal_weights</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+            <span class="s2">"transformed_weighting"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">transformed_weighting</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="n">_validate_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">proximal_weights</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ProximalAcquisitionFunction.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.proximal.ProximalAcquisitionFunction.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">assert_output_shape</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -113,21 +122,36 @@
 
         <span class="n">train_inputs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
+        <span class="c1"># if the model is ModelListGP then get the first model</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelListGP</span><span class="p">):</span>
             <span class="n">train_inputs</span> <span class="o">=</span> <span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># if the model has more than one output get the first copy of training inputs</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">)</span> <span class="ow">and</span> <span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">train_inputs</span> <span class="o">=</span> <span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
         <span class="n">input_transform</span> <span class="o">=</span> <span class="n">_get_input_transform</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
         <span class="n">last_X</span> <span class="o">=</span> <span class="n">train_inputs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="c1"># un-transform last_X</span>
+        <span class="c1"># if transformed_weighting, transform X to calculate diff</span>
+        <span class="c1"># (proximal weighting in transformed space)</span>
+        <span class="c1"># otherwise,un-transform the last observed point to real space</span>
+        <span class="c1"># (proximal weighting in real space)</span>
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">last_X</span> <span class="o">=</span> <span class="n">input_transform</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">last_X</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformed_weighting</span><span class="p">:</span>
+                <span class="c1"># transformed space weighting</span>
+                <span class="n">diff</span> <span class="o">=</span> <span class="n">input_transform</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">-</span> <span class="n">last_X</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># real space weighting</span>
+                <span class="n">diff</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">input_transform</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">last_X</span><span class="p">)</span>
 
-        <span class="n">diff</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">last_X</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># no transformation</span>
+            <span class="n">diff</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">last_X</span>
+
         <span class="n">M</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">diff</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">proximal_weights</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
-
         <span class="n">proximal_acq_weight</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">M</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="n">proximal_acq_weight</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span></div></div>
 

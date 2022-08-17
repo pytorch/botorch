@@ -32,9 +32,21 @@
 
 <span class="sa">r</span><span class="sd">"""Gaussian Process Regression models with fully Bayesian inference.</span>
 
-<span class="sd">We use a lightweight PyTorch implementation of a Matern-5/2 kernel as there are some</span>
-<span class="sd">performance issues with running NUTS on top of standard GPyTorch models. The resulting</span>
-<span class="sd">hyperparameter samples are loaded into a batched GPyTorch model after fitting.</span>
+<span class="sd">Fully Bayesian models use Bayesian inference over model hyperparameters, such</span>
+<span class="sd">as lengthscales and noise variance, learning a posterior distribution for the</span>
+<span class="sd">hyperparameters using the No-U-Turn-Sampler (NUTS). This is followed by</span>
+<span class="sd">sampling a small set of hyperparameters (often ~16) from the posterior</span>
+<span class="sd">that we will use for model predictions and for computing acquisition function</span>
+<span class="sd">values. By contrast, our “standard” models (e.g.</span>
+<span class="sd">`SingleTaskGP`) learn only a single best value for each hyperparameter using</span>
+<span class="sd">MAP. The fully Bayesian method generally results in a better and more</span>
+<span class="sd">well-calibrated model, but is more computationally intensive. For a full</span>
+<span class="sd">description, see [Eriksson2021saasbo].</span>
+
+<span class="sd">We use a lightweight PyTorch implementation of a Matern-5/2 kernel as there are</span>
+<span class="sd">some performance issues with running NUTS on top of standard GPyTorch models.</span>
+<span class="sd">The resulting hyperparameter samples are loaded into a batched GPyTorch model</span>
+<span class="sd">after fitting.</span>
 
 <span class="sd">References:</span>
 
@@ -58,7 +70,6 @@
 <span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">validate_input_scaling</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.fully_bayesian</span> <span class="kn">import</span> <span class="n">FullyBayesianPosterior</span><span class="p">,</span> <span class="n">MCMC_DIM</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">TrainingData</span>
 <span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
@@ -80,7 +91,7 @@
     <span class="n">nu</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">/</span> <span class="mi">2</span>
     <span class="n">dist</span> <span class="o">=</span> <span class="n">compute_dists</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">lengthscale</span><span class="o">=</span><span class="n">lengthscale</span><span class="p">)</span>
     <span class="n">exp_component</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">nu</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">dist</span><span class="p">)</span>
-    <span class="n">constant_component</span> <span class="o">=</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">*</span> <span class="n">dist</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mf">5.0</span> <span class="o">/</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">dist</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">constant_component</span> <span class="o">=</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">*</span> <span class="n">dist</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mf">5.0</span> <span class="o">/</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">dist</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">constant_component</span> <span class="o">*</span> <span class="n">exp_component</span></div>
 
 
@@ -96,10 +107,24 @@
     <span class="k">return</span> <span class="n">new_value</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">target</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="PyroModel"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.PyroModel">[docs]</a><span class="k">class</span> <span class="nc">PyroModel</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for a Pyro model."""</span>
+<span class="k">class</span> <span class="nc">PyroModel</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Base class for a Pyro model; used to assist in learning hyperparameters.</span>
 
-<div class="viewcode-block" id="PyroModel.set_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.PyroModel.set_inputs">[docs]</a>    <span class="k">def</span> <span class="nf">set_inputs</span><span class="p">(</span>
+<span class="sd">    This class and its subclasses are not a standard BoTorch models; instead</span>
+<span class="sd">    the subclasses are used as inputs to a `SaasFullyBayesianSingleTaskGP`,</span>
+<span class="sd">    which should then have its hyperparameters fit with</span>
+<span class="sd">    `fit_fully_bayesian_model_nuts`. (By default, its subclass `SaasPyroModel`</span>
+<span class="sd">    is used).  A `PyroModel`’s `sample` method should specify lightweight</span>
+<span class="sd">    PyTorch functionality, which will be used for fast model fitting with NUTS.</span>
+<span class="sd">    The utility of `PyroModel` is in enabling fast fitting with NUTS, since we</span>
+<span class="sd">    would otherwise need to use GPyTorch, which is computationally infeasible</span>
+<span class="sd">    in combination with Pyro.</span>
+
+<span class="sd">    :meta private:</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="nf">set_inputs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">):</span>
         <span class="sd">"""Set the training data.</span>
@@ -111,25 +136,25 @@
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span> <span class="o">=</span> <span class="n">train_X</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_Y</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">train_Yvar</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">train_Yvar</span>
 
-<div class="viewcode-block" id="PyroModel.sample"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.PyroModel.sample">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Sample from the model."""</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
-<div class="viewcode-block" id="PyroModel.postprocess_mcmc_samples"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.PyroModel.postprocess_mcmc_samples">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">postprocess_mcmc_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
         <span class="sd">"""Post-process the final MCMC samples."""</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
-<div class="viewcode-block" id="PyroModel.load_mcmc_samples"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.PyroModel.load_mcmc_samples">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">load_mcmc_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Mean</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">Likelihood</span><span class="p">]:</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
 <div class="viewcode-block" id="SaasPyroModel"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasPyroModel">[docs]</a><span class="k">class</span> <span class="nc">SaasPyroModel</span><span class="p">(</span><span class="n">PyroModel</span><span class="p">):</span>
@@ -138,6 +163,12 @@
 <span class="sd">    The SAAS model uses sparsity-inducing priors to identift the most important</span>
 <span class="sd">    parameters. This model is suitable for high-dimensional BO with potentially</span>
 <span class="sd">    hundreds of tunable parameters. See [Eriksson2021saasbo]_ for more details.</span>
+
+<span class="sd">    `SaasPyroModel` is not a standard BoTorch model; instead, it is used as</span>
+<span class="sd">    an input to `SaasFullyBayesianSingleTaskGP`. It is used as a default keyword</span>
+<span class="sd">    argument, and end users are not likely to need to instantiate or modify a</span>
+<span class="sd">    `SaasPyroModel` unless they want to customize its attributes (such as</span>
+<span class="sd">    `covar_module`).</span>
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="SaasPyroModel.sample"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasPyroModel.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -297,9 +328,9 @@
 <span class="sd">    isn't compatible with `fit_gpytorch_model`.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    &gt;&gt;&gt; saas_gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)</span>
-<span class="sd">    &gt;&gt;&gt; fit_fully_bayesian_model_nuts(saas_gp)</span>
-<span class="sd">    &gt;&gt;&gt; posterior = saas_gp.posterior(test_X)</span>
+<span class="sd">        &gt;&gt;&gt; saas_gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)</span>
+<span class="sd">        &gt;&gt;&gt; fit_fully_bayesian_model_nuts(saas_gp)</span>
+<span class="sd">        &gt;&gt;&gt; posterior = saas_gp.posterior(test_X)</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -457,23 +488,7 @@
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="n">FullyBayesianPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">posterior</span></div>
-
-<div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Construct kwargs for the `Model` from `TrainingData` and other options.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            training_data: `TrainingData` container with data for single outcome</span>
-<span class="sd">                or for multiple outcomes for batched multi-output case.</span>
-<span class="sd">            **kwargs: None expected for this class.</span>
-<span class="sd">        """</span>
-        <span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"train_X"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Y</span><span class="p">}</span>
-        <span class="k">if</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">inputs</span><span class="p">[</span><span class="s2">"train_Yvar"</span><span class="p">]</span> <span class="o">=</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Yvar</span>
-        <span class="k">return</span> <span class="n">inputs</span></div></div>
+        <span class="k">return</span> <span class="n">posterior</span></div></div>
 </pre></div>
 </div>
 </div>

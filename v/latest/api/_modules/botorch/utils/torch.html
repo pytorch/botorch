@@ -80,6 +80,11 @@
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buffers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            buffers: A mapping (dictionary) from string to :class:`~torch.Tensor`, or</span>
+<span class="sd">                an iterable of key-value pairs of type (string, :class:`~torch.Tensor`).</span>
+<span class="sd">        """</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">BufferDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">buffers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">buffers</span><span class="p">)</span>

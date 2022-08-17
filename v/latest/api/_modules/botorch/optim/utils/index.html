@@ -302,12 +302,12 @@
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Failed to extract X_baseline."</span><span class="p">,</span> <span class="n">BotorchWarning</span><span class="p">)</span>
                 <span class="k">return</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># make sure input transforms are not applied</span>
-            <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelListGPyTorchModel</span><span class="p">):</span>
-                <span class="n">X</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># Make sure we get the original train inputs.</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelListGPyTorchModel</span><span class="p">)</span> <span class="k">else</span> <span class="n">model</span>
+            <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">_has_transformed_inputs</span><span class="p">:</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">_original_train_inputs</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">X</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">except</span> <span class="p">(</span><span class="n">BotorchError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Failed to extract X_baseline."</span><span class="p">,</span> <span class="n">BotorchWarning</span><span class="p">)</span>
             <span class="k">return</span>

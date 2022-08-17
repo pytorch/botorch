@@ -32,6 +32,11 @@
 
 <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">Cost models to be used with multi-fidelity optimization.</span>
+
+<span class="sd">Cost are useful for defining known cost functions when the cost of an evaluation</span>
+<span class="sd">is heterogeneous in fidelity. For a full worked example, see the</span>
+<span class="sd">`tutorial &lt;https://botorch.org/tutorials/multi_fidelity_bo&gt;`_ on continuous</span>
+<span class="sd">multi-fidelity Bayesian Optimization.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
@@ -44,12 +49,24 @@
 
 
 <div class="viewcode-block" id="AffineFidelityCostModel"><a class="viewcode-back" href="../../../models.html#botorch.models.cost.AffineFidelityCostModel">[docs]</a><span class="k">class</span> <span class="nc">AffineFidelityCostModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Affine cost model operating on fidelity parameters.</span>
+    <span class="sa">r</span><span class="sd">"""Deterministic, affine cost model operating on fidelity parameters.</span>
 
 <span class="sd">    For each (q-batch) element of a candidate set `X`, this module computes a</span>
 <span class="sd">    cost of the form</span>
 
 <span class="sd">        cost = fixed_cost + sum_j weights[j] * X[fidelity_dims[j]]</span>
+
+<span class="sd">    For a full worked example, see the</span>
+<span class="sd">    `tutorial &lt;https://botorch.org/tutorials/multi_fidelity_bo&gt;`_ on continuous</span>
+<span class="sd">    multi-fidelity Bayesian Optimization.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; from botorch.models import AffineFidelityCostModel</span>
+<span class="sd">        &gt;&gt;&gt; from botorch.acquisition.cost_aware import InverseCostWeightedUtility</span>
+<span class="sd">        &gt;&gt;&gt; cost_model = AffineFidelityCostModel(</span>
+<span class="sd">        &gt;&gt;&gt;    fidelity_weights={6: 1.0}, fixed_cost=5.0</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+<span class="sd">        &gt;&gt;&gt; cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_model)</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -57,13 +74,12 @@
         <span class="n">fidelity_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">fixed_cost</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Affine cost model operating on fidelity parameters.</span>
-
+        <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            fidelity_weights: A dictionary mapping a subset of columns of `X`</span>
-<span class="sd">                (the fidelity parameters) to it's associated weight in the</span>
+<span class="sd">                (the fidelity parameters) to its associated weight in the</span>
 <span class="sd">                affine cost expression. If omitted, assumes that the last</span>
-<span class="sd">                column of X is the fidelity parameter with a weight of 1.0.</span>
+<span class="sd">                column of `X` is the fidelity parameter with a weight of 1.0.</span>
 <span class="sd">            fixed_cost: The fixed cost of running a single candidate point (i.e.</span>
 <span class="sd">                an element of a q-batch).</span>
 <span class="sd">        """</span>

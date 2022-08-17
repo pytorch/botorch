@@ -36,6 +36,14 @@
 <span class="sd">applied (i) within the model constructor to transform the train observations</span>
 <span class="sd">to the model space, and (ii) in the `Model.posterior` call to untransform</span>
 <span class="sd">the model posterior back to the original space.</span>
+
+<span class="sd">References</span>
+
+<span class="sd">.. [eriksson2021scalable]</span>
+<span class="sd">    D. Eriksson, M. Poloczek. Scalable Constrained Bayesian Optimization.</span>
+<span class="sd">    International Conference on Artificial Intelligence and Statistics. PMLR, 2021,</span>
+<span class="sd">    http://proceedings.mlr.press/v130/eriksson21a.html</span>
+
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
@@ -51,15 +59,19 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">TransformedPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize_indices</span>
-<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">CholLazyTensor</span><span class="p">,</span> <span class="n">DiagLazyTensor</span>
+<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">BlockDiagLazyTensor</span><span class="p">,</span> <span class="n">CholLazyTensor</span><span class="p">,</span> <span class="n">DiagLazyTensor</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ModuleDict</span>
 
 
-<div class="viewcode-block" id="OutcomeTransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform">[docs]</a><span class="k">class</span> <span class="nc">OutcomeTransform</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for outcome transforms."""</span>
+<span class="k">class</span> <span class="nc">OutcomeTransform</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Abstract base class for outcome transforms.</span>
 
-<div class="viewcode-block" id="OutcomeTransform.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
+<span class="sd">    :meta private:</span>
+<span class="sd">    """</span>
+
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
@@ -76,9 +88,9 @@
 <span class="sd">            - The transformed outcome observations.</span>
 <span class="sd">            - The transformed observation noise (if applicable).</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
-<div class="viewcode-block" id="OutcomeTransform.subset_output"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Subset the transform along the output dimension.</span>
 
 <span class="sd">        This functionality is used to properly treat outcome transformations</span>
@@ -93,9 +105,9 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not implement the "</span>
             <span class="s2">"`subset_output` method"</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
-<div class="viewcode-block" id="OutcomeTransform.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
         <span class="sa">r</span><span class="sd">"""Un-transform previously transformed outcomes</span>
@@ -113,9 +125,9 @@
 <span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not implement the `untransform` method"</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
-<div class="viewcode-block" id="OutcomeTransform.untransform_posterior"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform.untransform_posterior">[docs]</a>    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Un-transform a posterior</span>
 
 <span class="sd">        Args:</span>
@@ -127,7 +139,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not implement the "</span>
             <span class="s2">"`untransform_posterior` method"</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span>
 
 
 <div class="viewcode-block" id="ChainedOutcomeTransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform">[docs]</a><span class="k">class</span> <span class="nc">ChainedOutcomeTransform</span><span class="p">(</span><span class="n">OutcomeTransform</span><span class="p">,</span> <span class="n">ModuleDict</span><span class="p">):</span>
@@ -395,9 +407,20 @@
             <span class="n">covar_tf</span> <span class="o">=</span> <span class="n">CholLazyTensor</span><span class="p">(</span><span class="n">mvn</span><span class="o">.</span><span class="n">scale_tril</span> <span class="o">*</span> <span class="n">scale_fac</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">lcv</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span>
-            <span class="c1"># allow batch-evaluation of the model</span>
-            <span class="n">scale_mat</span> <span class="o">=</span> <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">scale_fac</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">lcv</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
-            <span class="n">covar_tf</span> <span class="o">=</span> <span class="n">scale_mat</span> <span class="o">@</span> <span class="n">lcv</span> <span class="o">@</span> <span class="n">scale_mat</span>
+            <span class="n">scale_fac</span> <span class="o">=</span> <span class="n">scale_fac</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">lcv</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="c1"># TODO: Remove the custom logic with next GPyTorch release (T126095032).</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lcv</span><span class="p">,</span> <span class="n">BlockDiagLazyTensor</span><span class="p">):</span>
+                <span class="c1"># Keep the block diag structure of lcv.</span>
+                <span class="n">base_lcv</span> <span class="o">=</span> <span class="n">lcv</span><span class="o">.</span><span class="n">base_lazy_tensor</span>
+                <span class="n">scale_mat</span> <span class="o">=</span> <span class="n">DiagLazyTensor</span><span class="p">(</span>
+                    <span class="n">scale_fac</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">scale_fac</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">lcv</span><span class="o">.</span><span class="n">num_blocks</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">base_lcv_tf</span> <span class="o">=</span> <span class="n">scale_mat</span> <span class="o">@</span> <span class="n">base_lcv</span> <span class="o">@</span> <span class="n">scale_mat</span>
+                <span class="n">covar_tf</span> <span class="o">=</span> <span class="n">BlockDiagLazyTensor</span><span class="p">(</span><span class="n">base_lazy_tensor</span><span class="o">=</span><span class="n">base_lcv_tf</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># allow batch-evaluation of the model</span>
+                <span class="n">scale_mat</span> <span class="o">=</span> <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">scale_fac</span><span class="p">)</span>
+                <span class="n">covar_tf</span> <span class="o">=</span> <span class="n">scale_mat</span> <span class="o">@</span> <span class="n">lcv</span> <span class="o">@</span> <span class="n">scale_mat</span>
 
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"interleaved"</span><span class="p">:</span> <span class="n">mvn</span><span class="o">.</span><span class="n">_interleaved</span><span class="p">}</span> <span class="k">if</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_is_mt</span> <span class="k">else</span> <span class="p">{}</span>
         <span class="n">mvn_tf</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">mean_tf</span><span class="p">,</span> <span class="n">covariance_matrix</span><span class="o">=</span><span class="n">covar_tf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -656,6 +679,130 @@
         <span class="k">return</span> <span class="n">TransformedPosterior</span><span class="p">(</span>
             <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span>
             <span class="n">sample_transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">power</span><span class="p">),</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Bilog"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog">[docs]</a><span class="k">class</span> <span class="nc">Bilog</span><span class="p">(</span><span class="n">OutcomeTransform</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Bilog-transform outcomes.</span>
+
+<span class="sd">    The Bilog transform [eriksson2021scalable]_ is useful for modeling outcome</span>
+<span class="sd">    constraints as it magnifies values near zero and flattens extreme values.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Bilog-transform outcomes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            outputs: Which of the outputs to Bilog-transform. If omitted, all</span>
+<span class="sd">                outputs will be transformed.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="o">=</span> <span class="n">outputs</span>
+
+<div class="viewcode-block" id="Bilog.subset_output"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Subset the transform along the output dimension.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idcs: The output indices to subset the transform to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current outcome transform, subset to the specified output indices.</span>
+<span class="sd">        """</span>
+        <span class="n">new_outputs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="o">+</span> <span class="n">idcs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Negative indexing not supported for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="s2">"when subsetting outputs and only transforming some outputs."</span>
+                <span class="p">)</span>
+            <span class="n">new_outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idcs</span><span class="p">]</span>
+        <span class="n">new_tf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">outputs</span><span class="o">=</span><span class="n">new_outputs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="n">new_tf</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">new_tf</span></div>
+
+<div class="viewcode-block" id="Bilog.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
+        <span class="sa">r</span><span class="sd">"""Bilog-transform outcomes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            Y: A `batch_shape x n x m`-dim tensor of training targets.</span>
+<span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of observation noises</span>
+<span class="sd">                associated with the training targets (if applicable).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A two-tuple with the transformed outcomes:</span>
+
+<span class="sd">            - The transformed outcome observations.</span>
+<span class="sd">            - The transformed observation noise (if applicable).</span>
+<span class="sd">        """</span>
+        <span class="n">Y_tf</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">sign</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">log</span><span class="p">()</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">normalize_indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">Y_tf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">Y_tf</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">outputs</span> <span class="k">else</span> <span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+                <span class="p">],</span>
+                <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Bilog does not yet support transforming observation noise"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">Y_tf</span><span class="p">,</span> <span class="n">Yvar</span></div>
+
+<div class="viewcode-block" id="Bilog.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
+        <span class="sa">r</span><span class="sd">"""Un-transform bilog-transformed outcomes</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            Y: A `batch_shape x n x m`-dim tensor of bilog-transfomred targets.</span>
+<span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of bilog-transformed</span>
+<span class="sd">                observation noises associated with the training targets</span>
+<span class="sd">                (if applicable).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A two-tuple with the un-transformed outcomes:</span>
+
+<span class="sd">            - The un-transformed outcome observations.</span>
+<span class="sd">            - The un-transformed observation noise (if applicable).</span>
+<span class="sd">        """</span>
+        <span class="n">Y_utf</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">sign</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">normalize_indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">Y_utf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">Y_utf</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">outputs</span> <span class="k">else</span> <span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+                <span class="p">],</span>
+                <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># TODO: Delta method, possibly issue warning</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Bilog does not yet support transforming observation noise"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">Y_utf</span><span class="p">,</span> <span class="n">Yvar</span></div>
+
+<div class="viewcode-block" id="Bilog.untransform_posterior"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.untransform_posterior">[docs]</a>    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Un-transform the bilog-transformed posterior.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            posterior: A posterior in the bilog-transformed space.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The un-transformed posterior.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Bilog does not yet support output selection for untransform_posterior"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">TransformedPosterior</span><span class="p">(</span>
+            <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span>
+            <span class="n">sample_transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sign</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">),</span>
         <span class="p">)</span></div></div>
 </pre></div>
 </div>

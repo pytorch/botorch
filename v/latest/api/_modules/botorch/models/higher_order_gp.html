@@ -89,6 +89,13 @@
         <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">min_stdv</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
     <span class="p">):</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            output_shape: A `n x output_shape`-dim tensor of training targets.</span>
+<span class="sd">            batch_shape: The batch_shape of the training targets.</span>
+<span class="sd">            min_stddv: The minimum standard deviation for which to perform</span>
+<span class="sd">                standardization (if lower, only de-mean the data).</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">batch_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>
 
@@ -159,9 +166,23 @@
 
 <div class="viewcode-block" id="HigherOrderGP"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP">[docs]</a><span class="k">class</span> <span class="nc">HigherOrderGP</span><span class="p">(</span><span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">    A Higher order Gaussian process model (HOGP) (predictions are matrices/tensors) as</span>
-<span class="sd">    described in [Zhe2019hogp]_. The posterior uses Matheron's rule [Doucet2010sampl]_</span>
+<span class="sd">    A model for high-dimensional output regression.</span>
+
+<span class="sd">    As described in [Zhe2019hogp]_. “Higher-order” means that the predictions</span>
+<span class="sd">    are matrices (tensors) with at least two dimensions, such as images or</span>
+<span class="sd">    grids of images, or measurements taken from a region of at least two</span>
+<span class="sd">    dimensions.</span>
+<span class="sd">    The posterior uses Matheron's rule [Doucet2010sampl]_</span>
 <span class="sd">    as described in [Maddox2021bohdo]_.</span>
+
+<span class="sd">    `HigherOrderGP` differs from a "vector” multi-output model in that it uses</span>
+<span class="sd">    Kronecker algebra to obtain parsimonious covariance matrices for these</span>
+<span class="sd">    outputs (see `KroneckerMultiTaskGP` for more information). For example,</span>
+<span class="sd">    imagine a 10 x 20 x 30 grid of images. If we were to vectorize the</span>
+<span class="sd">    resulting 6,000 data points in order to use them in a non-higher-order GP,</span>
+<span class="sd">    they would have a 6,000 x 6,000 covariance matrix, with 36 million entries.</span>
+<span class="sd">    The Kronecker structure allows representing this as a product of 10x10,</span>
+<span class="sd">    20x20, and 30x30 covariance matrices, with only 1,400 entries.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -176,8 +197,7 @@
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""A HigherOrderGP model for high-dim output regression.</span>
-
+        <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: A `batch_shape x n x d`-dim tensor of training inputs.</span>
 <span class="sd">            train_Y: A `batch_shape x n x output_shape`-dim tensor of training targets.</span>
