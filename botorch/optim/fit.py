@@ -126,7 +126,7 @@ def fit_gpytorch_torch(
         bounds_.update(bounds)
 
     iterations = []
-    t1 = time.time()
+    t1 = time.monotonic()
 
     param_trajectory: Dict[str, List[Tensor]] = {
         name: [] for name, param in mll.named_parameters()
@@ -154,7 +154,9 @@ def fit_gpytorch_torch(
         ):
             print(f"Iter {i + 1}/{optim_options['maxiter']}: {loss.item()}")
         if track_iterations:
-            iterations.append(OptimizationIteration(i, loss.item(), time.time() - t1))
+            iterations.append(
+                OptimizationIteration(i, loss.item(), time.monotonic() - t1)
+            )
         optimizer.step()
         # project onto bounds:
         if bounds_:
@@ -165,7 +167,7 @@ def fit_gpytorch_torch(
         stop = stopping_criterion.evaluate(fvals=loss.detach())
     info_dict = {
         "fopt": loss_trajectory[-1],
-        "wall_time": time.time() - t1,
+        "wall_time": time.monotonic() - t1,
         "iterations": iterations,
     }
     return mll, info_dict
@@ -227,11 +229,11 @@ def fit_gpytorch_scipy(
 
     xs = []
     ts = []
-    t1 = time.time()
+    t1 = time.monotonic()
 
     def store_iteration(xk):
         xs.append(xk.copy())
-        ts.append(time.time() - t1)
+        ts.append(time.monotonic() - t1)
 
     cb = store_iteration if track_iterations else None
 
@@ -254,7 +256,7 @@ def fit_gpytorch_scipy(
     # Construct info dict
     info_dict = {
         "fopt": float(res.fun),
-        "wall_time": time.time() - t1,
+        "wall_time": time.monotonic() - t1,
         "iterations": iterations,
         "OptimizeResult": res,
     }
