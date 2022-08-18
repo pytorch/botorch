@@ -143,7 +143,7 @@ def run_optimization(sampler, n_candidates, n_init, max_evals, batch_size, use_k
     
     while len(X) < max_evals:
         # Create a batch
-        start = time.time()
+        start = time.monotonic()
         X_next = generate_batch(
             X=X,
             Y=Y,
@@ -152,7 +152,7 @@ def run_optimization(sampler, n_candidates, n_init, max_evals, batch_size, use_k
             sampler=sampler,
             use_keops=use_keops,
         )
-        end = time.time()
+        end = time.monotonic()
         print(f"Generated batch in {end - start:.1f} seconds")
         Y_next = torch.tensor(
             [eval_objective(x) for x in X_next], dtype=dtype, device=device

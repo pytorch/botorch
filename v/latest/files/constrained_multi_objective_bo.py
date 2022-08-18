@@ -295,7 +295,7 @@ hvs_random.append(volume)
 
 # run N_BATCH rounds of BayesOpt after the initial random batch
 for iteration in range(1, N_BATCH + 1):
-    t0 = time.time()
+    t0 = time.monotonic()
 
     # fit the models
     fit_gpytorch_model(mll_qparego)
@@ -351,7 +351,7 @@ for iteration in range(1, N_BATCH + 1):
     mll_qparego, model_qparego = initialize_model(train_x_qparego, train_obj_qparego, train_con_qparego)
     mll_qnehvi, model_qnehvi = initialize_model(train_x_qnehvi, train_obj_qnehvi, train_con_qnehvi)
 
-    t1 = time.time()
+    t1 = time.monotonic()
 
     if verbose:
         print(

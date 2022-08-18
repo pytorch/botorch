@@ -220,7 +220,7 @@ for trial in range(1, N_TRIALS + 1):
     # run N_BATCH rounds of BayesOpt after the initial random batch
     for iteration in range(1, N_BATCH + 1):    
         
-        t0 = time.time()
+        t0 = time.monotonic()
         
         # fit the models
         fit_gpytorch_model(mll_ei)
@@ -279,7 +279,7 @@ for trial in range(1, N_TRIALS + 1):
             model_nei.state_dict(),
         )
         
-        t1 = time.time()
+        t1 = time.monotonic()
         
         if verbose:
             print(

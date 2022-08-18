@@ -328,7 +328,7 @@ $$f(x) = -\sum_{i=1}^4 \alpha_i \exp \left( -\sum_{j=1}^6 A_{ij} (x_j - P_{ij})^
     <span class="c1"># run N_BATCH rounds of BayesOpt after the initial random batch</span>
     <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">N_BATCH</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>    
         
-        <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
         
         <span class="c1"># fit the models</span>
         <span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll_ei</span><span class="p">)</span>
@@ -387,7 +387,7 @@ $$f(x) = -\sum_{i=1}^4 \alpha_i \exp \left( -\sum_{j=1}^6 A_{ij} (x_j - P_{ij})^
             <span class="n">model_nei</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span>
         <span class="p">)</span>
         
-        <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
         
         <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span>

@@ -192,7 +192,7 @@ for trial in range(n_trials):
         # we empty the cache to clear memory out
         torch.cuda.empty_cache()
 
-        mtgp_t0 = time.time()
+        mtgp_t0 = time.monotonic()
         mtgp = KroneckerMultiTaskGP(
             mtgp_train_x, 
             mtgp_train_y, 
@@ -201,9 +201,9 @@ for trial in range(n_trials):
         fit_gpytorch_torch(mtgp_mll, options={"maxiter": 3000, "lr": 0.01, "disp": False})
         mtgp_acqf = construct_acqf(mtgp, objective, num_samples, best_value_mtgp)
         new_mtgp_x = optimize_acqf_and_get_candidate(mtgp_acqf, bounds, batch_size)
-        mtgp_t1 = time.time()
+        mtgp_t1 = time.monotonic()
 
-        batch_t0 = time.time()
+        batch_t0 = time.monotonic()
         batchgp = SingleTaskGP(
             batch_train_x, 
             batch_train_y, 
@@ -212,7 +212,7 @@ for trial in range(n_trials):
         fit_gpytorch_torch(batch_mll, options={"maxiter": 3000, "lr": 0.01, "disp": False})
         batch_acqf = construct_acqf(batchgp, objective, num_samples, best_value_batch)
         new_batch_x = optimize_acqf_and_get_candidate(batch_acqf, bounds, batch_size)
-        batch_t1 = time.time()
+        batch_t1 = time.monotonic()
 
         mtgp_train_x = torch.cat((mtgp_train_x, new_mtgp_x), dim=0)
         batch_train_x = torch.cat((batch_train_x, new_batch_x), dim=0)

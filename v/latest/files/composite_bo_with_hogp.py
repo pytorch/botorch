@@ -206,7 +206,7 @@ with gpt_settings.cholesky_jitter(1e-4):
 
     # run the BO loop
     for i in range(n_batches):
-        tic = time.time()
+        tic = time.monotonic()
 
         # get best observations, log status
         best_f = {k: objective(v).max().detach() for k, v in train_Y.items()}
@@ -269,7 +269,7 @@ with gpt_settings.cholesky_jitter(1e-4):
                 train_X[k] = torch.cat([Xold, Xnew])
                 train_Y[k] = torch.cat([train_Y[k], c_batched(Xnew)])
 
-        logging.info(f"Wall time: {time.time() - tic:1f}")
+        logging.info(f"Wall time: {time.monotonic() - tic:1f}")
 
     objective_dict = {k: objective(train_Y[k]) for k in train_Y}
 

@@ -228,7 +228,7 @@ for trial in range(1, N_TRIALS + 1):
     # run N_BATCH rounds of BayesOpt after the initial random batch
     for iteration in range(1, N_BATCH + 1):    
         
-        t0 = time.time()
+        t0 = time.monotonic()
         
         # fit the models
         fit_gpytorch_model(mll_ei)
@@ -265,7 +265,7 @@ for trial in range(1, N_TRIALS + 1):
         mll_ei, model_ei = initialize_model(train_x_ei, train_obj_ei, use_input_warping=False)
         mll_warp, model_warp = initialize_model(train_x_warp, train_obj_warp, use_input_warping=True)
         
-        t1 = time.time()
+        t1 = time.monotonic()
         
         if verbose:
             print(
