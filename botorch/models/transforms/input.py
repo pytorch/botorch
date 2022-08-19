@@ -1064,7 +1064,7 @@ class AppendFeaturesFromCallable(InputTransform, Module):
         if (indices is not None) and (len(indices) == 0):
             raise ValueError("`indices` list is empty!")
         if (indices is not None) and (len(indices) > 0):
-            self.indicesindices = torch.tensor(indices, dtype=torch.long)
+            indices = torch.tensor(indices, dtype=torch.long)
             if len(indices) > d:
                 raise ValueError("Can provide at most `d` indices!")
             if (indices > d - 1).any():
@@ -1103,13 +1103,13 @@ class AppendFeaturesFromCallable(InputTransform, Module):
 
         features = self._f(X[..., self.indices])
 
-        if features.ndim == 1:
+        if features.ndim < X.ndim:
             features = features.unsqueeze(-1)
 
         expanded_X = X.unsqueeze(0)
         expanded_features = features.expand(*expanded_X.shape[:-1], -1)
         appended_X = torch.cat([expanded_X, expanded_features], dim=-1)
-        return appended_X.view(*X.shape[:-2], -1, appended_X.shape[-1])
+        return appended_X.squeeze()
 
 
 class FilterFeatures(InputTransform, Module):

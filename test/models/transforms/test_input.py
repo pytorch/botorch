@@ -11,6 +11,7 @@ import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.input import (
     AppendFeatures,
+    AppendFeaturesFromCallable,
     ChainedInputTransform,
     FilterFeatures,
     InputPerturbation,
@@ -845,6 +846,53 @@ class TestAppendFeatures(BotorchTestCase):
             # Batched evaluation.
             tf_X = append_tf(pert_tf(test_X.expand(3, 5, -1, -1)))
             self.assertTrue(torch.allclose(tf_X, expected_X.expand(3, 5, -1, -1)))
+
+
+class TestAppendFeaturesFromCallable(BotorchTestCase):
+    def test_append_features_from_callable(self):
+        # basic init, provided indices
+        for dtype in [torch.float, torch.double]:
+            tkwargs = {"device": self.device, "dtype": dtype}
+            with self.assertRaises(ValueError):
+                transform = AppendFeaturesFromCallable(
+                    d=2, indices=[0, 1, 2], f=lambda x: torch.sum(x, dim=-1)
+                )
+            with self.assertRaises(ValueError):
+                transform = AppendFeaturesFromCallable(
+                    d=2, indices=[0, 2], f=lambda x: torch.sum(x, dim=-1)
+                )
+            with self.assertRaises(ValueError):
+                transform = AppendFeaturesFromCallable(
+                    d=2, indices=[0, 0], f=lambda x: torch.sum(x, dim=-1)
+                )
+            with self.assertRaises(ValueError):
+                transform = AppendFeaturesFromCallable(
+                    d=2, indices=[], f=lambda x: torch.sum(x, dim=-1)
+                )
+        # test functionality
+        X = torch.rand(10, 3).to(**tkwargs)
+        transform = AppendFeaturesFromCallable(d=3, f=lambda x: torch.sum(x, dim=-1))
+        X_transformed = transform.transform(X)
+        assert X_transformed.shape == torch.Size((10, 4))
+
+        transform = AppendFeaturesFromCallable(
+            d=3, indices=[0, 1], f=lambda x: torch.sum(x, dim=-1)
+        )
+        X_transformed = transform.transform(X)
+        assert X_transformed.shape == torch.Size((10, 4))
+
+        transform = AppendFeaturesFromCallable(d=3, f=lambda x: x[..., -2:])
+        X_transformed = transform.transform(X)
+        assert X_transformed.shape == torch.Size((10, 5))
+
+        X = torch.rand(2, 10, 3).to(**tkwargs)
+        transform = AppendFeaturesFromCallable(d=3, f=lambda x: torch.sum(x, dim=-1))
+        X_transformed = transform.transform(X)
+
+        X = torch.rand(2, 10, 3).to(**tkwargs)
+        transform = AppendFeaturesFromCallable(d=3, f=lambda x: x[..., -2:])
+        X_transformed = transform.transform(X)
+        assert X_transformed.shape == torch.Size((2, 10, 5))
 
 
 class TestFilterFeatures(BotorchTestCase):
