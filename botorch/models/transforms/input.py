@@ -1031,10 +1031,11 @@ class AppendFeatures(InputTransform, Module):
 
 
 class AppendFeaturesFromCallable(InputTransform, Module):
-    r"""A transform that generates a set of features using the provided callable and then appends it to the input.
-    Possible examples of callable include statistical models that are built on PyTorch, built-in mathematical operations such
-    as torch.sum, or custom scripted functions. This input transform allows for advanced feature engineering and transfer learning
-    models within the optimization loop.
+    r"""A transform that generates a set of features using the provided callable
+    and then appends it to the input. Possible examples of callable include statistical
+    models that are built on PyTorch, built-in mathematical operations such as
+    torch.sum, or custom scripted functions. This input transform allows for advanced
+    feature engineering and transfer learning models within the optimization loop.
     """
 
     def __init__(
@@ -1051,8 +1052,10 @@ class AppendFeaturesFromCallable(InputTransform, Module):
         Args:
             f: A callable mapping a `batch_shape x n x d`-dim input tensor `X`
                 to a `batch_shape x n x m`-dimensional output tensor.
-            feature_indices: An one-dim tensor denoting the indices of the features to be
-                used and passed into f.
+            d: Dimensionality of the input space
+            indices: List of indices denoting the indices of the features to be
+                passed into f. Per default all features are passed to `f`.
+                Default: None.
             transform_on_train: A boolean indicating whether to apply the
                 transforms in train() mode. Default: True.
             transform_on_eval: A boolean indicating whether to apply the
@@ -1082,30 +1085,17 @@ class AppendFeaturesFromCallable(InputTransform, Module):
         self.transform_on_fantasize = transform_on_fantasize
 
     def transform(self, X: Tensor) -> Tensor:
-        r"""Transform the inputs by generating a feature set and appending it to the input.
-
-        For each `1 x d`-dim element in the input tensor, this will produce
-        an `n_f x (d + d_f)`-dim tensor with `feature_set` appended as the last `d_f`
-        dimensions. For a generic `batch_shape x q x d`-dim `X`, this translates to a
-        `batch_shape x (q * n_f) x (d + d_f)`-dim output, where the values corresponding
-        to `X[..., i, :]` are found in `output[..., i * n_f: (i + 1) * n_f, :]`.
-
-        Note: Adding the `feature_set` on the `q-batch` dimension is necessary to avoid
-        introducing additional bias by evaluating the inputs on independent GP
-        sample paths.
+        r"""Transform the inputs by generating an additional feature set of
+        dimensionality d_f and appending it to the input.
 
         Args:
             X: A `batch_shape x q x d`-dim tensor of inputs.
 
         Returns:
-            A `batch_shape x (q * n_f) x (d + d_f)`-dim tensor of appended inputs.
+            A `batch_shape x q x (d + d_f)`-dim tensor of appended inputs.
         """
 
         features = self._f(X[..., self.indices])
-
-        # if features.ndim < X.ndim:
-        #    features = features.unsqueeze(-1)
-
         expanded_X = X.unsqueeze(0)
         expanded_features = features.expand(*expanded_X.shape[:-1], -1)
         appended_X = torch.cat([expanded_X, expanded_features], dim=-1)
