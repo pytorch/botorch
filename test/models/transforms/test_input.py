@@ -855,44 +855,79 @@ class TestAppendFeaturesFromCallable(BotorchTestCase):
             tkwargs = {"device": self.device, "dtype": dtype}
             with self.assertRaises(ValueError):
                 transform = AppendFeaturesFromCallable(
-                    d=2, indices=[0, 1, 2], f=lambda x: torch.sum(x, dim=-1)
+                    d=2,
+                    indices=[0, 1, 2],
+                    f=lambda x: torch.sum(x, dim=-1, keepdim=True),
                 )
             with self.assertRaises(ValueError):
                 transform = AppendFeaturesFromCallable(
-                    d=2, indices=[0, 2], f=lambda x: torch.sum(x, dim=-1)
+                    d=2, indices=[0, 2], f=lambda x: torch.sum(x, dim=-1, keepdim=True)
                 )
             with self.assertRaises(ValueError):
                 transform = AppendFeaturesFromCallable(
-                    d=2, indices=[0, 0], f=lambda x: torch.sum(x, dim=-1)
+                    d=2, indices=[0, 0], f=lambda x: torch.sum(x, dim=-1, keepdim=True)
                 )
             with self.assertRaises(ValueError):
                 transform = AppendFeaturesFromCallable(
-                    d=2, indices=[], f=lambda x: torch.sum(x, dim=-1)
+                    d=2, indices=[], f=lambda x: torch.sum(x, dim=-1, keepdim=True)
                 )
         # test functionality
         X = torch.rand(10, 3).to(**tkwargs)
-        transform = AppendFeaturesFromCallable(d=3, f=lambda x: torch.sum(x, dim=-1))
-        X_transformed = transform.transform(X)
+        transform = AppendFeaturesFromCallable(
+            d=3,
+            f=lambda x: torch.sum(x, dim=-1, keepdim=True),
+        )
+        X_transformed = transform(X)
         assert X_transformed.shape == torch.Size((10, 4))
 
         transform = AppendFeaturesFromCallable(
-            d=3, indices=[0, 1], f=lambda x: torch.sum(x, dim=-1)
+            d=3, indices=[0, 1], f=lambda x: torch.sum(x, dim=-1, keepdim=True)
         )
-        X_transformed = transform.transform(X)
+        X_transformed = transform(X)
         assert X_transformed.shape == torch.Size((10, 4))
 
         transform = AppendFeaturesFromCallable(d=3, f=lambda x: x[..., -2:])
-        X_transformed = transform.transform(X)
+        X_transformed = transform(X)
         assert X_transformed.shape == torch.Size((10, 5))
 
         X = torch.rand(2, 10, 3).to(**tkwargs)
-        transform = AppendFeaturesFromCallable(d=3, f=lambda x: torch.sum(x, dim=-1))
-        X_transformed = transform.transform(X)
+        transform = AppendFeaturesFromCallable(
+            d=3, f=lambda x: torch.sum(x, dim=-1, keepdim=True)
+        )
+        X_transformed = transform(X)
+        assert X_transformed.shape == torch.Size((2, 10, 4))
 
         X = torch.rand(2, 10, 3).to(**tkwargs)
         transform = AppendFeaturesFromCallable(d=3, f=lambda x: x[..., -2:])
-        X_transformed = transform.transform(X)
+        X_transformed = transform(X)
         assert X_transformed.shape == torch.Size((2, 10, 5))
+
+        # test no transform on train
+        X = torch.rand(10, 3).to(**tkwargs)
+        transform = AppendFeaturesFromCallable(
+            d=3,
+            f=lambda x: torch.sum(x, dim=-1, keepdim=True),
+            transform_on_train=False,
+        )
+        transform.train()
+        X_transformed = transform(X)
+        self.assertTrue(torch.equal(X, X_transformed))
+        transform.eval()
+        X_transformed = transform(X)
+        assert X_transformed.shape == torch.Size((10, 4))
+
+        # test not transform on eval
+        X = torch.rand(10, 3).to(**tkwargs)
+        transform = AppendFeaturesFromCallable(
+            d=3, f=lambda x: torch.sum(x, dim=-1, keepdim=True), transform_on_eval=False
+        )
+        transform.eval()
+        X_transformed = transform(X)
+        print(X_transformed.shape)
+        self.assertTrue(torch.equal(X, X_transformed))
+        transform.train()
+        X_transformed = transform(X)
+        assert X_transformed.shape == torch.Size((10, 4))
 
 
 class TestFilterFeatures(BotorchTestCase):

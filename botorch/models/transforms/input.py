@@ -1049,10 +1049,10 @@ class AppendFeaturesFromCallable(InputTransform, Module):
         r"""Generate a feature set and append it to the input
 
         Args:
-            f: A callable and takes a tensor of inputs as the argument, which is possible to backpropagate through.
+            f: A callable mapping a `batch_shape x n x d`-dim input tensor `X`
+                to a `batch_shape x n x m`-dimensional output tensor.
             feature_indices: An one-dim tensor denoting the indices of the features to be
                 used and passed into f.
-            f_kwargs: Keywork arguments that will be passed into f when called. Default: None.
             transform_on_train: A boolean indicating whether to apply the
                 transforms in train() mode. Default: True.
             transform_on_eval: A boolean indicating whether to apply the
@@ -1103,8 +1103,8 @@ class AppendFeaturesFromCallable(InputTransform, Module):
 
         features = self._f(X[..., self.indices])
 
-        if features.ndim < X.ndim:
-            features = features.unsqueeze(-1)
+        # if features.ndim < X.ndim:
+        #    features = features.unsqueeze(-1)
 
         expanded_X = X.unsqueeze(0)
         expanded_features = features.expand(*expanded_X.shape[:-1], -1)
