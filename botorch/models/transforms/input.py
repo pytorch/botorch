@@ -1030,6 +1030,88 @@ class AppendFeatures(InputTransform, Module):
         return appended_X.view(*X.shape[:-2], -1, appended_X.shape[-1])
 
 
+class AppendFeaturesFromCallable(InputTransform, Module):
+    r"""A transform that generates a set of features using the provided callable and then appends it to the input.
+    Possible examples of callable include statistical models that are built on PyTorch, built-in mathematical operations such
+    as torch.sum, or custom scripted functions. This input transform allows for advanced feature engineering and transfer learning
+    models within the optimization loop.
+    """
+
+    def __init__(
+        self,
+        f: Callable[[Tensor], Tensor],
+        d: int,
+        indices: Optional[List[int]] = None,
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
+        transform_on_fantasize: bool = True,
+    ) -> None:
+        r"""Generate a feature set and append it to the input
+
+        Args:
+            f: A callable and takes a tensor of inputs as the argument, which is possible to backpropagate through.
+            feature_indices: An one-dim tensor denoting the indices of the features to be
+                used and passed into f.
+            f_kwargs: Keywork arguments that will be passed into f when called. Default: None.
+            transform_on_train: A boolean indicating whether to apply the
+                transforms in train() mode. Default: True.
+            transform_on_eval: A boolean indicating whether to apply the
+                transform in eval() mode. Default: True.
+            transform_on_fantasize: A boolean indicating whether to apply the
+                transform when called from within a `fantasize` call. Default: True.
+        """
+        super().__init__()
+        if (indices is not None) and (len(indices) == 0):
+            raise ValueError("`indices` list is empty!")
+        if (indices is not None) and (len(indices) > 0):
+            self.indicesindices = torch.tensor(indices, dtype=torch.long)
+            if len(indices) > d:
+                raise ValueError("Can provide at most `d` indices!")
+            if (indices > d - 1).any():
+                raise ValueError("Elements of `indices` have to be smaller than `d`!")
+            if len(indices.unique()) != len(indices):
+                raise ValueError("Elements of `indices` tensor must be unique!")
+            self.indices = indices
+        else:
+            self.indices = torch.tensor(range(d), dtype=torch.long)
+        self._d = d
+        self._f = f
+        self.indices
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
+        self.transform_on_fantasize = transform_on_fantasize
+
+    def transform(self, X: Tensor) -> Tensor:
+        r"""Transform the inputs by generating a feature set and appending it to the input.
+
+        For each `1 x d`-dim element in the input tensor, this will produce
+        an `n_f x (d + d_f)`-dim tensor with `feature_set` appended as the last `d_f`
+        dimensions. For a generic `batch_shape x q x d`-dim `X`, this translates to a
+        `batch_shape x (q * n_f) x (d + d_f)`-dim output, where the values corresponding
+        to `X[..., i, :]` are found in `output[..., i * n_f: (i + 1) * n_f, :]`.
+
+        Note: Adding the `feature_set` on the `q-batch` dimension is necessary to avoid
+        introducing additional bias by evaluating the inputs on independent GP
+        sample paths.
+
+        Args:
+            X: A `batch_shape x q x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x (q * n_f) x (d + d_f)`-dim tensor of appended inputs.
+        """
+
+        features = self._f(X[..., self.indices])
+
+        if features.ndim == 1:
+            features = features.unsqueeze(-1)
+
+        expanded_X = X.unsqueeze(0)
+        expanded_features = features.expand(*expanded_X.shape[:-1], -1)
+        appended_X = torch.cat([expanded_X, expanded_features], dim=-1)
+        return appended_X.view(*X.shape[:-2], -1, appended_X.shape[-1])
+
+
 class FilterFeatures(InputTransform, Module):
 
     r"""A transform that filters the input with a given set of features indices.
