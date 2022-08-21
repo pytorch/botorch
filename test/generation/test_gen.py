@@ -238,7 +238,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
         with mock.patch(
             "botorch.generation.gen.minimize"
         ) as mock_minimize, warnings.catch_warnings(record=True) as ws:
-            mock_minimize.return_value = OptimizeResult(x=test_ics.numpy())
+            mock_minimize.return_value = OptimizeResult(x=test_ics.cpu().numpy())
 
             gen_candidates_scipy(
                 initial_conditions=test_ics,

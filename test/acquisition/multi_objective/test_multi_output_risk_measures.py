@@ -614,4 +614,4 @@ class TestMARS(BotorchTestCase):
             mars_vals = mars(samples)
             self.assertEqual(mars_vals.shape, torch.Size([5, 3]))
             self.assertEqual(mars_vals.dtype, dtype)
-            self.assertEqual(mars_vals.device, self.device)
+            self.assertEqual(mars_vals.device.type, self.device.type)

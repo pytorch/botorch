@@ -131,7 +131,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     self.assertTrue(
                         torch.allclose(qei_prox, qei * test_prox_weight.flatten())
                     )
-                    self.assertTrue(qei_prox.shape == torch.Size([4]))
+                    self.assertEqual(qei_prox.shape, torch.Size([4]))
 
             # test gradient
             test_X = torch.rand(
@@ -185,14 +185,12 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
 
             multi_output_model = SingleTaskGP(train_X, train_Y).to(device=self.device)
             ptransform = ScalarizedPosteriorTransform(
-                weights=torch.ones(2, dtype=dtype)
+                weights=torch.ones(2, dtype=dtype, device=self.device)
             )
-            acq = ProximalAcquisitionFunction(
-                ExpectedImprovement(
-                    multi_output_model, 0.0, posterior_transform=ptransform
-                ),
-                proximal_weights,
+            ei = ExpectedImprovement(
+                multi_output_model, 0.0, posterior_transform=ptransform
             )
+            acq = ProximalAcquisitionFunction(ei, proximal_weights)
             acq(test_X)
 
     def test_proximal_model_list(self):
