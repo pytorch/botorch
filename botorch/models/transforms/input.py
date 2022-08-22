@@ -25,6 +25,7 @@ from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.utils import expand_and_copy_tensor
 from botorch.models.utils import fantasize
 from botorch.utils.rounding import approximate_round
+from botorch.utils.transforms import normalize_indices
 from gpytorch import Module as GPyTorchModule
 from gpytorch.constraints import GreaterThan
 from gpytorch.priors import Prior
@@ -1066,12 +1067,11 @@ class AppendFeaturesFromCallable(InputTransform, Module):
         super().__init__()
         if (indices is not None) and (len(indices) == 0):
             raise ValueError("`indices` list is empty!")
+        indices = normalize_indices(indices=indices, d=d)
         if (indices is not None) and (len(indices) > 0):
             indices = torch.tensor(indices, dtype=torch.long)
             if len(indices) > d:
                 raise ValueError("Can provide at most `d` indices!")
-            if (indices > d - 1).any():
-                raise ValueError("Elements of `indices` have to be smaller than `d`!")
             if len(indices.unique()) != len(indices):
                 raise ValueError("Elements of `indices` tensor must be unique!")
             self.indices = indices
@@ -1099,7 +1099,7 @@ class AppendFeaturesFromCallable(InputTransform, Module):
         expanded_X = X.unsqueeze(0)
         expanded_features = features.expand(*expanded_X.shape[:-1], -1)
         appended_X = torch.cat([expanded_X, expanded_features], dim=-1)
-        return appended_X.squeeze()
+        return appended_X.view(*X.shape[:-2], -1, appended_X.shape[-1])
 
 
 class FilterFeatures(InputTransform, Module):

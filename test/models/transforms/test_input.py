@@ -850,63 +850,88 @@ class TestAppendFeatures(BotorchTestCase):
 
 class TestAppendFeaturesFromCallable(BotorchTestCase):
     def test_append_features_from_callable(self):
+
+        # test callables
+
+        def f1(x: Tensor) -> Tensor:
+            return torch.sum(x, dim=-1, keepdim=True)
+
+        def f2(x: Tensor) -> Tensor:
+            return x[..., -2:]
+
         # basic init, provided indices
         for dtype in [torch.float, torch.double]:
             tkwargs = {"device": self.device, "dtype": dtype}
             with self.assertRaises(ValueError):
                 transform = AppendFeaturesFromCallable(
-                    f=lambda x: torch.sum(x, dim=-1, keepdim=True),
+                    f=f1,
                     d=2,
-                    indices=[0, 1, 2],  
+                    indices=[0, 1, 2],
                 )
             with self.assertRaises(ValueError):
-                transform = AppendFeaturesFromCallable(
-                    d=2, indices=[0, 2], f=lambda x: torch.sum(x, dim=-1, keepdim=True)
-                )
+                transform = AppendFeaturesFromCallable(f=f1, d=2, indices=[0, 2])
             with self.assertRaises(ValueError):
-                transform = AppendFeaturesFromCallable(
-                    d=2, indices=[0, 0], f=lambda x: torch.sum(x, dim=-1, keepdim=True)
-                )
+                transform = AppendFeaturesFromCallable(f=f1, d=2, indices=[0, 0])
             with self.assertRaises(ValueError):
-                transform = AppendFeaturesFromCallable(
-                    d=2, indices=[], f=lambda x: torch.sum(x, dim=-1, keepdim=True)
-                )
+                transform = AppendFeaturesFromCallable(f=f1, d=2, indices=[])
         # test functionality
+        X = torch.rand(1, 3, **tkwargs)
+        transform = AppendFeaturesFromCallable(
+            f=f1,
+            d=3,
+        )
+        X_transformed = transform(X)
+        self.assertEqual(X_transformed.shape, torch.Size((1, 4)))
+
         X = torch.rand(10, 3, **tkwargs)
         transform = AppendFeaturesFromCallable(
-            f=lambda x: torch.sum(x, dim=-1, keepdim=True),
+            f=f1,
             d=3,
         )
         X_transformed = transform(X)
         self.assertEqual(X_transformed.shape, torch.Size((10, 4)))
 
+        transform = AppendFeaturesFromCallable(f=f1, d=3, indices=[0, 1])
+        X_transformed = transform(X)
+        self.assertEqual(X_transformed.shape, torch.Size((10, 4)))
+
+        transform = AppendFeaturesFromCallable(f=f2, d=3)
+        X_transformed = transform(X)
+        self.assertEqual(X_transformed.shape, torch.Size((10, 5)))
+
+        X = torch.rand(1, 10, 3).to(**tkwargs)
         transform = AppendFeaturesFromCallable(
-            d=3, indices=[0, 1], f=lambda x: torch.sum(x, dim=-1, keepdim=True)
+            f=f1,
+            d=3,
         )
         X_transformed = transform(X)
-        assert X_transformed.shape == torch.Size((10, 4))
+        self.assertEqual(X_transformed.shape, torch.Size((1, 10, 4)))
 
-        transform = AppendFeaturesFromCallable(d=3, f=lambda x: x[..., -2:])
+        X = torch.rand(1, 1, 3).to(**tkwargs)
+        transform = AppendFeaturesFromCallable(
+            f=f1,
+            d=3,
+        )
         X_transformed = transform(X)
-        assert X_transformed.shape == torch.Size((10, 5))
+        self.assertEqual(X_transformed.shape, torch.Size((1, 1, 4)))
 
         X = torch.rand(2, 10, 3).to(**tkwargs)
         transform = AppendFeaturesFromCallable(
-            d=3, f=lambda x: torch.sum(x, dim=-1, keepdim=True)
+            f=f1,
+            d=3,
         )
         X_transformed = transform(X)
-        assert X_transformed.shape == torch.Size((2, 10, 4))
+        self.assertEqual(X_transformed.shape, torch.Size((2, 10, 4)))
 
-        X = torch.rand(2, 10, 3).to(**tkwargs)
-        transform = AppendFeaturesFromCallable(d=3, f=lambda x: x[..., -2:])
+        transform = AppendFeaturesFromCallable(f=f2, d=3)
         X_transformed = transform(X)
-        assert X_transformed.shape == torch.Size((2, 10, 5))
+        self.assertEqual(X_transformed.shape, torch.Size((2, 10, 5)))
 
         # test no transform on train
         X = torch.rand(10, 3).to(**tkwargs)
         transform = AppendFeaturesFromCallable(
+            f=f1,
             d=3,
-            f=lambda x: torch.sum(x, dim=-1, keepdim=True),
             transform_on_train=False,
         )
         transform.train()
@@ -914,19 +939,17 @@ class TestAppendFeaturesFromCallable(BotorchTestCase):
         self.assertTrue(torch.equal(X, X_transformed))
         transform.eval()
         X_transformed = transform(X)
-        assert X_transformed.shape == torch.Size((10, 4))
+        self.assertEqual(X_transformed.shape, torch.Size((10, 4)))
 
         # test not transform on eval
         X = torch.rand(10, 3).to(**tkwargs)
-        transform = AppendFeaturesFromCallable(
-            d=3, f=lambda x: torch.sum(x, dim=-1, keepdim=True), transform_on_eval=False
-        )
+        transform = AppendFeaturesFromCallable(f=f1, d=3, transform_on_eval=False)
         transform.eval()
         X_transformed = transform(X)
         self.assertTrue(torch.equal(X, X_transformed))
         transform.train()
         X_transformed = transform(X)
-        assert X_transformed.shape == torch.Size((10, 4))
+        self.assertEqual(X_transformed.shape, torch.Size((10, 4)))
 
 
 class TestFilterFeatures(BotorchTestCase):
