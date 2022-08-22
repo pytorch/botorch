@@ -390,7 +390,7 @@ class TestModelListGP(BotorchTestCase):
                     FixedNoiseGP(X, Y, yvar, outcome_transform=Standardize(m=1))
                 )
 
-                model.posterior(torch.zeros((1, 1)))
+                model.posterior(torch.zeros((1, 1), **tkwargs))
 
                 fant = model.fantasize(
                     X, sampler=IIDNormalSampler(n_fants, seed=0), noise=yvar

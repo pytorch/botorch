@@ -557,7 +557,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
                 apply feasibility-weighting to samples.
         """
         super().__init__(alpha=alpha, n_w=n_w)
-        self.chebyshev_weights = chebyshev_weights
+        self.chebyshev_weights = torch.as_tensor(chebyshev_weights)
         self.baseline_Y = baseline_Y
         self.register_buffer(
             "ref_point", torch.as_tensor(ref_point) if ref_point is not None else None
@@ -661,7 +661,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
             Y = normalize(Y, bounds=Y_bounds)
             if ref_point is not None:
                 Y = Y - ref_point
-            product = torch.einsum("...m,m->...m", Y, self.chebyshev_weights)
+            product = torch.einsum("...m,m->...m", Y, self.chebyshev_weights.to(Y))
             return product.min(dim=-1).values
 
         self._chebyshev_objective = chebyshev_obj
