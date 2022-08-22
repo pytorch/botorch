@@ -1070,8 +1070,6 @@ class AppendFeaturesFromCallable(InputTransform, Module):
         indices = normalize_indices(indices=indices, d=d)
         if (indices is not None) and (len(indices) > 0):
             indices = torch.tensor(indices, dtype=torch.long)
-            if len(indices) > d:
-                raise ValueError("Can provide at most `d` indices!")
             if len(indices.unique()) != len(indices):
                 raise ValueError("Elements of `indices` tensor must be unique!")
             self.indices = indices

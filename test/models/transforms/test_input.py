@@ -873,6 +873,8 @@ class TestAppendFeaturesFromCallable(BotorchTestCase):
             with self.assertRaises(ValueError):
                 transform = AppendFeaturesFromCallable(f=f1, d=2, indices=[0, 0])
             with self.assertRaises(ValueError):
+                transform = AppendFeaturesFromCallable(f=f1, d=2, indices=[0, 1, 2])
+            with self.assertRaises(ValueError):
                 transform = AppendFeaturesFromCallable(f=f1, d=2, indices=[])
         # test functionality
         X = torch.rand(1, 3, **tkwargs)
