@@ -1051,7 +1051,7 @@ class AppendFeaturesFromCallable(InputTransform, Module):
 
         Args:
             f: A callable mapping a `batch_shape x n x d`-dim input tensor `X`
-                to a `batch_shape x n x m`-dimensional output tensor.
+                to a `batch_shape x n x d_f`-dimensional output tensor.
             d: Dimensionality of the input space.
             indices: List of indices denoting the indices of the features to be
                 passed into f. Per default all features are passed to `f`.
