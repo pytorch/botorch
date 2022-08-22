@@ -1076,7 +1076,7 @@ class AppendFeaturesFromCallable(InputTransform, Module):
                 raise ValueError("Elements of `indices` tensor must be unique!")
             self.indices = indices
         else:
-            self.indices = torch.tensor(range(d), dtype=torch.long)
+            self.indices = torch.arange(d, dtype=torch.long)
         self._d = d
         self._f = f
         self.indices
