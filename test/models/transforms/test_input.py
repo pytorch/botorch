@@ -923,7 +923,6 @@ class TestAppendFeaturesFromCallable(BotorchTestCase):
         )
         transform.eval()
         X_transformed = transform(X)
-        print(X_transformed.shape)
         self.assertTrue(torch.equal(X, X_transformed))
         transform.train()
         X_transformed = transform(X)
