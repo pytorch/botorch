@@ -874,8 +874,8 @@ class TestAppendFeaturesFromCallable(BotorchTestCase):
         # test functionality
         X = torch.rand(10, 3, **tkwargs)
         transform = AppendFeaturesFromCallable(
-            d=3,
             f=lambda x: torch.sum(x, dim=-1, keepdim=True),
+            d=3,
         )
         X_transformed = transform(X)
         self.assertEqual(X_transformed.shape, torch.Size((10, 4)))
