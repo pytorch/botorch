@@ -872,7 +872,7 @@ class TestAppendFeaturesFromCallable(BotorchTestCase):
                     d=2, indices=[], f=lambda x: torch.sum(x, dim=-1, keepdim=True)
                 )
         # test functionality
-        X = torch.rand(10, 3).to(**tkwargs)
+        X = torch.rand(10, 3, **tkwargs)
         transform = AppendFeaturesFromCallable(
             d=3,
             f=lambda x: torch.sum(x, dim=-1, keepdim=True),
