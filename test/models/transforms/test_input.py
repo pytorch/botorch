@@ -878,7 +878,7 @@ class TestAppendFeaturesFromCallable(BotorchTestCase):
             f=lambda x: torch.sum(x, dim=-1, keepdim=True),
         )
         X_transformed = transform(X)
-        assert X_transformed.shape == torch.Size((10, 4))
+        self.assertEqual(X_transformed.shape, torch.Size((10, 4)))
 
         transform = AppendFeaturesFromCallable(
             d=3, indices=[0, 1], f=lambda x: torch.sum(x, dim=-1, keepdim=True)
