@@ -855,9 +855,9 @@ class TestAppendFeaturesFromCallable(BotorchTestCase):
             tkwargs = {"device": self.device, "dtype": dtype}
             with self.assertRaises(ValueError):
                 transform = AppendFeaturesFromCallable(
-                    d=2,
-                    indices=[0, 1, 2],
                     f=lambda x: torch.sum(x, dim=-1, keepdim=True),
+                    d=2,
+                    indices=[0, 1, 2],  
                 )
             with self.assertRaises(ValueError):
                 transform = AppendFeaturesFromCallable(
