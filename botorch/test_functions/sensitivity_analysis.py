@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import torch
 
@@ -27,6 +27,13 @@ class Ishigami(SyntheticTestFunction):
     def __init__(
         self, b: float = 0.1, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
+        r"""
+        Args:
+            b: the b constant, should be 0.1 or 0.05.
+            noise_std: Standard deviation of the observation noise.
+            negative: If True, negative the objective.
+        """
+        self._optimizers = None
         if b not in (0.1, 0.05):
             raise ValueError("b parameter should be 0.1 or 0.05")
         self.dim = 3
@@ -46,25 +53,41 @@ class Ishigami(SyntheticTestFunction):
             self.dgsm_gradient_square = [2.8, 24.5, 11]
         self._bounds = [(-math.pi, math.pi) for _ in range(self.dim)]
         self.b = b
-        self._optimizers = None
         super().__init__(noise_std=noise_std, negate=negate)
 
-    def compute_dgsm(self, X: Tensor) -> Tensor:
-        r"""This function can be called separately to estimate the dgsm measure
-        Those values are already added under self.dgsm_gradient"""
+    @property
+    def _optimal_value(self) -> float:
+        raise NotImplementedError
+
+    def compute_dgsm(self, X: Tensor) -> Tuple[List[float], List[float], List[float]]:
+        r"""Compute derivative global sensitivity measures.
+
+        This function can be called separately to estimate the dgsm measure
+        The exact global integrals of these values are already added under
+        as attributes dgsm_gradient, dgsm_gradient_bas, and dgsm_gradient_square.
+
+        Args:
+            X: Set of points at which to compute derivative measures.
+
+        Returns: The average gradient, absolute gradient, and square gradients.
+        """
         dx_1 = torch.cos(X[..., 0]) * (1 + self.b * (X[..., 2] ** 4))
         dx_2 = 14 * torch.cos(X[..., 1]) * torch.sin(X[..., 1])
         dx_3 = 0.4 * (X[..., 2] ** 3) * torch.sin(X[..., 0])
-        gradient_measure = [torch.mean(dx_1), torch.mean(dx_1), torch.mean(dx_1)]
+        gradient_measure = [
+            torch.mean(dx_1).item(),
+            torch.mean(dx_1).item(),
+            torch.mean(dx_1).item(),
+        ]
         gradient_absolute_measure = [
-            torch.mean(torch.abs(dx_1)),
-            torch.mean(torch.abs(dx_2)),
-            torch.mean(torch.abs(dx_3)),
+            torch.mean(torch.abs(dx_1)).item(),
+            torch.mean(torch.abs(dx_2)).item(),
+            torch.mean(torch.abs(dx_3)).item(),
         ]
         gradient_square_measure = [
-            torch.mean(torch.pow(dx_1, 2)),
-            torch.mean(torch.pow(dx_2, 2)),
-            torch.mean(torch.pow(dx_3, 2)),
+            torch.mean(torch.pow(dx_1, 2)).item(),
+            torch.mean(torch.pow(dx_2, 2)).item(),
+            torch.mean(torch.pow(dx_3, 2)).item(),
         ]
         return gradient_measure, gradient_absolute_measure, gradient_square_measure
 
@@ -83,17 +106,20 @@ class Gsobol(SyntheticTestFunction):
 
     d-dimensional function (usually evaluated on `[0, 1]^d`):
 
-        f(x) = Prod_{i=1}^{d} ((|4x_i-2|+a_i)/(1+a_i)), a_i >=0
+        f(x) = Prod_{i=1}\^{d} ((\|4x_i-2\|+a_i)/(1+a_i)), a_i >=0
 
     common combinations of dimension and a vector:
+
         dim=8, a= [0, 1, 4.5, 9, 99, 99, 99, 99]
         dim=6, a=[0, 0.5, 3, 9, 99, 99]
-        dim = 15, a= [1, 2, 5, 10, 20, 50, 100, 500, 1000, 1000, 1000, 1000, 1000,
-                         1000, 1000]
+        dim = 15, a= [1, 2, 5, 10, 20, 50, 100, 500, 1000, ..., 1000]
+
     Proposed to test sensitivity analysis methods
     First order Sobol indices have closed form expression S_i=V_i/V with :
-        V_i= 1/(3(1+a_i)^2)
-        V= Prod_{i=1}^{d} (1+V_i) - 1
+
+        V_i= 1/(3(1+a_i)\^2)
+        V= Prod_{i=1}\^{d} (1+V_i) - 1
+
     """
 
     def __init__(
@@ -103,6 +129,14 @@ class Gsobol(SyntheticTestFunction):
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:
+        r"""
+        Args:
+            dim: Dimensionality of the problem. If 6, 8, or 15, will use standard a.
+            a: a parameter, unless dim is 6, 8, or 15.
+            noise_std: Standard deviation of observation noise.
+            negate: Return negatie of function.
+        """
+        self._optimizers = None
         self.dim = dim
         self._bounds = [(0, 1) for _ in range(self.dim)]
         if self.dim == 6:
@@ -129,9 +163,12 @@ class Gsobol(SyntheticTestFunction):
             ]
         else:
             self.a = a
-        self._optimizers = None
         self.optimal_sobol_indicies()
         super().__init__(noise_std=noise_std, negate=negate)
+
+    @property
+    def _optimal_value(self) -> float:
+        raise NotImplementedError
 
     def optimal_sobol_indicies(self):
         vi = []
@@ -164,15 +201,22 @@ class Morris(SyntheticTestFunction):
     r"""Morris test function.
 
     20-dimensional function (usually evaluated on `[0, 1]^20`):
-       f(x) = sum_{i=1}^20 beta_i w_i + sum_{i<j}^20 beta_ij w_i w_j
-                + sum_{i<j<l}^20 beta_ijl w_i w_j w_l + 5w_1 w_2 w_3 w_4
+
+        f(x) = sum_{i=1}\^20 beta_i w_i + sum_{i<j}\^20 beta_ij w_i w_j
+        + sum_{i<j<l}\^20 beta_ijl w_i w_j w_l + 5w_1 w_2 w_3 w_4
+
     Proposed to test sensitivity analysis methods
     """
 
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+        r"""
+        Args:
+            noise_std: Standard deviation of observation noise.
+            negate: Return negative of function.
+        """
+        self._optimizers = None
         self.dim = 20
         self._bounds = [(0, 1) for _ in range(self.dim)]
-        self._optimizers = None
         self.si = [
             0.005,
             0.008,
@@ -196,6 +240,10 @@ class Morris(SyntheticTestFunction):
             0,
         ]
         super().__init__(noise_std=noise_std, negate=negate)
+
+    @property
+    def _optimal_value(self) -> float:
+        raise NotImplementedError
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         self.to(device=X.device, dtype=X.dtype)
