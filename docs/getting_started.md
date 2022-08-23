@@ -15,7 +15,7 @@ Before jumping the gun, we recommend you start with the high-level
 
 - Python >= 3.7
 - PyTorch >= 1.10
-- gpytorch >= 1.8.1
+- gpytorch == 1.8.1
 - scipy
 - multiple-dispatch
 - pyro-ppl >= 1.8.0

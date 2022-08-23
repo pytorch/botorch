@@ -23,7 +23,7 @@ jobs:
         python-version: 3.7
     - name: Install dependencies
       run: |
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install "gpytorch==1.8.1"
         pip install .[dev]
         # NOTE: nbconvert 6.4.4 is incompatible with jinja2 3.1.0.
         # We can unpin this with a future release of nbconvert.
