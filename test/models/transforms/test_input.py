@@ -193,9 +193,14 @@ class TestInputTransforms(BotorchTestCase):
                 # learned bounds
                 nlz = Normalize(d=2, batch_shape=batch_shape)
                 X = torch.randn(*batch_shape, 4, 2, device=self.device, dtype=dtype)
-                X_nlzd = nlz(X)
+                for _X in (torch.stack((X, X)), X):  # check batch_shape is obeyed
+                    X_nlzd = nlz(_X)
+                    self.assertEqual(nlz.mins.shape, batch_shape + (1, X.shape[-1]))
+                    self.assertEqual(nlz.ranges.shape, batch_shape + (1, X.shape[-1]))
+
                 self.assertEqual(X_nlzd.min().item(), 0.0)
                 self.assertEqual(X_nlzd.max().item(), 1.0)
+
                 nlz.eval()
                 X_unnlzd = nlz.untransform(X_nlzd)
                 self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
@@ -362,9 +367,14 @@ class TestInputTransforms(BotorchTestCase):
                 stdz = InputStandardize(d=2, batch_shape=batch_shape)
                 torch.manual_seed(42)
                 X = torch.randn(*batch_shape, 4, 2, device=self.device, dtype=dtype)
-                X_stdz = stdz(X)
+                for _X in (torch.stack((X, X)), X):  # check batch_shape is obeyed
+                    X_stdz = stdz(_X)
+                    self.assertEqual(stdz.means.shape, batch_shape + (1, X.shape[-1]))
+                    self.assertEqual(stdz.stds.shape, batch_shape + (1, X.shape[-1]))
+
                 self.assertTrue(torch.all(X_stdz.mean(dim=-2).abs() < 1e-4))
                 self.assertTrue(torch.all((X_stdz.std(dim=-2) - 1.0).abs() < 1e-4))
+
                 stdz.eval()
                 X_unstdz = stdz.untransform(X_stdz)
                 self.assertTrue(torch.allclose(X, X_unstdz, atol=1e-4, rtol=1e-4))

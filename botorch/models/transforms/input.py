@@ -341,7 +341,7 @@ class Normalize(ReversibleInputTransform, Module):
                 take all dimensions of the inputs into account.
             bounds: If provided, use these bounds to normalize the inputs. If
                 omitted, learn the bounds in train mode.
-            batch_shape: The batch shape of the inputs (asssuming input tensors
+            batch_shape: The batch shape of the inputs (assuming input tensors
                 of shape `batch_shape x n x d`). If provided, perform individual
                 normalization per batch, otherwise uses a single normalization.
             transform_on_train: A boolean indicating whether to apply the
@@ -410,10 +410,27 @@ class Normalize(ReversibleInputTransform, Module):
                     f"Wrong input dimension. Received {X.size(-1)}, "
                     f"expected {self.mins.size(-1)}."
                 )
-            self.mins = X.min(dim=-2, keepdim=True)[0]
-            ranges = X.max(dim=-2, keepdim=True)[0] - self.mins
-            ranges[torch.where(ranges <= self.min_range)] = self.min_range
-            self.ranges = ranges
+
+            n = len(self.batch_shape) + 2
+            if X.ndim < n:
+                raise ValueError(
+                    f"`X` must have at least {n} dimensions, {n - 2} batch and 2 innate"
+                    f" , but has {X.ndim}."
+                )
+
+            # Move extra batch and innate batch (i.e. marginal) dimensions to the right
+            batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
+            _X = X.permute(
+                *range(X.ndim - batch_ndim - 2, X.ndim - 2),  # module batch dims
+                X.ndim - 1,  # input dim
+                *range(X.ndim - batch_ndim - 2),  # other dims, to be reduced over
+                X.ndim - 2,  # marginal dim
+            ).reshape(*self.batch_shape, 1, X.shape[-1], -1)
+
+            # Extract minimums and ranges
+            self.mins = _X.min(dim=-1).values  # batch_shape x (1, d)
+            self.ranges = (_X.max(dim=-1).values - self.mins).clip(min=self.min_range)
+
         if hasattr(self, "indices"):
             X_new = X.clone()
             X_new[..., self.indices] = (
@@ -551,10 +568,23 @@ class InputStandardize(ReversibleInputTransform, Module):
                     f"Wrong input. dimension. Received {X.size(-1)}, "
                     f"expected {self.means.size(-1)}"
                 )
-            self.means = X.mean(dim=-2, keepdim=True)
-            self.stds = X.std(dim=-2, keepdim=True)
 
-            self.stds = torch.clamp(self.stds, min=self.min_std)
+            n = len(self.batch_shape) + 2
+            if X.ndim < n:
+                raise ValueError(
+                    f"`X` must have at least {n} dimensions, {n - 2} batch and 2 innate"
+                    f" , but has {X.ndim}."
+                )
+
+            # Aggregate means and standard deviations over extra batch and marginal dims
+            batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
+            reduce_dims = (*range(X.ndim - batch_ndim - 2), X.ndim - 2)
+            self.stds, self.means = (
+                values.unsqueeze(-2)
+                for values in torch.std_mean(X, dim=reduce_dims, unbiased=True)
+            )
+            self.stds.clamp_(min=self.min_std)
+
         if hasattr(self, "indices"):
             X_new = X.clone()
             X_new[..., self.indices] = (
