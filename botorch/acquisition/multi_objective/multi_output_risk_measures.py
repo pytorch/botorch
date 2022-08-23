@@ -38,6 +38,7 @@ from botorch.acquisition.multi_objective.objective import (
 )
 from botorch.acquisition.risk_measures import CVaR, RiskMeasureMCObjective, VaR
 from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.model import Model
 from botorch.utils.multi_objective.pareto import is_non_dominated
 from botorch.utils.transforms import normalize
@@ -568,17 +569,34 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
         self.mvar = MVaR(n_w=self.n_w, alpha=self.alpha)
         self._chebyshev_objective = None
 
-    def set_baseline_Y(self, model: Model, X_baseline: Tensor) -> None:
+    def set_baseline_Y(
+        self,
+        model: Optional[Model],
+        X_baseline: Optional[Tensor],
+        Y_samples: Optional[Tensor] = None,
+    ) -> None:
         r"""Set the `baseline_Y` based on the MVaR predictions of the `model`
         for `X_baseline`.
 
         Args:
             model: The model being used for MARS optimization. Must have a compatible
-                `InputPerturbation` transform attached.
+                `InputPerturbation` transform attached. Ignored if `Y_samples` is given.
             X_baseline: An `n x d`-dim tensor of previously evaluated points.
+                Ignored if `Y_samples` is given.
+            Y_samples: An optional `(n * n_w) x d`-dim tensor of predictions. If given,
+                instead of sampling from the model, these are used.
         """
-        with torch.no_grad():
-            Y = model.posterior(X_baseline.unsqueeze(-2)).mean.squeeze(-2)
+        if Y_samples is None:
+            with torch.no_grad():
+                Y = model.posterior(X_baseline.unsqueeze(-2)).mean.squeeze(-2)
+        else:
+            if model is not None or X_baseline is not None:
+                warnings.warn(
+                    "`model` and `X_baseline` are ignored when `Y_samples` is "
+                    "provided to `MARS.set_baseline_Y`.",
+                    BotorchWarning,
+                )
+            Y = Y_samples
         Y = self.preprocessing_function(Y)
         Y = self.mvar(Y).view(-1, Y.shape[-1])
         Y = Y[is_non_dominated(Y)]
