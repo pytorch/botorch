@@ -182,7 +182,7 @@ $$y = \sin(2\pi x) + \epsilon, ~\epsilon \sim \mathcal N(0, 0.15)$$
 <h4 id="Define-optimizer-and-specify-parameters-to-optimize">Define optimizer and specify parameters to optimize<a class="anchor-link" href="#Define-optimizer-and-specify-parameters-to-optimize">¶</a></h4><p>We will use stochastic gradient descent (<code>torch.optim.SGD</code>) to optimize the kernel hyperparameters and the noise level. In this example, we will use a simple fixed learning rate of 0.1, but in practice the learning rate may need to be adjusted.</p>
 <p>Notes:</p>
 <ul>
-<li>As the <code>GaussianLikelihood</code> module is a of child (submodule) of the <code>SingleTaskGP</code> moduel, <code>model.parameters()</code> will also include the noise level of the <code>GaussianLikelihood</code>. </li>
+<li>As the <code>GaussianLikelihood</code> module is a of child (submodule) of the <code>SingleTaskGP</code> moduel, <code>model.parameters()</code> will also include the noise level of the <code>GaussianLikelihood</code>.</li>
 <li>A subset of the parameters could be passed to the optimizer to tune those parameters, while leaving the other parameters fixed.</li>
 </ul>
 </div>

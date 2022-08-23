@@ -355,8 +355,8 @@ To speed up integration over the function values at the previously evaluated des
 <h3 id="Perform-Bayesian-Optimization-loop-with-$q$NEHVI,-$q$EHVI,-and-$q$NParEGO">Perform Bayesian Optimization loop with $q$NEHVI, $q$EHVI, and $q$NParEGO<a class="anchor-link" href="#Perform-Bayesian-Optimization-loop-with-$q$NEHVI,-$q$EHVI,-and-$q$NParEGO">¶</a></h3><p>The Bayesian optimization "loop" for a batch size of $q$ simply iterates the following steps:</p>
 <ol>
 <li>given a surrogate model, choose a batch of points $\{x_1, x_2, \ldots x_q\}$</li>
-<li>observe $f(x)$ for each $x$ in the batch </li>
-<li>update the surrogate model. </li>
+<li>observe $f(x)$ for each $x$ in the batch</li>
+<li>update the surrogate model.</li>
 </ol>
 <p>Just for illustration purposes, we run one trial with <code>N_BATCH=20</code> rounds of optimization. The acquisition function is approximated using <code>MC_SAMPLES=128</code> samples.</p>
 <p><em>Note</em>: Running this may take a little while.</p>
