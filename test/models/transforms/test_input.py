@@ -187,15 +187,22 @@ class TestInputTransforms(BotorchTestCase):
             X = torch.cat((torch.randn(4, 1), torch.zeros(4, 1)), dim=-1)
             X = X.to(self.device)
             self.assertEqual(torch.isfinite(nlz(X)).sum(), X.numel())
+            with self.assertRaisesRegex(ValueError, r"must have at least \d+ dim"):
+                nlz(torch.randn(X.shape[-1], dtype=dtype))
 
             # basic usage
             for batch_shape in (torch.Size(), torch.Size([3])):
                 # learned bounds
                 nlz = Normalize(d=2, batch_shape=batch_shape)
                 X = torch.randn(*batch_shape, 4, 2, device=self.device, dtype=dtype)
-                X_nlzd = nlz(X)
+                for _X in (torch.stack((X, X)), X):  # check batch_shape is obeyed
+                    X_nlzd = nlz(_X)
+                    self.assertEqual(nlz.mins.shape, batch_shape + (1, X.shape[-1]))
+                    self.assertEqual(nlz.ranges.shape, batch_shape + (1, X.shape[-1]))
+
                 self.assertEqual(X_nlzd.min().item(), 0.0)
                 self.assertEqual(X_nlzd.max().item(), 1.0)
+
                 nlz.eval()
                 X_unnlzd = nlz.untransform(X_nlzd)
                 self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
@@ -356,15 +363,22 @@ class TestInputTransforms(BotorchTestCase):
             X = torch.cat((torch.randn(4, 1), torch.zeros(4, 1)), dim=-1)
             X = X.to(self.device, dtype=dtype)
             self.assertEqual(torch.isfinite(stdz(X)).sum(), X.numel())
+            with self.assertRaisesRegex(ValueError, r"must have at least \d+ dim"):
+                stdz(torch.randn(X.shape[-1], dtype=dtype))
 
             # basic usage
             for batch_shape in (torch.Size(), torch.Size([3])):
                 stdz = InputStandardize(d=2, batch_shape=batch_shape)
                 torch.manual_seed(42)
                 X = torch.randn(*batch_shape, 4, 2, device=self.device, dtype=dtype)
-                X_stdz = stdz(X)
+                for _X in (torch.stack((X, X)), X):  # check batch_shape is obeyed
+                    X_stdz = stdz(_X)
+                    self.assertEqual(stdz.means.shape, batch_shape + (1, X.shape[-1]))
+                    self.assertEqual(stdz.stds.shape, batch_shape + (1, X.shape[-1]))
+
                 self.assertTrue(torch.all(X_stdz.mean(dim=-2).abs() < 1e-4))
                 self.assertTrue(torch.all((X_stdz.std(dim=-2) - 1.0).abs() < 1e-4))
+
                 stdz.eval()
                 X_unstdz = stdz.untransform(X_stdz)
                 self.assertTrue(torch.allclose(X, X_unstdz, atol=1e-4, rtol=1e-4))
