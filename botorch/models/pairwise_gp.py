@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import torch
 from botorch.acquisition.objective import PosteriorTransform
+from botorch.exceptions import UnsupportedError
 from botorch.models.likelihoods.pairwise import (
     PairwiseLikelihood,
     PairwiseProbitLikelihood,
@@ -712,34 +713,48 @@ class PairwiseGP(Model, GP):
         self.to(self.datapoints)
 
     def load_state_dict(
-        self, state_dict: Dict[str, Tensor], strict: Optional[bool] = False
+        self, state_dict: Dict[str, Tensor], strict: bool = False
     ) -> _IncompatibleKeys:
         r"""Removes data related buffers from the `state_dict` and calls
         `super().load_state_dict` with `strict=False`.
 
         Args:
             state_dict: The state dict.
-            strict: A boolean denoting whether to error out if all keys are not
-                present in the `state_dict`. Since we remove data related buffers
-                from the `state_dict`, this will lead to an error whenever
-                `strict=True`. Instead, we overwrite it with `strict=False`, and
-                raise a warning explaining this if `strict=True` is passed.
+            strict: Boolean specifying whether or not given and instance-bound
+                state_dicts should have identical keys. Only implemented for
+                `strict=False` since buffers will filters out when calling
+                `_load_from_state_dict`.
 
         Returns:
             A named tuple `_IncompatibleKeys`, containing the `missing_keys`
-            and `unexpected_keys`. Note that the buffers we remove from the
-            `state_dict` may be listed under `missing_keys`.
+            and `unexpected_keys`.
         """
         if strict:
-            warnings.warn(
-                f"Received `strict=True` in {self.__class__.__name__}.load_state_dict "
-                "call. This will be overwritten with `strict=False` after removing "
-                "a set of data related buffers from the `state_dict`.",
-                RuntimeWarning,
-            )
-        for key in self._buffer_names:
-            state_dict.pop(key, None)
+            raise UnsupportedError("Passing strict=True is not supported.")
+
         return super().load_state_dict(state_dict=state_dict, strict=False)
+
+    def _load_from_state_dict(
+        self,
+        state_dict: Dict[str, Tensor],
+        prefix: str,
+        local_metadata: Dict[str, Any],
+        strict: bool,
+        missing_keys: List[str],
+        unexpected_keys: List[str],
+        error_msgs: List[str],
+    ) -> None:
+        super()._load_from_state_dict(
+            state_dict={
+                k: v for k, v in state_dict.items() if k not in self._buffer_names
+            },
+            prefix=prefix,
+            local_metadata=local_metadata,
+            strict=False,
+            missing_keys=missing_keys,
+            unexpected_keys=unexpected_keys,
+            error_msgs=error_msgs,
+        )
 
     def forward(self, datapoints: Tensor) -> MultivariateNormal:
         r"""Calculate a posterior or prior prediction.
