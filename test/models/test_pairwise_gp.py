@@ -10,7 +10,7 @@ import warnings
 import torch
 from botorch import fit_gpytorch_model
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
-from botorch.exceptions.warnings import OptimizationWarning
+from botorch.exceptions import OptimizationWarning, UnsupportedError
 from botorch.models.likelihoods.pairwise import (
     PairwiseLogitLikelihood,
     PairwiseProbitLikelihood,
@@ -320,11 +320,14 @@ class TestPairwiseGP(BotorchTestCase):
     def test_load_state_dict(self):
         model, _ = self._get_model_and_data(batch_shape=[])
         sd = model.state_dict()
-        with warnings.catch_warnings(record=True) as ws:
-            missing, unexpected = model.load_state_dict(sd, strict=True)
-        # Check that the warning was raised.
-        self.assertTrue(any("strict=True" in str(w.message) for w in ws))
-        # Check that buffers are missing.
-        self.assertIn("datapoints", missing)
-        self.assertIn("D", missing)
-        self.assertIn("covar", missing)
+        with self.assertRaises(UnsupportedError):
+            model.load_state_dict(sd, strict=True)
+
+        # Set instance buffers to None
+        for buffer_name in model._buffer_names:
+            model.register_buffer(buffer_name, None)
+
+        # Check that instance buffers were not restored
+        _ = model.load_state_dict(sd)
+        for buffer_name in model._buffer_names:
+            self.assertIsNone(model.get_buffer(buffer_name))
