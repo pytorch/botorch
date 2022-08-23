@@ -33,7 +33,7 @@ jobs:
       name: Install latest PyTorch & GPyTorch
       run: |
         pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install "gpytorch==1.8.1"
     - if: ${{ inputs.use_stable_pytorch_gpytorch }}
       name: Install min required PyTorch & GPyTorch
       run: |

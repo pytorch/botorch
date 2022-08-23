@@ -25,7 +25,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install "gpytorch==1.8.1"
         pip install .[test]
     - name: Unit tests and coverage
       run: |
@@ -51,7 +51,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install "gpytorch==1.8.1"
         pip install .[test]
         pip install --upgrade build setuptools setuptools_scm wheel
     - name: Extract reduced version and save to env var
@@ -98,7 +98,7 @@ jobs:
         conda config --set anaconda_upload no
         conda install -y -c pytorch-nightly pytorch cpuonly
         conda install -y -c conda-forge pyro-ppl>=1.8.0
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install "gpytorch==1.8.1"
     - name: Build and verify conda package
       shell: bash -l {0}
       run: |
@@ -120,7 +120,7 @@ jobs:
       run: git fetch --prune --unshallow
     - name: Install dependencies
       run: |
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install "gpytorch==1.8.1"
         pip install .[dev]
         pip install git+https://github.com/facebook/Ax.git
         # NOTE: nbconvert 6.4.4 is incompatible with jinja2 3.1.0.
