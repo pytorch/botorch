@@ -22,7 +22,7 @@ from torch import Tensor
 class SyntheticTestFunction(BaseTestProblem):
     r"""Base class for synthetic test functions."""
 
-    _optimizers: List[Tuple[float, ...]]
+    _optimizers: Optional[List[Tuple[float, ...]]]
     _optimal_value: float
     num_objectives: int = 1
 
