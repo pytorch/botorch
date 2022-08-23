@@ -847,6 +847,254 @@ class TestAppendFeatures(BotorchTestCase):
             tf_X = append_tf(pert_tf(test_X.expand(3, 5, -1, -1)))
             self.assertTrue(torch.allclose(tf_X, expected_X.expand(3, 5, -1, -1)))
 
+    def test_w_f(self):
+        def f1(x: Tensor, n_f: int = 1) -> Tensor:
+            result = torch.sum(x, dim=-1, keepdim=True).unsqueeze(-2)
+            return result.expand(*result.shape[:-2], n_f, -1)
+
+        def f2(x: Tensor, n_f: int = 1) -> Tensor:
+            result = x[..., -2:].unsqueeze(-2)
+            return result.expand(*result.shape[:-2], n_f, -1)
+
+        for dtype in [torch.float, torch.double]:
+            tkwargs = {"device": self.device, "dtype": dtype}
+
+            # test init
+            with self.assertRaises(ValueError):
+                transform = AppendFeatures(
+                    f=f1,
+                    d=2,
+                    indices=[0, 1, 2],
+                )
+            with self.assertRaises(ValueError):
+                transform = AppendFeatures(f=f1, d=2, indices=[0, 2])
+            with self.assertRaises(ValueError):
+                transform = AppendFeatures(f=f1, d=2, indices=[0, 0])
+            with self.assertRaises(ValueError):
+                transform = AppendFeatures(f=f1, d=2, indices=[0, 1, 2])
+            with self.assertRaises(ValueError):
+                transform = AppendFeatures(f=f1, d=2, indices=[])
+            with self.assertRaises(ValueError):
+                transform = AppendFeatures(f=f1, d=3, skip_expand=True)
+            with self.assertRaises(ValueError):
+                transform = AppendFeatures(feature_set=None, f=None)
+            with self.assertRaises(ValueError):
+                transform = AppendFeatures(
+                    feature_set=torch.linspace(0, 1, 6)
+                    .view(3, 2)
+                    .to(device=self.device, dtype=dtype),
+                    f=f1,
+                    d=3,
+                )
+
+            # test functionality with n_f = 1
+            X = torch.rand(1, 3, **tkwargs)
+            transform = AppendFeaturesFromCallable(
+                f=f1,
+                d=3,
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((1, 4)))
+
+            X = torch.rand(10, 3, **tkwargs)
+            transform = AppendFeatures(
+                f=f1,
+                d=3,
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((10, 4)))
+
+            transform = AppendFeatures(
+                f=f1,
+                d=3,
+                indices=[0, 1],
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((10, 4)))
+
+            transform = AppendFeatures(
+                f=f2,
+                d=3,
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((10, 5)))
+
+            X = torch.rand(1, 10, 3).to(**tkwargs)
+            transform = AppendFeatures(
+                f=f1,
+                d=3,
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((1, 10, 4)))
+
+            X = torch.rand(1, 1, 3).to(**tkwargs)
+            transform = AppendFeatures(
+                f=f1,
+                d=3,
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((1, 1, 4)))
+
+            X = torch.rand(2, 10, 3).to(**tkwargs)
+            transform = AppendFeatures(
+                f=f1,
+                d=3,
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((2, 10, 4)))
+
+            transform = AppendFeatures(
+                f=f2,
+                d=3,
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((2, 10, 5)))
+
+            # test functionality with n_f > 1
+            X = torch.rand(10, 3, **tkwargs)
+            transform = AppendFeatures(
+                f=f1,
+                d=3,
+                fkwargs={"n_f": 2},
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((20, 4)))
+
+            X = torch.rand(2, 10, 3, **tkwargs)
+            transform = AppendFeatures(
+                f=f1,
+                d=3,
+                fkwargs={"n_f": 2},
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((2, 20, 4)))
+
+            X = torch.rand(1, 10, 3, **tkwargs)
+            transform = AppendFeatures(
+                f=f1,
+                d=3,
+                fkwargs={"n_f": 2},
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((1, 20, 4)))
+
+            X = torch.rand(1, 3, **tkwargs)
+            transform = AppendFeatures(
+                f=f1,
+                d=3,
+                fkwargs={"n_f": 2},
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((2, 4)))
+
+            X = torch.rand(10, 3, **tkwargs)
+            transform = AppendFeatures(
+                f=f2,
+                d=3,
+                fkwargs={"n_f": 2},
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((20, 5)))
+
+            X = torch.rand(2, 10, 3, **tkwargs)
+            transform = AppendFeatures(
+                f=f2,
+                d=3,
+                fkwargs={"n_f": 2},
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((2, 20, 5)))
+
+            X = torch.rand(1, 10, 3, **tkwargs)
+            transform = AppendFeatures(
+                f=f2,
+                d=3,
+                fkwargs={"n_f": 2},
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((1, 20, 5)))
+
+            X = torch.rand(1, 3, **tkwargs)
+            transform = AppendFeatures(
+                f=f2,
+                d=3,
+                fkwargs={"n_f": 2},
+                transform_on_eval=True,
+                transform_on_train=True,
+                transform_on_fantasize=True,
+            )
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((2, 5)))
+
+            # test no transform on train
+            X = torch.rand(10, 3).to(**tkwargs)
+            transform = AppendFeatures(
+                f=f1, d=3, transform_on_train=False, transform_on_eval=True
+            )
+            transform.train()
+            X_transformed = transform(X)
+            self.assertTrue(torch.equal(X, X_transformed))
+            transform.eval()
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((10, 4)))
+
+            # test not transform on eval
+            X = torch.rand(10, 3).to(**tkwargs)
+            transform = AppendFeatures(
+                f=f1, d=3, transform_on_eval=False, transform_on_train=True
+            )
+            transform.eval()
+            X_transformed = transform(X)
+            self.assertTrue(torch.equal(X, X_transformed))
+            transform.train()
+            X_transformed = transform(X)
+            self.assertEqual(X_transformed.shape, torch.Size((10, 4)))
+
 
 class TestAppendFeaturesFromCallable(BotorchTestCase):
     def test_append_features_from_callable(self):
