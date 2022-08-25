@@ -4,9 +4,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import warnings
 from typing import Optional
 
 import torch
+from botorch import settings
 from botorch.acquisition.multi_objective.multi_output_risk_measures import (
     IndependentCVaR,
     IndependentVaR,
@@ -18,6 +20,7 @@ from botorch.acquisition.multi_objective.multi_output_risk_measures import (
 )
 from botorch.acquisition.multi_objective.objective import IdentityMCMultiOutputObjective
 from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.transforms.input import InputPerturbation
 from botorch.utils.multi_objective.pareto import is_non_dominated
@@ -475,10 +478,16 @@ class TestMARS(BotorchTestCase):
         )
         model = GenericDeterministicModel(f=lambda X: X, num_outputs=2)
         model.input_transform = perturbation
-        mars.set_baseline_Y(
-            model=model, X_baseline=torch.tensor([[0.0, 0.0], [1.0, 1.0]])
-        )
+        X_baseline = torch.tensor([[0.0, 0.0], [1.0, 1.0]])
+        mars.set_baseline_Y(model=model, X_baseline=X_baseline)
         self.assertTrue(torch.equal(mars.baseline_Y, torch.tensor([[1.5, 1.5]])))
+        # With Y_samples.
+        mars._baseline_Y = None
+        Y_samples = model.posterior(X_baseline).mean
+        with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+            mars.set_baseline_Y(model=model, X_baseline=X_baseline, Y_samples=Y_samples)
+        self.assertTrue(torch.equal(mars.baseline_Y, torch.tensor([[1.5, 1.5]])))
+        self.assertTrue(any(w.category == BotorchWarning for w in ws))
         # With pre-processing function.
         mars = MARS(
             alpha=0.5,
@@ -486,9 +495,7 @@ class TestMARS(BotorchTestCase):
             chebyshev_weights=[0.5, 0.5],
             preprocessing_function=lambda Y: -Y,
         )
-        mars.set_baseline_Y(
-            model=model, X_baseline=torch.tensor([[0.0, 0.0], [1.0, 1.0]])
-        )
+        mars.set_baseline_Y(model=model, X_baseline=X_baseline)
         self.assertTrue(torch.equal(mars.baseline_Y, torch.tensor([[-0.5, -0.5]])))
 
     def test_get_Y_normalization_bounds(self):
