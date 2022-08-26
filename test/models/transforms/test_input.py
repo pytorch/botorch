@@ -11,7 +11,6 @@ import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.input import (
     AppendFeatures,
-    AppendFeaturesFromCallable,
     ChainedInputTransform,
     FilterFeatures,
     InputPerturbation,

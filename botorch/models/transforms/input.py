@@ -25,7 +25,6 @@ from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.utils import expand_and_copy_tensor
 from botorch.models.utils import fantasize
 from botorch.utils.rounding import approximate_round
-from botorch.utils.transforms import normalize_indices
 from gpytorch import Module as GPyTorchModule
 from gpytorch.constraints import GreaterThan
 from gpytorch.priors import Prior
