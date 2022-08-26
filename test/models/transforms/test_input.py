@@ -861,21 +861,11 @@ class TestAppendFeatures(BotorchTestCase):
 
             # test init
             with self.assertRaises(ValueError):
-                transform = AppendFeatures(
-                    f=f1,
-                    d=2,
-                    indices=[0, 1, 2],
-                )
+                transform = AppendFeatures(f=f1, indices=[0, 0])
             with self.assertRaises(ValueError):
-                transform = AppendFeatures(f=f1, d=2, indices=[0, 2])
+                transform = AppendFeatures(f=f1, indices=[])
             with self.assertRaises(ValueError):
-                transform = AppendFeatures(f=f1, d=2, indices=[0, 0])
-            with self.assertRaises(ValueError):
-                transform = AppendFeatures(f=f1, d=2, indices=[0, 1, 2])
-            with self.assertRaises(ValueError):
-                transform = AppendFeatures(f=f1, d=2, indices=[])
-            with self.assertRaises(ValueError):
-                transform = AppendFeatures(f=f1, d=3, skip_expand=True)
+                transform = AppendFeatures(f=f1, skip_expand=True)
             with self.assertRaises(ValueError):
                 transform = AppendFeatures(feature_set=None, f=None)
             with self.assertRaises(ValueError):
@@ -884,35 +874,33 @@ class TestAppendFeatures(BotorchTestCase):
                     .view(3, 2)
                     .to(device=self.device, dtype=dtype),
                     f=f1,
-                    d=3,
                 )
 
             # test functionality with n_f = 1
             X = torch.rand(1, 3, **tkwargs)
-            transform = AppendFeaturesFromCallable(
+            transform = AppendFeatures(
                 f=f1,
-                d=3,
                 transform_on_eval=True,
                 transform_on_train=True,
                 transform_on_fantasize=True,
             )
             X_transformed = transform(X)
             self.assertEqual(X_transformed.shape, torch.Size((1, 4)))
+            self.assertTrue(torch.allclose(X.sum(dim=-1), X_transformed[..., -1]))
 
             X = torch.rand(10, 3, **tkwargs)
             transform = AppendFeatures(
                 f=f1,
-                d=3,
                 transform_on_eval=True,
                 transform_on_train=True,
                 transform_on_fantasize=True,
             )
             X_transformed = transform(X)
             self.assertEqual(X_transformed.shape, torch.Size((10, 4)))
+            self.assertTrue(torch.allclose(X.sum(dim=-1), X_transformed[..., -1]))
 
             transform = AppendFeatures(
                 f=f1,
-                d=3,
                 indices=[0, 1],
                 transform_on_eval=True,
                 transform_on_train=True,
@@ -920,10 +908,12 @@ class TestAppendFeatures(BotorchTestCase):
             )
             X_transformed = transform(X)
             self.assertEqual(X_transformed.shape, torch.Size((10, 4)))
+            self.assertTrue(
+                torch.allclose(X[..., [0, 1]].sum(dim=-1), X_transformed[..., -1])
+            )
 
             transform = AppendFeatures(
                 f=f2,
-                d=3,
                 transform_on_eval=True,
                 transform_on_train=True,
                 transform_on_fantasize=True,
@@ -934,7 +924,6 @@ class TestAppendFeatures(BotorchTestCase):
             X = torch.rand(1, 10, 3).to(**tkwargs)
             transform = AppendFeatures(
                 f=f1,
-                d=3,
                 transform_on_eval=True,
                 transform_on_train=True,
                 transform_on_fantasize=True,
@@ -945,7 +934,6 @@ class TestAppendFeatures(BotorchTestCase):
             X = torch.rand(1, 1, 3).to(**tkwargs)
             transform = AppendFeatures(
                 f=f1,
-                d=3,
                 transform_on_eval=True,
                 transform_on_train=True,
                 transform_on_fantasize=True,
@@ -956,7 +944,6 @@ class TestAppendFeatures(BotorchTestCase):
             X = torch.rand(2, 10, 3).to(**tkwargs)
             transform = AppendFeatures(
                 f=f1,
-                d=3,
                 transform_on_eval=True,
                 transform_on_train=True,
                 transform_on_fantasize=True,
@@ -966,19 +953,18 @@ class TestAppendFeatures(BotorchTestCase):
 
             transform = AppendFeatures(
                 f=f2,
-                d=3,
                 transform_on_eval=True,
                 transform_on_train=True,
                 transform_on_fantasize=True,
             )
             X_transformed = transform(X)
             self.assertEqual(X_transformed.shape, torch.Size((2, 10, 5)))
+            self.assertTrue(torch.allclose(X[..., -2:], X_transformed[..., -2:]))
 
             # test functionality with n_f > 1
             X = torch.rand(10, 3, **tkwargs)
             transform = AppendFeatures(
                 f=f1,
-                d=3,
                 fkwargs={"n_f": 2},
                 transform_on_eval=True,
                 transform_on_train=True,
@@ -990,7 +976,6 @@ class TestAppendFeatures(BotorchTestCase):
             X = torch.rand(2, 10, 3, **tkwargs)
             transform = AppendFeatures(
                 f=f1,
-                d=3,
                 fkwargs={"n_f": 2},
                 transform_on_eval=True,
                 transform_on_train=True,
@@ -1002,7 +987,6 @@ class TestAppendFeatures(BotorchTestCase):
             X = torch.rand(1, 10, 3, **tkwargs)
             transform = AppendFeatures(
                 f=f1,
-                d=3,
                 fkwargs={"n_f": 2},
                 transform_on_eval=True,
                 transform_on_train=True,
@@ -1014,7 +998,6 @@ class TestAppendFeatures(BotorchTestCase):
             X = torch.rand(1, 3, **tkwargs)
             transform = AppendFeatures(
                 f=f1,
-                d=3,
                 fkwargs={"n_f": 2},
                 transform_on_eval=True,
                 transform_on_train=True,
@@ -1026,7 +1009,6 @@ class TestAppendFeatures(BotorchTestCase):
             X = torch.rand(10, 3, **tkwargs)
             transform = AppendFeatures(
                 f=f2,
-                d=3,
                 fkwargs={"n_f": 2},
                 transform_on_eval=True,
                 transform_on_train=True,
@@ -1038,7 +1020,6 @@ class TestAppendFeatures(BotorchTestCase):
             X = torch.rand(2, 10, 3, **tkwargs)
             transform = AppendFeatures(
                 f=f2,
-                d=3,
                 fkwargs={"n_f": 2},
                 transform_on_eval=True,
                 transform_on_train=True,
@@ -1050,7 +1031,6 @@ class TestAppendFeatures(BotorchTestCase):
             X = torch.rand(1, 10, 3, **tkwargs)
             transform = AppendFeatures(
                 f=f2,
-                d=3,
                 fkwargs={"n_f": 2},
                 transform_on_eval=True,
                 transform_on_train=True,
@@ -1062,7 +1042,6 @@ class TestAppendFeatures(BotorchTestCase):
             X = torch.rand(1, 3, **tkwargs)
             transform = AppendFeatures(
                 f=f2,
-                d=3,
                 fkwargs={"n_f": 2},
                 transform_on_eval=True,
                 transform_on_train=True,
@@ -1074,7 +1053,7 @@ class TestAppendFeatures(BotorchTestCase):
             # test no transform on train
             X = torch.rand(10, 3).to(**tkwargs)
             transform = AppendFeatures(
-                f=f1, d=3, transform_on_train=False, transform_on_eval=True
+                f=f1, transform_on_train=False, transform_on_eval=True
             )
             transform.train()
             X_transformed = transform(X)
@@ -1086,7 +1065,7 @@ class TestAppendFeatures(BotorchTestCase):
             # test not transform on eval
             X = torch.rand(10, 3).to(**tkwargs)
             transform = AppendFeatures(
-                f=f1, d=3, transform_on_eval=False, transform_on_train=True
+                f=f1, transform_on_eval=False, transform_on_train=True
             )
             transform.eval()
             X_transformed = transform(X)

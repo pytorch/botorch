@@ -974,7 +974,6 @@ class AppendFeatures(InputTransform, Module):
         self,
         feature_set: Optional[Tensor] = None,
         f: Optional[Callable[[Tensor], Tensor]] = None,
-        d: Optional[int] = None,
         indices: Optional[List[int]] = None,
         fkwargs: Optional[Dict[str, Any]] = None,
         skip_expand: bool = False,
@@ -991,8 +990,6 @@ class AppendFeatures(InputTransform, Module):
             f: A callable mapping a `batch_shape x q x d`-dim input tensor `X`
                 to a `batch_shape x q x n_f x d_f`-dimensional output tensor.
                 Default: None.
-            d: Dimensionality of the input space. Has to be privided in case
-                of using a callable. Default: None.
             indices: List of indices denoting the indices of the features to be
                 passed into f. Per default all features are passed to `f`.
                 Default: None.
@@ -1019,29 +1016,25 @@ class AppendFeatures(InputTransform, Module):
             raise ValueError(
                 "Only one can be used: either `feature_set` or callable `f`."
             )
-        self._use_callable = True
         if feature_set is not None:
             if feature_set.dim() != 2:
                 raise ValueError("`feature_set` must be an `n_f x d_f`-dim tensor!")
             self.register_buffer("feature_set", feature_set)
-            self._use_callable = False
+            self._f = None
         if f is not None:
             if skip_expand:
                 raise ValueError(
                     "`skip_expand` option is not supported in case of using a callable"
                 )
-            if d is None:
-                raise ValueError("`d` has to be provided in case of using a callable.")
             if (indices is not None) and (len(indices) == 0):
                 raise ValueError("`indices` list is empty!")
-            indices = normalize_indices(indices=indices, d=d)
-            if (indices is not None) and (len(indices) > 0):
+            if indices is not None:
                 indices = torch.tensor(indices, dtype=torch.long)
                 if len(indices.unique()) != len(indices):
                     raise ValueError("Elements of `indices` tensor must be unique!")
                 self.indices = indices
             else:
-                self.indices = torch.arange(d, dtype=torch.long)
+                self.indices = slice(None)
             self._f = f
             self.fkwargs = fkwargs or {}
 
@@ -1073,7 +1066,7 @@ class AppendFeatures(InputTransform, Module):
         Returns:
             A `batch_shape x (q * n_f) x (d + d_f)`-dim tensor of appended inputs.
         """
-        if self._use_callable:
+        if self._f is not None:
             expanded_features = self._f(X[..., self.indices], **self.fkwargs)
             n_f = expanded_features.shape[-2]
         else:
@@ -1084,7 +1077,7 @@ class AppendFeatures(InputTransform, Module):
         else:
             expanded_X = X.unsqueeze(dim=-2).expand(*X.shape[:-1], n_f, -1)
 
-        if not self._use_callable:
+        if self._f is None:
             expanded_features = self.feature_set.expand(*expanded_X.shape[:-1], -1)
 
         appended_X = torch.cat([expanded_X, expanded_features], dim=-1)
