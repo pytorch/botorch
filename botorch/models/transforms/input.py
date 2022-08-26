@@ -1042,7 +1042,6 @@ class AppendFeatures(InputTransform, Module):
                 self.indices = indices
             else:
                 self.indices = torch.arange(d, dtype=torch.long)
-            self._d = d
             self._f = f
             self.fkwargs = fkwargs or {}
 
