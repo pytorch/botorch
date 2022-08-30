@@ -71,7 +71,7 @@ class PairwiseGP(Model, GP):
     (implicitly setting it to 1) and use ScaleKernel to scale the function.
 
     In the example below, the user/decision maker has stated that they prefer
-    the first item over the second item and the third item over the first item,
+    the first item over the second item and the third item over the second item,
     generating comparisons [0, 1] and [2, 1].
 
     Example:
