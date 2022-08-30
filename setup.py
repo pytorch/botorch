@@ -32,6 +32,8 @@ TEST_REQUIRES = ["pytest", "pytest-cov"]
 
 FMT_REQUIRES = ["flake8", "ufmt", "flake8-docstrings"]
 
+PROFILING_REQUIRES = ["line_profiler", "memory_profiler"]
+
 # Read in the pinned versions of the formatting tools
 root_dir = os.path.dirname(__file__)
 with open(os.path.join(root_dir, "requirements-fmt.txt"), "r") as fh:
@@ -91,5 +93,6 @@ setup(
         "dev": DEV_REQUIRES,
         "test": TEST_REQUIRES,
         "tutorials": TUTORIALS_REQUIRES,
+        "profiling": PROFILING_REQUIRES,
     },
 )
