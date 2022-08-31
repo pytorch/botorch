@@ -168,6 +168,7 @@ class _SingleTaskVariationalGP(ApproximateGP):
         variational_distribution: Optional[_VariationalDistribution] = None,
         variational_strategy: Type[_VariationalStrategy] = VariationalStrategy,
         inducing_points: Optional[Union[Tensor, int]] = None,
+        input_transform: Optional[InputTransform] = None,
     ) -> None:
         r"""
         Args:
@@ -252,6 +253,8 @@ class _SingleTaskVariationalGP(ApproximateGP):
         super().__init__(variational_strategy=variational_strategy)
         self.mean_module = mean_module
         self.covar_module = covar_module
+        if input_transform is not None:
+            self.input_transform = input_transform
 
     def forward(self, X) -> MultivariateNormal:
         mean_x = self.mean_module(X)
@@ -373,14 +376,13 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
             variational_distribution=variational_distribution,
             variational_strategy=variational_strategy,
             inducing_points=inducing_points,
+            input_transform=input_transform,
         )
 
         super().__init__(model=model, likelihood=likelihood, num_outputs=num_outputs)
 
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
-        if input_transform is not None:
-            self.input_transform = input_transform
 
         # for model fitting utilities
         # TODO: make this a flag?

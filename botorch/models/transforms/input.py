@@ -55,16 +55,20 @@ class InputTransform(ABC):
     transform_on_train: bool
     transform_on_fantasize: bool
 
-    def forward(self, X: Tensor) -> Tensor:
+    def forward(self, X: Tensor, is_training_input: bool) -> Tensor:
         r"""Transform the inputs to a model.
 
         Args:
             X: A `batch_shape x n x d`-dim tensor of inputs.
+            is_training_input: A boolean denoting whether the input is a training input.
+                If true, only the transforms with `transform_on_train=True` are applied.
+                Otherwise, the transform will be applied based on `transform_on_eval`
+                and `transform_on_fantasize` options.
 
         Returns:
             A `batch_shape x n' x d`-dim tensor of transformed inputs.
         """
-        if self.training:
+        if is_training_input:
             if self.transform_on_train:
                 return self.transform(X)
         elif self.transform_on_eval:
@@ -122,33 +126,6 @@ class InputTransform(ABC):
                 for k, v in self.state_dict().items()
             )
         )
-
-    def preprocess_transform(self, X: Tensor) -> Tensor:
-        r"""Apply transforms for preprocessing inputs.
-
-        The main use cases for this method are 1) to preprocess training data
-        before calling `set_train_data` and 2) preprocess `X_baseline` for noisy
-        acquisition functions so that `X_baseline` is "preprocessed" with the
-        same transformations as the cached training inputs.
-
-        Args:
-            X: A `batch_shape x n x d`-dim tensor of inputs.
-
-        Returns:
-            A `batch_shape x n x d`-dim tensor of (transformed) inputs.
-        """
-        if self.transform_on_train:
-            # We need to disable learning of bounds here.
-            # See why: https://github.com/pytorch/botorch/issues/1078.
-            if hasattr(self, "learn_bounds"):
-                learn_bounds = self.learn_bounds
-                self.learn_bounds = False
-                result = self.transform(X)
-                self.learn_bounds = learn_bounds
-                return result
-            else:
-                return self.transform(X)
-        return X
 
 
 class ChainedInputTransform(InputTransform, ModuleDict):
@@ -223,24 +200,6 @@ class ChainedInputTransform(InputTransform, ModuleDict):
         return super().equals(other=other) and all(
             t1 == t2 for t1, t2 in zip(self.values(), other.values())
         )
-
-    def preprocess_transform(self, X: Tensor) -> Tensor:
-        r"""Apply transforms for preprocessing inputs.
-
-        The main use cases for this method are 1) to preprocess training data
-        before calling `set_train_data` and 2) preprocess `X_baseline` for noisy
-        acquisition functions so that `X_baseline` is "preprocessed" with the
-        same transformations as the cached training inputs.
-
-        Args:
-            X: A `batch_shape x n x d`-dim tensor of inputs.
-
-        Returns:
-            A `batch_shape x n x d`-dim tensor of (transformed) inputs.
-        """
-        for tf in self.values():
-            X = tf.preprocess_transform(X)
-        return X
 
 
 class ReversibleInputTransform(InputTransform, ABC):
