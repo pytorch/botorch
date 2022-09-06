@@ -13,10 +13,10 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
 )
-
-from gpytorch.utils.cholesky import psd_safe_cholesky
-from gpytorch.utils.errors import NanError, NotPSDError
 from linear_operator.operators import BlockDiagLinearOperator, LinearOperator
+
+from linear_operator.utils.cholesky import psd_safe_cholesky
+from linear_operator.utils.errors import NanError, NotPSDError
 from torch import Tensor
 
 

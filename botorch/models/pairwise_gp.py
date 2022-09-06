@@ -47,8 +47,8 @@ from gpytorch.models.gp import GP
 from gpytorch.module import Module
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
-from gpytorch.utils.cholesky import psd_safe_cholesky
 from linear_operator.operators import LinearOperator
+from linear_operator.utils.cholesky import psd_safe_cholesky
 from scipy import optimize
 from torch import float32, float64, Tensor
 from torch.nn.modules.module import _IncompatibleKeys

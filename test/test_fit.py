@@ -28,8 +28,8 @@ from gpytorch.constraints import GreaterThan, Interval
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
-from gpytorch.utils.errors import NanError, NotPSDError
 from gpytorch.utils.warnings import NumericalWarning
+from linear_operator.utils.errors import NanError, NotPSDError
 from scipy.optimize import OptimizeResult
 
 

@@ -29,7 +29,7 @@ from gpytorch import settings as gpt_settings
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
 )
-from gpytorch.utils.errors import NanError, NotPSDError
+from linear_operator.utils.errors import NanError, NotPSDError
 from torch import Tensor
 
 

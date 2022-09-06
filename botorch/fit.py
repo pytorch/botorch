@@ -25,7 +25,7 @@ from botorch.optim.utils import sample_all_priors
 from botorch.settings import debug
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
-from gpytorch.utils.errors import NotPSDError
+from linear_operator.utils.errors import NotPSDError
 from pyro.infer.mcmc import MCMC, NUTS
 
 
