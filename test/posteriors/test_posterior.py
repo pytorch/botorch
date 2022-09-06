@@ -13,7 +13,7 @@ from botorch.posteriors import GPyTorchPosterior, Posterior, PosteriorList
 from botorch.posteriors.deterministic import DeterministicPosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.lazy.non_lazy_tensor import lazify
+from linear_operator.operators import to_linear_operator
 
 
 class NotSoAbstractPosterior(Posterior):
@@ -51,7 +51,7 @@ class TestPosteriorList(BotorchTestCase):
         mean = torch.rand(*shape, dtype=dtype, device=self.device)
         variance = 1 + torch.rand(*shape, dtype=dtype, device=self.device)
         covar = torch.diag_embed(variance)
-        mvn = MultivariateNormal(mean, lazify(covar))
+        mvn = MultivariateNormal(mean, to_linear_operator(covar))
         return GPyTorchPosterior(mvn=mvn)
 
     def _make_deterministic_posterior(self, shape, dtype):

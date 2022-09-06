@@ -21,7 +21,7 @@ from botorch.posteriors.posterior import Posterior
 from botorch.test_functions.base import BaseTestProblem
 from botorch.utils.transforms import unnormalize
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy import AddedDiagLazyTensor, DiagLazyTensor
+from linear_operator.operators import AddedDiagLinearOperator, DiagLinearOperator
 from torch import Tensor
 
 
@@ -273,7 +273,7 @@ def _get_test_posterior(
         covar = a @ a.transpose(-1, -2)
         flat_diag = torch.rand(*batch_shape, q * m, **tkwargs)
         if lazy:
-            covar = AddedDiagLazyTensor(covar, DiagLazyTensor(flat_diag))
+            covar = AddedDiagLinearOperator(covar, DiagLinearOperator(flat_diag))
         else:
             covar = covar + torch.diag_embed(flat_diag)
         mtmvn = MultitaskMultivariateNormal(mean, covar, interleaved=interleaved)

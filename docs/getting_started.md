@@ -13,12 +13,12 @@ Before jumping the gun, we recommend you start with the high-level
 
 #### Installation Requirements:
 
-- Python >= 3.7
-- PyTorch >= 1.10
-- gpytorch == 1.8.1
+- Python >= 3.8
+- PyTorch >= 1.11
+- gpytorch > 1.8.1
 - scipy
 - multiple-dispatch
-- pyro-ppl >= 1.8.0
+- pyro-ppl >= 1.8.1
 
 BoTorch is easily installed via
 [Anaconda](https://www.anaconda.com/distribution/#download-section) (recommended)

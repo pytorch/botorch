@@ -45,12 +45,12 @@ class LinearTruncatedFidelityKernel(Kernel):
         >>> x = torch.randn(10, 5)
         >>> # Non-batch: Simple option
         >>> covar_module = LinearTruncatedFidelityKernel()
-        >>> covar = covar_module(x)  # Output: LazyVariable of size (10 x 10)
+        >>> covar = covar_module(x)  # Output: LinearOperator of size (10 x 10)
         >>>
         >>> batch_x = torch.randn(2, 10, 5)
         >>> # Batch: Simple option
         >>> covar_module = LinearTruncatedFidelityKernel(batch_shape = torch.Size([2]))
-        >>> covar = covar_module(x)  # Output: LazyVariable of size (2 x 10 x 10)
+        >>> covar = covar_module(x)  # Output: LinearOperator of size (2 x 10 x 10)
     """
 
     def __init__(  # noqa C901

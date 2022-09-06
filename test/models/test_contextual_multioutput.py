@@ -12,8 +12,8 @@ from botorch.models.multitask import MultiTaskGP
 from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy import LazyTensor
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+from linear_operator.operators import LinearOperator
 from torch import Tensor
 
 
@@ -44,7 +44,7 @@ class ContextualMultiOutputTest(BotorchTestCase):
             fit_gpytorch_model(mll, options={"maxiter": 1})
 
             context_covar = model._eval_context_covar()
-            self.assertIsInstance(context_covar, LazyTensor)
+            self.assertIsInstance(context_covar, LinearOperator)
             self.assertEqual(context_covar.shape, torch.Size([2, 2]))
 
             embeddings = model._task_embeddings()

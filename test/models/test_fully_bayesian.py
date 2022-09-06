@@ -47,9 +47,9 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
-from gpytorch.lazy.non_lazy_tensor import lazify
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihood
 from gpytorch.means import ConstantMean
+from linear_operator.operators import to_linear_operator
 
 
 class CustomPyroModel(PyroModel):
@@ -595,7 +595,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             mean = torch.randn(1, 5, **tkwargs)
             variance = torch.rand(1, 5, **tkwargs)
             covar = torch.diag_embed(variance)
-            mvn = MultivariateNormal(mean, lazify(covar))
+            mvn = MultivariateNormal(mean, to_linear_operator(covar))
             posterior = FullyBayesianPosterior(mvn=mvn)
             dist = torch.distributions.Normal(
                 loc=mean.unsqueeze(-1), scale=variance.unsqueeze(-1).sqrt()

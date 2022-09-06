@@ -46,7 +46,7 @@ class TestDownsamplingKernel(BotorchTestCase, BaseKernelTestCase):
 
         diff = torch.tensor([[0.72, 0.54], [0.64, 0.48]])
         actual = offset + diff.pow(1 + power)
-        res = kernel(a, b).evaluate()
+        res = kernel(a, b).to_dense()
 
         self.assertLess(torch.norm(res - actual), 1e-5)
 
@@ -62,7 +62,7 @@ class TestDownsamplingKernel(BotorchTestCase, BaseKernelTestCase):
 
         diff = torch.tensor([[0.72, 0.54], [0.64, 0.48]])
         actual = offset + diff.pow(1 + power)
-        res = kernel(a, b).evaluate()
+        res = kernel(a, b).to_dense()
 
         self.assertLess(torch.norm(res - actual), 1e-5)
 
@@ -82,7 +82,7 @@ class TestDownsamplingKernel(BotorchTestCase, BaseKernelTestCase):
         kernel = DownsamplingKernel(batch_shape=torch.Size([3]), active_dims=[0])
         kernel.initialize(power=power, offset=offset)
         kernel.eval()
-        res = kernel(a, b).evaluate()
+        res = kernel(a, b).to_dense()
 
         actual = torch.zeros(3, 3, 3)
 
@@ -107,7 +107,7 @@ class TestDownsamplingKernel(BotorchTestCase, BaseKernelTestCase):
         kernel = DownsamplingKernel(batch_shape=torch.Size([3]))
         kernel.initialize(power=power, offset=offset)
         kernel.eval()
-        res = kernel(a, b).evaluate()
+        res = kernel(a, b).to_dense()
 
         actual = torch.zeros(3, 2, 2)
 
@@ -164,7 +164,7 @@ class TestDownsamplingKernel(BotorchTestCase, BaseKernelTestCase):
         kernel = DownsamplingKernel()
         kernel.initialize(power=power, offset=offset)
         kernel.eval()
-        res = kernel(a, b, last_dim_is_batch=True).evaluate()
+        res = kernel(a, b, last_dim_is_batch=True).to_dense()
 
         actual = torch.zeros(3, 2, 2)
 

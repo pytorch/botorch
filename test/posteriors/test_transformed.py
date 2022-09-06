@@ -9,7 +9,7 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.transformed import TransformedPosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy.non_lazy_tensor import lazify
+from linear_operator.operators import to_linear_operator
 
 
 class TestTransformedPosterior(BotorchTestCase):
@@ -21,10 +21,12 @@ class TestTransformedPosterior(BotorchTestCase):
                 variance = 1 + torch.rand(shape, dtype=dtype, device=self.device)
                 if m == 1:
                     covar = torch.diag_embed(variance.squeeze(-1))
-                    mvn = MultivariateNormal(mean.squeeze(-1), lazify(covar))
+                    mvn = MultivariateNormal(
+                        mean.squeeze(-1), to_linear_operator(covar)
+                    )
                 else:
                     covar = torch.diag_embed(variance.view(*variance.shape[:-2], -1))
-                    mvn = MultitaskMultivariateNormal(mean, lazify(covar))
+                    mvn = MultitaskMultivariateNormal(mean, to_linear_operator(covar))
                 p_base = GPyTorchPosterior(mvn=mvn)
                 p_tf = TransformedPosterior(  # dummy transforms
                     posterior=p_base,
