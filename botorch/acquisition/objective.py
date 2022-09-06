@@ -21,7 +21,7 @@ from botorch.posteriors.posterior import Posterior
 from botorch.sampling import IIDNormalSampler, MCSampler
 from botorch.utils import apply_constraints
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy import lazify
+from linear_operator.operators.dense_linear_operator import to_linear_operator
 from torch import Tensor
 from torch.nn import Module
 
@@ -244,11 +244,13 @@ class ExpectationPosteriorTransform(PosteriorTransform):
         )
         new_cov = weights @ (org_cov @ weights.t())
         if m == 1:
-            new_mvn = MultivariateNormal(new_loc.squeeze(-1), lazify(new_cov))
+            new_mvn = MultivariateNormal(
+                new_loc.squeeze(-1), to_linear_operator(new_cov)
+            )
         else:
             # Using MTMVN since we pass a single loc and covar for all `m` outputs.
             new_mvn = MultitaskMultivariateNormal(
-                new_loc, lazify(new_cov), interleaved=False
+                new_loc, to_linear_operator(new_cov), interleaved=False
             )
         return GPyTorchPosterior(mvn=new_mvn)
 

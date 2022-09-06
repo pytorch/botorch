@@ -22,7 +22,7 @@ from botorch.utils.low_rank import extract_batch_covar
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.utils.errors import NanError, NotPSDError
 
-CHOLESKY_PATH = "gpytorch.lazy.lazy_tensor.psd_safe_cholesky"
+CHOLESKY_PATH = "linear_operator.operators._linear_operator.psd_safe_cholesky"
 EXTRACT_BATCH_COVAR_PATH = "botorch.acquisition.cached_cholesky.extract_batch_covar"
 
 

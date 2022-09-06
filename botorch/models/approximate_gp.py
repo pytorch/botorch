@@ -41,7 +41,6 @@ from botorch.sampling import MCSampler
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import Kernel, MaternKernel, ScaleKernel
-from gpytorch.lazy import LazyTensor
 from gpytorch.likelihoods import (
     GaussianLikelihood,
     Likelihood,
@@ -59,6 +58,7 @@ from gpytorch.variational import (
     IndependentMultitaskVariationalStrategy,
     VariationalStrategy,
 )
+from linear_operator.operators import LinearOperator
 from torch import Tensor
 
 
@@ -437,7 +437,7 @@ def _select_inducing_points(
 
     Args:
         inputs: A (*batch_shape, n, d)-dim input data tensor.
-        covar_module: GPyTorch Module returning a LazyTensor kernel matrix.
+        covar_module: GPyTorch Module returning a LinearOperator kernel matrix.
         num_inducing: The maximun number (m) of inducing points (m <= n).
         input_batch_shape: The non-task-related batch shape.
 
@@ -498,7 +498,7 @@ def _select_inducing_points(
 
 def _pivoted_cholesky_init(
     train_inputs: Tensor,
-    kernel_matrix: Union[Tensor, LazyTensor],
+    kernel_matrix: Union[Tensor, LinearOperator],
     max_length: int,
     epsilon: float = 1e-6,
 ) -> Tensor:

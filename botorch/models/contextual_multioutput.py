@@ -13,8 +13,8 @@ from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.constraints import Interval
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
-from gpytorch.lazy import InterpolatedLazyTensor, LazyTensor
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
+from linear_operator.operators import InterpolatedLinearOperator, LinearOperator
 from torch import Tensor
 from torch.nn import ModuleList
 
@@ -96,7 +96,7 @@ class LCEMGP(MultiTaskGP):
         )
         self.to(train_X)
 
-    def _eval_context_covar(self) -> LazyTensor:
+    def _eval_context_covar(self) -> LinearOperator:
         """obtain context covariance matrix (num_contexts x num_contexts)"""
         all_embs = self._task_embeddings()
         return self.task_covar_module(all_embs)
@@ -128,11 +128,11 @@ class LCEMGP(MultiTaskGP):
             task_idcs: (n x 1) or (b x n x 1) task indices tensor
         """
         covar_matrix = self._eval_context_covar()
-        return InterpolatedLazyTensor(
-            base_lazy_tensor=covar_matrix,
+        return InterpolatedLinearOperator(
+            base_linear_op=covar_matrix,
             left_interp_indices=task_idcs,
             right_interp_indices=task_idcs,
-        ).evaluate()
+        ).to_dense()
 
     def forward(self, x: Tensor) -> MultivariateNormal:
         if self.training:

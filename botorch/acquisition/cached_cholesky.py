@@ -112,7 +112,7 @@ class CachedCholeskyMCAcquisitionFunction(ABC):
             lazy_covar = posterior.mvn.lazy_covariance_matrix
         with gpt_settings.fast_computations.covar_root_decomposition(False):
             lazy_covar_root = lazy_covar.root_decomposition()
-            baseline_L = lazy_covar_root.root.evaluate()
+            baseline_L = lazy_covar_root.root.to_dense()
         self.register_buffer("_baseline_L", baseline_L)
 
     def _get_f_X_samples(self, posterior: GPyTorchPosterior, q_in: int) -> Tensor:

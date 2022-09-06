@@ -36,7 +36,6 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.utils.transforms import is_fully_bayesian
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
-from gpytorch.utils.broadcasting import _mul_broadcast_shape
 from torch import Tensor
 
 
@@ -516,7 +515,7 @@ class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
                 "batch shapes"
             )
             try:
-                broadcast_shape = _mul_broadcast_shape(*batch_shapes)
+                broadcast_shape = torch.broadcast_shapes(*batch_shapes)
                 warnings.warn(msg + ". Broadcasting batch shapes.")
                 return broadcast_shape
             except RuntimeError:

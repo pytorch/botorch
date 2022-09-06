@@ -10,7 +10,7 @@ from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.lazy import DiagLazyTensor
+from linear_operator.operators import DiagLinearOperator
 
 
 def _get_test_posterior(device, dtype=torch.float):
@@ -422,7 +422,7 @@ class TestSobolQMCNormalSampler(BotorchTestCase):
         sampler = SobolQMCNormalSampler(num_samples=2)
         maxdim = torch.quasirandom.SobolEngine.MAXDIM + 1
         mean = torch.zeros(maxdim)
-        cov = DiagLazyTensor(torch.ones(maxdim))
+        cov = DiagLinearOperator(torch.ones(maxdim))
         mvn = MultivariateNormal(mean, cov)
         posterior = GPyTorchPosterior(mvn)
         with self.assertRaises(UnsupportedError) as e:

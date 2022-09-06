@@ -4,7 +4,7 @@ channels:
   - gpytorch
   - conda-forge
 dependencies:
-  - pytorch>=1.10
-  - gpytorch==1.8.1
+  - pytorch>=1.11
+  - gpytorch>1.8.1
   - scipy
-  - pyro-ppl>=1.8.0
+  - pyro-ppl>=1.8.1

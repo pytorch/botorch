@@ -10,8 +10,8 @@ import torch
 from gpytorch.kernels.kernel import Kernel
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
-from gpytorch.lazy.sum_lazy_tensor import SumLazyTensor
 from gpytorch.priors.torch_priors import GammaPrior
+from linear_operator.operators.sum_linear_operator import SumLinearOperator
 from torch import Tensor
 from torch.nn import ModuleDict  # pyre-ignore
 
@@ -111,5 +111,5 @@ class SACKernel(Kernel):
         if diag:
             res = sum(covars)
         else:
-            res = SumLazyTensor(*covars)
+            res = SumLinearOperator(*covars)
         return res

@@ -41,7 +41,6 @@ from gpytorch.constraints import Positive
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
-from gpytorch.lazy.lazy_tensor import LazyTensor
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.mlls import MarginalLogLikelihood
 from gpytorch.models.gp import GP
@@ -49,6 +48,7 @@ from gpytorch.module import Module
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
 from gpytorch.utils.cholesky import psd_safe_cholesky
+from linear_operator.operators import LinearOperator
 from scipy import optimize
 from torch import float32, float64, Tensor
 from torch.nn.modules.module import _IncompatibleKeys
@@ -232,10 +232,10 @@ class PairwiseGP(Model, GP):
             or self.comparisons is None
         )
 
-    def _calc_covar(self, X1: Tensor, X2: Tensor) -> Union[Tensor, LazyTensor]:
+    def _calc_covar(self, X1: Tensor, X2: Tensor) -> Union[Tensor, LinearOperator]:
         r"""Calculate the covariance matrix given two sets of datapoints"""
         covar = self.covar_module(X1, X2)
-        return covar.evaluate()
+        return covar.to_dense()
 
     def _batch_chol_inv(self, mat_chol: Tensor) -> Tensor:
         r"""Wrapper to perform (batched) cholesky inverse"""
@@ -267,7 +267,7 @@ class PairwiseGP(Model, GP):
         self.covar_chol = psd_safe_cholesky(self.covar)
         self.covar_inv = self._batch_chol_inv(self.covar_chol)
 
-    def _prior_mean(self, X: Tensor) -> Union[Tensor, LazyTensor]:
+    def _prior_mean(self, X: Tensor) -> Union[Tensor, LinearOperator]:
         r"""Return point prediction using prior only
 
         Args:
