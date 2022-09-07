@@ -67,15 +67,6 @@
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.matern_kernel</span> <span class="kn">import</span> <span class="n">MaternKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.multitask_kernel</span> <span class="kn">import</span> <span class="n">MultitaskKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.scale_kernel</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">BatchRepeatLazyTensor</span><span class="p">,</span>
-    <span class="n">CatLazyTensor</span><span class="p">,</span>
-    <span class="n">DiagLazyTensor</span><span class="p">,</span>
-    <span class="n">KroneckerProductDiagLazyTensor</span><span class="p">,</span>
-    <span class="n">KroneckerProductLazyTensor</span><span class="p">,</span>
-    <span class="n">lazify</span><span class="p">,</span>
-    <span class="n">RootLazyTensor</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">,</span>
     <span class="n">GaussianLikelihood</span><span class="p">,</span>
@@ -94,6 +85,15 @@
 <span class="kn">from</span> <span class="nn">gpytorch.settings</span> <span class="kn">import</span> <span class="n">detach_test_caches</span>
 <span class="kn">from</span> <span class="nn">gpytorch.utils.errors</span> <span class="kn">import</span> <span class="n">CachingError</span>
 <span class="kn">from</span> <span class="nn">gpytorch.utils.memoize</span> <span class="kn">import</span> <span class="n">cached</span><span class="p">,</span> <span class="n">pop_from_cache</span>
+<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BatchRepeatLinearOperator</span><span class="p">,</span>
+    <span class="n">CatLinearOperator</span><span class="p">,</span>
+    <span class="n">DiagLinearOperator</span><span class="p">,</span>
+    <span class="n">KroneckerProductDiagLinearOperator</span><span class="p">,</span>
+    <span class="n">KroneckerProductLinearOperator</span><span class="p">,</span>
+    <span class="n">RootLinearOperator</span><span class="p">,</span>
+    <span class="n">to_linear_operator</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -605,15 +605,17 @@
         <span class="p">)</span>
         <span class="n">task_root</span> <span class="o">=</span> <span class="n">task_rootlt</span><span class="o">.</span><span class="n">root</span>
         <span class="k">if</span> <span class="n">task_covar</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">!=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]:</span>
-            <span class="n">task_covar</span> <span class="o">=</span> <span class="n">BatchRepeatLazyTensor</span><span class="p">(</span><span class="n">task_covar</span><span class="p">,</span> <span class="n">batch_repeat</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
-            <span class="n">task_root</span> <span class="o">=</span> <span class="n">BatchRepeatLazyTensor</span><span class="p">(</span>
-                <span class="n">lazify</span><span class="p">(</span><span class="n">task_root</span><span class="p">),</span> <span class="n">batch_repeat</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">task_covar</span> <span class="o">=</span> <span class="n">BatchRepeatLinearOperator</span><span class="p">(</span>
+                <span class="n">task_covar</span><span class="p">,</span> <span class="n">batch_repeat</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">task_root</span> <span class="o">=</span> <span class="n">BatchRepeatLinearOperator</span><span class="p">(</span>
+                <span class="n">to_linear_operator</span><span class="p">(</span><span class="n">task_root</span><span class="p">),</span> <span class="n">batch_repeat</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
             <span class="p">)</span>
 
-        <span class="n">task_covar_rootlt</span> <span class="o">=</span> <span class="n">RootLazyTensor</span><span class="p">(</span><span class="n">task_root</span><span class="p">)</span>
+        <span class="n">task_covar_rootlt</span> <span class="o">=</span> <span class="n">RootLinearOperator</span><span class="p">(</span><span class="n">task_root</span><span class="p">)</span>
 
         <span class="c1"># construct RR' \approx Kxx</span>
-        <span class="n">data_data_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_full_covar</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">data_data_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_full_covar</span><span class="o">.</span><span class="n">linear_ops</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="c1"># populate the diagonalziation caches for the root and inverse root</span>
         <span class="c1"># decomposition</span>
         <span class="n">data_data_evals</span><span class="p">,</span> <span class="n">data_data_evecs</span> <span class="o">=</span> <span class="n">data_data_covar</span><span class="o">.</span><span class="n">diagonalization</span><span class="p">()</span>
@@ -633,9 +635,9 @@
                 <span class="n">dtype</span><span class="o">=</span><span class="n">data_data_evals</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
                 <span class="n">device</span><span class="o">=</span><span class="n">data_data_evals</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">data_data_evecs</span> <span class="o">=</span> <span class="n">CatLazyTensor</span><span class="p">(</span>
+            <span class="n">data_data_evecs</span> <span class="o">=</span> <span class="n">CatLinearOperator</span><span class="p">(</span>
                 <span class="n">data_data_evecs</span><span class="p">,</span>
-                <span class="n">lazify</span><span class="p">(</span><span class="n">zero_evecs</span><span class="p">),</span>
+                <span class="n">to_linear_operator</span><span class="p">(</span><span class="n">zero_evecs</span><span class="p">),</span>
                 <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
                 <span class="n">output_device</span><span class="o">=</span><span class="n">data_data_evals</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
             <span class="p">)</span>
@@ -648,24 +650,26 @@
 
         <span class="c1"># now update root so that \tilde{R}\tilde{R}' \approx K_{(x,xt), (x,xt)}</span>
         <span class="c1"># cloning preserves the gradient history</span>
-        <span class="n">updated_lazy_tensor</span> <span class="o">=</span> <span class="n">data_data_covar</span><span class="o">.</span><span class="n">cat_rows</span><span class="p">(</span>
+        <span class="n">updated_linear_op</span> <span class="o">=</span> <span class="n">data_data_covar</span><span class="o">.</span><span class="n">cat_rows</span><span class="p">(</span>
             <span class="n">cross_mat</span><span class="o">=</span><span class="n">test_data_covar</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
             <span class="n">new_mat</span><span class="o">=</span><span class="n">test_test_covar</span><span class="p">,</span>
             <span class="n">method</span><span class="o">=</span><span class="s2">"diagonalization"</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">updated_root</span> <span class="o">=</span> <span class="n">updated_lazy_tensor</span><span class="o">.</span><span class="n">root_decomposition</span><span class="p">()</span><span class="o">.</span><span class="n">root</span>
+        <span class="n">updated_root</span> <span class="o">=</span> <span class="n">updated_linear_op</span><span class="o">.</span><span class="n">root_decomposition</span><span class="p">()</span><span class="o">.</span><span class="n">root</span>
         <span class="c1"># occasionally, there's device errors so enforce this comes out right</span>
         <span class="n">updated_root</span> <span class="o">=</span> <span class="n">updated_root</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">data_data_covar</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
         <span class="c1"># build a root decomposition of the joint train/test covariance matrix</span>
         <span class="c1"># construct (\tilde{R} \otimes M)(\tilde{R} \otimes M)' \approx</span>
         <span class="c1"># (K_{(x,xt), (x,xt)} \otimes Ktt)</span>
-        <span class="n">joint_covar</span> <span class="o">=</span> <span class="n">RootLazyTensor</span><span class="p">(</span>
-            <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span><span class="n">updated_root</span><span class="p">,</span> <span class="n">task_covar_rootlt</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
+        <span class="n">joint_covar</span> <span class="o">=</span> <span class="n">RootLinearOperator</span><span class="p">(</span>
+            <span class="n">KroneckerProductLinearOperator</span><span class="p">(</span>
+                <span class="n">updated_root</span><span class="p">,</span> <span class="n">task_covar_rootlt</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="p">)</span>
         <span class="p">)</span>
 
         <span class="c1"># construct K_{xt, x} \otimes Ktt</span>
-        <span class="n">test_obs_kernel</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span><span class="n">test_data_covar</span><span class="p">,</span> <span class="n">task_covar</span><span class="p">)</span>
+        <span class="n">test_obs_kernel</span> <span class="o">=</span> <span class="n">KroneckerProductLinearOperator</span><span class="p">(</span><span class="n">test_data_covar</span><span class="p">,</span> <span class="n">task_covar</span><span class="p">)</span>
 
         <span class="c1"># collect y - \mu(x) and \mu(X)</span>
         <span class="n">train_diff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_targets</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span>
@@ -674,7 +678,7 @@
         <span class="n">test_mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
         <span class="n">train_noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">_shaped_noise_covar</span><span class="p">(</span><span class="n">train_x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-        <span class="n">diagonal_noise</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">train_noise</span><span class="p">,</span> <span class="n">DiagLazyTensor</span><span class="p">)</span>
+        <span class="n">diagonal_noise</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">train_noise</span><span class="p">,</span> <span class="n">DiagLinearOperator</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">detach_test_caches</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
             <span class="n">train_noise</span> <span class="o">=</span> <span class="n">train_noise</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
         <span class="n">test_noise</span> <span class="o">=</span> <span class="p">(</span>
@@ -688,20 +692,22 @@
             <span class="o">+</span> <span class="n">test_mean</span>
         <span class="p">)</span>
         <span class="c1"># next the predictive variance, assume diagonal noise</span>
-        <span class="n">test_var_term</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span><span class="n">test_test_covar</span><span class="p">,</span> <span class="n">task_covar</span><span class="p">)</span><span class="o">.</span><span class="n">diag</span><span class="p">()</span>
+        <span class="n">test_var_term</span> <span class="o">=</span> <span class="n">KroneckerProductLinearOperator</span><span class="p">(</span>
+            <span class="n">test_test_covar</span><span class="p">,</span> <span class="n">task_covar</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">diag</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">diagonal_noise</span><span class="p">:</span>
             <span class="n">task_evals</span><span class="p">,</span> <span class="n">task_evecs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_covar_matrix</span><span class="o">.</span><span class="n">diagonalization</span><span class="p">()</span>
             <span class="c1"># TODO: make this be the default KPMatmulLT diagonal method in gpytorch</span>
             <span class="n">full_data_inv_evals</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">KroneckerProductDiagLazyTensor</span><span class="p">(</span>
-                    <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">data_data_evals</span><span class="p">),</span> <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">task_evals</span><span class="p">)</span>
+                <span class="n">KroneckerProductDiagLinearOperator</span><span class="p">(</span>
+                    <span class="n">DiagLinearOperator</span><span class="p">(</span><span class="n">data_data_evals</span><span class="p">),</span> <span class="n">DiagLinearOperator</span><span class="p">(</span><span class="n">task_evals</span><span class="p">)</span>
                 <span class="p">)</span>
                 <span class="o">+</span> <span class="n">train_noise</span>
             <span class="p">)</span><span class="o">.</span><span class="n">inverse</span><span class="p">()</span>
-            <span class="n">test_train_hadamard</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span>
-                <span class="n">test_data_covar</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">data_data_evecs</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
-                <span class="n">task_covar</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">task_evecs</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="n">test_train_hadamard</span> <span class="o">=</span> <span class="n">KroneckerProductLinearOperator</span><span class="p">(</span>
+                <span class="n">test_data_covar</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">data_data_evecs</span><span class="p">)</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="n">task_covar</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">task_evecs</span><span class="p">)</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">data_var_term</span> <span class="o">=</span> <span class="n">test_train_hadamard</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">full_data_inv_evals</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -710,7 +716,7 @@
             <span class="c1"># should be a kronecker lt, R = \Sigma_X^{-1/2} \kron \Sigma_T^{-1/2}</span>
             <span class="c1"># TODO: enforce the diagonalization to return a KPLT for all shapes in</span>
             <span class="c1"># gpytorch or dense linear algebra for small shapes</span>
-            <span class="n">data_noise</span><span class="p">,</span> <span class="n">task_noise</span> <span class="o">=</span> <span class="n">train_noise</span><span class="o">.</span><span class="n">lazy_tensors</span>
+            <span class="n">data_noise</span><span class="p">,</span> <span class="n">task_noise</span> <span class="o">=</span> <span class="n">train_noise</span><span class="o">.</span><span class="n">linear_ops</span>
             <span class="n">data_noise_root</span> <span class="o">=</span> <span class="n">data_noise</span><span class="o">.</span><span class="n">root_inv_decomposition</span><span class="p">(</span>
                 <span class="n">method</span><span class="o">=</span><span class="s2">"diagonalization"</span>
             <span class="p">)</span>
@@ -742,27 +748,29 @@
 
             <span class="c1"># we add one to the eigenvalues as above (not just for stability)</span>
             <span class="n">full_data_inv_evals</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">KroneckerProductDiagLazyTensor</span><span class="p">(</span>
-                    <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">w_data_evals</span><span class="p">),</span> <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">w_task_evals</span><span class="p">)</span>
+                <span class="n">KroneckerProductDiagLinearOperator</span><span class="p">(</span>
+                    <span class="n">DiagLinearOperator</span><span class="p">(</span><span class="n">w_data_evals</span><span class="p">),</span> <span class="n">DiagLinearOperator</span><span class="p">(</span><span class="n">w_task_evals</span><span class="p">)</span>
                 <span class="p">)</span>
                 <span class="o">.</span><span class="n">add_jitter</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">inverse</span><span class="p">()</span>
             <span class="p">)</span>
 
             <span class="n">test_data_comp</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">test_data_covar</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">data_noise_root</span><span class="p">)</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">w_data_evecs</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+                <span class="n">test_data_covar</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">data_noise_root</span><span class="p">)</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">w_data_evecs</span><span class="p">)</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
                 <span class="o">**</span> <span class="mi">2</span>
             <span class="p">)</span>
             <span class="n">task_comp</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">task_covar</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">task_noise_root</span><span class="p">)</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">w_task_evecs</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span>
+                <span class="n">task_covar</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">task_noise_root</span><span class="p">)</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">w_task_evecs</span><span class="p">)</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span>
             <span class="p">)</span>
 
-            <span class="n">test_train_hadamard</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span><span class="n">test_data_comp</span><span class="p">,</span> <span class="n">task_comp</span><span class="p">)</span>
+            <span class="n">test_train_hadamard</span> <span class="o">=</span> <span class="n">KroneckerProductLinearOperator</span><span class="p">(</span>
+                <span class="n">test_data_comp</span><span class="p">,</span> <span class="n">task_comp</span>
+            <span class="p">)</span>
             <span class="n">data_var_term</span> <span class="o">=</span> <span class="n">test_train_hadamard</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">full_data_inv_evals</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="n">pred_variance</span> <span class="o">=</span> <span class="n">test_var_term</span> <span class="o">-</span> <span class="n">data_var_term</span>
         <span class="n">specialized_mvn</span> <span class="o">=</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">(</span>
-            <span class="n">pred_mean</span><span class="p">,</span> <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">pred_variance</span><span class="p">)</span>
+            <span class="n">pred_mean</span><span class="p">,</span> <span class="n">DiagLinearOperator</span><span class="p">(</span><span class="n">pred_variance</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">observation_noise</span><span class="p">:</span>
             <span class="n">specialized_mvn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">specialized_mvn</span><span class="p">)</span>
@@ -834,7 +842,7 @@
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

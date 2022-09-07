@@ -76,7 +76,7 @@
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Robust-Multi-Objective-Bayesian-Optimization-Under-Input-Noise">Robust Multi-Objective Bayesian Optimization Under Input Noise<a class="anchor-link" href="#Robust-Multi-Objective-Bayesian-Optimization-Under-Input-Noise">¶</a></h2><p>In this tutorial, we illustrate how to perform robust multi-objective Bayesian optimization (BO) under input noise.</p>
-<p>This is a simple tutorial; for support for constraints, batch sizes greater than 1, and many alternative methods, please see <a href="https://github.com/facebookresearch/robust_mobo">https://github.com/facebookresearch/robust_mobo</a>.</p>
+<p>This is a simple tutorial; for support for constraints, batch sizes greater than 1, and many alternative methods, please see https://github.com/facebookresearch/robust_mobo.</p>
 <p>We consider the problem of optimizing (maximizing) a vector-valued objective function $\mathbf f(\mathbf x)$ where at implementation time $\mathbf f(\mathbf x)$ is subject to input noise $\mathbf{f}(\mathbf{x} \diamond \mathbf{\xi})$ where $\mathbf{\xi} \sim P(\mathbf \xi | \mathbf x)$ is the random input noise and $\diamond$ denotes the perturbation function (e.g. addition, multiplication, or any arbitrary function).</p>
 <p>We consider the scenario where:</p>
 <ol>

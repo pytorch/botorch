@@ -182,7 +182,8 @@ model sets all other lengthscales to large values.</p>
 noise variance (<code>train_Yvar</code>) for each observation, which may be useful in cases where you for example
 know that the problem is noise-free and can then set the noise variance to a small value such as <code>1e-6</code>.</p>
 <p>In this case you can construct a model as follows:</p>
-<pre><code>gp = SaasFullyBayesianSingleTaskGP(train_X=train_X, train_Y=train_Y, train_Yvar=torch.full_like(train_Y, 1e-6))</code></pre>
+<pre><code>gp = SaasFullyBayesianSingleTaskGP(train_X=train_X, train_Y=train_Y, train_Yvar=torch.full_like(train_Y, 1e-6))
+</code></pre>
 </div>
 </div>
 </div>
@@ -272,7 +273,8 @@ torch.Size([16, 5, 1])
 <pre><code>mixture_mean = posterior.mixture_mean
 mixture_variance = posterior.mixture_variance
 mixture_median = posterior.mixture_median
-mixture_quantile = posterior.quantile(q=0.95)</code></pre>
+mixture_quantile = posterior.quantile(q=0.95)
+</code></pre>
 </div>
 </div>
 </div>

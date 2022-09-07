@@ -78,8 +78,8 @@
 <h1 id="Scalable-Constrained-Bayesian-Optimization-(SCBO)">Scalable Constrained Bayesian Optimization (SCBO)<a class="anchor-link" href="#Scalable-Constrained-Bayesian-Optimization-(SCBO)">¶</a></h1><p>In this tutorial, we show how to implement Scalable Constrained Bayesian Optimization (SCBO) [1] in a closed loop in BoTorch.</p>
 <p>We optimize the 20𝐷 Ackley function on the domain [−5,10]^20. This implementation uses two simple constraint functions c1 and c2. Our goal is to find values x which maximize Ackley(x) subject to the constraints c1(x) &lt;= 0 and c2(x) &lt;= 0.</p>
 <p>[1]: David Eriksson and Matthias Poloczek. Scalable constrained Bayesian optimization. In International Conference on Artificial Intelligence and Statistics, pages 730–738. PMLR, 2021.
-(<a href="https://doi.org/10.48550/arxiv.2002.08526">https://doi.org/10.48550/arxiv.2002.08526</a>)</p>
-<p>Since SCBO is essentially a constrained version of Trust Region Bayesian Optimization (TuRBO), this tutorial shares much of the same code as the TuRBO Tutorial (<a href="https://botorch.org/tutorials/turbo_1">https://botorch.org/tutorials/turbo_1</a>) with small modifications made to implement SCBO.</p>
+(https://doi.org/10.48550/arxiv.2002.08526)</p>
+<p>Since SCBO is essentially a constrained version of Trust Region Bayesian Optimization (TuRBO), this tutorial shares much of the same code as the TuRBO Tutorial (https://botorch.org/tutorials/turbo_1) with small modifications made to implement SCBO.</p>
 </div>
 </div>
 </div>
@@ -193,7 +193,7 @@ Note that SCBO expects all constraints to be of the for c(x) &lt;= 0, so any oth
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Define-TuRBO-Class">Define TuRBO Class<a class="anchor-link" href="#Define-TuRBO-Class">¶</a></h2><p>Just as in the TuRBO Tutorial (<a href="https://botorch.org/tutorials/turbo_1">https://botorch.org/tutorials/turbo_1</a>), we'll define a class to hold the turst region state and a method update_state() to update the side length of the trust region hyper-cube during optimization. We'll update the side length according to the number of sequential successes or failures as discussed in the original TuRBO paper.</p>
+<h2 id="Define-TuRBO-Class">Define TuRBO Class<a class="anchor-link" href="#Define-TuRBO-Class">¶</a></h2><p>Just as in the TuRBO Tutorial (https://botorch.org/tutorials/turbo_1), we'll define a class to hold the turst region state and a method update_state() to update the side length of the trust region hyper-cube during optimization. We'll update the side length according to the number of sequential successes or failures as discussed in the original TuRBO paper.</p>
 </div>
 </div>
 </div>
@@ -349,7 +349,7 @@ Note that SCBO expects all constraints to be of the for c(x) &lt;= 0, so any oth
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Generating-a-batch-of-candidates-for-SCBO">Generating a batch of candidates for SCBO<a class="anchor-link" href="#Generating-a-batch-of-candidates-for-SCBO">¶</a></h3><p>Just as in the TuRBO Tutorial (<a href="https://botorch.org/tutorials/turbo_1">https://botorch.org/tutorials/turbo_1</a>), we'll define a method generate_batch to generate a new batch of candidate points within the TuRBO trust region using thompson sampling.</p>
+<h3 id="Generating-a-batch-of-candidates-for-SCBO">Generating a batch of candidates for SCBO<a class="anchor-link" href="#Generating-a-batch-of-candidates-for-SCBO">¶</a></h3><p>Just as in the TuRBO Tutorial (https://botorch.org/tutorials/turbo_1), we'll define a method generate_batch to generate a new batch of candidate points within the TuRBO trust region using thompson sampling.</p>
 <p>The key difference here from TuRBO is that, instead of using MaxPosteriorSampling to simply grab the candidates within the trust region with the maximum posterior values, we use ConstrainedMaxPosteriorSampling to instead grab the candidates within the trust region with the maximum posterior values subject to the constrain that the posteriors for the constraint models for c1(x) and c2(x) must be less than or equal to 0 for each candidate. In otherwords, we use additional GPs ('constraiant models') to model each black-box constraint (c1 and c2), and throw out all candidates for which the posterior prediction of these constraint models is greater than 0 (throw out all predicted constraint violators). According to [1], in the special case when all of the candidaates arae predicted to be constraint violators, we select the candidate with the minimum predicted violation. (See botorch.generation.sampling.ConstrainedMaxPosteriorSampling for implementation details).</p>
 </div>
 </div>

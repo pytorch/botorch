@@ -47,7 +47,7 @@
 <span class="kn">from</span> <span class="nn">botorch.sampling</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils</span> <span class="kn">import</span> <span class="n">apply_constraints</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span> <span class="n">MultivariateNormal</span>
-<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">lazify</span>
+<span class="kn">from</span> <span class="nn">linear_operator.operators.dense_linear_operator</span> <span class="kn">import</span> <span class="n">to_linear_operator</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
@@ -270,11 +270,13 @@
         <span class="p">)</span>
         <span class="n">new_cov</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">@</span> <span class="p">(</span><span class="n">org_cov</span> <span class="o">@</span> <span class="n">weights</span><span class="o">.</span><span class="n">t</span><span class="p">())</span>
         <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">new_mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">new_loc</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">lazify</span><span class="p">(</span><span class="n">new_cov</span><span class="p">))</span>
+            <span class="n">new_mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span>
+                <span class="n">new_loc</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">to_linear_operator</span><span class="p">(</span><span class="n">new_cov</span><span class="p">)</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Using MTMVN since we pass a single loc and covar for all `m` outputs.</span>
             <span class="n">new_mvn</span> <span class="o">=</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">(</span>
-                <span class="n">new_loc</span><span class="p">,</span> <span class="n">lazify</span><span class="p">(</span><span class="n">new_cov</span><span class="p">),</span> <span class="n">interleaved</span><span class="o">=</span><span class="kc">False</span>
+                <span class="n">new_loc</span><span class="p">,</span> <span class="n">to_linear_operator</span><span class="p">(</span><span class="n">new_cov</span><span class="p">),</span> <span class="n">interleaved</span><span class="o">=</span><span class="kc">False</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">new_mvn</span><span class="p">)</span></div></div>
 
@@ -626,7 +628,7 @@
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

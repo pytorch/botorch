@@ -84,8 +84,8 @@
 \end{align}
 where $|C|$ is the determinant of the $B\times B$ correlation matrix between the batch elements and $\hat{\alpha}_{\text{MES}}$ is an analytical approximation of the standard (non-batch) MES acquisition function. The GIBBON acquisition function forms a lower bound on the exact (but intractable) batch MES function and is consequently referred to as the <code>qLowerBoundMaxValueEntropy</code> in BoTorch. Crucially, GIBBON can be computed in closed-form and so incurs substantially lower overheads than batch MES via fantasies.</p>
 <h3 id="Interpretating-GIBBON">Interpretating GIBBON<a class="anchor-link" href="#Interpretating-GIBBON">¶</a></h3><p>Note that the above decomposition of GIBBON has two terms and each has a helpful intuitive justification. In particular, the first term encourages diversity within the batch (achieving high values for points with low predictive correlation), whereas the second term ensures that evaluations are targeted in areas of the search space that provide large amounts of information about the maximum value attained by the objective function.</p>
-<p><br/>
-<strong>References</strong></p>
+<br/>
+__References__
 <p>[1] <a href="https://arxiv.org/abs/1703.01968">Wang, Z., Jegelka, S., <em>Max-value Entropy Search for Efficient Bayesian Optimization.</em> arXiv:1703.01968v3, 2018</a></p>
 <p>[2] <a href="https://arxiv.org/abs/2102.03324">Moss, M., et al., <em>GIBBON: General-purpose Information-Based Bayesian Optimisation.</em>  arXiv:2102.03324, 2020</a></p>
 </div>

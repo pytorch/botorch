@@ -24,7 +24,7 @@
 <div class="bodywrapper">
 <div class="body" role="main">
 <section id="module-botorch.fit">
-<span id="botorch-fit"></span><h1>botorch.fit<a class="headerlink" href="#module-botorch.fit" title="Permalink to this headline">¶</a></h1>
+<span id="botorch-fit"></span><h1>botorch.fit<a class="headerlink" href="#module-botorch.fit" title="Permalink to this heading">¶</a></h1>
 <p>Utilities for model fitting.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.fit.fit_gpytorch_model">
@@ -35,9 +35,9 @@ hyperparameter priors and optimization is retried. The maximum number of
 retries can be passed in as a <cite>max_retries</cite> kwarg (default is 5).</p>
 <p>Optimizer functions are in botorch.optim.fit.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mll</strong> (<em>gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
+<li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
 <li><p><strong>optimizer</strong> (<em>Callable</em>) – The optimizer function.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – Arguments passed along to the optimizer function, including
 <cite>max_retries</cite> and <cite>sequential</cite> (controls the fitting of <cite>ModelListGP</cite>
@@ -45,11 +45,11 @@ and <cite>BatchedMultiOutputGPyTorchModel</cite> models) or <cite>approx_mll</ci
 (whether to use gpytorch’s approximate MLL computation).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>MarginalLogLikelihood with optimized parameters.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>MarginalLogLikelihood</em></p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -64,9 +64,9 @@ and <cite>BatchedMultiOutputGPyTorchModel</cite> models) or <cite>approx_mll</ci
 <span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">fit_fully_bayesian_model_nuts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tree_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warmup_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thinning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disable_progbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_fully_bayesian_model_nuts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_fully_bayesian_model_nuts" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit a fully Bayesian model using the No-U-Turn-Sampler (NUTS)</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP</em></a>) – SaasFullyBayesianSingleTaskGP to be fitted.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>SaasFullyBayesianSingleTaskGP</em></a>) – SaasFullyBayesianSingleTaskGP to be fitted.</p></li>
 <li><p><strong>max_tree_depth</strong> (<em>int</em>) – Maximum tree depth for NUTS</p></li>
 <li><p><strong>warmup_steps</strong> (<em>int</em>) – The number of burn-in steps for NUTS.</p></li>
 <li><p><strong>num_samples</strong> (<em>int</em>) – The number of MCMC samples. Note that with thinning,
@@ -76,7 +76,7 @@ num_samples / thinning samples are retained.</p></li>
 bar and diagnostics during MCMC.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
@@ -128,7 +128,7 @@ bar and diagnostics during MCMC.</p></li>
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

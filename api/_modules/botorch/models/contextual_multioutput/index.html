@@ -39,8 +39,8 @@
 <span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">Interval</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.rbf_kernel</span> <span class="kn">import</span> <span class="n">RBFKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">InterpolatedLazyTensor</span><span class="p">,</span> <span class="n">LazyTensor</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="n">FixedNoiseGaussianLikelihood</span>
+<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">InterpolatedLinearOperator</span><span class="p">,</span> <span class="n">LinearOperator</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleList</span>
 
@@ -122,7 +122,7 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_eval_context_covar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LazyTensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_eval_context_covar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearOperator</span><span class="p">:</span>
         <span class="sd">"""obtain context covariance matrix (num_contexts x num_contexts)"""</span>
         <span class="n">all_embs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_embeddings</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module</span><span class="p">(</span><span class="n">all_embs</span><span class="p">)</span>
@@ -154,11 +154,11 @@
 <span class="sd">            task_idcs: (n x 1) or (b x n x 1) task indices tensor</span>
 <span class="sd">        """</span>
         <span class="n">covar_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_context_covar</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">InterpolatedLazyTensor</span><span class="p">(</span>
-            <span class="n">base_lazy_tensor</span><span class="o">=</span><span class="n">covar_matrix</span><span class="p">,</span>
+        <span class="k">return</span> <span class="n">InterpolatedLinearOperator</span><span class="p">(</span>
+            <span class="n">base_linear_op</span><span class="o">=</span><span class="n">covar_matrix</span><span class="p">,</span>
             <span class="n">left_interp_indices</span><span class="o">=</span><span class="n">task_idcs</span><span class="p">,</span>
             <span class="n">right_interp_indices</span><span class="o">=</span><span class="n">task_idcs</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span></div>
+        <span class="p">)</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="LCEMGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.LCEMGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
@@ -261,7 +261,7 @@
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

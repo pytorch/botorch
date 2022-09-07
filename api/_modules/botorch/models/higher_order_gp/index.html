@@ -58,17 +58,17 @@
 <span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">MaternKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">BatchRepeatLazyTensor</span><span class="p">,</span>
-    <span class="n">DiagLazyTensor</span><span class="p">,</span>
-    <span class="n">KroneckerProductLazyTensor</span><span class="p">,</span>
-    <span class="n">LazyTensor</span><span class="p">,</span>
-    <span class="n">ZeroLazyTensor</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="n">GaussianLikelihood</span><span class="p">,</span> <span class="n">Likelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.models</span> <span class="kn">import</span> <span class="n">ExactGP</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span><span class="p">,</span> <span class="n">MultivariateNormalPrior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.settings</span> <span class="kn">import</span> <span class="n">fast_pred_var</span><span class="p">,</span> <span class="n">skip_posterior_variances</span>
+<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BatchRepeatLinearOperator</span><span class="p">,</span>
+    <span class="n">DiagLinearOperator</span><span class="p">,</span>
+    <span class="n">KroneckerProductLinearOperator</span><span class="p">,</span>
+    <span class="n">LinearOperator</span><span class="p">,</span>
+    <span class="n">ZeroLinearOperator</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleList</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">ParameterList</span>
 
@@ -148,7 +148,7 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">HigherOrderGPPosterior</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
         <span class="c1"># TODO: return a HigherOrderGPPosterior once rescaling constant</span>
-        <span class="c1"># muls * LazyTensors won't force a dense decomposition rather than a</span>
+        <span class="c1"># muls * LinearOperators won't force a dense decomposition rather than a</span>
         <span class="c1"># Kronecker structured one.</span>
         <span class="k">return</span> <span class="n">TransformedPosterior</span><span class="p">(</span>
             <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span>
@@ -381,10 +381,10 @@
         <span class="k">if</span> <span class="n">covariance_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">!=</span> <span class="n">covariance_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">covariance_list</span><span class="p">)):</span>
                 <span class="n">cm</span> <span class="o">=</span> <span class="n">covariance_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-                <span class="n">covariance_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">BatchRepeatLazyTensor</span><span class="p">(</span>
+                <span class="n">covariance_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">BatchRepeatLinearOperator</span><span class="p">(</span>
                     <span class="n">cm</span><span class="p">,</span> <span class="n">covariance_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">batch_shape</span>
                 <span class="p">)</span>
-        <span class="n">kronecker_covariance</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span><span class="o">*</span><span class="n">covariance_list</span><span class="p">)</span>
+        <span class="n">kronecker_covariance</span> <span class="o">=</span> <span class="n">KroneckerProductLinearOperator</span><span class="p">(</span><span class="o">*</span><span class="n">covariance_list</span><span class="p">)</span>
 
         <span class="c1"># TODO: expand options for the mean module via batch shaping?</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
@@ -499,7 +499,7 @@
             <span class="n">train_train_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction_strategy</span><span class="o">.</span><span class="n">lik_train_train_covar</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
             <span class="n">base_train_train_covar</span> <span class="o">=</span> <span class="n">train_train_covar</span><span class="o">.</span><span class="n">lazy_tensor</span>
 
-            <span class="n">data_train_covar</span> <span class="o">=</span> <span class="n">base_train_train_covar</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">data_train_covar</span> <span class="o">=</span> <span class="n">base_train_train_covar</span><span class="o">.</span><span class="n">linear_ops</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">data_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_modules</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">data_train_test_covar</span> <span class="o">=</span> <span class="n">data_covar</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">train_inputs</span><span class="p">)</span>
             <span class="n">data_test_test_covar</span> <span class="o">=</span> <span class="n">data_covar</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
@@ -512,15 +512,15 @@
             <span class="c1"># TODO: Can we enable backprop through the latent covariances?</span>
             <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">data_train_test_covar</span><span class="o">.</span><span class="n">batch_shape</span>
             <span class="n">latent_covar_list</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">latent_covar</span> <span class="ow">in</span> <span class="n">base_train_train_covar</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="k">for</span> <span class="n">latent_covar</span> <span class="ow">in</span> <span class="n">base_train_train_covar</span><span class="o">.</span><span class="n">linear_ops</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
                 <span class="k">if</span> <span class="n">latent_covar</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">!=</span> <span class="n">batch_shape</span><span class="p">:</span>
-                    <span class="n">latent_covar</span> <span class="o">=</span> <span class="n">BatchRepeatLazyTensor</span><span class="p">(</span><span class="n">latent_covar</span><span class="p">,</span> <span class="n">batch_shape</span><span class="p">)</span>
+                    <span class="n">latent_covar</span> <span class="o">=</span> <span class="n">BatchRepeatLinearOperator</span><span class="p">(</span><span class="n">latent_covar</span><span class="p">,</span> <span class="n">batch_shape</span><span class="p">)</span>
                 <span class="n">latent_covar_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">latent_covar</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
 
-            <span class="n">joint_covar</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span>
+            <span class="n">joint_covar</span> <span class="o">=</span> <span class="n">KroneckerProductLinearOperator</span><span class="p">(</span>
                 <span class="n">data_joint_covar</span><span class="p">,</span> <span class="o">*</span><span class="n">latent_covar_list</span>
             <span class="p">)</span>
-            <span class="n">test_train_covar</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span>
+            <span class="n">test_train_covar</span> <span class="o">=</span> <span class="n">KroneckerProductLinearOperator</span><span class="p">(</span>
                 <span class="n">data_train_test_covar</span><span class="p">,</span> <span class="o">*</span><span class="n">latent_covar_list</span>
             <span class="p">)</span>
 
@@ -534,9 +534,9 @@
             <span class="n">new_mean</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">no_pred_variance</span><span class="p">:</span>
                 <span class="n">new_variance</span> <span class="o">=</span> <span class="n">pred_variance</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span><span class="p">)</span>
-                <span class="n">new_variance</span> <span class="o">=</span> <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">new_variance</span><span class="p">)</span>
+                <span class="n">new_variance</span> <span class="o">=</span> <span class="n">DiagLinearOperator</span><span class="p">(</span><span class="n">new_variance</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">new_variance</span> <span class="o">=</span> <span class="n">ZeroLazyTensor</span><span class="p">(</span>
+                <span class="n">new_variance</span> <span class="o">=</span> <span class="n">ZeroLinearOperator</span><span class="p">(</span>
                     <span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
                 <span class="p">)</span>
 
@@ -557,42 +557,41 @@
                 <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">posterior</span></div>
 
-<div class="viewcode-block" id="HigherOrderGP.make_posterior_variances"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.make_posterior_variances">[docs]</a>    <span class="k">def</span> <span class="nf">make_posterior_variances</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">joint_covariance_matrix</span><span class="p">:</span> <span class="n">LazyTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="HigherOrderGP.make_posterior_variances"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.make_posterior_variances">[docs]</a>    <span class="k">def</span> <span class="nf">make_posterior_variances</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">joint_covariance_matrix</span><span class="p">:</span> <span class="n">LinearOperator</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Computes the posterior variances given the data points X. As currently</span>
 <span class="sd">        implemented, it computes another forwards call with the stacked data to get out</span>
 <span class="sd">        the joint covariance across all data points.</span>
 <span class="sd">        """</span>
         <span class="c1"># TODO: use the exposed joint covariances from the prediction strategy</span>
-        <span class="n">data_joint_covariance</span> <span class="o">=</span> <span class="n">joint_covariance_matrix</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span>
-            <span class="mi">0</span>
-        <span class="p">]</span><span class="o">.</span><span class="n">evaluate_kernel</span><span class="p">()</span>
+        <span class="n">data_joint_covariance</span> <span class="o">=</span> <span class="n">joint_covariance_matrix</span><span class="o">.</span><span class="n">linear_ops</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate_kernel</span><span class="p">()</span>
         <span class="n">num_train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="n">test_train_covar</span> <span class="o">=</span> <span class="n">data_joint_covariance</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">num_train</span><span class="p">:,</span> <span class="p">:</span><span class="n">num_train</span><span class="p">]</span>
         <span class="n">train_train_covar</span> <span class="o">=</span> <span class="n">data_joint_covariance</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">num_train</span><span class="p">,</span> <span class="p">:</span><span class="n">num_train</span><span class="p">]</span>
         <span class="n">test_test_covar</span> <span class="o">=</span> <span class="n">data_joint_covariance</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">num_train</span><span class="p">:,</span> <span class="n">num_train</span><span class="p">:]</span>
 
-        <span class="n">full_train_train_covar</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span>
-            <span class="n">train_train_covar</span><span class="p">,</span> <span class="o">*</span><span class="n">joint_covariance_matrix</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">jcm_linops</span> <span class="o">=</span> <span class="n">joint_covariance_matrix</span><span class="o">.</span><span class="n">linear_ops</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">full_train_train_covar</span> <span class="o">=</span> <span class="n">KroneckerProductLinearOperator</span><span class="p">(</span>
+            <span class="n">train_train_covar</span><span class="p">,</span> <span class="o">*</span><span class="n">jcm_linops</span>
         <span class="p">)</span>
-        <span class="n">full_test_test_covar</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span>
-            <span class="n">test_test_covar</span><span class="p">,</span> <span class="o">*</span><span class="n">joint_covariance_matrix</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">full_test_test_covar</span> <span class="o">=</span> <span class="n">KroneckerProductLinearOperator</span><span class="p">(</span>
+            <span class="n">test_test_covar</span><span class="p">,</span> <span class="o">*</span><span class="n">jcm_linops</span>
         <span class="p">)</span>
-        <span class="n">full_test_train_covar_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">test_train_covar</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
-            <span class="o">*</span><span class="n">joint_covariance_matrix</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-        <span class="p">]</span>
+        <span class="n">full_test_train_covar_tuple</span> <span class="o">=</span> <span class="p">(</span><span class="n">test_train_covar</span><span class="p">,)</span> <span class="o">+</span> <span class="n">jcm_linops</span>
 
         <span class="n">train_evals</span><span class="p">,</span> <span class="n">train_evecs</span> <span class="o">=</span> <span class="n">full_train_train_covar</span><span class="o">.</span><span class="n">symeig</span><span class="p">(</span><span class="n">eigenvectors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="c1"># (\kron \Lambda_i + \sigma^2 I)^{-1}</span>
-        <span class="n">train_inv_evals</span> <span class="o">=</span> <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">train_evals</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span><span class="p">))</span>
+        <span class="n">train_inv_evals</span> <span class="o">=</span> <span class="n">DiagLinearOperator</span><span class="p">(</span>
+            <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">train_evals</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span><span class="p">)</span>
+        <span class="p">)</span>
 
         <span class="c1"># compute K_i S_i \hadamard K_i S_i</span>
-        <span class="n">test_train_hadamard</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span>
+        <span class="n">test_train_hadamard</span> <span class="o">=</span> <span class="n">KroneckerProductLinearOperator</span><span class="p">(</span>
             <span class="o">*</span><span class="p">[</span>
-                <span class="n">lt1</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">lt2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span>
-                <span class="k">for</span> <span class="n">lt1</span><span class="p">,</span> <span class="n">lt2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
-                    <span class="n">full_test_train_covar_list</span><span class="p">,</span> <span class="n">train_evecs</span><span class="o">.</span><span class="n">lazy_tensors</span>
-                <span class="p">)</span>
+                <span class="n">lt1</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">lt2</span><span class="p">)</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span>
+                <span class="k">for</span> <span class="n">lt1</span><span class="p">,</span> <span class="n">lt2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">full_test_train_covar_tuple</span><span class="p">,</span> <span class="n">train_evecs</span><span class="o">.</span><span class="n">linear_ops</span><span class="p">)</span>
             <span class="p">]</span>
         <span class="p">)</span>
 
@@ -644,7 +643,7 @@
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

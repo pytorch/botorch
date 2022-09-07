@@ -71,12 +71,12 @@
 <span class="sd">        &gt;&gt;&gt; x = torch.randn(10, 5)</span>
 <span class="sd">        &gt;&gt;&gt; # Non-batch: Simple option</span>
 <span class="sd">        &gt;&gt;&gt; covar_module = LinearTruncatedFidelityKernel()</span>
-<span class="sd">        &gt;&gt;&gt; covar = covar_module(x)  # Output: LazyVariable of size (10 x 10)</span>
+<span class="sd">        &gt;&gt;&gt; covar = covar_module(x)  # Output: LinearOperator of size (10 x 10)</span>
 <span class="sd">        &gt;&gt;&gt;</span>
 <span class="sd">        &gt;&gt;&gt; batch_x = torch.randn(2, 10, 5)</span>
 <span class="sd">        &gt;&gt;&gt; # Batch: Simple option</span>
 <span class="sd">        &gt;&gt;&gt; covar_module = LinearTruncatedFidelityKernel(batch_shape = torch.Size([2]))</span>
-<span class="sd">        &gt;&gt;&gt; covar = covar_module(x)  # Output: LazyVariable of size (2 x 10 x 10)</span>
+<span class="sd">        &gt;&gt;&gt; covar = covar_module(x)  # Output: LinearOperator of size (2 x 10 x 10)</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>  <span class="c1"># noqa C901</span>
@@ -315,7 +315,7 @@
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

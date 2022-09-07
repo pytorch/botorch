@@ -354,7 +354,7 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
     <span class="c1"># run N_BATCH rounds of BayesOpt after the initial random batch</span>
     <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">N_BATCH</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>    
         
-        <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
         
         <span class="c1"># fit the models</span>
         <span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll_ei</span><span class="p">)</span>
@@ -391,7 +391,7 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
         <span class="n">mll_ei</span><span class="p">,</span> <span class="n">model_ei</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span><span class="n">train_x_ei</span><span class="p">,</span> <span class="n">train_obj_ei</span><span class="p">,</span> <span class="n">use_input_warping</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">mll_warp</span><span class="p">,</span> <span class="n">model_warp</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span><span class="n">train_x_warp</span><span class="p">,</span> <span class="n">train_obj_warp</span><span class="p">,</span> <span class="n">use_input_warping</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         
-        <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
         
         <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span>
@@ -429,8 +429,8 @@ Trial  3 of 3 ..................................................</pre>
 <h3 id="Perform-Bayesian-Optimization">Perform Bayesian Optimization<a class="anchor-link" href="#Perform-Bayesian-Optimization">¶</a></h3><p>The Bayesian optimization "loop" simply iterates the following steps:</p>
 <ol>
 <li>given a surrogate model, choose a candidate point</li>
-<li>observe $f(x)$ for each $x$ in the batch </li>
-<li>update the surrogate model. </li>
+<li>observe $f(x)$ for each $x$ in the batch</li>
+<li>update the surrogate model.</li>
 </ol>
 <p>Just for illustration purposes, we run three trials each of which do <code>N_BATCH=50</code> rounds of optimization.</p>
 <p><em>Note</em>: Running this may take a little while.</p>

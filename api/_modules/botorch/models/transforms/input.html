@@ -44,7 +44,7 @@
 
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
@@ -367,7 +367,7 @@
 <span class="sd">                take all dimensions of the inputs into account.</span>
 <span class="sd">            bounds: If provided, use these bounds to normalize the inputs. If</span>
 <span class="sd">                omitted, learn the bounds in train mode.</span>
-<span class="sd">            batch_shape: The batch shape of the inputs (asssuming input tensors</span>
+<span class="sd">            batch_shape: The batch shape of the inputs (assuming input tensors</span>
 <span class="sd">                of shape `batch_shape x n x d`). If provided, perform individual</span>
 <span class="sd">                normalization per batch, otherwise uses a single normalization.</span>
 <span class="sd">            transform_on_train: A boolean indicating whether to apply the</span>
@@ -436,10 +436,27 @@
                     <span class="sa">f</span><span class="s2">"Wrong input dimension. Received </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">, "</span>
                     <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mins</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
                 <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mins</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">ranges</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span>
-            <span class="n">ranges</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ranges</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_range</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_range</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span> <span class="o">=</span> <span class="n">ranges</span>
+
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
+            <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"`X` must have at least </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> dimensions, </span><span class="si">{</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="si">}</span><span class="s2"> batch and 2 innate"</span>
+                    <span class="sa">f</span><span class="s2">" , but has </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">."</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Move extra batch and innate batch (i.e. marginal) dimensions to the right</span>
+            <span class="n">batch_ndim</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># batch rank of `X`</span>
+            <span class="n">_X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span>
+                <span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">batch_ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span>  <span class="c1"># module batch dims</span>
+                <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># input dim</span>
+                <span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">batch_ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span>  <span class="c1"># other dims, to be reduced over</span>
+                <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span>  <span class="c1"># marginal dim</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="c1"># Extract minimums and ranges</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mins</span> <span class="o">=</span> <span class="n">_X</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>  <span class="c1"># batch_shape x (1, d)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span> <span class="o">=</span> <span class="p">(</span><span class="n">_X</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_range</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
             <span class="n">X_new</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
             <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
@@ -577,10 +594,23 @@
                     <span class="sa">f</span><span class="s2">"Wrong input. dimension. Received </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">, "</span>
                     <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">means</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">means</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">stds</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">stds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stds</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_std</span><span class="p">)</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
+            <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"`X` must have at least </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> dimensions, </span><span class="si">{</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="si">}</span><span class="s2"> batch and 2 innate"</span>
+                    <span class="sa">f</span><span class="s2">" , but has </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">."</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Aggregate means and standard deviations over extra batch and marginal dims</span>
+            <span class="n">batch_ndim</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># batch rank of `X`</span>
+            <span class="n">reduce_dims</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">batch_ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">values</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">torch</span><span class="o">.</span><span class="n">std_mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">reduce_dims</span><span class="p">,</span> <span class="n">unbiased</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stds</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_std</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
             <span class="n">X_new</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
             <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
@@ -944,11 +974,13 @@
 
 
 <div class="viewcode-block" id="AppendFeatures"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.AppendFeatures">[docs]</a><span class="k">class</span> <span class="nc">AppendFeatures</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A transform that appends the input with a given set of features.</span>
+    <span class="sa">r</span><span class="sd">"""A transform that appends the input with a given set of features either</span>
+<span class="sd">    provided beforehand or generated on the fly via a callable.</span>
 
-<span class="sd">    As an example, this can be used with `RiskMeasureMCObjective` to optimize risk</span>
-<span class="sd">    measures as described in [Cakmak2020risk]_. A tutorial notebook implementing the</span>
-<span class="sd">    rhoKG acqusition function introduced in [Cakmak2020risk]_ can be found at</span>
+<span class="sd">    As an example, the predefined set of features can be used with</span>
+<span class="sd">    `RiskMeasureMCObjective` to optimize risk measures as described in</span>
+<span class="sd">    [Cakmak2020risk]_. A tutorial notebook implementing the rhoKG acqusition</span>
+<span class="sd">    function introduced in [Cakmak2020risk]_ can be found at</span>
 <span class="sd">    https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables.</span>
 
 <span class="sd">    The steps for using this to obtain samples of a risk measure are as follows:</span>
@@ -968,6 +1000,11 @@
 <span class="sd">    Note: The samples of the risk measure obtained this way are in general biased</span>
 <span class="sd">    since the `feature_set` does not fully represent the distribution of the</span>
 <span class="sd">    environmental variable.</span>
+
+<span class="sd">    Possible examples for using a callable include statistical models that are built on</span>
+<span class="sd">    PyTorch, built-in mathematical operations such as torch.sum, or custom scripted</span>
+<span class="sd">    functions. By this, this input transform allows for advanced feature engineering</span>
+<span class="sd">    and transfer learning models within the optimization loop.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # We consider 1D `x` and 1D `w`, with `W` having a</span>
@@ -990,21 +1027,34 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">feature_set</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">feature_set</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">f</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fkwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">skip_expand</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">transform_on_train</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">transform_on_fantasize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Append `feature_set` to each input.</span>
+        <span class="sa">r</span><span class="sd">"""Append `feature_set` to each input or generate a set of features to</span>
+<span class="sd">        append on the fly via a callable.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            feature_set: An `n_f x d_f`-dim tensor denoting the features to be</span>
-<span class="sd">                appended to the inputs.</span>
+<span class="sd">                appended to the inputs. Default: None.</span>
+<span class="sd">            f: A callable mapping a `batch_shape x q x d`-dim input tensor `X`</span>
+<span class="sd">                to a `batch_shape x q x n_f x d_f`-dimensional output tensor.</span>
+<span class="sd">                Default: None.</span>
+<span class="sd">            indices: List of indices denoting the indices of the features to be</span>
+<span class="sd">                passed into f. Per default all features are passed to `f`.</span>
+<span class="sd">                Default: None.</span>
+<span class="sd">            fkwargs: Dictionary of keyword arguments passed to the callable `f`.</span>
+<span class="sd">                Default: None.</span>
 <span class="sd">            skip_expand: A boolean indicating whether to expand the input tensor</span>
 <span class="sd">                before appending features. This is intended for use with an</span>
 <span class="sd">                `InputPerturbation`. If `True`, the input tensor will be expected</span>
-<span class="sd">                to be of shape `batch_shape x (q * n_f) x d`.</span>
+<span class="sd">                to be of shape `batch_shape x (q * n_f) x d`. Not implemented</span>
+<span class="sd">                in combination with a callable.</span>
 <span class="sd">            transform_on_train: A boolean indicating whether to apply the</span>
 <span class="sd">                transforms in train() mode. Default: False.</span>
 <span class="sd">            transform_on_eval: A boolean indicating whether to apply the</span>
@@ -1013,16 +1063,44 @@
 <span class="sd">                transform when called from within a `fantasize` call. Default: False.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">feature_set</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`feature_set` must be an `n_f x d_f`-dim tensor!"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">feature_set</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">f</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Either a `feature_set` or a callable `f` has to be provided."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">feature_set</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Only one can be used: either `feature_set` or callable `f`."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">feature_set</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">feature_set</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`feature_set` must be an `n_f x d_f`-dim tensor!"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"feature_set"</span><span class="p">,</span> <span class="n">feature_set</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_f</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">skip_expand</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"`skip_expand` option is not supported in case of using a callable"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`indices` list is empty!"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Elements of `indices` tensor must be unique!"</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_f</span> <span class="o">=</span> <span class="n">f</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fkwargs</span> <span class="o">=</span> <span class="n">fkwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">skip_expand</span> <span class="o">=</span> <span class="n">skip_expand</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"feature_set"</span><span class="p">,</span> <span class="n">feature_set</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">=</span> <span class="n">transform_on_train</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">=</span> <span class="n">transform_on_eval</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_fantasize</span> <span class="o">=</span> <span class="n">transform_on_fantasize</span>
 
 <div class="viewcode-block" id="AppendFeatures.transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.AppendFeatures.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Transform the inputs by appending `feature_set` to each input.</span>
+        <span class="sa">r</span><span class="sd">"""Transform the inputs by appending `feature_set` to each input or</span>
+<span class="sd">        by generating a set of features to be appended on the fly via a callable.</span>
 
 <span class="sd">        For each `1 x d`-dim element in the input tensor, this will produce</span>
 <span class="sd">        an `n_f x (d + d_f)`-dim tensor with `feature_set` appended as the last `d_f`</span>
@@ -1043,15 +1121,20 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `batch_shape x (q * n_f) x (d + d_f)`-dim tensor of appended inputs.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">skip_expand</span><span class="p">:</span>
-            <span class="n">expanded_X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
-                <span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_set</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">expanded_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">],</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">fkwargs</span><span class="p">)</span>
+            <span class="n">n_f</span> <span class="o">=</span> <span class="n">expanded_features</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">expanded_X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
-                <span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_set</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span>
-            <span class="p">)</span>
-        <span class="n">expanded_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_set</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">expanded_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">n_f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_set</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">skip_expand</span><span class="p">:</span>
+            <span class="n">expanded_X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_f</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">expanded_X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">n_f</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">expanded_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_set</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">expanded_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
         <span class="n">appended_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">expanded_X</span><span class="p">,</span> <span class="n">expanded_features</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">appended_X</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">appended_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></div></div>
 
@@ -1272,7 +1355,7 @@
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

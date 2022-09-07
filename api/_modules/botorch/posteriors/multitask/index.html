@@ -34,7 +34,7 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
-<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">lazify</span><span class="p">,</span> <span class="n">LazyTensor</span>
+<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">LinearOperator</span><span class="p">,</span> <span class="n">to_linear_operator</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -42,13 +42,13 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">mvn</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">,</span>
-        <span class="n">joint_covariance_matrix</span><span class="p">:</span> <span class="n">LazyTensor</span><span class="p">,</span>
-        <span class="n">test_train_covar</span><span class="p">:</span> <span class="n">LazyTensor</span><span class="p">,</span>
+        <span class="n">joint_covariance_matrix</span><span class="p">:</span> <span class="n">LinearOperator</span><span class="p">,</span>
+        <span class="n">test_train_covar</span><span class="p">:</span> <span class="n">LinearOperator</span><span class="p">,</span>
         <span class="n">train_diff</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">test_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">train_train_covar</span><span class="p">:</span> <span class="n">LazyTensor</span><span class="p">,</span>
-        <span class="n">train_noise</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">LazyTensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
-        <span class="n">test_noise</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">LazyTensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">train_train_covar</span><span class="p">:</span> <span class="n">LinearOperator</span><span class="p">,</span>
+        <span class="n">train_noise</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">LinearOperator</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">test_noise</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">LinearOperator</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Posterior class for a Kronecker Multi-task GP model using with ICM kernel.</span>
@@ -81,7 +81,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">observation_noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">num_train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_diff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">num_tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_train_covar</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># The following assumes test_train_covar is a SumLinearOperator. TODO: Improve</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_train_covar</span><span class="o">.</span><span class="n">linear_ops</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">base_sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
@@ -253,11 +254,11 @@
         <span class="k">return</span> <span class="n">final_samples</span></div>
 
     <span class="k">def</span> <span class="nf">_draw_from_base_covar</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">covar</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LazyTensor</span><span class="p">],</span> <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">covar</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">],</span> <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="c1"># Now reparameterize those base samples</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">covar</span><span class="p">,</span> <span class="n">LazyTensor</span><span class="p">):</span>
-            <span class="n">covar</span> <span class="o">=</span> <span class="n">lazify</span><span class="p">(</span><span class="n">covar</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">covar</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">):</span>
+            <span class="n">covar</span> <span class="o">=</span> <span class="n">to_linear_operator</span><span class="p">(</span><span class="n">covar</span><span class="p">)</span>
         <span class="n">covar_root</span> <span class="o">=</span> <span class="n">covar</span><span class="o">.</span><span class="n">root_decomposition</span><span class="p">()</span><span class="o">.</span><span class="n">root</span>
         <span class="c1"># If necessary, adjust base_samples for rank of root decomposition</span>
         <span class="k">if</span> <span class="n">covar_root</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]:</span>
@@ -310,7 +311,7 @@
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

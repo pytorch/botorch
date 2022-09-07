@@ -173,8 +173,8 @@ Thus, $P(f \leq f^* \mid y)$ is the CDF of above Gaussian.</p>
 \end{align}
 This turns out to reduce the variance of the acquisition value by a significant factor, especially when the acquisition value is small, hence making the algorithm numerically more stable.</p>
 <p>For the case of $q &gt; 1$, joint optimization becomes difficult, since the q-batch-mode MES acquisiton function becomes not tractable due to the multivariate normal CDF functions in $Z$. Instead, the MES acquisition optimization is solved sequentially and using fantasies, <em>i. e.</em>, we generate one point each time and when we try to generate the $i$-th point, we condition the models on the $i-1$ points generated prior to this (using the $i-1$ points as fantasies).</p>
-<p><br/>
-<strong>References</strong></p>
+<br/>
+__References__
 <p>[1] <a href="https://arxiv.org/abs/1901.08275">Takeno, S., et al., <em>Multi-fidelity Bayesian Optimization with Max-value Entropy Search.</em>  arXiv:1901.08275v1, 2019</a></p>
 <p>[2] <a href="https://arxiv.org/abs/1703.01968">Wang, Z., Jegelka, S., <em>Max-value Entropy Search for Efficient Bayesian Optimization.</em> arXiv:1703.01968v3, 2018</a></p>
 </div>

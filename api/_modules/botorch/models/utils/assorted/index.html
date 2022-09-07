@@ -44,7 +44,6 @@
 <span class="kn">from</span> <span class="nn">botorch.settings</span> <span class="kn">import</span> <span class="n">_Flag</span>
 <span class="kn">from</span> <span class="nn">gpytorch</span> <span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">gpt_settings</span>
 <span class="kn">from</span> <span class="nn">gpytorch.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="kn">from</span> <span class="nn">gpytorch.utils.broadcasting</span> <span class="kn">import</span> <span class="n">_mul_broadcast_shape</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -133,11 +132,13 @@
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_batch_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">original_batch_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="c1"># check that X_batch_shape supports broadcasting or augments</span>
         <span class="c1"># original_batch_shape with extra batch dims</span>
-        <span class="n">error_msg</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s2">"The trailing batch dimensions of X must match the trailing "</span>
-            <span class="s2">"batch dimensions of the training inputs."</span>
-        <span class="p">)</span>
-        <span class="n">_mul_broadcast_shape</span><span class="p">(</span><span class="n">X_batch_shape</span><span class="p">,</span> <span class="n">original_batch_shape</span><span class="p">,</span> <span class="n">error_msg</span><span class="o">=</span><span class="n">error_msg</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">broadcast_shapes</span><span class="p">(</span><span class="n">X_batch_shape</span><span class="p">,</span> <span class="n">original_batch_shape</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"The trailing batch dimensions of X must match the trailing "</span>
+                <span class="s2">"batch dimensions of the training inputs."</span>
+            <span class="p">)</span>
     <span class="c1"># insert `m` dimension</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span>
     <span class="n">output_dim_idx</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">original_batch_shape</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_batch_shape</span><span class="p">))</span>
@@ -352,7 +353,7 @@
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

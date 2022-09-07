@@ -35,7 +35,7 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
-<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">LazyTensor</span>
+<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">LinearOperator</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -58,9 +58,9 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">mvn</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">,</span>
-        <span class="n">joint_covariance_matrix</span><span class="p">:</span> <span class="n">LazyTensor</span><span class="p">,</span>
-        <span class="n">train_train_covar</span><span class="p">:</span> <span class="n">LazyTensor</span><span class="p">,</span>
-        <span class="n">test_train_covar</span><span class="p">:</span> <span class="n">LazyTensor</span><span class="p">,</span>
+        <span class="n">joint_covariance_matrix</span><span class="p">:</span> <span class="n">LinearOperator</span><span class="p">,</span>
+        <span class="n">train_train_covar</span><span class="p">:</span> <span class="n">LinearOperator</span><span class="p">,</span>
+        <span class="n">test_train_covar</span><span class="p">:</span> <span class="n">LinearOperator</span><span class="p">,</span>
         <span class="n">train_targets</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">output_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
         <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -207,7 +207,8 @@
         <span class="n">test_marginal_samples</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_train_covar</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="p">:,</span> <span class="p">:]</span>
         <span class="c1"># we need to add noise to the train_joint_samples</span>
         <span class="c1"># THIS ASSUMES CONSTANT NOISE</span>
-        <span class="n">noise_std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_train_covar</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">_diag</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mf">0.5</span>
+        <span class="c1"># The following assumes test_train_covar is a SumLinearOperator. TODO: Improve</span>
+        <span class="n">noise_std</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_train_covar</span><span class="o">.</span><span class="n">linear_ops</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">_diag</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mf">0.5</span>
         <span class="c1"># TODO: cleanup the reshaping here</span>
         <span class="c1"># expands the noise to allow broadcasting against the noise base samples</span>
         <span class="c1"># reshape_as or view_as don't work here because we need to expand to</span>
@@ -287,7 +288,7 @@
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

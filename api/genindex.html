@@ -796,6 +796,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.test_functions.sensitivity_analysis
+
+      <ul>
+<li><a href="test_functions.html#module-botorch.test_functions.sensitivity_analysis">module</a>
+</li>
+</ul></li>
+<li>
     botorch.test_functions.synthetic
 
       <ul>
@@ -1013,6 +1020,8 @@
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.hypervolume.Hypervolume.compute">compute() (botorch.utils.multi_objective.hypervolume.Hypervolume method)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami.compute_dgsm">compute_dgsm() (botorch.test_functions.sensitivity_analysis.Ishigami method)</a>
+</li>
 <li><a href="models.html#botorch.models.fully_bayesian.compute_dists">compute_dists() (in module botorch.models.fully_bayesian)</a>
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.box_decompositions.utils.compute_dominated_hypercell_bounds_2d">compute_dominated_hypercell_bounds_2d() (in module botorch.utils.multi_objective.box_decompositions.utils)</a>
@@ -1142,7 +1151,7 @@
 </li>
 <li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior">DeterministicPosterior (class in botorch.posteriors.deterministic)</a>
 </li>
-<li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr.device">device (botorch.optim.numpy_converter.TorchAttr property)</a>
+<li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr.device">device (botorch.optim.numpy_converter.TorchAttr attribute)</a>
 <ul>
 <li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.device">(botorch.posteriors.deterministic.DeterministicPosterior property)</a>
 </li>
@@ -1250,6 +1259,12 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.dim">(botorch.test_functions.multi_objective_multi_fidelity.MOMFPark attribute)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Gsobol.dim">(botorch.test_functions.sensitivity_analysis.Gsobol attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami.dim">(botorch.test_functions.sensitivity_analysis.Ishigami attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Morris.dim">(botorch.test_functions.sensitivity_analysis.Morris attribute)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Beale.dim">(botorch.test_functions.synthetic.Beale attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Branin.dim">(botorch.test_functions.synthetic.Branin attribute)</a>
@@ -1336,7 +1351,7 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ7">DTLZ7 (class in botorch.test_functions.multi_objective)</a>
 </li>
-<li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr.dtype">dtype (botorch.optim.numpy_converter.TorchAttr property)</a>
+<li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr.dtype">dtype (botorch.optim.numpy_converter.TorchAttr attribute)</a>
 <ul>
 <li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.dtype">(botorch.posteriors.deterministic.DeterministicPosterior property)</a>
 </li>
@@ -1476,6 +1491,12 @@
 <li><a href="test_functions.html#botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.evaluate_true">(botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin method)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.evaluate_true">(botorch.test_functions.multi_objective_multi_fidelity.MOMFPark method)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Gsobol.evaluate_true">(botorch.test_functions.sensitivity_analysis.Gsobol method)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami.evaluate_true">(botorch.test_functions.sensitivity_analysis.Ishigami method)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Morris.evaluate_true">(botorch.test_functions.sensitivity_analysis.Morris method)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Ackley.evaluate_true">(botorch.test_functions.synthetic.Ackley method)</a>
 </li>
@@ -1942,6 +1963,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.penalized.GroupLassoPenalty">GroupLassoPenalty (class in botorch.acquisition.penalized)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Gsobol">Gsobol (class in botorch.test_functions.sensitivity_analysis)</a>
+</li>
 </ul></td>
 </tr></table>
 <h2 id="H">H</h2>
@@ -1990,10 +2013,10 @@
 </li>
 <li><a href="optim.html#botorch.optim.initializers.initialize_q_batch">initialize_q_batch() (in module botorch.optim.initializers)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.initializers.initialize_q_batch_nonneg">initialize_q_batch_nonneg() (in module botorch.optim.initializers)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="exceptions.html#botorch.exceptions.errors.InputDataError">InputDataError</a>
 </li>
 <li><a href="exceptions.html#botorch.exceptions.warnings.InputDataWarning">InputDataWarning</a>
@@ -2011,6 +2034,8 @@
 <li><a href="utils.html#botorch.utils.multi_objective.pareto.is_non_dominated">is_non_dominated() (in module botorch.utils.multi_objective.pareto)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.utils.is_nonnegative">is_nonnegative() (in module botorch.acquisition.utils)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami">Ishigami (class in botorch.test_functions.sensitivity_analysis)</a>
 </li>
 <li><a href="utils.html#botorch.utils.torch.BufferDict.items">items() (botorch.utils.torch.BufferDict method)</a>
 </li>
@@ -2168,7 +2193,7 @@
 </li>
 <li><a href="models.html#botorch.models.utils.assorted.mod_batch_shape">mod_batch_shape() (in module botorch.models.utils.assorted)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVResults.model">model (botorch.cross_validation.CVResults property)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVResults.model">model (botorch.cross_validation.CVResults attribute)</a>
 </li>
 <li><a href="models.html#botorch.models.model.Model">Model (class in botorch.models.model)</a>
 </li>
@@ -2364,6 +2389,8 @@
 </li>
 <li><a href="test_functions.html#module-botorch.test_functions.multi_objective_multi_fidelity">botorch.test_functions.multi_objective_multi_fidelity</a>
 </li>
+<li><a href="test_functions.html#module-botorch.test_functions.sensitivity_analysis">botorch.test_functions.sensitivity_analysis</a>
+</li>
 <li><a href="test_functions.html#module-botorch.test_functions.synthetic">botorch.test_functions.synthetic</a>
 </li>
 <li><a href="utils.html#module-botorch.utils">botorch.utils</a>
@@ -2420,6 +2447,8 @@
 <li><a href="test_functions.html#botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin">MOMFBraninCurrin (class in botorch.test_functions.multi_objective_multi_fidelity)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective_multi_fidelity.MOMFPark">MOMFPark (class in botorch.test_functions.multi_objective_multi_fidelity)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Morris">Morris (class in botorch.test_functions.sensitivity_analysis)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.Penicillin.mu_p">mu_p (botorch.test_functions.multi_objective.Penicillin attribute)</a>
 </li>
@@ -2596,9 +2625,11 @@
 <h2 id="O">O</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="cross_validation.html#botorch.cross_validation.CVResults.observed_Y">observed_Y (botorch.cross_validation.CVResults property)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVResults.observed_Y">observed_Y (botorch.cross_validation.CVResults attribute)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVResults.observed_Yvar">observed_Yvar (botorch.cross_validation.CVResults property)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVResults.observed_Yvar">observed_Yvar (botorch.cross_validation.CVResults attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Gsobol.optimal_sobol_indicies">optimal_sobol_indicies() (botorch.test_functions.sensitivity_analysis.Gsobol method)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Hartmann.optimal_value">optimal_value (botorch.test_functions.synthetic.Hartmann property)</a>
 <ul>
@@ -2670,7 +2701,7 @@
 </li>
 <li><a href="utils.html#botorch.utils.torch.BufferDict.pop">pop() (botorch.utils.torch.BufferDict method)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVResults.posterior">posterior (botorch.cross_validation.CVResults property)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVResults.posterior">posterior (botorch.cross_validation.CVResults attribute)</a>
 </li>
 <li><a href="models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior">posterior() (botorch.models.approximate_gp.ApproximateGPyTorchModel method)</a>
 <ul>
@@ -2897,7 +2928,7 @@
 </ul></li>
 <li><a href="utils.html#botorch.utils.testing.BotorchTestCase.setUp">setUp() (botorch.utils.testing.BotorchTestCase method)</a>
 </li>
-<li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr.shape">shape (botorch.optim.numpy_converter.TorchAttr property)</a>
+<li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr.shape">shape (botorch.optim.numpy_converter.TorchAttr attribute)</a>
 <ul>
 <li><a href="utils.html#botorch.utils.containers.DenseContainer.shape">(botorch.utils.containers.DenseContainer property)</a>
 </li>
@@ -3006,11 +3037,11 @@
 </li>
 <li><a href="utils.html#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_ref_point">test_ref_point() (botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase method)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.test_X">test_X (botorch.cross_validation.CVFolds property)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.test_X">test_X (botorch.cross_validation.CVFolds attribute)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.test_Y">test_Y (botorch.cross_validation.CVFolds property)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.test_Y">test_Y (botorch.cross_validation.CVFolds attribute)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.test_Yvar">test_Yvar (botorch.cross_validation.CVFolds property)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.test_Yvar">test_Yvar (botorch.cross_validation.CVFolds attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.ThreeHumpCamel">ThreeHumpCamel (class in botorch.test_functions.synthetic)</a>
 </li>
@@ -3027,11 +3058,11 @@
 </ul></li>
 <li><a href="models.html#botorch.models.multitask.KroneckerMultiTaskGP.train_full_covar">train_full_covar (botorch.models.multitask.KroneckerMultiTaskGP property)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.train_X">train_X (botorch.cross_validation.CVFolds property)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.train_X">train_X (botorch.cross_validation.CVFolds attribute)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.train_Y">train_Y (botorch.cross_validation.CVFolds property)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.train_Y">train_Y (botorch.cross_validation.CVFolds attribute)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.train_Yvar">train_Yvar (botorch.cross_validation.CVFolds property)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.train_Yvar">train_Yvar (botorch.cross_validation.CVFolds attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.active_learning.PairwiseMCPosteriorVariance.training">training (botorch.acquisition.active_learning.PairwiseMCPosteriorVariance attribute)</a>
 <ul>
@@ -3226,6 +3257,12 @@
 <li><a href="test_functions.html#botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin.training">(botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective_multi_fidelity.MOMFPark.training">(botorch.test_functions.multi_objective_multi_fidelity.MOMFPark attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Gsobol.training">(botorch.test_functions.sensitivity_analysis.Gsobol attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami.training">(botorch.test_functions.sensitivity_analysis.Ishigami attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Morris.training">(botorch.test_functions.sensitivity_analysis.Morris attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Beale.training">(botorch.test_functions.synthetic.Beale attribute)</a>
 </li>
@@ -3536,7 +3573,7 @@
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

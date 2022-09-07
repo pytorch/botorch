@@ -53,6 +53,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.likelihoods.pairwise</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">PairwiseLikelihood</span><span class="p">,</span>
     <span class="n">PairwiseProbitLikelihood</span><span class="p">,</span>
@@ -66,14 +67,14 @@
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.rbf_kernel</span> <span class="kn">import</span> <span class="n">RBFKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.scale_kernel</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.lazy.lazy_tensor</span> <span class="kn">import</span> <span class="n">LazyTensor</span>
 <span class="kn">from</span> <span class="nn">gpytorch.means.constant_mean</span> <span class="kn">import</span> <span class="n">ConstantMean</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.models.gp</span> <span class="kn">import</span> <span class="n">GP</span>
 <span class="kn">from</span> <span class="nn">gpytorch.module</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.smoothed_box_prior</span> <span class="kn">import</span> <span class="n">SmoothedBoxPrior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
-<span class="kn">from</span> <span class="nn">gpytorch.utils.cholesky</span> <span class="kn">import</span> <span class="n">psd_safe_cholesky</span>
+<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">LinearOperator</span>
+<span class="kn">from</span> <span class="nn">linear_operator.utils.cholesky</span> <span class="kn">import</span> <span class="n">psd_safe_cholesky</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">optimize</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">float32</span><span class="p">,</span> <span class="n">float64</span><span class="p">,</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn.modules.module</span> <span class="kn">import</span> <span class="n">_IncompatibleKeys</span>
@@ -96,7 +97,7 @@
 <span class="sd">    (implicitly setting it to 1) and use ScaleKernel to scale the function.</span>
 
 <span class="sd">    In the example below, the user/decision maker has stated that they prefer</span>
-<span class="sd">    the first item over the second item and the third item over the first item,</span>
+<span class="sd">    the first item over the second item and the third item over the second item,</span>
 <span class="sd">    generating comparisons [0, 1] and [2, 1].</span>
 
 <span class="sd">    Example:</span>
@@ -257,10 +258,10 @@
             <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_calc_covar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LazyTensor</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">_calc_covar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">]:</span>
         <span class="sa">r</span><span class="sd">"""Calculate the covariance matrix given two sets of datapoints"""</span>
         <span class="n">covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">covar</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">covar</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_batch_chol_inv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mat_chol</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Wrapper to perform (batched) cholesky inverse"""</span>
@@ -292,7 +293,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span> <span class="o">=</span> <span class="n">psd_safe_cholesky</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">covar_inv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_chol_inv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_prior_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LazyTensor</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">_prior_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">]:</span>
         <span class="sa">r</span><span class="sd">"""Return point prediction using prior only</span>
 
 <span class="sd">        Args:</span>
@@ -738,34 +739,48 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="PairwiseGP.load_state_dict"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP.load_state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_IncompatibleKeys</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Removes data related buffers from the `state_dict` and calls</span>
 <span class="sd">        `super().load_state_dict` with `strict=False`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            state_dict: The state dict.</span>
-<span class="sd">            strict: A boolean denoting whether to error out if all keys are not</span>
-<span class="sd">                present in the `state_dict`. Since we remove data related buffers</span>
-<span class="sd">                from the `state_dict`, this will lead to an error whenever</span>
-<span class="sd">                `strict=True`. Instead, we overwrite it with `strict=False`, and</span>
-<span class="sd">                raise a warning explaining this if `strict=True` is passed.</span>
+<span class="sd">            strict: Boolean specifying whether or not given and instance-bound</span>
+<span class="sd">                state_dicts should have identical keys. Only implemented for</span>
+<span class="sd">                `strict=False` since buffers will filters out when calling</span>
+<span class="sd">                `_load_from_state_dict`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A named tuple `_IncompatibleKeys`, containing the `missing_keys`</span>
-<span class="sd">            and `unexpected_keys`. Note that the buffers we remove from the</span>
-<span class="sd">            `state_dict` may be listed under `missing_keys`.</span>
+<span class="sd">            and `unexpected_keys`.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Received `strict=True` in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.load_state_dict "</span>
-                <span class="s2">"call. This will be overwritten with `strict=False` after removing "</span>
-                <span class="s2">"a set of data related buffers from the `state_dict`."</span><span class="p">,</span>
-                <span class="ne">RuntimeWarning</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffer_names</span><span class="p">:</span>
-            <span class="n">state_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span><span class="s2">"Passing strict=True is not supported."</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="o">=</span><span class="n">state_dict</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_load_from_state_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">state_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">local_metadata</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">missing_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">unexpected_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">error_msgs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_load_from_state_dict</span><span class="p">(</span>
+            <span class="n">state_dict</span><span class="o">=</span><span class="p">{</span>
+                <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffer_names</span>
+            <span class="p">},</span>
+            <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+            <span class="n">local_metadata</span><span class="o">=</span><span class="n">local_metadata</span><span class="p">,</span>
+            <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">missing_keys</span><span class="o">=</span><span class="n">missing_keys</span><span class="p">,</span>
+            <span class="n">unexpected_keys</span><span class="o">=</span><span class="n">unexpected_keys</span><span class="p">,</span>
+            <span class="n">error_msgs</span><span class="o">=</span><span class="n">error_msgs</span><span class="p">,</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="PairwiseGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Calculate a posterior or prior prediction.</span>
@@ -1075,7 +1090,7 @@
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

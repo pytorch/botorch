@@ -35,7 +35,6 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">gpytorch.utils.broadcasting</span> <span class="kn">import</span> <span class="n">_mul_broadcast_shape</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -99,7 +98,7 @@
 <span class="sd">        var: A `batch_shape x n` variance vectorof the Normal distribution.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        The `batch_shape x n` mean vector of the log-Normal distribution</span>
+<span class="sd">        The `batch_shape x n` mean vector of the log-Normal distribution.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">mu</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">var</span><span class="p">)</span></div>
 
@@ -122,17 +121,20 @@
     <span class="sa">r</span><span class="sd">"""Expand and copy X according to batch_shape.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        X: A `input_batch_shape x n x d`-dim tensor of inputs</span>
-<span class="sd">        batch_shape: The new batch shape</span>
+<span class="sd">        X: A `input_batch_shape x n x d`-dim tensor of inputs.</span>
+<span class="sd">        batch_shape: The new batch shape.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A `input_batch_shape x batch_shape x n x d`-dim tensor of inputs</span>
+<span class="sd">        A `new_batch_shape x n x d`-dim tensor of inputs, where `new_batch_shape`</span>
+<span class="sd">        is `input_batch_shape` against `batch_shape`.</span>
 <span class="sd">    """</span>
-    <span class="n">err_msg</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">"Provided batch shape (</span><span class="si">{</span><span class="n">batch_shape</span><span class="si">}</span><span class="s2">) and input batch shape "</span>
-        <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">) are not broadcastable."</span>
-    <span class="p">)</span>
-    <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">_mul_broadcast_shape</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">batch_shape</span><span class="p">,</span> <span class="n">error_msg</span><span class="o">=</span><span class="n">err_msg</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">broadcast_shapes</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">batch_shape</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Provided batch shape (</span><span class="si">{</span><span class="n">batch_shape</span><span class="si">}</span><span class="s2">) and input batch shape "</span>
+            <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">) are not broadcastable."</span>
+        <span class="p">)</span>
     <span class="n">expand_shape</span> <span class="o">=</span> <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
     <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">expand_shape</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span></div>
 </pre></div>
@@ -177,7 +179,7 @@
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

@@ -355,8 +355,8 @@ To speed up integration over the function values at the previously evaluated des
 <h3 id="Perform-Bayesian-Optimization-loop-with-$q$NEHVI,-$q$EHVI,-and-$q$NParEGO">Perform Bayesian Optimization loop with $q$NEHVI, $q$EHVI, and $q$NParEGO<a class="anchor-link" href="#Perform-Bayesian-Optimization-loop-with-$q$NEHVI,-$q$EHVI,-and-$q$NParEGO">¶</a></h3><p>The Bayesian optimization "loop" for a batch size of $q$ simply iterates the following steps:</p>
 <ol>
 <li>given a surrogate model, choose a batch of points $\{x_1, x_2, \ldots x_q\}$</li>
-<li>observe $f(x)$ for each $x$ in the batch </li>
-<li>update the surrogate model. </li>
+<li>observe $f(x)$ for each $x$ in the batch</li>
+<li>update the surrogate model.</li>
 </ol>
 <p>Just for illustration purposes, we run one trial with <code>N_BATCH=20</code> rounds of optimization. The acquisition function is approximated using <code>MC_SAMPLES=128</code> samples.</p>
 <p><em>Note</em>: Running this may take a little while.</p>
@@ -410,7 +410,7 @@ To speed up integration over the function values at the previously evaluated des
 <span class="c1"># run N_BATCH rounds of BayesOpt after the initial random batch</span>
 <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">N_BATCH</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>    
     
-    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
     
     <span class="c1"># fit the models</span>
     <span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll_qparego</span><span class="p">)</span>
@@ -469,7 +469,7 @@ To speed up integration over the function values at the previously evaluated des
     <span class="n">mll_qehvi</span><span class="p">,</span> <span class="n">model_qehvi</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span><span class="n">train_x_qehvi</span><span class="p">,</span> <span class="n">train_obj_qehvi</span><span class="p">)</span>
     <span class="n">mll_qnehvi</span><span class="p">,</span> <span class="n">model_qnehvi</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span><span class="n">train_x_qnehvi</span><span class="p">,</span> <span class="n">train_obj_qnehvi</span><span class="p">)</span>
     
-    <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
     
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span>

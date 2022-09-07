@@ -126,8 +126,8 @@
         <span class="n">bdims</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="c1"># We use q=1 here b/c ScalarizedObjective currently does not fully exploit</span>
-            <span class="c1"># lazy tensor operations and thus may be slow / overly memory-hungry.</span>
-            <span class="c1"># TODO (T52818288): Properly use lazy tensors in scalarize_posterior</span>
+            <span class="c1"># LinearOperator operations and thus may be slow / overly memory-hungry.</span>
+            <span class="c1"># TODO (T52818288): Properly use LinearOperators in scalarize_posterior</span>
             <span class="n">mc_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mc_points</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">bdims</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># While we only need marginal variances, we can evaluate for q&gt;1</span>
@@ -252,7 +252,7 @@
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>

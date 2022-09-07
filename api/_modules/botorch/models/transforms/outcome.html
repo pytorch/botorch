@@ -59,7 +59,11 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">TransformedPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize_indices</span>
-<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">BlockDiagLazyTensor</span><span class="p">,</span> <span class="n">CholLazyTensor</span><span class="p">,</span> <span class="n">DiagLazyTensor</span>
+<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BlockDiagLinearOperator</span><span class="p">,</span>
+    <span class="n">CholLinearOperator</span><span class="p">,</span>
+    <span class="n">DiagLinearOperator</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ModuleDict</span>
 
@@ -404,22 +408,22 @@
             <span class="ow">or</span> <span class="n">mvn</span><span class="o">.</span><span class="n">_MultivariateNormal__unbroadcasted_scale_tril</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="p">):</span>
             <span class="c1"># if already computed, we can save a lot of time using scale_tril</span>
-            <span class="n">covar_tf</span> <span class="o">=</span> <span class="n">CholLazyTensor</span><span class="p">(</span><span class="n">mvn</span><span class="o">.</span><span class="n">scale_tril</span> <span class="o">*</span> <span class="n">scale_fac</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">covar_tf</span> <span class="o">=</span> <span class="n">CholLinearOperator</span><span class="p">(</span><span class="n">mvn</span><span class="o">.</span><span class="n">scale_tril</span> <span class="o">*</span> <span class="n">scale_fac</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">lcv</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span>
             <span class="n">scale_fac</span> <span class="o">=</span> <span class="n">scale_fac</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">lcv</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
             <span class="c1"># TODO: Remove the custom logic with next GPyTorch release (T126095032).</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lcv</span><span class="p">,</span> <span class="n">BlockDiagLazyTensor</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lcv</span><span class="p">,</span> <span class="n">BlockDiagLinearOperator</span><span class="p">):</span>
                 <span class="c1"># Keep the block diag structure of lcv.</span>
-                <span class="n">base_lcv</span> <span class="o">=</span> <span class="n">lcv</span><span class="o">.</span><span class="n">base_lazy_tensor</span>
-                <span class="n">scale_mat</span> <span class="o">=</span> <span class="n">DiagLazyTensor</span><span class="p">(</span>
+                <span class="n">base_lcv</span> <span class="o">=</span> <span class="n">lcv</span><span class="o">.</span><span class="n">base_linear_op</span>
+                <span class="n">scale_mat</span> <span class="o">=</span> <span class="n">DiagLinearOperator</span><span class="p">(</span>
                     <span class="n">scale_fac</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">scale_fac</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">lcv</span><span class="o">.</span><span class="n">num_blocks</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
                 <span class="p">)</span>
                 <span class="n">base_lcv_tf</span> <span class="o">=</span> <span class="n">scale_mat</span> <span class="o">@</span> <span class="n">base_lcv</span> <span class="o">@</span> <span class="n">scale_mat</span>
-                <span class="n">covar_tf</span> <span class="o">=</span> <span class="n">BlockDiagLazyTensor</span><span class="p">(</span><span class="n">base_lazy_tensor</span><span class="o">=</span><span class="n">base_lcv_tf</span><span class="p">)</span>
+                <span class="n">covar_tf</span> <span class="o">=</span> <span class="n">BlockDiagLinearOperator</span><span class="p">(</span><span class="n">base_linear_op</span><span class="o">=</span><span class="n">base_lcv_tf</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># allow batch-evaluation of the model</span>
-                <span class="n">scale_mat</span> <span class="o">=</span> <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">scale_fac</span><span class="p">)</span>
+                <span class="n">scale_mat</span> <span class="o">=</span> <span class="n">DiagLinearOperator</span><span class="p">(</span><span class="n">scale_fac</span><span class="p">)</span>
                 <span class="n">covar_tf</span> <span class="o">=</span> <span class="n">scale_mat</span> <span class="o">@</span> <span class="n">lcv</span> <span class="o">@</span> <span class="n">scale_mat</span>
 
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"interleaved"</span><span class="p">:</span> <span class="n">mvn</span><span class="o">.</span><span class="n">_interleaved</span><span class="p">}</span> <span class="k">if</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_is_mt</span> <span class="k">else</span> <span class="p">{}</span>
@@ -846,7 +850,7 @@
 </form>
 </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 </div>
 </div>
 <div class="clearer"></div>
