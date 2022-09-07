@@ -86,7 +86,7 @@ jobs:
         conda install -y -c pytorch pytorch cpuonly
         conda install -y scipy sphinx pytest flake8
         conda install -y -c gpytorch gpytorch
-        conda install -y -c conda-forge pyro-ppl>=1.8.1
+        conda install -y -c conda-forge pyro-ppl>=1.8.2
         conda config --set anaconda_upload no
     - name: Build and verify conda package
       shell: bash -l {0}

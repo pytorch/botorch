@@ -58,7 +58,7 @@ Optimization simply use Ax.
 - Python >= 3.8
 - PyTorch >= 1.11
 - gpytorch >= 1.9.0
-- pyro-ppl >= 1.8.1
+- pyro-ppl >= 1.8.2
 - scipy
 - multiple-dispatch
 
