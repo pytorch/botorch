@@ -2,6 +2,32 @@
 
 The release log for BoTorch.
 
+## [0.7.0] - Sep 7, 2022
+
+#### Compatibility
+* Require python >= 3.8 (via #1347).
+* Support for python 3.10 (via #1379).
+* Require PyTorch >= 1.11 (via (#1363).
+* Require GPyTorch >= 1.9.0 (#1347).
+  * GPyTorch 1.9.0 is a major refactor that factors out the lazy tensor
+  functionality into a new `LinearOperator` library, which required
+  a number of adjustments to BoTorch (#1363, #1377).
+* Require pyro >= 1.8.2 (#1379).
+
+#### New Features
+* Add ability to generate the features appended in the `AppendFeatures` input
+transform via a generic callable (#1354).
+* Add new synthetic test functions for sensitivity analysis (#1355, #1361).
+
+#### Other Changes
+* Use `time.monotonic()` instead of `time.time()` to measure duration (#1353).
+* Allow passing `Y_samples` directly in `MARS.set_baseline_Y` (#1364).
+
+#### Bug Fixes
+* Patch `state_dict` loading for `PairwiseGP` (#1359).
+* Fix `batch_shape` handling in `Normalize` and `InputStandardize` transforms (#1360).
+
+
 ## [0.6.6] - Aug 12, 2022
 
 #### Compatibility
