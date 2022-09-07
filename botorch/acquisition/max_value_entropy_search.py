@@ -46,8 +46,9 @@ from botorch.models.model import Model
 from botorch.models.utils import check_no_nans
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
-from gpytorch.functions import inv_quad
-from gpytorch.utils.cholesky import psd_safe_cholesky
+
+from linear_operator.functions import inv_quad
+from linear_operator.utils.cholesky import psd_safe_cholesky
 from scipy.optimize import brentq
 from scipy.stats import norm
 from torch import Tensor

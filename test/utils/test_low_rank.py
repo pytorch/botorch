@@ -16,8 +16,8 @@ from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
 )
-from gpytorch.utils.errors import NanError, NotPSDError
 from linear_operator.operators import BlockDiagLinearOperator, to_linear_operator
+from linear_operator.utils.errors import NanError, NotPSDError
 
 
 class TestExtractBatchCovar(BotorchTestCase):

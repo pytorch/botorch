@@ -25,7 +25,7 @@ from botorch.optim.numpy_converter import set_params_with_array, TorchAttr
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
-from gpytorch.utils.errors import NanError, NotPSDError
+from linear_operator.utils.errors import NanError, NotPSDError
 from torch import Tensor
 
 

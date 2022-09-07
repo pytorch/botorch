@@ -49,7 +49,7 @@ from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from gpytorch.priors.prior import Prior
 from gpytorch.priors.torch_priors import GammaPrior
-from gpytorch.utils.errors import NanError, NotPSDError
+from linear_operator.utils.errors import NanError, NotPSDError
 
 
 class DummyPrior(Prior):
