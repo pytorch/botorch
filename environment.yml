@@ -7,4 +7,4 @@ dependencies:
   - pytorch>=1.11
   - gpytorch>-1.9.0
   - scipy
-  - pyro-ppl>=1.8.1
+  - pyro-ppl>=1.8.2
