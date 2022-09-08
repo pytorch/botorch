@@ -33,7 +33,11 @@ from botorch.models.transforms.utils import (
 )
 from botorch.posteriors import GPyTorchPosterior, Posterior, TransformedPosterior
 from botorch.utils.transforms import normalize_indices
-from linear_operator.operators import CholLinearOperator, DiagLinearOperator
+from linear_operator.operators import (
+    BlockDiagLinearOperator,
+    CholLinearOperator,
+    DiagLinearOperator,
+)
 from torch import Tensor
 from torch.nn import Module, ModuleDict
 
@@ -382,8 +386,19 @@ class Standardize(OutcomeTransform):
         else:
             lcv = mvn.lazy_covariance_matrix
             scale_fac = scale_fac.expand(lcv.shape[:-1])
-            scale_mat = DiagLinearOperator(scale_fac)
-            covar_tf = scale_mat @ lcv @ scale_mat
+            # TODO: Remove the custom logic with next GPyTorch release (T126095032).
+            if isinstance(lcv, BlockDiagLinearOperator):
+                # Keep the block diag structure of lcv.
+                base_lcv = lcv.base_linear_op
+                scale_mat = DiagLinearOperator(
+                    scale_fac.view(*scale_fac.shape[:-1], lcv.num_blocks, -1)
+                )
+                base_lcv_tf = scale_mat @ base_lcv @ scale_mat
+                covar_tf = BlockDiagLinearOperator(base_linear_op=base_lcv_tf)
+            else:
+                # allow batch-evaluation of the model
+                scale_mat = DiagLinearOperator(scale_fac)
+                covar_tf = scale_mat @ lcv @ scale_mat
 
         kwargs = {"interleaved": mvn._interleaved} if posterior._is_mt else {}
         mvn_tf = mvn.__class__(mean=mean_tf, covariance_matrix=covar_tf, **kwargs)
