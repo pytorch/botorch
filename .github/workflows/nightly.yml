@@ -25,6 +25,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+        pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
     - name: Unit tests and coverage
@@ -51,6 +52,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+        pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
         pip install --upgrade build setuptools setuptools_scm wheel
@@ -97,7 +99,8 @@ jobs:
         conda install -y scipy setuptools_scm conda-build conda-verify
         conda config --set anaconda_upload no
         conda install -y -c pytorch-nightly pytorch cpuonly
-        conda install -y -c conda-forge pyro-ppl>=1.8.0
+        conda install -y -c conda-forge pyro-ppl>=1.8.2
+        pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
     - name: Build and verify conda package
       shell: bash -l {0}
@@ -120,13 +123,11 @@ jobs:
       run: git fetch --prune --unshallow
     - name: Install dependencies
       run: |
+        pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[dev]
         pip install git+https://github.com/facebook/Ax.git
-        # NOTE: nbconvert 6.4.4 is incompatible with jinja2 3.1.0.
-        # We can unpin this with a future release of nbconvert.
-        pip install beautifulsoup4 ipython nbconvert "jinja2==3.0.3"
-    - name: Unit tests
+        pip install beautifulsoup4 ipython nbconvert jinja2
       run: |
         pytest -ra
     - name: Publish latest website
