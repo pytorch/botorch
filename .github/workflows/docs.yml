@@ -20,14 +20,13 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: "3.8"
     - name: Install dependencies
       run: |
+        pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[dev]
-        # NOTE: nbconvert 6.4.4 is incompatible with jinja2 3.1.0.
-        # We can unpin this with a future release of nbconvert.
-        pip install beautifulsoup4 ipython nbconvert "jinja2==3.0.3"
+        pip install beautifulsoup4 ipython nbconvert jinja2
     - name: Validate Sphinx
       run: |
         python scripts/validate_sphinx.py -p "$(pwd)"

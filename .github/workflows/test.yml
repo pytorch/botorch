@@ -27,6 +27,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+        pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
     - name: Unit tests and coverage
@@ -57,6 +58,7 @@ jobs:
       run: |
         conda install -y -c pytorch-nightly pytorch cpuonly
         conda install -y pip scipy sphinx pytest flake8
+        pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
     - name: Unit tests
