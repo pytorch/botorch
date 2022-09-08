@@ -128,6 +128,7 @@ jobs:
         pip install .[dev]
         pip install git+https://github.com/facebook/Ax.git
         pip install beautifulsoup4 ipython nbconvert jinja2
+    - name: Unit tests
       run: |
         pytest -ra
     - name: Publish latest website
