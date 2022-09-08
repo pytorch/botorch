@@ -94,6 +94,7 @@ running into the occasional bug here or there), you can install the latest
 development version directly from GitHub (this will also require installing
 the current GPyTorch development version):
 ```bash
+pip install --upgrade git+https://github.com/cornellius-gp/linear_operator.git
 pip install --upgrade git+https://github.com/cornellius-gp/gpytorch.git
 pip install --upgrade git+https://github.com/pytorch/botorch.git
 ```
