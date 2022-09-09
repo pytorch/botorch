@@ -25,6 +25,7 @@ from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
 from botorch.sampling.samplers import MCSampler
+from botorch.utils.datasets import SupervisedDataset
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel
 from gpytorch.kernels.kernel import Kernel
@@ -372,3 +373,26 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         covar_i = self.task_covar_module(latent_features)
         covar = covar_x.mul(covar_i)
         return MultivariateNormal(mean_x, covar)
+
+    @classmethod
+    def construct_inputs(
+        cls,
+        training_data: Dict[str, SupervisedDataset],
+        task_feature: int,
+        rank: Optional[int] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        r"""Construct `Model` keyword arguments from dictionary of `SupervisedDataset`.
+
+        Args:
+            training_data: Dictionary of `SupervisedDataset`.
+            task_feature: Column index of embedded task indicator features. For details,
+                see `parse_training_data`.
+            rank: The rank of the cross-task covariance matrix.
+        """
+
+        inputs = super().construct_inputs(
+            training_data=training_data, task_feature=task_feature, rank=rank, **kwargs
+        )
+        inputs.pop("task_covar_prior")
+        return inputs
