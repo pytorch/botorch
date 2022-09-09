@@ -577,7 +577,11 @@ class PairwiseGP(Model, GP):
             self.likelihood_hess = hl
             cov_hl = covar @ hl
             if eye is None:
-                eye = torch.diag_embed(torch.ones(cov_hl.shape[:-1]))
+                eye = torch.diag_embed(
+                    torch.ones(
+                        cov_hl.shape[:-1], device=cov_hl.device, dtype=cov_hl.dtype
+                    )
+                )
             cov_hl = cov_hl + eye  # add 1 to cov_hl
             g = self._grad_posterior_f(x, dp, D, DT, ch, ci)
             cov_g = covar @ g.unsqueeze(-1)
@@ -1008,7 +1012,9 @@ class PairwiseLaplaceMarginalLogLikelihood(MarginalLogLikelihood):
         log_posterior = -log_posterior.clamp(min=0)
 
         mll = model.covar @ model.likelihood_hess
-        mll = mll + torch.diag_embed(torch.ones(mll.shape[:-1]))
+        mll = mll + torch.diag_embed(
+            torch.ones(mll.shape[:-1], device=mll.device, dtype=mll.dtype)
+        )
         mll = -0.5 * torch.logdet(mll)
 
         mll = mll + log_posterior
