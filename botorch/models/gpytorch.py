@@ -685,7 +685,9 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         else:
             # Otherwise, make a MultitaskMultivariateNormal out of this
             mtmvn = MultitaskMultivariateNormal(
-                mean=mvn.mean.view(*X.shape[:-2], num_outputs, -1).transpose(-1, -2),
+                mean=mvn.mean.view(*mvn.mean.shape[:-1], num_outputs, -1).transpose(
+                    -1, -2
+                ),
                 covariance_matrix=mvn.lazy_covariance_matrix,
                 interleaved=False,
             )
