@@ -185,13 +185,25 @@ def is_fully_bayesian(model: Model) -> bool:
     """
     from botorch.models import ModelList, ModelListGP
     from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
+    from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
 
-    if isinstance(model, SaasFullyBayesianSingleTaskGP):
+    full_bayesian_model_cls = [
+        SaasFullyBayesianSingleTaskGP,
+        SaasFullyBayesianMultiTaskGP,
+    ]
+
+    if any(isinstance(model, m_cls) for m_cls in full_bayesian_model_cls):
         return True
-    elif isinstance(model, (ModelList, ModelListGP)) and any(
-        isinstance(m, SaasFullyBayesianSingleTaskGP) for m in model.models
-    ):
-        return True
+    elif isinstance(model, ModelList):
+        for m in model.models:
+            if any(isinstance(m, m_cls) for m_cls in full_bayesian_model_cls):
+                return True
+            elif isinstance(m, ModelListGP) and any(
+                isinstance(m_sub, m_cls)
+                for m_sub in m.models
+                for m_cls in full_bayesian_model_cls
+            ):
+                return True
     return False
 
 

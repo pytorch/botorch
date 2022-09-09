@@ -13,12 +13,14 @@ from __future__ import annotations
 import logging
 import warnings
 from copy import deepcopy
-from typing import Any, Callable
+from typing import Any, Callable, Union
 
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
 from botorch.models.converter import batched_to_model_list, model_list_to_batched
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
+from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
+
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.optim.fit import fit_gpytorch_scipy
 from botorch.optim.utils import sample_all_priors
@@ -157,7 +159,7 @@ def fit_gpytorch_model(
 
 
 def fit_fully_bayesian_model_nuts(
-    model: SaasFullyBayesianSingleTaskGP,
+    model: Union[SaasFullyBayesianSingleTaskGP, SaasFullyBayesianMultiTaskGP],
     max_tree_depth: int = 6,
     warmup_steps: int = 512,
     num_samples: int = 256,
