@@ -145,6 +145,12 @@ class SaasPyroModel(PyroModel):
     `covar_module`).
     """
 
+    def set_inputs(
+        self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
+    ):
+        super().set_inputs(train_X, train_Y, train_Yvar)
+        self.ard_num_dims = self.train_X.shape[-1]
+
     def sample(self) -> None:
         r"""Sample from the SAAS model.
 
@@ -155,7 +161,7 @@ class SaasPyroModel(PyroModel):
         outputscale = self.sample_outputscale(concentration=2.0, rate=0.15, **tkwargs)
         mean = self.sample_mean(**tkwargs)
         noise = self.sample_noise(**tkwargs)
-        lengthscale = self.sample_lengthscale(dim=self.train_X.shape[-1], **tkwargs)
+        lengthscale = self.sample_lengthscale(dim=self.ard_num_dims, **tkwargs)
         k = matern52_kernel(X=self.train_X, lengthscale=lengthscale)
         k = outputscale * k + noise * torch.eye(self.train_X.shape[0], **tkwargs)
         pyro.sample(
@@ -252,7 +258,7 @@ class SaasPyroModel(PyroModel):
         mean_module = ConstantMean(batch_shape=batch_shape).to(**tkwargs)
         covar_module = ScaleKernel(
             base_kernel=MaternKernel(
-                ard_num_dims=self.train_X.shape[-1],
+                ard_num_dims=self.ard_num_dims,
                 batch_shape=batch_shape,
             ),
             batch_shape=batch_shape,

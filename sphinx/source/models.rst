@@ -89,6 +89,11 @@ Fully Bayesian GP Models
 .. automodule:: botorch.models.fully_bayesian
     :members:
 
+Fully Bayesian Multitask GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.fully_bayesian_multitask
+    :members:
+
 
 Model Components
 -------------------------------------------
