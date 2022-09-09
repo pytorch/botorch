@@ -52,6 +52,22 @@ from gpytorch.means import ConstantMean
 from linear_operator.operators import to_linear_operator
 
 
+EXPECTED_KEYS = [
+    "mean_module.raw_constant",
+    "covar_module.raw_outputscale",
+    "covar_module.base_kernel.raw_lengthscale",
+    "covar_module.base_kernel.raw_lengthscale_constraint.lower_bound",
+    "covar_module.base_kernel.raw_lengthscale_constraint.upper_bound",
+    "covar_module.raw_outputscale_constraint.lower_bound",
+    "covar_module.raw_outputscale_constraint.upper_bound",
+]
+EXPECTED_KEYS_NOISE = EXPECTED_KEYS + [
+    "likelihood.noise_covar.raw_noise",
+    "likelihood.noise_covar.raw_noise_constraint.lower_bound",
+    "likelihood.noise_covar.raw_noise_constraint.upper_bound",
+]
+
+
 class CustomPyroModel(PyroModel):
     def sample(self) -> None:
         pass
@@ -310,6 +326,24 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             self.assertEqual(median_lengthscale.shape, torch.Size([4]))
             self.assertEqual(model.num_mcmc_samples, 3)
 
+            # Test loading via state dict
+            state_dict = model.state_dict()
+            true_keys = EXPECTED_KEYS_NOISE if infer_noise else EXPECTED_KEYS
+            self.assertEqual(set(state_dict.keys()), set(true_keys))
+            _, _, _, model_new = self._get_data_and_model(
+                infer_noise=infer_noise, **tkwargs
+            )
+            self.assertEqual(model_new.state_dict(), {})
+            model_new.load_state_dict(state_dict)
+            self.assertEqual(model.state_dict().keys(), model_new.state_dict().keys())
+            for k in model.state_dict().keys():
+                self.assertTrue(
+                    (model.state_dict()[k] == model_new.state_dict()[k]).all()
+                )
+            preds1, preds2 = model.posterior(test_X), model_new.posterior(test_X)
+            self.assertTrue((preds1.mean == preds2.mean).all())
+            self.assertTrue((preds1.variance == preds2.variance).all())
+
             # Make sure the model shapes are set correctly
             self.assertEqual(model.pyro_model.train_X.shape, torch.Size([n, d]))
             self.assertTrue(torch.allclose(model.pyro_model.train_X, train_X))
@@ -520,6 +554,10 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 train_Yvar=train_Yvar,
                 pyro_model=CustomPyroModel(),
             )
+            with self.assertRaisesRegex(
+                NotImplementedError, "load_state_dict only works for SaasPyroModel"
+            ):
+                model.load_state_dict({})
             self.assertIsInstance(model.pyro_model, CustomPyroModel)
             self.assertTrue(torch.allclose(model.pyro_model.train_X, train_X))
             self.assertTrue(torch.allclose(model.pyro_model.train_Y, train_Y))
