@@ -46,6 +46,8 @@ from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
 from gpytorch.means import ConstantMean
 
+from .test_multitask import _gen_fixed_noise_model_and_data
+
 
 class TestFullyBayesianMultiTaskGP(BotorchTestCase):
     def _get_data_and_model(self, task_rank: Optional[int] = 1, **tkwargs):
@@ -509,3 +511,33 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                     mcmc_samples["latent_features"],
                 )
             )
+
+    def test_construct_inputs(self):
+        for dtype in [torch.float, torch.double]:
+            tkwargs = {"device": self.device, "dtype": dtype}
+            task_feature = 0
+
+            (
+                _,
+                datasets,
+                (train_X, train_Y, train_Yvar),
+            ) = _gen_fixed_noise_model_and_data(task_feature=task_feature, **tkwargs)
+
+            model = SaasFullyBayesianMultiTaskGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                train_Yvar=train_Yvar,
+                task_feature=task_feature,
+            )
+
+            data_dict = model.construct_inputs(
+                datasets,
+                task_feature=task_feature,
+                rank=1,
+            )
+            self.assertTrue(torch.equal(data_dict["train_X"], train_X))
+            self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
+            self.assertTrue(torch.allclose(data_dict["train_Yvar"], train_Yvar))
+            self.assertEqual(data_dict["task_feature"], task_feature)
+            self.assertEqual(data_dict["rank"], 1)
+            self.assertTrue("task_covar_prior" not in data_dict)
