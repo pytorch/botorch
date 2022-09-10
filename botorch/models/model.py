@@ -36,18 +36,7 @@ class Model(Module, ABC):
 
     Model cannot be used directly; it only defines an API for other BoTorch
     models.
-
-    Args:
-        _has_transformed_inputs: A boolean denoting whether `train_inputs` are currently
-            stored as transformed or not.
-        _original_train_inputs: A Tensor storing the original train inputs for use in
-            `_revert_to_original_inputs`. Note that this is necessary since
-            transform / untransform cycle introduces numerical errors which lead
-            to upstream errors during training.
     """
-
-    _has_transformed_inputs: bool = False
-    _original_train_inputs: Optional[Tensor] = None
 
     @abstractmethod
     def posterior(
@@ -199,57 +188,11 @@ class Model(Module, ABC):
         Returns:
             A tensor of transformed inputs
         """
-        if input_transform is not None:
-            input_transform.to(X)
-            return input_transform(X)
-        try:
-            return self.input_transform(X)
-        except AttributeError:
-            return X
-
-    def _set_transformed_inputs(self) -> None:
-        r"""Update training inputs with transformed inputs."""
-        if hasattr(self, "input_transform") and not self._has_transformed_inputs:
-            if hasattr(self, "train_inputs"):
-                self._original_train_inputs = self.train_inputs[0]
-                with torch.no_grad():
-                    X_tf = self.input_transform.preprocess_transform(
-                        self.train_inputs[0]
-                    )
-                self.set_train_data(X_tf, strict=False)
-                self._has_transformed_inputs = True
-            else:
-                warnings.warn(
-                    "Could not update `train_inputs` with transformed inputs "
-                    f"since {self.__class__.__name__} does not have a `train_inputs` "
-                    "attribute. Make sure that the `input_transform` is applied to "
-                    "both the train inputs and test inputs.",
-                    RuntimeWarning,
-                )
-
-    def _revert_to_original_inputs(self) -> None:
-        r"""Revert training inputs back to original."""
-        if hasattr(self, "input_transform") and self._has_transformed_inputs:
-            self.set_train_data(self._original_train_inputs, strict=False)
-            self._has_transformed_inputs = False
-
-    def eval(self) -> Model:
-        r"""Puts the model in `eval` mode and sets the transformed inputs."""
-        self._set_transformed_inputs()
-        return super().eval()
-
-    def train(self, mode: bool = True) -> Model:
-        r"""Puts the model in `train` mode and reverts to the original inputs.
-
-        Args:
-            mode: A boolean denoting whether to put in `train` or `eval` mode.
-                If `False`, model is put in `eval` mode.
-        """
-        if mode:
-            self._revert_to_original_inputs()
-        else:
-            self._set_transformed_inputs()
-        return super().train(mode=mode)
+        warnings.warn(
+            "`Model.transform_inputs` is deprecated. Input transforms are applied at GPyTorch model `__call__` instead.",
+            DeprecationWarning,
+        )
+        return X
 
 
 class ModelList(Model):
@@ -413,10 +356,8 @@ class ModelList(Model):
         Returns:
             A list of tensors of transformed inputs.
         """
-        transformed_X_list = []
-        for model in self.models:
-            try:
-                transformed_X_list.append(model.input_transform(X))
-            except AttributeError:
-                transformed_X_list.append(X)
-        return transformed_X_list
+        warnings.warn(
+            "`Model.transform_inputs` is deprecated. Input transforms are applied at GPyTorch model `__call__` instead.",
+            DeprecationWarning,
+        )
+        return [X for _ in self.models]
