@@ -172,6 +172,9 @@ observation noise levels (requires noise observations).</li>
 <li><a href="../api/models.html#botorch.models.multitask.KroneckerMultiTaskGP"><code>KroneckerMultiTaskGP</code></a>: A multi-task,
 multi-output GP using an ICM kernel, with Kronecker structure. Useful for
 multi-fidelity optimization.</li>
+<li><a href="../api/models.html#saasfullybayesianmultitaskgp"><code>SaasFullyBayesianMultiTaskGP</code></a>:
+a fully Bayesian multi-task GP using an ICM kernel. The data kernel uses the SAAS
+prior to model high-dimensional parameter spaces.</li>
 </ul>
 <p>All of the above models use Matérn 5/2 kernels with Automatic Relevance
 Discovery (ARD), and have reasonable priors on hyperparameters that make them
