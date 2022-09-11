@@ -326,23 +326,26 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             self.assertEqual(median_lengthscale.shape, torch.Size([4]))
             self.assertEqual(model.num_mcmc_samples, 3)
 
-            # Test loading via state dict
-            state_dict = model.state_dict()
+            # Check the keys in the state dict
             true_keys = EXPECTED_KEYS_NOISE if infer_noise else EXPECTED_KEYS
-            self.assertEqual(set(state_dict.keys()), set(true_keys))
-            _, _, _, model_new = self._get_data_and_model(
-                infer_noise=infer_noise, **tkwargs
-            )
-            self.assertEqual(model_new.state_dict(), {})
-            model_new.load_state_dict(state_dict)
-            self.assertEqual(model.state_dict().keys(), model_new.state_dict().keys())
-            for k in model.state_dict().keys():
-                self.assertTrue(
-                    (model.state_dict()[k] == model_new.state_dict()[k]).all()
+            self.assertEqual(set(model.state_dict().keys()), set(true_keys))
+
+            for i in range(2):  # Test loading via state dict
+                m = model if i == 0 else ModelList(model, deterministic)
+                state_dict = m.state_dict()
+                _, _, _, m_new = self._get_data_and_model(
+                    infer_noise=infer_noise, **tkwargs
                 )
-            preds1, preds2 = model.posterior(test_X), model_new.posterior(test_X)
-            self.assertTrue((preds1.mean == preds2.mean).all())
-            self.assertTrue((preds1.variance == preds2.variance).all())
+                m_new = m_new if i == 0 else ModelList(m_new, deterministic)
+                if i == 0:
+                    self.assertEqual(m_new.state_dict(), {})
+                m_new.load_state_dict(state_dict)
+                self.assertEqual(m.state_dict().keys(), m_new.state_dict().keys())
+                for k in m.state_dict().keys():
+                    self.assertTrue((m.state_dict()[k] == m_new.state_dict()[k]).all())
+                preds1, preds2 = m.posterior(test_X), m_new.posterior(test_X)
+                self.assertTrue(torch.equal(preds1.mean, preds2.mean))
+                self.assertTrue(torch.equal(preds1.variance, preds2.variance))
 
             # Make sure the model shapes are set correctly
             self.assertEqual(model.pyro_model.train_X.shape, torch.Size([n, d]))

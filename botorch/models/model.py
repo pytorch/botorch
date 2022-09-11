@@ -16,7 +16,7 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from copy import deepcopy
-from typing import Any, Callable, Dict, Hashable, List, Optional, Union
+from typing import Any, Callable, Dict, Hashable, List, Mapping, Optional, Union
 
 import numpy as np
 import torch
@@ -420,3 +420,17 @@ class ModelList(Model):
             except AttributeError:
                 transformed_X_list.append(X)
         return transformed_X_list
+
+    def load_state_dict(
+        self, state_dict: Mapping[str, Any], strict: bool = True
+    ) -> None:
+        """Initialize the fully Bayesian models before loading the state dict."""
+        for i, m in enumerate(self.models):
+            if is_fully_bayesian(m):
+                filtered_dict = {
+                    k.replace(f"models.{i}.", ""): v
+                    for k, v in state_dict.items()
+                    if k.startswith(f"models.{i}")
+                }
+                m.load_state_dict(filtered_dict)
+        super().load_state_dict(state_dict=state_dict, strict=strict)
