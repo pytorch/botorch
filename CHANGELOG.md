@@ -2,6 +2,24 @@
 
 The release log for BoTorch.
 
+## [0.7.1] - Sep 13, 2022
+
+#### Compatibility
+* Pin GPyTorch >= 1.9.0 (#1397).
+* Pin linear_operator == 0.1.1 (#1397).
+
+#### New Features
+* Implement `SaasFullyBayesianMultiTaskGP` and related utilities (#1181, #1203).
+
+#### Other Changes
+* Support loading a state dict for `SaasFullyBayesianSingleTaskGP` (#1120).
+* Update `load_state_dict` for `ModelList` to support fully Bayesian models (#1395).
+* Add `is_one_to_many` attribute to input transforms (#1396).
+
+#### Bug Fixes
+* Fix `PairwiseGP` on GPU (#1388).
+
+
 ## [0.7.0] - Sep 7, 2022
 
 #### Compatibility
