@@ -41,6 +41,8 @@ class InputTransform(ABC):
         between `gpytorch.module.Module` and `torch.nn.Module` in `Warp`.
 
     Properties:
+        is_one_to_many: A boolean denoting whether the transform produces
+            multiple values for each input.
         transform_on_train: A boolean indicating whether to apply the
             transform in train() mode.
         transform_on_eval: A boolean indicating whether to apply the
@@ -51,6 +53,7 @@ class InputTransform(ABC):
     :meta private:
     """
 
+    is_one_to_many: bool = False
     transform_on_eval: bool
     transform_on_train: bool
     transform_on_fantasize: bool
@@ -177,6 +180,7 @@ class ChainedInputTransform(InputTransform, ModuleDict):
         self.transform_on_eval = False
         self.transform_on_fantasize = False
         for tf in transforms.values():
+            self.is_one_to_many |= tf.is_one_to_many
             self.transform_on_train |= tf.transform_on_train
             self.transform_on_eval |= tf.transform_on_eval
             self.transform_on_fantasize |= tf.transform_on_fantasize
@@ -999,6 +1003,8 @@ class AppendFeatures(InputTransform, Module):
         >>> risk_measure_samples = risk_measure(posterior_samples)
     """
 
+    is_one_to_many: bool = True
+
     def __init__(
         self,
         feature_set: Optional[Tensor] = None,
@@ -1195,6 +1201,8 @@ class InputPerturbation(InputTransform, Module):
     A tutorial notebook using this with `qNoisyExpectedImprovement` can be found at
     https://botorch.org/tutorials/risk_averse_bo_with_input_perturbations.
     """
+
+    is_one_to_many: bool = True
 
     def __init__(
         self,
