@@ -126,11 +126,10 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue(torch.equal(ipt5(X), X))
 
     def test_normalize(self):
-
         for dtype in (torch.float, torch.double):
-
             # basic init, learned bounds
             nlz = Normalize(d=2)
+            self.assertFalse(nlz.is_one_to_many)
             self.assertTrue(nlz.learn_bounds)
             self.assertTrue(nlz.training)
             self.assertEqual(nlz._d, 2)
@@ -316,7 +315,6 @@ class TestInputTransforms(BotorchTestCase):
 
     def test_standardize(self):
         for dtype in (torch.float, torch.double):
-
             # basic init
             stdz = InputStandardize(d=2)
             self.assertTrue(stdz.training)
@@ -455,7 +453,6 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertFalse(stdz7.equals(stdz8))
 
     def test_chained_input_transform(self):
-
         ds = (1, 2)
         batch_shapes = (torch.Size(), torch.Size([2]))
         dtypes = (torch.float, torch.double)
@@ -473,6 +470,7 @@ class TestInputTransforms(BotorchTestCase):
             self.assertEqual(sorted(tf.keys()), ["stz_fixed", "stz_learned"])
             self.assertEqual(tf["stz_fixed"], tf1)
             self.assertEqual(tf["stz_learned"], tf2)
+            self.assertFalse(tf.is_one_to_many)
 
             X = torch.rand(*batch_shape, 4, d, device=self.device, dtype=dtype)
             X_tf = tf(X)
@@ -514,6 +512,11 @@ class TestInputTransforms(BotorchTestCase):
             tf1.transform_on_train = True
             tf = ChainedInputTransform(stz_fixed=tf1, stz_learned=tf2)
             self.assertTrue(torch.equal(tf.preprocess_transform(X), tf1.transform(X)))
+
+        # test one-to-many
+        tf2 = InputPerturbation(perturbation_set=bounds)
+        tf = ChainedInputTransform(stz=tf1, pert=tf2)
+        self.assertTrue(tf.is_one_to_many)
 
     def test_round_transform(self):
         for dtype in (torch.float, torch.double):
@@ -811,6 +814,7 @@ class TestAppendFeatures(BotorchTestCase):
                 torch.linspace(0, 1, 6).view(3, 2).to(device=self.device, dtype=dtype)
             )
             transform = AppendFeatures(feature_set=feature_set)
+            self.assertTrue(transform.is_one_to_many)
             X = torch.rand(4, 5, 3, device=self.device, dtype=dtype)
             # in train - no transform
             transform.train()
@@ -1173,6 +1177,7 @@ class TestInputPerturbation(BotorchTestCase):
                 [[0.5, -0.3], [0.2, 0.4], [-0.7, 0.1]], device=self.device, dtype=dtype
             )
             transform = InputPerturbation(perturbation_set=perturbation_set)
+            self.assertTrue(transform.is_one_to_many)
             X = torch.tensor(
                 [[[0.5, 0.5], [0.9, 0.7]], [[0.3, 0.2], [0.1, 0.4]]],
                 device=self.device,
