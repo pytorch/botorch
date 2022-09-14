@@ -1,0 +1,500 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/versions"><h3>stable</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.models.fully_bayesian_multitask</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+
+<span class="sa">r</span><span class="sd">"""Multi-task Gaussian Process Regression models with fully Bayesian inference.</span>
+<span class="sd">"""</span>
+
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">pyro</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">matern52_kernel</span><span class="p">,</span>
+    <span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">,</span>
+    <span class="n">PyroModel</span><span class="p">,</span>
+    <span class="n">reshape_and_detach</span><span class="p">,</span>
+    <span class="n">SaasPyroModel</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">FixedNoiseMultiTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.fully_bayesian</span> <span class="kn">import</span> <span class="n">FullyBayesianPosterior</span><span class="p">,</span> <span class="n">MCMC_DIM</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">SupervisedDataset</span>
+<span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">MaternKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels.kernel</span> <span class="kn">import</span> <span class="n">Kernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.likelihood</span> <span class="kn">import</span> <span class="n">Likelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.means.mean</span> <span class="kn">import</span> <span class="n">Mean</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.nn.parameter</span> <span class="kn">import</span> <span class="n">Parameter</span>
+
+
+<div class="viewcode-block" id="MultitaskSaasPyroModel"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel">[docs]</a><span class="k">class</span> <span class="nc">MultitaskSaasPyroModel</span><span class="p">(</span><span class="n">SaasPyroModel</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Implementation of the multi-task sparse axis-aligned subspace priors (SAAS) model.</span>
+
+<span class="sd">    The multi-task model uses an ICM kernel. The data kernel is same as the single task</span>
+<span class="sd">    SAAS model in order to handle high-dimensional parameter spaces. The task kernel</span>
+<span class="sd">    is a Matern-5/2 kernel using learned task embeddings as the input.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="MultitaskSaasPyroModel.set_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.set_inputs">[docs]</a>    <span class="k">def</span> <span class="nf">set_inputs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">task_rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">"""Set the training data.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            train_X: Training inputs (n x (d + 1))</span>
+<span class="sd">            train_Y: Training targets (n x 1)</span>
+<span class="sd">            train_Yvar: Observed noise variance (n x 1).</span>
+<span class="sd">            task_feature: The index of the task feature (`-d &lt;= task_feature &lt;= d`).</span>
+<span class="sd">            task_rank: The num of learned task embeddings to be used in the task kernel.</span>
+<span class="sd">                If omitted, set it to be 1.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">train_Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">train_Yvar</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()):</span>
+            <span class="c1"># TODO: revisit inferred noise for batched MTGP</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Currently do not support inferred noise for multitask GP with MCMC!"</span>
+            <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_inputs</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
+        <span class="c1"># obtain a list of task indicies</span>
+        <span class="n">all_tasks</span> <span class="o">=</span> <span class="n">train_X</span><span class="p">[:,</span> <span class="n">task_feature</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_feature</span> <span class="o">=</span> <span class="n">task_feature</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_tasks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_tasks</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_rank</span> <span class="o">=</span> <span class="n">task_rank</span> <span class="ow">or</span> <span class="mi">1</span>
+        <span class="c1"># assume there is one column for task feature</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="MultitaskSaasPyroModel.sample"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Sample from the SAAS model.</span>
+
+<span class="sd">        This samples the mean, noise variance, outputscale, and lengthscales according</span>
+<span class="sd">        to the SAAS prior.</span>
+<span class="sd">        """</span>
+        <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+        <span class="n">base_idxr</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s2">"device"</span><span class="p">:</span> <span class="n">tkwargs</span><span class="p">[</span><span class="s2">"device"</span><span class="p">]})</span>
+        <span class="n">base_idxr</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">task_feature</span> <span class="p">:]</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># exclude task feature</span>
+        <span class="n">task_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_feature</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">tkwargs</span><span class="p">[</span><span class="s2">"device"</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span>
+        <span class="p">)</span>
+
+        <span class="n">outputscale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_outputscale</span><span class="p">(</span><span class="n">concentration</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_mean</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_noise</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+
+        <span class="n">lengthscale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_lengthscale</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">matern52_kernel</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">base_idxr</span><span class="p">],</span> <span class="n">lengthscale</span><span class="o">=</span><span class="n">lengthscale</span><span class="p">)</span>
+
+        <span class="c1"># compute task covar matrix</span>
+        <span class="n">task_latent_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_latent_features</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)[</span><span class="n">task_indices</span><span class="p">]</span>
+        <span class="n">task_lengthscale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_task_lengthscale</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="n">task_covar</span> <span class="o">=</span> <span class="n">matern52_kernel</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">task_latent_features</span><span class="p">,</span> <span class="n">lengthscale</span><span class="o">=</span><span class="n">task_lengthscale</span>
+        <span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">k</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">task_covar</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">outputscale</span> <span class="o">*</span> <span class="n">k</span> <span class="o">+</span> <span class="n">noise</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="n">pyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+            <span class="s2">"Y"</span><span class="p">,</span>
+            <span class="n">pyro</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">MultivariateNormal</span><span class="p">(</span>
+                <span class="n">loc</span><span class="o">=</span><span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="n">covariance_matrix</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">obs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_Y</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MultitaskSaasPyroModel.sample_latent_features"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.sample_latent_features">[docs]</a>    <span class="k">def</span> <span class="nf">sample_latent_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">pyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+            <span class="s2">"latent_features"</span><span class="p">,</span>
+            <span class="n">pyro</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">num_tasks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_rank</span><span class="p">])),</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MultitaskSaasPyroModel.sample_task_lengthscale"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.sample_task_lengthscale">[docs]</a>    <span class="k">def</span> <span class="nf">sample_task_lengthscale</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">concentration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">6.0</span><span class="p">,</span> <span class="n">rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="n">pyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+            <span class="s2">"task_lengthscale"</span><span class="p">,</span>
+            <span class="n">pyro</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">concentration</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">rate</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">task_rank</span><span class="p">])),</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MultitaskSaasPyroModel.load_mcmc_samples"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.load_mcmc_samples">[docs]</a>    <span class="k">def</span> <span class="nf">load_mcmc_samples</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Mean</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">Likelihood</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""Load the MCMC samples into the mean_module, covar_module, and likelihood."""</span>
+        <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"device"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">dtype</span><span class="p">}</span>
+        <span class="n">num_mcmc_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"mean"</span><span class="p">])</span>
+        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_mcmc_samples</span><span class="p">])</span>
+
+        <span class="n">mean_module</span><span class="p">,</span> <span class="n">covar_module</span><span class="p">,</span> <span class="n">likelihood</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">load_mcmc_samples</span><span class="p">(</span>
+            <span class="n">mcmc_samples</span><span class="o">=</span><span class="n">mcmc_samples</span>
+        <span class="p">)</span>
+
+        <span class="n">task_covar_module</span> <span class="o">=</span> <span class="n">MaternKernel</span><span class="p">(</span>
+            <span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span>
+            <span class="n">ard_num_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">task_rank</span><span class="p">,</span>
+            <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="n">task_covar_module</span><span class="o">.</span><span class="n">lengthscale</span> <span class="o">=</span> <span class="n">reshape_and_detach</span><span class="p">(</span>
+            <span class="n">target</span><span class="o">=</span><span class="n">task_covar_module</span><span class="o">.</span><span class="n">lengthscale</span><span class="p">,</span>
+            <span class="n">new_value</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"task_lengthscale"</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">latent_features</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
+                <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">num_tasks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_rank</span><span class="p">]),</span>
+                <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">tkwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">latent_features</span> <span class="o">=</span> <span class="n">reshape_and_detach</span><span class="p">(</span>
+            <span class="n">target</span><span class="o">=</span><span class="n">latent_features</span><span class="p">,</span>
+            <span class="n">new_value</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"latent_features"</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">mean_module</span><span class="p">,</span> <span class="n">covar_module</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">,</span> <span class="n">task_covar_module</span><span class="p">,</span> <span class="n">latent_features</span></div></div>
+
+
+<div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">SaasFullyBayesianMultiTaskGP</span><span class="p">(</span><span class="n">FixedNoiseMultiTaskGP</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""A fully Bayesian multi-task GP model with the SAAS prior.</span>
+
+<span class="sd">    This model assumes that the inputs have been normalized to [0, 1]^d and that the</span>
+<span class="sd">    output has been stratified standardized to have zero mean and unit variance for</span>
+<span class="sd">    each task.The SAAS model [Eriksson2021saasbo]_ with a Matern-5/2 is used as data</span>
+<span class="sd">    kernel by default.</span>
+
+<span class="sd">    You are expected to use `fit_fully_bayesian_model_nuts` to fit this model as it</span>
+<span class="sd">    isn't compatible with `fit_gpytorch_model`.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; X1, X2 = torch.rand(10, 2), torch.rand(20, 2)</span>
+<span class="sd">        &gt;&gt;&gt; i1, i2 = torch.zeros(10, 1), torch.ones(20, 1)</span>
+<span class="sd">        &gt;&gt;&gt; train_X = torch.cat([</span>
+<span class="sd">        &gt;&gt;&gt;     torch.cat([X1, i1], -1), torch.cat([X2, i2], -1),</span>
+<span class="sd">        &gt;&gt;&gt; ])</span>
+<span class="sd">        &gt;&gt;&gt; train_Y = torch.cat(f1(X1), f2(X2)).unsqueeze(-1)</span>
+<span class="sd">        &gt;&gt;&gt; train_Yvar = 0.01 * torch.ones_like(train_Y)</span>
+<span class="sd">        &gt;&gt;&gt; mtsaas_gp = SaasFullyBayesianFixedNoiseMultiTaskGP(</span>
+<span class="sd">        &gt;&gt;&gt;     train_X, train_Y, train_Yvar, task_feature=-1,</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+<span class="sd">        &gt;&gt;&gt; fit_fully_bayesian_model_nuts(mtsaas_gp)</span>
+<span class="sd">        &gt;&gt;&gt; posterior = mtsaas_gp.posterior(test_X)</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pyro_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PyroModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Initialize the fully Bayesian multi-task GP model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            train_X: Training inputs (n x (d + 1))</span>
+<span class="sd">            train_Y: Training targets (n x 1)</span>
+<span class="sd">            train_Yvar: Observed noise variance (n x 1).</span>
+<span class="sd">            task_feature: The index of the task feature (`-d &lt;= task_feature &lt;= d`).</span>
+<span class="sd">            rank: The num of learned task embeddings to be used in the task kernel.</span>
+<span class="sd">                If omitted, set it to be 1.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">train_X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span>
+            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Expected train_X to have shape n x d and train_Y to have shape n x 1"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">train_Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Inferred Noise is not supported in multitask SAAS GP."</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">train_Yvar</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Expected train_Yvar to be None or have the same shape as train_Y"</span>
+                <span class="p">)</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
+
+        <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">train_Yvar</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
+            <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
+            <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
+            <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span>
+            <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">pyro_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pyro_model</span> <span class="o">=</span> <span class="n">MultitaskSaasPyroModel</span><span class="p">()</span>
+        <span class="n">pyro_model</span><span class="o">.</span><span class="n">set_inputs</span><span class="p">(</span>
+            <span class="n">train_X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span>
+            <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
+            <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
+            <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span>
+            <span class="n">task_rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span> <span class="o">=</span> <span class="n">pyro_model</span>
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
+        <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">input_transform</span>
+
+<div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.train"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Puts the model in `train` mode."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mode</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">median_lengthscale</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Median lengthscales across the MCMC samples."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
+        <span class="n">lengthscale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">lengthscale</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_mcmc_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Number of MCMC samples in the model."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">outputscale</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.fantasize"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.fantasize">[docs]</a>    <span class="k">def</span> <span class="nf">fantasize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="p">:</span> <span class="n">MCSampler</span><span class="p">,</span>
+        <span class="n">observation_noise</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FixedNoiseMultiTaskGP</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Fantasize is not implemented!"</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_check_if_fitted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">"""Raise an exception if the model hasn't been fitted."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"Model has not been fitted. You need to call "</span>
+                <span class="s2">"`fit_fully_bayesian_model_nuts` to fit the model."</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.load_mcmc_samples"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.load_mcmc_samples">[docs]</a>    <span class="k">def</span> <span class="nf">load_mcmc_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Load the MCMC hyperparameter samples into the model.</span>
+
+<span class="sd">        This method will be called by `fit_fully_bayesian_model_nuts` when the model</span>
+<span class="sd">        has been fitted in order to create a batched SingleTaskGP model.</span>
+<span class="sd">        """</span>
+        <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">latent_features</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">load_mcmc_samples</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">output_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FullyBayesianPosterior</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Computes the posterior over model outputs at the provided points.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `FullyBayesianPosterior` object. Includes observation noise if specified.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
+            <span class="n">output_indices</span><span class="o">=</span><span class="n">output_indices</span><span class="p">,</span>
+            <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="n">FullyBayesianPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">posterior</span></div>
+
+<div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">)</span>
+
+        <span class="n">x_basic</span><span class="p">,</span> <span class="n">task_idcs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="n">mean_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">x_basic</span><span class="p">)</span>
+        <span class="n">covar_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">x_basic</span><span class="p">)</span>
+
+        <span class="n">tsub_idcs</span> <span class="o">=</span> <span class="n">task_idcs</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">latent_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">latent_features</span><span class="p">[:,</span> <span class="n">tsub_idcs</span><span class="p">,</span> <span class="p">:]</span>
+
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="c1"># batch eval mode</span>
+            <span class="c1"># for X (batch_shape x num_samples x q x d), task_idcs[:,i,:,] are the same</span>
+            <span class="c1"># reshape X to (batch_shape x num_samples x q x d)</span>
+            <span class="n">latent_features</span> <span class="o">=</span> <span class="n">latent_features</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span>
+                <span class="p">[</span><span class="o">-</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+                <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="o">+</span> <span class="p">[</span><span class="o">-</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Combine the two in an ICM fashion</span>
+        <span class="n">covar_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module</span><span class="p">(</span><span class="n">latent_features</span><span class="p">)</span>
+        <span class="n">covar</span> <span class="o">=</span> <span class="n">covar_x</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">covar_i</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">training_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">],</span>
+        <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from dictionary of `SupervisedDataset`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            training_data: Dictionary of `SupervisedDataset`.</span>
+<span class="sd">            task_feature: Column index of embedded task indicator features. For details,</span>
+<span class="sd">                see `parse_training_data`.</span>
+<span class="sd">            rank: The rank of the cross-task covariance matrix.</span>
+<span class="sd">        """</span>
+
+        <span class="n">inputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span>
+            <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+        <span class="n">inputs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"task_covar_prior"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">inputs</span></div></div>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'botorch',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

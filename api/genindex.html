@@ -458,6 +458,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.models.fully_bayesian_multitask
+
+      <ul>
+<li><a href="models.html#module-botorch.models.fully_bayesian_multitask">module</a>
+</li>
+</ul></li>
+<li>
     botorch.models.gp_regression
 
       <ul>
@@ -1072,8 +1079,10 @@
 </li>
 <li><a href="utils.html#botorch.utils.sampling.construct_base_samples_from_posterior">construct_base_samples_from_posterior() (in module botorch.utils.sampling)</a>
 </li>
-<li><a href="models.html#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP.construct_inputs">construct_inputs() (botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP class method)</a>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.construct_inputs">construct_inputs() (botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP class method)</a>
 <ul>
+<li><a href="models.html#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP.construct_inputs">(botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP class method)</a>
+</li>
 <li><a href="models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP.construct_inputs">(botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP class method)</a>
 </li>
 <li><a href="models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP.construct_inputs">(botorch.models.gp_regression_mixed.MixedSingleTaskGP class method)</a>
@@ -1602,6 +1611,8 @@
 <ul>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.fantasize">(botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP method)</a>
 </li>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.fantasize">(botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP method)</a>
+</li>
 <li><a href="models.html#botorch.models.gp_regression.FixedNoiseGP.fantasize">(botorch.models.gp_regression.FixedNoiseGP method)</a>
 </li>
 <li><a href="models.html#botorch.models.model.Model.fantasize">(botorch.models.model.Model method)</a>
@@ -1788,6 +1799,8 @@
 <li><a href="models.html#botorch.models.deterministic.PosteriorMeanModel.forward">(botorch.models.deterministic.PosteriorMeanModel method)</a>
 </li>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.forward">(botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP method)</a>
+</li>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.forward">(botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP method)</a>
 </li>
 <li><a href="models.html#botorch.models.gp_regression.FixedNoiseGP.forward">(botorch.models.gp_regression.FixedNoiseGP method)</a>
 </li>
@@ -2015,10 +2028,10 @@
 </li>
 <li><a href="optim.html#botorch.optim.initializers.initialize_q_batch_nonneg">initialize_q_batch_nonneg() (in module botorch.optim.initializers)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="exceptions.html#botorch.exceptions.errors.InputDataError">InputDataError</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="exceptions.html#botorch.exceptions.warnings.InputDataWarning">InputDataWarning</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.InputPerturbation">InputPerturbation (class in botorch.models.transforms.input)</a>
@@ -2035,6 +2048,11 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.utils.is_nonnegative">is_nonnegative() (in module botorch.acquisition.utils)</a>
 </li>
+<li><a href="models.html#botorch.models.transforms.input.AppendFeatures.is_one_to_many">is_one_to_many (botorch.models.transforms.input.AppendFeatures attribute)</a>
+<ul>
+<li><a href="models.html#botorch.models.transforms.input.InputPerturbation.is_one_to_many">(botorch.models.transforms.input.InputPerturbation attribute)</a>
+</li>
+</ul></li>
 <li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami">Ishigami (class in botorch.test_functions.sensitivity_analysis)</a>
 </li>
 <li><a href="utils.html#botorch.utils.torch.BufferDict.items">items() (botorch.utils.torch.BufferDict method)</a>
@@ -2095,21 +2113,29 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Levy">Levy (class in botorch.test_functions.synthetic)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.parameter_constraints.lin_constraint_jac">lin_constraint_jac() (in module botorch.optim.parameter_constraints)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.LinearMCObjective">LinearMCObjective (class in botorch.acquisition.objective)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="models.html#botorch.models.kernels.linear_truncated_fidelity.LinearTruncatedFidelityKernel">LinearTruncatedFidelityKernel (class in botorch.models.kernels.linear_truncated_fidelity)</a>
 </li>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.load_mcmc_samples">load_mcmc_samples() (botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP method)</a>
 <ul>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasPyroModel.load_mcmc_samples">(botorch.models.fully_bayesian.SaasPyroModel method)</a>
 </li>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.load_mcmc_samples">(botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel method)</a>
+</li>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.load_mcmc_samples">(botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP method)</a>
+</li>
 </ul></li>
-<li><a href="models.html#botorch.models.pairwise_gp.PairwiseGP.load_state_dict">load_state_dict() (botorch.models.pairwise_gp.PairwiseGP method)</a>
+<li><a href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.load_state_dict">load_state_dict() (botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP method)</a>
 <ul>
+<li><a href="models.html#botorch.models.model.ModelList.load_state_dict">(botorch.models.model.ModelList method)</a>
+</li>
+<li><a href="models.html#botorch.models.pairwise_gp.PairwiseGP.load_state_dict">(botorch.models.pairwise_gp.PairwiseGP method)</a>
+</li>
 <li><a href="utils.html#botorch.utils.testing.MockModel.load_state_dict">(botorch.utils.testing.MockModel method)</a>
 </li>
 </ul></li>
@@ -2172,7 +2198,10 @@
 </li>
 </ul></li>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.median_lengthscale">median_lengthscale (botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP property)</a>
+<ul>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.median_lengthscale">(botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP property)</a>
 </li>
+</ul></li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Michalewicz">Michalewicz (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP">MixedSingleTaskGP (class in botorch.models.gp_regression_mixed)</a>
@@ -2292,6 +2321,8 @@
 <li><a href="models.html#module-botorch.models.deterministic">botorch.models.deterministic</a>
 </li>
 <li><a href="models.html#module-botorch.models.fully_bayesian">botorch.models.fully_bayesian</a>
+</li>
+<li><a href="models.html#module-botorch.models.fully_bayesian_multitask">botorch.models.fully_bayesian_multitask</a>
 </li>
 <li><a href="models.html#module-botorch.models.gp_regression">botorch.models.gp_regression</a>
 </li>
@@ -2474,6 +2505,8 @@
 </li>
 <li><a href="posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior">MultitaskGPPosterior (class in botorch.posteriors.multitask)</a>
 </li>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel">MultitaskSaasPyroModel (class in botorch.models.fully_bayesian_multitask)</a>
+</li>
 <li><a href="sampling.html#botorch.sampling.qmc.MultivariateNormalQMCEngine">MultivariateNormalQMCEngine (class in botorch.sampling.qmc)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR">MVaR (class in botorch.acquisition.multi_objective.multi_output_risk_measures)</a>
@@ -2543,7 +2576,10 @@
 </li>
 </ul></li>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.num_mcmc_samples">num_mcmc_samples (botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP property)</a>
+<ul>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.num_mcmc_samples">(botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP property)</a>
 </li>
+</ul></li>
 <li><a href="test_functions.html#botorch.test_functions.base.MultiObjectiveTestProblem.num_objectives">num_objectives (botorch.test_functions.base.MultiObjectiveTestProblem attribute)</a>
 <ul>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.BNH.num_objectives">(botorch.test_functions.multi_objective.BNH attribute)</a>
@@ -2707,6 +2743,8 @@
 <ul>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.posterior">(botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP method)</a>
 </li>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.posterior">(botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP method)</a>
+</li>
 <li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP.posterior">(botorch.models.higher_order_gp.HigherOrderGP method)</a>
 </li>
 <li><a href="models.html#botorch.models.model.Model.posterior">(botorch.models.model.Model method)</a>
@@ -2856,6 +2894,8 @@
 <h2 id="S">S</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP">SaasFullyBayesianMultiTaskGP (class in botorch.models.fully_bayesian_multitask)</a>
+</li>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP">SaasFullyBayesianSingleTaskGP (class in botorch.models.fully_bayesian)</a>
 </li>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasPyroModel">SaasPyroModel (class in botorch.models.fully_bayesian)</a>
@@ -2865,12 +2905,17 @@
 <li><a href="models.html#botorch.models.kernels.contextual_sac.SACKernel">SACKernel (class in botorch.models.kernels.contextual_sac)</a>
 </li>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasPyroModel.sample">sample() (botorch.models.fully_bayesian.SaasPyroModel method)</a>
+<ul>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.sample">(botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel method)</a>
 </li>
+</ul></li>
 <li><a href="optim.html#botorch.optim.utils.sample_all_priors">sample_all_priors() (in module botorch.optim.utils)</a>
 </li>
 <li><a href="utils.html#botorch.utils.low_rank.sample_cached_cholesky">sample_cached_cholesky() (in module botorch.utils.low_rank)</a>
 </li>
 <li><a href="utils.html#botorch.utils.sampling.sample_hypersphere">sample_hypersphere() (in module botorch.utils.sampling)</a>
+</li>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.sample_latent_features">sample_latent_features() (botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel method)</a>
 </li>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasPyroModel.sample_lengthscale">sample_lengthscale() (botorch.models.fully_bayesian.SaasPyroModel method)</a>
 </li>
@@ -2887,6 +2932,8 @@
 <li><a href="utils.html#botorch.utils.sampling.sample_polytope">sample_polytope() (in module botorch.utils.sampling)</a>
 </li>
 <li><a href="utils.html#botorch.utils.sampling.sample_simplex">sample_simplex() (in module botorch.utils.sampling)</a>
+</li>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.sample_task_lengthscale">sample_task_lengthscale() (botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel method)</a>
 </li>
 <li><a href="optim.html#botorch.optim.initializers.sample_truncated_normal_perturbations">sample_truncated_normal_perturbations() (in module botorch.optim.initializers)</a>
 </li>
@@ -2907,6 +2954,11 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MARS.set_baseline_Y">set_baseline_Y() (botorch.acquisition.multi_objective.multi_output_risk_measures.MARS method)</a>
 </li>
+<li><a href="models.html#botorch.models.fully_bayesian.SaasPyroModel.set_inputs">set_inputs() (botorch.models.fully_bayesian.SaasPyroModel method)</a>
+<ul>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.set_inputs">(botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel method)</a>
+</li>
+</ul></li>
 <li><a href="optim.html#botorch.optim.numpy_converter.set_params_with_array">set_params_with_array() (in module botorch.optim.numpy_converter)</a>
 </li>
 <li><a href="models.html#botorch.models.pairwise_gp.PairwiseGP.set_train_data">set_train_data() (botorch.models.pairwise_gp.PairwiseGP method)</a>
@@ -2926,6 +2978,8 @@
 <li><a href="utils.html#botorch.utils.testing.MockAcquisitionFunction.set_X_pending">(botorch.utils.testing.MockAcquisitionFunction method)</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.testing.BotorchTestCase.setUp">setUp() (botorch.utils.testing.BotorchTestCase method)</a>
 </li>
 <li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr.shape">shape (botorch.optim.numpy_converter.TorchAttr attribute)</a>
@@ -2935,8 +2989,6 @@
 <li><a href="utils.html#botorch.utils.containers.SliceContainer.shape">(botorch.utils.containers.SliceContainer property)</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Shekel">Shekel (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="models.html#botorch.models.gp_regression.SingleTaskGP">SingleTaskGP (class in botorch.models.gp_regression)</a>
@@ -3051,6 +3103,8 @@
 </li>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.train">train() (botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP method)</a>
 <ul>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.train">(botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP method)</a>
+</li>
 <li><a href="models.html#botorch.models.model.Model.train">(botorch.models.model.Model method)</a>
 </li>
 <li><a href="models.html#botorch.models.multitask.KroneckerMultiTaskGP.train">(botorch.models.multitask.KroneckerMultiTaskGP method)</a>
@@ -3331,35 +3385,23 @@
 <li><a href="models.html#botorch.models.model.ModelList.transform_inputs">(botorch.models.model.ModelList method)</a>
 </li>
 </ul></li>
-<li><a href="models.html#botorch.models.transforms.input.AppendFeatures.transform_on_eval">transform_on_eval (botorch.models.transforms.input.AppendFeatures attribute)</a>
+<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.transform_on_eval">transform_on_eval (botorch.models.transforms.input.ChainedInputTransform attribute)</a>
 <ul>
-<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.transform_on_eval">(botorch.models.transforms.input.ChainedInputTransform attribute)</a>
-</li>
 <li><a href="models.html#botorch.models.transforms.input.FilterFeatures.transform_on_eval">(botorch.models.transforms.input.FilterFeatures attribute)</a>
-</li>
-<li><a href="models.html#botorch.models.transforms.input.InputPerturbation.transform_on_eval">(botorch.models.transforms.input.InputPerturbation attribute)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.Round.transform_on_eval">(botorch.models.transforms.input.Round attribute)</a>
 </li>
 </ul></li>
-<li><a href="models.html#botorch.models.transforms.input.AppendFeatures.transform_on_fantasize">transform_on_fantasize (botorch.models.transforms.input.AppendFeatures attribute)</a>
+<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.transform_on_fantasize">transform_on_fantasize (botorch.models.transforms.input.ChainedInputTransform attribute)</a>
 <ul>
-<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.transform_on_fantasize">(botorch.models.transforms.input.ChainedInputTransform attribute)</a>
-</li>
 <li><a href="models.html#botorch.models.transforms.input.FilterFeatures.transform_on_fantasize">(botorch.models.transforms.input.FilterFeatures attribute)</a>
-</li>
-<li><a href="models.html#botorch.models.transforms.input.InputPerturbation.transform_on_fantasize">(botorch.models.transforms.input.InputPerturbation attribute)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.Round.transform_on_fantasize">(botorch.models.transforms.input.Round attribute)</a>
 </li>
 </ul></li>
-<li><a href="models.html#botorch.models.transforms.input.AppendFeatures.transform_on_train">transform_on_train (botorch.models.transforms.input.AppendFeatures attribute)</a>
+<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.transform_on_train">transform_on_train (botorch.models.transforms.input.ChainedInputTransform attribute)</a>
 <ul>
-<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.transform_on_train">(botorch.models.transforms.input.ChainedInputTransform attribute)</a>
-</li>
 <li><a href="models.html#botorch.models.transforms.input.FilterFeatures.transform_on_train">(botorch.models.transforms.input.FilterFeatures attribute)</a>
-</li>
-<li><a href="models.html#botorch.models.transforms.input.InputPerturbation.transform_on_train">(botorch.models.transforms.input.InputPerturbation attribute)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.Round.transform_on_train">(botorch.models.transforms.input.Round attribute)</a>
 </li>

@@ -66,7 +66,7 @@ and <cite>BatchedMultiOutputGPyTorchModel</cite> models) or <cite>approx_mll</ci
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>SaasFullyBayesianSingleTaskGP</em></a>) – SaasFullyBayesianSingleTaskGP to be fitted.</p></li>
+<li><p><strong>model</strong> (<em>Union</em><em>[</em><a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>SaasFullyBayesianSingleTaskGP</em></a><em>, </em><a class="reference internal" href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP" title="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP"><em>SaasFullyBayesianMultiTaskGP</em></a><em>]</em>) – SaasFullyBayesianSingleTaskGP to be fitted.</p></li>
 <li><p><strong>max_tree_depth</strong> (<em>int</em>) – Maximum tree depth for NUTS</p></li>
 <li><p><strong>warmup_steps</strong> (<em>int</em>) – The number of burn-in steps for NUTS.</p></li>
 <li><p><strong>num_samples</strong> (<em>int</em>) – The number of MCMC samples. Note that with thinning,

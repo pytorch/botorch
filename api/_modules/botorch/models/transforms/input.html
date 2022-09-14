@@ -67,6 +67,8 @@
 <span class="sd">        between `gpytorch.module.Module` and `torch.nn.Module` in `Warp`.</span>
 
 <span class="sd">    Properties:</span>
+<span class="sd">        is_one_to_many: A boolean denoting whether the transform produces</span>
+<span class="sd">            multiple values for each input.</span>
 <span class="sd">        transform_on_train: A boolean indicating whether to apply the</span>
 <span class="sd">            transform in train() mode.</span>
 <span class="sd">        transform_on_eval: A boolean indicating whether to apply the</span>
@@ -77,6 +79,7 @@
 <span class="sd">    :meta private:</span>
 <span class="sd">    """</span>
 
+    <span class="n">is_one_to_many</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span>
     <span class="n">transform_on_train</span><span class="p">:</span> <span class="nb">bool</span>
     <span class="n">transform_on_fantasize</span><span class="p">:</span> <span class="nb">bool</span>
@@ -203,6 +206,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_fantasize</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">for</span> <span class="n">tf</span> <span class="ow">in</span> <span class="n">transforms</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_one_to_many</span> <span class="o">|=</span> <span class="n">tf</span><span class="o">.</span><span class="n">is_one_to_many</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">|=</span> <span class="n">tf</span><span class="o">.</span><span class="n">transform_on_train</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">|=</span> <span class="n">tf</span><span class="o">.</span><span class="n">transform_on_eval</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_fantasize</span> <span class="o">|=</span> <span class="n">tf</span><span class="o">.</span><span class="n">transform_on_fantasize</span>
@@ -1025,6 +1029,8 @@
 <span class="sd">        &gt;&gt;&gt; risk_measure_samples = risk_measure(posterior_samples)</span>
 <span class="sd">    """</span>
 
+    <span class="n">is_one_to_many</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">feature_set</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1221,6 +1227,8 @@
 <span class="sd">    A tutorial notebook using this with `qNoisyExpectedImprovement` can be found at</span>
 <span class="sd">    https://botorch.org/tutorials/risk_averse_bo_with_input_perturbations.</span>
 <span class="sd">    """</span>
+
+    <span class="n">is_one_to_many</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>

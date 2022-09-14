@@ -355,6 +355,22 @@ the model `m1</cite> subset to its second output.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.model.ModelList.load_state_dict">
+<span class="sig-name descname"><span class="pre">load_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList.load_state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList.load_state_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the fully Bayesian models before loading the state dict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state_dict</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – </p></li>
+<li><p><strong>strict</strong> (<em>bool</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.models.gpytorch">
@@ -2411,7 +2427,7 @@ after fitting.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="eriksson2021saasbo" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Eriksson2021saasbo<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id14" role="doc-backlink">1</a>,<a href="#id15" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id14" role="doc-backlink">1</a>,<a href="#id15" role="doc-backlink">2</a>,<a href="#id16" role="doc-backlink">3</a>)</span>
 <p>D. Eriksson, M. Jankowiak. High-Dimensional Bayesian Optimization
 with Sparse Axis-Aligned Subspaces. Proceedings of the Thirty-
 Seventh Conference on Uncertainty in Artificial Intelligence, 2021.</p>
@@ -2470,7 +2486,7 @@ Seventh Conference on Uncertainty in Artificial Intelligence, 2021.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.fully_bayesian.</span></span><span class="sig-name descname"><span class="pre">SaasPyroModel</span></span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasPyroModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasPyroModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyroModel</span></code></p>
 <p>Implementation of the sparse axis-aligned subspace priors (SAAS) model.</p>
-<p>The SAAS model uses sparsity-inducing priors to identift the most important
+<p>The SAAS model uses sparsity-inducing priors to identify the most important
 parameters. This model is suitable for high-dimensional BO with potentially
 hundreds of tunable parameters. See <a class="reference internal" href="#eriksson2021saasbo" id="id14"><span>[Eriksson2021saasbo]</span></a> for more details.</p>
 <p><cite>SaasPyroModel</cite> is not a standard BoTorch model; instead, it is used as
@@ -2478,6 +2494,20 @@ an input to <cite>SaasFullyBayesianSingleTaskGP</cite>. It is used as a default 
 argument, and end users are not likely to need to instantiate or modify a
 <cite>SaasPyroModel</cite> unless they want to customize its attributes (such as
 <cite>covar_module</cite>).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian.SaasPyroModel.set_inputs">
+<span class="sig-name descname"><span class="pre">set_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasPyroModel.set_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasPyroModel.set_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the training data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<em>Tensor</em>) – Training inputs (n x d)</p></li>
+<li><p><strong>train_Y</strong> (<em>Tensor</em>) – Training targets (n x 1)</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Observed noise variance (n x 1). Inferred if None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian.SaasPyroModel.sample">
 <span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasPyroModel.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasPyroModel.sample" title="Permalink to this definition">¶</a></dt>
@@ -2683,6 +2713,27 @@ has been fitted in order to create a batched SingleTaskGP model.</p>
 </dl>
 </dd></dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.load_state_dict">
+<span class="sig-name descname"><span class="pre">load_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasFullyBayesianSingleTaskGP.load_state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.load_state_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Custom logic for loading the state dict.</p>
+<p>The standard approach of calling <cite>load_state_dict</cite> currently doesn’t play well
+with the <cite>SaasFullyBayesianSingleTaskGP</cite> since the <cite>mean_module</cite>, <cite>covar_module</cite>
+and <cite>likelihood</cite> aren’t initialized until the model has been fitted. The reason
+for this is that we don’t know the number of MCMC samples until NUTS is called.
+Given the state dict, we can initialize a new model with some dummy samples and
+then load the state dict into this model. This currently only works for a
+<cite>SaasPyroModel</cite> and supporting more Pyro models likely requires moving the model
+construction logic into the Pyro model itself.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state_dict</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – </p></li>
+<li><p><strong>strict</strong> (<em>bool</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasFullyBayesianSingleTaskGP.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Defines the computation performed at every call.</p>
@@ -2730,6 +2781,257 @@ observation noise (must be of shape <cite>(batch_shape) x q x m</cite>).</p></li
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior" title="botorch.posteriors.fully_bayesian.FullyBayesianPosterior"><em>FullyBayesianPosterior</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</section>
+<section id="module-botorch.models.fully_bayesian_multitask">
+<span id="fully-bayesian-multitask-gp-models"></span><h3>Fully Bayesian Multitask GP Models<a class="headerlink" href="#module-botorch.models.fully_bayesian_multitask" title="Permalink to this heading">¶</a></h3>
+<p>Multi-task Gaussian Process Regression models with fully Bayesian inference.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.fully_bayesian_multitask.</span></span><span class="sig-name descname"><span class="pre">MultitaskSaasPyroModel</span></span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#MultitaskSaasPyroModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.fully_bayesian.SaasPyroModel" title="botorch.models.fully_bayesian.SaasPyroModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SaasPyroModel</span></code></a></p>
+<p>Implementation of the multi-task sparse axis-aligned subspace priors (SAAS) model.</p>
+<p>The multi-task model uses an ICM kernel. The data kernel is same as the single task
+SAAS model in order to handle high-dimensional parameter spaces. The task kernel
+is a Matern-5/2 kernel using learned task embeddings as the input.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.set_inputs">
+<span class="sig-name descname"><span class="pre">set_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#MultitaskSaasPyroModel.set_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.set_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the training data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<em>Tensor</em>) – Training inputs (n x (d + 1))</p></li>
+<li><p><strong>train_Y</strong> (<em>Tensor</em>) – Training targets (n x 1)</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – Observed noise variance (n x 1).</p></li>
+<li><p><strong>task_feature</strong> (<em>int</em>) – The index of the task feature (<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
+<li><p><strong>task_rank</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The num of learned task embeddings to be used in the task kernel.
+If omitted, set it to be 1.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#MultitaskSaasPyroModel.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample from the SAAS model.</p>
+<p>This samples the mean, noise variance, outputscale, and lengthscales according
+to the SAAS prior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.sample_latent_features">
+<span class="sig-name descname"><span class="pre">sample_latent_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#MultitaskSaasPyroModel.sample_latent_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.sample_latent_features" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tkwargs</strong> (<em>Any</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.sample_task_lengthscale">
+<span class="sig-name descname"><span class="pre">sample_task_lengthscale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">concentration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#MultitaskSaasPyroModel.sample_task_lengthscale"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.sample_task_lengthscale" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>concentration</strong> (<em>float</em>) – </p></li>
+<li><p><strong>rate</strong> (<em>float</em>) – </p></li>
+<li><p><strong>tkwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.load_mcmc_samples">
+<span class="sig-name descname"><span class="pre">load_mcmc_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcmc_samples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#MultitaskSaasPyroModel.load_mcmc_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.load_mcmc_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the MCMC samples into the mean_module, covar_module, and likelihood.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tuple</em>[<em>Mean</em>, <em>Kernel</em>, <em>Likelihood</em>, <em>Kernel</em>, <em>Parameter</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.fully_bayesian_multitask.</span></span><span class="sig-name descname"><span class="pre">SaasFullyBayesianMultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyro_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.multitask.FixedNoiseMultiTaskGP" title="botorch.models.multitask.FixedNoiseMultiTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">FixedNoiseMultiTaskGP</span></code></a></p>
+<p>A fully Bayesian multi-task GP model with the SAAS prior.</p>
+<p>This model assumes that the inputs have been normalized to [0, 1]^d and that the
+output has been stratified standardized to have zero mean and unit variance for
+each task.The SAAS model <a class="reference internal" href="#eriksson2021saasbo" id="id16"><span>[Eriksson2021saasbo]</span></a> with a Matern-5/2 is used as data
+kernel by default.</p>
+<p>You are expected to use <cite>fit_fully_bayesian_model_nuts</cite> to fit this model as it
+isn’t compatible with <cite>fit_gpytorch_model</cite>.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">i1</span><span class="p">,</span> <span class="n">i2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X1</span><span class="p">,</span> <span class="n">i1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X2</span><span class="p">,</span> <span class="n">i2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">f1</span><span class="p">(</span><span class="n">X1</span><span class="p">),</span> <span class="n">f2</span><span class="p">(</span><span class="n">X2</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mtsaas_gp</span> <span class="o">=</span> <span class="n">SaasFullyBayesianFixedNoiseMultiTaskGP</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">,</span> <span class="n">task_feature</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fit_fully_bayesian_model_nuts</span><span class="p">(</span><span class="n">mtsaas_gp</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">posterior</span> <span class="o">=</span> <span class="n">mtsaas_gp</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Initialize the fully Bayesian multi-task GP model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<em>Tensor</em>) – Training inputs (n x (d + 1))</p></li>
+<li><p><strong>train_Y</strong> (<em>Tensor</em>) – Training targets (n x 1)</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – Observed noise variance (n x 1).</p></li>
+<li><p><strong>task_feature</strong> (<em>int</em>) – The index of the task feature (<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
+<li><p><strong>rank</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The num of learned task embeddings to be used in the task kernel.
+If omitted, set it to be 1.</p></li>
+<li><p><strong>output_tasks</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>) – </p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – </p></li>
+<li><p><strong>pyro_model</strong> (<em>Optional</em><em>[</em><em>PyroModel</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.train">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Puts the model in <cite>train</cite> mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mode</strong> (<em>bool</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.median_lengthscale">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">median_lengthscale</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.median_lengthscale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Median lengthscales across the MCMC samples.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.num_mcmc_samples">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_mcmc_samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.num_mcmc_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of MCMC samples in the model.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.fantasize">
+<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.fantasize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a fantasy model.</p>
+<p>Constructs a fantasy model in the following fashion:
+(1) compute the model posterior at <cite>X</cite> (including observation noise if
+<cite>observation_noise=True</cite>).
+(2) sample from this posterior (using <cite>sampler</cite>) to generate “fake”
+observations.
+(3) condition the model on the new fake observations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
+the feature space, <cite>n’</cite> is the number of points per batch, and
+<cite>batch_shape</cite> is the batch shape (must be compatible with the
+batch shape of the model).</p></li>
+<li><p><strong>sampler</strong> (<em>MCSampler</em>) – The sampler used for sampling from the posterior at <cite>X</cite>.</p></li>
+<li><p><strong>observation_noise</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>Tensor</em><em>]</em>) – If True, include observation noise.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The constructed fantasy model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.models.multitask.FixedNoiseMultiTaskGP" title="botorch.models.multitask.FixedNoiseMultiTaskGP"><em>FixedNoiseMultiTaskGP</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.load_mcmc_samples">
+<span class="sig-name descname"><span class="pre">load_mcmc_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcmc_samples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP.load_mcmc_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.load_mcmc_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the MCMC hyperparameter samples into the model.</p>
+<p>This method will be called by <cite>fit_fully_bayesian_model_nuts</cite> when the model
+has been fitted in order to create a batched SingleTaskGP model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.posterior">
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.posterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the posterior over model outputs at the provided points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <cite>FullyBayesianPosterior</cite> object. Includes observation noise if specified.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>observation_noise</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior" title="botorch.posteriors.fully_bayesian.FullyBayesianPosterior"><em>FullyBayesianPosterior</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>MultivariateNormal</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.construct_inputs">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct <cite>Model</cite> keyword arguments from dictionary of <cite>SupervisedDataset</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>training_data</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dictionary of <cite>SupervisedDataset</cite>.</p></li>
+<li><p><strong>task_feature</strong> (<em>int</em>) – Column index of embedded task indicator features. For details,
+see <cite>parse_training_data</cite>.</p></li>
+<li><p><strong>rank</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The rank of the cross-task covariance matrix.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Dict</em>[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3191,7 +3493,7 @@ the model posterior back to the original space.</p>
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="eriksson2021scalable" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id16" role="doc-backlink">eriksson2021scalable</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id17" role="doc-backlink">eriksson2021scalable</a><span class="fn-bracket">]</span></span>
 <p>D. Eriksson, M. Poloczek. Scalable Constrained Bayesian Optimization.
 International Conference on Artificial Intelligence and Statistics. PMLR, 2021,
 <a class="reference external" href="http://proceedings.mlr.press/v130/eriksson21a.html">http://proceedings.mlr.press/v130/eriksson21a.html</a></p>
@@ -3613,7 +3915,7 @@ observation noises associated with the training targets
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.outcome.</span></span><span class="sig-name descname"><span class="pre">Bilog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Bilog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Bilog" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OutcomeTransform</span></code></p>
 <p>Bilog-transform outcomes.</p>
-<p>The Bilog transform <a class="reference internal" href="#eriksson2021scalable" id="id16"><span>[eriksson2021scalable]</span></a> is useful for modeling outcome
+<p>The Bilog transform <a class="reference internal" href="#eriksson2021scalable" id="id17"><span>[eriksson2021scalable]</span></a> is useful for modeling outcome
 constraints as it magnifies values near zero and flattens extreme values.</p>
 <p>Bilog-transform outcomes.</p>
 <dl class="field-list simple">
@@ -4106,8 +4408,8 @@ of the Kumaraswamy distribution.</p></li>
 provided beforehand or generated on the fly via a callable.</p>
 <p>As an example, the predefined set of features can be used with
 <cite>RiskMeasureMCObjective</cite> to optimize risk measures as described in
-<a class="reference internal" href="acquisition.html#cakmak2020risk" id="id17"><span>[Cakmak2020risk]</span></a>. A tutorial notebook implementing the rhoKG acqusition
-function introduced in <a class="reference internal" href="acquisition.html#cakmak2020risk" id="id18"><span>[Cakmak2020risk]</span></a> can be found at
+<a class="reference internal" href="acquisition.html#cakmak2020risk" id="id18"><span>[Cakmak2020risk]</span></a>. A tutorial notebook implementing the rhoKG acqusition
+function introduced in <a class="reference internal" href="acquisition.html#cakmak2020risk" id="id19"><span>[Cakmak2020risk]</span></a> can be found at
 <a class="reference external" href="https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables">https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables</a>.</p>
 <p>The steps for using this to obtain samples of a risk measure are as follows:</p>
 <ul class="simple">
@@ -4176,16 +4478,8 @@ transform when called from within a <cite>fantasize</cite> call. Default: False.
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.AppendFeatures.transform_on_train">
-<span class="sig-name descname"><span class="pre">transform_on_train</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.AppendFeatures.transform_on_train" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.AppendFeatures.transform_on_eval">
-<span class="sig-name descname"><span class="pre">transform_on_eval</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.AppendFeatures.transform_on_eval" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.AppendFeatures.transform_on_fantasize">
-<span class="sig-name descname"><span class="pre">transform_on_fantasize</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.AppendFeatures.transform_on_fantasize" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.models.transforms.input.AppendFeatures.is_one_to_many">
+<span class="sig-name descname"><span class="pre">is_one_to_many</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#botorch.models.transforms.input.AppendFeatures.is_one_to_many" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.AppendFeatures.transform">
@@ -4325,16 +4619,8 @@ transform when called from within a <cite>fantasize</cite> call. Default: False.
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.InputPerturbation.transform_on_train">
-<span class="sig-name descname"><span class="pre">transform_on_train</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.InputPerturbation.transform_on_train" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.InputPerturbation.transform_on_eval">
-<span class="sig-name descname"><span class="pre">transform_on_eval</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.InputPerturbation.transform_on_eval" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.transforms.input.InputPerturbation.transform_on_fantasize">
-<span class="sig-name descname"><span class="pre">transform_on_fantasize</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.InputPerturbation.transform_on_fantasize" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.models.transforms.input.InputPerturbation.is_one_to_many">
+<span class="sig-name descname"><span class="pre">is_one_to_many</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#botorch.models.transforms.input.InputPerturbation.is_one_to_many" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.InputPerturbation.transform">
