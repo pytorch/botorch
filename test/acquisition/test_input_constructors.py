@@ -47,6 +47,9 @@ from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
+from botorch.acquisition.multi_objective.multi_output_risk_measures import (
+    MultiOutputExpectation,
+)
 from botorch.acquisition.multi_objective.objective import (
     IdentityAnalyticMultiOutputObjective,
     IdentityMCMultiOutputObjective,
@@ -563,6 +566,31 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertTrue(torch.equal(partitioning.ref_point, objective_thresholds))
         self.assertTrue(torch.equal(partitioning._neg_Y, -mean))
 
+        # Test with risk measures.
+        for use_preprocessing in (True, False):
+            obj = MultiOutputExpectation(
+                n_w=3,
+                preprocessing_function=WeightedMCMultiOutputObjective(
+                    torch.tensor([-1.0, -1.0])
+                )
+                if use_preprocessing
+                else None,
+            )
+            kwargs = c(
+                model=mm,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                objective=obj,
+            )
+            expected_obj_t = (
+                -objective_thresholds if use_preprocessing else objective_thresholds
+            )
+            self.assertIs(kwargs["objective"], obj)
+            self.assertTrue(torch.equal(kwargs["ref_point"], expected_obj_t))
+            partitioning = kwargs["partitioning"]
+            self.assertIsInstance(partitioning, FastNondominatedPartitioning)
+            self.assertTrue(torch.equal(partitioning.ref_point, expected_obj_t))
+
     def test_construct_inputs_qEHVI(self):
         c = get_acqf_input_constructor(qExpectedHypervolumeImprovement)
         objective_thresholds = torch.rand(2)
@@ -734,6 +762,36 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertFalse(kwargs["cache_pending"])
         self.assertEqual(kwargs["max_iep"], 1)
         self.assertFalse(kwargs["incremental_nehvi"])
+
+        # Test with risk measures.
+        with self.assertRaisesRegex(UnsupportedError, "feasibility-weighted"):
+            kwargs = c(
+                model=mock_model,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                objective=MultiOutputExpectation(n_w=3),
+                outcome_constraints=outcome_constraints,
+            )
+        for use_preprocessing in (True, False):
+            obj = MultiOutputExpectation(
+                n_w=3,
+                preprocessing_function=WeightedMCMultiOutputObjective(
+                    torch.tensor([-1.0, -1.0])
+                )
+                if use_preprocessing
+                else None,
+            )
+            kwargs = c(
+                model=mock_model,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                objective=obj,
+            )
+            expected_obj_t = (
+                -objective_thresholds if use_preprocessing else objective_thresholds
+            )
+            self.assertIs(kwargs["objective"], obj)
+            self.assertTrue(torch.equal(kwargs["ref_point"], expected_obj_t))
 
     def test_construct_inputs_kg(self):
         current_value = torch.tensor(1.23)
