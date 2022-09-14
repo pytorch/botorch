@@ -506,6 +506,9 @@ class TestInputTransforms(BotorchTestCase):
             # change order
             other_tf = ChainedInputTransform(stz_learned=tf2, stz_fixed=tf1)
             self.assertFalse(tf.equals(other_tf))
+            # Identical transforms but different objects.
+            other_tf = ChainedInputTransform(stz_fixed=tf1, stz_learned=deepcopy(tf2))
+            self.assertTrue(tf.equals(other_tf))
 
             # test preprocess_transform
             tf2.transform_on_train = False
