@@ -225,7 +225,7 @@ class ChainedInputTransform(InputTransform, ModuleDict):
             A boolean indicating if the other transform is equivalent.
         """
         return super().equals(other=other) and all(
-            t1 == t2 for t1, t2 in zip(self.values(), other.values())
+            t1.equals(t2) for t1, t2 in zip(self.values(), other.values())
         )
 
     def preprocess_transform(self, X: Tensor) -> Tensor:
