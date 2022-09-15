@@ -84,7 +84,7 @@ def optimize_acqf(
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
         equality_constraints: A list of tuples (indices, coefficients, rhs),
-            with each tuple encoding an inequality constraint of the form
+            with each tuple encoding an equality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
         nonlinear_inequality_constraints: A list of callables with that represent
             non-linear inequality constraints of the form `callable(x) >= 0`. Each
@@ -115,7 +115,7 @@ def optimize_acqf(
             this is a `(num_restarts)`-dim tensor of joint acquisition values
             (with explicit restart dimension if `return_best_only=False`). If
             `sequential=True`, this is a `q`-dim tensor of expected acquisition
-            values conditional on having observed canidates `0,1,...,i-1`.
+            values conditional on having observed candidates `0,1,...,i-1`.
 
     Example:
         >>> # generate `q=2` candidates jointly using 20 random restarts
@@ -138,6 +138,42 @@ def optimize_acqf(
             )
         # TODO: Validate constraints if provided:
         # https://github.com/pytorch/botorch/pull/1231
+
+    full_tree = False
+
+    if isinstance(acq_function, OneShotAcquisitionFunction):
+        if not kwargs.pop("return_full_tree", False):
+            full_tree = True
+
+    initial_conditions_provided = batch_initial_conditions is not None
+
+    if initial_conditions_provided and sequential:
+        raise UnsupportedError(
+            "`batch_initial_conditions` is not supported for sequential optimization. "
+            "Either avoid specifying `batch_initial_conditions` to use the custom "
+            "initializer or use the `ic_generator` kwarg to generate "
+            "initial conditions for the case of nonlinear inequality constraints."
+        )
+
+    # Sets initial condition generator ic_gen if initial conditions not provided
+    if not initial_conditions_provided:
+        ic_gen = kwargs.pop("ic_generator", None)
+        if ic_gen is None:
+            if nonlinear_inequality_constraints:
+                raise RuntimeError(
+                    "`ic_generator` must be given if "
+                    "there are non-linear inequality constraints."
+                )
+            if raw_samples is None:
+                raise ValueError(
+                    "Must specify `raw_samples` when "
+                    "`batch_initial_conditions` is None`."
+                )
+            ic_gen = (
+                gen_one_shot_kg_initial_conditions
+                if isinstance(acq_function, qKnowledgeGradient)
+                else gen_batch_initial_conditions
+            )
 
     if sequential and q > 1:
         if not return_best_only:
@@ -167,7 +203,9 @@ def optimize_acqf(
                 batch_initial_conditions=None,
                 return_best_only=True,
                 sequential=False,
+                ic_generator=ic_gen,
             )
+
             candidate_list.append(candidate)
             acq_value_list.append(acq_value)
             candidates = torch.cat(candidate_list, dim=-2)
@@ -195,24 +233,8 @@ def optimize_acqf(
             acq_value = acq_function(X)
         return X, acq_value
 
-    initial_conditions_provided = batch_initial_conditions is not None
     if not initial_conditions_provided:
-        if nonlinear_inequality_constraints:
-            raise NotImplementedError(
-                "`batch_initial_conditions` must be given if there are non-linear "
-                "inequality constraints."
-            )
-        if raw_samples is None:
-            raise ValueError(
-                "Must specify `raw_samples` when `batch_initial_conditions` is `None`."
-            )
 
-    def _gen_initial_conditions() -> Tensor:
-        ic_gen = (
-            gen_one_shot_kg_initial_conditions
-            if isinstance(acq_function, qKnowledgeGradient)
-            else gen_batch_initial_conditions
-        )
         batch_initial_conditions = ic_gen(
             acq_function=acq_function,
             bounds=bounds,
@@ -223,11 +245,8 @@ def optimize_acqf(
             options=options,
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
+            **kwargs,
         )
-        return batch_initial_conditions
-
-    if not initial_conditions_provided:
-        batch_initial_conditions = _gen_initial_conditions()
 
     batch_limit: int = options.get(
         "batch_limit", num_restarts if not nonlinear_inequality_constraints else 1
@@ -287,7 +306,18 @@ def optimize_acqf(
         warnings.warn(first_warn_msg, RuntimeWarning)
 
         if not initial_conditions_provided:
-            batch_initial_conditions = _gen_initial_conditions()
+            batch_initial_conditions = ic_gen(
+                acq_function=acq_function,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                fixed_features=fixed_features,
+                options=options,
+                inequality_constraints=inequality_constraints,
+                equality_constraints=equality_constraints,
+                **kwargs,
+            )
 
             batch_candidates, batch_acq_values, ws = _optimize_batch_candidates()
 
@@ -309,9 +339,8 @@ def optimize_acqf(
         batch_candidates = batch_candidates[best]
         batch_acq_values = batch_acq_values[best]
 
-    if isinstance(acq_function, OneShotAcquisitionFunction):
-        if not kwargs.get("return_full_tree", False):
-            batch_candidates = acq_function.extract_candidates(X_full=batch_candidates)
+    if full_tree:
+        batch_candidates = acq_function.extract_candidates(X_full=batch_candidates)
 
     return batch_candidates, batch_acq_values
 
@@ -329,6 +358,7 @@ def optimize_acqf_cyclic(
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
     cyclic_options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
+    **kwargs,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of `q` candidates via cyclic optimization.
 
@@ -392,6 +422,7 @@ def optimize_acqf_cyclic(
         batch_initial_conditions=batch_initial_conditions,
         return_best_only=True,
         sequential=True,
+        **kwargs,
     )
     if q > 1:
         cyclic_options = cyclic_options or {}
@@ -421,7 +452,6 @@ def optimize_acqf_cyclic(
                     post_processing_func=post_processing_func,
                     batch_initial_conditions=candidates[i].unsqueeze(0),
                     return_best_only=True,
-                    sequential=True,
                 )
                 candidates[i] = candidate_i
                 acq_vals[i] = acq_val_i
