@@ -9,8 +9,8 @@ import random
 import warnings
 
 import torch
-from botorch import fit_gpytorch_model
 from botorch.exceptions.warnings import OptimizationWarning
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.transforms import Normalize
@@ -100,7 +100,9 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             mll = ExactMarginalLogLikelihood(model.likelihood, model).to(**tkwargs)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+                fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
+                )
 
             # test init
             self.assertIsInstance(model.mean_module, ConstantMean)

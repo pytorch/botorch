@@ -8,9 +8,9 @@ import itertools
 import warnings
 
 import torch
-from botorch import fit_gpytorch_model
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions import OptimizationWarning, UnsupportedError
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.likelihoods.pairwise import (
     PairwiseLogitLikelihood,
     PairwiseProbitLikelihood,
@@ -72,7 +72,9 @@ class TestPairwiseGP(BotorchTestCase):
             )
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                fit_gpytorch_model(mll, options={"maxiter": 2}, max_retries=1)
+                fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 2}}, max_attempts=1
+                )
             # prior training
             prior_m = PairwiseGP(None, None).to(**tkwargs)
             with self.assertRaises(RuntimeError):

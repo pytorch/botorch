@@ -993,7 +993,7 @@ class AppendFeatures(InputTransform, Module):
         ...     input_transform=AppendFeatures(feature_set=torch.rand(10, 1))
         ... )
         >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        >>> fit_gpytorch_model(mll)
+        >>> fit_gpytorch_mll(mll)
         >>> test_x = torch.rand(3, 1)
         >>> # `posterior_samples` is a `10 x 30 x 1`-dim tensor
         >>> posterior_samples = model.posterior(test_x).rsamples(torch.size([10]))

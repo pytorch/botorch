@@ -4,9 +4,18 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from re import compile
+from string import ascii_lowercase
+from unittest.mock import MagicMock
+
 import numpy as np
 import torch
-from botorch.optim.numpy_converter import module_to_array, set_params_with_array
+from botorch.optim.numpy_converter import (
+    create_name_filter,
+    get_parameters_and_bounds,
+    module_to_array,
+    set_params_with_array,
+)
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.constraints import GreaterThan
 from gpytorch.kernels.rbf_kernel import RBFKernel
@@ -23,6 +32,43 @@ def _get_index(property_dict, parameter_name):
             break
         idx += ta.shape.numel()
     return idx
+
+
+class TestCreateNameFilter(BotorchTestCase):
+    def test_create_name_filter(self):
+        with self.assertRaises(TypeError):
+            create_name_filter(("foo", compile("bar"), 1))
+
+        names = ascii_lowercase
+        name_filter = create_name_filter(iter(names[1::2]))
+        self.assertEqual(names[::2], "".join(filter(name_filter, names)))
+
+        items = tuple(zip(names, range(len(names))))
+        self.assertEqual(items[::2], tuple(filter(name_filter, items)))
+
+
+class TestGetParametersAndBounds(BotorchTestCase):
+    def setUp(self):
+        self.module = GaussianLikelihood(
+            noise_constraint=GreaterThan(1e-6, initial_value=0.123),
+        )
+
+    def test_get_parameters_and_bounds(self):
+        module = GaussianLikelihood(
+            noise_constraint=GreaterThan(1e-6, initial_value=0.123),
+        )
+        param_dict, bounds_dict = get_parameters_and_bounds(module)
+        self.assertTrue(1 == len(param_dict) == len(bounds_dict))
+
+        name, bounds = next(iter(bounds_dict.items()))
+        self.assertEqual(name, "noise_covar.raw_noise")
+        self.assertEqual(bounds, (-float("inf"), float("inf")))
+
+        mock_module = torch.nn.Module()
+        mock_module.named_parameters = MagicMock(return_value=module.named_parameters())
+        param_dict2, bounds_dict2 = get_parameters_and_bounds(mock_module)
+        self.assertEqual(param_dict, param_dict2)
+        self.assertTrue(len(bounds_dict2) == 0)
 
 
 class TestModuleToArray(BotorchTestCase):
@@ -113,6 +159,15 @@ class TestModuleToArray(BotorchTestCase):
                 lower_exp[_get_index(pdict, p)] = -np.inf
             self.assertTrue(np.equal(bounds[0], lower_exp).all())
             self.assertTrue(np.equal(bounds[1], np.full_like(x, np.inf)).all())
+
+            x, pdict, bounds = module_to_array(
+                module=mll,
+                bounds={
+                    key: (-float("inf"), float("inf"))
+                    for key, _ in mll.named_parameters()
+                },
+            )
+            self.assertIsNone(bounds)
 
     def test_module_bounds(self):
         for dtype in (torch.float, torch.double):

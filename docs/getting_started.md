@@ -48,7 +48,7 @@ Here's a quick run down of the main components of a Bayesian Optimization loop.
     ```python
     import torch
     from botorch.models import SingleTaskGP
-    from botorch.fit import fit_gpytorch_model
+    from botorch.fit import fit_gpytorch_mll
     from gpytorch.mlls import ExactMarginalLogLikelihood
 
     train_X = torch.rand(10, 2)
@@ -58,7 +58,7 @@ Here's a quick run down of the main components of a Bayesian Optimization loop.
 
     gp = SingleTaskGP(train_X, train_Y)
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-    fit_gpytorch_model(mll);
+    fit_gpytorch_mll(mll);
     ```
 
 2. Construct an acquisition function

@@ -6,7 +6,7 @@
 
 
 import torch
-from botorch import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.contextual import LCEAGP, SACGP
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.kernels.contextual_lcea import LCEAKernel
@@ -33,7 +33,7 @@ class TestContextualGP(BotorchTestCase):
 
             model = SACGP(train_X, train_Y, train_Yvar, self.decomposition)
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            fit_gpytorch_model(mll, options={"maxiter": 1})
+            fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 1}})
 
             self.assertIsInstance(model, FixedNoiseGP)
             self.assertDictEqual(model.decomposition, self.decomposition)
@@ -81,7 +81,7 @@ class TestContextualGP(BotorchTestCase):
                 decomposition=decomposition,
             )
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            fit_gpytorch_model(mll, options={"maxiter": 1})
+            fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 1}})
 
             self.assertIsInstance(model, LCEAGP)
             self.assertIsInstance(model.covar_module, LCEAKernel)

@@ -11,7 +11,7 @@ import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import OptimizationWarning
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models import ModelListGP
 from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.models.transforms import Standardize
@@ -97,12 +97,17 @@ class TestModelListGP(BotorchTestCase):
             # test model fitting (sequential)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+                mll = fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
+                )
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
                 # test model fitting (joint)
-                mll = fit_gpytorch_model(
-                    mll, options={"maxiter": 1}, max_retries=1, sequential=False
+                mll = fit_gpytorch_mll(
+                    mll,
+                    optimizer_kwargs={"options": {"maxiter": 1}},
+                    max_attempts=1,
+                    sequential=False,
                 )
 
             # test subset outputs
@@ -201,7 +206,9 @@ class TestModelListGP(BotorchTestCase):
                 self.assertIsInstance(mll_, ExactMarginalLogLikelihood)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+                mll = fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
+                )
 
             # test posterior
             test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
