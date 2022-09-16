@@ -10,9 +10,22 @@ Tools for model fitting.
 
 from __future__ import annotations
 
-import time
 import warnings
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set, Tuple, Union
+from itertools import filterfalse
+from re import Pattern
+from time import monotonic
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 from botorch.exceptions.warnings import OptimizationWarning
@@ -26,6 +39,7 @@ from botorch.optim.utils import (
     _filter_kwargs,
     _get_extra_mll_args,
     _scipy_objective_and_grad,
+    create_name_filter,
 )
 from gpytorch import settings as gpt_settings
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
@@ -53,13 +67,123 @@ class OptimizationIteration(NamedTuple):
     time: float
 
 
+def fit_gpytorch_scipy(
+    mll: MarginalLogLikelihood,
+    bounds: Optional[ParameterBounds] = None,
+    method: str = "L-BFGS-B",
+    options: Optional[Dict[str, Any]] = None,
+    track_iterations: bool = False,
+    approx_mll: bool = False,
+    scipy_objective: TScipyObjective = _scipy_objective_and_grad,
+    module_to_array_func: TModToArray = module_to_array,
+    module_from_array_func: TArrayToMod = set_params_with_array,
+) -> Tuple[MarginalLogLikelihood, Dict[str, Union[float, List[OptimizationIteration]]]]:
+    r"""Fit a gpytorch model by maximizing MLL with a scipy optimizer.
+
+    The model and likelihood in mll must already be in train mode.
+    This method requires that the model has `train_inputs` and `train_targets`.
+
+    Args:
+        mll: MarginalLogLikelihood to be maximized.
+        bounds: A dictionary mapping parameter names to tuples of lower and upper
+            bounds.
+        method: Solver type, passed along to scipy.minimize.
+        options: Dictionary of solver options, passed along to scipy.minimize.
+        track_iterations: Track the function values and wall time for each
+            iteration.
+        approx_mll: If True, use gpytorch's approximate MLL computation. This is
+            disabled by default since the stochasticity is an issue for
+            determistic optimizers). Enabling this is only recommended when
+            working with large training data sets (n>2000).
+
+    Returns:
+        2-element tuple containing
+        - MarginalLogLikelihood with parameters optimized in-place.
+        - Dictionary with the following key/values:
+        "fopt": Best mll value.
+        "wall_time": Wall time of fitting.
+        "iterations": List of OptimizationIteration objects with information on each
+        iteration. If track_iterations is False, will be empty.
+        "OptimizeResult": The result returned by `scipy.optim.minimize`.
+
+    Example:
+        >>> gp = SingleTaskGP(train_X, train_Y)
+        >>> mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+        >>> mll.train()
+        >>> fit_gpytorch_scipy(mll)
+        >>> mll.eval()
+    """
+    options = {} if options is None else options.copy()
+    exclude: Iterator[Union[Pattern, str]] = options.pop("exclude", None)
+    if exclude:
+        exclude, _ = zip(  # get the qualified names of excluded parameters
+            *filterfalse(create_name_filter(exclude), mll.named_parameters())
+        )
+
+    x0, property_dict, bounds = module_to_array_func(
+        module=mll,
+        bounds=bounds,
+        exclude=exclude,
+    )
+    x0 = x0.astype(np.float64)
+    if bounds is not None:
+        bounds = Bounds(lb=bounds[0], ub=bounds[1], keep_feasible=True)
+
+    xs = []
+    ts = []
+    t1 = monotonic()
+
+    def store_iteration(xk):
+        xs.append(xk.copy())
+        ts.append(monotonic() - t1)
+
+    cb = store_iteration if track_iterations else None
+    with gpt_settings.fast_computations(log_prob=approx_mll):
+        res = minimize(
+            scipy_objective,
+            x0,
+            args=(mll, property_dict),
+            bounds=bounds,
+            method=method,
+            jac=True,
+            options=options,
+            callback=cb,
+        )
+        iterations = []
+        if track_iterations:
+            for i, xk in enumerate(xs):
+                obj, _ = scipy_objective(x=xk, mll=mll, property_dict=property_dict)
+                iterations.append(OptimizationIteration(i, obj, ts[i]))
+
+    # Construct info dict
+    info_dict = {
+        "fopt": float(res.fun),
+        "wall_time": monotonic() - t1,
+        "iterations": iterations,
+        "OptimizeResult": res,
+    }
+    if not res.success:
+        try:
+            # Some res.message are bytes
+            msg = res.message.decode("ascii")
+        except AttributeError:
+            # Others are str
+            msg = res.message
+        warnings.warn(
+            f"Fitting failed with the optimizer reporting '{msg}'", OptimizationWarning
+        )
+    # Set to optimum
+    mll = module_from_array_func(mll, res.x, property_dict)
+    return mll, info_dict
+
+
 def fit_gpytorch_torch(
     mll: MarginalLogLikelihood,
     bounds: Optional[ParameterBounds] = None,
     optimizer_cls: Optimizer = Adam,
     options: Optional[Dict[str, Any]] = None,
-    track_iterations: bool = True,
-    approx_mll: bool = True,
+    track_iterations: bool = False,
+    approx_mll: bool = False,
 ) -> Tuple[MarginalLogLikelihood, Dict[str, Union[float, List[OptimizationIteration]]]]:
     r"""Fit a gpytorch model by maximizing MLL with a torch optimizer.
 
@@ -103,12 +227,13 @@ def fit_gpytorch_torch(
     optim_options = {"maxiter": 100, "disp": True, "lr": 0.05}
     optim_options.update(options or {})
     exclude = optim_options.pop("exclude", None)
-    if exclude is not None:
-        mll_params = [
-            t for p_name, t in mll.named_parameters() if p_name not in exclude
-        ]
-    else:
+    if exclude is None:
         mll_params = list(mll.parameters())
+    else:
+        mll_params = [
+            v for k, v in filter(create_name_filter(exclude), mll.named_parameters())
+        ]
+
     optimizer = optimizer_cls(
         params=[{"params": mll_params}],
         **_filter_kwargs(optimizer_cls, **optim_options),
@@ -126,7 +251,7 @@ def fit_gpytorch_torch(
         bounds_.update(bounds)
 
     iterations = []
-    t1 = time.monotonic()
+    t1 = monotonic()
 
     param_trajectory: Dict[str, List[Tensor]] = {
         name: [] for name, param in mll.named_parameters()
@@ -154,9 +279,8 @@ def fit_gpytorch_torch(
         ):
             print(f"Iter {i + 1}/{optim_options['maxiter']}: {loss.item()}")
         if track_iterations:
-            iterations.append(
-                OptimizationIteration(i, loss.item(), time.monotonic() - t1)
-            )
+            iterations.append(OptimizationIteration(i, loss.item(), monotonic() - t1))
+
         optimizer.step()
         # project onto bounds:
         if bounds_:
@@ -167,109 +291,7 @@ def fit_gpytorch_torch(
         stop = stopping_criterion.evaluate(fvals=loss.detach())
     info_dict = {
         "fopt": loss_trajectory[-1],
-        "wall_time": time.monotonic() - t1,
+        "wall_time": monotonic() - t1,
         "iterations": iterations,
     }
-    return mll, info_dict
-
-
-def fit_gpytorch_scipy(
-    mll: MarginalLogLikelihood,
-    bounds: Optional[ParameterBounds] = None,
-    method: str = "L-BFGS-B",
-    options: Optional[Dict[str, Any]] = None,
-    track_iterations: bool = True,
-    approx_mll: bool = False,
-    scipy_objective: TScipyObjective = _scipy_objective_and_grad,
-    module_to_array_func: TModToArray = module_to_array,
-    module_from_array_func: TArrayToMod = set_params_with_array,
-) -> Tuple[MarginalLogLikelihood, Dict[str, Union[float, List[OptimizationIteration]]]]:
-    r"""Fit a gpytorch model by maximizing MLL with a scipy optimizer.
-
-    The model and likelihood in mll must already be in train mode.
-    This method requires that the model has `train_inputs` and `train_targets`.
-
-    Args:
-        mll: MarginalLogLikelihood to be maximized.
-        bounds: A dictionary mapping parameter names to tuples of lower and upper
-            bounds.
-        method: Solver type, passed along to scipy.minimize.
-        options: Dictionary of solver options, passed along to scipy.minimize.
-        track_iterations: Track the function values and wall time for each
-            iteration.
-        approx_mll: If True, use gpytorch's approximate MLL computation. This is
-            disabled by default since the stochasticity is an issue for
-            determistic optimizers). Enabling this is only recommended when
-            working with large training data sets (n>2000).
-
-    Returns:
-        2-element tuple containing
-        - MarginalLogLikelihood with parameters optimized in-place.
-        - Dictionary with the following key/values:
-        "fopt": Best mll value.
-        "wall_time": Wall time of fitting.
-        "iterations": List of OptimizationIteration objects with information on each
-        iteration. If track_iterations is False, will be empty.
-        "OptimizeResult": The result returned by `scipy.optim.minimize`.
-
-    Example:
-        >>> gp = SingleTaskGP(train_X, train_Y)
-        >>> mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-        >>> mll.train()
-        >>> fit_gpytorch_scipy(mll)
-        >>> mll.eval()
-    """
-    options = options or {}
-    x0, property_dict, bounds = module_to_array_func(
-        module=mll, bounds=bounds, exclude=options.pop("exclude", None)
-    )
-    x0 = x0.astype(np.float64)
-    if bounds is not None:
-        bounds = Bounds(lb=bounds[0], ub=bounds[1], keep_feasible=True)
-
-    xs = []
-    ts = []
-    t1 = time.monotonic()
-
-    def store_iteration(xk):
-        xs.append(xk.copy())
-        ts.append(time.monotonic() - t1)
-
-    cb = store_iteration if track_iterations else None
-
-    with gpt_settings.fast_computations(log_prob=approx_mll):
-        res = minimize(
-            scipy_objective,
-            x0,
-            args=(mll, property_dict),
-            bounds=bounds,
-            method=method,
-            jac=True,
-            options=options,
-            callback=cb,
-        )
-        iterations = []
-        if track_iterations:
-            for i, xk in enumerate(xs):
-                obj, _ = scipy_objective(x=xk, mll=mll, property_dict=property_dict)
-                iterations.append(OptimizationIteration(i, obj, ts[i]))
-    # Construct info dict
-    info_dict = {
-        "fopt": float(res.fun),
-        "wall_time": time.monotonic() - t1,
-        "iterations": iterations,
-        "OptimizeResult": res,
-    }
-    if not res.success:
-        try:
-            # Some res.message are bytes
-            msg = res.message.decode("ascii")
-        except AttributeError:
-            # Others are str
-            msg = res.message
-        warnings.warn(
-            f"Fitting failed with the optimizer reporting '{msg}'", OptimizationWarning
-        )
-    # Set to optimum
-    mll = module_from_array_func(mll, res.x, property_dict)
     return mll, info_dict

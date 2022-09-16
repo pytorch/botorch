@@ -37,3 +37,9 @@ class BotorchTensorDimensionError(BotorchError):
     r"""Exception raised when a tensor violates a botorch convention."""
 
     pass
+
+
+class ModelFittingError(Exception):
+    r"""Exception raised when attempts to fit a model terminate unsuccessfully."""
+
+    pass

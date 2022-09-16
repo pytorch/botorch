@@ -8,8 +8,8 @@ import itertools
 import warnings
 
 import torch
-from botorch import fit_gpytorch_model
 from botorch.exceptions.warnings import OptimizationWarning
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.gp_regression import (
     FixedNoiseGP,
     HeteroskedasticSingleTaskGP,
@@ -90,7 +90,9 @@ class TestSingleTaskGP(BotorchTestCase):
             mll = ExactMarginalLogLikelihood(model.likelihood, model).to(**tkwargs)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+                fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
+                )
 
             # test init
             self.assertIsInstance(model.mean_module, ConstantMean)
@@ -368,7 +370,7 @@ class TestSingleTaskGP(BotorchTestCase):
             intf = tf_class(d=2)
             model = SingleTaskGP(X, Y, input_transform=intf)
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            fit_gpytorch_model(mll, options={"maxiter": 2})
+            fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 2}})
             tf_X = intf(X)
             self.assertEqual(X.shape, tf_X.shape)
 

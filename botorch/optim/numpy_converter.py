@@ -14,12 +14,24 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from math import inf
-from typing import Dict, List, NamedTuple, Optional, Set, Tuple
+from numbers import Number
+from re import Pattern
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import torch
-from torch.nn import Module
-
+from torch.nn import Module, Parameter
 
 ParameterBounds = Dict[str, Tuple[Optional[float], Optional[float]]]
 
@@ -28,6 +40,90 @@ class TorchAttr(NamedTuple):
     shape: torch.Size
     dtype: torch.dtype
     device: torch.device
+
+
+def create_name_filter(
+    patterns: Iterator[Union[Pattern, str]]
+) -> Callable[[Union[str, Tuple[str, Any, ...]]], bool]:
+    r"""Returns a binary function that filters strings (or iterables whose first
+    element is a string) according to a bank of excluded patterns. Typically, used
+    in conjunction with generators such as `module.named_parameters()`.
+
+    Args:
+        patterns: A collection of regular expressions or strings that
+            define the set of names to be excluded.
+
+    Returns:
+        A binary function indicating whether or not an item should be filtered.
+    """
+    names = set()
+    _patterns = set()
+    for pattern in patterns:
+        if isinstance(pattern, str):
+            names.add(pattern)
+        elif isinstance(pattern, Pattern):
+            _patterns.add(pattern)
+        else:
+            raise TypeError
+
+    def name_filter(item: Union[str, Tuple[str, Any, ...]]) -> bool:
+        name = item if isinstance(item, str) else next(iter(item))
+        if name in names:
+            return False
+
+        for pattern in _patterns:
+            if pattern.search(name):
+                return False
+
+        return True
+
+    return name_filter
+
+
+def get_parameters_and_bounds(
+    module: Module,
+    name_filter: Optional[Callable[[str], bool]] = None,
+    requires_grad: Optional[bool] = None,
+    default_bounds: Tuple[float, float] = (-float("inf"), float("inf")),
+) -> Tuple[Dict[str, Parameter], Dict[str, ParameterBounds]]:
+    r"""Helper method for extracting parameters and feasible ranges thereof.
+
+    Args:
+        module: The target module from which parameters are to be extracted.
+        name_filter: Optional Boolean function used to filter parameters by name.
+        requires_grad: Optional Boolean used to filter parameters based on whether
+            or not their require_grad attribute matches the user provided value.
+        default_bounds: Default lower and upper bounds for constrained parameters
+            with `None` typed bounds.
+
+    Returns:
+        0: Dictionary mapping names to Parameters.
+        1: Dictionary mapping names of constrained parameters to ParameterBounds.
+    """
+    if hasattr(module, "named_parameters_and_constraints"):
+        bounds = {}
+        params = {}
+        for name, param, constraint in module.named_parameters_and_constraints():
+            if (requires_grad is None or (param.requires_grad == requires_grad)) and (
+                name_filter is None or name_filter(name)
+            ):
+                params[name] = param
+                if constraint is None:
+                    continue
+
+                bounds[name] = tuple(
+                    default if bound is None else constraint.inverse_transform(bound)
+                    for (bound, default) in zip(constraint, default_bounds)
+                )
+    else:
+        bounds = {}
+        params = {
+            name: param
+            for name, param in module.named_parameters()
+            if name_filter is None or name_filter(name)
+        }
+
+    return params, bounds
 
 
 def module_to_array(
@@ -60,46 +156,48 @@ def module_to_array(
         >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
         >>> parameter_array, property_dict, bounds_out = module_to_array(mll)
     """
-    x: List[np.ndarray] = []
-    lower: List[np.ndarray] = []
-    upper: List[np.ndarray] = []
-    property_dict = OrderedDict()
-    exclude = set() if exclude is None else exclude
-
-    # get bounds specified in model (if any)
-    bounds_: ParameterBounds = {}
-    if hasattr(module, "named_parameters_and_constraints"):
-        for param_name, _, constraint in module.named_parameters_and_constraints():
-            if constraint is not None and not constraint.enforced:
-                bounds_[param_name] = constraint.lower_bound, constraint.upper_bound
-
-    # update with user-supplied bounds (overwrites if already exists)
+    param_dict, bounds_dict = get_parameters_and_bounds(
+        module=module,
+        name_filter=None if exclude is None else create_name_filter(exclude),
+        requires_grad=True,
+    )
     if bounds is not None:
-        bounds_.update(bounds)
+        bounds_dict.update(bounds)
 
-    for p_name, t in module.named_parameters():
-        if p_name not in exclude and t.requires_grad:
-            property_dict[p_name] = TorchAttr(
-                shape=t.shape, dtype=t.dtype, device=t.device
-            )
-            x.append(t.detach().view(-1).cpu().double().clone().numpy())
-            # construct bounds
-            if bounds_:
-                l_, u_ = bounds_.get(p_name, (-inf, inf))
-                if torch.is_tensor(l_):
-                    l_ = l_.cpu().detach()
-                if torch.is_tensor(u_):
-                    u_ = u_.cpu().detach()
-                # check for Nones here b/c it may be passed in manually in bounds
-                lower.append(np.full(t.nelement(), l_ if l_ is not None else -inf))
-                upper.append(np.full(t.nelement(), u_ if u_ is not None else inf))
+    # Record tensor metadata and read parameter values to the tape
+    param_tape: List[Number] = []
+    property_dict = OrderedDict()
+    with torch.no_grad():
+        for name, param in param_dict.items():
+            property_dict[name] = TorchAttr(param.shape, param.dtype, param.device)
+            param_tape.extend(param.view(-1).cpu().double().tolist())
 
-    x_out = np.concatenate(x)
-    bounds_out = None
-    if bounds_:
-        if not all(np.isinf(b).all() for lu in (lower, upper) for b in lu):
-            bounds_out = np.stack([np.concatenate(lower), np.concatenate(upper)])
-    return x_out, property_dict, bounds_out
+    # Extract lower and upper bounds
+    start = 0
+    bounds_np = None
+    params_np = np.asarray(param_tape)
+    for name, param in param_dict.items():
+        numel = param.numel()
+        if name in bounds_dict:
+            for row, bound in enumerate(bounds_dict[name]):
+                if bound is None:
+                    continue
+
+                if torch.is_tensor(bound):
+                    if (bound == (2 * row - 1) * inf).all():
+                        continue
+                    bound = bound.detach().cpu()
+
+                elif bound == (2 * row - 1) * inf:
+                    continue
+
+                if bounds_np is None:
+                    bounds_np = np.full((2, len(params_np)), ((-inf,), (inf,)))
+
+                bounds_np[row, start : start + numel] = bound
+        start += numel
+
+    return params_np, property_dict, bounds_np
 
 
 def set_params_with_array(

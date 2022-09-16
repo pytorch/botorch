@@ -4,158 +4,359 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-r"""
-Utilities for model fitting.
-"""
+r"""Model fitting routines."""
 
 from __future__ import annotations
 
 import logging
-import warnings
-from copy import deepcopy
-from typing import Any, Callable, Union
+from contextlib import nullcontext
+from re import compile, Pattern
+from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Type, Union
+from warnings import catch_warnings, simplefilter, warn, WarningMessage
 
-from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.errors import ModelFittingError, UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
 from botorch.models.converter import batched_to_model_list, model_list_to_batched
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
 
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
+from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.optim.fit import fit_gpytorch_scipy
-from botorch.optim.utils import sample_all_priors
+from botorch.optim.utils import (
+    allclose_mll,
+    del_attribute_ctx,
+    parameter_rollback_ctx,
+    requires_grad_ctx,
+    sample_all_priors,
+    state_rollback_ctx,
+    Tkwargs,
+)
 from botorch.settings import debug
+from botorch.utils.dispatcher import Dispatcher, MDNotImplementedError
+from gpytorch.likelihoods import Likelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from linear_operator.utils.errors import NotPSDError
 from pyro.infer.mcmc import MCMC, NUTS
+from torch import device, mean, Tensor
+
+OptimizerType = Callable[[MarginalLogLikelihood], Tuple[MarginalLogLikelihood, Any]]
+DEFAULT_LOGGING_PATTERNS: Dict[int, Pattern] = {
+    logging.DEBUG: compile(  # catch warning corresponding to `maxiter` and `maxfun`
+        "TOTAL NO. of (ITERATIONS REACHED LIMIT|f AND g EVALUATIONS EXCEEDS LIMIT)"
+    )
+}
 
 
-FAILED_CONVERSION_MSG = (
-    "Failed to convert ModelList to batched model. "
-    "Performing joint instead of sequential fitting."
-)
+def DEFAULT_WARNING_FILTER(
+    w: WarningMessage,
+    logging_patterns: Dict[int, Pattern] = DEFAULT_LOGGING_PATTERNS,
+) -> bool:
+    r"""Default warning resolution policy: retry upon encountering an
+    OptimizationWarning that does not match any logging pattern.
+
+    Args:
+        w: Candidate for filtering.
+        logging_patterns: Dictionary mapping logging levels to regular expressions.
+            Warning messages are compared against these expressions and matches are
+            awarded first-come-first-serve when iterating through the dictionary.
+
+    Returns:
+        Boolean indicating whether the warning is unresolved.
+    """
+    for level, pattern in logging_patterns.items():
+        if pattern.search(str(w.message)):
+            logging.log(level, w.message)
+            return False
+
+    # Rethrow OptimizationWarnings but mark them as resolved
+    if not issubclass(w.category, OptimizationWarning):
+        warn(w.message, w.category)
+        return False
+
+    return True
+
+
+# Dispatcher for `fit_gpytorch_mll`
+def _type_bypassing_encoder(arg: Any) -> Type:
+    # Allow type variables to be passed as pre-encoded arguments
+    return arg if isinstance(arg, type) else type(arg)
+
+
+dispatcher = Dispatcher("fit_gpytorch_mll", encoder=_type_bypassing_encoder)
+
+
+def fit_gpytorch_mll(
+    mll: MarginalLogLikelihood,
+    optimizer: Optional[Callable] = None,
+    optimizer_kwargs: Optional[dict] = None,
+    **kwargs: Any,
+) -> MarginalLogLikelihood:
+    r"""Clearing house for fitting models passed as GPyTorch MarginalLogLikelihoods.
+
+    Args:
+        mll: A GPyTorch MarginalLogLikelihood instance.
+        optimizer: User specified optimization algorithm. When `optimizer is None`,
+            this keyword argument is omitted when calling the dispatcher.
+        optimizer_kwargs: A dictionary of keyword arguments passed when
+            calling `optimizer`.
+        **kwargs: Keyword arguments passed down through the dispatcher to
+            fit subroutines. Unexpected keywords are ignored.
+
+    Returns:
+        The `mll` instance. If fitting succeeded, then `mll` will be in evaluation mode,
+        i.e. `mll.training == False`. Otherwise, `mll` will be in training mode.
+    """
+    if optimizer is not None:  # defer to per-method defaults
+        kwargs["optimizer"] = optimizer
+
+    return dispatcher(
+        mll,
+        type(mll.likelihood),
+        type(mll.model),
+        optimizer_kwargs=optimizer_kwargs,
+        **kwargs,
+    )
 
 
 def fit_gpytorch_model(
-    mll: MarginalLogLikelihood, optimizer: Callable = fit_gpytorch_scipy, **kwargs: Any
+    mll: MarginalLogLikelihood,
+    optimizer: Optional[OptimizerType] = None,
+    optimizer_kwargs: Optional[dict] = None,
+    exclude: Optional[Iterable[str]] = None,
+    max_retries: Optional[int] = None,
+    **kwargs: Any,
 ) -> MarginalLogLikelihood:
-    r"""Fit hyperparameters of a GPyTorch model.
-
-    On optimizer failures, a new initial condition is sampled from the
-    hyperparameter priors and optimization is retried. The maximum number of
-    retries can be passed in as a `max_retries` kwarg (default is 5).
-
-    Optimizer functions are in botorch.optim.fit.
+    r"""Convenience method for fitting GPyTorch models using legacy API. For more
+    details, see `fit_gpytorch_mll`.
 
     Args:
-        mll: MarginalLogLikelihood to be maximized.
-        optimizer: The optimizer function.
-        kwargs: Arguments passed along to the optimizer function, including
-            `max_retries` and `sequential` (controls the fitting of `ModelListGP`
-            and `BatchedMultiOutputGPyTorchModel` models) or `approx_mll`
-            (whether to use gpytorch's approximate MLL computation).
-
-    Returns:
-        MarginalLogLikelihood with optimized parameters.
-
-    Example:
-        >>> gp = SingleTaskGP(train_X, train_Y)
-        >>> mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-        >>> fit_gpytorch_model(mll)
+        mll: A GPyTorch MarginalLogLikelihood instance.
+        optimizer: User specified optimization algorithm. When `optimizer is None`,
+            this keyword argument is omitted when calling the dispatcher from inside
+            `fit_gpytorch_mll`.
+        exclude: Legacy argument for specifying parameters `x` that should be held fixed
+            during optimization. Internally, used to temporarily set `x.requires_grad`
+            to False.
+        max_retries: Legacy name for `max_attempts`. When `max_retries is None`,
+            this keyword argument is omitted when calling `fit_gpytorch_mll`.
     """
-    sequential = kwargs.pop("sequential", True)
-    max_retries = kwargs.pop("max_retries", 5)
-    if isinstance(mll, SumMarginalLogLikelihood) and sequential:
-        for mll_ in mll.mlls:
-            fit_gpytorch_model(
-                mll=mll_, optimizer=optimizer, max_retries=max_retries, **kwargs
-            )
-        return mll
-    elif (
-        isinstance(mll.model, BatchedMultiOutputGPyTorchModel)
-        and mll.model._num_outputs > 1
-        and sequential
+    warn(
+        "`fit_gpytorch_model` is marked for deprecation, consider using "
+        "`fit_gpytorch_mll` instead.",
+        DeprecationWarning,
+    )
+    if max_retries is not None:
+        kwargs["max_attempts"] = max_retries
+
+    optimizer_kwargs = {} if optimizer_kwargs is None else optimizer_kwargs
+    for key in ("bounds", "options", "track_iterations", "approx_mll"):
+        if key not in kwargs:
+            continue
+
+        val = kwargs.pop(key)
+        if key in optimizer_kwargs and val is not optimizer_kwargs[key]:
+            raise SyntaxError(f"keyword argument repeated: {key}")
+
+        optimizer_kwargs[key] = val
+
+    with (
+        nullcontext()
+        if exclude is None
+        else requires_grad_ctx(mll, assignments={name: False for name in exclude})
     ):
-        tf = None
-        try:  # check if backwards-conversion is possible
-            # remove the outcome transform since the training targets are already
-            # transformed and the outcome transform cannot currently be split.
-            # TODO: support splitting outcome transforms.
-            if hasattr(mll.model, "outcome_transform"):
-                tf = mll.model.outcome_transform
-                mll.model.outcome_transform = None
-            model_list = batched_to_model_list(mll.model)
-            mll_ = SumMarginalLogLikelihood(model_list.likelihood, model_list)
-            fit_gpytorch_model(
-                mll=mll_,
+        try:
+            mll = fit_gpytorch_mll(
+                mll,
                 optimizer=optimizer,
-                sequential=True,
-                max_retries=max_retries,
+                optimizer_kwargs=optimizer_kwargs,
                 **kwargs,
             )
-            model_ = model_list_to_batched(mll_.model)
-            mll.model.load_state_dict(model_.state_dict())
-            # setting the transformed inputs is necessary because gpytorch
-            # stores the raw training inputs on the ExactGP in the
-            # ExactGP.__init__ call. At evaluation time, the test inputs will
-            # already be in the transformed space if some transforms have
-            # transform_on_eval set to False. ExactGP.__call__ will
-            # concatenate the test points with the training inputs. Therefore,
-            # it is important to set the ExactGP's train_inputs to also be
-            # transformed data using all transforms (including the transforms
-            # with transform_on_train set to True).
-            mll.train()
-            if tf is not None:
-                mll.model.outcome_transform = tf
-            return mll.eval()
-        # NotImplementedError is omitted since it derives from RuntimeError
-        except (UnsupportedError, RuntimeError, AttributeError):
-            warnings.warn(FAILED_CONVERSION_MSG, BotorchWarning)
-            if tf is not None:
-                mll.model.outcome_transform = tf
-            return fit_gpytorch_model(
-                mll=mll, optimizer=optimizer, sequential=False, max_retries=max_retries
-            )
-    # retry with random samples from the priors upon failure
-    mll.train()
-    original_state_dict = deepcopy(mll.model.state_dict())
-    retry = 0
-    while retry < max_retries:
-        with warnings.catch_warnings(record=True) as ws, debug(True):
-            # Make sure we catch all OptimizationWarnings.
-            warnings.simplefilter("always", category=OptimizationWarning)
-            if retry > 0:  # use normal initial conditions on first try
-                mll.model.load_state_dict(original_state_dict)
-                sample_all_priors(mll.model)
-            try:
-                mll, _ = optimizer(mll, track_iterations=False, **kwargs)
-            except NotPSDError:
-                retry += 1
-                logging.log(
-                    logging.DEBUG,
-                    f"Fitting failed on try {retry} due to a NotPSDError.",
-                )
-                continue
-        has_optwarning = False
-        for w in ws:
-            # Do not count reaching `maxiter` as an optimization failure.
-            if "ITERATIONS REACHED LIMIT" in str(w.message):
-                logging.log(
-                    logging.DEBUG,
-                    "Fitting ended early due to reaching the iteration limit.",
-                )
-                continue
-            has_optwarning |= issubclass(w.category, OptimizationWarning)
-            warnings.warn(w.message, w.category)
-        if not has_optwarning:
-            mll.eval()
-            return mll
-        retry += 1
-        logging.log(logging.DEBUG, f"Fitting failed on try {retry}.")
+        except ModelFittingError as err:
+            warn(str(err), RuntimeWarning)
 
-    warnings.warn("Fitting failed on all retries.", RuntimeWarning)
-    return mll.eval()
+    return mll
+
+
+@dispatcher.register(MarginalLogLikelihood, object, object)
+def _fit_fallback(
+    mll: MarginalLogLikelihood,
+    _: Type[object],
+    __: Type[object],
+    *,
+    optimizer: Optional[Callable] = fit_gpytorch_scipy,
+    optimizer_kwargs: Optional[dict] = None,
+    max_attempts: int = 5,
+    warning_filter: Callable[[WarningMessage], bool] = DEFAULT_WARNING_FILTER,
+    caught_exception_types: Tuple[Type[BaseException], ...] = (NotPSDError,),
+    **ignore: Any,
+) -> MarginalLogLikelihood:
+    r"""Generic fallback method for fitting Gaussian processes.
+
+    Attempts to fit a model using the provided optimizer, then determines whether or
+    not to retry by evaluating a given policy on emitted warning messages. The first
+    attempt is run using the initialized parameter values; subsequent attempts begin
+    by resampling tunable parameters.
+
+    Args:
+        optimizer: The underlying optimization algorithm to run.
+        optimizer_kwargs: Keyword arguments passed when calling `optimizer`.
+        max_attempts: The maximum number of fit attempts allowed. The attempt budget
+            is NOT shared between calls to this method.
+        warning_filter: A function used to filter warnings produced when calling
+            `optimizer`. Any unfiltered warnings will be rethrown and trigger a
+            model fitting retry.
+        caught_exception_types: A tuple of exception types whose instances should
+            be redirected to `logging.DEBUG`.
+        **ignore: This function ignores unrecognized keyword arguments.
+
+    Returns:
+        The `mll` instance. If fitting succeeded, then `mll` will be in evaluation mode,
+        i.e. `mll.training == False`. Otherwise, `mll` will be in training mode.
+    """
+    ckpt: Dict[str, Tuple[Tensor, Tkwargs]] = None  # lazy CPU-based checkpoint
+    ckpt_nograd: Dict[str, Tuple[Tensor, Tkwargs]] = None  # subset for fixed parameters
+    optimizer_kwargs = {} if optimizer_kwargs is None else optimizer_kwargs
+
+    mll.train()
+    for attempt in range(1, 1 + max_attempts):
+        # Wrap with rollback contextmanager so each loop iteration reloads the original
+        # state_dict upon exiting (unless `ckpt` is cleared).
+        with state_rollback_ctx(mll, checkpoint=ckpt, device=device("cpu")) as ckpt:
+            if ckpt_nograd is None:
+                ckpt_nograd = {  # reuse cached values from primary checkpoint
+                    k: ckpt[k] for k, v in mll.named_parameters() if not v.requires_grad
+                }
+
+            if attempt > 1:  # maybe resample parameters that require gradients
+                with parameter_rollback_ctx(mll, checkpoint=ckpt_nograd):
+                    sample_all_priors(mll.model)
+
+            try:
+                # Fit the model
+                with catch_warnings(record=True) as warning_list, debug(True):
+                    simplefilter("always", category=OptimizationWarning)
+                    mll, _ = optimizer(mll, **optimizer_kwargs)
+
+                # Resolve warning messages and determine whether or not to retry
+                done = True
+                for unresolved_warning in filter(warning_filter, warning_list):
+                    warn(unresolved_warning.message, unresolved_warning.category)
+                    done = False
+
+                if done:
+                    ckpt.clear()  # do not rollback upon exiting
+                    return mll.eval()
+
+                # Ensure mll is in the right mode if fitting failed
+                mll = mll if mll.training else mll.train()
+                logging.log(
+                    logging.DEBUG,
+                    f"Fit attempt #{attempt} of {max_attempts} triggered retry policy"
+                    f"{'.' if attempt == max_attempts else '; retrying...'}",
+                )
+
+            except caught_exception_types as err:
+                logging.log(
+                    logging.DEBUG,
+                    f"Fit attempt #{attempt} of {max_attempts} failed with exception: "
+                    f"{err}",
+                )
+
+    raise ModelFittingError("All attempts to fit the model have failed.")
+
+
+@dispatcher.register(SumMarginalLogLikelihood, Likelihood, ModelListGP)
+def _fit_list(
+    mll: SumMarginalLogLikelihood,
+    _: Type[Likelihood],
+    __: Type[ModelListGP],
+    **kwargs: Any,
+) -> SumMarginalLogLikelihood:
+    r"""Fitting routine for lists of independent Gaussian processes.
+
+    Args:
+        **kwargs: Passed to each of `mll.mlls`.
+
+    Returns:
+        The `mll` instance. If fitting succeeded for all of `mll.mlls`, then `mll` will
+        be in evaluation mode, i.e. `mll.training == False`. Otherwise, `mll` will be in
+        training mode.
+    """
+    mll.train()
+    for sub_mll in mll.mlls:
+        fit_gpytorch_mll(sub_mll, **kwargs)
+
+    return mll.eval() if not any(sub_mll.training for sub_mll in mll.mlls) else mll
+
+
+@dispatcher.register(MarginalLogLikelihood, Likelihood, BatchedMultiOutputGPyTorchModel)
+def _fit_multioutput_independent(
+    mll: MarginalLogLikelihood,
+    _: Type[Likelihood],
+    __: Type[BatchedMultiOutputGPyTorchModel],
+    *,
+    sequential: bool = True,
+    **kwargs: Any,
+) -> MarginalLogLikelihood:
+    r"""Fitting routine for multioutput Gaussian processes.
+
+    Args:
+        sequential: Boolean specifying whether or not to an attempt should be made to
+            fit the model as a collection of independent GPs. Only relevant for
+            certain types of GPs with independent outputs, see `batched_to_model_list`.
+        **kwargs: Passed to the next method unaltered.
+
+    Returns:
+        The `mll` instance. If fitting succeeded, then `mll` will be in evaluation mode,
+        i.e. `mll.training == False`. Otherwise, `mll` will be in training mode.
+    """
+    if (  # incompatible models
+        not sequential
+        or mll.model.num_outputs == 1
+        or mll.likelihood is not getattr(mll.model, "likelihood", None)
+    ):
+        raise MDNotImplementedError  # defer to generic
+
+    # TODO: Unpacking of OutcomeTransforms not yet supported. Targets are often
+    # pre-transformed in __init__, so try fitting with outcome_transform hidden
+    mll.train()
+    with del_attribute_ctx(mll.model, "outcome_transform"):
+        try:
+            # Attempt to unpack batched model into a list of independent submodels
+            unpacked_model = batched_to_model_list(mll.model)
+            unpacked_mll = SumMarginalLogLikelihood(  # avg. over MLLs internally
+                unpacked_model.likelihood, unpacked_model
+            )
+            if not allclose_mll(a=mll, b=unpacked_mll, transform_a=mean):
+                raise RuntimeError(  # validate model unpacking
+                    "Training loss of unpacked model differs from that of the original."
+                )
+
+            # Fit submodels independently
+            unpacked_mll = fit_gpytorch_mll(unpacked_mll, **kwargs)
+
+            # Repackage submodels and copy over state_dict
+            repacked_model = model_list_to_batched(unpacked_mll.model)
+            repacked_mll = type(mll)(repacked_model.likelihood, repacked_model)
+            with state_rollback_ctx(mll, device=device("cpu")) as ckpt:
+                mll.load_state_dict(repacked_mll.state_dict())
+                if not allclose_mll(a=mll, b=repacked_mll):
+                    raise RuntimeError(  # validate model repacking
+                        "Training loss of repacked model differs from that of the "
+                        "original."
+                    )
+                ckpt.clear()  # do not rollback when exiting
+                return mll.eval()  # DONE!
+
+        except (AttributeError, RuntimeError, UnsupportedError) as err:
+            msg = f"Failed to independently fit submodels with exception: {err}"
+            warn(
+                f"{msg.rstrip('.')}. Deferring to generic dispatch...",
+                BotorchWarning,
+            )
+            raise MDNotImplementedError
 
 
 def fit_fully_bayesian_model_nuts(

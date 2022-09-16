@@ -12,7 +12,7 @@ from typing import Optional
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions import OptimizationWarning
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.multitask import (
     FixedNoiseMultiTaskGP,
     KroneckerMultiTaskGP,
@@ -217,7 +217,9 @@ class TestMultiTaskGP(BotorchTestCase):
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+                mll = fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
+                )
 
             # test posterior
             test_x = torch.rand(2, 1, **tkwargs)
@@ -302,7 +304,9 @@ class TestMultiTaskGP(BotorchTestCase):
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+                mll = fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
+                )
 
             # test posterior
             test_x = torch.rand(2, 1, **tkwargs)
@@ -381,7 +385,9 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+                mll = fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
+                )
 
             # check that training data has input transform applied
             # check that the train inputs have been transformed and set on the model
@@ -469,7 +475,9 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+                mll = fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
+                )
 
             # test posterior
             test_x = torch.rand(2, 1, **tkwargs)
@@ -640,7 +648,9 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+                mll = fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
+                )
 
             # test posterior
             test_x = torch.rand(2, 2, **tkwargs)
@@ -749,7 +759,9 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+                mll = fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
+                )
 
             # test posterior
             max_cholesky_sizes = [1, 800]

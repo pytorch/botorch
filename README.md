@@ -126,7 +126,7 @@ For more details see our [Documentation](https://botorch.org/docs/introduction) 
   ```python
   import torch
   from botorch.models import SingleTaskGP
-  from botorch.fit import fit_gpytorch_model
+  from botorch.fit import fit_gpytorch_mll
   from gpytorch.mlls import ExactMarginalLogLikelihood
 
   train_X = torch.rand(10, 2)
@@ -136,7 +136,7 @@ For more details see our [Documentation](https://botorch.org/docs/introduction) 
 
   gp = SingleTaskGP(train_X, train_Y)
   mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-  fit_gpytorch_model(mll)
+  fit_gpytorch_mll(mll)
   ```
 
 2. Construct an acquisition function
