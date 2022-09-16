@@ -430,7 +430,7 @@ class ModelList(Model):
                 filtered_dict = {
                     k.replace(f"models.{i}.", ""): v
                     for k, v in state_dict.items()
-                    if k.startswith(f"models.{i}")
+                    if k.startswith(f"models.{i}.")
                 }
                 m.load_state_dict(filtered_dict)
         super().load_state_dict(state_dict=state_dict, strict=strict)
