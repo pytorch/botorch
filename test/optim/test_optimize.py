@@ -240,7 +240,7 @@ class TestOptimizeAcqf(BotorchTestCase):
             ]
             mock_gen_candidates_scipy.side_effect = gcs_return_vals
             expected_candidates = torch.cat(
-                [rv[0][0] for rv in gcs_return_vals], dim=-2
+                [cands[0] for cands, _ in gcs_return_vals], dim=-2
             ).round()
             bounds = torch.stack(
                 [
@@ -249,7 +249,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                 ]
             )
             inequality_constraints = [
-                (torch.tensor([3]), torch.tensor([4]), torch.tensor(5))
+                (torch.tensor([2]), torch.tensor([4]), torch.tensor(5))
             ]
             candidates, acq_value = optimize_acqf(
                 acq_function=mock_acq_function,
@@ -264,7 +264,9 @@ class TestOptimizeAcqf(BotorchTestCase):
             )
             self.assertTrue(torch.equal(candidates, expected_candidates))
             self.assertTrue(
-                torch.equal(acq_value, torch.cat([rv[1] for rv in gcs_return_vals]))
+                torch.equal(
+                    acq_value, torch.cat([acqval for _, acqval in gcs_return_vals])
+                )
             )
         # verify error when using a OneShotAcquisitionFunction
         with self.assertRaises(NotImplementedError):
@@ -290,7 +292,29 @@ class TestOptimizeAcqf(BotorchTestCase):
                 sequential=True,
             )
 
+        # Veryify error when using sequential=True in
+        # conjunction with user-supplied batch_initial_conditions
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "`batch_initial_conditions` is not supported for sequential "
+            "optimization. Either avoid specifying `batch_initial_conditions` "
+            "to use the custom initializer or use the `ic_generator` kwarg to "
+            "generate initial conditions for the case of "
+            "nonlinear inequality constraints.",
+        ):
+            optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                batch_initial_conditions=mock_gen_batch_initial_conditions,
+                sequential=True,
+            )
+
     def test_optimize_acqf_sequential_notimplemented(self):
+        # Sequential acquisition function optimization only supported
+        # when return_best_only=True
         with self.assertRaises(NotImplementedError):
             optimize_acqf(
                 acq_function=MockAcquisitionFunction(),
@@ -568,6 +592,23 @@ class TestOptimizeAcqf(BotorchTestCase):
                 torch.allclose(acq_value, torch.tensor(2.45, **tkwargs), atol=1e-3)
             )
 
+            # Test that an ic_generator object with the same API as
+            # gen_batch_initial_conditions returns candidates of the
+            # required shape.
+            with mock.patch(
+                "botorch.optim.optimize.gen_batch_initial_conditions"
+            ) as ic_generator:
+                ic_generator.return_value = batch_initial_conditions
+                candidates, acq_value = optimize_acqf(
+                    acq_function=mock_acq_function,
+                    bounds=bounds,
+                    q=3,
+                    nonlinear_inequality_constraints=[nlc1],
+                    num_restarts=1,
+                    ic_generator=ic_generator,
+                )
+                self.assertEqual(candidates.size(), torch.Size([1, 3]))
+
             # Make sure fixed features aren't supported
             with self.assertRaisesRegex(
                 NotImplementedError,
@@ -599,20 +640,6 @@ class TestOptimizeAcqf(BotorchTestCase):
                     batch_initial_conditions=batch_initial_conditions,
                 )
 
-            # batch_initial_conditions must be given
-            with self.assertRaisesRegex(
-                NotImplementedError,
-                "`batch_initial_conditions` must be given if there are non-linear "
-                "inequality constraints.",
-            ):
-                optimize_acqf(
-                    acq_function=mock_acq_function,
-                    bounds=bounds,
-                    q=1,
-                    nonlinear_inequality_constraints=[nlc1],
-                    num_restarts=num_restarts,
-                )
-
             # batch_initial_conditions must be feasible
             with self.assertRaisesRegex(
                 ValueError,
@@ -642,6 +669,88 @@ class TestOptimizeAcqf(BotorchTestCase):
                     num_restarts=5,
                     options={"batch_limit": 5},
                 )
+            # If there are non-linear inequality constraints an initial condition
+            # generator object `ic_generator` must be supplied.
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "`ic_generator` must be given if "
+                "there are non-linear inequality constraints.",
+            ):
+                optimize_acqf(
+                    acq_function=mock_acq_function,
+                    bounds=bounds,
+                    q=1,
+                    nonlinear_inequality_constraints=[nlc1],
+                    num_restarts=1,
+                    raw_samples=16,
+                )
+
+    @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
+    @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
+    def test_optimize_acqf_non_linear_constraints_sequential(
+        self, mock_gen_candidates_scipy, mock_gen_batch_initial_conditions
+    ):
+        def nlc(x):
+            return 4 * x[..., 2] - 5
+
+        q = 3
+        num_restarts = 2
+        raw_samples = 10
+        options = {}
+        for dtype in (torch.float, torch.double):
+            mock_acq_function = MockAcquisitionFunction()
+            mock_gen_batch_initial_conditions.side_effect = [
+                torch.zeros(num_restarts, device=self.device, dtype=dtype)
+                for _ in range(q)
+            ]
+            gcs_return_vals = [
+                (
+                    torch.tensor([[[1.0, 2.0, 3.0]]], device=self.device, dtype=dtype),
+                    torch.tensor([i], device=self.device, dtype=dtype),
+                )
+                # for nonlinear inequality constraints the batch_limit variable is
+                # currently set to 1 by default and hence gen_candidates_scipy is
+                # called num_restarts*q times
+                for i in range(num_restarts * q)
+            ]
+            mock_gen_candidates_scipy.side_effect = gcs_return_vals
+            expected_candidates = torch.cat(
+                [cands[0] for cands, _ in gcs_return_vals[::num_restarts]], dim=-2
+            )
+            bounds = torch.stack(
+                [
+                    torch.zeros(3, device=self.device, dtype=dtype),
+                    4 * torch.ones(3, device=self.device, dtype=dtype),
+                ]
+            )
+
+            candidates, acq_value = optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options,
+                nonlinear_inequality_constraints=[nlc],
+                sequential=True,
+                ic_generator=mock_gen_batch_initial_conditions,
+            )
+            self.assertTrue(torch.equal(candidates, expected_candidates))
+            # Extract the relevant entries from gcs_return_vals to
+            # perform comparison with.
+            self.assertTrue(
+                torch.equal(
+                    acq_value,
+                    torch.cat(
+                        [
+                            expected_acq_value
+                            for _, expected_acq_value in gcs_return_vals[
+                                num_restarts - 1 :: num_restarts
+                            ]
+                        ]
+                    ),
+                ),
+            )
 
     def test_constraint_caching(self):
         def nlc(x):
