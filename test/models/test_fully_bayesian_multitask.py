@@ -209,10 +209,11 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
             fit_fully_bayesian_model_nuts(
                 model, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
             )
+            self.assertEqual(model.batch_shape, torch.Size([3]))
             self.assertIsInstance(model.mean_module, ConstantMean)
-            self.assertEqual(model.mean_module.raw_constant.shape, torch.Size([3]))
+            self.assertEqual(model.mean_module.raw_constant.shape, model.batch_shape)
             self.assertIsInstance(model.covar_module, ScaleKernel)
-            self.assertEqual(model.covar_module.outputscale.shape, torch.Size([3]))
+            self.assertEqual(model.covar_module.outputscale.shape, model.batch_shape)
             self.assertIsInstance(model.covar_module.base_kernel, MaternKernel)
             self.assertEqual(
                 model.covar_module.base_kernel.lengthscale.shape, torch.Size([3, 1, d])
@@ -238,14 +239,15 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                 self.assertIsInstance(posterior, FullyBayesianPosterior)
                 # Mean/variance
                 expected_shape = (
-                    batch_shape[: MCMC_DIM + 2]
-                    + [3]
-                    + batch_shape[MCMC_DIM + 2 :]
-                    + [self.num_tasks]
+                    *batch_shape[: MCMC_DIM + 2],
+                    *model.batch_shape,
+                    *batch_shape[MCMC_DIM + 2 :],
+                    self.num_tasks,
                 )
+                expected_shape = torch.Size(expected_shape)
                 mean, var = posterior.mean, posterior.variance
-                self.assertEqual(mean.shape, torch.Size(expected_shape))
-                self.assertEqual(var.shape, torch.Size(expected_shape))
+                self.assertEqual(mean.shape, expected_shape)
+                self.assertEqual(var.shape, expected_shape)
 
                 # Mixture mean/variance/median/quantiles
                 mixture_mean = posterior.mixture_mean
@@ -310,16 +312,17 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                     [[deterministic, ModelListGP(model)], [model, model]],
                 ):
                     expected_shape = (
-                        batch_shape[: MCMC_DIM + 2]
-                        + [3]
-                        + batch_shape[MCMC_DIM + 2 :]
-                        + [2]
+                        *batch_shape[: MCMC_DIM + 2],
+                        *model.batch_shape,
+                        *batch_shape[MCMC_DIM + 2 :],
+                        2,
                     )
+                    expected_shape = torch.Size(expected_shape)
                     model_list = ModelListClass(*models)
                     posterior = model_list.posterior(test_X)
                     mean, var = posterior.mean, posterior.variance
-                    self.assertEqual(mean.shape, torch.Size(expected_shape))
-                    self.assertEqual(var.shape, torch.Size(expected_shape))
+                    self.assertEqual(mean.shape, expected_shape)
+                    self.assertEqual(var.shape, expected_shape)
 
             # Check properties
             median_lengthscale = model.median_lengthscale
