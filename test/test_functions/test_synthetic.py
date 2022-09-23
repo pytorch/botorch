@@ -24,9 +24,39 @@ from botorch.test_functions.synthetic import (
     Shekel,
     SixHumpCamel,
     StyblinskiTang,
+    SyntheticTestFunction,
     ThreeHumpCamel,
 )
 from botorch.utils.testing import BotorchTestCase, SyntheticTestFunctionBaseTestCase
+from torch import Tensor
+
+
+class DummySyntheticTestFunction(SyntheticTestFunction):
+    dim = 2
+    _bounds = [(-1, 1), (-1, 1)]
+    _optimal_value = 0
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        return -X.pow(2).sum(dim=-1)
+
+
+class DummySyntheticTestFunctionWithOptimizers(DummySyntheticTestFunction):
+    _optimizers = [(0, 0)]
+
+
+class TestSyntheticTestFunction(BotorchTestCase):
+    def test_custom_bounds(self):
+        with self.assertRaisesRegex(ValueError, "not match function dim"):
+            DummySyntheticTestFunctionWithOptimizers(bounds=[(0, 0)])
+
+        with self.assertRaisesRegex(
+            ValueError, "No global optimum found within custom bounds"
+        ):
+            DummySyntheticTestFunctionWithOptimizers(bounds=[(1, 2), (3, 4)])
+
+        dummy = DummySyntheticTestFunctionWithOptimizers(bounds=[(-2, 2), (-3, 3)])
+        self.assertEqual(dummy._bounds[0], (-2, 2))
+        self.assertEqual(dummy._bounds[1], (-3, 3))
 
 
 class TestAckley(SyntheticTestFunctionBaseTestCase, BotorchTestCase):
