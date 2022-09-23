@@ -399,6 +399,14 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
         self._check_if_fitted()
         return len(self.covar_module.outputscale)
 
+    @property
+    def batch_shape(self) -> torch.Size:
+        r"""Batch shape of the model, equal to the number of MCMC samples.
+        Note that `SaasFullyBayesianSingleTaskGP` does not support batching
+        over input data at this point."""
+        self._check_if_fitted()
+        return torch.Size([self.num_mcmc_samples])
+
     def fantasize(
         self,
         X: Tensor,
