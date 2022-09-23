@@ -110,10 +110,12 @@ class TestOutcomeTransforms(BotorchTestCase):
 
             # with observation noise
             tf = Standardize(m=m, batch_shape=batch_shape)
-            Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
-            Yvar = 1e-8 + torch.rand(
-                *batch_shape, 3, m, device=self.device, dtype=dtype
-            )
+            with torch.random.fork_rng():
+                torch.manual_seed(0)
+                Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
+                Yvar = 1e-8 + torch.rand(
+                    *batch_shape, 3, m, device=self.device, dtype=dtype
+                )
             Y_tf, Yvar_tf = tf(Y, Yvar)
             self.assertTrue(tf.training)
             self.assertTrue(torch.all(Y_tf.mean(dim=-2).abs() < 1e-4))
@@ -225,7 +227,9 @@ class TestOutcomeTransforms(BotorchTestCase):
             self.assertEqual(tf._min_stdv, 1e-8)
 
             # no observation noise
-            Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
+            with torch.random.fork_rng():
+                torch.manual_seed(0)
+                Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
             Y_tf, Yvar_tf = tf(Y, None)
             self.assertTrue(tf.training)
             Y_tf_mean = Y_tf.mean(dim=-2)
@@ -248,10 +252,12 @@ class TestOutcomeTransforms(BotorchTestCase):
 
             # with observation noise
             tf = Standardize(m=m, outputs=outputs, batch_shape=batch_shape)
-            Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
-            Yvar = 1e-8 + torch.rand(
-                *batch_shape, 3, m, device=self.device, dtype=dtype
-            )
+            with torch.random.fork_rng():
+                torch.manual_seed(0)
+                Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
+                Yvar = 1e-8 + torch.rand(
+                    *batch_shape, 3, m, device=self.device, dtype=dtype
+                )
             Y_tf, Yvar_tf = tf(Y, Yvar)
             self.assertTrue(tf.training)
             Y_tf_mean = Y_tf.mean(dim=-2)
