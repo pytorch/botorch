@@ -22,18 +22,51 @@ from torch import Tensor
 class SyntheticTestFunction(BaseTestProblem):
     r"""Base class for synthetic test functions."""
 
-    _optimizers: Optional[List[Tuple[float, ...]]]
     _optimal_value: float
+    _optimizers: Optional[List[Tuple[float, ...]]] = None
     num_objectives: int = 1
 
-    def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+    def __init__(
+        self,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
+    ) -> None:
         r"""
         Args:
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         super().__init__(noise_std=noise_std, negate=negate)
         if self._optimizers is not None:
+            if bounds is not None:
+                if len(bounds) != self.dim:
+                    raise ValueError("Custom bounds does not match function dim.")
+
+                # Ensure at least one optimizer lies within the custom bounds
+                def in_bounds(
+                    optimizer: Tuple[float, ...], bounds: List[Tuple[float, float]]
+                ) -> bool:
+                    for i, xopt in enumerate(optimizer):
+                        lower, upper = bounds[i]
+                        if xopt < lower or xopt > upper:
+                            return False
+
+                    return True
+
+                if not any(
+                    in_bounds(optimizer=optimizer, bounds=bounds)
+                    for optimizer in self._optimizers
+                ):
+                    raise ValueError(
+                        "No global optimum found within custom bounds. Please specify "
+                        "bounds which include at least one point in "
+                        f"`{self.__class__.__name__}._optimizers`."
+                    )
+
+                self._bounds = bounds
+
             self.register_buffer(
                 "optimizers", torch.tensor(self._optimizers, dtype=torch.float)
             )
@@ -60,18 +93,23 @@ class Ackley(SyntheticTestFunction):
     _check_grad_at_opt: bool = False
 
     def __init__(
-        self, dim: int = 2, noise_std: Optional[float] = None, negate: bool = False
+        self,
+        dim: int = 2,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
             dim: The (input) dimension.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
         self._bounds = [(-32.768, 32.768) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
         self.a = 20
         self.b = 0.2
         self.c = 2 * math.pi
@@ -181,7 +219,11 @@ class DixonPrice(SyntheticTestFunction):
     _optimal_value = 0.0
 
     def __init__(
-        self, dim=2, noise_std: Optional[float] = None, negate: bool = False
+        self,
+        dim=2,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
@@ -197,7 +239,7 @@ class DixonPrice(SyntheticTestFunction):
                 for i in range(1, self.dim + 1)
             )
         ]
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         d = self.dim
@@ -235,18 +277,23 @@ class Griewank(SyntheticTestFunction):
     _optimal_value = 0.0
 
     def __init__(
-        self, dim=2, noise_std: Optional[float] = None, negate: bool = False
+        self,
+        dim=2,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
             dim: The (input) dimension.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
         self._bounds = [(-600.0, 600.0) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         part1 = torch.sum(X**2 / 4000.0, dim=-1)
@@ -271,13 +318,18 @@ class Hartmann(SyntheticTestFunction):
     """
 
     def __init__(
-        self, dim=6, noise_std: Optional[float] = None, negate: bool = False
+        self,
+        dim=6,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
             dim: The (input) dimension.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         if dim not in (3, 4, 6):
             raise ValueError(f"Hartmann with dim {dim} not defined")
@@ -291,7 +343,7 @@ class Hartmann(SyntheticTestFunction):
         }
         self._optimal_value = optvals.get(self.dim)
         self._optimizers = optimizers.get(self.dim)
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
         self.register_buffer("ALPHA", torch.tensor([1.0, 1.2, 3.0, 3.2]))
         if dim == 3:
             A = [[3.0, 10, 30], [0.1, 10, 35], [3.0, 10, 30], [0.1, 10, 35]]
@@ -401,18 +453,23 @@ class Levy(SyntheticTestFunction):
     _optimal_value = 0.0
 
     def __init__(
-        self, dim=2, noise_std: Optional[float] = None, negate: bool = False
+        self,
+        dim=2,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
             dim: The (input) dimension.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
         self._bounds = [(-10.0, 10.0) for _ in range(self.dim)]
         self._optimizers = [tuple(1.0 for _ in range(self.dim))]
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         w = 1.0 + (X - 1.0) / 4.0
@@ -437,13 +494,18 @@ class Michalewicz(SyntheticTestFunction):
     """
 
     def __init__(
-        self, dim=2, noise_std: Optional[float] = None, negate: bool = False
+        self,
+        dim=2,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
             dim: The (input) dimension.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
         self._bounds = [(0.0, math.pi) for _ in range(self.dim)]
@@ -451,7 +513,7 @@ class Michalewicz(SyntheticTestFunction):
         optimizers = {2: [(2.20290552, 1.57079633)]}
         self._optimal_value = optvals.get(self.dim)
         self._optimizers = optimizers.get(self.dim)
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
         self.register_buffer(
             "i", torch.tensor(tuple(range(1, self.dim + 1)), dtype=torch.float)
         )
@@ -477,18 +539,23 @@ class Powell(SyntheticTestFunction):
     _optimal_value = 0.0
 
     def __init__(
-        self, dim=4, noise_std: Optional[float] = None, negate: bool = False
+        self,
+        dim=4,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
             dim: The (input) dimension.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
         self._bounds = [(-4.0, 5.0) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         result = torch.zeros_like(X[..., 0])
@@ -507,18 +574,23 @@ class Rastrigin(SyntheticTestFunction):
     _optimal_value = 0.0
 
     def __init__(
-        self, dim=2, noise_std: Optional[float] = None, negate: bool = False
+        self,
+        dim=2,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
             dim: The (input) dimension.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
         self._bounds = [(-5.12, 5.12) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         return 10.0 * self.dim + torch.sum(
@@ -540,18 +612,23 @@ class Rosenbrock(SyntheticTestFunction):
     _optimal_value = 0.0
 
     def __init__(
-        self, dim=2, noise_std: Optional[float] = None, negate: bool = False
+        self,
+        dim=2,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
             dim: The (input) dimension.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
         self._bounds = [(-5.0, 10.0) for _ in range(self.dim)]
         self._optimizers = [tuple(1.0 for _ in range(self.dim))]
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         return torch.sum(
@@ -576,18 +653,23 @@ class Shekel(SyntheticTestFunction):
     _optimizers = [(4.000747, 3.99951, 4.00075, 3.99951)]
 
     def __init__(
-        self, m: int = 10, noise_std: Optional[float] = None, negate: bool = False
+        self,
+        m: int = 10,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
             m: Defaults to 10.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.m = m
         optvals = {5: -10.1532, 7: -10.4029, 10: -10.536443}
         self._optimal_value = optvals[self.m]
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
         self.register_buffer(
             "beta", torch.tensor([1, 2, 2, 4, 4, 6, 3, 7, 5, 5], dtype=torch.float)
@@ -640,19 +722,24 @@ class StyblinskiTang(SyntheticTestFunction):
     """
 
     def __init__(
-        self, dim=2, noise_std: Optional[float] = None, negate: bool = False
+        self,
+        dim=2,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
     ) -> None:
         r"""
         Args:
             dim: The (input) dimension.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
         self._bounds = [(-5.0, 5.0) for _ in range(self.dim)]
         self._optimal_value = -39.166166 * self.dim
         self._optimizers = [tuple(-2.903534 for _ in range(self.dim))]
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         return 0.5 * (X**4 - 16 * X**2 + 5 * X).sum(dim=-1)
