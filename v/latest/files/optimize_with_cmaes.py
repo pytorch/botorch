@@ -19,7 +19,7 @@
 import math
 import torch
 
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
@@ -29,7 +29,7 @@ Y += 0.1 * torch.randn_like(Y)
 
 gp = SingleTaskGP(X, Y)
 mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-fit_gpytorch_model(mll);
+fit_gpytorch_mll(mll);
 
 
 # In[5]:

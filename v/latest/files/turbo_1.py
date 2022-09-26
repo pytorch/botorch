@@ -21,7 +21,7 @@ from dataclasses import dataclass
 
 import torch
 from botorch.acquisition import qExpectedImprovement
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.generation import MaxPosteriorSampling
 from botorch.models import SingleTaskGP
 from botorch.optim import optimize_acqf
@@ -249,7 +249,7 @@ while not state.restart_triggered:  # Run until TuRBO converges
     # Do the fitting and acquisition function optimization inside the Cholesky context
     with gpytorch.settings.max_cholesky_size(max_cholesky_size):
         # Fit the model
-        fit_gpytorch_model(mll)
+        fit_gpytorch_mll(mll)
     
         # Create a batch
         X_next = generate_batch(
@@ -297,7 +297,7 @@ while len(Y_ei) < len(Y_turbo):
     likelihood = GaussianLikelihood(noise_constraint=Interval(1e-8, 1e-3))
     model = SingleTaskGP(X_ei, train_Y, likelihood=likelihood)
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
-    fit_gpytorch_model(mll)
+    fit_gpytorch_mll(mll)
 
     # Create a batch
     ei = qExpectedImprovement(model, train_Y.max(), maximize=True)

@@ -254,7 +254,7 @@ def optimize_qnparego_and_get_observation(model, train_x, train_obj, sampler):
 # In[7]:
 
 
-from botorch import fit_gpytorch_model
+from botorch import fit_gpytorch_mll
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.exceptions import BadInitialCandidatesWarning
 from botorch.utils.multi_objective.pareto import is_non_dominated
@@ -299,9 +299,9 @@ for iteration in range(1, N_BATCH + 1):
     t0 = time.monotonic()
     
     # fit the models
-    fit_gpytorch_model(mll_qparego)
-    fit_gpytorch_model(mll_qehvi)
-    fit_gpytorch_model(mll_qnehvi)
+    fit_gpytorch_mll(mll_qparego)
+    fit_gpytorch_mll(mll_qehvi)
+    fit_gpytorch_mll(mll_qnehvi)
     
     # define the qEI and qNEI acquisition modules using a QMC sampler
     qparego_sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)

@@ -172,7 +172,7 @@ def get_fitted_model(train_x, train_obj, state_dict=None):
         model.load_state_dict(state_dict)
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     mll.to(train_x)
-    fit_gpytorch_model(mll)
+    fit_gpytorch_mll(mll)
     return model
 
 
@@ -217,7 +217,7 @@ def optimize_acqf_and_get_observation(acq_func):
 # In[10]:
 
 
-from botorch import fit_gpytorch_model
+from botorch import fit_gpytorch_mll
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.sampling.samplers import SobolQMCNormalSampler
 

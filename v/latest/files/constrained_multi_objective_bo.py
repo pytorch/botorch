@@ -252,7 +252,7 @@ def optimize_qparego_and_get_observation(model, train_obj, train_con, sampler):
 import time
 import warnings
 
-from botorch import fit_gpytorch_model
+from botorch import fit_gpytorch_mll
 from botorch.exceptions import BadInitialCandidatesWarning
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.utils.multi_objective.hypervolume import Hypervolume
@@ -298,8 +298,8 @@ for iteration in range(1, N_BATCH + 1):
     t0 = time.monotonic()
 
     # fit the models
-    fit_gpytorch_model(mll_qparego)
-    fit_gpytorch_model(mll_qnehvi)
+    fit_gpytorch_mll(mll_qparego)
+    fit_gpytorch_mll(mll_qnehvi)
 
     # define the qParEGO and qNEHVI acquisition modules using a QMC sampler
     qparego_sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)

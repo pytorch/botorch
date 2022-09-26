@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -25,10 +25,10 @@
 <div class="body" role="main">
 <section id="module-botorch.generation">
 <span id="botorch-generation"></span><h1>botorch.generation<a class="headerlink" href="#module-botorch.generation" title="Permalink to this heading">¶</a></h1>
-<section id="module-botorch.generation.gen">
-<span id="candidate-generation-utilities-for-acquisition-functions"></span><h2>Candidate Generation Utilities for Acquisition Functions<a class="headerlink" href="#module-botorch.generation.gen" title="Permalink to this heading">¶</a></h2>
+<section id="candidate-generation-utilities-for-acquisition-functions">
+<h2>Candidate Generation Utilities for Acquisition Functions<a class="headerlink" href="#candidate-generation-utilities-for-acquisition-functions" title="Permalink to this heading">¶</a></h2>
 <p>Candidate generation utilities.</p>
-<dl class="py function">
+<span class="target" id="module-botorch.generation.gen"></span><dl class="py function">
 <dt class="sig sig-object py" id="botorch.generation.gen.gen_candidates_scipy">
 <span class="sig-prename descclassname"><span class="pre">botorch.generation.gen.</span></span><span class="sig-name descname"><span class="pre">gen_candidates_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_conditions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nonlinear_inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/gen.html#gen_candidates_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.gen.gen_candidates_scipy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a set of candidates using <cite>scipy.optimize.minimize</cite>.</p>
@@ -184,15 +184,15 @@ with the highest associated value.</p>
 </div>
 </dd></dl>
 </section>
-<section id="module-botorch.generation.sampling">
-<span id="sampling-strategies"></span><h2>Sampling Strategies<a class="headerlink" href="#module-botorch.generation.sampling" title="Permalink to this heading">¶</a></h2>
+<section id="sampling-strategies">
+<h2>Sampling Strategies<a class="headerlink" href="#sampling-strategies" title="Permalink to this heading">¶</a></h2>
 <p>Sampling-based generation strategies.</p>
 <p>A SamplingStrategy returns samples from the input points (i.e. Tensors in feature
 space), rather than the value for a set of tensors, as acquisition functions do.
 The q-batch dimension has similar semantics as for acquisition functions in that the
 points across the q-batch are considered jointly for sampling (where as for
 q-acquisition functions we evaluate the joint value of the q-batch).</p>
-<dl class="py class">
+<span class="target" id="module-botorch.generation.sampling"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.generation.sampling.MaxPosteriorSampling">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.generation.sampling.</span></span><span class="sig-name descname"><span class="pre">MaxPosteriorSampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacement</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#MaxPosteriorSampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.MaxPosteriorSampling" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingStrategy</span></code></p>

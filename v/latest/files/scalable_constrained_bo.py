@@ -19,7 +19,7 @@ from dataclasses import dataclass
 
 import torch
 from torch import Tensor
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.test_functions import Ackley
 from botorch.utils.transforms import unnormalize
@@ -324,7 +324,7 @@ def get_fitted_model(X,Y):
         mll = ExactMarginalLogLikelihood(model.likelihood, model)
         
         with gpytorch.settings.max_cholesky_size(max_cholesky_size):
-            fit_gpytorch_model(mll)
+            fit_gpytorch_mll(mll)
 
         return model
 

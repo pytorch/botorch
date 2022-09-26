@@ -3,7 +3,7 @@
 
 # ## Fitting models in BoTorch with a torch.optim.Optimizer
 # 
-# BoTorch provides a convenient `botorch.fit.fit_gpytorch_model` function with sensible defaults that work on most basic models, including those that botorch ships with. Internally, this function uses L-BFGS-B to fit the parameters. However, in more advanced use cases you may need or want to implement your own model fitting logic.
+# BoTorch provides a convenient `botorch.fit.fit_gpytorch_mll` function with sensible defaults that work on most basic models, including those that botorch ships with. Internally, this function uses L-BFGS-B to fit the parameters. However, in more advanced use cases you may need or want to implement your own model fitting logic.
 # 
 # This tutorial allows you to customize model fitting to your needs using the familiar PyTorch-style model fitting loop.
 # 

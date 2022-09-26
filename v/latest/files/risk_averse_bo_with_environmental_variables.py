@@ -42,7 +42,7 @@ from time import time
 
 import matplotlib.pyplot as plt
 import torch
-from botorch import fit_gpytorch_model
+from botorch import fit_gpytorch_mll
 from botorch.acquisition import qMultiFidelityKnowledgeGradient, qSimpleRegret
 from botorch.acquisition.risk_measures import CVaR
 from botorch.models import SingleTaskGP
@@ -101,7 +101,7 @@ def train_model(train_X: Tensor, train_Y: Tensor) -> SingleTaskGP:
         train_X, train_Y, input_transform=AppendFeatures(feature_set=w_set), outcome_transform=Standardize(m=1)
     )
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
-    fit_gpytorch_model(mll)
+    fit_gpytorch_mll(mll)
     return model
 
 model = train_model(train_X, train_Y)

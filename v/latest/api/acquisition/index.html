@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -27,10 +27,10 @@
 <span id="botorch-acquisition"></span><h1>botorch.acquisition<a class="headerlink" href="#module-botorch.acquisition" title="Permalink to this heading">¶</a></h1>
 <section id="acquisition-function-apis">
 <h2>Acquisition Function APIs<a class="headerlink" href="#acquisition-function-apis" title="Permalink to this heading">¶</a></h2>
-<section id="module-botorch.acquisition.acquisition">
-<span id="abstract-acquisition-function-apis"></span><h3>Abstract Acquisition Function APIs<a class="headerlink" href="#module-botorch.acquisition.acquisition" title="Permalink to this heading">¶</a></h3>
+<section id="abstract-acquisition-function-apis">
+<h3>Abstract Acquisition Function APIs<a class="headerlink" href="#abstract-acquisition-function-apis" title="Permalink to this heading">¶</a></h3>
 <p>Abstract base module for all botorch acquisition functions.</p>
-</section>
+<span class="target" id="module-botorch.acquisition.acquisition"></span></section>
 <section id="analytic-acquisition-function-api">
 <h3>Analytic Acquisition Function API<a class="headerlink" href="#analytic-acquisition-function-api" title="Permalink to this heading">¶</a></h3>
 <dl class="py class">
@@ -77,11 +77,11 @@ been submitted for evaluation but have not yet been evaluated.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.cached_cholesky">
-<span id="cached-cholesky-acquisition-function-api"></span><h3>Cached Cholesky Acquisition Function API<a class="headerlink" href="#module-botorch.acquisition.cached_cholesky" title="Permalink to this heading">¶</a></h3>
+<section id="cached-cholesky-acquisition-function-api">
+<h3>Cached Cholesky Acquisition Function API<a class="headerlink" href="#cached-cholesky-acquisition-function-api" title="Permalink to this heading">¶</a></h3>
 <p>Abstract class for acquisition functions leveraging a cached Cholesky
 decomposition of the posterior covaiance over f(X_baseline).</p>
-</section>
+<span class="target" id="module-botorch.acquisition.cached_cholesky"></span></section>
 <section id="monte-carlo-acquisition-function-api">
 <h3>Monte-Carlo Acquisition Function API<a class="headerlink" href="#monte-carlo-acquisition-function-api" title="Permalink to this heading">¶</a></h3>
 <dl class="py class">
@@ -230,11 +230,11 @@ evaluations.</p>
 </section>
 <section id="acquisition-functions">
 <h2>Acquisition Functions<a class="headerlink" href="#acquisition-functions" title="Permalink to this heading">¶</a></h2>
-<section id="module-botorch.acquisition.analytic">
-<span id="analytic-acquisition-functions"></span><h3>Analytic Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.analytic" title="Permalink to this heading">¶</a></h3>
+<section id="analytic-acquisition-functions">
+<h3>Analytic Acquisition Functions<a class="headerlink" href="#analytic-acquisition-functions" title="Permalink to this heading">¶</a></h3>
 <p>Analytic Acquisition Functions that evaluate the posterior without performing
 Monte-Carlo sampling.</p>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.analytic"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.analytic.ExpectedImprovement">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.analytic.</span></span><span class="sig-name descname"><span class="pre">ExpectedImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/analytic.html#ExpectedImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.analytic.ExpectedImprovement" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.analytic.AnalyticAcquisitionFunction" title="botorch.acquisition.analytic.AnalyticAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalyticAcquisitionFunction</span></code></a></p>
@@ -607,8 +607,8 @@ points <cite>X</cite>.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.monte_carlo">
-<span id="monte-carlo-acquisition-functions"></span><h3>Monte-Carlo Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.monte_carlo" title="Permalink to this heading">¶</a></h3>
+<section id="monte-carlo-acquisition-functions">
+<h3>Monte-Carlo Acquisition Functions<a class="headerlink" href="#monte-carlo-acquisition-functions" title="Permalink to this heading">¶</a></h3>
 <p>Batch acquisition functions using the reparameterization trick in combination
 with (quasi) Monte-Carlo sampling. See <a class="reference internal" href="#rezende2014reparam" id="id1"><span>[Rezende2014reparam]</span></a>, <a class="reference internal" href="#wilson2017reparam" id="id2"><span>[Wilson2017reparam]</span></a> and
 <a class="reference internal" href="#balandat2020botorch" id="id3"><span>[Balandat2020botorch]</span></a>.</p>
@@ -624,7 +624,7 @@ approximate inference in deep generative models. ICML 2014.</p>
 The reparameterization trick for acquisition functions. ArXiv 2017.</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.monte_carlo"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qExpectedImprovement">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qExpectedImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qExpectedImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qExpectedImprovement" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionFunction</span></code></a></p>
@@ -942,8 +942,8 @@ model and input <cite>X</cite>.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.multi_objective.analytic">
-<span id="multi-objective-analytic-acquisition-functions"></span><h3>Multi-Objective Analytic Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_objective.analytic" title="Permalink to this heading">¶</a></h3>
+<section id="multi-objective-analytic-acquisition-functions">
+<h3>Multi-Objective Analytic Acquisition Functions<a class="headerlink" href="#multi-objective-analytic-acquisition-functions" title="Permalink to this heading">¶</a></h3>
 <p>Analytic Acquisition Functions for Multi-objective Bayesian optimization.</p>
 <p>References</p>
 <div class="citation-list" role="list">
@@ -955,7 +955,7 @@ hypervolume improvement using box decomposition algorithms. J Glob Optim 75,
 3–34 (2019)</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.multi_objective.analytic"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.analytic.</span></span><span class="sig-name descname"><span class="pre">ExpectedHypervolumeImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitioning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/analytic.html#ExpectedHypervolumeImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction" title="botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveAnalyticAcquisitionFunction</span></code></a></p>
@@ -1081,8 +1081,8 @@ design point each, and returns a Tensor with shape <cite>batch_shape’</cite>, 
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.multi_objective.max_value_entropy_search">
-<span id="multi-objective-entropy-based-acquisition-functions"></span><h3>Multi-Objective Entropy-Based Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_objective.max_value_entropy_search" title="Permalink to this heading">¶</a></h3>
+<section id="multi-objective-entropy-based-acquisition-functions">
+<h3>Multi-Objective Entropy-Based Acquisition Functions<a class="headerlink" href="#multi-objective-entropy-based-acquisition-functions" title="Permalink to this heading">¶</a></h3>
 <p>Acquisition functions for max-value entropy search for multi-objective
 Bayesian optimization (MESMO).</p>
 <p>References</p>
@@ -1094,7 +1094,7 @@ for Multi-Objective Bayesian Optimization. Advances in Neural
 Information Processing Systems, 32. 2019.</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.multi_objective.max_value_entropy_search"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.max_value_entropy_search.</span></span><span class="sig-name descname"><span class="pre">qMultiObjectiveMaxValueEntropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_pareto_frontiers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_fantasies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/max_value_entropy_search.html#qMultiObjectiveMaxValueEntropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy" title="botorch.acquisition.max_value_entropy_search.qMaxValueEntropy"><code class="xref py py-class docutils literal notranslate"><span class="pre">qMaxValueEntropy</span></code></a>, <a class="reference internal" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction" title="botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveMCAcquisitionFunction</span></code></a></p>
@@ -1170,8 +1170,8 @@ with <cite>1</cite> <cite>d</cite>-dim design points each.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.multi_objective.monte_carlo">
-<span id="multi-objective-monte-carlo-acquisition-functions"></span><h3>Multi-Objective Monte-Carlo Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_objective.monte_carlo" title="Permalink to this heading">¶</a></h3>
+<section id="multi-objective-monte-carlo-acquisition-functions">
+<h3>Multi-Objective Monte-Carlo Acquisition Functions<a class="headerlink" href="#multi-objective-monte-carlo-acquisition-functions" title="Permalink to this heading">¶</a></h3>
 <p>Monte-Carlo Acquisition Functions for Multi-objective Bayesian optimization.</p>
 <p>References</p>
 <div class="citation-list" role="list">
@@ -1189,7 +1189,7 @@ Multiple Noisy Objectives with Expected Hypervolume Improvement. Advances
 in Neural Information Processing Systems 34, 2021.</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.multi_objective.monte_carlo"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qExpectedHypervolumeImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitioning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#qExpectedHypervolumeImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction" title="botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveMCAcquisitionFunction</span></code></a></p>
@@ -1361,8 +1361,8 @@ evaluations.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.multi_objective.multi_fidelity">
-<span id="multi-objective-multi-fidelity-acquisition-functions"></span><h3>Multi-Objective Multi-Fidelity Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_objective.multi_fidelity" title="Permalink to this heading">¶</a></h3>
+<section id="multi-objective-multi-fidelity-acquisition-functions">
+<h3>Multi-Objective Multi-Fidelity Acquisition Functions<a class="headerlink" href="#multi-objective-multi-fidelity-acquisition-functions" title="Permalink to this heading">¶</a></h3>
 <p>Multi-Fidelity Acquisition Functions for Multi-objective Bayesian optimization.</p>
 <p>References</p>
 <div class="citation-list" role="list">
@@ -1373,7 +1373,7 @@ simultaneous multi-objective and multi-fidelity optimization.
 arXiv preprint arXiv:2112.13901, 2021.</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.multi_objective.multi_fidelity"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_fidelity.MOMF">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_fidelity.</span></span><span class="sig-name descname"><span class="pre">MOMF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitioning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cost_call</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_fidelity.html#MOMF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_fidelity.MOMF" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement" title="botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">qExpectedHypervolumeImprovement</span></code></a></p>
@@ -1453,8 +1453,8 @@ evaluations.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.knowledge_gradient">
-<span id="the-one-shot-knowledge-gradient"></span><h3>The One-Shot Knowledge Gradient<a class="headerlink" href="#module-botorch.acquisition.knowledge_gradient" title="Permalink to this heading">¶</a></h3>
+<section id="the-one-shot-knowledge-gradient">
+<h3>The One-Shot Knowledge Gradient<a class="headerlink" href="#the-one-shot-knowledge-gradient" title="Permalink to this heading">¶</a></h3>
 <p>Batch Knowledge Gradient (KG) via one-shot optimization as introduced in
 <a class="reference internal" href="#balandat2020botorch" id="id15"><span>[Balandat2020botorch]</span></a>. For broader discussion of KG see also <a class="reference internal" href="#frazier2008knowledge" id="id16"><span>[Frazier2008knowledge]</span></a>
 and <a class="reference internal" href="#wu2016parallelkg" id="id17"><span>[Wu2016parallelkg]</span></a>.</p>
@@ -1478,7 +1478,7 @@ sequential information collection. SIAM Journal on Control and Optimization,
 bayesian optimization. NIPS 2016.</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.knowledge_gradient"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.knowledge_gradient.qKnowledgeGradient">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.knowledge_gradient.</span></span><span class="sig-name descname"><span class="pre">qKnowledgeGradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_fantasies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inner_sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/knowledge_gradient.html#qKnowledgeGradient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionFunction</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">OneShotAcquisitionFunction</span></code></p>
@@ -1772,8 +1772,8 @@ design points <cite>X</cite>.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.multi_step_lookahead">
-<span id="multi-step-lookahead-acquisition-functions"></span><h3>Multi-Step Lookahead Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_step_lookahead" title="Permalink to this heading">¶</a></h3>
+<section id="multi-step-lookahead-acquisition-functions">
+<h3>Multi-Step Lookahead Acquisition Functions<a class="headerlink" href="#multi-step-lookahead-acquisition-functions" title="Permalink to this heading">¶</a></h3>
 <p>A general implementation of multi-step look-ahead acquistion function with configurable
 value functions. See <a class="reference internal" href="#jiang2020multistep" id="id18"><span>[Jiang2020multistep]</span></a>.</p>
 <div class="citation-list" role="list">
@@ -1784,7 +1784,7 @@ Efficient Nonmyopic Bayesian Optimization via One-Shot Multi-Step Trees.
 In Advances in Neural Information Processing Systems 33, 2020.</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.multi_step_lookahead"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_step_lookahead.</span></span><span class="sig-name descname"><span class="pre">qMultiStepLookahead</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_fantasies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samplers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valfunc_cls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valfunc_argfacs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inner_mc_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collapse_fantasy_base_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_step_lookahead.html#qMultiStepLookahead"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionFunction</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">OneShotAcquisitionFunction</span></code></p>
@@ -2004,8 +2004,8 @@ the observed value.</p>
 </dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.max_value_entropy_search">
-<span id="entropy-based-acquisition-functions"></span><h3>Entropy-Based Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.max_value_entropy_search" title="Permalink to this heading">¶</a></h3>
+<section id="entropy-based-acquisition-functions">
+<h3>Entropy-Based Acquisition Functions<a class="headerlink" href="#entropy-based-acquisition-functions" title="Permalink to this heading">¶</a></h3>
 <p>Acquisition functions for Max-value Entropy Search (MES), General
 Information-Based Bayesian Optimization (GIBBON), and
 multi-fidelity MES with noisy observations and trace observations.</p>
@@ -2032,7 +2032,7 @@ Bayesian Optimization. Proceedings of the 37th International
 Conference on Machine Learning, 2017.</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.max_value_entropy_search"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.max_value_entropy_search.DiscreteMaxValueBase">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.max_value_entropy_search.</span></span><span class="sig-name descname"><span class="pre">DiscreteMaxValueBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidate_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_mv_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_gumbel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/max_value_entropy_search.html#DiscreteMaxValueBase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.max_value_entropy_search.DiscreteMaxValueBase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MaxValueBase</span></code></p>
@@ -2323,8 +2323,8 @@ additional (“trace”) observations.</p></li>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.active_learning">
-<span id="active-learning-acquisition-functions"></span><h3>Active Learning Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.active_learning" title="Permalink to this heading">¶</a></h3>
+<section id="active-learning-acquisition-functions">
+<h3>Active Learning Acquisition Functions<a class="headerlink" href="#active-learning-acquisition-functions" title="Permalink to this heading">¶</a></h3>
 <p>Active learning acquisition functions.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="seo2014activedata" role="doc-biblioentry">
@@ -2344,7 +2344,7 @@ exploration? Sequential design for stochastic simulation experiments.
 ArXiv 2017.</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.active_learning"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.active_learning.qNegIntegratedPosteriorVariance">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.active_learning.</span></span><span class="sig-name descname"><span class="pre">qNegIntegratedPosteriorVariance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mc_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/active_learning.html#qNegIntegratedPosteriorVariance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.active_learning.qNegIntegratedPosteriorVariance" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.analytic.AnalyticAcquisitionFunction" title="botorch.acquisition.analytic.AnalyticAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalyticAcquisitionFunction</span></code></a></p>
@@ -2444,8 +2444,8 @@ of link function at X that active learning hopes to maximize</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.preference">
-<span id="preference-acquisition-functions"></span><h3>Preference Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.preference" title="Permalink to this heading">¶</a></h3>
+<section id="preference-acquisition-functions">
+<h3>Preference Acquisition Functions<a class="headerlink" href="#preference-acquisition-functions" title="Permalink to this heading">¶</a></h3>
 <p>Preference acquisition functions. This includes:
 Analytical EUBO acquisition function as introduced in <a class="reference internal" href="#lin2022preference" id="id26"><span>[Lin2022preference]</span></a>.</p>
 <div class="citation-list" role="list">
@@ -2457,7 +2457,7 @@ for Efficient Bayesian Optimization with Multiple Outcomes. International
 Conference on Artificial Intelligence and Statistics (AISTATS), 2022.</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.preference"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.preference.</span></span><span class="sig-name descname"><span class="pre">AnalyticExpectedUtilityOfBestOption</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pref_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_winner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/preference.html#AnalyticExpectedUtilityOfBestOption"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.analytic.AnalyticAcquisitionFunction" title="botorch.acquisition.analytic.AnalyticAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalyticAcquisitionFunction</span></code></a></p>
@@ -2506,10 +2506,10 @@ is not <cite>None</cite>, and <cite>q = 1</cite> otherwise.</p>
 </section>
 <section id="objectives-and-cost-aware-utilities">
 <h2>Objectives and Cost-Aware Utilities<a class="headerlink" href="#objectives-and-cost-aware-utilities" title="Permalink to this heading">¶</a></h2>
-<section id="module-botorch.acquisition.objective">
-<span id="objectives"></span><h3>Objectives<a class="headerlink" href="#module-botorch.acquisition.objective" title="Permalink to this heading">¶</a></h3>
+<section id="objectives">
+<h3>Objectives<a class="headerlink" href="#objectives" title="Permalink to this heading">¶</a></h3>
 <p>Objective Modules to be used with acquisition functions.</p>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.objective"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.objective.ScalarizedPosteriorTransform">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.objective.</span></span><span class="sig-name descname"><span class="pre">ScalarizedPosteriorTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#ScalarizedPosteriorTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.objective.ScalarizedPosteriorTransform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PosteriorTransform</span></code></p>
@@ -3280,11 +3280,11 @@ dimension).</p>
 </dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.cost_aware">
-<span id="cost-aware-utility"></span><h3>Cost-Aware Utility<a class="headerlink" href="#module-botorch.acquisition.cost_aware" title="Permalink to this heading">¶</a></h3>
+<section id="cost-aware-utility">
+<h3>Cost-Aware Utility<a class="headerlink" href="#cost-aware-utility" title="Permalink to this heading">¶</a></h3>
 <p>Cost functions for cost-aware acquisition functions, e.g. multi-fidelity KG.
 To be used in a context where there is an objective/cost tradeoff.</p>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.cost_aware"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.cost_aware.GenericCostAwareUtility">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.cost_aware.</span></span><span class="sig-name descname"><span class="pre">GenericCostAwareUtility</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cost</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/cost_aware.html#GenericCostAwareUtility"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.cost_aware.GenericCostAwareUtility" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CostAwareUtility</span></code></p>
@@ -3390,8 +3390,8 @@ model (required if <cite>use_mean=False</cite>, ignored if <cite>use_mean=True</
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.risk_measures">
-<span id="risk-measures"></span><h3>Risk Measures<a class="headerlink" href="#module-botorch.acquisition.risk_measures" title="Permalink to this heading">¶</a></h3>
+<section id="risk-measures">
+<h3>Risk Measures<a class="headerlink" href="#risk-measures" title="Permalink to this heading">¶</a></h3>
 <p>Risk Measures implemented as Monte-Carlo objectives, based on Bayesian
 optimization of risk measures as introduced in <a class="reference internal" href="#cakmak2020risk" id="id28"><span>[Cakmak2020risk]</span></a>. For a
 broader discussion of Monte-Carlo methods for VaR and CVaR risk measures,
@@ -3409,7 +3409,7 @@ conditional value-at-risk: a review. ACM Transactions on Modeling and
 Computer Simulation, 2014.</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.risk_measures"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.risk_measures.CVaR">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.risk_measures.</span></span><span class="sig-name descname"><span class="pre">CVaR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/risk_measures.html#CVaR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.risk_measures.CVaR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasureMCObjective</span></code></p>
@@ -3581,8 +3581,8 @@ posterior samples. The q-batches should be ordered so that each
 </dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.multi_objective.multi_output_risk_measures">
-<span id="multi-output-risk-measures"></span><h3>Multi-Output Risk Measures<a class="headerlink" href="#module-botorch.acquisition.multi_objective.multi_output_risk_measures" title="Permalink to this heading">¶</a></h3>
+<section id="multi-output-risk-measures">
+<h3>Multi-Output Risk Measures<a class="headerlink" href="#multi-output-risk-measures" title="Permalink to this heading">¶</a></h3>
 <p>Multi-output extensions of the risk measures, implemented as Monte-Carlo
 objectives. Except for MVaR, the risk measures are computed over each
 output dimension independently. In contrast, MVaR is computed using the
@@ -3608,7 +3608,7 @@ Robust multi-objective Bayesian optimization under input noise.
 Proceedings of the 39th International Conference on Machine Learning, 2022.</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.multi_objective.multi_output_risk_measures"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputExpectation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">MultiOutputExpectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MultiOutputExpectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputExpectation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MultiOutputRiskMeasureMCObjective</span></code></p>
@@ -3987,11 +3987,11 @@ instead of sampling from the model, these are used.</p></li>
 </section>
 <section id="utilities">
 <h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this heading">¶</a></h2>
-<section id="module-botorch.acquisition.fixed_feature">
-<span id="fixed-feature-acquisition-function"></span><h3>Fixed Feature Acquisition Function<a class="headerlink" href="#module-botorch.acquisition.fixed_feature" title="Permalink to this heading">¶</a></h3>
+<section id="fixed-feature-acquisition-function">
+<h3>Fixed Feature Acquisition Function<a class="headerlink" href="#fixed-feature-acquisition-function" title="Permalink to this heading">¶</a></h3>
 <p>A wrapper around AquisitionFunctions to fix certain features for optimization.
 This is useful e.g. for performing contextual optimization.</p>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.fixed_feature"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.fixed_feature.</span></span><span class="sig-name descname"><span class="pre">FixedFeatureAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/fixed_feature.html#FixedFeatureAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></p>
@@ -4051,11 +4051,11 @@ by adding <cite>values</cite> in the appropriate places (see
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.input_constructors">
-<span id="constructors-for-acquisition-function-input-arguments"></span><h3>Constructors for Acquisition Function Input Arguments<a class="headerlink" href="#module-botorch.acquisition.input_constructors" title="Permalink to this heading">¶</a></h3>
+<section id="constructors-for-acquisition-function-input-arguments">
+<h3>Constructors for Acquisition Function Input Arguments<a class="headerlink" href="#constructors-for-acquisition-function-input-arguments" title="Permalink to this heading">¶</a></h3>
 <p>A registry of helpers for generating inputs to acquisition function
 constructors programmatically from a consistent input format.</p>
-<dl class="py function">
+<span class="target" id="module-botorch.acquisition.input_constructors"></span><dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.input_constructors.get_acqf_input_constructor">
 <span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">get_acqf_input_constructor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acqf_cls</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#get_acqf_input_constructor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.get_acqf_input_constructor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get acqusition function input constructor from registry.</p>
@@ -4620,10 +4620,10 @@ optimization.</p></li>
 </dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.penalized">
-<span id="penalized-acquisition-function-wrapper"></span><h3>Penalized Acquisition Function Wrapper<a class="headerlink" href="#module-botorch.acquisition.penalized" title="Permalink to this heading">¶</a></h3>
+<section id="penalized-acquisition-function-wrapper">
+<h3>Penalized Acquisition Function Wrapper<a class="headerlink" href="#penalized-acquisition-function-wrapper" title="Permalink to this heading">¶</a></h3>
 <p>Modules to add regularization to acquisition functions.</p>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.penalized"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.penalized.L2Penalty">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">L2Penalty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init_point</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#L2Penalty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.L2Penalty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
@@ -4938,11 +4938,11 @@ with penalty added for each point.</p>
 </dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.proximal">
-<span id="proximal-acquisition-function-wrapper"></span><h3>Proximal Acquisition Function Wrapper<a class="headerlink" href="#module-botorch.acquisition.proximal" title="Permalink to this heading">¶</a></h3>
+<section id="proximal-acquisition-function-wrapper">
+<h3>Proximal Acquisition Function Wrapper<a class="headerlink" href="#proximal-acquisition-function-wrapper" title="Permalink to this heading">¶</a></h3>
 <p>A wrapper around AcquisitionFunctions to add proximal weighting of the
 acquisition function.</p>
-<dl class="py class">
+<span class="target" id="module-botorch.acquisition.proximal"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.proximal.ProximalAcquisitionFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.proximal.</span></span><span class="sig-name descname"><span class="pre">ProximalAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proximal_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transformed_weighting</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/proximal.html#ProximalAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.proximal.ProximalAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></p>
@@ -5001,10 +5001,10 @@ weighting.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.utils">
-<span id="general-utilities-for-acquisition-functions"></span><h3>General Utilities for Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.utils" title="Permalink to this heading">¶</a></h3>
+<section id="general-utilities-for-acquisition-functions">
+<h3>General Utilities for Acquisition Functions<a class="headerlink" href="#general-utilities-for-acquisition-functions" title="Permalink to this heading">¶</a></h3>
 <p>Utilities for acquisition functions.</p>
-<dl class="py function">
+<span class="target" id="module-botorch.acquisition.utils"></span><dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.utils.get_acquisition_function">
 <span class="sig-prename descclassname"><span class="pre">botorch.acquisition.utils.</span></span><span class="sig-name descname"><span class="pre">get_acquisition_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acquisition_function_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_observed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mc_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qmc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#get_acquisition_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.utils.get_acquisition_function" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function for initializing botorch acquisition functions.</p>
@@ -5231,10 +5231,10 @@ columns of X.</p></li>
 </dl>
 </dd></dl>
 </section>
-<section id="module-botorch.acquisition.multi_objective.utils">
-<span id="multi-objective-utilities-for-acquisition-functions"></span><h3>Multi-Objective Utilities for Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_objective.utils" title="Permalink to this heading">¶</a></h3>
+<section id="multi-objective-utilities-for-acquisition-functions">
+<h3>Multi-Objective Utilities for Acquisition Functions<a class="headerlink" href="#multi-objective-utilities-for-acquisition-functions" title="Permalink to this heading">¶</a></h3>
 <p>Utilities for multi-objective acquisition functions.</p>
-<dl class="py function">
+<span class="target" id="module-botorch.acquisition.multi_objective.utils"></span><dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.utils.get_default_partitioning_alpha">
 <span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.utils.</span></span><span class="sig-name descname"><span class="pre">get_default_partitioning_alpha</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_objectives</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/utils.html#get_default_partitioning_alpha"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.utils.get_default_partitioning_alpha" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determines an approximation level based on the number of objectives.</p>

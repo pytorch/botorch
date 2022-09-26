@@ -12,7 +12,7 @@
 
 import torch
 
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.test_functions import Hartmann
 from gpytorch.mlls import ExactMarginalLogLikelihood
@@ -29,7 +29,7 @@ train_x = torch.rand(10, 6)
 train_obj = neg_hartmann6(train_x).unsqueeze(-1)
 model = SingleTaskGP(train_X=train_x, train_Y=train_obj)
 mll = ExactMarginalLogLikelihood(model.likelihood, model)
-fit_gpytorch_model(mll);
+fit_gpytorch_mll(mll);
 
 
 # Initialize an analytic EI acquisition function on the fitted model.

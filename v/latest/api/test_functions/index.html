@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -25,10 +25,10 @@
 <div class="body" role="main">
 <section id="module-botorch.test_functions">
 <span id="botorch-test-functions"></span><h1>botorch.test_functions<a class="headerlink" href="#module-botorch.test_functions" title="Permalink to this heading">¶</a></h1>
-<section id="module-botorch.test_functions.base">
-<span id="abstract-test-function-api"></span><h2>Abstract Test Function API<a class="headerlink" href="#module-botorch.test_functions.base" title="Permalink to this heading">¶</a></h2>
+<section id="abstract-test-function-api">
+<h2>Abstract Test Function API<a class="headerlink" href="#abstract-test-function-api" title="Permalink to this heading">¶</a></h2>
 <p>Base class for test functions for optimization benchmarks.</p>
-<dl class="py class">
+<span class="target" id="module-botorch.test_functions.base"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.base.BaseTestProblem">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.base.</span></span><span class="sig-name descname"><span class="pre">BaseTestProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/base.html#BaseTestProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.base.BaseTestProblem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
@@ -214,11 +214,11 @@ between a provided point and the closest point on the true pareto front.</p>
 </dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.test_functions.synthetic">
-<span id="synthetic-test-functions"></span><h2>Synthetic Test Functions<a class="headerlink" href="#module-botorch.test_functions.synthetic" title="Permalink to this heading">¶</a></h2>
+<section id="synthetic-test-functions">
+<h2>Synthetic Test Functions<a class="headerlink" href="#synthetic-test-functions" title="Permalink to this heading">¶</a></h2>
 <p>Synthetic functions for optimization benchmarks.
 Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/optimization.html">https://www.sfu.ca/~ssurjano/optimization.html</a></p>
-<dl class="py class">
+<span class="target" id="module-botorch.test_functions.synthetic"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.synthetic.SyntheticTestFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.synthetic.</span></span><span class="sig-name descname"><span class="pre">SyntheticTestFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#SyntheticTestFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseTestProblem</span></code></a></p>
@@ -1022,10 +1022,10 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.test_functions.multi_fidelity">
-<span id="multi-fidelity-synthetic-test-functions"></span><h2>Multi-Fidelity Synthetic Test Functions<a class="headerlink" href="#module-botorch.test_functions.multi_fidelity" title="Permalink to this heading">¶</a></h2>
+<section id="multi-fidelity-synthetic-test-functions">
+<h2>Multi-Fidelity Synthetic Test Functions<a class="headerlink" href="#multi-fidelity-synthetic-test-functions" title="Permalink to this heading">¶</a></h2>
 <p>Synthetic functions for multi-fidelity optimization benchmarks.</p>
-<dl class="py class">
+<span class="target" id="module-botorch.test_functions.multi_fidelity"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.multi_fidelity.AugmentedBranin">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_fidelity.</span></span><span class="sig-name descname"><span class="pre">AugmentedBranin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_fidelity.html#AugmentedBranin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_fidelity.AugmentedBranin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="botorch.test_functions.synthetic.SyntheticTestFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">SyntheticTestFunction</span></code></a></p>
@@ -1165,8 +1165,8 @@ where the last two dimensions are the fidelity parameters:</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.test_functions.multi_objective">
-<span id="multi-objective-synthetic-test-functions"></span><h2>Multi-Objective Synthetic Test Functions<a class="headerlink" href="#module-botorch.test_functions.multi_objective" title="Permalink to this heading">¶</a></h2>
+<section id="multi-objective-synthetic-test-functions">
+<h2>Multi-Objective Synthetic Test Functions<a class="headerlink" href="#multi-objective-synthetic-test-functions" title="Permalink to this heading">¶</a></h2>
 <p>Multi-objective optimization benchmark problems.</p>
 <p>References</p>
 <div class="citation-list" role="list">
@@ -1248,7 +1248,7 @@ evolutionary algorithms: Empirical results. Evolutionary Computation, vol.
 8, no. 2,pp. 173–195, 2000.</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.test_functions.multi_objective"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.multi_objective.BraninCurrin">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">BraninCurrin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#BraninCurrin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.BraninCurrin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a></p>
@@ -2994,8 +2994,8 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.test_functions.multi_objective_multi_fidelity">
-<span id="multi-objective-multi-fidelity-synthetic-test-functions"></span><h2>Multi-Objective Multi-Fidelity Synthetic Test Functions<a class="headerlink" href="#module-botorch.test_functions.multi_objective_multi_fidelity" title="Permalink to this heading">¶</a></h2>
+<section id="multi-objective-multi-fidelity-synthetic-test-functions">
+<h2>Multi-Objective Multi-Fidelity Synthetic Test Functions<a class="headerlink" href="#multi-objective-multi-fidelity-synthetic-test-functions" title="Permalink to this heading">¶</a></h2>
 <p>Multi-objective multi-fidelity optimization benchmark problems.</p>
 <p>References</p>
 <div class="citation-list" role="list">
@@ -3007,7 +3007,7 @@ simultaneous multi-objective and multi-fidelity optimization.
 arXiv preprint arXiv:2112.13901, 2021.</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.test_functions.multi_objective_multi_fidelity"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective_multi_fidelity.</span></span><span class="sig-name descname"><span class="pre">MOMFBraninCurrin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective_multi_fidelity.html#MOMFBraninCurrin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective_multi_fidelity.MOMFBraninCurrin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblem</span></code></a></p>

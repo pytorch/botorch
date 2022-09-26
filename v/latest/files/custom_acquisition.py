@@ -87,7 +87,7 @@ class qScalarizedUpperConfidenceBound(MCAcquisitionFunction):
 
 import torch
 
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.utils import standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
@@ -101,7 +101,7 @@ Y = standardize(Y)  # standardize to zero mean unit variance
 # construct and fit the multi-output model
 gp = SingleTaskGP(X, Y)
 mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-fit_gpytorch_model(mll)
+fit_gpytorch_mll(mll)
 
 # construct the acquisition function
 qSUCB = qScalarizedUpperConfidenceBound(gp, beta=0.1, weights=torch.tensor([0.1, 0.5]))

@@ -184,7 +184,7 @@ def update_random_observations(best_random):
 # In[7]:
 
 
-from botorch import fit_gpytorch_model
+from botorch import fit_gpytorch_mll
 from botorch.acquisition.monte_carlo import qNoisyExpectedImprovement
 from botorch.exceptions import BadInitialCandidatesWarning
 
@@ -231,8 +231,8 @@ for trial in range(1, N_TRIALS + 1):
         t0 = time.monotonic()
         
         # fit the models
-        fit_gpytorch_model(mll_ei)
-        fit_gpytorch_model(mll_warp)
+        fit_gpytorch_mll(mll_ei)
+        fit_gpytorch_mll(mll_warp)
         
         ei = qNoisyExpectedImprovement(
             model=model_ei, 

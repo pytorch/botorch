@@ -31,7 +31,7 @@ from botorch.acquisition.objective import GenericMCObjective
 from botorch.models import HigherOrderGP, SingleTaskGP
 from botorch.models.higher_order_gp import FlattenedStandardize
 from botorch.models.transforms import Normalize, Standardize
-from botorch import fit_gpytorch_model
+from botorch import fit_gpytorch_mll
 from botorch.optim import optimize_acqf
 from botorch.sampling import IIDNormalSampler
 from botorch.utils.sampling import draw_sobol_samples

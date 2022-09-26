@@ -150,7 +150,7 @@ plt.tight_layout()
 
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from botorch.models import FixedNoiseGP
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 
 
 def get_fitted_model(train_X, train_Y, train_Yvar, state_dict=None):
@@ -165,7 +165,7 @@ def get_fitted_model(train_X, train_Y, train_Yvar, state_dict=None):
     model.Y_std = Y_std
     if state_dict is None:
         mll = ExactMarginalLogLikelihood(model.likelihood, model).to(train_X)
-        fit_gpytorch_model(mll)
+        fit_gpytorch_mll(mll)
     else:
         model.load_state_dict(state_dict)
     return model

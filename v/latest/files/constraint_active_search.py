@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 import torch
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.acquisition.objective import IdentityMCObjective
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models import ModelListGP, SingleTaskGP
 from botorch.models.transforms.outcome import Standardize
 from botorch.optim import optimize_acqf
@@ -204,7 +204,7 @@ def get_and_fit_gp(X, Y):
     octf = Standardize(m=Y.shape[-1])
     gp = SingleTaskGP(X, Y, likelihood=likelihood, outcome_transform=octf)
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-    fit_gpytorch_model(mll)
+    fit_gpytorch_mll(mll)
     return gp
 
 

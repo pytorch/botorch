@@ -31,7 +31,7 @@ from torch.quasirandom import SobolEngine
 import gpytorch
 import gpytorch.settings as gpts
 import pykeops
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.generation import MaxPosteriorSampling
 from botorch.models import SingleTaskGP
 from botorch.test_functions import Hartmann
@@ -104,7 +104,7 @@ def generate_batch(
     likelihood = GaussianLikelihood(noise_constraint=Interval(1e-8, 1e-3))
     model = SingleTaskGP(X, train_Y, likelihood=likelihood, covar_module=covar_module)
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
-    fit_gpytorch_model(mll)
+    fit_gpytorch_mll(mll)
 
     # Draw samples on a Sobol sequence
     sobol = SobolEngine(X.shape[-1], scramble=True)

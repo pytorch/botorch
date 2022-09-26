@@ -323,7 +323,7 @@ except RuntimeError:
 import gc
 import gpytorch.settings as gpt_settings
 from time import time
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.optim.optimize import optimize_acqf
 
@@ -339,7 +339,7 @@ for i in range(iterations):
     perturbation_set = draw_sobol_normal_samples(d=base_function.dim, n=n_w, **tkwargs) * scaled_std_dev
     # Fit the model.
     mll, model = initialize_model(train_x=X, train_y=Y, perturbation_set=perturbation_set)
-    fit_gpytorch_model(mll)
+    fit_gpytorch_mll(mll)
 
 
     with gpt_settings.cholesky_max_tries(6):

@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -25,10 +25,10 @@
 <div class="body" role="main">
 <section id="module-botorch.utils">
 <span id="botorch-utils"></span><h1>botorch.utils<a class="headerlink" href="#module-botorch.utils" title="Permalink to this heading">¶</a></h1>
-<section id="module-botorch.utils.constraints">
-<span id="constraints"></span><h2>Constraints<a class="headerlink" href="#module-botorch.utils.constraints" title="Permalink to this heading">¶</a></h2>
+<section id="constraints">
+<h2>Constraints<a class="headerlink" href="#constraints" title="Permalink to this heading">¶</a></h2>
 <p>Helpers for handling outcome constraints.</p>
-<dl class="py function">
+<span class="target" id="module-botorch.utils.constraints"></span><dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.constraints.get_outcome_constraint_transforms">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.constraints.</span></span><span class="sig-name descname"><span class="pre">get_outcome_constraint_transforms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcome_constraints</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/constraints.html#get_outcome_constraint_transforms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.constraints.get_outcome_constraint_transforms" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create outcome constraint callables from outcome constraint tensors.</p>
@@ -57,10 +57,10 @@ Negative values imply feasibility. The callables support broadcasting
 </div>
 </dd></dl>
 </section>
-<section id="module-botorch.utils.containers">
-<span id="containers"></span><h2>Containers<a class="headerlink" href="#module-botorch.utils.containers" title="Permalink to this heading">¶</a></h2>
+<section id="containers">
+<h2>Containers<a class="headerlink" href="#containers" title="Permalink to this heading">¶</a></h2>
 <p>Representations for different kinds of data.</p>
-<dl class="py class">
+<span class="target" id="module-botorch.utils.containers"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.containers.DenseContainer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.containers.</span></span><span class="sig-name descname"><span class="pre">DenseContainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_shape</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/containers.html#DenseContainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.containers.DenseContainer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchContainer</span></code></p>
@@ -135,10 +135,10 @@ taken from the leading dimension of an n-dimensional source tensor.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.utils.datasets">
-<span id="datasets"></span><h2>Datasets<a class="headerlink" href="#module-botorch.utils.datasets" title="Permalink to this heading">¶</a></h2>
+<section id="datasets">
+<h2>Datasets<a class="headerlink" href="#datasets" title="Permalink to this heading">¶</a></h2>
 <p>Representations for different kinds of datasets.</p>
-<dl class="py class">
+<span class="target" id="module-botorch.utils.datasets"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.datasets.BotorchDataset">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">BotorchDataset</span></span><a class="reference internal" href="_modules/botorch/utils/datasets.html#BotorchDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.BotorchDataset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
@@ -441,10 +441,10 @@ decomposition with increasing jitter.</p></li>
 </dl>
 </dd></dl>
 </section>
-<section id="module-botorch.utils.objective">
-<span id="objective"></span><h2>Objective<a class="headerlink" href="#module-botorch.utils.objective" title="Permalink to this heading">¶</a></h2>
+<section id="objective">
+<h2>Objective<a class="headerlink" href="#objective" title="Permalink to this heading">¶</a></h2>
 <p>Helpers for handling objectives.</p>
-<dl class="py function">
+<span class="target" id="module-botorch.utils.objective"></span><dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.objective.get_objective_weights_transform">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.objective.</span></span><span class="sig-name descname"><span class="pre">get_objective_weights_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#get_objective_weights_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.objective.get_objective_weights_transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a linear objective callable from a set of weights.</p>
@@ -576,8 +576,8 @@ each piece is a hyperbolic tangent function.</p>
 </dl>
 </dd></dl>
 </section>
-<section id="module-botorch.utils.sampling">
-<span id="sampling"></span><h2>Sampling<a class="headerlink" href="#module-botorch.utils.sampling" title="Permalink to this heading">¶</a></h2>
+<section id="sampling">
+<h2>Sampling<a class="headerlink" href="#sampling" title="Permalink to this heading">¶</a></h2>
 <p>Utilities for MC and qMC sampling.</p>
 <p>References</p>
 <div class="citation-list" role="list">
@@ -587,7 +587,7 @@ each piece is a hyperbolic tangent function.</p>
 density n-polytopes. Technical report, Brown University, 2014.</p>
 </div>
 </div>
-<dl class="py function">
+<span class="target" id="module-botorch.utils.sampling"></span><dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.sampling.manual_seed">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">manual_seed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#manual_seed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.manual_seed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Contextmanager for manual setting the torch.random seed.</p>
@@ -1731,10 +1731,10 @@ strings are acceptable.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.utils.transforms">
-<span id="transformations"></span><h2>Transformations<a class="headerlink" href="#module-botorch.utils.transforms" title="Permalink to this heading">¶</a></h2>
+<section id="transformations">
+<h2>Transformations<a class="headerlink" href="#transformations" title="Permalink to this heading">¶</a></h2>
 <p>Some basic data transformation helpers.</p>
-<dl class="py function">
+<span class="target" id="module-botorch.utils.transforms"></span><dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.transforms.squeeze_last_dim">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></span><span class="sig-name descname"><span class="pre">squeeze_last_dim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#squeeze_last_dim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.squeeze_last_dim" title="Permalink to this definition">¶</a></dt>
 <dd><p>Squeeze the last dimension of a Tensor.</p>
@@ -2095,8 +2095,8 @@ with probability above the given threshold.</p>
 <h3>Multi-Objective Utilities<a class="headerlink" href="#multi-objective-utilities" title="Permalink to this heading">¶</a></h3>
 </section>
 </section>
-<section id="module-botorch.utils.multi_objective.box_decompositions.box_decomposition">
-<span id="abstract-box-decompositions"></span><h2>Abstract Box Decompositions<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.box_decomposition" title="Permalink to this heading">¶</a></h2>
+<section id="abstract-box-decompositions">
+<h2>Abstract Box Decompositions<a class="headerlink" href="#abstract-box-decompositions" title="Permalink to this heading">¶</a></h2>
 <p>Box decomposition algorithms.</p>
 <p>References</p>
 <div class="citation-list" role="list">
@@ -2108,11 +2108,11 @@ compute the hypervolume indicator. Computers &amp; Operations Research,
 Volume 79, 2017.</p>
 </div>
 </div>
-</section>
-<section id="module-botorch.utils.multi_objective.box_decompositions.box_decomposition_list">
-<span id="box-decomposition-list"></span><h2>Box Decomposition List<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.box_decomposition_list" title="Permalink to this heading">¶</a></h2>
+<span class="target" id="module-botorch.utils.multi_objective.box_decompositions.box_decomposition"></span></section>
+<section id="box-decomposition-list">
+<h2>Box Decomposition List<a class="headerlink" href="#box-decomposition-list" title="Permalink to this heading">¶</a></h2>
 <p>Box decomposition container.</p>
-<dl class="py class">
+<span class="target" id="module-botorch.utils.multi_objective.box_decompositions.box_decomposition_list"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.box_decomposition_list.</span></span><span class="sig-name descname"><span class="pre">BoxDecompositionList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">box_decompositions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition_list.html#BoxDecompositionList"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
@@ -2210,10 +2210,10 @@ box_decomposition <cite>i</cite>.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.utils.multi_objective.box_decompositions.utils">
-<span id="box-decomposition-utilities"></span><h2>Box Decomposition Utilities<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.utils" title="Permalink to this heading">¶</a></h2>
+<section id="box-decomposition-utilities">
+<h2>Box Decomposition Utilities<a class="headerlink" href="#box-decomposition-utilities" title="Permalink to this heading">¶</a></h2>
 <p>Utilities for box decomposition algorithms.</p>
-<dl class="py function">
+<span class="target" id="module-botorch.utils.multi_objective.box_decompositions.utils"></span><dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.utils.compute_local_upper_bounds">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.utils.</span></span><span class="sig-name descname"><span class="pre">compute_local_upper_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">U</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/utils.html#compute_local_upper_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.utils.compute_local_upper_bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute local upper bounds.</p>
@@ -2336,10 +2336,10 @@ that are sorted by the 0th dimension in increasing order.</p></li>
 </dl>
 </dd></dl>
 </section>
-<section id="module-botorch.utils.multi_objective.box_decompositions.dominated">
-<span id="dominated-partitionings"></span><h2>Dominated Partitionings<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.dominated" title="Permalink to this heading">¶</a></h2>
+<section id="dominated-partitionings">
+<h2>Dominated Partitionings<a class="headerlink" href="#dominated-partitionings" title="Permalink to this heading">¶</a></h2>
 <p>Algorithms for partitioning the dominated space into hyperrectangles.</p>
-<dl class="py class">
+<span class="target" id="module-botorch.utils.multi_objective.box_decompositions.dominated"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.dominated.</span></span><span class="sig-name descname"><span class="pre">DominatedPartitioning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/dominated.html#DominatedPartitioning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FastPartitioning</span></code></p>
@@ -2380,8 +2380,8 @@ that are sorted by the 0th dimension in increasing order.</p></li>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.utils.multi_objective.hypervolume">
-<span id="hypervolume"></span><h2>Hypervolume<a class="headerlink" href="#module-botorch.utils.multi_objective.hypervolume" title="Permalink to this heading">¶</a></h2>
+<section id="hypervolume">
+<h2>Hypervolume<a class="headerlink" href="#hypervolume" title="Permalink to this heading">¶</a></h2>
 <p>Hypervolume Utilities.</p>
 <p>References</p>
 <div class="citation-list" role="list">
@@ -2399,7 +2399,7 @@ for visually examining diversity maintenance behavior in a decision
 space. Proc. 13th Annual Conf. Genetic Evol. Comput., 2011.</p>
 </div>
 </div>
-<dl class="py function">
+<span class="target" id="module-botorch.utils.multi_objective.hypervolume"></span><dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.hypervolume.infer_reference_point">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.hypervolume.</span></span><span class="sig-name descname"><span class="pre">infer_reference_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pareto_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_ref_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_max_ref_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#infer_reference_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.infer_reference_point" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get reference point for hypervolume computations.</p>
@@ -2591,8 +2591,8 @@ nodes of the node that is reinserted are in the list.</p>
 </dd></dl>
 </dd></dl>
 </section>
-<section id="module-botorch.utils.multi_objective.box_decompositions.non_dominated">
-<span id="non-dominated-partitionings"></span><h2>Non-dominated Partitionings<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.non_dominated" title="Permalink to this heading">¶</a></h2>
+<section id="non-dominated-partitionings">
+<h2>Non-dominated Partitionings<a class="headerlink" href="#non-dominated-partitionings" title="Permalink to this heading">¶</a></h2>
 <p>Algorithms for partitioning the non-dominated space into rectangles.</p>
 <p>References</p>
 <div class="citation-list" role="list">
@@ -2605,7 +2605,7 @@ Multiobjective Optimization: Multiobjective statistical criterions,”
 pp. 1-8.</p>
 </div>
 </div>
-<dl class="py class">
+<span class="target" id="module-botorch.utils.multi_objective.box_decompositions.non_dominated"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.non_dominated.</span></span><span class="sig-name descname"><span class="pre">NondominatedPartitioning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/non_dominated.html#NondominatedPartitioning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BoxDecomposition</span></code></p>
@@ -2769,8 +2769,8 @@ each point is non-dominated.</p>
 </dl>
 </dd></dl>
 </section>
-<section id="module-botorch.utils.multi_objective.scalarization">
-<span id="scalarization"></span><h2>Scalarization<a class="headerlink" href="#module-botorch.utils.multi_objective.scalarization" title="Permalink to this heading">¶</a></h2>
+<section id="scalarization">
+<h2>Scalarization<a class="headerlink" href="#scalarization" title="Permalink to this heading">¶</a></h2>
 <p>Helper utilities for constructing scalarizations.</p>
 <p>References</p>
 <div class="citation-list" role="list">
@@ -2782,7 +2782,7 @@ for expensive multiobjective optimization problems,” in IEEE Transactions
 on Evolutionary Computation, vol. 10, no. 1, pp. 50-66, Feb. 2006.</p>
 </div>
 </div>
-<dl class="py function">
+<span class="target" id="module-botorch.utils.multi_objective.scalarization"></span><dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.scalarization.get_chebyshev_scalarization">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.scalarization.</span></span><span class="sig-name descname"><span class="pre">get_chebyshev_scalarization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/scalarization.html#get_chebyshev_scalarization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.scalarization.get_chebyshev_scalarization" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct an augmented Chebyshev scalarization.</p>

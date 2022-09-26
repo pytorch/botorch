@@ -246,7 +246,7 @@ def optimize_MOMF_and_get_obs(
 
 
 # MOMF Opt run
-from botorch import fit_gpytorch_model
+from botorch import fit_gpytorch_mll
 from botorch.sampling.samplers import SobolQMCNormalSampler
 
 verbose = True
@@ -256,7 +256,7 @@ train_x[:n_INIT, :], train_obj[:n_INIT, :] = gen_init_data(dim_x, n_INIT, dim_y)
 mll, model = initialize_model(train_x[:n_INIT, :], train_obj[:n_INIT, :])  # Initialize Model
 for iteration in range(0, n_BATCH):
     # run N_BATCH rounds of BayesOpt after the initial random batch
-    fit_gpytorch_model(mll)  # Fit the model
+    fit_gpytorch_mll(mll)  # Fit the model
     momf_sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)  # Generate Sampler
     # Updating indices used to store new observations
     lower_index = n_INIT + iteration * BATCH_SIZE
@@ -308,7 +308,7 @@ def get_pareto(train_x, train_obj, test_x, ref_point):
     # Posterior mean at the testing points. From these points the non-dominated set is calculated and used to computer
     # the hypervolume.
     mll, model = initialize_model(train_x, train_obj)
-    fit_gpytorch_model(mll)
+    fit_gpytorch_mll(mll)
     with torch.no_grad():
         # Compute posterior mean over outputs at testing data
         means = model.posterior(test_x).mean
@@ -465,9 +465,9 @@ for trial in range(0, n_TRIALS):
     mll_MO, model_MO = initialize_model(train_xMO[:n_INITMO, :, trial], train_objMO[:n_INITMO, :, trial])
     for _iter in range(0, n_BATCH):
         # run N_BATCH rounds of BayesOpt after the initial random batch
-        fit_gpytorch_model(mll)
+        fit_gpytorch_mll(mll)
 
-        fit_gpytorch_model(mll_MO)  # fit the models
+        fit_gpytorch_mll(mll_MO)  # fit the models
         sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)
         # Updating indices used to store new observations
         lower_index = n_INIT + _iter * BATCH_SIZE

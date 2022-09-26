@@ -80,7 +80,7 @@ def initialize_model(train_x, train_obj):
 # In[4]:
 
 
-from botorch import fit_gpytorch_model
+from botorch import fit_gpytorch_mll
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition import PosteriorMean
@@ -185,7 +185,7 @@ N_ITER = 3 if not SMOKE_TEST else 1
 
 for i in range(N_ITER):
     mll, model = initialize_model(train_x, train_obj)
-    fit_gpytorch_model(mll)
+    fit_gpytorch_mll(mll)
     mfkg_acqf = get_mfkg(model)
     new_x, new_obj, cost = optimize_mfkg_and_get_observation(mfkg_acqf)
     train_x = torch.cat([train_x, new_x])
@@ -282,7 +282,7 @@ train_x, train_obj = generate_initial_data(n=16)
 
 for _ in range(N_ITER):
     mll, model = initialize_model(train_x, train_obj)
-    fit_gpytorch_model(mll)
+    fit_gpytorch_mll(mll)
     ei_acqf = get_ei(model, best_f=train_obj.max())
     new_x, new_obj, cost = optimize_ei_and_get_observation(ei_acqf)
     train_x = torch.cat([train_x, new_x])

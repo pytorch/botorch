@@ -18,7 +18,7 @@
 
 import torch
 
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
@@ -35,7 +35,7 @@ train_Y = 1 - torch.norm(train_X, dim=-1, keepdim=True)
 
 model = SingleTaskGP(train_X, train_Y)
 mll = ExactMarginalLogLikelihood(model.likelihood, model)
-fit_gpytorch_model(mll);
+fit_gpytorch_mll(mll);
 
 
 # ### Define acquisition function

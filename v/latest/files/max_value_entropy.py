@@ -130,7 +130,7 @@ import math
 import torch
 
 from botorch.test_functions import Branin
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.utils.transforms import standardize, normalize
 from gpytorch.mlls import ExactMarginalLogLikelihood
@@ -146,7 +146,7 @@ train_Y = standardize(train_Y + 0.05 * torch.randn_like(train_Y))
 
 model = SingleTaskGP(train_X, train_Y)
 mll = ExactMarginalLogLikelihood(model.likelihood, model)
-fit_gpytorch_model(mll);
+fit_gpytorch_mll(mll);
 
 
 # ### 3. Defining the MES acquisition function
