@@ -22,6 +22,7 @@ from botorch.models.converter import (
 from botorch.models.transforms.input import AppendFeatures, Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.utils.testing import BotorchTestCase
+from gpytorch.kernels import RBFKernel
 from gpytorch.likelihoods import GaussianLikelihood
 
 from .test_gpytorch import SimpleGPyTorchModel
@@ -145,6 +146,18 @@ class TestConverters(BotorchTestCase):
             gp2 = SingleTaskGP(train_X, train_Y2, likelihood=GaussianLikelihood())
             with self.assertRaises(NotImplementedError):
                 model_list_to_batched(ModelListGP(gp2))
+            # test non-default kernel
+            gp1 = SingleTaskGP(train_X, train_Y1, covar_module=RBFKernel())
+            gp2 = SingleTaskGP(train_X, train_Y2, covar_module=RBFKernel())
+            list_gp = ModelListGP(gp1, gp2)
+            batch_gp = model_list_to_batched(list_gp)
+            self.assertEqual(type(batch_gp.covar_module), RBFKernel)
+            # test error when component GPs have different kernel types
+            gp1 = SingleTaskGP(train_X, train_Y1, covar_module=RBFKernel())
+            gp2 = SingleTaskGP(train_X, train_Y2)
+            list_gp = ModelListGP(gp1, gp2)
+            with self.assertRaises(UnsupportedError):
+                model_list_to_batched(list_gp)
             # test FixedNoiseGP
             train_X = torch.rand(10, 2, device=self.device, dtype=dtype)
             train_Y1 = train_X.sum(dim=-1, keepdim=True)
