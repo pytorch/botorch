@@ -96,7 +96,7 @@ jobs:
       # Don't need most deps for conda build, but need them for testing
       # We do need setuptools_scm though to properly parse the version
       run: |
-        conda install -y scipy setuptools_scm conda-build conda-verify
+        conda install -y scipy multipledispatch setuptools_scm conda-build conda-verify
         conda config --set anaconda_upload no
         conda install -y -c pytorch-nightly pytorch cpuonly
         conda install -y -c conda-forge pyro-ppl>=1.8.2
