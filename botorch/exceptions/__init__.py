@@ -9,6 +9,7 @@ from botorch.exceptions.errors import (
     BotorchTensorDimensionError,
     CandidateGenerationError,
     InputDataError,
+    ModelFittingError,
     UnsupportedError,
 )
 from botorch.exceptions.warnings import (
@@ -33,6 +34,7 @@ __all__ = [
     "InputDataError",
     "BadInitialCandidatesWarning",
     "CandidateGenerationError",
+    "ModelFittingError",
     "OptimizationWarning",
     "SamplingWarning",
     "UnsupportedError",
