@@ -7,11 +7,16 @@ The release log for BoTorch.
 #### New Features
 * A full refactor of `fit_gyptorch_model` and broader fitting methods (#1134).
   * This introduces a new `fit_gpytorch_mll` method that multiple-dispatches
-    on the model type.
-  * Unlike the previous fitting helpers, `fit_gpytorch_mll` does **not** pass
+    on the model type. Users may register custom fitting routines for different
+    combinations of MLLs, Likelihoods, and Models.
+  * Unlike previous fitting helpers, `fit_gpytorch_mll` does **not** pass
    `kwargs` to `optimizer` and instead introduces an optional `optimizer_kwargs`
     argument.
-  * TODO: Discuss changed error handling behavior.
+  * When a model fitting attempt fails, `botorch.fit` methods restore modules to their
+    original states.
+  * `fit_gpytorch_mll` throws a `ModelFittingError` when all model fitting attempts fail.
+  * Upon returning from `fit_gpytorch_mll`, `mll.training` will be `True` if fitting failed
+  and `False` otherwise.
 * Allow custom bounds to be passed in to `SyntheticTestFunction` (#1415).
 
 #### Deprecations
