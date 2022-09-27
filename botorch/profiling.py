@@ -33,7 +33,7 @@ def _get_device():
 
 def _get_train_x_and_y(
     n: int, dim: int, batch_dim: Optional[int] = None
-) -> Tuple[torch.tensor, torch.tensor]:
+) -> Tuple[torch.Tensor, torch.Tensor]:
     tkwargs = {"device": _get_device(), "dtype": torch.double}
     if batch_dim is None:
         x = torch.rand(n, dim, **tkwargs)

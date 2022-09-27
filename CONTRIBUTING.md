@@ -40,7 +40,7 @@ flake8 .
 
 #### Import Sorting
 
-BoTorch uses [ufmt](https://github.com/omnilib/ufmt) library for consistent
+BoTorch uses [ufmt](https://github.com/omnilib/ufmt) for consistent
 sorting of imports across the codebase. Install via `pip install ufmt`, and
 auto-sort with
 ```bash
