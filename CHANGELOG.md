@@ -5,7 +5,7 @@ The release log for BoTorch.
 ## [0.7.2] - Sep 27, 2022
 
 #### New Features
-* A full refactor of `fit_gyptorch_model` and broader fitting methods (#1134).
+* A full refactor of model fitting methods (#1134).
   * This introduces a new `fit_gpytorch_mll` method that multiple-dispatches
     on the model type. Users may register custom fitting routines for different
     combinations of MLLs, Likelihoods, and Models.
@@ -16,7 +16,7 @@ The release log for BoTorch.
     original states.
   * `fit_gpytorch_mll` throws a `ModelFittingError` when all model fitting attempts fail.
   * Upon returning from `fit_gpytorch_mll`, `mll.training` will be `True` if fitting failed
-  and `False` otherwise.
+    and `False` otherwise.
 * Allow custom bounds to be passed in to `SyntheticTestFunction` (#1415).
 
 #### Deprecations
