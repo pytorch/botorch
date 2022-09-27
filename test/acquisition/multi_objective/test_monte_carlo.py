@@ -252,8 +252,9 @@ class TestQExpectedHypervolumeImprovement(BotorchTestCase):
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+                self.assertEqual(
+                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
+                )
 
             # test objective
             acqf = qExpectedHypervolumeImprovement(
@@ -718,8 +719,9 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     acqf.sampler.base_samples.shape,
                     torch.Size([1, X_baseline.shape[0], m]),
                 )
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+                self.assertEqual(
+                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
+                )
 
             # test objective
             # set the MockPosterior to use samples over baseline points
@@ -973,8 +975,9 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     torch.cat([X_pending2, X_pending2], dim=0).requires_grad_(True)
                 )
                 self.assertIsNone(acqf.X_pending)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+                self.assertEqual(
+                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
+                )
 
             # test max iep
             mm._posterior._samples = baseline_samples
@@ -1415,8 +1418,9 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                     with torch.no_grad():
                         acqf(test_X)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+                self.assertEqual(
+                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
+                )
 
     def test_cache_root_w_standardize(self):
         # Test caching with standardize transform.

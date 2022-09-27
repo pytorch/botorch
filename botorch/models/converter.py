@@ -150,10 +150,18 @@ def model_list_to_batched(model_list: ModelListGP) -> BatchedMultiOutputGPyTorch
             raise UnsupportedError("All models must have the same fidelity parameters.")
         kwargs.update(init_args)
 
+    # add batched kernel, except if the model type is SingleTaskMultiFidelityGP,
+    # which does not have a `covar_module`
+    if not isinstance(models[0], SingleTaskMultiFidelityGP):
+        batch_length = len(models)
+        covar_module = _batched_kernel(models[0].covar_module, batch_length)
+        kwargs["covar_module"] = covar_module
+
     # construct the batched GP model
     input_transform = getattr(models[0], "input_transform", None)
     if input_transform is not None:
         input_transform.train()
+
     batch_gp = models[0].__class__(input_transform=input_transform, **kwargs)
     adjusted_batch_keys, non_adjusted_batch_keys = _get_adjusted_batch_keys(
         batch_state_dict=batch_gp.state_dict(), input_transform=input_transform
@@ -194,6 +202,46 @@ def model_list_to_batched(model_list: ModelListGP) -> BatchedMultiOutputGPyTorch
     batch_gp.load_state_dict(batch_state_dict)
 
     return batch_gp
+
+
+def _batched_kernel(kernel, batch_length: int):
+    """Adds a batch dimension of size `batch_length` to all non-scalar
+    Tensor parameters that govern the kernel function `kernel`.
+    NOTE: prior or constraint parameters are excluded from batching.
+    """
+    # copy just in case there are non-tensor parameters that are passed by reference
+    kernel = deepcopy(kernel)
+    search_str = "raw_outputscale"
+    for key, attr in kernel.state_dict().items():
+        if isinstance(attr, Tensor) and (
+            attr.ndim > 0 or (search_str == key.rpartition(".")[-1])
+        ):
+            attr = attr.unsqueeze(0).expand(batch_length, *attr.shape).clone()
+            set_attribute(kernel, key, torch.nn.Parameter(attr))
+    return kernel
+
+
+# two helper functions for `batched_kernel`
+# like `setattr` and `getattr` for object hierarchies
+def set_attribute(obj, attr: str, val):
+    """Like `setattr` but works with hierarchical attribute specification.
+    E.g. if obj=Zoo(), and attr="tiger.age", set_attribute(obj, attr, 3),
+    would set the Zoo's tiger's age to three.
+    """
+    path_to_leaf, _, attr_name = attr.rpartition(".")
+    leaf = get_attribute(obj, path_to_leaf) if path_to_leaf else obj
+    setattr(leaf, attr_name, val)
+
+
+def get_attribute(obj, attr: str):
+    """Like `getattr` but works with hierarchical attribute specification.
+    E.g. if obj=Zoo(), and attr="tiger.age", get_attribute(obj, attr),
+    would return the Zoo's tiger's age.
+    """
+    attr_names = attr.split(".")
+    while attr_names:
+        obj = getattr(obj, attr_names.pop(0))
+    return obj
 
 
 def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> ModelListGP:

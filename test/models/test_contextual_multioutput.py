@@ -6,14 +6,14 @@
 
 
 import torch
-from botorch import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.contextual_multioutput import FixedNoiseLCEMGP, LCEMGP
 from botorch.models.multitask import MultiTaskGP
 from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy import LazyTensor
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+from linear_operator.operators import LinearOperator
 from torch import Tensor
 
 
@@ -41,10 +41,10 @@ class ContextualMultiOutputTest(BotorchTestCase):
             self.assertEqual(model.emb_dims, [(2, 1)])
 
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            fit_gpytorch_model(mll, options={"maxiter": 1})
+            fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 1}})
 
             context_covar = model._eval_context_covar()
-            self.assertIsInstance(context_covar, LazyTensor)
+            self.assertIsInstance(context_covar, LinearOperator)
             self.assertEqual(context_covar.shape, torch.Size([2, 2]))
 
             embeddings = model._task_embeddings()
@@ -104,7 +104,7 @@ class ContextualMultiOutputTest(BotorchTestCase):
                 train_X=train_x, train_Y=train_y, train_Yvar=train_yvar, task_feature=d
             )
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            fit_gpytorch_model(mll, options={"maxiter": 1})
+            fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 1}})
 
             self.assertIsInstance(model, FixedNoiseLCEMGP)
 

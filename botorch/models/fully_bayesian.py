@@ -33,7 +33,7 @@ References:
 
 import math
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import pyro
 import torch
@@ -134,7 +134,7 @@ class PyroModel:
 class SaasPyroModel(PyroModel):
     r"""Implementation of the sparse axis-aligned subspace priors (SAAS) model.
 
-    The SAAS model uses sparsity-inducing priors to identift the most important
+    The SAAS model uses sparsity-inducing priors to identify the most important
     parameters. This model is suitable for high-dimensional BO with potentially
     hundreds of tunable parameters. See [Eriksson2021saasbo]_ for more details.
 
@@ -144,6 +144,12 @@ class SaasPyroModel(PyroModel):
     `SaasPyroModel` unless they want to customize its attributes (such as
     `covar_module`).
     """
+
+    def set_inputs(
+        self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
+    ):
+        super().set_inputs(train_X, train_Y, train_Yvar)
+        self.ard_num_dims = self.train_X.shape[-1]
 
     def sample(self) -> None:
         r"""Sample from the SAAS model.
@@ -155,7 +161,7 @@ class SaasPyroModel(PyroModel):
         outputscale = self.sample_outputscale(concentration=2.0, rate=0.15, **tkwargs)
         mean = self.sample_mean(**tkwargs)
         noise = self.sample_noise(**tkwargs)
-        lengthscale = self.sample_lengthscale(dim=self.train_X.shape[-1], **tkwargs)
+        lengthscale = self.sample_lengthscale(dim=self.ard_num_dims, **tkwargs)
         k = matern52_kernel(X=self.train_X, lengthscale=lengthscale)
         k = outputscale * k + noise * torch.eye(self.train_X.shape[0], **tkwargs)
         pyro.sample(
@@ -252,7 +258,7 @@ class SaasPyroModel(PyroModel):
         mean_module = ConstantMean(batch_shape=batch_shape).to(**tkwargs)
         covar_module = ScaleKernel(
             base_kernel=MaternKernel(
-                ard_num_dims=self.train_X.shape[-1],
+                ard_num_dims=self.ard_num_dims,
                 batch_shape=batch_shape,
             ),
             batch_shape=batch_shape,
@@ -393,6 +399,14 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
         self._check_if_fitted()
         return len(self.covar_module.outputscale)
 
+    @property
+    def batch_shape(self) -> torch.Size:
+        r"""Batch shape of the model, equal to the number of MCMC samples.
+        Note that `SaasFullyBayesianSingleTaskGP` does not support batching
+        over input data at this point."""
+        self._check_if_fitted()
+        return torch.Size([self.num_mcmc_samples])
+
     def fantasize(
         self,
         X: Tensor,
@@ -421,6 +435,41 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
             self.covar_module,
             self.likelihood,
         ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
+
+    def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True):
+        r"""Custom logic for loading the state dict.
+
+        The standard approach of calling `load_state_dict` currently doesn't play well
+        with the `SaasFullyBayesianSingleTaskGP` since the `mean_module`, `covar_module`
+        and `likelihood` aren't initialized until the model has been fitted. The reason
+        for this is that we don't know the number of MCMC samples until NUTS is called.
+        Given the state dict, we can initialize a new model with some dummy samples and
+        then load the state dict into this model. This currently only works for a
+        `SaasPyroModel` and supporting more Pyro models likely requires moving the model
+        construction logic into the Pyro model itself.
+        """
+
+        if not isinstance(self.pyro_model, SaasPyroModel):
+            raise NotImplementedError("load_state_dict only works for SaasPyroModel")
+        raw_mean = state_dict["mean_module.raw_constant"]
+        num_mcmc_samples = len(raw_mean)
+        dim = self.pyro_model.train_X.shape[-1]
+        tkwargs = {"device": raw_mean.device, "dtype": raw_mean.dtype}
+        # Load some dummy samples
+        mcmc_samples = {
+            "mean": torch.ones(num_mcmc_samples, **tkwargs),
+            "lengthscale": torch.ones(num_mcmc_samples, dim, **tkwargs),
+            "outputscale": torch.ones(num_mcmc_samples, **tkwargs),
+        }
+        if self.pyro_model.train_Yvar is None:
+            mcmc_samples["noise"] = torch.ones(num_mcmc_samples, **tkwargs)
+        (
+            self.mean_module,
+            self.covar_module,
+            self.likelihood,
+        ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
+        # Load the actual samples from the state dict
+        super().load_state_dict(state_dict=state_dict, strict=strict)
 
     def forward(self, X: Tensor) -> MultivariateNormal:
         self._check_if_fitted()

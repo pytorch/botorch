@@ -25,7 +25,7 @@ class ContextualKernelTest(BotorchTestCase):
         # test diag works well for lazy tensor
         x1 = torch.rand(5, 4)
         x2 = torch.rand(5, 4)
-        res = kernel(x1, x2).evaluate()
+        res = kernel(x1, x2).to_dense()
         res_diag = kernel(x1, x2, diag=True)
         self.assertLess(torch.norm(res_diag - res.diag()), 1e-4)
 
@@ -78,14 +78,14 @@ class ContextualKernelTest(BotorchTestCase):
         # test diag works well for lazy tensor
         x1 = torch.rand(5, 4)
         x2 = torch.rand(5, 4)
-        res = kernel(x1, x2).evaluate()
+        res = kernel(x1, x2).to_dense()
         res_diag = kernel(x1, x2, diag=True)
         self.assertLess(torch.norm(res_diag - res.diag()), 1e-4)
 
         # test batch evaluation
         x1 = torch.rand(3, 5, 4)
         x2 = torch.rand(3, 5, 4)
-        res = kernel(x1, x2).evaluate()
+        res = kernel(x1, x2).to_dense()
         self.assertEqual(res.shape, torch.Size([3, 5, 5]))
 
         # test input context_weight,

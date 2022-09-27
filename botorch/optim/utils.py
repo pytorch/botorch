@@ -12,8 +12,9 @@ from __future__ import annotations
 
 import warnings
 from collections import OrderedDict
+from contextlib import contextmanager
 from inspect import signature
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -21,12 +22,21 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import BotorchError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.gpytorch import GPyTorchModel, ModelListGPyTorchModel
-from botorch.optim.numpy_converter import set_params_with_array, TorchAttr
+from botorch.optim.numpy_converter import (  # noqa F401
+    create_name_filter,
+    get_parameters_and_bounds,
+    set_params_with_array,
+    TorchAttr,
+)
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
-from gpytorch.utils.errors import NanError, NotPSDError
+from linear_operator.utils.errors import NanError, NotPSDError
 from torch import Tensor
+from torch.nn import Module
+
+ParameterBounds = Dict[str, Tuple[Optional[float], Optional[float]]]
+Tkwargs = Dict[str, Union[torch.device, torch.dtype]]
 
 
 def sample_all_priors(model: GPyTorchModel) -> None:
@@ -216,17 +226,19 @@ def _scipy_objective_and_grad(
     except RuntimeError as e:
         return _handle_numerical_errors(error=e, x=x)
     loss.backward()
+
+    i = 0
     param_dict = OrderedDict(mll.named_parameters())
-    grad = []
+    grad = np.zeros(sum([tattr.shape.numel() for tattr in property_dict.values()]))
     for p_name in property_dict:
-        t = param_dict[p_name].grad
-        if t is None:
-            # this deals with parameters that do not affect the loss
-            grad.append(np.zeros(property_dict[p_name].shape.numel()))
-        else:
-            grad.append(t.detach().view(-1).cpu().double().clone().numpy())
+        t = param_dict[p_name]
+        size = t.numel()
+        if t.requires_grad and t.grad is not None:
+            grad[i : i + size] = t.grad.detach().view(-1).cpu().double().clone().numpy()
+        i += size
+
     mll.zero_grad()
-    return loss.item(), np.concatenate(grad)
+    return loss.item(), grad
 
 
 def _handle_numerical_errors(
@@ -289,3 +301,178 @@ def get_X_baseline(acq_function: AcquisitionFunction) -> Optional[Tensor]:
     while X.ndim > 2:
         X = X[0]
     return X
+
+
+@contextmanager
+def del_attribute_ctx(
+    instance: object, *attrs: str, enforce_hasattr: bool = False
+) -> Generator[None, None, None]:
+    r"""Contextmanager for temporarily deleting attributes."""
+    try:
+        cache = {}
+        for key in attrs:
+            if hasattr(instance, key):
+                cache[key] = getattr(instance, key)
+                delattr(instance, key)
+            elif enforce_hasattr:
+                raise ValueError(
+                    f"Attribute {key} missing from {type(instance)} instance."
+                )
+        yield
+    finally:
+        for key, cached_val in cache.items():
+            setattr(instance, key, cached_val)
+
+
+@contextmanager
+def requires_grad_ctx(
+    module: Module, assignments: Dict[str, bool]
+) -> Generator[None, None, None]:
+    r"""Contextmanager for temporarily setting the requires_grad field of a module's
+    parameters."""
+    try:
+        cache = {}
+        for name, mode in assignments.items():
+            parameter = module.get_parameter(name)
+            cache[name] = parameter.requires_grad
+            parameter.requires_grad_(mode)
+        yield
+    finally:
+        for name, mode in cache.items():
+            module.get_parameter(name).requires_grad_(mode)
+
+
+@contextmanager
+def parameter_rollback_ctx(
+    module: Module,
+    name_filter: Optional[Callable[[str], bool]] = None,
+    requires_grad: Optional[bool] = None,
+    checkpoint: Optional[Dict[str, Tuple[Tensor, Tkwargs]]] = None,
+    **tkwargs: Any,
+) -> Generator[Dict[str, Tensor], None, None]:
+    r"""Contextmanager that exits by rolling back parameter values.
+
+    Args:
+        module: Module instance.
+        name_filter: Optional Boolean function used to filter parameters by name.
+        requires_grad: Optional Boolean used to filter parameters based on whether
+            or not their require_grad attribute matches the user provided value.
+        checkpoint: Optional cache of values and tensor metadata specifying the rollback
+            state for the module (or some subset thereof).
+        **tkwargs: Keyword arguments passed to `torch.Tensor.to` when copying data from
+            each tensor in `module.state_dict()` to the internally created checkpoint.
+            Only adhered to when the `checkpoint` argument is None.
+
+    Yields:
+        A checkpoint dictionary for the module, mapping qualified names to cached values
+        and tensor metadata. Any in-places changes to the checkpoint will be observed at
+        rollback time. If the checkpoint is cleared, no rollback will occur.
+    """
+    # Create copies of the orginal values
+    if checkpoint is None:
+        checkpoint = {}
+        for name, param in module.named_parameters():
+            if (requires_grad is None or (param.requires_grad == requires_grad)) and (
+                name_filter is None or name_filter(name)
+            ):
+                checkpoint[name]: Tuple[Tensor, Tkwargs] = (
+                    param.detach().to(**tkwargs).clone(),
+                    {"device": param.device, "dtype": param.dtype},
+                )
+
+    try:  # yield the checkpoint to the user
+        yield checkpoint
+    finally:  # restore original values of tracked parameters
+        for name, (values, _tkwargs) in checkpoint.items():
+            param = module.get_parameter(name)
+            param.data[...] = values.to(**_tkwargs)
+
+
+@contextmanager
+def state_rollback_ctx(
+    module: Module,
+    name_filter: Optional[Callable[[str], bool]] = None,
+    checkpoint: Optional[Dict[str, Tuple[Tensor, Tkwargs]]] = None,
+    **tkwargs: Any,
+) -> Generator[Dict[str, Tuple[Tensor, Tkwargs]], None, None]:
+    r"""Contextmanager that exits by rolling back a module's state_dict.
+
+    Args:
+        module: Module instance.
+        name_filter: Optional Boolean function used to filter items by name.
+        checkpoint: Optional cache of values and tensor metadata specifying the rollback
+            state for the module (or some subset thereof).
+        **tkwargs: Keyword arguments passed to `torch.Tensor.to` when copying data from
+            each tensor in `module.state_dict()` to the internally created checkpoint.
+            Only adhered to when the `checkpoint` argument is None.
+
+    Yields:
+        A checkpoint dictionary for the module, mapping qualified names to cached values
+        and tensor metadata. Any in-places changes to the checkpoint will be observed at
+        rollback time. If the checkpoint is cleared, no rollback will occur.
+    """
+    # Create copies of the orginal values
+    if checkpoint is None:
+        checkpoint: Dict[str, Tuple[Tensor, Tkwargs]] = {
+            name: (
+                data.detach().to(**tkwargs).clone(),
+                {"device": data.device, "dtype": data.dtype},
+            )
+            for name, data in module.state_dict().items()
+            if name_filter is None or name_filter(name)
+        }
+
+    try:  # yield the checkpoint dictionary to the user
+        yield checkpoint
+    finally:  # restore original values of tracked parameters
+        if checkpoint:
+            state_dict = module.state_dict()
+            for key, (values, _tkwargs) in checkpoint.items():
+                tnsr = state_dict.get(key)
+                if tnsr is None:
+                    state_dict[key] = values.to(**_tkwargs)
+                else:
+                    tnsr[...] = values.to(**_tkwargs)
+            module.load_state_dict(state_dict)
+
+
+def allclose_mll(
+    a: MarginalLogLikelihood,
+    b: MarginalLogLikelihood,
+    transform_a: Optional[Callable[[Tensor], Tensor]] = None,
+    transform_b: Optional[Callable[[Tensor], Tensor]] = None,
+    rtol: float = 1e-05,
+    atol: float = 1e-08,
+) -> bool:
+    r"""Convenience method for testing whether the log likelihoods produced by different
+    MarginalLogLikelihood instances, when evaluated on their respective models' training
+    sets, are allclose.
+
+    Args:
+        a: A MarginalLogLikelihood instance.
+        b: A second MarginalLogLikelihood instance.
+        transform_a: Optional callable used to post-transform log likelihoods under `a`.
+        transform_b: Optional callable used to post-transform log likelihoods under `b`.
+        rtol: Relative tolerance.
+        atol: Absolute tolerance.
+
+    Returns:
+        Boolean result of the allclose test.
+    """
+    values_a = a(
+        a.model(*a.model.train_inputs),
+        a.model.train_targets,
+        *_get_extra_mll_args(a),
+    )
+    if transform_a:
+        values_a = transform_a(values_a)
+
+    values_b = b(
+        b.model(*b.model.train_inputs),
+        b.model.train_targets,
+        *_get_extra_mll_args(b),
+    )
+    if transform_b:
+        values_b = transform_b(values_b)
+
+    return values_a.allclose(values_b, rtol=rtol, atol=atol)

@@ -41,14 +41,14 @@ from gpytorch.constraints import Positive
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
-from gpytorch.lazy.lazy_tensor import LazyTensor
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.mlls import MarginalLogLikelihood
 from gpytorch.models.gp import GP
 from gpytorch.module import Module
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
-from gpytorch.utils.cholesky import psd_safe_cholesky
+from linear_operator.operators import LinearOperator
+from linear_operator.utils.cholesky import psd_safe_cholesky
 from scipy import optimize
 from torch import float32, float64, Tensor
 from torch.nn.modules.module import _IncompatibleKeys
@@ -232,10 +232,10 @@ class PairwiseGP(Model, GP):
             or self.comparisons is None
         )
 
-    def _calc_covar(self, X1: Tensor, X2: Tensor) -> Union[Tensor, LazyTensor]:
+    def _calc_covar(self, X1: Tensor, X2: Tensor) -> Union[Tensor, LinearOperator]:
         r"""Calculate the covariance matrix given two sets of datapoints"""
         covar = self.covar_module(X1, X2)
-        return covar.evaluate()
+        return covar.to_dense()
 
     def _batch_chol_inv(self, mat_chol: Tensor) -> Tensor:
         r"""Wrapper to perform (batched) cholesky inverse"""
@@ -267,7 +267,7 @@ class PairwiseGP(Model, GP):
         self.covar_chol = psd_safe_cholesky(self.covar)
         self.covar_inv = self._batch_chol_inv(self.covar_chol)
 
-    def _prior_mean(self, X: Tensor) -> Union[Tensor, LazyTensor]:
+    def _prior_mean(self, X: Tensor) -> Union[Tensor, LinearOperator]:
         r"""Return point prediction using prior only
 
         Args:
@@ -577,7 +577,11 @@ class PairwiseGP(Model, GP):
             self.likelihood_hess = hl
             cov_hl = covar @ hl
             if eye is None:
-                eye = torch.diag_embed(torch.ones(cov_hl.shape[:-1]))
+                eye = torch.diag_embed(
+                    torch.ones(
+                        cov_hl.shape[:-1], device=cov_hl.device, dtype=cov_hl.dtype
+                    )
+                )
             cov_hl = cov_hl + eye  # add 1 to cov_hl
             g = self._grad_posterior_f(x, dp, D, DT, ch, ci)
             cov_g = covar @ g.unsqueeze(-1)
@@ -1008,7 +1012,9 @@ class PairwiseLaplaceMarginalLogLikelihood(MarginalLogLikelihood):
         log_posterior = -log_posterior.clamp(min=0)
 
         mll = model.covar @ model.likelihood_hess
-        mll = mll + torch.diag_embed(torch.ones(mll.shape[:-1]))
+        mll = mll + torch.diag_embed(
+            torch.ones(mll.shape[:-1], device=mll.device, dtype=mll.dtype)
+        )
         mll = -0.5 * torch.logdet(mll)
 
         mll = mll + log_posterior

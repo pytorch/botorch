@@ -75,6 +75,7 @@ from botorch.acquisition.objective import (
     ScalarizedPosteriorTransform,
 )
 from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
+from botorch.acquisition.risk_measures import RiskMeasureMCObjective
 from botorch.acquisition.utils import (
     expand_trace_observations,
     project_to_target_fidelity,
@@ -677,7 +678,11 @@ def construct_inputs_EHVI(
     # objective threhsold to have the proper optimization direction.
     if objective is None:
         objective = IdentityAnalyticMultiOutputObjective()
-    ref_point = objective(objective_thresholds)
+    if isinstance(objective, RiskMeasureMCObjective):
+        pre_obj = objective.preprocessing_function
+    else:
+        pre_obj = objective
+    ref_point = pre_obj(objective_thresholds)
 
     # Compute posterior mean (for ref point computation ref pareto frontier)
     # if one is not provided among arguments.
@@ -688,13 +693,13 @@ def construct_inputs_EHVI(
     if alpha > 0:
         partitioning = NondominatedPartitioning(
             ref_point=ref_point,
-            Y=objective(Y_pmean),
+            Y=pre_obj(Y_pmean),
             alpha=alpha,
         )
     else:
         partitioning = FastNondominatedPartitioning(
             ref_point=ref_point,
-            Y=objective(Y_pmean),
+            Y=pre_obj(Y_pmean),
         )
 
     return {
@@ -793,6 +798,11 @@ def construct_inputs_qNEHVI(
     if outcome_constraints is None:
         cons_tfs = None
     else:
+        if isinstance(objective, RiskMeasureMCObjective):
+            raise UnsupportedError(
+                "Outcome constraints are not supported with risk measures. "
+                "Use a feasibility-weighted risk measure instead."
+            )
         cons_tfs = get_outcome_constraint_transforms(outcome_constraints)
 
     sampler = kwargs.get("sampler")
@@ -801,9 +811,14 @@ def construct_inputs_qNEHVI(
             mc_samples=kwargs.get("mc_samples", 128), qmc=kwargs.get("qmc", True)
         )
 
+    if isinstance(objective, RiskMeasureMCObjective):
+        ref_point = objective.preprocessing_function(objective_thresholds)
+    else:
+        ref_point = objective(objective_thresholds)
+
     return {
         "model": model,
-        "ref_point": objective(objective_thresholds),
+        "ref_point": ref_point,
         "X_baseline": X_baseline,
         "sampler": sampler,
         "objective": objective,

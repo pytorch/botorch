@@ -11,7 +11,7 @@ from unittest import mock
 import torch
 from botorch.acquisition import qExpectedImprovement, qKnowledgeGradient
 from botorch.exceptions.warnings import OptimizationWarning
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.generation.gen import (
     gen_candidates_scipy,
     gen_candidates_torch,
@@ -61,8 +61,8 @@ class TestBaseCandidateGeneration(BotorchTestCase):
         self.model = model.to(device=self.device, dtype=dtype)
         self.mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         with warnings.catch_warnings():
-            self.mll = fit_gpytorch_model(
-                self.mll, options={"maxiter": 1}, max_retries=1
+            self.mll = fit_gpytorch_mll(
+                self.mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
             )
 
 

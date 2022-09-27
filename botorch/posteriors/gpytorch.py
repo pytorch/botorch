@@ -17,9 +17,13 @@ import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.posteriors.base_samples import _reshape_base_samples_non_interleaved
 from botorch.posteriors.posterior import Posterior
-from gpytorch import settings as gpt_settings
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy import BlockDiagLazyTensor, LazyTensor, SumLazyTensor
+from linear_operator import settings as linop_settings
+from linear_operator.operators import (
+    BlockDiagLinearOperator,
+    LinearOperator,
+    SumLinearOperator,
+)
 from torch import Tensor
 
 
@@ -95,8 +99,8 @@ class GPyTorchPosterior(Posterior):
             else:
                 base_samples = base_samples.squeeze(-1)
         with ExitStack() as es:
-            if gpt_settings._fast_covar_root_decomposition.is_default():
-                es.enter_context(gpt_settings._fast_covar_root_decomposition(False))
+            if linop_settings._fast_covar_root_decomposition.is_default():
+                es.enter_context(linop_settings._fast_covar_root_decomposition(False))
             samples = self.mvn.rsample(
                 sample_shape=sample_shape, base_samples=base_samples
             )
@@ -174,11 +178,11 @@ def scalarize_posterior(
             sum_dims = (-1, -2)
         else:
             # special-case the independent setting
-            if isinstance(cov, BlockDiagLazyTensor):
-                new_cov = SumLazyTensor(
+            if isinstance(cov, BlockDiagLinearOperator):
+                new_cov = SumLinearOperator(
                     *[
-                        cov.base_lazy_tensor[..., i, :, :] * weights[i].pow(2)
-                        for i in range(cov.base_lazy_tensor.size(-3))
+                        cov.base_linear_op[..., i, :, :] * weights[i].pow(2)
+                        for i in range(cov.base_linear_op.size(-3))
                     ]
                 )
                 new_mvn = MultivariateNormal(new_mean, new_cov)
@@ -189,10 +193,11 @@ def scalarize_posterior(
             sum_dims = (-2, -3)
 
         cov_scaled = w_cov * cov * w_cov.transpose(-1, -2)
-        # TODO: Do not instantiate full covariance for lazy tensors (ideally we simplify
-        # this in GPyTorch: https://github.com/cornellius-gp/gpytorch/issues/1055)
-        if isinstance(cov_scaled, LazyTensor):
-            cov_scaled = cov_scaled.evaluate()
+        # TODO: Do not instantiate full covariance for LinearOperators
+        # (ideally we simplify this in GPyTorch:
+        # https://github.com/cornellius-gp/gpytorch/issues/1055)
+        if isinstance(cov_scaled, LinearOperator):
+            cov_scaled = cov_scaled.to_dense()
         new_cov = cov_scaled.view(sum_shape).sum(dim=sum_dims[0]).sum(dim=sum_dims[1])
 
     new_mvn = MultivariateNormal(new_mean, new_cov)

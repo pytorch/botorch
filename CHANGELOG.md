@@ -2,6 +2,80 @@
 
 The release log for BoTorch.
 
+## [0.7.2] - Sep 27, 2022
+
+#### New Features
+* A full refactor of model fitting methods (#1134).
+  * This introduces a new `fit_gpytorch_mll` method that multiple-dispatches
+    on the model type. Users may register custom fitting routines for different
+    combinations of MLLs, Likelihoods, and Models.
+  * Unlike previous fitting helpers, `fit_gpytorch_mll` does **not** pass
+   `kwargs` to `optimizer` and instead introduces an optional `optimizer_kwargs`
+    argument.
+  * When a model fitting attempt fails, `botorch.fit` methods restore modules to their
+    original states.
+  * `fit_gpytorch_mll` throws a `ModelFittingError` when all model fitting attempts fail.
+  * Upon returning from `fit_gpytorch_mll`, `mll.training` will be `True` if fitting failed
+    and `False` otherwise.
+* Allow custom bounds to be passed in to `SyntheticTestFunction` (#1415).
+
+#### Deprecations
+* Deprecate weights argument of risk measures in favor of a `preprocessing_function` (#1400),
+* Deprecate `fit_gyptorch_model`; to be superseded by `fit_gpytorch_mll`.
+
+#### Other Changes
+* Support risk measures in MOO input constructors (#1401).
+
+#### Bug Fixes
+* Fix fully Bayesian state dict loading when there are more than 10 models (#1405).
+* Fix `batch_shape` property of `SaasFullyBayesianSingleTaskGP` (#1413).
+* Fix `model_list_to_batched` ignoring the `covar_module` of the input models (#1419).
+
+
+## [0.7.1] - Sep 13, 2022
+
+#### Compatibility
+* Pin GPyTorch >= 1.9.0 (#1397).
+* Pin linear_operator == 0.1.1 (#1397).
+
+#### New Features
+* Implement `SaasFullyBayesianMultiTaskGP` and related utilities (#1181, #1203).
+
+#### Other Changes
+* Support loading a state dict for `SaasFullyBayesianSingleTaskGP` (#1120).
+* Update `load_state_dict` for `ModelList` to support fully Bayesian models (#1395).
+* Add `is_one_to_many` attribute to input transforms (#1396).
+
+#### Bug Fixes
+* Fix `PairwiseGP` on GPU (#1388).
+
+
+## [0.7.0] - Sep 7, 2022
+
+#### Compatibility
+* Require python >= 3.8 (via #1347).
+* Support for python 3.10 (via #1379).
+* Require PyTorch >= 1.11 (via (#1363).
+* Require GPyTorch >= 1.9.0 (#1347).
+  * GPyTorch 1.9.0 is a major refactor that factors out the lazy tensor
+  functionality into a new `LinearOperator` library, which required
+  a number of adjustments to BoTorch (#1363, #1377).
+* Require pyro >= 1.8.2 (#1379).
+
+#### New Features
+* Add ability to generate the features appended in the `AppendFeatures` input
+transform via a generic callable (#1354).
+* Add new synthetic test functions for sensitivity analysis (#1355, #1361).
+
+#### Other Changes
+* Use `time.monotonic()` instead of `time.time()` to measure duration (#1353).
+* Allow passing `Y_samples` directly in `MARS.set_baseline_Y` (#1364).
+
+#### Bug Fixes
+* Patch `state_dict` loading for `PairwiseGP` (#1359).
+* Fix `batch_shape` handling in `Normalize` and `InputStandardize` transforms (#1360).
+
+
 ## [0.6.6] - Aug 12, 2022
 
 #### Compatibility

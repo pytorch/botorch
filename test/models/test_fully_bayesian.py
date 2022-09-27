@@ -47,9 +47,25 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
-from gpytorch.lazy.non_lazy_tensor import lazify
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihood
 from gpytorch.means import ConstantMean
+from linear_operator.operators import to_linear_operator
+
+
+EXPECTED_KEYS = [
+    "mean_module.raw_constant",
+    "covar_module.raw_outputscale",
+    "covar_module.base_kernel.raw_lengthscale",
+    "covar_module.base_kernel.raw_lengthscale_constraint.lower_bound",
+    "covar_module.base_kernel.raw_lengthscale_constraint.upper_bound",
+    "covar_module.raw_outputscale_constraint.lower_bound",
+    "covar_module.raw_outputscale_constraint.upper_bound",
+]
+EXPECTED_KEYS_NOISE = EXPECTED_KEYS + [
+    "likelihood.noise_covar.raw_noise",
+    "likelihood.noise_covar.raw_noise_constraint.lower_bound",
+    "likelihood.noise_covar.raw_noise_constraint.upper_bound",
+]
 
 
 class CustomPyroModel(PyroModel):
@@ -189,10 +205,11 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             fit_fully_bayesian_model_nuts(
                 model, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
             )
+            self.assertEqual(model.batch_shape, torch.Size([3]))
             self.assertIsInstance(model.mean_module, ConstantMean)
-            self.assertEqual(model.mean_module.raw_constant.shape, torch.Size([3]))
+            self.assertEqual(model.mean_module.raw_constant.shape, model.batch_shape)
             self.assertIsInstance(model.covar_module, ScaleKernel)
-            self.assertEqual(model.covar_module.outputscale.shape, torch.Size([3]))
+            self.assertEqual(model.covar_module.outputscale.shape, model.batch_shape)
             self.assertIsInstance(model.covar_module.base_kernel, MaternKernel)
             self.assertEqual(
                 model.covar_module.base_kernel.lengthscale.shape, torch.Size([3, 1, d])
@@ -221,14 +238,15 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 self.assertIsInstance(posterior, FullyBayesianPosterior)
                 # Mean/variance
                 expected_shape = (
-                    batch_shape[: MCMC_DIM + 2]
-                    + [3]
-                    + batch_shape[MCMC_DIM + 2 :]
-                    + [1]
+                    *batch_shape[: MCMC_DIM + 2],
+                    *model.batch_shape,
+                    *batch_shape[MCMC_DIM + 2 :],
+                    1,
                 )
+                expected_shape = torch.Size(expected_shape)
                 mean, var = posterior.mean, posterior.variance
-                self.assertEqual(mean.shape, torch.Size(expected_shape))
-                self.assertEqual(var.shape, torch.Size(expected_shape))
+                self.assertEqual(mean.shape, expected_shape)
+                self.assertEqual(var.shape, expected_shape)
                 # Mixture mean/variance/median/quantiles
                 mixture_mean = posterior.mixture_mean
                 mixture_median = posterior.mixture_median
@@ -275,16 +293,17 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                     [ModelList, ModelListGP], [deterministic, model]
                 ):
                     expected_shape = (
-                        batch_shape[: MCMC_DIM + 2]
-                        + [3]
-                        + batch_shape[MCMC_DIM + 2 :]
-                        + [2]
+                        *batch_shape[: MCMC_DIM + 2],
+                        *model.batch_shape,
+                        *batch_shape[MCMC_DIM + 2 :],
+                        2,
                     )
+                    expected_shape = torch.Size(expected_shape)
                     model_list = ModelListClass(model, model2)
                     posterior = model_list.posterior(test_X)
                     mean, var = posterior.mean, posterior.variance
-                    self.assertEqual(mean.shape, torch.Size(expected_shape))
-                    self.assertEqual(var.shape, torch.Size(expected_shape))
+                    self.assertEqual(mean.shape, expected_shape)
+                    self.assertEqual(var.shape, expected_shape)
 
             # Mixing fully Bayesian models with different batch shapes isn't supported
             _, _, _, model2 = self._get_data_and_model(
@@ -309,6 +328,27 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             median_lengthscale = model.median_lengthscale
             self.assertEqual(median_lengthscale.shape, torch.Size([4]))
             self.assertEqual(model.num_mcmc_samples, 3)
+
+            # Check the keys in the state dict
+            true_keys = EXPECTED_KEYS_NOISE if infer_noise else EXPECTED_KEYS
+            self.assertEqual(set(model.state_dict().keys()), set(true_keys))
+
+            for i in range(2):  # Test loading via state dict
+                m = model if i == 0 else ModelList(model, deterministic)
+                state_dict = m.state_dict()
+                _, _, _, m_new = self._get_data_and_model(
+                    infer_noise=infer_noise, **tkwargs
+                )
+                m_new = m_new if i == 0 else ModelList(m_new, deterministic)
+                if i == 0:
+                    self.assertEqual(m_new.state_dict(), {})
+                m_new.load_state_dict(state_dict)
+                self.assertEqual(m.state_dict().keys(), m_new.state_dict().keys())
+                for k in m.state_dict().keys():
+                    self.assertTrue((m.state_dict()[k] == m_new.state_dict()[k]).all())
+                preds1, preds2 = m.posterior(test_X), m_new.posterior(test_X)
+                self.assertTrue(torch.equal(preds1.mean, preds2.mean))
+                self.assertTrue(torch.equal(preds1.variance, preds2.variance))
 
             # Make sure the model shapes are set correctly
             self.assertEqual(model.pyro_model.train_X.shape, torch.Size([n, d]))
@@ -520,6 +560,10 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 train_Yvar=train_Yvar,
                 pyro_model=CustomPyroModel(),
             )
+            with self.assertRaisesRegex(
+                NotImplementedError, "load_state_dict only works for SaasPyroModel"
+            ):
+                model.load_state_dict({})
             self.assertIsInstance(model.pyro_model, CustomPyroModel)
             self.assertTrue(torch.allclose(model.pyro_model.train_X, train_X))
             self.assertTrue(torch.allclose(model.pyro_model.train_Y, train_Y))
@@ -595,7 +639,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             mean = torch.randn(1, 5, **tkwargs)
             variance = torch.rand(1, 5, **tkwargs)
             covar = torch.diag_embed(variance)
-            mvn = MultivariateNormal(mean, lazify(covar))
+            mvn = MultivariateNormal(mean, to_linear_operator(covar))
             posterior = FullyBayesianPosterior(mvn=mvn)
             dist = torch.distributions.Normal(
                 loc=mean.unsqueeze(-1), scale=variance.unsqueeze(-1).sqrt()

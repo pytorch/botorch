@@ -113,6 +113,9 @@ instead.
 * [`KroneckerMultiTaskGP`](../api/models.html#botorch.models.multitask.KroneckerMultiTaskGP): A multi-task,
   multi-output GP using an ICM kernel, with Kronecker structure. Useful for
   multi-fidelity optimization.
+* [`SaasFullyBayesianMultiTaskGP`](../api/models.html#saasfullybayesianmultitaskgp):
+  a fully Bayesian multi-task GP using an ICM kernel. The data kernel uses the SAAS
+  prior to model high-dimensional parameter spaces.
 
 All of the above models use Matérn 5/2 kernels with Automatic Relevance
 Discovery (ARD), and have reasonable priors on hyperparameters that make them

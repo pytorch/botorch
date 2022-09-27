@@ -9,7 +9,7 @@ from typing import Optional
 import torch
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.lazy import LazyTensor
+from linear_operator.operators import LinearOperator
 from torch import Tensor
 
 
@@ -32,9 +32,9 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
     def __init__(
         self,
         mvn: MultivariateNormal,
-        joint_covariance_matrix: LazyTensor,
-        train_train_covar: LazyTensor,
-        test_train_covar: LazyTensor,
+        joint_covariance_matrix: LinearOperator,
+        train_train_covar: LinearOperator,
+        test_train_covar: LinearOperator,
         train_targets: Tensor,
         output_shape: torch.Size,
         num_outputs: int,
@@ -181,7 +181,8 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
         test_marginal_samples = samples[..., self.train_train_covar.shape[-1] :, :]
         # we need to add noise to the train_joint_samples
         # THIS ASSUMES CONSTANT NOISE
-        noise_std = self.train_train_covar.lazy_tensors[1]._diag[..., 0] ** 0.5
+        # The following assumes test_train_covar is a SumLinearOperator. TODO: Improve
+        noise_std = self.train_train_covar.linear_ops[1]._diag[..., 0] ** 0.5
         # TODO: cleanup the reshaping here
         # expands the noise to allow broadcasting against the noise base samples
         # reshape_as or view_as don't work here because we need to expand to

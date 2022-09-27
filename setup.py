@@ -11,7 +11,7 @@ from setuptools import find_packages, setup
 
 
 REQUIRED_MAJOR = 3
-REQUIRED_MINOR = 7
+REQUIRED_MINOR = 8
 
 # Check for python version
 if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR):
@@ -80,14 +80,15 @@ setup(
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     packages=find_packages(exclude=["test", "test.*"]),
     install_requires=[
-        "torch>=1.10",
-        "gpytorch==1.8.1",
+        "torch>=1.11",
+        "gpytorch==1.9.0",
+        "linear_operator==0.1.1",
         "scipy",
         "multipledispatch",
-        "pyro-ppl>=1.8.0",
+        "pyro-ppl>=1.8.2",
     ],
     extras_require={
         "dev": DEV_REQUIRES,

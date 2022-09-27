@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: [3.7, 3.9]
+        python-version: ["3.8", "3.10"]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -29,7 +29,7 @@ jobs:
       run: |
         pytest -ra --cov=. --cov-report term-missing
     - name: Upload coverage
-      if: ${{ runner.os == 'Linux' && matrix.python-version == 3.7 }}
+      if: ${{ runner.os == 'Linux' && matrix.python-version == 3.8 }}
       run: |
         bash <(curl -s https://codecov.io/bash)
 
@@ -46,7 +46,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: "3.8"
     - name: Install dependencies
       run: |
         pip install .[test]
@@ -76,7 +76,7 @@ jobs:
       with:
         miniconda-version: "latest"
         activate-environment: test
-        python-version: "3.7"
+        python-version: "3.8"
     - name: Fetch all history for all tags and branches
       run: git fetch --prune --unshallow
     - name: Install dependencies
@@ -86,7 +86,7 @@ jobs:
         conda install -y -c pytorch pytorch cpuonly
         conda install -y scipy sphinx pytest flake8
         conda install -y -c gpytorch gpytorch
-        conda install -y -c conda-forge pyro-ppl>=1.8.0
+        conda install -y -c conda-forge pyro-ppl>=1.8.2
         conda config --set anaconda_upload no
     - name: Build and verify conda package
       shell: bash -l {0}
@@ -111,7 +111,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: 3.8
     - name: Install dependencies
       # there may not be a compatible Ax pip version, so we use the development version
       run: |

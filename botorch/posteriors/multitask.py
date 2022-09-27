@@ -8,7 +8,7 @@ from typing import Optional, Tuple, Union
 import torch
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.lazy import lazify, LazyTensor
+from linear_operator.operators import LinearOperator, to_linear_operator
 from torch import Tensor
 
 
@@ -16,13 +16,13 @@ class MultitaskGPPosterior(GPyTorchPosterior):
     def __init__(
         self,
         mvn: MultivariateNormal,
-        joint_covariance_matrix: LazyTensor,
-        test_train_covar: LazyTensor,
+        joint_covariance_matrix: LinearOperator,
+        test_train_covar: LinearOperator,
         train_diff: Tensor,
         test_mean: Tensor,
-        train_train_covar: LazyTensor,
-        train_noise: Union[LazyTensor, Tensor],
-        test_noise: Optional[Union[LazyTensor, Tensor]] = None,
+        train_train_covar: LinearOperator,
+        train_noise: Union[LinearOperator, Tensor],
+        test_noise: Optional[Union[LinearOperator, Tensor]] = None,
     ):
         r"""
         Posterior class for a Kronecker Multi-task GP model using with ICM kernel.
@@ -55,7 +55,8 @@ class MultitaskGPPosterior(GPyTorchPosterior):
         self.observation_noise = self.test_noise is not None
 
         self.num_train = self.train_diff.shape[-2]
-        self.num_tasks = self.test_train_covar.lazy_tensors[-1].shape[-1]
+        # The following assumes test_train_covar is a SumLinearOperator. TODO: Improve
+        self.num_tasks = self.test_train_covar.linear_ops[-1].shape[-1]
 
     @property
     def base_sample_shape(self) -> torch.Size:
@@ -227,11 +228,11 @@ class MultitaskGPPosterior(GPyTorchPosterior):
         return final_samples
 
     def _draw_from_base_covar(
-        self, covar: Union[Tensor, LazyTensor], base_samples: Tensor
+        self, covar: Union[Tensor, LinearOperator], base_samples: Tensor
     ) -> Tensor:
         # Now reparameterize those base samples
-        if not isinstance(covar, LazyTensor):
-            covar = lazify(covar)
+        if not isinstance(covar, LinearOperator):
+            covar = to_linear_operator(covar)
         covar_root = covar.root_decomposition().root
         # If necessary, adjust base_samples for rank of root decomposition
         if covar_root.shape[-1] < base_samples.shape[-2]:

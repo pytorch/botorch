@@ -9,6 +9,9 @@ from __future__ import annotations
 import math
 import warnings
 from copy import deepcopy
+from itertools import product
+from string import ascii_lowercase
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import torch
@@ -29,14 +32,22 @@ from botorch.exceptions import BotorchError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import ModelListGP, SingleTaskGP
 from botorch.models.transforms.input import Warp
+from botorch.optim import utils
+from botorch.optim.numpy_converter import module_to_array
 from botorch.optim.utils import (
     _expand_bounds,
     _get_extra_mll_args,
     _handle_numerical_errors,
+    _scipy_objective_and_grad,
+    allclose_mll,
     columnwise_clamp,
+    del_attribute_ctx,
     fix_features,
     get_X_baseline,
+    parameter_rollback_ctx,
+    requires_grad_ctx,
     sample_all_priors,
+    state_rollback_ctx,
 )
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
@@ -49,7 +60,8 @@ from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from gpytorch.priors.prior import Prior
 from gpytorch.priors.torch_priors import GammaPrior
-from gpytorch.utils.errors import NanError, NotPSDError
+from linear_operator.utils.errors import NanError, NotPSDError
+from torch.nn import Module, Parameter
 
 
 class DummyPrior(Prior):
@@ -427,3 +439,192 @@ class TestGetXBaseline(BotorchTestCase):
                 acq_function=acqf,
             )
             self.assertTrue(torch.equal(X, X_train))
+
+
+class TestAllcloseMLL(BotorchTestCase):
+    def setUp(self):
+        with torch.random.fork_rng():
+            torch.manual_seed(0)
+            train_X = torch.linspace(0, 1, 10).unsqueeze(-1)
+            train_Y = torch.sin((2 * math.pi) * train_X)
+            train_Y = train_Y + 0.1 * torch.randn_like(train_Y)
+
+        self.mlls = []
+        for nu in (1.5, 2.5):
+            model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
+            model.covar_module.base_kernel.nu = nu
+            self.mlls.append(ExactMarginalLogLikelihood(model.likelihood, model))
+
+    def test_allclose_mll(self):
+        self.assertTrue(allclose_mll(a=self.mlls[0], b=self.mlls[0]))
+        for transform_a, transform_b in product(
+            *(2 * [(None, lambda vals: torch.zeros_like(vals))])
+        ):
+            out = allclose_mll(
+                a=self.mlls[0],
+                b=self.mlls[1],
+                transform_a=transform_a,
+                transform_b=transform_b,
+            )
+            self.assertEqual(out, transform_a is not None and transform_b is not None)
+
+
+class TestContextManagers(BotorchTestCase):
+    def setUp(self):
+        module = self.module = Module()
+        for i, name in enumerate(ascii_lowercase[:3], start=1):
+            values = torch.rand(2).to(torch.float16)
+            param = Parameter(values.to(torch.float64), requires_grad=bool(i % 2))
+            module.register_parameter(name, param)
+
+    def test_del_attribute_ctx(self):
+        # Test temporary removal of attributes
+        a = self.module.a
+        b = self.module.b
+        with del_attribute_ctx(self.module, "a", "b"):
+            self.assertIsNone(getattr(self.module, "a", None))
+            self.assertIsNone(getattr(self.module, "b", None))
+            self.assertTrue(self.module.c is not None)
+
+        # Test that removed attributes get restored
+        self.assertTrue(self.module.a.equal(a))
+        self.assertTrue(self.module.b.equal(b))
+
+        with self.assertRaisesRegex(ValueError, "Attribute .* missing"):
+            with del_attribute_ctx(self.module, "z", enforce_hasattr=True):
+                pass  # pragma: no cover
+
+    def test_requires_grad_ctx(self):
+        # Test temporary setting of requires_grad field
+        with requires_grad_ctx(self.module, assignments={"a": False, "b": True}):
+            self.assertTrue(not self.module.a.requires_grad)
+            self.assertTrue(self.module.b.requires_grad)
+            self.assertTrue(self.module.c.requires_grad)
+
+        # Test that requires_grad fields get restored
+        self.assertTrue(self.module.a.requires_grad)
+        self.assertTrue(not self.module.b.requires_grad)
+        self.assertTrue(self.module.c.requires_grad)
+
+    def test_parameter_rollback_ctx(self):
+        # Test that only unfiltered parameters get rolled back
+        a = self.module.a.detach().clone()
+        b = self.module.b.detach().clone()
+        c = self.module.c.detach().clone()
+        with parameter_rollback_ctx(
+            module=self.module,
+            name_filter=lambda name: name in ("a", "b"),
+            requires_grad=True,
+            dtype=torch.float16,
+        ) as ckpt:
+            for (tnsr, _) in ckpt.values():  # test whether dtype is obeyed
+                self.assertEqual(torch.float16, tnsr.dtype)
+
+            self.module.a.data[...] = 0
+            self.module.b.data[...] = 0
+            self.module.c.data[...] = 0
+
+        self.assertTrue(self.module.a.equal(a))
+        self.assertTrue(self.module.b.eq(0).all())
+        self.assertTrue(self.module.c.eq(0).all())
+
+        # Test that changes to checkpoint dict are reflected in rollback state
+        with parameter_rollback_ctx(self.module) as ckpt:
+            self.module.a.data[...] = 1
+            self.module.b.data[...] = 1
+            self.module.c.data[...] = 1
+            del ckpt["a"]
+
+        self.assertTrue(self.module.a.eq(1).all())
+        self.assertTrue(self.module.b.eq(0).all())
+        self.assertTrue(self.module.c.eq(0).all())
+
+        # Test rolling back to a user-provided checkpoint
+        checkpoint = {"a": (a, {}), "b": (b, {}), "c": (c, {})}
+        with parameter_rollback_ctx(module=self.module, checkpoint=checkpoint):
+            pass
+
+        self.assertTrue(self.module.a.equal(a))
+        self.assertTrue(self.module.b.equal(b))
+        self.assertTrue(self.module.c.equal(c))
+
+    def test_state_rollback_ctx(self):
+        # Test that only unfiltered objects get rolled back
+        a = self.module.a.detach().clone()
+        b = self.module.b.detach().clone()
+        c = self.module.c.detach().clone()
+        with state_rollback_ctx(
+            self.module, lambda name: name == "a", dtype=torch.float16
+        ) as ckpt:
+            for (tnsr, _) in ckpt.values():  # test whether dtype is obeyed
+                self.assertEqual(torch.float16, tnsr.dtype)
+
+            self.module.a.data[...] = 0
+            self.module.b.data[...] = 0
+            self.module.c.data[...] = 0
+
+        self.assertTrue(self.module.a.equal(a))
+        self.assertTrue(self.module.b.eq(0).all())
+        self.assertTrue(self.module.c.eq(0).all())
+
+        # Test that changes to checkpoint dict are reflected in rollback state
+        with state_rollback_ctx(self.module) as ckpt:
+            self.module.a.data[...] = 1
+            self.module.b.data[...] = 1
+            self.module.c.data[...] = 1
+            del ckpt["a"]
+
+        self.assertTrue(self.module.a.eq(1).all())
+        self.assertTrue(self.module.b.eq(0).all())
+        self.assertTrue(self.module.c.eq(0).all())
+
+        # Test rolling back to a user-provided checkpoint
+        checkpoint = {"a": (a, {}), "b": (b, {}), "c": (c, {})}
+        with state_rollback_ctx(module=self.module, checkpoint=checkpoint):
+            pass
+        self.assertTrue(self.module.a.equal(a))
+        self.assertTrue(self.module.b.equal(b))
+        self.assertTrue(self.module.c.equal(c))
+
+        # Test that items in checkpoint get inserted into state_dict
+        with del_attribute_ctx(self.module, "a"):
+            with self.assertRaisesRegex(  # should fail when attempting to rollback
+                RuntimeError, r'Unexpected key\(s\) in state_dict: "a"'
+            ):
+                with state_rollback_ctx(module=self.module, checkpoint=checkpoint):
+                    pass
+
+
+class TestScipyObjectiveAndGrad(BotorchTestCase):
+    def setUp(self):
+        with torch.random.fork_rng():
+            torch.manual_seed(0)
+            train_X = torch.linspace(0, 1, 10).unsqueeze(-1)
+            train_Y = torch.sin((2 * math.pi) * train_X)
+            train_Y = train_Y + 0.1 * torch.randn_like(train_Y)
+
+        model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
+        self.mll = ExactMarginalLogLikelihood(model.likelihood, model)
+
+    def test_scipy_objective_and_grad(self):
+        x, property_dict, bounds = module_to_array(module=self.mll)
+        loss, grad = _scipy_objective_and_grad(x, self.mll, property_dict)
+
+        _dist = self.mll.model(*self.mll.model.train_inputs)
+        _loss = -self.mll(_dist, self.mll.model.train_targets)
+        _loss.sum().backward()
+        _grad = torch.concat(
+            [self.mll.get_parameter(name).grad.view(-1) for name in property_dict]
+        )
+        self.assertEqual(loss, _loss.detach().sum().item())
+        self.assertTrue(np.allclose(grad, _grad.detach().numpy()))
+
+        def _getter(*args, **kwargs):
+            raise RuntimeError("foo")
+
+        _handler = MagicMock()
+        with patch.multiple(
+            utils, _get_extra_mll_args=_getter, _handle_numerical_errors=_handler
+        ):
+            _scipy_objective_and_grad(x, self.mll, property_dict)
+        self.assertEqual(_handler.call_count, 1)

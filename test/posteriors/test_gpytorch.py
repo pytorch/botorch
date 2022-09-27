@@ -15,9 +15,12 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
 from botorch.utils.testing import _get_test_posterior, BotorchTestCase
 from gpytorch import settings as gpt_settings
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy.non_lazy_tensor import lazify
+from linear_operator.operators import to_linear_operator
 
-ROOT_DECOMP_PATH = "gpytorch.lazy.non_lazy_tensor.NonLazyTensor._root_decomposition"
+ROOT_DECOMP_PATH = (
+    "linear_operator.operators.dense_linear_operator."
+    "DenseLinearOperator._root_decomposition"
+)
 
 
 class TestGPyTorchPosterior(BotorchTestCase):
@@ -27,7 +30,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             mean = torch.rand(n, dtype=dtype, device=self.device)
             variance = 1 + torch.rand(n, dtype=dtype, device=self.device)
             covar = variance.diag()
-            mvn = MultivariateNormal(mean, lazify(covar))
+            mvn = MultivariateNormal(mean, to_linear_operator(covar))
             posterior = GPyTorchPosterior(mvn=mvn)
             # basics
             self.assertEqual(posterior.device.type, self.device.type)
@@ -53,7 +56,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
                     gpt_settings.fast_computations(covar_root_decomposition=True)
                 )
                 # need to clear cache, cannot re-use previous objects
-                mvn = MultivariateNormal(mean, lazify(covar))
+                mvn = MultivariateNormal(mean, to_linear_operator(covar))
                 posterior = GPyTorchPosterior(mvn=mvn)
                 posterior.rsample(sample_shape=torch.Size([4]))
                 mock_func.assert_called_once()
@@ -81,7 +84,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             b_mean = torch.rand(2, 3, dtype=dtype, device=self.device)
             b_variance = 1 + torch.rand(2, 3, dtype=dtype, device=self.device)
             b_covar = torch.diag_embed(b_variance)
-            b_mvn = MultivariateNormal(b_mean, lazify(b_covar))
+            b_mvn = MultivariateNormal(b_mean, to_linear_operator(b_covar))
             b_posterior = GPyTorchPosterior(mvn=b_mvn)
             b_base_samples = torch.randn(4, 1, 3, 1, device=self.device, dtype=dtype)
             b_samples = b_posterior.rsample(
@@ -94,7 +97,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             mean = torch.rand(3, 2, dtype=dtype, device=self.device)
             variance = 1 + torch.rand(3, 2, dtype=dtype, device=self.device)
             covar = variance.view(-1).diag()
-            mvn = MultitaskMultivariateNormal(mean, lazify(covar))
+            mvn = MultitaskMultivariateNormal(mean, to_linear_operator(covar))
             posterior = GPyTorchPosterior(mvn=mvn)
             # basics
             self.assertEqual(posterior.device.type, self.device.type)
@@ -128,7 +131,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             b_mean = torch.rand(2, 3, 2, dtype=dtype, device=self.device)
             b_variance = 1 + torch.rand(2, 3, 2, dtype=dtype, device=self.device)
             b_covar = torch.diag_embed(b_variance.view(2, 6))
-            b_mvn = MultitaskMultivariateNormal(b_mean, lazify(b_covar))
+            b_mvn = MultitaskMultivariateNormal(b_mean, to_linear_operator(b_covar))
             b_posterior = GPyTorchPosterior(mvn=b_mvn)
             b_base_samples = torch.randn(4, 1, 3, 2, device=self.device, dtype=dtype)
             b_samples = b_posterior.rsample(
@@ -143,7 +146,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
                 [[1, 1, 0], [1, 1, 0], [0, 0, 2]], dtype=dtype, device=self.device
             )
             mean = torch.rand(3, dtype=dtype, device=self.device)
-            mvn = MultivariateNormal(mean, lazify(degenerate_covar))
+            mvn = MultivariateNormal(mean, to_linear_operator(degenerate_covar))
             posterior = GPyTorchPosterior(mvn=mvn)
             # basics
             self.assertEqual(posterior.device.type, self.device.type)
@@ -183,7 +186,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             # collapse_batch_dims
             b_mean = torch.rand(2, 3, dtype=dtype, device=self.device)
             b_degenerate_covar = degenerate_covar.expand(2, *degenerate_covar.shape)
-            b_mvn = MultivariateNormal(b_mean, lazify(b_degenerate_covar))
+            b_mvn = MultivariateNormal(b_mean, to_linear_operator(b_degenerate_covar))
             b_posterior = GPyTorchPosterior(mvn=b_mvn)
             b_base_samples = torch.randn(4, 2, 3, 1, device=self.device, dtype=dtype)
             with warnings.catch_warnings(record=True) as ws:
@@ -201,7 +204,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
                 [[1, 1, 0], [1, 1, 0], [0, 0, 2]], dtype=dtype, device=self.device
             )
             mean = torch.rand(3, dtype=dtype, device=self.device)
-            mvn = MultivariateNormal(mean, lazify(degenerate_covar))
+            mvn = MultivariateNormal(mean, to_linear_operator(degenerate_covar))
             mvn = MultitaskMultivariateNormal.from_independent_mvns([mvn, mvn])
             posterior = GPyTorchPosterior(mvn=mvn)
             # basics
@@ -242,7 +245,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             # collapse_batch_dims
             b_mean = torch.rand(2, 3, dtype=dtype, device=self.device)
             b_degenerate_covar = degenerate_covar.expand(2, *degenerate_covar.shape)
-            b_mvn = MultivariateNormal(b_mean, lazify(b_degenerate_covar))
+            b_mvn = MultivariateNormal(b_mean, to_linear_operator(b_degenerate_covar))
             b_mvn = MultitaskMultivariateNormal.from_independent_mvns([b_mvn, b_mvn])
             b_posterior = GPyTorchPosterior(mvn=b_mvn)
             b_base_samples = torch.randn(4, 1, 3, 2, device=self.device, dtype=dtype)

@@ -8,12 +8,13 @@ import itertools
 import warnings
 
 import torch
-from botorch import fit_gpytorch_model, settings
+from botorch import settings
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions import (
     BotorchTensorDimensionError,
     BotorchTensorDimensionWarning,
 )
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.gpytorch import (
     BatchedMultiOutputGPyTorchModel,
     GPyTorchModel,
@@ -277,7 +278,7 @@ class TestGPyTorchModel(BotorchTestCase):
             intf = SimpleInputTransform(transform_on_train)
             model = SimpleGPyTorchModel(train_X, train_Y, input_transform=intf)
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            fit_gpytorch_model(mll, options={"maxiter": 2})
+            fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 2}})
 
             test_X = torch.rand(2, 1, **tkwargs)
             model.posterior(test_X)
@@ -477,7 +478,7 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             # train models to have the train inputs preprocessed
             for m in [m1, m2]:
                 mll = ExactMarginalLogLikelihood(m.likelihood, m)
-                fit_gpytorch_model(mll, options={"maxiter": 2})
+                fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 2}})
             model = SimpleModelListGPyTorchModel(m1, m2)
 
             test_X = torch.rand(2, 1, **tkwargs)
@@ -507,7 +508,7 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             m2 = SimpleGPyTorchModel(train_X2, train_Y2, input_transform=m2_tf)
             for m in [m1, m2]:
                 mll = ExactMarginalLogLikelihood(m.likelihood, m)
-                fit_gpytorch_model(mll, options={"maxiter": 2})
+                fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 2}})
             model = SimpleModelListGPyTorchModel(m1, m2)
             model.posterior(test_X)
             for m, t_X in [[m1, train_X1], [m2, train_X2]]:

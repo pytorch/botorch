@@ -16,9 +16,8 @@ from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
 )
-from gpytorch.lazy import lazify
-from gpytorch.lazy.block_diag_lazy_tensor import BlockDiagLazyTensor
-from gpytorch.utils.errors import NanError, NotPSDError
+from linear_operator.operators import BlockDiagLinearOperator, to_linear_operator
+from linear_operator.utils.errors import NanError, NotPSDError
 
 
 class TestExtractBatchCovar(BotorchTestCase):
@@ -29,16 +28,18 @@ class TestExtractBatchCovar(BotorchTestCase):
             base_covar = torch.tensor(
                 [[1.0, 0.6, 0.9], [0.6, 1.0, 0.5], [0.9, 0.5, 1.0]], **tkwargs
             )
-            lazy_covar = lazify(torch.stack([base_covar, base_covar * 2], dim=0))
-            block_diag_covar = BlockDiagLazyTensor(lazy_covar)
+            lazy_covar = to_linear_operator(
+                torch.stack([base_covar, base_covar * 2], dim=0)
+            )
+            block_diag_covar = BlockDiagLinearOperator(lazy_covar)
             mt_mvn = MultitaskMultivariateNormal(
                 torch.zeros(3, 2, **tkwargs), block_diag_covar
             )
             batch_covar = extract_batch_covar(mt_mvn=mt_mvn)
-            self.assertTrue(torch.equal(batch_covar.evaluate(), lazy_covar.evaluate()))
-            # test non BlockDiagLazyTensor
+            self.assertTrue(torch.equal(batch_covar.to_dense(), lazy_covar.to_dense()))
+            # test non BlockDiagLinearOperator
             mt_mvn = MultitaskMultivariateNormal(
-                torch.zeros(3, 2, **tkwargs), block_diag_covar.evaluate()
+                torch.zeros(3, 2, **tkwargs), block_diag_covar.to_dense()
             )
             with self.assertRaises(BotorchError):
                 extract_batch_covar(mt_mvn=mt_mvn)
@@ -106,9 +107,9 @@ class TestSampleCachedCholesky(BotorchTestCase):
                                     mvn = base_posterior.mvn
                                     lazy_covar = mvn.lazy_covariance_matrix
                                     if m == 2:
-                                        lazy_covar = lazy_covar.base_lazy_tensor
+                                        lazy_covar = lazy_covar.base_linear_op
                                     baseline_L = lazy_covar.root_decomposition()
-                                    baseline_L = baseline_L.root.evaluate()
+                                    baseline_L = baseline_L.root.to_dense()
                                 test_X = test_X.clone().requires_grad_(True)
                                 new_posterior = model.posterior(test_X)
                                 samples = sampler(new_posterior)

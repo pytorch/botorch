@@ -10,8 +10,8 @@ import torch
 from gpytorch.constraints import Positive
 from gpytorch.kernels.kernel import Kernel
 from gpytorch.kernels.matern_kernel import MaternKernel
-from gpytorch.lazy.sum_lazy_tensor import SumLazyTensor
 from gpytorch.priors.torch_priors import GammaPrior
+from linear_operator.operators.sum_linear_operator import SumLinearOperator
 from torch import Tensor
 from torch.nn import ModuleList
 
@@ -220,7 +220,7 @@ class LCEAKernel(Kernel):
         else:
             all_embs = self._task_embeddings()  # no broadcast - (num_contexts x k)
 
-        context_covar = self.task_covar_module(all_embs).evaluate()
+        context_covar = self.task_covar_module(all_embs).to_dense()
         if self.context_weight is None:
             context_outputscales = self.outputscale_list
         else:
@@ -341,5 +341,5 @@ class LCEAKernel(Kernel):
         if diag:
             res = sum(covars)
         else:
-            res = SumLazyTensor(*covars)
+            res = SumLinearOperator(*covars)
         return res
