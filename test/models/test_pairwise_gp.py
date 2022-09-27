@@ -92,14 +92,6 @@ class TestPairwiseGP(BotorchTestCase):
             with self.assertRaises(RuntimeError):
                 custom_mll(post, other_comp)
 
-            # setting jitter = 0 with a singular covar will raise error
-            sing_train_X = torch.ones(batch_shape + torch.Size([10, X_dim]), **tkwargs)
-            with self.assertRaises(RuntimeError):
-                with warnings.catch_warnings():
-                    warnings.filterwarnings("ignore", category=RuntimeWarning)
-                    custom_m = PairwiseGP(sing_train_X, train_comp, jitter=0)
-                    custom_m.posterior(sing_train_X)
-
             # test init
             self.assertIsInstance(model.mean_module, ConstantMean)
             self.assertIsInstance(model.covar_module, ScaleKernel)
@@ -122,20 +114,6 @@ class TestPairwiseGP(BotorchTestCase):
             prior_m.eval()
             post = prior_m.posterior(train_X)
             self.assertIsInstance(post, GPyTorchPosterior)
-
-            # test trying adding jitter
-            pd_mat = torch.eye(2, 2)
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=RuntimeWarning)
-                jittered_pd_mat = model._add_jitter(pd_mat)
-            diag_diff = (jittered_pd_mat - pd_mat).diagonal(dim1=-2, dim2=-1)
-            self.assertTrue(
-                torch.allclose(
-                    diag_diff,
-                    torch.full_like(diag_diff, model._jitter),
-                    atol=model._jitter / 10,
-                )
-            )
 
             # test initial utility val
             util_comp = torch.topk(model.utility, k=2, dim=-1).indices.unsqueeze(-2)
