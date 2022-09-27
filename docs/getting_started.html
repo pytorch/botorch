@@ -97,7 +97,7 @@ on GitHub.</p>
 <li><p>Fit a Gaussian Process model to data</p>
 <pre><code class="hljs css language-python"><span class="hljs-keyword">import</span> torch
 <span class="hljs-keyword">from</span> botorch.models <span class="hljs-keyword">import</span> SingleTaskGP
-<span class="hljs-keyword">from</span> botorch.fit <span class="hljs-keyword">import</span> fit_gpytorch_model
+<span class="hljs-keyword">from</span> botorch.fit <span class="hljs-keyword">import</span> fit_gpytorch_mll
 <span class="hljs-keyword">from</span> gpytorch.mlls <span class="hljs-keyword">import</span> ExactMarginalLogLikelihood
 
 train_X = torch.rand(<span class="hljs-number">10</span>, <span class="hljs-number">2</span>)
@@ -107,7 +107,7 @@ train_Y = (Y - Y.mean()) / Y.std()
 
 gp = SingleTaskGP(train_X, train_Y)
 mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-fit_gpytorch_model(mll);
+fit_gpytorch_mll(mll);
 </code></pre></li>
 <li><p>Construct an acquisition function</p>
 <pre><code class="hljs css language-python"><span class="hljs-keyword">from</span> botorch.acquisition <span class="hljs-keyword">import</span> UpperConfidenceBound

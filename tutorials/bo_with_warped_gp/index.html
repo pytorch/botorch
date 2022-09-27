@@ -310,7 +310,7 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
 <div class="prompt input_prompt">In [7]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">fit_gpytorch_model</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">qNoisyExpectedImprovement</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">BadInitialCandidatesWarning</span>
 
@@ -357,8 +357,8 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
         <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
         
         <span class="c1"># fit the models</span>
-        <span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll_ei</span><span class="p">)</span>
-        <span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll_warp</span><span class="p">)</span>
+        <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll_ei</span><span class="p">)</span>
+        <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll_warp</span><span class="p">)</span>
         
         <span class="n">ei</span> <span class="o">=</span> <span class="n">qNoisyExpectedImprovement</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model_ei</span><span class="p">,</span> 

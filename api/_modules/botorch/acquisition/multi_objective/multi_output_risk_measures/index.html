@@ -88,19 +88,26 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">n_w</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">preprocessing_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Transform the posterior samples to samples of a risk measure.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            n_w: The size of the `w_set` to calculate the risk measure over.</span>
+<span class="sd">            preprocessing_function: A preprocessing function to apply to the</span>
+<span class="sd">                samples before computing the risk measure. This can be used to</span>
+<span class="sd">                remove non-objective outcomes or to align all outcomes for</span>
+<span class="sd">                maximization. For constrained optimization, this should also</span>
+<span class="sd">                apply feasibility-weighting to samples. Given a `batch x m`-dim</span>
+<span class="sd">                tensor of samples, this should return a `batch x m'`-dim tensor.</span>
 <span class="sd">            weights: An optional `m`-dim tensor or list of weights for scaling</span>
 <span class="sd">                multi-output samples before calculating the risk measure.</span>
-<span class="sd">                This can also be used to make sure that all outputs are</span>
-<span class="sd">                correctly aligned for maximization by negating those that are</span>
-<span class="sd">                originally defined for minimization.</span>
+<span class="sd">                Deprecated, use `preprocessing_function` instead.</span>
 <span class="sd">        """</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_w</span><span class="o">=</span><span class="n">n_w</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">n_w</span><span class="o">=</span><span class="n">n_w</span><span class="p">,</span> <span class="n">preprocessing_function</span><span class="o">=</span><span class="n">preprocessing_function</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_prepare_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Prepare samples for risk measure calculations by scaling and</span>
@@ -112,11 +119,10 @@
 <span class="sd">                `n_w` block of samples correspond to the same input.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `sample_shape x batch_shape x q x n_w x m`-dim tensor of prepared samples.</span>
+<span class="sd">            A `sample_shape x batch_shape x q x n_w x m'`-dim tensor of</span>
+<span class="sd">            prepared samples.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-            <span class="n">samples</span> <span class="o">=</span> <span class="n">samples</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocessing_function</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">samples</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_w</span><span class="p">,</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 
     <span class="nd">@abstractmethod</span>
@@ -130,7 +136,7 @@
 <span class="sd">            X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `sample_shape x batch_shape x q x m`-dim tensor of risk measure samples.</span>
+<span class="sd">            A `sample_shape x batch_shape x q x m'`-dim tensor of risk measure samples.</span>
 <span class="sd">        """</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
@@ -155,7 +161,7 @@
 <span class="sd">            X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `sample_shape x batch_shape x q x m`-dim tensor of expectation samples.</span>
+<span class="sd">            A `sample_shape x batch_shape x q x m'`-dim tensor of expectation samples.</span>
 <span class="sd">        """</span>
         <span class="n">prepared_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span></div></div>
@@ -189,7 +195,7 @@
 <span class="sd">                `n_w` block of samples correspond to the same input.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `sample_shape x batch_shape x q x n_w x m`-dim tensor of sorted samples.</span>
+<span class="sd">            A `sample_shape x batch_shape x q x n_w x m'`-dim tensor of sorted samples.</span>
 <span class="sd">        """</span>
         <span class="n">prepared_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
@@ -204,7 +210,7 @@
 <span class="sd">            X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `sample_shape x batch_shape x q x m`-dim tensor of CVaR samples.</span>
+<span class="sd">            A `sample_shape x batch_shape x q x m'`-dim tensor of CVaR samples.</span>
 <span class="sd">        """</span>
         <span class="n">sorted_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_sorted_prepared_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">sorted_samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span></div></div>
@@ -232,7 +238,7 @@
 <span class="sd">            X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `sample_shape x batch_shape x q x m`-dim tensor of VaR samples.</span>
+<span class="sd">            A `sample_shape x batch_shape x q x m'`-dim tensor of VaR samples.</span>
 <span class="sd">        """</span>
         <span class="n">sorted_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_sorted_prepared_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">sorted_samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span><span class="p">,</span> <span class="p">:]</span></div></div>
@@ -251,7 +257,7 @@
 <span class="sd">            X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `sample_shape x batch_shape x q x m`-dim tensor of worst-case samples.</span>
+<span class="sd">            A `sample_shape x batch_shape x q x m'`-dim tensor of worst-case samples.</span>
 <span class="sd">        """</span>
         <span class="n">prepared_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">prepared_samples</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">values</span></div></div>
@@ -275,6 +281,7 @@
         <span class="n">n_w</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">expectation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">preprocessing_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pad_to_n_w</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">filter_dominated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -288,11 +295,15 @@
 <span class="sd">            expectation: If True, returns the expectation of the MVaR set as is</span>
 <span class="sd">                done in [Cousin2013MVaR]_. Otherwise, it returns the union of all</span>
 <span class="sd">                values in the MVaR set. Default: False.</span>
+<span class="sd">            preprocessing_function: A preprocessing function to apply to the</span>
+<span class="sd">                samples before computing the risk measure. This can be used to</span>
+<span class="sd">                remove non-objective outcomes or to align all outcomes for</span>
+<span class="sd">                maximization. For constrained optimization, this should also</span>
+<span class="sd">                apply feasibility-weighting to samples. Given a `batch x m`-dim</span>
+<span class="sd">                tensor of samples, this should return a `batch x m'`-dim tensor.</span>
 <span class="sd">            weights: An optional `m`-dim tensor or list of weights for scaling</span>
 <span class="sd">                multi-output samples before calculating the risk measure.</span>
-<span class="sd">                This can also be used to make sure that all outputs are</span>
-<span class="sd">                correctly aligned for maximization by negating those that are</span>
-<span class="sd">                originally defined for minimization.</span>
+<span class="sd">                Deprecated, use `preprocessing_function` instead.</span>
 <span class="sd">            pad_to_n_w: If True, instead of padding up to `k'`, which is the size of</span>
 <span class="sd">                the largest MVaR set across all batches, we pad the MVaR set up to</span>
 <span class="sd">                `n_w`. This produces a return tensor of known size, however, it may</span>
@@ -306,7 +317,9 @@
 <span class="sd">                calculating the hypervolume. Disabling this is not recommended</span>
 <span class="sd">                if `expectation=True`.</span>
 <span class="sd">        """</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_w</span><span class="o">=</span><span class="n">n_w</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">n_w</span><span class="o">=</span><span class="n">n_w</span><span class="p">,</span> <span class="n">preprocessing_function</span><span class="o">=</span><span class="n">preprocessing_function</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">alpha</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`alpha` must be in (0.0, 1.0]"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
@@ -490,11 +503,11 @@
 <span class="sd">            X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `sample_shape x batch_shape x q x m`-dim tensor of MVaR values,</span>
+<span class="sd">            A `sample_shape x batch_shape x q x m'`-dim tensor of MVaR values,</span>
 <span class="sd">            if `self.expectation=True`.</span>
-<span class="sd">            Otherwise, this returns a `sample_shape x batch_shape x (q * k') x m`-dim</span>
+<span class="sd">            Otherwise, this returns a `sample_shape x batch_shape x (q * k') x m'`-dim</span>
 <span class="sd">            tensor, where `k'` is the maximum `k` across all batches that is returned</span>
-<span class="sd">            by `get_mvar_set_...`. Each `(q * k') x m` corresponds to the `k` MVaR</span>
+<span class="sd">            by `get_mvar_set_...`. Each `(q * k') x m'` corresponds to the `k` MVaR</span>
 <span class="sd">            values for each `q` batch of `n_w` inputs, padded up to `k'` by repeating</span>
 <span class="sd">            the last element. If `self.pad_to_n_w`, we set `k' = self.n_w`, producing</span>
 <span class="sd">            a deterministic return shape.</span>
@@ -583,15 +596,18 @@
 <span class="sd">                maximization. For constrained optimization, this should also</span>
 <span class="sd">                apply feasibility-weighting to samples.</span>
 <span class="sd">        """</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span> <span class="n">n_w</span><span class="o">=</span><span class="n">n_w</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">preprocessing_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">preprocessing_function</span> <span class="o">=</span> <span class="n">IdentityMCMultiOutputObjective</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
+            <span class="n">n_w</span><span class="o">=</span><span class="n">n_w</span><span class="p">,</span>
+            <span class="n">preprocessing_function</span><span class="o">=</span><span class="n">preprocessing_function</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">chebyshev_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">chebyshev_weights</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">baseline_Y</span> <span class="o">=</span> <span class="n">baseline_Y</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
             <span class="s2">"ref_point"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">ref_point</span><span class="p">)</span> <span class="k">if</span> <span class="n">ref_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="n">preprocessing_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">preprocessing_function</span> <span class="o">=</span> <span class="n">IdentityMCMultiOutputObjective</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">preprocessing_function</span> <span class="o">=</span> <span class="n">preprocessing_function</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mvar</span> <span class="o">=</span> <span class="n">MVaR</span><span class="p">(</span><span class="n">n_w</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_w</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_chebyshev_objective</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -722,9 +738,8 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `sample_shape x batch_shape x q x n_w`-dim tensor of prepared samples.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">VaR</span><span class="o">.</span><span class="n">_prepare_samples</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">chebyshev_objective</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chebyshev_objective</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">samples</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_w</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_Y_normalization_bounds</span><span class="p">(</span>

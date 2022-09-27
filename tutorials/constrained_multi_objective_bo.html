@@ -365,7 +365,7 @@ To speed up integration over the function values at the previously evaluated des
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 
-<span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">fit_gpytorch_model</span>
+<span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">BadInitialCandidatesWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.hypervolume</span> <span class="kn">import</span> <span class="n">Hypervolume</span>
@@ -411,8 +411,8 @@ To speed up integration over the function values at the previously evaluated des
     <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
 
     <span class="c1"># fit the models</span>
-    <span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll_qparego</span><span class="p">)</span>
-    <span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll_qnehvi</span><span class="p">)</span>
+    <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll_qparego</span><span class="p">)</span>
+    <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll_qnehvi</span><span class="p">)</span>
 
     <span class="c1"># define the qParEGO and qNEHVI acquisition modules using a QMC sampler</span>
     <span class="n">qparego_sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">MC_SAMPLES</span><span class="p">)</span>

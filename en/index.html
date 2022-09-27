@@ -32,7 +32,7 @@
 </code></pre>
 </span></div></li><li><h4>Fit a model:</h4><div><span><pre><code class="hljs css language-python"><span class="hljs-keyword">import</span> torch
 <span class="hljs-keyword">from</span> botorch.models <span class="hljs-keyword">import</span> SingleTaskGP
-<span class="hljs-keyword">from</span> botorch.fit <span class="hljs-keyword">import</span> fit_gpytorch_model
+<span class="hljs-keyword">from</span> botorch.fit <span class="hljs-keyword">import</span> fit_gpytorch_mll
 <span class="hljs-keyword">from</span> botorch.utils <span class="hljs-keyword">import</span> standardize
 <span class="hljs-keyword">from</span> gpytorch.mlls <span class="hljs-keyword">import</span> ExactMarginalLogLikelihood
 
@@ -43,7 +43,7 @@ train_Y = standardize(Y)
 
 gp = SingleTaskGP(train_X, train_Y)
 mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-fit_gpytorch_model(mll)
+fit_gpytorch_mll(mll)
 </code></pre>
 </span></div></li><li><h4>Construct an acquisition function:</h4><div><span><pre><code class="hljs css language-python"><span class="hljs-keyword">from</span> botorch.acquisition <span class="hljs-keyword">import</span> UpperConfidenceBound
 

@@ -64,6 +64,8 @@
 </li>
 <li><a href="models.html#botorch.models.cost.AffineFidelityCostModel">AffineFidelityCostModel (class in botorch.models.cost)</a>
 </li>
+<li><a href="optim.html#botorch.optim.utils.allclose_mll">allclose_mll() (in module botorch.optim.utils)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.DH1.alpha">alpha (botorch.test_functions.multi_objective.DH1 attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.Penicillin.alpha_1">alpha_1 (botorch.test_functions.multi_objective.Penicillin attribute)</a>
@@ -126,8 +128,12 @@
 </li>
 <li><a href="cross_validation.html#botorch.cross_validation.batch_cross_validation">batch_cross_validation() (in module botorch.cross_validation)</a>
 </li>
-<li><a href="models.html#botorch.models.model.Model.batch_shape">batch_shape (botorch.models.model.Model property)</a>
+<li><a href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.batch_shape">batch_shape (botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP property)</a>
 <ul>
+<li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.batch_shape">(botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP property)</a>
+</li>
+<li><a href="models.html#botorch.models.model.Model.batch_shape">(botorch.models.model.Model property)</a>
+</li>
 <li><a href="models.html#botorch.models.model.ModelList.batch_shape">(botorch.models.model.ModelList property)</a>
 </li>
 <li><a href="models.html#botorch.models.pairwise_gp.PairwiseGP.batch_shape">(botorch.models.pairwise_gp.PairwiseGP property)</a>
@@ -534,6 +540,8 @@
 <li><a href="models.html#module-botorch.models.kernels.exponential_decay">module</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.kernels.linear_truncated_fidelity
 
@@ -541,8 +549,6 @@
 <li><a href="models.html#module-botorch.models.kernels.linear_truncated_fidelity">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.likelihoods.pairwise
 
@@ -1071,10 +1077,10 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.ConstrainedMCObjective">ConstrainedMCObjective (class in botorch.acquisition.objective)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase">ConstrainedMultiObjectiveTestProblemBaseTestCase (class in botorch.utils.testing)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.sampling.construct_base_samples">construct_base_samples() (in module botorch.utils.sampling)</a>
 </li>
 <li><a href="utils.html#botorch.utils.sampling.construct_base_samples_from_posterior">construct_base_samples_from_posterior() (in module botorch.utils.sampling)</a>
@@ -1141,6 +1147,8 @@
 </ul></li>
 <li><a href="exceptions.html#botorch.exceptions.warnings.CostAwareWarning">CostAwareWarning</a>
 </li>
+<li><a href="optim.html#botorch.optim.numpy_converter.create_name_filter">create_name_filter() (in module botorch.optim.numpy_converter)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.risk_measures.CVaR">CVaR (class in botorch.acquisition.risk_measures)</a>
 </li>
 <li><a href="cross_validation.html#botorch.cross_validation.CVFolds">CVFolds (class in botorch.cross_validation)</a>
@@ -1153,6 +1161,10 @@
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="settings.html#botorch.settings.debug">debug (class in botorch.settings)</a>
+</li>
+<li><a href="fit.html#botorch.fit.DEFAULT_WARNING_FILTER">DEFAULT_WARNING_FILTER() (in module botorch.fit)</a>
+</li>
+<li><a href="optim.html#botorch.optim.utils.del_attribute_ctx">del_attribute_ctx() (in module botorch.optim.utils)</a>
 </li>
 <li><a href="utils.html#botorch.utils.sampling.DelaunayPolytopeSampler">DelaunayPolytopeSampler (class in botorch.utils.sampling)</a>
 </li>
@@ -1628,6 +1640,8 @@
 </li>
 <li><a href="fit.html#botorch.fit.fit_fully_bayesian_model_nuts">fit_fully_bayesian_model_nuts() (in module botorch.fit)</a>
 </li>
+<li><a href="fit.html#botorch.fit.fit_gpytorch_mll">fit_gpytorch_mll() (in module botorch.fit)</a>
+</li>
 <li><a href="fit.html#botorch.fit.fit_gpytorch_model">fit_gpytorch_model() (in module botorch.fit)</a>
 </li>
 <li><a href="optim.html#botorch.optim.fit.fit_gpytorch_scipy">fit_gpytorch_scipy() (in module botorch.optim.fit)</a>
@@ -1900,6 +1914,8 @@
 </li>
 <li><a href="models.html#botorch.models.multitask.MultiTaskGP.get_all_tasks">get_all_tasks() (botorch.models.multitask.MultiTaskGP class method)</a>
 </li>
+<li><a href="models.html#botorch.models.converter.get_attribute">get_attribute() (in module botorch.models.converter)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.get_augmented_q_batch_size">get_augmented_q_batch_size() (botorch.acquisition.knowledge_gradient.qKnowledgeGradient method)</a>
 <ul>
 <li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_augmented_q_batch_size">(botorch.acquisition.multi_step_lookahead.qMultiStepLookahead method)</a>
@@ -1951,6 +1967,8 @@
 <li><a href="utils.html#botorch.utils.constraints.get_outcome_constraint_transforms">get_outcome_constraint_transforms() (in module botorch.utils.constraints)</a>
 </li>
 <li><a href="utils.html#botorch.utils.feasible_volume.get_outcome_feasibility_probability">get_outcome_feasibility_probability() (in module botorch.utils.feasible_volume)</a>
+</li>
+<li><a href="optim.html#botorch.optim.numpy_converter.get_parameters_and_bounds">get_parameters_and_bounds() (in module botorch.optim.numpy_converter)</a>
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.box_decompositions.utils.get_partition_bounds">get_partition_bounds() (in module botorch.utils.multi_objective.box_decompositions.utils)</a>
 </li>
@@ -2227,6 +2245,8 @@
 <li><a href="models.html#botorch.models.model.Model">Model (class in botorch.models.model)</a>
 </li>
 <li><a href="models.html#botorch.models.converter.model_list_to_batched">model_list_to_batched() (in module botorch.models.converter)</a>
+</li>
+<li><a href="exceptions.html#botorch.exceptions.errors.ModelFittingError">ModelFittingError</a>
 </li>
 <li><a href="models.html#botorch.models.model.ModelList">ModelList (class in botorch.models.model)</a>
 </li>
@@ -2723,6 +2743,8 @@
 </li>
 <li><a href="sampling.html#botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler">PairwiseSobolQMCNormalSampler (class in botorch.sampling.pairwise_samplers)</a>
 </li>
+<li><a href="optim.html#botorch.optim.utils.parameter_rollback_ctx">parameter_rollback_ctx() (in module botorch.optim.utils)</a>
+</li>
 <li><a href="utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.pareto_Y">pareto_Y (botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList property)</a>
 </li>
 <li><a href="models.html#botorch.models.utils.parse_training_data.parse_training_data">parse_training_data() (in module botorch.models.utils.parse_training_data)</a>
@@ -2855,6 +2877,8 @@
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.hypervolume.MultiList.remove">remove() (botorch.utils.multi_objective.hypervolume.MultiList method)</a>
 </li>
+<li><a href="optim.html#botorch.optim.utils.requires_grad_ctx">requires_grad_ctx() (in module botorch.optim.utils)</a>
+</li>
 <li><a href="models.html#botorch.models.fully_bayesian.reshape_and_detach">reshape_and_detach() (in module botorch.models.fully_bayesian)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.InputStandardize.reverse">reverse (botorch.models.transforms.input.InputStandardize attribute)</a>
@@ -2952,6 +2976,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.ScalarizedPosteriorTransform">ScalarizedPosteriorTransform (class in botorch.acquisition.objective)</a>
 </li>
+<li><a href="models.html#botorch.models.converter.set_attribute">set_attribute() (in module botorch.models.converter)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MARS.set_baseline_Y">set_baseline_Y() (botorch.acquisition.multi_objective.multi_output_risk_measures.MARS method)</a>
 </li>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasPyroModel.set_inputs">set_inputs() (botorch.models.fully_bayesian.SaasPyroModel method)</a>
@@ -3022,6 +3048,8 @@
 <li><a href="utils.html#botorch.utils.transforms.standardize">standardize() (in module botorch.utils.transforms)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.MockModel.state_dict">state_dict() (botorch.utils.testing.MockModel method)</a>
+</li>
+<li><a href="optim.html#botorch.optim.utils.state_rollback_ctx">state_rollback_ctx() (in module botorch.optim.utils)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.StyblinskiTang">StyblinskiTang (class in botorch.test_functions.synthetic)</a>
 </li>

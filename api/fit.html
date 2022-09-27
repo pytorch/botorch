@@ -25,39 +25,79 @@
 <div class="body" role="main">
 <section id="module-botorch.fit">
 <span id="botorch-fit"></span><h1>botorch.fit<a class="headerlink" href="#module-botorch.fit" title="Permalink to this heading">¶</a></h1>
-<p>Utilities for model fitting.</p>
+<p>Model fitting routines.</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="botorch.fit.fit_gpytorch_model">
-<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer=&lt;function</span> <span class="pre">fit_gpytorch_scipy&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_gpytorch_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_gpytorch_model" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fit hyperparameters of a GPyTorch model.</p>
-<p>On optimizer failures, a new initial condition is sampled from the
-hyperparameter priors and optimization is retried. The maximum number of
-retries can be passed in as a <cite>max_retries</cite> kwarg (default is 5).</p>
-<p>Optimizer functions are in botorch.optim.fit.</p>
+<dt class="sig sig-object py" id="botorch.fit.DEFAULT_WARNING_FILTER">
+<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_WARNING_FILTER</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging_patterns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{10:</span> <span class="pre">re.compile('TOTAL</span> <span class="pre">NO.</span> <span class="pre">of</span> <span class="pre">(ITERATIONS</span> <span class="pre">REACHED</span> <span class="pre">LIMIT|f</span> <span class="pre">AND</span> <span class="pre">g</span> <span class="pre">EVALUATIONS</span> <span class="pre">EXCEEDS</span> <span class="pre">LIMIT)')}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#DEFAULT_WARNING_FILTER"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.DEFAULT_WARNING_FILTER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default warning resolution policy: retry upon encountering an
+OptimizationWarning that does not match any logging pattern.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
-<li><p><strong>optimizer</strong> (<em>Callable</em>) – The optimizer function.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – Arguments passed along to the optimizer function, including
-<cite>max_retries</cite> and <cite>sequential</cite> (controls the fitting of <cite>ModelListGP</cite>
-and <cite>BatchedMultiOutputGPyTorchModel</cite> models) or <cite>approx_mll</cite>
-(whether to use gpytorch’s approximate MLL computation).</p></li>
+<li><p><strong>w</strong> (<em>WarningMessage</em>) – Candidate for filtering.</p></li>
+<li><p><strong>logging_patterns</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>Pattern</em><em>]</em>) – Dictionary mapping logging levels to regular expressions.
+Warning messages are compared against these expressions and matches are
+awarded first-come-first-serve when iterating through the dictionary.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>MarginalLogLikelihood with optimized parameters.</p>
+<dd class="field-even"><p>Boolean indicating whether the warning is unresolved.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.fit.fit_gpytorch_mll">
+<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_mll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_gpytorch_mll"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_gpytorch_mll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clearing house for fitting models passed as GPyTorch MarginalLogLikelihoods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A GPyTorch MarginalLogLikelihood instance.</p></li>
+<li><p><strong>optimizer</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – User specified optimization algorithm. When <cite>optimizer is None</cite>,
+this keyword argument is omitted when calling the dispatcher.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – A dictionary of keyword arguments passed when
+calling <cite>optimizer</cite>.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Keyword arguments passed down through the dispatcher to
+fit subroutines. Unexpected keywords are ignored.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The <cite>mll</cite> instance. If fitting succeeded, then <cite>mll</cite> will be in evaluation mode,
+i.e. <cite>mll.training == False</cite>. Otherwise, <cite>mll</cite> will be in training mode.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>MarginalLogLikelihood</em></p>
 </dd>
 </dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gp</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">gp</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">gp</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
-</pre></div>
-</div>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.fit.fit_gpytorch_model">
+<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_gpytorch_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_gpytorch_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience method for fitting GPyTorch models using legacy API. For more
+details, see <cite>fit_gpytorch_mll</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A GPyTorch MarginalLogLikelihood instance.</p></li>
+<li><p><strong>optimizer</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>MarginalLogLikelihood</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>MarginalLogLikelihood</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>]</em>) – User specified optimization algorithm. When <cite>optimizer is None</cite>,
+this keyword argument is omitted when calling the dispatcher from inside
+<cite>fit_gpytorch_mll</cite>.</p></li>
+<li><p><strong>exclude</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Legacy argument for specifying parameters <cite>x</cite> that should be held fixed
+during optimization. Internally, used to temporarily set <cite>x.requires_grad</cite>
+to False.</p></li>
+<li><p><strong>max_retries</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Legacy name for <cite>max_attempts</cite>. When <cite>max_retries is None</cite>,
+this keyword argument is omitted when calling <cite>fit_gpytorch_mll</cite>.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>MarginalLogLikelihood</em></p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.fit.fit_fully_bayesian_model_nuts">
