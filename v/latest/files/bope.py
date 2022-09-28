@@ -26,7 +26,7 @@
 # 
 # [1] [Z.J. Lin, R. Astudillo, P.I. Frazier, and E. Bakshy, Preference Exploration for Efficient Bayesian Optimization with Multiple Outcomes. AISTATS, 2022.](https://arxiv.org/abs/2203.11382)
 
-# In[1]:
+# In[ ]:
 
 
 import os
@@ -40,7 +40,7 @@ import torch
 from botorch.acquisition import GenericMCObjective, LearnedObjective
 from botorch.acquisition.monte_carlo import qNoisyExpectedImprovement, qSimpleRegret
 from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.deterministic import FixedSingleSampleModel
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
@@ -49,7 +49,6 @@ from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.test_functions.multi_objective import DTLZ2
 from botorch.utils.sampling import draw_sobol_samples
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-
 
 get_ipython().run_line_magic('matplotlib', 'inline')
 
@@ -109,7 +108,7 @@ def fit_outcome_model(X, Y, X_bounds):
     """Fit the outcome model f"""
     outcome_model = SingleTaskGP(train_X=X, train_Y=Y)
     mll = ExactMarginalLogLikelihood(outcome_model.likelihood, outcome_model)
-    fit_gpytorch_model(mll)
+    fit_gpytorch_mll(mll)
     return outcome_model
 
 
@@ -117,7 +116,7 @@ def fit_pref_model(Y, comps):
     """Fit the preference model g"""
     model = PairwiseGP(Y, comps, jitter=1e-4)
     mll = PairwiseLaplaceMarginalLogLikelihood(model.likelihood, model)
-    fit_gpytorch_model(mll)
+    fit_gpytorch_mll(mll)
     return model
 
 
@@ -273,9 +272,9 @@ def find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=False):
 
 verbose = False
 # Number of pairwise comparisons performed before checking posterior mean
-every_n_comps = 3
+every_n_comps = 4
 # Total number of checking the maximum posterior mean
-n_check_post_mean = 3
+n_check_post_mean = 2
 n_reps = 1
 within_session_results = []
 exp_candidate_results = []

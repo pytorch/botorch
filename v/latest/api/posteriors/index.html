@@ -27,10 +27,10 @@
 <span id="botorch-posteriors"></span><h1>botorch.posteriors<a class="headerlink" href="#module-botorch.posteriors" title="Permalink to this heading">¶</a></h1>
 <section id="posterior-apis">
 <h2>Posterior APIs<a class="headerlink" href="#posterior-apis" title="Permalink to this heading">¶</a></h2>
-<section id="abstract-posterior-api">
-<h3>Abstract Posterior API<a class="headerlink" href="#abstract-posterior-api" title="Permalink to this heading">¶</a></h3>
+<section id="module-botorch.posteriors.posterior">
+<span id="abstract-posterior-api"></span><h3>Abstract Posterior API<a class="headerlink" href="#module-botorch.posteriors.posterior" title="Permalink to this heading">¶</a></h3>
 <p>Abstract base module for all botorch posteriors.</p>
-<span class="target" id="module-botorch.posteriors.posterior"></span><dl class="py class">
+<dl class="py class">
 <dt class="sig sig-object py" id="botorch.posteriors.posterior.PosteriorList">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.posterior.</span></span><span class="sig-name descname"><span class="pre">PosteriorList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">posteriors</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/posterior.html#PosteriorList"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.posterior.PosteriorList" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></p>
@@ -107,10 +107,10 @@ This is used for deterministic optimization.</p></li>
 </section>
 <section id="posteriors">
 <h2>Posteriors<a class="headerlink" href="#posteriors" title="Permalink to this heading">¶</a></h2>
-<section id="gpytorch-posterior">
-<h3>GPyTorch Posterior<a class="headerlink" href="#gpytorch-posterior" title="Permalink to this heading">¶</a></h3>
+<section id="module-botorch.posteriors.gpytorch">
+<span id="gpytorch-posterior"></span><h3>GPyTorch Posterior<a class="headerlink" href="#module-botorch.posteriors.gpytorch" title="Permalink to this heading">¶</a></h3>
 <p>Posterior Module to be used with GPyTorch models.</p>
-<span class="target" id="module-botorch.posteriors.gpytorch"></span><dl class="py class">
+<dl class="py class">
 <dt class="sig sig-object py" id="botorch.posteriors.gpytorch.GPyTorchPosterior">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.gpytorch.</span></span><span class="sig-name descname"><span class="pre">GPyTorchPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mvn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/gpytorch.html#GPyTorchPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></p>
@@ -211,11 +211,11 @@ Supports <cite>t</cite>-batching.</p></li>
 </div>
 </dd></dl>
 </section>
-<section id="determinstic-posterior">
-<h3>Determinstic Posterior<a class="headerlink" href="#determinstic-posterior" title="Permalink to this heading">¶</a></h3>
+<section id="module-botorch.posteriors.deterministic">
+<span id="determinstic-posterior"></span><h3>Determinstic Posterior<a class="headerlink" href="#module-botorch.posteriors.deterministic" title="Permalink to this heading">¶</a></h3>
 <p>Deterministic (degenerate) posteriors. Used in conjunction with deterministic
 models.</p>
-<span class="target" id="module-botorch.posteriors.deterministic"></span><dl class="py class">
+<dl class="py class">
 <dt class="sig sig-object py" id="botorch.posteriors.deterministic.DeterministicPosterior">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.deterministic.</span></span><span class="sig-name descname"><span class="pre">DeterministicPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/deterministic.html#DeterministicPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></p>

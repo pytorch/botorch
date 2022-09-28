@@ -26,7 +26,7 @@
 # 
 # We generate the data using following code:
 
-# In[1]:
+# In[ ]:
 
 
 import os
@@ -36,8 +36,7 @@ from itertools import combinations
 import numpy as np
 import torch
 
-
-# suppress warnings from potential numerical issues
+# Suppress potential optimization warnings for cleaner notebook
 warnings.filterwarnings("ignore")
 
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
@@ -48,8 +47,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 # data generating helper functions
 def utility(X):
-    """ Given X, output corresponding utility (i.e., the latent function)
-    """
+    """Given X, output corresponding utility (i.e., the latent function)"""
     # y is weighted sum of X, with weight sqrt(i) imposed on dimension i
     weighted_X = X * torch.sqrt(torch.arange(X.size(-1), dtype=torch.float) + 1)
     y = torch.sum(weighted_X, dim=-1)
@@ -57,7 +55,7 @@ def utility(X):
 
 
 def generate_data(n, dim=2):
-    """ Generate data X and y """
+    """Generate data X and y"""
     # X is randomly sampled from dim-dimentional unit cube
     # we recommend using double as opposed to float tensor here for
     # better numerical stability
@@ -67,7 +65,7 @@ def generate_data(n, dim=2):
 
 
 def generate_comparisons(y, n_comp, noise=0.1, replace=False):
-    """  Create pairwise comparisons with noise """
+    """Create pairwise comparisons with noise"""
     # generate all possible pairs of elements in y
     all_pairs = np.array(list(combinations(range(y.shape[0]), 2)))
     # randomly select n_comp pairs from all_pairs
@@ -78,7 +76,7 @@ def generate_comparisons(y, n_comp, noise=0.1, replace=False):
     reverse_comp = (c0 < c1).numpy()
     comp_pairs[reverse_comp, :] = np.flip(comp_pairs[reverse_comp, :], 1)
     comp_pairs = torch.tensor(comp_pairs).long()
-    
+
     return comp_pairs
 
 
@@ -111,12 +109,11 @@ train_comp = generate_comparisons(train_y, m, noise=noise)
 
 
 from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
-from botorch.fit import fit_gpytorch_model
-
+from botorch.fit import fit_gpytorch_mll
 
 model = PairwiseGP(train_X, train_comp)
 mll = PairwiseLaplaceMarginalLogLikelihood(model.likelihood, model)
-mll = fit_gpytorch_model(mll)
+mll = fit_gpytorch_mll(mll)
 
 
 # Because the we never observe the latent function value, output values from the model are only meaningful on a relative scale.
@@ -163,7 +160,7 @@ def init_and_fit_model(X, comp, state_dict=None):
     """Model fitting helper function"""
     model = PairwiseGP(X, comp)
     mll = PairwiseLaplaceMarginalLogLikelihood(model.likelihood, model)
-    fit_gpytorch_model(mll)
+    fit_gpytorch_mll(mll)
     return mll, model
 
 

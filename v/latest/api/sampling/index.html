@@ -25,10 +25,10 @@
 <div class="body" role="main">
 <section id="module-botorch.sampling">
 <span id="botorch-sampling"></span><h1>botorch.sampling<a class="headerlink" href="#module-botorch.sampling" title="Permalink to this heading">¶</a></h1>
-<section id="monte-carlo-samplers">
-<h2>Monte-Carlo Samplers<a class="headerlink" href="#monte-carlo-samplers" title="Permalink to this heading">¶</a></h2>
+<section id="module-botorch.sampling.samplers">
+<span id="monte-carlo-samplers"></span><h2>Monte-Carlo Samplers<a class="headerlink" href="#module-botorch.sampling.samplers" title="Permalink to this heading">¶</a></h2>
 <p>Sampler modules to be used with MC-evaluated acquisition functions.</p>
-<span class="target" id="module-botorch.sampling.samplers"></span><dl class="py class">
+<dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.samplers.IIDNormalSampler">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.samplers.</span></span><span class="sig-name descname"><span class="pre">IIDNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collapse_batch_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">-2)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/samplers.html#IIDNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.samplers.IIDNormalSampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
@@ -210,8 +210,8 @@ If None, use all possible pairwise comparisons.</p></li>
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="qmc-base-functionality">
-<h2>QMC Base Functionality<a class="headerlink" href="#qmc-base-functionality" title="Permalink to this heading">¶</a></h2>
+<section id="module-botorch.sampling.qmc">
+<span id="qmc-base-functionality"></span><h2>QMC Base Functionality<a class="headerlink" href="#module-botorch.sampling.qmc" title="Permalink to this heading">¶</a></h2>
 <p>Quasi Monte-Carlo sampling from Normal distributions.</p>
 <p>References:</p>
 <div class="citation-list" role="list">
@@ -222,7 +222,7 @@ If None, use all possible pairwise comparisons.</p></li>
 Finance. Universitext. Springer International Publishing, 2018.</p>
 </div>
 </div>
-<span class="target" id="module-botorch.sampling.qmc"></span><dl class="py class">
+<dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.qmc.NormalQMCEngine">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.qmc.</span></span><span class="sig-name descname"><span class="pre">NormalQMCEngine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#NormalQMCEngine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.qmc.NormalQMCEngine" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>

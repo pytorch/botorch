@@ -27,10 +27,10 @@
 <span id="botorch-optim"></span><h1>botorch.optim<a class="headerlink" href="#module-botorch.optim" title="Permalink to this heading">¶</a></h1>
 <section id="optimization">
 <h2>Optimization<a class="headerlink" href="#optimization" title="Permalink to this heading">¶</a></h2>
-<section id="acquisition-function-optimization">
-<h3>Acquisition Function Optimization<a class="headerlink" href="#acquisition-function-optimization" title="Permalink to this heading">¶</a></h3>
+<section id="module-botorch.optim.optimize">
+<span id="acquisition-function-optimization"></span><h3>Acquisition Function Optimization<a class="headerlink" href="#module-botorch.optim.optimize" title="Permalink to this heading">¶</a></h3>
 <p>Methods for optimizing acquisition functions.</p>
-<span class="target" id="module-botorch.optim.optimize"></span><dl class="py function">
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.optimize.optimize_acqf">
 <span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nonlinear_inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_initial_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_best_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequential</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a set of candidates via multi-start optimization.</p>
@@ -362,10 +362,10 @@ a large training set.</p></li>
 </dl>
 </dd></dl>
 </section>
-<section id="model-fitting-optimization">
-<h3>Model Fitting Optimization<a class="headerlink" href="#model-fitting-optimization" title="Permalink to this heading">¶</a></h3>
+<section id="module-botorch.optim.fit">
+<span id="model-fitting-optimization"></span><h3>Model Fitting Optimization<a class="headerlink" href="#module-botorch.optim.fit" title="Permalink to this heading">¶</a></h3>
 <p>Tools for model fitting.</p>
-<span class="target" id="module-botorch.optim.fit"></span><dl class="py function">
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.fit.fit_gpytorch_torch">
 <span class="sig-prename descclassname"><span class="pre">botorch.optim.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_torch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_cls=&lt;class</span> <span class="pre">'torch.optim.adam.Adam'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track_iterations=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approx_mll=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/fit.html#fit_gpytorch_torch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.fit.fit_gpytorch_torch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit a gpytorch model by maximizing MLL with a torch optimizer.</p>
@@ -463,8 +463,8 @@ iteration. If track_iterations is False, will be empty.
 </div>
 </dd></dl>
 </section>
-<section id="initialization-helpers">
-<h3>Initialization Helpers<a class="headerlink" href="#initialization-helpers" title="Permalink to this heading">¶</a></h3>
+<section id="module-botorch.optim.initializers">
+<span id="initialization-helpers"></span><h3>Initialization Helpers<a class="headerlink" href="#module-botorch.optim.initializers" title="Permalink to this heading">¶</a></h3>
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="regis" role="doc-biblioentry">
@@ -474,7 +474,7 @@ surrogates and dynamic coordinate search in high-dimensional
 expensive black-box optimization, Engineering Optimization, 2013.</p>
 </div>
 </div>
-<span class="target" id="module-botorch.optim.initializers"></span><dl class="py function">
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.initializers.gen_batch_initial_conditions">
 <span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">gen_batch_initial_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#gen_batch_initial_conditions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.gen_batch_initial_conditions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a batch of initial conditions for random-restart optimziation.</p>
@@ -884,12 +884,12 @@ true for all elements.</p>
 </section>
 <section id="utilities">
 <h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this heading">¶</a></h2>
-<section id="numpy-torch-conversion-tools">
-<h3>Numpy - Torch Conversion Tools<a class="headerlink" href="#numpy-torch-conversion-tools" title="Permalink to this heading">¶</a></h3>
+<section id="module-botorch.optim.numpy_converter">
+<span id="numpy-torch-conversion-tools"></span><h3>Numpy - Torch Conversion Tools<a class="headerlink" href="#module-botorch.optim.numpy_converter" title="Permalink to this heading">¶</a></h3>
 <p>A converter that simplifies using numpy-based optimizers with generic torch
 <cite>nn.Module</cite> classes. This enables using a <cite>scipy.optim.minimize</cite> optimizer
 for optimizing module parameters.</p>
-<span class="target" id="module-botorch.optim.numpy_converter"></span><dl class="py class">
+<dl class="py class">
 <dt class="sig sig-object py" id="botorch.optim.numpy_converter.TorchAttr">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.numpy_converter.</span></span><span class="sig-name descname"><span class="pre">TorchAttr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/numpy_converter.html#TorchAttr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
@@ -983,10 +983,10 @@ returned by module_to_array.</p></li>
 </div>
 </dd></dl>
 </section>
-<section id="parameter-constraint-utilities">
-<h3>Parameter Constraint Utilities<a class="headerlink" href="#parameter-constraint-utilities" title="Permalink to this heading">¶</a></h3>
+<section id="module-botorch.optim.parameter_constraints">
+<span id="parameter-constraint-utilities"></span><h3>Parameter Constraint Utilities<a class="headerlink" href="#module-botorch.optim.parameter_constraints" title="Permalink to this heading">¶</a></h3>
 <p>Utility functions for constrained optimization.</p>
-<span class="target" id="module-botorch.optim.parameter_constraints"></span><dl class="py function">
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.parameter_constraints.make_scipy_bounds">
 <span class="sig-prename descclassname"><span class="pre">botorch.optim.parameter_constraints.</span></span><span class="sig-name descname"><span class="pre">make_scipy_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/parameter_constraints.html#make_scipy_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.parameter_constraints.make_scipy_bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a scipy Bounds object for optimziation</p>
@@ -1140,10 +1140,10 @@ type (“eq”, “ineq”), as expected by <cite>scipy.minimize</cite>.</p>
 </dl>
 </dd></dl>
 </section>
-<section id="general-optimization-utilities">
-<h3>General Optimization Utilities<a class="headerlink" href="#general-optimization-utilities" title="Permalink to this heading">¶</a></h3>
+<section id="module-botorch.optim.utils">
+<span id="general-optimization-utilities"></span><h3>General Optimization Utilities<a class="headerlink" href="#module-botorch.optim.utils" title="Permalink to this heading">¶</a></h3>
 <p>Utilities for optimization.</p>
-<span class="target" id="module-botorch.optim.utils"></span><dl class="py function">
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.utils.sample_all_priors">
 <span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.</span></span><span class="sig-name descname"><span class="pre">sample_all_priors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#sample_all_priors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.sample_all_priors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample from hyperparameter priors (in-place).</p>
