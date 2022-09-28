@@ -122,6 +122,8 @@ jobs:
     - name: Fetch all history for all tags and branches
       run: git fetch --prune --unshallow
     - name: Install dependencies
+      env:
+        ALLOW_BOTORCH_LATEST: true  # allow Ax to install w/ new BoTorch release
       run: |
         pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
