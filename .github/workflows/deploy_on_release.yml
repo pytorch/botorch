@@ -82,7 +82,7 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
-        conda install -y setuptools_scm conda-build conda-verify anaconda-client
+        conda install -y setuptools_scm multipledispatch conda-build conda-verify anaconda-client
         conda install -y -c pytorch pytorch cpuonly
         conda install -y scipy sphinx pytest flake8
         conda install -y -c gpytorch gpytorch
@@ -119,9 +119,7 @@ jobs:
         pip install .[dev]
         pip install git+https://github.com/facebook/Ax.git
         pip install .[tutorials]
-        # NOTE: nbconvert 6.4.4 is incompatible with jinja2 3.1.0.
-        # We can unpin this with a future release of nbconvert.
-        pip install beautifulsoup4 ipython nbconvert "jinja2==3.0.3"
+        pip install beautifulsoup4 ipython nbconvert jinja2
     - name: Publish latest website
       env:
         DOCUSAURUS_PUBLISH_TOKEN: ${{ secrets.DOCUSAURUS_PUBLISH_TOKEN }}
