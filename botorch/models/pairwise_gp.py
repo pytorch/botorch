@@ -37,7 +37,7 @@ from botorch.models.transforms.input import InputTransform
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
 from gpytorch import settings
-from gpytorch.constraints import Positive
+from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
@@ -47,7 +47,7 @@ from gpytorch.models.gp import GP
 from gpytorch.module import Module
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
-from linear_operator.operators import LinearOperator
+from linear_operator.operators import LinearOperator, RootLinearOperator
 from linear_operator.utils.cholesky import psd_safe_cholesky
 from scipy import optimize
 from torch import float32, float64, Tensor
@@ -134,6 +134,7 @@ class PairwiseGP(Model, GP):
 
         self.train_inputs = []
         self.train_targets = None
+        self.utility = None
 
         self.pred_cov_fac_need_update = True
         self.dim = None
@@ -145,8 +146,8 @@ class PairwiseGP(Model, GP):
         self.set_train_data(datapoints, comparisons, update_model=False)
 
         # Set optional parameters
-        # jitter to add for numerical stability
-        self._jitter = kwargs.get("jitter", 1e-6)
+        # Explicitly set jitter for numerical stability in psd_safe_cholesky
+        self._jitter = kwargs.get("jitter", 1e-5)
         # Stopping creteria in scipy.optimize.fsolve used to find f_map in _update()
         # If None, set to 1e-6 by default in _update
         self._xtol = kwargs.get("xtol")
@@ -176,8 +177,8 @@ class PairwiseGP(Model, GP):
                     batch_shape=self.batch_shape,
                     ard_num_dims=self.dim,
                     lengthscale_prior=ls_prior,
-                    lengthscale_constraint=Positive(
-                        transform=None, initial_value=ls_prior_mode
+                    lengthscale_constraint=GreaterThan(
+                        lower_bound=1e-4, transform=None, initial_value=ls_prior_mode
                     ),
                 ),
                 outputscale_prior=SmoothedBoxPrior(a=1, b=4),
@@ -264,7 +265,7 @@ class PairwiseGP(Model, GP):
             datapoints: (Transformed) datapoints for finding f_max
         """
         self.covar = self._calc_covar(datapoints, datapoints)
-        self.covar_chol = psd_safe_cholesky(self.covar)
+        self.covar_chol = psd_safe_cholesky(self.covar, jitter=self._jitter)
         self.covar_inv = self._batch_chol_inv(self.covar_chol)
 
     def _prior_mean(self, X: Tensor) -> Union[Tensor, LinearOperator]:
@@ -291,31 +292,6 @@ class PairwiseGP(Model, GP):
         pred_mean = self._prior_mean(X)
         pred_covar = self._calc_covar(X, X)
         return pred_mean, pred_covar
-
-    def _add_jitter(self, X: Tensor) -> Tensor:
-        jitter_prev = 0
-        Eye = torch.eye(X.size(-1), device=X.device, dtype=X.dtype).expand(X.shape)
-        for i in range(3):
-            jitter_new = self._jitter * (10**i)
-            X = X + (jitter_new - jitter_prev) * Eye
-            jitter_prev = jitter_new
-            # This may be VERY slow given upstream pytorch issue:
-            # https://github.com/pytorch/pytorch/issues/34272
-            try:
-                _ = torch.linalg.cholesky(X)
-                warnings.warn(
-                    "X is not a p.d. matrix; "
-                    f"Added jitter of {jitter_new:.2e} to the diagonal",
-                    RuntimeWarning,
-                )
-                return X
-            except RuntimeError:
-                continue
-        warnings.warn(
-            f"Failed to render X p.d. after adding {jitter_new:.2e} jitter",
-            RuntimeWarning,
-        )
-        return X
 
     def _grad_posterior_f(
         self,
@@ -508,10 +484,12 @@ class PairwiseGP(Model, GP):
         hlcov_eye_size = torch.Size((*self.likelihood_hess.shape[:-2], self.n, self.n))
         self.hlcov_eye = torch.empty(hlcov_eye_size)
 
-        # Take a newton step on the posterior MAP point to fill
-        # in gradients for pytorch
+        # Take two newton step on the posterior MAP point to fill
+        # in gradients for pytorch. Using 2 instead of 1 since empirically sometimes
+        # the first step results in gradients in the order of 1e-7 while the 2nd step
+        # allows it go down further to the order of 1e-12 and stay there.
         self.utility = self._util_newton_updates(
-            datapoints, f.clone().requires_grad_(True), max_iter=1
+            datapoints, f.clone().requires_grad_(True), max_iter=2
         )
 
     def _transform_batch_shape(self, X: Tensor, X_new: Tensor) -> Tuple[Tensor, Tensor]:
@@ -693,7 +671,6 @@ class PairwiseGP(Model, GP):
         self.dim = self.datapoints.shape[-1]  # feature dimensions
         self.n = self.datapoints.shape[-2]  # num datapoints
         self.m = self.comparisons.shape[-2]  # num pairwise comparisons
-        self.utility = None
         # D is batch_size x m x n or num_comparison x num_datapoints.
         # D_k_i is the s_k(x_i) value as in equation (6) in [Chu2005preference]_
         # D will usually be very sparse as well
@@ -857,27 +834,14 @@ class PairwiseGP(Model, GP):
 
             output_mean, output_covar = pred_mean, pred_covar
 
-        try:
-            if self.datapoints is None:
-                diag_jitter = torch.eye(output_covar.size(-1))
-            else:
-                diag_jitter = torch.eye(
-                    output_covar.size(-1),
-                    dtype=self.datapoints.dtype,
-                    device=self.datapoints.device,
-                )
-            diag_jitter = diag_jitter.expand(output_covar.shape)
-            diag_jitter = diag_jitter * self._jitter
-            # Preemptively adding jitter to diagonal to prevent the use of _add_jitter
-            # given that torch.cholesky may be very slow on non-pd matrix input
-            # See https://github.com/pytorch/pytorch/issues/34272
-            # TODO: remove this once torch.cholesky issue is resolved
-            output_covar = output_covar + diag_jitter
-            post = MultivariateNormal(output_mean, output_covar)
-        except RuntimeError:
-            output_covar = self._add_jitter(output_covar)
-            post = MultivariateNormal(output_mean, output_covar)
-
+        post = MultivariateNormal(
+            mean=output_mean,
+            # output_covar is sometimes non-PSD
+            # perform a cholesky decomposition to check and amend
+            covariance_matrix=RootLinearOperator(
+                psd_safe_cholesky(output_covar, jitter=self._jitter)
+            ),
+        )
         return post
 
     # ============== botorch.models.model.Model interfaces ==============
