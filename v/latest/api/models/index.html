@@ -2654,6 +2654,13 @@ forward pass.</p></li>
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_mcmc_samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.num_mcmc_samples" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of MCMC samples in the model.</p>
 </dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.batch_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Size</span></em><a class="headerlink" href="#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Batch shape of the model, equal to the number of MCMC samples.
+Note that <cite>SaasFullyBayesianSingleTaskGP</cite> does not support batching
+over input data at this point.</p>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.fantasize">
 <span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasFullyBayesianSingleTaskGP.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.fantasize" title="Permalink to this definition">¶</a></dt>
@@ -2927,6 +2934,13 @@ If omitted, set it to be 1.</p></li>
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.num_mcmc_samples">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_mcmc_samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.num_mcmc_samples" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of MCMC samples in the model.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.batch_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Size</span></em><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Batch shape of the model, equal to the number of MCMC samples.
+Note that <cite>SaasFullyBayesianMultiTaskGP</cite> does not support batching
+over input data at this point.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.fantasize">
@@ -4438,7 +4452,7 @@ and transfer learning models within the optimization loop.</p>
 <span class="gp">... </span>    <span class="n">input_transform</span><span class="o">=</span><span class="n">AppendFeatures</span><span class="p">(</span><span class="n">feature_set</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">test_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># `posterior_samples` is a `10 x 30 x 1`-dim tensor</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">posterior_samples</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">test_x</span><span class="p">)</span><span class="o">.</span><span class="n">rsamples</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">size</span><span class="p">([</span><span class="mi">10</span><span class="p">]))</span>
@@ -4825,6 +4839,30 @@ type and have the shape (batch shape and number of training inputs).</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">batch_gp</span> <span class="o">=</span> <span class="n">model_list_to_batched</span><span class="p">(</span><span class="n">list_gp</span><span class="p">)</span>
 </pre></div>
 </div>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.converter.set_attribute">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.converter.</span></span><span class="sig-name descname"><span class="pre">set_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/converter.html#set_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.converter.set_attribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like <cite>setattr</cite> but works with hierarchical attribute specification.
+E.g. if obj=Zoo(), and attr=”tiger.age”, set_attribute(obj, attr, 3),
+would set the Zoo’s tiger’s age to three.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>attr</strong> (<em>str</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.converter.get_attribute">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.converter.</span></span><span class="sig-name descname"><span class="pre">get_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/converter.html#get_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.converter.get_attribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like <cite>getattr</cite> but works with hierarchical attribute specification.
+E.g. if obj=Zoo(), and attr=”tiger.age”, get_attribute(obj, attr),
+would return the Zoo’s tiger’s age.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>attr</strong> (<em>str</em>) – </p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.models.converter.batched_to_model_list">

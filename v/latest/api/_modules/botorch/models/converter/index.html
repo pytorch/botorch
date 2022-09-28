@@ -176,10 +176,18 @@
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span><span class="s2">"All models must have the same fidelity parameters."</span><span class="p">)</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">init_args</span><span class="p">)</span>
 
+    <span class="c1"># add batched kernel, except if the model type is SingleTaskMultiFidelityGP,</span>
+    <span class="c1"># which does not have a `covar_module`</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">SingleTaskMultiFidelityGP</span><span class="p">):</span>
+        <span class="n">batch_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
+        <span class="n">covar_module</span> <span class="o">=</span> <span class="n">_batched_kernel</span><span class="p">(</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">covar_module</span><span class="p">,</span> <span class="n">batch_length</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"covar_module"</span><span class="p">]</span> <span class="o">=</span> <span class="n">covar_module</span>
+
     <span class="c1"># construct the batched GP model</span>
     <span class="n">input_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">input_transform</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+
     <span class="n">batch_gp</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="n">adjusted_batch_keys</span><span class="p">,</span> <span class="n">non_adjusted_batch_keys</span> <span class="o">=</span> <span class="n">_get_adjusted_batch_keys</span><span class="p">(</span>
         <span class="n">batch_state_dict</span><span class="o">=</span><span class="n">batch_gp</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
@@ -220,6 +228,46 @@
     <span class="n">batch_gp</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">batch_state_dict</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">batch_gp</span></div>
+
+
+<span class="k">def</span> <span class="nf">_batched_kernel</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">batch_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">"""Adds a batch dimension of size `batch_length` to all non-scalar</span>
+<span class="sd">    Tensor parameters that govern the kernel function `kernel`.</span>
+<span class="sd">    NOTE: prior or constraint parameters are excluded from batching.</span>
+<span class="sd">    """</span>
+    <span class="c1"># copy just in case there are non-tensor parameters that are passed by reference</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">kernel</span><span class="p">)</span>
+    <span class="n">search_str</span> <span class="o">=</span> <span class="s2">"raw_outputscale"</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">kernel</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">attr</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="n">search_str</span> <span class="o">==</span> <span class="n">key</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="p">):</span>
+            <span class="n">attr</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_length</span><span class="p">,</span> <span class="o">*</span><span class="n">attr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+            <span class="n">set_attribute</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">attr</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">kernel</span>
+
+
+<span class="c1"># two helper functions for `batched_kernel`</span>
+<span class="c1"># like `setattr` and `getattr` for object hierarchies</span>
+<div class="viewcode-block" id="set_attribute"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.set_attribute">[docs]</a><span class="k">def</span> <span class="nf">set_attribute</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="sd">"""Like `setattr` but works with hierarchical attribute specification.</span>
+<span class="sd">    E.g. if obj=Zoo(), and attr="tiger.age", set_attribute(obj, attr, 3),</span>
+<span class="sd">    would set the Zoo's tiger's age to three.</span>
+<span class="sd">    """</span>
+    <span class="n">path_to_leaf</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">attr_name</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
+    <span class="n">leaf</span> <span class="o">=</span> <span class="n">get_attribute</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">path_to_leaf</span><span class="p">)</span> <span class="k">if</span> <span class="n">path_to_leaf</span> <span class="k">else</span> <span class="n">obj</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">leaf</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_attribute"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.get_attribute">[docs]</a><span class="k">def</span> <span class="nf">get_attribute</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sd">"""Like `getattr` but works with hierarchical attribute specification.</span>
+<span class="sd">    E.g. if obj=Zoo(), and attr="tiger.age", get_attribute(obj, attr),</span>
+<span class="sd">    would return the Zoo's tiger's age.</span>
+<span class="sd">    """</span>
+    <span class="n">attr_names</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">attr_names</span><span class="p">:</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr_names</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">obj</span></div>
 
 
 <div class="viewcode-block" id="batched_to_model_list"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.batched_to_model_list">[docs]</a><span class="k">def</span> <span class="nf">batched_to_model_list</span><span class="p">(</span><span class="n">batch_model</span><span class="p">:</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelListGP</span><span class="p">:</span>

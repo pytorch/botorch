@@ -110,7 +110,7 @@
 <span class="sd">            with each tuple encoding an inequality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`</span>
 <span class="sd">        equality_constraints: A list of tuples (indices, coefficients, rhs),</span>
-<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            with each tuple encoding an equality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`</span>
 <span class="sd">        nonlinear_inequality_constraints: A list of callables with that represent</span>
 <span class="sd">            non-linear inequality constraints of the form `callable(x) &gt;= 0`. Each</span>
@@ -141,7 +141,7 @@
 <span class="sd">            this is a `(num_restarts)`-dim tensor of joint acquisition values</span>
 <span class="sd">            (with explicit restart dimension if `return_best_only=False`). If</span>
 <span class="sd">            `sequential=True`, this is a `q`-dim tensor of expected acquisition</span>
-<span class="sd">            values conditional on having observed canidates `0,1,...,i-1`.</span>
+<span class="sd">            values conditional on having observed candidates `0,1,...,i-1`.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # generate `q=2` candidates jointly using 20 random restarts</span>
@@ -164,6 +164,42 @@
             <span class="p">)</span>
         <span class="c1"># TODO: Validate constraints if provided:</span>
         <span class="c1"># https://github.com/pytorch/botorch/pull/1231</span>
+
+    <span class="n">full_tree</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"return_full_tree"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">full_tree</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">initial_conditions_provided</span> <span class="o">=</span> <span class="n">batch_initial_conditions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">initial_conditions_provided</span> <span class="ow">and</span> <span class="n">sequential</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="s2">"`batch_initial_conditions` is not supported for sequential optimization. "</span>
+            <span class="s2">"Either avoid specifying `batch_initial_conditions` to use the custom "</span>
+            <span class="s2">"initializer or use the `ic_generator` kwarg to generate "</span>
+            <span class="s2">"initial conditions for the case of nonlinear inequality constraints."</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Sets initial condition generator ic_gen if initial conditions not provided</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">initial_conditions_provided</span><span class="p">:</span>
+        <span class="n">ic_gen</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"ic_generator"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ic_gen</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">"`ic_generator` must be given if "</span>
+                    <span class="s2">"there are non-linear inequality constraints."</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">raw_samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Must specify `raw_samples` when "</span>
+                    <span class="s2">"`batch_initial_conditions` is None`."</span>
+                <span class="p">)</span>
+            <span class="n">ic_gen</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">gen_one_shot_kg_initial_conditions</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">qKnowledgeGradient</span><span class="p">)</span>
+                <span class="k">else</span> <span class="n">gen_batch_initial_conditions</span>
+            <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">sequential</span> <span class="ow">and</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">return_best_only</span><span class="p">:</span>
@@ -193,7 +229,9 @@
                 <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">return_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="n">sequential</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">ic_generator</span><span class="o">=</span><span class="n">ic_gen</span><span class="p">,</span>
             <span class="p">)</span>
+
             <span class="n">candidate_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
             <span class="n">acq_value_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acq_value</span><span class="p">)</span>
             <span class="n">candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">candidate_list</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
@@ -221,24 +259,8 @@
             <span class="n">acq_value</span> <span class="o">=</span> <span class="n">acq_function</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">acq_value</span>
 
-    <span class="n">initial_conditions_provided</span> <span class="o">=</span> <span class="n">batch_initial_conditions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">initial_conditions_provided</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="s2">"`batch_initial_conditions` must be given if there are non-linear "</span>
-                <span class="s2">"inequality constraints."</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="n">raw_samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"Must specify `raw_samples` when `batch_initial_conditions` is `None`."</span>
-            <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_gen_initial_conditions</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="n">ic_gen</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">gen_one_shot_kg_initial_conditions</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">qKnowledgeGradient</span><span class="p">)</span>
-            <span class="k">else</span> <span class="n">gen_batch_initial_conditions</span>
-        <span class="p">)</span>
         <span class="n">batch_initial_conditions</span> <span class="o">=</span> <span class="n">ic_gen</span><span class="p">(</span>
             <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
             <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
@@ -249,11 +271,8 @@
             <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
             <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
             <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">batch_initial_conditions</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">initial_conditions_provided</span><span class="p">:</span>
-        <span class="n">batch_initial_conditions</span> <span class="o">=</span> <span class="n">_gen_initial_conditions</span><span class="p">()</span>
 
     <span class="n">batch_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
         <span class="s2">"batch_limit"</span><span class="p">,</span> <span class="n">num_restarts</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">nonlinear_inequality_constraints</span> <span class="k">else</span> <span class="mi">1</span>
@@ -313,7 +332,18 @@
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">first_warn_msg</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">initial_conditions_provided</span><span class="p">:</span>
-            <span class="n">batch_initial_conditions</span> <span class="o">=</span> <span class="n">_gen_initial_conditions</span><span class="p">()</span>
+            <span class="n">batch_initial_conditions</span> <span class="o">=</span> <span class="n">ic_gen</span><span class="p">(</span>
+                <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+                <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+                <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span>
+                <span class="n">num_restarts</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span>
+                <span class="n">raw_samples</span><span class="o">=</span><span class="n">raw_samples</span><span class="p">,</span>
+                <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
+                <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+                <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+                <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
 
             <span class="n">batch_candidates</span><span class="p">,</span> <span class="n">batch_acq_values</span><span class="p">,</span> <span class="n">ws</span> <span class="o">=</span> <span class="n">_optimize_batch_candidates</span><span class="p">()</span>
 
@@ -335,9 +365,8 @@
         <span class="n">batch_candidates</span> <span class="o">=</span> <span class="n">batch_candidates</span><span class="p">[</span><span class="n">best</span><span class="p">]</span>
         <span class="n">batch_acq_values</span> <span class="o">=</span> <span class="n">batch_acq_values</span><span class="p">[</span><span class="n">best</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"return_full_tree"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-            <span class="n">batch_candidates</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">extract_candidates</span><span class="p">(</span><span class="n">X_full</span><span class="o">=</span><span class="n">batch_candidates</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">full_tree</span><span class="p">:</span>
+        <span class="n">batch_candidates</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">extract_candidates</span><span class="p">(</span><span class="n">X_full</span><span class="o">=</span><span class="n">batch_candidates</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">batch_candidates</span><span class="p">,</span> <span class="n">batch_acq_values</span></div>
 
@@ -355,6 +384,7 @@
     <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">cyclic_options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
     <span class="sa">r</span><span class="sd">"""Generate a set of `q` candidates via cyclic optimization.</span>
 
@@ -418,6 +448,7 @@
         <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="n">batch_initial_conditions</span><span class="p">,</span>
         <span class="n">return_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">sequential</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">cyclic_options</span> <span class="o">=</span> <span class="n">cyclic_options</span> <span class="ow">or</span> <span class="p">{}</span>
@@ -447,7 +478,6 @@
                     <span class="n">post_processing_func</span><span class="o">=</span><span class="n">post_processing_func</span><span class="p">,</span>
                     <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="n">candidates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
                     <span class="n">return_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">sequential</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">candidates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">candidate_i</span>
                 <span class="n">acq_vals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">acq_val_i</span>

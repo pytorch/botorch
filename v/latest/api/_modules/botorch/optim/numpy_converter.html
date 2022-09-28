@@ -40,12 +40,24 @@
 
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">inf</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+<span class="kn">from</span> <span class="nn">re</span> <span class="kn">import</span> <span class="n">Pattern</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Any</span><span class="p">,</span>
+    <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">Dict</span><span class="p">,</span>
+    <span class="n">Iterator</span><span class="p">,</span>
+    <span class="n">List</span><span class="p">,</span>
+    <span class="n">NamedTuple</span><span class="p">,</span>
+    <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">Set</span><span class="p">,</span>
+    <span class="n">Tuple</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
-
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">Parameter</span>
 
 <span class="n">ParameterBounds</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span>
 
@@ -54,6 +66,90 @@
     <span class="n">shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span>
     <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span>
     <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span></div>
+
+
+<div class="viewcode-block" id="create_name_filter"><a class="viewcode-back" href="../../../optim.html#botorch.optim.numpy_converter.create_name_filter">[docs]</a><span class="k">def</span> <span class="nf">create_name_filter</span><span class="p">(</span>
+    <span class="n">patterns</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Pattern</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]]],</span> <span class="nb">bool</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Returns a binary function that filters strings (or iterables whose first</span>
+<span class="sd">    element is a string) according to a bank of excluded patterns. Typically, used</span>
+<span class="sd">    in conjunction with generators such as `module.named_parameters()`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        patterns: A collection of regular expressions or strings that</span>
+<span class="sd">            define the set of names to be excluded.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A binary function indicating whether or not an item should be filtered.</span>
+<span class="sd">    """</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">_patterns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">patterns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">Pattern</span><span class="p">):</span>
+            <span class="n">_patterns</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span>
+
+    <span class="k">def</span> <span class="nf">name_filter</span><span class="p">(</span><span class="n">item</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">item</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">_patterns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="n">name_filter</span></div>
+
+
+<div class="viewcode-block" id="get_parameters_and_bounds"><a class="viewcode-back" href="../../../optim.html#botorch.optim.numpy_converter.get_parameters_and_bounds">[docs]</a><span class="k">def</span> <span class="nf">get_parameters_and_bounds</span><span class="p">(</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+    <span class="n">name_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">requires_grad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">default_bounds</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ParameterBounds</span><span class="p">]]:</span>
+    <span class="sa">r</span><span class="sd">"""Helper method for extracting parameters and feasible ranges thereof.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        module: The target module from which parameters are to be extracted.</span>
+<span class="sd">        name_filter: Optional Boolean function used to filter parameters by name.</span>
+<span class="sd">        requires_grad: Optional Boolean used to filter parameters based on whether</span>
+<span class="sd">            or not their require_grad attribute matches the user provided value.</span>
+<span class="sd">        default_bounds: Default lower and upper bounds for constrained parameters</span>
+<span class="sd">            with `None` typed bounds.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        0: Dictionary mapping names to Parameters.</span>
+<span class="sd">        1: Dictionary mapping names of constrained parameters to ParameterBounds.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">"named_parameters_and_constraints"</span><span class="p">):</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_parameters_and_constraints</span><span class="p">():</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">requires_grad</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">==</span> <span class="n">requires_grad</span><span class="p">))</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">name_filter</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">name_filter</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span>
+                <span class="k">if</span> <span class="n">constraint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="n">bounds</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                    <span class="n">default</span> <span class="k">if</span> <span class="n">bound</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">constraint</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">bound</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="p">(</span><span class="n">bound</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="n">default_bounds</span><span class="p">)</span>
+                <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="n">param</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">name_filter</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">name_filter</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">bounds</span></div>
 
 
 <div class="viewcode-block" id="module_to_array"><a class="viewcode-back" href="../../../optim.html#botorch.optim.numpy_converter.module_to_array">[docs]</a><span class="k">def</span> <span class="nf">module_to_array</span><span class="p">(</span>
@@ -86,46 +182,48 @@
 <span class="sd">        &gt;&gt;&gt; mll = ExactMarginalLogLikelihood(model.likelihood, model)</span>
 <span class="sd">        &gt;&gt;&gt; parameter_array, property_dict, bounds_out = module_to_array(mll)</span>
 <span class="sd">    """</span>
-    <span class="n">x</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">lower</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">upper</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">property_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
-    <span class="n">exclude</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span> <span class="k">if</span> <span class="n">exclude</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">exclude</span>
-
-    <span class="c1"># get bounds specified in model (if any)</span>
-    <span class="n">bounds_</span><span class="p">:</span> <span class="n">ParameterBounds</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">"named_parameters_and_constraints"</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_parameters_and_constraints</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">constraint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">constraint</span><span class="o">.</span><span class="n">enforced</span><span class="p">:</span>
-                <span class="n">bounds_</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">constraint</span><span class="o">.</span><span class="n">upper_bound</span>
-
-    <span class="c1"># update with user-supplied bounds (overwrites if already exists)</span>
+    <span class="n">param_dict</span><span class="p">,</span> <span class="n">bounds_dict</span> <span class="o">=</span> <span class="n">get_parameters_and_bounds</span><span class="p">(</span>
+        <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">,</span>
+        <span class="n">name_filter</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">exclude</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">create_name_filter</span><span class="p">(</span><span class="n">exclude</span><span class="p">),</span>
+        <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">bounds_</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
+        <span class="n">bounds_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">p_name</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">p_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">exclude</span> <span class="ow">and</span> <span class="n">t</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">:</span>
-            <span class="n">property_dict</span><span class="p">[</span><span class="n">p_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">TorchAttr</span><span class="p">(</span>
-                <span class="n">shape</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">device</span>
-            <span class="p">)</span>
-            <span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">double</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
-            <span class="c1"># construct bounds</span>
-            <span class="k">if</span> <span class="n">bounds_</span><span class="p">:</span>
-                <span class="n">l_</span><span class="p">,</span> <span class="n">u_</span> <span class="o">=</span> <span class="n">bounds_</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p_name</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="n">inf</span><span class="p">,</span> <span class="n">inf</span><span class="p">))</span>
-                <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">l_</span><span class="p">):</span>
-                    <span class="n">l_</span> <span class="o">=</span> <span class="n">l_</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">u_</span><span class="p">):</span>
-                    <span class="n">u_</span> <span class="o">=</span> <span class="n">u_</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
-                <span class="c1"># check for Nones here b/c it may be passed in manually in bounds</span>
-                <span class="n">lower</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">nelement</span><span class="p">(),</span> <span class="n">l_</span> <span class="k">if</span> <span class="n">l_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="n">inf</span><span class="p">))</span>
-                <span class="n">upper</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">nelement</span><span class="p">(),</span> <span class="n">u_</span> <span class="k">if</span> <span class="n">u_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">inf</span><span class="p">))</span>
+    <span class="c1"># Record tensor metadata and read parameter values to the tape</span>
+    <span class="n">param_tape</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Number</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">property_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">property_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">TorchAttr</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">param</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">param</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">param_tape</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">double</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
 
-    <span class="n">x_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-    <span class="n">bounds_out</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">bounds_</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="k">for</span> <span class="n">lu</span> <span class="ow">in</span> <span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">lu</span><span class="p">):</span>
-            <span class="n">bounds_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">lower</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">upper</span><span class="p">)])</span>
-    <span class="k">return</span> <span class="n">x_out</span><span class="p">,</span> <span class="n">property_dict</span><span class="p">,</span> <span class="n">bounds_out</span></div>
+    <span class="c1"># Extract lower and upper bounds</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">bounds_np</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">params_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">param_tape</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">numel</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">bounds_dict</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">row</span><span class="p">,</span> <span class="n">bound</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bounds_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="n">bound</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">bound</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">bound</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">inf</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                        <span class="k">continue</span>
+                    <span class="n">bound</span> <span class="o">=</span> <span class="n">bound</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+
+                <span class="k">elif</span> <span class="n">bound</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">inf</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="k">if</span> <span class="n">bounds_np</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">bounds_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">params_np</span><span class="p">)),</span> <span class="p">((</span><span class="o">-</span><span class="n">inf</span><span class="p">,),</span> <span class="p">(</span><span class="n">inf</span><span class="p">,)))</span>
+
+                <span class="n">bounds_np</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">numel</span><span class="p">]</span> <span class="o">=</span> <span class="n">bound</span>
+        <span class="n">start</span> <span class="o">+=</span> <span class="n">numel</span>
+
+    <span class="k">return</span> <span class="n">params_np</span><span class="p">,</span> <span class="n">property_dict</span><span class="p">,</span> <span class="n">bounds_np</span></div>
 
 
 <div class="viewcode-block" id="set_params_with_array"><a class="viewcode-back" href="../../../optim.html#botorch.optim.numpy_converter.set_params_with_array">[docs]</a><span class="k">def</span> <span class="nf">set_params_with_array</span><span class="p">(</span>
