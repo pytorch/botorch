@@ -6,6 +6,7 @@
 
 import itertools
 import warnings
+from typing import Optional
 
 import torch
 from botorch import settings
@@ -96,6 +97,8 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
 
 
 class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, ExactGP):
+    _batch_shape: Optional[torch.Size] = None
+
     def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
         r"""
         Args:
@@ -133,6 +136,12 @@ class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, Exa
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
+
+    @property
+    def batch_shape(self) -> torch.Size:
+        if self._batch_shape is not None:
+            return self._batch_shape
+        return super().batch_shape
 
 
 class SimpleModelListGPyTorchModel(IndependentModelList, ModelListGPyTorchModel):
@@ -397,6 +406,13 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             )
             train_Y1 = torch.sin(train_X1)
             train_Y2 = torch.cos(train_X2)
+            # test SAAS type batch shape
+            m1 = SimpleBatchedMultiOutputGPyTorchModel(train_X1, train_Y1)
+            m2 = SimpleBatchedMultiOutputGPyTorchModel(train_X2, train_Y2)
+            m1._batch_shape = torch.Size([2])
+            m2._batch_shape = torch.Size([2])
+            model = SimpleModelListGPyTorchModel(m1, m2)
+            self.assertEqual(model.batch_shape, torch.Size([2]))
             # test different batch shapes (broadcastable)
             m1 = SimpleGPyTorchModel(
                 train_X1.expand(2, *train_X1.shape), train_Y1.expand(2, *train_Y1.shape)

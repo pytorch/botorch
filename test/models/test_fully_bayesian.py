@@ -304,6 +304,8 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                     mean, var = posterior.mean, posterior.variance
                     self.assertEqual(mean.shape, expected_shape)
                     self.assertEqual(var.shape, expected_shape)
+                # This check is only for ModelListGP.
+                self.assertEqual(model_list.batch_shape, model.batch_shape)
 
             # Mixing fully Bayesian models with different batch shapes isn't supported
             _, _, _, model2 = self._get_data_and_model(
