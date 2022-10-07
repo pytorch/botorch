@@ -508,7 +508,7 @@ class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
         to the `posterior` method returns a Posterior object over an output of
         shape `broadcast(test_batch_shape, model.batch_shape) x q x m`.
         """
-        batch_shapes = {ti[0].shape[:-2] for ti in self.train_inputs}
+        batch_shapes = {m.batch_shape for m in self.models}
         if len(batch_shapes) > 1:
             msg = (
                 f"Component models of {self.__class__.__name__} have different "
