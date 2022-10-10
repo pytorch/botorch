@@ -6,7 +6,7 @@ title: Optimization
 ## Model Fitting
 
 BoTorch provides the convenience method
-[`fit_gpytorch_model()`](../api/fit.html#botorch.fit.fit_gpytorch_scipy) for
+[`fit_gpytorch_mll()`](../api/fit.html#botorch.fit.fit_gpytorch_mll) for
 fitting GPyTorch models (optimizing model hyperparameters) using L-BFGS-B via
 `scipy.optimize.minimize()`. We recommend using this method for exact GPs, but
 other optimizers may be necessary for models with thousands of parameters or

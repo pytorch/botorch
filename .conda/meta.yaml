@@ -13,14 +13,16 @@ build:
 
 requirements:
   host:
-    - python>=3.7
-    - setuptools<48  # setup_requires was deprecated in v48.0.0
-    - setuptools-scm
+    - python>=3.8
+    - setuptools
+    - setuptools_scm
   run:
-    - pytorch >=1.9
-    - gpytorch >=1.6
+    - pytorch >=1.11
+    - gpytorch ==1.9.0
+    - linear_operator ==0.1.1
     - scipy
-    - pyro-ppl 1.8.0
+    - multipledispatch
+    - pyro-ppl >=1.8.2
 
 test:
   imports:

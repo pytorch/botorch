@@ -36,6 +36,7 @@ from botorch.models import (
 )
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.transforms.input import InputPerturbation
+from botorch.models.transforms.outcome import Standardize
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
 from botorch.utils.multi_objective.box_decompositions.dominated import (
@@ -251,8 +252,9 @@ class TestQExpectedHypervolumeImprovement(BotorchTestCase):
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+                self.assertEqual(
+                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
+                )
 
             # test objective
             acqf = qExpectedHypervolumeImprovement(
@@ -717,8 +719,9 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     acqf.sampler.base_samples.shape,
                     torch.Size([1, X_baseline.shape[0], m]),
                 )
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+                self.assertEqual(
+                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
+                )
 
             # test objective
             # set the MockPosterior to use samples over baseline points
@@ -972,8 +975,9 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     torch.cat([X_pending2, X_pending2], dim=0).requires_grad_(True)
                 )
                 self.assertIsNone(acqf.X_pending)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+                self.assertEqual(
+                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
+                )
 
             # test max iep
             mm._posterior._samples = baseline_samples
@@ -1414,8 +1418,25 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                     with torch.no_grad():
                         acqf(test_X)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+                self.assertEqual(
+                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
+                )
+
+    def test_cache_root_w_standardize(self):
+        # Test caching with standardize transform.
+        train_x = torch.rand(3, 2)
+        train_y = torch.randn(3, 2)
+        model = SingleTaskGP(train_x, train_y, outcome_transform=Standardize(m=2))
+        acqf = qNoisyExpectedHypervolumeImprovement(
+            model=model,
+            X_baseline=train_x,
+            ref_point=torch.ones(2),
+            sampler=IIDNormalSampler(num_samples=1),
+            cache_root=True,
+        )
+        self.assertIsNotNone(acqf._baseline_L)
+        self.assertEqual(acqf(train_x[:1]).shape, torch.Size([1]))
+        self.assertEqual(acqf(train_x.unsqueeze(-2)).shape, torch.Size([3]))
 
     def test_with_set_valued_objectives(self):
         for dtype in (torch.float, torch.double):

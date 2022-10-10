@@ -503,6 +503,14 @@ class ProjectedAcquisitionFunction(AcquisitionFunction):
         base_value_function: AcquisitionFunction,
         project: Callable[[Tensor], Tensor],
     ) -> None:
+        r"""
+        Args:
+            base_value_function: The wrapped `AcquisitionFunction`.
+            project: A callable mapping a `batch_shape x q x d` tensor of design
+                points to a tensor with shape `batch_shape x q_term x d` projected
+                to the desired target set (e.g. the target fidelities in case of
+                multi-fidelity optimization). For the basic case, `q_term = q`.
+        """
         super().__init__(base_value_function.model)
         self.base_value_function = base_value_function
         self.project = project

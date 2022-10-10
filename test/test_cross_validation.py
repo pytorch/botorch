@@ -51,7 +51,7 @@ class TestFitBatchCrossValidation(BotorchTestCase):
                     model_cls=SingleTaskGP,
                     mll_cls=ExactMarginalLogLikelihood,
                     cv_folds=noiseless_cv_folds,
-                    fit_args={"options": {"maxiter": 1}},
+                    fit_args={"optimizer_kwargs": {"options": {"maxiter": 1}}},
                 )
             expected_shape = batch_shape + torch.Size([n, 1, m])
             self.assertEqual(cv_results.posterior.mean.shape, expected_shape)
@@ -74,7 +74,7 @@ class TestFitBatchCrossValidation(BotorchTestCase):
                     model_cls=FixedNoiseGP,
                     mll_cls=ExactMarginalLogLikelihood,
                     cv_folds=noisy_cv_folds,
-                    fit_args={"options": {"maxiter": 1}},
+                    fit_args={"optimizer_kwargs": {"options": {"maxiter": 1}}},
                 )
             self.assertEqual(cv_results.posterior.mean.shape, expected_shape)
             self.assertEqual(cv_results.observed_Y.shape, expected_shape)

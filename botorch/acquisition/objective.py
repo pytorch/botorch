@@ -4,16 +4,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-r"""
-Objective Modules to be used with acquisition functions.
-"""
+r"""Objective Modules to be used with acquisition functions."""
 
 from __future__ import annotations
 
 import inspect
 import warnings
 from abc import ABC, abstractmethod
-from typing import Union, Callable, List, Optional
+from typing import Callable, List, Optional, Union
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -22,8 +20,8 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
 from botorch.posteriors.posterior import Posterior
 from botorch.sampling import IIDNormalSampler, MCSampler
 from botorch.utils import apply_constraints
-from gpytorch.distributions import MultivariateNormal, MultitaskMultivariateNormal
-from gpytorch.lazy import lazify
+from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
+from linear_operator.operators.dense_linear_operator import to_linear_operator
 from torch import Tensor
 from torch.nn import Module
 
@@ -32,12 +30,18 @@ class AcquisitionObjective(Module, ABC):
     r"""Abstract base class for objectives.
 
     DEPRECATED - This will be removed in the next version.
+
+    :meta private:
     """
     ...
 
 
 class PosteriorTransform(Module, ABC):
-    r"""Abstract base class for objectives that transform the posterior."""
+    r"""
+    Abstract base class for objectives that transform the posterior.
+
+    :meta private:
+    """
 
     scalarize: bool  # True if the transform reduces to single-output
 
@@ -90,8 +94,7 @@ class ScalarizedPosteriorTransform(PosteriorTransform):
     scalarize: bool = True
 
     def __init__(self, weights: Tensor, offset: float = 0.0) -> None:
-        r"""Affine posterior transform.
-
+        r"""
         Args:
             weights: A one-dimensional tensor with `m` elements representing the
                 linear weights on the outputs.
@@ -133,6 +136,12 @@ class ScalarizedObjective(ScalarizedPosteriorTransform, AcquisitionObjective):
     """DEPRECATED - Use ScalarizedPosteriorTransform instead."""
 
     def __init__(self, weights: Tensor, offset: float = 0.0) -> None:
+        r"""
+        Args:
+            weights: A one-dimensional tensor with `m` elements representing the
+                linear weights on the outputs.
+            offset: An offset to be added to posterior mean.
+        """
         warnings.warn(
             "ScalarizedObjective is deprecated and will be removed in the next "
             "version. Use ScalarizedPosteriorTransform instead."
@@ -235,11 +244,13 @@ class ExpectationPosteriorTransform(PosteriorTransform):
         )
         new_cov = weights @ (org_cov @ weights.t())
         if m == 1:
-            new_mvn = MultivariateNormal(new_loc.squeeze(-1), lazify(new_cov))
+            new_mvn = MultivariateNormal(
+                new_loc.squeeze(-1), to_linear_operator(new_cov)
+            )
         else:
             # Using MTMVN since we pass a single loc and covar for all `m` outputs.
             new_mvn = MultitaskMultivariateNormal(
-                new_loc, lazify(new_cov), interleaved=False
+                new_loc, to_linear_operator(new_cov), interleaved=False
             )
         return GPyTorchPosterior(mvn=new_mvn)
 
@@ -251,6 +262,8 @@ class MCAcquisitionObjective(Module, ABC):
         _verify_output_shape: If True and `X` is given, check that the q-batch
             shape of the objectives agrees with that of X.
         _is_mo: A boolean denoting whether the objectives are multi-output.
+
+    :meta private:
     """
 
     _verify_output_shape: bool = True
@@ -329,8 +342,7 @@ class LinearMCObjective(MCAcquisitionObjective):
     """
 
     def __init__(self, weights: Tensor) -> None:
-        r"""Linear Objective.
-
+        r"""
         Args:
             weights: A one-dimensional tensor with `m` elements representing the
                 linear weights on the outputs.
@@ -373,8 +385,7 @@ class GenericMCObjective(MCAcquisitionObjective):
     """
 
     def __init__(self, objective: Callable[[Tensor, Optional[Tensor]], Tensor]) -> None:
-        r"""Objective generated from a generic callable.
-
+        r"""
         Args:
             objective: A callable `f(samples, X)` mapping a
                 `sample_shape x batch-shape x q x m`-dim Tensor `samples` and
@@ -444,8 +455,7 @@ class ConstrainedMCObjective(GenericMCObjective):
         infeasible_cost: Union[Tensor, float] = 0.0,
         eta: float = 1e-3,
     ) -> None:
-        r"""Feasibility-weighted objective.
-
+        r"""
         Args:
             objective: A callable `f(samples, X)` mapping a
                 `sample_shape x batch-shape x q x m`-dim Tensor `samples` and
@@ -508,8 +518,7 @@ class LearnedObjective(MCAcquisitionObjective):
         pref_model: Model,
         sampler: Optional[MCSampler] = None,
     ):
-        r"""Learned preference objective constructed from a preference model.
-
+        r"""
         Args:
             pref_model: A BoTorch model, which models the latent preference/utility
                 function. Given an input tensor of size

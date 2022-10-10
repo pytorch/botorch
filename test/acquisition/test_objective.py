@@ -28,12 +28,13 @@ from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.utils import apply_constraints
 from botorch.utils.testing import _get_test_posterior, BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy import lazify
+from linear_operator.operators.dense_linear_operator import to_linear_operator
+
 from torch import Tensor
 
 
 def generic_obj_deprecated(samples: Tensor) -> Tensor:
-    return torch.log(torch.sum(samples ** 2, dim=-1))
+    return torch.log(torch.sum(samples**2, dim=-1))
 
 
 def generic_obj(samples: Tensor, X=None) -> Tensor:
@@ -133,9 +134,9 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
                 [0.2, 0.15, 0.2, 0.7, 1.0, 0.7],
                 [0.1, 0.1, 0.05, 0.6, 0.7, 1.0],
             ],
-            **tkwargs
+            **tkwargs,
         )
-        org_mvn = MultivariateNormal(org_loc, lazify(org_covar))
+        org_mvn = MultivariateNormal(org_loc, to_linear_operator(org_covar))
         org_post = GPyTorchPosterior(mvn=org_mvn)
         tf = ExpectationPosteriorTransform(n_w=3)
         tf_post = tf(org_post)
@@ -168,7 +169,7 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
                 [0.0, 0.0, 0.0, 0.0, 0.4, 0.3, 1.4, 0.5],
                 [0.0, 0.0, 0.0, 0.0, 0.3, 0.2, 0.5, 1.2],
             ],
-            **tkwargs
+            **tkwargs,
         )
         # Making it batched by adding two more batches, mostly the same.
         org_loc = org_loc.repeat(3, 1)
@@ -184,7 +185,7 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
             # We constructed it according to the output of mvn.loc,
             # reshaping here to have the required `b x n x t` shape.
             org_loc.view(3, 2, 4).transpose(-2, -1),
-            lazify(org_covar),
+            to_linear_operator(org_covar),
             interleaved=True,  # To test the error.
         )
         org_post = GPyTorchPosterior(mvn=org_mvn)
@@ -194,7 +195,7 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
         # Construct the non-interleaved posterior.
         org_mvn = MultitaskMultivariateNormal(
             org_loc.view(3, 2, 4).transpose(-2, -1),
-            lazify(org_covar),
+            to_linear_operator(org_covar),
             interleaved=False,
         )
         org_post = GPyTorchPosterior(mvn=org_mvn)
@@ -217,7 +218,7 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
                 [0.0, 0.0, 0.875, 0.35],
                 [0.0, 0.0, 0.35, 1.05],
             ],
-            **tkwargs
+            **tkwargs,
         ).repeat(3, 1, 1)
         self.assertTrue(torch.allclose(tf_mvn.loc, expected_loc, atol=1e-3))
         self.assertTrue(

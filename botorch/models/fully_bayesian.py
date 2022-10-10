@@ -6,9 +6,21 @@
 
 r"""Gaussian Process Regression models with fully Bayesian inference.
 
-We use a lightweight PyTorch implementation of a Matern-5/2 kernel as there are some
-performance issues with running NUTS on top of standard GPyTorch models. The resulting
-hyperparameter samples are loaded into a batched GPyTorch model after fitting.
+Fully Bayesian models use Bayesian inference over model hyperparameters, such
+as lengthscales and noise variance, learning a posterior distribution for the
+hyperparameters using the No-U-Turn-Sampler (NUTS). This is followed by
+sampling a small set of hyperparameters (often ~16) from the posterior
+that we will use for model predictions and for computing acquisition function
+values. By contrast, our “standard” models (e.g.
+`SingleTaskGP`) learn only a single best value for each hyperparameter using
+MAP. The fully Bayesian method generally results in a better and more
+well-calibrated model, but is more computationally intensive. For a full
+description, see [Eriksson2021saasbo].
+
+We use a lightweight PyTorch implementation of a Matern-5/2 kernel as there are
+some performance issues with running NUTS on top of standard GPyTorch models.
+The resulting hyperparameter samples are loaded into a batched GPyTorch model
+after fitting.
 
 References:
 
@@ -21,7 +33,7 @@ References:
 
 import math
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import pyro
 import torch
@@ -53,7 +65,7 @@ def matern52_kernel(X: Tensor, lengthscale: Tensor) -> Tensor:
     nu = 5 / 2
     dist = compute_dists(X=X, lengthscale=lengthscale)
     exp_component = torch.exp(-math.sqrt(nu * 2) * dist)
-    constant_component = (math.sqrt(5) * dist).add(1).add(5.0 / 3.0 * (dist ** 2))
+    constant_component = (math.sqrt(5) * dist).add(1).add(5.0 / 3.0 * (dist**2))
     return constant_component * exp_component
 
 
@@ -70,7 +82,21 @@ def reshape_and_detach(target: Tensor, new_value: Tensor) -> None:
 
 
 class PyroModel:
-    r"""Abstract base class for a Pyro model."""
+    r"""
+    Base class for a Pyro model; used to assist in learning hyperparameters.
+
+    This class and its subclasses are not a standard BoTorch models; instead
+    the subclasses are used as inputs to a `SaasFullyBayesianSingleTaskGP`,
+    which should then have its hyperparameters fit with
+    `fit_fully_bayesian_model_nuts`. (By default, its subclass `SaasPyroModel`
+    is used).  A `PyroModel`’s `sample` method should specify lightweight
+    PyTorch functionality, which will be used for fast model fitting with NUTS.
+    The utility of `PyroModel` is in enabling fast fitting with NUTS, since we
+    would otherwise need to use GPyTorch, which is computationally infeasible
+    in combination with Pyro.
+
+    :meta private:
+    """
 
     def set_inputs(
         self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
@@ -108,10 +134,22 @@ class PyroModel:
 class SaasPyroModel(PyroModel):
     r"""Implementation of the sparse axis-aligned subspace priors (SAAS) model.
 
-    The SAAS model uses sparsity-inducing priors to identift the most important
+    The SAAS model uses sparsity-inducing priors to identify the most important
     parameters. This model is suitable for high-dimensional BO with potentially
     hundreds of tunable parameters. See [Eriksson2021saasbo]_ for more details.
+
+    `SaasPyroModel` is not a standard BoTorch model; instead, it is used as
+    an input to `SaasFullyBayesianSingleTaskGP`. It is used as a default keyword
+    argument, and end users are not likely to need to instantiate or modify a
+    `SaasPyroModel` unless they want to customize its attributes (such as
+    `covar_module`).
     """
+
+    def set_inputs(
+        self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
+    ):
+        super().set_inputs(train_X, train_Y, train_Yvar)
+        self.ard_num_dims = self.train_X.shape[-1]
 
     def sample(self) -> None:
         r"""Sample from the SAAS model.
@@ -123,7 +161,7 @@ class SaasPyroModel(PyroModel):
         outputscale = self.sample_outputscale(concentration=2.0, rate=0.15, **tkwargs)
         mean = self.sample_mean(**tkwargs)
         noise = self.sample_noise(**tkwargs)
-        lengthscale = self.sample_lengthscale(dim=self.train_X.shape[-1], **tkwargs)
+        lengthscale = self.sample_lengthscale(dim=self.ard_num_dims, **tkwargs)
         k = matern52_kernel(X=self.train_X, lengthscale=lengthscale)
         k = outputscale * k + noise * torch.eye(self.train_X.shape[0], **tkwargs)
         pyro.sample(
@@ -220,7 +258,7 @@ class SaasPyroModel(PyroModel):
         mean_module = ConstantMean(batch_shape=batch_shape).to(**tkwargs)
         covar_module = ScaleKernel(
             base_kernel=MaternKernel(
-                ard_num_dims=self.train_X.shape[-1],
+                ard_num_dims=self.ard_num_dims,
                 batch_shape=batch_shape,
             ),
             batch_shape=batch_shape,
@@ -270,9 +308,9 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
     isn't compatible with `fit_gpytorch_model`.
 
     Example:
-    >>> saas_gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)
-    >>> fit_fully_bayesian_model_nuts(saas_gp)
-    >>> posterior = saas_gp.posterior(test_X)
+        >>> saas_gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)
+        >>> fit_fully_bayesian_model_nuts(saas_gp)
+        >>> posterior = saas_gp.posterior(test_X)
     """
 
     def __init__(
@@ -361,6 +399,14 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
         self._check_if_fitted()
         return len(self.covar_module.outputscale)
 
+    @property
+    def batch_shape(self) -> torch.Size:
+        r"""Batch shape of the model, equal to the number of MCMC samples.
+        Note that `SaasFullyBayesianSingleTaskGP` does not support batching
+        over input data at this point."""
+        self._check_if_fitted()
+        return torch.Size([self.num_mcmc_samples])
+
     def fantasize(
         self,
         X: Tensor,
@@ -389,6 +435,41 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
             self.covar_module,
             self.likelihood,
         ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
+
+    def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True):
+        r"""Custom logic for loading the state dict.
+
+        The standard approach of calling `load_state_dict` currently doesn't play well
+        with the `SaasFullyBayesianSingleTaskGP` since the `mean_module`, `covar_module`
+        and `likelihood` aren't initialized until the model has been fitted. The reason
+        for this is that we don't know the number of MCMC samples until NUTS is called.
+        Given the state dict, we can initialize a new model with some dummy samples and
+        then load the state dict into this model. This currently only works for a
+        `SaasPyroModel` and supporting more Pyro models likely requires moving the model
+        construction logic into the Pyro model itself.
+        """
+
+        if not isinstance(self.pyro_model, SaasPyroModel):
+            raise NotImplementedError("load_state_dict only works for SaasPyroModel")
+        raw_mean = state_dict["mean_module.raw_constant"]
+        num_mcmc_samples = len(raw_mean)
+        dim = self.pyro_model.train_X.shape[-1]
+        tkwargs = {"device": raw_mean.device, "dtype": raw_mean.dtype}
+        # Load some dummy samples
+        mcmc_samples = {
+            "mean": torch.ones(num_mcmc_samples, **tkwargs),
+            "lengthscale": torch.ones(num_mcmc_samples, dim, **tkwargs),
+            "outputscale": torch.ones(num_mcmc_samples, **tkwargs),
+        }
+        if self.pyro_model.train_Yvar is None:
+            mcmc_samples["noise"] = torch.ones(num_mcmc_samples, **tkwargs)
+        (
+            self.mean_module,
+            self.covar_module,
+            self.likelihood,
+        ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
+        # Load the actual samples from the state dict
+        super().load_state_dict(state_dict=state_dict, strict=strict)
 
     def forward(self, X: Tensor) -> MultivariateNormal:
         self._check_if_fitted()

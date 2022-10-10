@@ -4,17 +4,28 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import warnings
 from typing import Optional
 
 import torch
+from botorch import settings
 from botorch.acquisition.multi_objective.multi_output_risk_measures import (
     IndependentCVaR,
     IndependentVaR,
+    MARS,
     MultiOutputExpectation,
     MultiOutputRiskMeasureMCObjective,
     MultiOutputWorstCase,
     MVaR,
 )
+from botorch.acquisition.multi_objective.objective import (
+    IdentityMCMultiOutputObjective,
+    WeightedMCMultiOutputObjective,
+)
+from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import BotorchWarning
+from botorch.models.deterministic import GenericDeterministicModel
+from botorch.models.transforms.input import InputPerturbation
 from botorch.utils.multi_objective.pareto import is_non_dominated
 from botorch.utils.testing import BotorchTestCase
 from torch import Tensor
@@ -32,6 +43,17 @@ class TestMultiOutputRiskMeasureMCObjective(BotorchTestCase):
         with self.assertRaises(TypeError):
             MultiOutputRiskMeasureMCObjective(n_w=3)
 
+        # DeprecationWarning.
+        with self.assertWarnsRegex(DeprecationWarning, "`weights` argument"):
+            obj = NotSoAbstractMORiskMeasure(n_w=2, weights=[0.5, 0.3])
+        # Preprocessing function is constructed from the weight.
+        self.assertIsInstance(
+            obj.preprocessing_function, WeightedMCMultiOutputObjective
+        )
+        self.assertTrue(
+            torch.equal(obj.preprocessing_function.weights, torch.tensor([0.5, 0.3]))
+        )
+
         for dtype in (torch.float, torch.double):
             samples = torch.tensor(
                 [
@@ -47,7 +69,7 @@ class TestMultiOutputRiskMeasureMCObjective(BotorchTestCase):
                 device=self.device,
                 dtype=dtype,
             )
-            obj = NotSoAbstractMORiskMeasure(n_w=3, weights=None)
+            obj = NotSoAbstractMORiskMeasure(n_w=3)
             # test _prepare_samples
             expected_samples = samples.view(1, 2, 3, 2)
             prepared_samples = obj._prepare_samples(samples)
@@ -57,17 +79,15 @@ class TestMultiOutputRiskMeasureMCObjective(BotorchTestCase):
             expected_samples = samples.view(5, 3, 2, 3, 3)
             prepared_samples = obj._prepare_samples(samples)
             self.assertTrue(torch.equal(prepared_samples, expected_samples))
-            # negating with weights
+            # negating with preprocessing function
             obj = NotSoAbstractMORiskMeasure(
                 n_w=3,
-                weights=torch.tensor(
-                    [-1.0, -1.0, -1.0], device=self.device, dtype=dtype
+                preprocessing_function=WeightedMCMultiOutputObjective(
+                    weights=torch.tensor(
+                        [-1.0, -1.0, -1.0], device=self.device, dtype=dtype
+                    )
                 ),
             )
-            prepared_samples = obj._prepare_samples(samples)
-            self.assertTrue(torch.equal(prepared_samples, -expected_samples))
-            # List of weights
-            obj = NotSoAbstractMORiskMeasure(n_w=3, weights=[-1.0, -1.0, -1.0])
             prepared_samples = obj._prepare_samples(samples)
             self.assertTrue(torch.equal(prepared_samples, -expected_samples))
 
@@ -101,7 +121,9 @@ class TestMultiOutputExpectation(BotorchTestCase):
                 )
             )
             # w/ first output negated
-            obj.weights = torch.tensor([-1.0, 1.0], device=self.device, dtype=dtype)
+            obj.preprocessing_function = WeightedMCMultiOutputObjective(
+                torch.tensor([-1.0, 1.0], device=self.device, dtype=dtype)
+            )
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.allclose(
@@ -145,7 +167,9 @@ class TestIndependentCVaR(BotorchTestCase):
                 )
             )
             # w/ first output negated
-            obj.weights = torch.tensor([-1.0, 1.0], device=self.device, dtype=dtype)
+            obj.preprocessing_function = WeightedMCMultiOutputObjective(
+                torch.tensor([-1.0, 1.0], device=self.device, dtype=dtype)
+            )
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.allclose(
@@ -185,7 +209,9 @@ class TestIndependentVaR(BotorchTestCase):
                 )
             )
             # w/ weights
-            obj.weights = torch.tensor([0.5, -1.0], device=self.device, dtype=dtype)
+            obj.preprocessing_function = WeightedMCMultiOutputObjective(
+                torch.tensor([0.5, -1.0], device=self.device, dtype=dtype)
+            )
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.equal(
@@ -225,7 +251,9 @@ class TestMultiOutputWorstCase(BotorchTestCase):
                 )
             )
             # w/ weights
-            obj.weights = torch.tensor([-1.0, 2.0], device=self.device, dtype=dtype)
+            obj.preprocessing_function = WeightedMCMultiOutputObjective(
+                torch.tensor([-1.0, 2.0], device=self.device, dtype=dtype)
+            )
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.equal(
@@ -285,7 +313,7 @@ class TestMVaR(BotorchTestCase):
                     [4, 1],
                     [3.5, 3.5],
                 ],
-                **tkwargs
+                **tkwargs,
             )
             cpu_mvar = mvar.get_mvar_set_cpu(Y)
             gpu_mvar = mvar.get_mvar_set_gpu(Y)[0]
@@ -299,7 +327,7 @@ class TestMVaR(BotorchTestCase):
                     [3, 3.5],
                     [4, 2],
                 ],
-                **tkwargs
+                **tkwargs,
             )
             self.assertTrue(set_equals(cpu_mvar, expected_w_dominated))
             expected_non_dominated = expected_w_dominated[
@@ -406,3 +434,211 @@ class TestMVaR(BotorchTestCase):
                 mvar(Y.requires_grad_())
 
             # TODO: Test grad support once properly implemented.
+
+
+class TestMARS(BotorchTestCase):
+    def test_init(self):
+        # Init w/ defaults.
+        mars = MARS(
+            alpha=0.5,
+            n_w=3,
+            chebyshev_weights=[0.5, 0.5],
+        )
+        self.assertEqual(mars.alpha, 0.5)
+        self.assertEqual(mars.n_w, 3)
+        self.assertTrue(torch.equal(mars.chebyshev_weights, torch.tensor([0.5, 0.5])))
+        self.assertIsNone(mars.baseline_Y)
+        self.assertIsNone(mars.ref_point)
+        self.assertIsInstance(
+            mars.preprocessing_function, IdentityMCMultiOutputObjective
+        )
+        self.assertIsInstance(mars.mvar, MVaR)
+        self.assertEqual(mars.mvar.alpha, 0.5)
+        self.assertEqual(mars.mvar.n_w, 3)
+        # Errors with Chebyshev weights.
+        with self.assertRaisesRegex(UnsupportedError, "Negative"):
+            MARS(
+                alpha=0.5,
+                n_w=3,
+                chebyshev_weights=[-0.5, 0.5],
+            )
+        with self.assertRaisesRegex(UnsupportedError, "Batched"):
+            MARS(
+                alpha=0.5,
+                n_w=3,
+                chebyshev_weights=[[0.5], [0.5]],
+            )
+        # With optional arguments.
+        baseline_Y = torch.rand(3, 2)
+        ref_point = [3.0, 5.0]
+
+        def dummy_func(Y):
+            return Y
+
+        mars = MARS(
+            alpha=0.5,
+            n_w=3,
+            chebyshev_weights=[0.5, 0.5],
+            baseline_Y=baseline_Y,
+            ref_point=ref_point,
+            preprocessing_function=dummy_func,
+        )
+        self.assertTrue(torch.equal(mars.baseline_Y, baseline_Y))
+        self.assertTrue(torch.equal(mars.ref_point, torch.tensor(ref_point)))
+        self.assertIs(mars.preprocessing_function, dummy_func)
+
+    def test_set_baseline_Y(self):
+        mars = MARS(
+            alpha=0.5,
+            n_w=3,
+            chebyshev_weights=[0.5, 0.5],
+        )
+        perturbation = InputPerturbation(
+            perturbation_set=torch.tensor([[0.0, 0.0], [0.5, 0.5], [1.0, 1.0]])
+        )
+        model = GenericDeterministicModel(f=lambda X: X, num_outputs=2)
+        model.input_transform = perturbation
+        X_baseline = torch.tensor([[0.0, 0.0], [1.0, 1.0]])
+        mars.set_baseline_Y(model=model, X_baseline=X_baseline)
+        self.assertTrue(torch.equal(mars.baseline_Y, torch.tensor([[1.5, 1.5]])))
+        # With Y_samples.
+        mars._baseline_Y = None
+        Y_samples = model.posterior(X_baseline).mean
+        with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+            mars.set_baseline_Y(model=model, X_baseline=X_baseline, Y_samples=Y_samples)
+        self.assertTrue(torch.equal(mars.baseline_Y, torch.tensor([[1.5, 1.5]])))
+        self.assertTrue(any(w.category == BotorchWarning for w in ws))
+        # With pre-processing function.
+        mars = MARS(
+            alpha=0.5,
+            n_w=3,
+            chebyshev_weights=[0.5, 0.5],
+            preprocessing_function=lambda Y: -Y,
+        )
+        mars.set_baseline_Y(model=model, X_baseline=X_baseline)
+        self.assertTrue(torch.equal(mars.baseline_Y, torch.tensor([[-0.5, -0.5]])))
+
+    def test_get_Y_normalization_bounds(self):
+        # Error if batched.
+        with self.assertRaisesRegex(UnsupportedError, "Batched"):
+            MARS._get_Y_normalization_bounds(Y=torch.rand(3, 5, 2))
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"dtype": dtype, "device": self.device}
+            # Empty Y.
+            bounds = MARS._get_Y_normalization_bounds(Y=torch.empty(0, 3, **tkwargs))
+            expected = torch.zeros(2, 3, **tkwargs)
+            expected[1] = 1.0
+            self.assertTrue(torch.allclose(bounds, expected))
+
+            # Single point in pareto_Y.
+            bounds = MARS._get_Y_normalization_bounds(Y=torch.zeros(1, 3, **tkwargs))
+            self.assertTrue(torch.allclose(bounds, expected))
+
+            # With reference point.
+            bounds = MARS._get_Y_normalization_bounds(
+                Y=torch.zeros(1, 3, **tkwargs), ref_point=-torch.ones(3)
+            )
+            self.assertTrue(torch.allclose(bounds, expected - 1))
+
+            # Check that dominated points are ignored.
+            Y = torch.tensor([[0.0, 0.0], [0.5, 1.0], [1.0, 0.5]], **tkwargs)
+            expected = expected[:, :2]
+            expected[0] = 0.5
+            bounds = MARS._get_Y_normalization_bounds(Y=Y)
+            self.assertTrue(torch.allclose(bounds, expected))
+
+            # Multiple pareto with ref point.
+            # Nothing better than ref.
+            bounds = MARS._get_Y_normalization_bounds(
+                Y=Y, ref_point=torch.ones(2) * 0.75
+            )
+            self.assertTrue(torch.allclose(bounds, expected))
+
+            # W/ points better than ref.
+            Y = torch.tensor(
+                [[0.5, 1.0], [1.0, 0.5], [0.8, 0.8], [0.9, 0.7]], **tkwargs
+            )
+            bounds = MARS._get_Y_normalization_bounds(
+                Y=Y, ref_point=torch.ones(2) * 0.6
+            )
+            expected = torch.tensor([[0.6, 0.6], [0.9, 0.8]], **tkwargs)
+            self.assertTrue(torch.allclose(bounds, expected))
+
+    def test_chebyshev_objective(self):
+        # Check that the objective is destroyed on setters.
+        mars = MARS(
+            alpha=0.5,
+            n_w=3,
+            chebyshev_weights=[0.5, 0.5],
+            baseline_Y=torch.empty(0, 2),
+        )
+        self.assertIsNone(mars._chebyshev_objective)
+        # Gets constructed on property access.
+        self.assertIsNotNone(mars.chebyshev_objective)
+        self.assertIsNotNone(mars._chebyshev_objective)
+        # Destored on updating the weights.
+        mars.chebyshev_weights = [0.5, 0.3]
+        self.assertIsNone(mars._chebyshev_objective)
+        # Destroyed on setting baseline_Y.
+        mars.chebyshev_objective
+        mars.baseline_Y = None
+        self.assertIsNone(mars._chebyshev_objective)
+
+        # Error if baseline_Y is not set.
+        with self.assertRaisesRegex(RuntimeError, "baseline_Y"):
+            MARS(
+                alpha=0.5,
+                n_w=3,
+                chebyshev_weights=[0.5, 0.5],
+            ).chebyshev_objective
+
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"dtype": dtype, "device": self.device}
+            # Without ref point or pre-processing.
+            mars = MARS(
+                alpha=0.5,
+                n_w=3,
+                chebyshev_weights=[0.5, 0.5],
+                baseline_Y=torch.tensor([[0.0, 0.5], [0.5, 0.0]], **tkwargs),
+            )
+            obj = mars.chebyshev_objective
+            Y = torch.ones(2, 2, **tkwargs)
+            self.assertTrue(torch.allclose(obj(Y), torch.ones(2, **tkwargs)))
+            # With pre-processing.
+            mars = MARS(
+                alpha=0.5,
+                n_w=3,
+                chebyshev_weights=[0.5, 0.5],
+                baseline_Y=torch.tensor([[0.0, 0.5], [0.5, 0.0]], **tkwargs),
+                preprocessing_function=lambda Y: -Y,
+            )
+            obj = mars.chebyshev_objective
+            Y = -torch.ones(2, 2, **tkwargs)
+            self.assertTrue(torch.allclose(obj(Y), torch.ones(2, **tkwargs)))
+            # With ref point.
+            mars = MARS(
+                alpha=0.5,
+                n_w=3,
+                chebyshev_weights=[0.5, 0.5],
+                baseline_Y=torch.tensor([[0.0, 0.5], [0.5, 0.0]], **tkwargs),
+                ref_point=[1.0, 1.0],
+            )
+            obj = mars.chebyshev_objective
+            Y = torch.ones(2, 2, **tkwargs)
+            self.assertTrue(torch.allclose(obj(Y), torch.zeros(2, **tkwargs)))
+
+    def test_end_to_end(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"dtype": dtype, "device": self.device}
+            mars = MARS(
+                alpha=0.5,
+                n_w=3,
+                chebyshev_weights=[0.5, 0.5],
+                ref_point=[1.0, 1.0],
+                baseline_Y=torch.randn(5, 2, **tkwargs),
+            )
+            samples = torch.randn(5, 9, 2, **tkwargs)
+            mars_vals = mars(samples)
+            self.assertEqual(mars_vals.shape, torch.Size([5, 3]))
+            self.assertEqual(mars_vals.dtype, dtype)
+            self.assertEqual(mars_vals.device.type, self.device.type)

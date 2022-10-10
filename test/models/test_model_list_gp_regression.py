@@ -11,12 +11,13 @@ import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import OptimizationWarning
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models import ModelListGP
 from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.models.transforms import Standardize
 from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
+from botorch.sampling.samplers import IIDNormalSampler
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -96,12 +97,17 @@ class TestModelListGP(BotorchTestCase):
             # test model fitting (sequential)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+                mll = fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
+                )
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
                 # test model fitting (joint)
-                mll = fit_gpytorch_model(
-                    mll, options={"maxiter": 1}, max_retries=1, sequential=False
+                mll = fit_gpytorch_mll(
+                    mll,
+                    optimizer_kwargs={"options": {"maxiter": 1}},
+                    max_attempts=1,
+                    sequential=False,
                 )
 
             # test subset outputs
@@ -142,19 +148,19 @@ class TestModelListGP(BotorchTestCase):
             self.assertIsInstance(posterior.mvn, MultivariateNormal)
 
             # test condition_on_observations
-            f_x = torch.rand(2, 1, **tkwargs)
+            f_x = [torch.rand(2, 1, **tkwargs) for _ in range(2)]
             f_y = torch.rand(2, 2, **tkwargs)
             cm = model.condition_on_observations(f_x, f_y)
             self.assertIsInstance(cm, ModelListGP)
 
             # test condition_on_observations batched
-            f_x = torch.rand(3, 2, 1, **tkwargs)
+            f_x = [torch.rand(3, 2, 1, **tkwargs) for _ in range(2)]
             f_y = torch.rand(3, 2, 2, **tkwargs)
             cm = model.condition_on_observations(f_x, f_y)
             self.assertIsInstance(cm, ModelListGP)
 
             # test condition_on_observations batched (fast fantasies)
-            f_x = torch.rand(2, 1, **tkwargs)
+            f_x = [torch.rand(2, 1, **tkwargs) for _ in range(2)]
             f_y = torch.rand(3, 2, 2, **tkwargs)
             cm = model.condition_on_observations(f_x, f_y)
             self.assertIsInstance(cm, ModelListGP)
@@ -162,6 +168,10 @@ class TestModelListGP(BotorchTestCase):
             # test condition_on_observations (incorrect input shape error)
             with self.assertRaises(BotorchTensorDimensionError):
                 model.condition_on_observations(f_x, torch.rand(3, 2, 3, **tkwargs))
+
+            # test X having wrong size
+            with self.assertRaises(AssertionError):
+                cm = model.condition_on_observations(f_x[:1], f_y)
 
             # test posterior transform
             X = torch.rand(3, 1, **tkwargs)
@@ -196,7 +206,9 @@ class TestModelListGP(BotorchTestCase):
                 self.assertIsInstance(mll_, ExactMarginalLogLikelihood)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+                mll = fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
+                )
 
             # test posterior
             test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
@@ -222,21 +234,21 @@ class TestModelListGP(BotorchTestCase):
             self.assertIsInstance(posterior.mvn, MultivariateNormal)
 
             # test condition_on_observations
-            f_x = torch.rand(2, 1, **tkwargs)
+            f_x = [torch.rand(2, 1, **tkwargs) for _ in range(2)]
             f_y = torch.rand(2, 2, **tkwargs)
             noise = 0.1 + 0.1 * torch.rand_like(f_y)
             cm = model.condition_on_observations(f_x, f_y, noise=noise)
             self.assertIsInstance(cm, ModelListGP)
 
             # test condition_on_observations batched
-            f_x = torch.rand(3, 2, 1, **tkwargs)
+            f_x = [torch.rand(3, 2, 1, **tkwargs) for _ in range(2)]
             f_y = torch.rand(3, 2, 2, **tkwargs)
             noise = 0.1 + 0.1 * torch.rand_like(f_y)
             cm = model.condition_on_observations(f_x, f_y, noise=noise)
             self.assertIsInstance(cm, ModelListGP)
 
             # test condition_on_observations batched (fast fantasies)
-            f_x = torch.rand(2, 1, **tkwargs)
+            f_x = [torch.rand(2, 1, **tkwargs) for _ in range(2)]
             f_y = torch.rand(3, 2, 2, **tkwargs)
             noise = 0.1 + 0.1 * torch.rand(2, 2, **tkwargs)
             cm = model.condition_on_observations(f_x, f_y, noise=noise)
@@ -295,3 +307,103 @@ class TestModelListGP(BotorchTestCase):
             )
             self.assertTrue(m._has_transformed_inputs)
             self.assertTrue(torch.equal(m._original_train_inputs, org_inputs[i]))
+
+    def test_fantasize(self):
+        m1 = SingleTaskGP(torch.rand(5, 2), torch.rand(5, 1)).eval()
+        m2 = SingleTaskGP(torch.rand(5, 2), torch.rand(5, 1)).eval()
+        modellist = ModelListGP(m1, m2)
+        fm = modellist.fantasize(torch.rand(3, 2), sampler=IIDNormalSampler(2))
+        self.assertIsInstance(fm, ModelListGP)
+        for i in range(2):
+            fm_i = fm.models[i]
+            self.assertIsInstance(fm_i, SingleTaskGP)
+            self.assertEqual(fm_i.train_inputs[0].shape, torch.Size([2, 8, 2]))
+            self.assertEqual(fm_i.train_targets.shape, torch.Size([2, 8]))
+
+    def test_fantasize_with_outcome_transform(self) -> None:
+        """
+        Check that fantasized posteriors from a `ModelListGP` with transforms
+        relate in a predictable way to posteriors from a `ModelListGP` when the
+        outputs have been manually transformed.
+
+        We are essentially fitting "Y = 10 * X" with Y standardized.
+        - In the original space, we should predict a mean of ~5 at 0.5
+        - In the standardized space, we should predict ~0.
+        - If we untransform the result in the standardized space, we should recover
+        the prediction of ~5 we would have gotten in the original space.
+        """
+
+        for dtype in [torch.float, torch.double]:
+            with self.subTest(dtype=dtype):
+                tkwargs = {"device": self.device, "dtype": dtype}
+                X = torch.linspace(0, 1, 20, **tkwargs)[:, None]
+                Y = 10 * torch.linspace(0, 1, 20, **tkwargs)[:, None]
+                target_x = torch.tensor([[0.5]], **tkwargs)
+
+                model_with_transform = ModelListGP(
+                    SingleTaskGP(X, Y, outcome_transform=Standardize(m=1))
+                )
+                y_standardized, _ = Standardize(m=1).forward(Y)
+                model_manually_transformed = ModelListGP(
+                    SingleTaskGP(X, y_standardized)
+                )
+
+                def _get_fant_mean(model: ModelListGP) -> float:
+                    fant = model.fantasize(
+                        target_x, sampler=IIDNormalSampler(10, seed=0)
+                    )
+                    return fant.posterior(target_x).mean.mean().item()
+
+                outcome_transform = model_with_transform.models[0].outcome_transform
+                # ~0
+                fant_mean_with_manual_transform = _get_fant_mean(
+                    model_manually_transformed
+                )
+                # Inexact since this is an MC test and we don't want it flaky
+                self.assertAlmostEqual(fant_mean_with_manual_transform, 0.0, delta=0.1)
+                manually_rescaled_mean, _ = outcome_transform.untransform(
+                    fant_mean_with_manual_transform
+                )
+                fant_mean_with_native_transform = _get_fant_mean(model_with_transform)
+                # Inexact since this is an MC test and we don't want it flaky
+                self.assertAlmostEqual(fant_mean_with_native_transform, 5.0, delta=0.5)
+
+                # tighter tolerance here since the models should use the same samples
+                self.assertAlmostEqual(
+                    manually_rescaled_mean.item(),
+                    fant_mean_with_native_transform,
+                    delta=1e-6,
+                )
+
+    def test_fantasize_with_outcome_transform_fixed_noise(self) -> None:
+        """
+        Test that 'fantasize' on average recovers the true mean fn.
+
+        Loose tolerance to protect against flakiness. The true mean function is
+        100 at x=0. If transforms are not properly applied, we'll get answers
+        on the order of ~1. Answers between 99 and 101 are acceptable.
+        """
+        n_fants = 20
+        y_at_low_x = 100.0
+        y_at_high_x = -40.0
+
+        for dtype in [torch.float, torch.double]:
+            with self.subTest(dtype=dtype):
+                tkwargs = {"device": self.device, "dtype": dtype}
+                X = torch.tensor([[0.0], [1.0]], **tkwargs)
+                Y = torch.tensor([[y_at_low_x], [y_at_high_x]], **tkwargs)
+                yvar = torch.full_like(Y, 1e-4)
+                model = ModelListGP(
+                    FixedNoiseGP(X, Y, yvar, outcome_transform=Standardize(m=1))
+                )
+
+                model.posterior(torch.zeros((1, 1), **tkwargs))
+
+                fant = model.fantasize(
+                    X, sampler=IIDNormalSampler(n_fants, seed=0), noise=yvar
+                )
+
+                fant_mean = fant.posterior(X).mean.mean(0).flatten().tolist()
+                self.assertAlmostEqual(fant_mean[0], y_at_low_x, delta=1)
+                # delta=1 is a 1% error (since y_at_low_x = 100)
+                self.assertAlmostEqual(fant_mean[1], y_at_high_x, delta=1)

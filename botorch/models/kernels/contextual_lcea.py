@@ -10,8 +10,8 @@ import torch
 from gpytorch.constraints import Positive
 from gpytorch.kernels.kernel import Kernel
 from gpytorch.kernels.matern_kernel import MaternKernel
-from gpytorch.lazy.sum_lazy_tensor import SumLazyTensor
 from gpytorch.priors.torch_priors import GammaPrior
+from linear_operator.operators.sum_linear_operator import SumLinearOperator
 from torch import Tensor
 from torch.nn import ModuleList
 
@@ -24,24 +24,6 @@ class LCEAKernel(Kernel):
     across contexts. Rather than assuming independence, LCEAKernel models the
     correlation in the latent functions for each context through learning context
     embeddings.
-
-    Args:
-        decomposition: Keys index context names. Values are the indexes of parameters
-            belong to the context. The parameter indexes are in the same order across
-            contexts.
-        batch_shape: Batch shape as usual for gpytorch kernels. Model does not support
-            batch training. When batch_shape is non-empty, it is used for loading
-            hyper-parameter values generated from MCMC sampling.
-        train_embedding: A boolean indictor of whether to learn context embeddings
-        cat_feature_dict: Keys are context names and values are list of categorical
-            features i.e. {"context_name" : [cat_0, ..., cat_k]}. k equals to number
-            of categorical variables. If None, we use context names in the
-            decomposition as the only categorical feature i.e. k = 1
-        embs_feature_dict: Pre-trained continuous embedding features of each context.
-        embs_dim_list: Embedding dimension for each categorical variable. The length
-            equals to num of categorical features k. If None, emb dim is set to 1
-            for each categorical variable.
-        context_weight_dict: Known population Weights of each context.
     """
 
     def __init__(
@@ -55,7 +37,26 @@ class LCEAKernel(Kernel):
         context_weight_dict: Optional[Dict] = None,
         device: Optional[torch.device] = None,
     ) -> None:
-
+        r"""
+        Args:
+            decomposition: Keys index context names. Values are the indexes of
+                parameters belong to the context. The parameter indexes are in the same
+                order across contexts.
+            batch_shape: Batch shape as usual for gpytorch kernels. Model does not
+                support batch training. When batch_shape is non-empty, it is used for
+                loading hyper-parameter values generated from MCMC sampling.
+            train_embedding: A boolean indictor of whether to learn context embeddings.
+            cat_feature_dict: Keys are context names and values are list of categorical
+                features i.e. {"context_name" : [cat_0, ..., cat_k]}. k equals the
+                number of categorical variables. If None, uses context names in the
+                decomposition as the only categorical feature, i.e., k = 1.
+            embs_feature_dict: Pre-trained continuous embedding features of each
+                context.
+            embs_dim_list: Embedding dimension for each categorical variable. The length
+                equals to num of categorical features k. If None, the embedding
+                dimension is set to 1 for each categorical variable.
+            context_weight_dict: Known population weights of each context.
+        """
         super().__init__(batch_shape=batch_shape)
         self.decomposition = decomposition
         self.batch_shape = batch_shape
@@ -219,7 +220,7 @@ class LCEAKernel(Kernel):
         else:
             all_embs = self._task_embeddings()  # no broadcast - (num_contexts x k)
 
-        context_covar = self.task_covar_module(all_embs).evaluate()
+        context_covar = self.task_covar_module(all_embs).to_dense()
         if self.context_weight is None:
             context_outputscales = self.outputscale_list
         else:
@@ -340,5 +341,5 @@ class LCEAKernel(Kernel):
         if diag:
             res = sum(covars)
         else:
-            res = SumLazyTensor(*covars)
+            res = SumLinearOperator(*covars)
         return res

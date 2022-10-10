@@ -19,9 +19,10 @@ from botorch.models.converter import (
     batched_to_model_list,
     model_list_to_batched,
 )
-from botorch.models.transforms.input import Normalize
+from botorch.models.transforms.input import AppendFeatures, Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.utils.testing import BotorchTestCase
+from gpytorch.kernels import RBFKernel
 from gpytorch.likelihoods import GaussianLikelihood
 
 from .test_gpytorch import SimpleGPyTorchModel
@@ -80,6 +81,16 @@ class TestConverters(BotorchTestCase):
                             expected_octf.__getattr__(attr_name),
                         )
                     )
+            # test with AppendFeatures
+            input_tf = AppendFeatures(
+                feature_set=torch.rand(2, 1, device=self.device, dtype=dtype)
+            )
+            batch_gp = SingleTaskGP(
+                train_X, train_Y, outcome_transform=octf, input_transform=input_tf
+            ).eval()
+            list_gp = batched_to_model_list(batch_gp)
+            self.assertIsInstance(list_gp, ModelListGP)
+            self.assertIsInstance(list_gp.models[0].input_transform, AppendFeatures)
 
     def test_model_list_to_batched(self):
         for dtype in (torch.float, torch.double):
@@ -135,6 +146,18 @@ class TestConverters(BotorchTestCase):
             gp2 = SingleTaskGP(train_X, train_Y2, likelihood=GaussianLikelihood())
             with self.assertRaises(NotImplementedError):
                 model_list_to_batched(ModelListGP(gp2))
+            # test non-default kernel
+            gp1 = SingleTaskGP(train_X, train_Y1, covar_module=RBFKernel())
+            gp2 = SingleTaskGP(train_X, train_Y2, covar_module=RBFKernel())
+            list_gp = ModelListGP(gp1, gp2)
+            batch_gp = model_list_to_batched(list_gp)
+            self.assertEqual(type(batch_gp.covar_module), RBFKernel)
+            # test error when component GPs have different kernel types
+            gp1 = SingleTaskGP(train_X, train_Y1, covar_module=RBFKernel())
+            gp2 = SingleTaskGP(train_X, train_Y2)
+            list_gp = ModelListGP(gp1, gp2)
+            with self.assertRaises(UnsupportedError):
+                model_list_to_batched(list_gp)
             # test FixedNoiseGP
             train_X = torch.rand(10, 2, device=self.device, dtype=dtype)
             train_Y1 = train_X.sum(dim=-1, keepdim=True)
@@ -167,6 +190,16 @@ class TestConverters(BotorchTestCase):
             self.assertTrue(
                 torch.equal(batch_gp.input_transform.bounds, input_tf.bounds)
             )
+            # test with AppendFeatures
+            input_tf3 = AppendFeatures(
+                feature_set=torch.rand(2, 1, device=self.device, dtype=dtype)
+            )
+            gp1_ = SingleTaskGP(train_X, train_Y1, input_transform=input_tf3)
+            gp2_ = SingleTaskGP(train_X, train_Y2, input_transform=input_tf3)
+            list_gp = ModelListGP(gp1_, gp2_).eval()
+            batch_gp = model_list_to_batched(list_gp)
+            self.assertIsInstance(batch_gp, SingleTaskGP)
+            self.assertIsInstance(batch_gp.input_transform, AppendFeatures)
             # test different input transforms
             input_tf2 = Normalize(
                 d=2,
@@ -177,7 +210,7 @@ class TestConverters(BotorchTestCase):
             gp1_ = SingleTaskGP(train_X, train_Y1, input_transform=input_tf)
             gp2_ = SingleTaskGP(train_X, train_Y2, input_transform=input_tf2)
             list_gp = ModelListGP(gp1_, gp2_)
-            with self.assertRaises(UnsupportedError):
+            with self.assertRaisesRegex(UnsupportedError, "have the same"):
                 model_list_to_batched(list_gp)
 
             # test batched input transform
@@ -292,17 +325,26 @@ class TestConverters(BotorchTestCase):
             self.assertTrue(
                 torch.equal(batch_so_model.input_transform.bounds, input_tf.bounds)
             )
+            # test with AppendFeatures
+            input_tf = AppendFeatures(
+                feature_set=torch.rand(2, 1, device=self.device, dtype=dtype)
+            )
+            batched_mo_model = SingleTaskGP(
+                train_X, train_Y, input_transform=input_tf
+            ).eval()
+            batch_so_model = batched_multi_output_to_single_output(batched_mo_model)
+            self.assertIsInstance(batch_so_model.input_transform, AppendFeatures)
 
             # test batched input transform
-            input_tf2 = Normalize(
+            input_tf = Normalize(
                 d=2,
                 bounds=torch.tensor(
                     [[-1.0, -1.0], [1.0, 1.0]], device=self.device, dtype=dtype
                 ),
                 batch_shape=torch.Size([2]),
             )
-            batched_mo_model = SingleTaskGP(train_X, train_Y, input_transform=input_tf2)
-            batched_so_model = batched_multi_output_to_single_output(batched_mo_model)
+            batched_mo_model = SingleTaskGP(train_X, train_Y, input_transform=input_tf)
+            batch_so_model = batched_multi_output_to_single_output(batched_mo_model)
             self.assertIsInstance(batch_so_model.input_transform, Normalize)
             self.assertTrue(
                 torch.equal(batch_so_model.input_transform.bounds, input_tf.bounds)

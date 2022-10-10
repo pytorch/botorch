@@ -8,9 +8,13 @@ import itertools
 import warnings
 
 import torch
-from botorch import fit_gpytorch_model
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
-from botorch.exceptions.warnings import OptimizationWarning
+from botorch.exceptions import OptimizationWarning, UnsupportedError
+from botorch.fit import fit_gpytorch_mll
+from botorch.models.likelihoods.pairwise import (
+    PairwiseLogitLikelihood,
+    PairwiseProbitLikelihood,
+)
 from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
 from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
@@ -30,34 +34,47 @@ class TestPairwiseGP(BotorchTestCase):
 
         return train_X, train_Y, train_comp
 
-    def _get_model_and_data(self, batch_shape, X_dim=2, **tkwargs):
+    def _get_model_and_data(self, batch_shape, X_dim=2, likelihood_cls=None, **tkwargs):
         train_X, train_Y, train_comp = self._make_rand_mini_data(
             batch_shape=batch_shape, X_dim=X_dim, **tkwargs
         )
 
-        model_kwargs = {"datapoints": train_X, "comparisons": train_comp}
+        model_kwargs = {
+            "datapoints": train_X,
+            "comparisons": train_comp,
+            "likelihood": None if likelihood_cls is None else likelihood_cls(),
+        }
         model = PairwiseGP(**model_kwargs)
         return model, model_kwargs
 
     def test_pairwise_gp(self):
-        for batch_shape, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])), (torch.float, torch.double)
+        for batch_shape, dtype, likelihood_cls in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (torch.float, torch.double),
+            (PairwiseLogitLikelihood, PairwiseProbitLikelihood),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             X_dim = 2
 
             model, model_kwargs = self._get_model_and_data(
-                batch_shape=batch_shape, X_dim=X_dim, **tkwargs
+                batch_shape=batch_shape,
+                X_dim=X_dim,
+                likelihood_cls=likelihood_cls,
+                **tkwargs,
             )
             train_X = model_kwargs["datapoints"]
             train_comp = model_kwargs["comparisons"]
 
             # test training
             # regular training
-            mll = PairwiseLaplaceMarginalLogLikelihood(model).to(**tkwargs)
+            mll = PairwiseLaplaceMarginalLogLikelihood(model.likelihood, model).to(
+                **tkwargs
+            )
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                fit_gpytorch_model(mll, options={"maxiter": 2}, max_retries=1)
+                fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 2}}, max_attempts=1
+                )
             # prior training
             prior_m = PairwiseGP(None, None).to(**tkwargs)
             with self.assertRaises(RuntimeError):
@@ -68,18 +85,12 @@ class TestPairwiseGP(BotorchTestCase):
             other_comp = train_comp.clone()
             with self.assertRaises(RuntimeError):
                 custom_m(other_X)
-            custom_mll = PairwiseLaplaceMarginalLogLikelihood(custom_m).to(**tkwargs)
+            custom_mll = PairwiseLaplaceMarginalLogLikelihood(
+                custom_m.likelihood, custom_m
+            ).to(**tkwargs)
             post = custom_m(train_X)
             with self.assertRaises(RuntimeError):
                 custom_mll(post, other_comp)
-
-            # setting jitter = 0 with a singular covar will raise error
-            sing_train_X = torch.ones(batch_shape + torch.Size([10, X_dim]), **tkwargs)
-            with self.assertRaises(RuntimeError):
-                with warnings.catch_warnings():
-                    warnings.filterwarnings("ignore", category=RuntimeWarning)
-                    custom_m = PairwiseGP(sing_train_X, train_comp, jitter=0)
-                    custom_m.posterior(sing_train_X)
 
             # test init
             self.assertIsInstance(model.mean_module, ConstantMean)
@@ -103,20 +114,6 @@ class TestPairwiseGP(BotorchTestCase):
             prior_m.eval()
             post = prior_m.posterior(train_X)
             self.assertIsInstance(post, GPyTorchPosterior)
-
-            # test trying adding jitter
-            pd_mat = torch.eye(2, 2)
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=RuntimeWarning)
-                jittered_pd_mat = model._add_jitter(pd_mat)
-            diag_diff = (jittered_pd_mat - pd_mat).diagonal(dim1=-2, dim2=-1)
-            self.assertTrue(
-                torch.allclose(
-                    diag_diff,
-                    torch.full_like(diag_diff, model._jitter),
-                    atol=model._jitter / 10,
-                )
-            )
 
             # test initial utility val
             util_comp = torch.topk(model.utility, k=2, dim=-1).indices.unsqueeze(-2)
@@ -172,20 +169,26 @@ class TestPairwiseGP(BotorchTestCase):
                 model.set_train_data(train_X, changed_train_comp, strict=True)
 
     def test_condition_on_observations(self):
-        for batch_shape, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])), (torch.float, torch.double)
+        for batch_shape, dtype, likelihood_cls in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (torch.float, torch.double),
+            (PairwiseLogitLikelihood, PairwiseProbitLikelihood),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             X_dim = 2
 
             model, model_kwargs = self._get_model_and_data(
-                batch_shape=batch_shape, X_dim=X_dim, **tkwargs
+                batch_shape=batch_shape,
+                X_dim=X_dim,
+                likelihood_cls=likelihood_cls,
+                **tkwargs,
             )
             train_X = model_kwargs["datapoints"]
             train_comp = model_kwargs["comparisons"]
 
             # evaluate model
             model.posterior(torch.rand(torch.Size([4, X_dim]), **tkwargs))
+
             # test condition_on_observations
 
             # test condition_on_observations with prior mode
@@ -241,6 +244,7 @@ class TestPairwiseGP(BotorchTestCase):
                     model_kwargs_non_batch = {
                         "datapoints": model_kwargs["datapoints"][0],
                         "comparisons": model_kwargs["comparisons"][0],
+                        "likelihood": likelihood_cls(),
                     }
                     model_non_batch = model.__class__(**model_kwargs_non_batch)
                     model_non_batch.load_state_dict(state_dict_non_batch)
@@ -268,14 +272,19 @@ class TestPairwiseGP(BotorchTestCase):
                     )
 
     def test_fantasize(self):
-        for batch_shape, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])), (torch.float, torch.double)
+        for batch_shape, dtype, likelihood_cls in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (torch.float, torch.double),
+            (PairwiseLogitLikelihood, PairwiseProbitLikelihood),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             X_dim = 2
 
             model, model_kwargs = self._get_model_and_data(
-                batch_shape=batch_shape, X_dim=X_dim, **tkwargs
+                batch_shape=batch_shape,
+                X_dim=X_dim,
+                likelihood_cls=likelihood_cls,
+                **tkwargs,
             )
 
             # fantasize
@@ -291,11 +300,14 @@ class TestPairwiseGP(BotorchTestCase):
     def test_load_state_dict(self):
         model, _ = self._get_model_and_data(batch_shape=[])
         sd = model.state_dict()
-        with warnings.catch_warnings(record=True) as ws:
-            missing, unexpected = model.load_state_dict(sd, strict=True)
-        # Check that the warning was raised.
-        self.assertTrue(any("strict=True" in str(w.message) for w in ws))
-        # Check that buffers are missing.
-        self.assertIn("datapoints", missing)
-        self.assertIn("D", missing)
-        self.assertIn("covar", missing)
+        with self.assertRaises(UnsupportedError):
+            model.load_state_dict(sd, strict=True)
+
+        # Set instance buffers to None
+        for buffer_name in model._buffer_names:
+            model.register_buffer(buffer_name, None)
+
+        # Check that instance buffers were not restored
+        _ = model.load_state_dict(sd)
+        for buffer_name in model._buffer_names:
+            self.assertIsNone(model.get_buffer(buffer_name))

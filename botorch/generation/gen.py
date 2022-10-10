@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, List, NoReturn, Optional, Tuple, Type, U
 import numpy as np
 import torch
 from botorch.acquisition import AcquisitionFunction
+from botorch.exceptions.warnings import OptimizationWarning
 from botorch.generation.utils import _remove_fixed_features_from_optimization
 from botorch.optim.parameter_constraints import (
     _arrayify,
@@ -210,6 +211,23 @@ def gen_candidates_scipy(
         callback=options.get("callback", None),
         options={k: v for k, v in options.items() if k not in ["method", "callback"]},
     )
+
+    if "success" not in res.keys() or "status" not in res.keys():
+        with warnings.catch_warnings():
+            warnings.simplefilter("always", category=OptimizationWarning)
+            warnings.warn(
+                "Optimization failed within `scipy.optimize.minimize` with no "
+                "status returned to `res.`",
+                OptimizationWarning,
+            )
+    elif not res.success:
+        with warnings.catch_warnings():
+            warnings.simplefilter("always", category=OptimizationWarning)
+            warnings.warn(
+                f"Optimization failed within `scipy.optimize.minimize` with status "
+                f"{res.status}.",
+                OptimizationWarning,
+            )
     candidates = fix_features(
         X=torch.from_numpy(res.x).to(initial_conditions).reshape(shapeX),
         fixed_features=fixed_features,

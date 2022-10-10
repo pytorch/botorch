@@ -47,6 +47,9 @@ from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
+from botorch.acquisition.multi_objective.multi_output_risk_measures import (
+    MultiOutputExpectation,
+)
 from botorch.acquisition.multi_objective.objective import (
     IdentityAnalyticMultiOutputObjective,
     IdentityMCMultiOutputObjective,
@@ -59,11 +62,13 @@ from botorch.acquisition.objective import (
     ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
+from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
 from botorch.acquisition.utils import (
     expand_trace_observations,
     project_to_target_fidelity,
 )
 from botorch.exceptions.errors import UnsupportedError
+from botorch.models.deterministic import FixedSingleSampleModel
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.datasets import SupervisedDataset
@@ -105,7 +110,10 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
     def test_get_best_f_analytic(self):
         with self.assertRaises(NotImplementedError):
             get_best_f_analytic(training_data=self.multiX_multiY)
+
         best_f = get_best_f_analytic(training_data=self.blockX_blockY)
+        self.assertEqual(best_f, get_best_f_analytic(self.blockX_blockY[0]))
+
         best_f_expected = self.blockX_blockY[0].Y().squeeze().max()
         self.assertEqual(best_f, best_f_expected)
         with self.assertRaises(NotImplementedError):
@@ -128,7 +136,10 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
     def test_get_best_f_mc(self):
         with self.assertRaises(NotImplementedError):
             get_best_f_mc(training_data=self.multiX_multiY)
+
         best_f = get_best_f_mc(training_data=self.blockX_blockY)
+        self.assertEqual(best_f, get_best_f_mc(self.blockX_blockY[0]))
+
         best_f_expected = self.blockX_blockY[0].Y().squeeze().max()
         self.assertEqual(best_f, best_f_expected)
         with self.assertRaisesRegex(UnsupportedError, "require an objective"):
@@ -296,6 +307,25 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
         self.assertFalse(kwargs["maximize"])
         with self.assertRaisesRegex(ValueError, "Field `X` must be shared"):
             c(model=mock_model, training_data=self.multiX_multiY)
+
+    def test_construct_inputs_constrained_analytic_eubo(self):
+        c = get_acqf_input_constructor(AnalyticExpectedUtilityOfBestOption)
+        mock_model = mock.Mock()
+        mock_model.num_outputs = 3
+        mock_model.train_inputs = [None]
+        mock_pref_model = mock.Mock()
+        kwargs = c(model=mock_model, pref_model=mock_pref_model)
+        self.assertTrue(isinstance(kwargs["outcome_model"], FixedSingleSampleModel))
+        self.assertTrue(kwargs["pref_model"] is mock_pref_model)
+        self.assertTrue(kwargs["previous_winner"] is None)
+
+        previous_winner = torch.randn(3)
+        kwargs = c(
+            model=mock_model,
+            pref_model=mock_pref_model,
+            previous_winner=previous_winner,
+        )
+        self.assertTrue(torch.equal(kwargs["previous_winner"], previous_winner))
 
 
 class TestMCAcquisitionFunctionInputConstructors(
@@ -536,6 +566,31 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertTrue(torch.equal(partitioning.ref_point, objective_thresholds))
         self.assertTrue(torch.equal(partitioning._neg_Y, -mean))
 
+        # Test with risk measures.
+        for use_preprocessing in (True, False):
+            obj = MultiOutputExpectation(
+                n_w=3,
+                preprocessing_function=WeightedMCMultiOutputObjective(
+                    torch.tensor([-1.0, -1.0])
+                )
+                if use_preprocessing
+                else None,
+            )
+            kwargs = c(
+                model=mm,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                objective=obj,
+            )
+            expected_obj_t = (
+                -objective_thresholds if use_preprocessing else objective_thresholds
+            )
+            self.assertIs(kwargs["objective"], obj)
+            self.assertTrue(torch.equal(kwargs["ref_point"], expected_obj_t))
+            partitioning = kwargs["partitioning"]
+            self.assertIsInstance(partitioning, FastNondominatedPartitioning)
+            self.assertTrue(torch.equal(partitioning.ref_point, expected_obj_t))
+
     def test_construct_inputs_qEHVI(self):
         c = get_acqf_input_constructor(qExpectedHypervolumeImprovement)
         objective_thresholds = torch.rand(2)
@@ -707,6 +762,36 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertFalse(kwargs["cache_pending"])
         self.assertEqual(kwargs["max_iep"], 1)
         self.assertFalse(kwargs["incremental_nehvi"])
+
+        # Test with risk measures.
+        with self.assertRaisesRegex(UnsupportedError, "feasibility-weighted"):
+            kwargs = c(
+                model=mock_model,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                objective=MultiOutputExpectation(n_w=3),
+                outcome_constraints=outcome_constraints,
+            )
+        for use_preprocessing in (True, False):
+            obj = MultiOutputExpectation(
+                n_w=3,
+                preprocessing_function=WeightedMCMultiOutputObjective(
+                    torch.tensor([-1.0, -1.0])
+                )
+                if use_preprocessing
+                else None,
+            )
+            kwargs = c(
+                model=mock_model,
+                training_data=self.blockX_blockY,
+                objective_thresholds=objective_thresholds,
+                objective=obj,
+            )
+            expected_obj_t = (
+                -objective_thresholds if use_preprocessing else objective_thresholds
+            )
+            self.assertIs(kwargs["objective"], obj)
+            self.assertTrue(torch.equal(kwargs["ref_point"], expected_obj_t))
 
     def test_construct_inputs_kg(self):
         current_value = torch.tensor(1.23)

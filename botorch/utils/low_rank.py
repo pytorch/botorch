@@ -13,14 +13,14 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
 )
-from gpytorch.lazy import BlockDiagLazyTensor
-from gpytorch.lazy.lazy_tensor import LazyTensor
-from gpytorch.utils.cholesky import psd_safe_cholesky
-from gpytorch.utils.errors import NanError, NotPSDError
+from linear_operator.operators import BlockDiagLinearOperator, LinearOperator
+
+from linear_operator.utils.cholesky import psd_safe_cholesky
+from linear_operator.utils.errors import NanError, NotPSDError
 from torch import Tensor
 
 
-def extract_batch_covar(mt_mvn: MultitaskMultivariateNormal) -> LazyTensor:
+def extract_batch_covar(mt_mvn: MultitaskMultivariateNormal) -> LinearOperator:
     r"""Extract a batched independent covariance matrix from an MTMVN.
 
     Args:
@@ -33,9 +33,11 @@ def extract_batch_covar(mt_mvn: MultitaskMultivariateNormal) -> LazyTensor:
 
     """
     lazy_covar = mt_mvn.lazy_covariance_matrix
-    if not isinstance(lazy_covar, BlockDiagLazyTensor):
-        raise BotorchError(f"Expected BlockDiagLazyTensor, but got {type(lazy_covar)}.")
-    return lazy_covar.base_lazy_tensor
+    if not isinstance(lazy_covar, BlockDiagLinearOperator):
+        raise BotorchError(
+            f"Expected BlockDiagLinearOperator, but got {type(lazy_covar)}."
+        )
+    return lazy_covar.base_linear_op
 
 
 def _reshape_base_samples(
@@ -86,7 +88,8 @@ def sample_cached_cholesky(
     sample_shape: torch.Size,
     max_tries: int = 6,
 ) -> Tensor:
-    r"""Get posterior samples at the `q` new points from the joint multi-output posterior.
+    r"""Get posterior samples at the `q` new points from the joint multi-output
+    posterior.
 
     Args:
         posterior: The joint posterior is over (X_baseline, X).
@@ -108,7 +111,7 @@ def sample_cached_cholesky(
     else:
         lazy_covar = posterior.mvn.lazy_covariance_matrix
     # Get the `q` new rows of the batched covariance matrix
-    bottom_rows = lazy_covar[..., -q:, :].evaluate()
+    bottom_rows = lazy_covar[..., -q:, :].to_dense()
     # The covariance in block form is:
     # [K(X_baseline, X_baseline), K(X_baseline, X)]
     # [K(X, X_baseline), K(X, X)]

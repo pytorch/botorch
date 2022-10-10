@@ -100,8 +100,8 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
         bdims = tuple(1 for _ in X.shape[:-2])
         if self.model.num_outputs > 1:
             # We use q=1 here b/c ScalarizedObjective currently does not fully exploit
-            # lazy tensor operations and thus may be slow / overly memory-hungry.
-            # TODO (T52818288): Properly use lazy tensors in scalarize_posterior
+            # LinearOperator operations and thus may be slow / overly memory-hungry.
+            # TODO (T52818288): Properly use LinearOperators in scalarize_posterior
             mc_points = self.mc_points.view(-1, *bdims, 1, X.size(-1))
         else:
             # While we only need marginal variances, we can evaluate for q>1

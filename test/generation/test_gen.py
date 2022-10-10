@@ -11,16 +11,17 @@ from unittest import mock
 import torch
 from botorch.acquisition import qExpectedImprovement, qKnowledgeGradient
 from botorch.exceptions.warnings import OptimizationWarning
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.generation.gen import (
     gen_candidates_scipy,
     gen_candidates_torch,
     get_best_candidates,
 )
 from botorch.models import SingleTaskGP
-from botorch.utils.testing import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 from gpytorch import settings as gpt_settings
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+from scipy.optimize import OptimizeResult
 
 
 EPS = 1e-8
@@ -60,9 +61,8 @@ class TestBaseCandidateGeneration(BotorchTestCase):
         self.model = model.to(device=self.device, dtype=dtype)
         self.mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=OptimizationWarning)
-            self.mll = fit_gpytorch_model(
-                self.mll, options={"maxiter": 1}, max_retries=1
+            self.mll = fit_gpytorch_mll(
+                self.mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
             )
 
 
@@ -83,15 +83,21 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 if isinstance(acqf, qKnowledgeGradient):
                     ics = ics.repeat(5, 1)
 
-                candidates, _ = gen_candidates(
-                    initial_conditions=ics,
-                    acquisition_function=acqf,
-                    lower_bounds=0,
-                    upper_bounds=1,
-                    options=options or {},
-                )
+                kwargs = {
+                    "initial_conditions": ics,
+                    "acquisition_function": acqf,
+                    "lower_bounds": 0,
+                    "upper_bounds": 1,
+                    "options": options or {},
+                }
+                if gen_candidates is gen_candidates_torch:
+                    kwargs["callback"] = mock.MagicMock()
+                candidates, _ = gen_candidates(**kwargs)
+
                 if isinstance(acqf, qKnowledgeGradient):
                     candidates = acqf.extract_candidates(candidates)
+                if gen_candidates is gen_candidates_torch:
+                    self.assertTrue(kwargs["callback"].call_count > 0)
 
                 self.assertTrue(-EPS <= candidates <= 1 + EPS)
 
@@ -119,15 +125,19 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 ics = self.initial_conditions
                 if isinstance(acqf, qKnowledgeGradient):
                     ics = ics.repeat(5, 1)
-
-                candidates, _ = gen_candidates(
-                    initial_conditions=ics,
-                    acquisition_function=acqf,
-                    lower_bounds=0,
-                    upper_bounds=1,
-                    fixed_features={1: None},
-                    options=options or {},
-                )
+                # we are getting a warning that this fails with status 1:
+                # 'STOP: TOTAL NO. of ITERATIONS REACHED LIMIT'
+                # This is expected since we have set "maxiter" low, so suppress
+                # the warning
+                with warnings.catch_warnings(record=True):
+                    candidates, _ = gen_candidates(
+                        initial_conditions=ics,
+                        acquisition_function=acqf,
+                        lower_bounds=0,
+                        upper_bounds=1,
+                        fixed_features={1: None},
+                        options=options or {},
+                    )
                 if isinstance(acqf, qKnowledgeGradient):
                     candidates = acqf.extract_candidates(candidates)
                 candidates = candidates.squeeze(0)
@@ -156,15 +166,19 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 ics = self.initial_conditions
                 if isinstance(acqf, qKnowledgeGradient):
                     ics = ics.repeat(5, 1)
-
-                candidates, _ = gen_candidates(
-                    initial_conditions=ics,
-                    acquisition_function=acqf,
-                    lower_bounds=0,
-                    upper_bounds=1,
-                    fixed_features={1: 0.25},
-                    options=options,
-                )
+                # we are getting a warning that this fails with status 1:
+                # 'STOP: TOTAL NO. of ITERATIONS REACHED LIMIT'
+                # This is expected since we have set "maxiter" low, so suppress
+                # the warning
+                with warnings.catch_warnings(record=True):
+                    candidates, _ = gen_candidates(
+                        initial_conditions=ics,
+                        acquisition_function=acqf,
+                        lower_bounds=0,
+                        upper_bounds=1,
+                        fixed_features={1: 0.25},
+                        options=options,
+                    )
 
                 if isinstance(acqf, qKnowledgeGradient):
                     candidates = acqf.extract_candidates(candidates)
@@ -178,21 +192,66 @@ class TestGenCandidates(TestBaseCandidateGeneration):
         for double in (True, False):
             self._setUp(double=double, expand=True)
             qEI = qExpectedImprovement(self.model, best_f=self.f_best)
-            candidates, _ = gen_candidates_scipy(
-                initial_conditions=self.initial_conditions.reshape(1, 1, -1),
-                acquisition_function=qEI,
-                inequality_constraints=[
-                    (torch.tensor([0]), torch.tensor([1]), 0),
-                    (torch.tensor([1]), torch.tensor([-1]), -1),
-                ],
-                fixed_features={1: 0.25},
-                options=options,
-            )
+            # we are getting a warning that this fails with status 9:
+            # "Iteration limit reached." This is expected since we have set
+            # "maxiter" low, so suppress the warning.
+            with warnings.catch_warnings(record=True):
+                candidates, _ = gen_candidates_scipy(
+                    initial_conditions=self.initial_conditions.reshape(1, 1, -1),
+                    acquisition_function=qEI,
+                    inequality_constraints=[
+                        (torch.tensor([0]), torch.tensor([1]), 0),
+                        (torch.tensor([1]), torch.tensor([-1]), -1),
+                    ],
+                    fixed_features={1: 0.25},
+                    options=options,
+                )
             # candidates is of dimension 1 x 1 x 2
             # so we are squeezing all the singleton dimensions
             candidates = candidates.squeeze()
             self.assertTrue(-EPS <= candidates[0] <= 1 + EPS)
             self.assertTrue(candidates[1].item() == 0.25)
+
+    def test_gen_candidates_scipy_warns_opt_failure(self):
+        with warnings.catch_warnings(record=True) as ws:
+            self.test_gen_candidates(options={"maxls": 1})
+        expected_msg = (
+            "Optimization failed within `scipy.optimize.minimize` with status 2."
+        )
+        expected_warning_raised = any(
+            (
+                issubclass(w.category, OptimizationWarning)
+                and expected_msg in str(w.message)
+                for w in ws
+            )
+        )
+        self.assertTrue(expected_warning_raised)
+
+    def test_gen_candidates_scipy_warns_opt_no_res(self):
+        ckwargs = {"dtype": torch.float, "device": self.device}
+
+        test_ics = torch.rand(3, 1, **ckwargs)
+        expected_msg = (
+            "Optimization failed within `scipy.optimize.minimize` with no "
+            "status returned to `res.`"
+        )
+        with mock.patch(
+            "botorch.generation.gen.minimize"
+        ) as mock_minimize, warnings.catch_warnings(record=True) as ws:
+            mock_minimize.return_value = OptimizeResult(x=test_ics.cpu().numpy())
+
+            gen_candidates_scipy(
+                initial_conditions=test_ics,
+                acquisition_function=MockAcquisitionFunction(),
+            )
+        expected_warning_raised = any(
+            (
+                issubclass(w.category, OptimizationWarning)
+                and expected_msg in str(w.message)
+                for w in ws
+            )
+        )
+        self.assertTrue(expected_warning_raised)
 
     def test_gen_candidates_torch_with_fixed_features(self):
         self.test_gen_candidates_with_fixed_features(

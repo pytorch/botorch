@@ -6,7 +6,7 @@
 
 
 import torch
-from botorch import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.contextual import LCEAGP, SACGP
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.kernels.contextual_lcea import LCEAKernel
@@ -17,7 +17,7 @@ from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
 
-class ContextualGPTest(BotorchTestCase):
+class TestContextualGP(BotorchTestCase):
     def test_SACGP(self):
         for dtype in (torch.float, torch.double):
             train_X = torch.tensor(
@@ -33,7 +33,7 @@ class ContextualGPTest(BotorchTestCase):
 
             model = SACGP(train_X, train_Y, train_Yvar, self.decomposition)
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            fit_gpytorch_model(mll, options={"maxiter": 1})
+            fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 1}})
 
             self.assertIsInstance(model, FixedNoiseGP)
             self.assertDictEqual(model.decomposition, self.decomposition)
@@ -45,7 +45,7 @@ class ContextualGPTest(BotorchTestCase):
             num_of_lengthscales = 0
             num_of_outputscales = 0
             for param_name, param in model.named_parameters():
-                if param_name == "mean_module.constant":
+                if param_name == "mean_module.raw_constant":
                     num_of_mean += param.data.shape.numel()
                 elif "raw_lengthscale" in param_name:
                     num_of_lengthscales += param.data.shape.numel()
@@ -81,7 +81,7 @@ class ContextualGPTest(BotorchTestCase):
                 decomposition=decomposition,
             )
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            fit_gpytorch_model(mll, options={"maxiter": 1})
+            fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 1}})
 
             self.assertIsInstance(model, LCEAGP)
             self.assertIsInstance(model.covar_module, LCEAKernel)

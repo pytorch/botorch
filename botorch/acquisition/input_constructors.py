@@ -74,12 +74,15 @@ from botorch.acquisition.objective import (
     ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
+from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
+from botorch.acquisition.risk_measures import RiskMeasureMCObjective
 from botorch.acquisition.utils import (
     expand_trace_observations,
     project_to_target_fidelity,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.cost import AffineFidelityCostModel
+from botorch.models.deterministic import FixedSingleSampleModel
 from botorch.models.model import Model
 from botorch.optim.optimize import optimize_acqf
 from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
@@ -100,7 +103,7 @@ MaybeDict = Union[T, Dict[Hashable, T]]
 
 
 def _field_is_shared(
-    datasets: Union[Dict[Hashable, BotorchDataset], Iterable[BotorchDataset]],
+    datasets: Union[Iterable[BotorchDataset], Dict[Hashable, BotorchDataset]],
     fieldname: Hashable,
 ) -> bool:
     r"""Determines whether or not a given field is shared by all datasets."""
@@ -494,7 +497,8 @@ def construct_inputs_qNEI(
     X_pending: Optional[Tensor] = None,
     sampler: Optional[MCSampler] = None,
     X_baseline: Optional[Tensor] = None,
-    prune_baseline: bool = False,
+    prune_baseline: Optional[bool] = False,
+    cache_root: Optional[bool] = True,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the `qNoisyExpectedImprovement` constructor.
@@ -542,6 +546,7 @@ def construct_inputs_qNEI(
         **base_inputs,
         "X_baseline": X_baseline,
         "prune_baseline": prune_baseline,
+        "cache_root": cache_root,
     }
 
 
@@ -673,7 +678,11 @@ def construct_inputs_EHVI(
     # objective threhsold to have the proper optimization direction.
     if objective is None:
         objective = IdentityAnalyticMultiOutputObjective()
-    ref_point = objective(objective_thresholds)
+    if isinstance(objective, RiskMeasureMCObjective):
+        pre_obj = objective.preprocessing_function
+    else:
+        pre_obj = objective
+    ref_point = pre_obj(objective_thresholds)
 
     # Compute posterior mean (for ref point computation ref pareto frontier)
     # if one is not provided among arguments.
@@ -684,13 +693,13 @@ def construct_inputs_EHVI(
     if alpha > 0:
         partitioning = NondominatedPartitioning(
             ref_point=ref_point,
-            Y=objective(Y_pmean),
+            Y=pre_obj(Y_pmean),
             alpha=alpha,
         )
     else:
         partitioning = FastNondominatedPartitioning(
             ref_point=ref_point,
-            Y=objective(Y_pmean),
+            Y=pre_obj(Y_pmean),
         )
 
     return {
@@ -789,6 +798,11 @@ def construct_inputs_qNEHVI(
     if outcome_constraints is None:
         cons_tfs = None
     else:
+        if isinstance(objective, RiskMeasureMCObjective):
+            raise UnsupportedError(
+                "Outcome constraints are not supported with risk measures. "
+                "Use a feasibility-weighted risk measure instead."
+            )
         cons_tfs = get_outcome_constraint_transforms(outcome_constraints)
 
     sampler = kwargs.get("sampler")
@@ -797,9 +811,14 @@ def construct_inputs_qNEHVI(
             mc_samples=kwargs.get("mc_samples", 128), qmc=kwargs.get("qmc", True)
         )
 
+    if isinstance(objective, RiskMeasureMCObjective):
+        ref_point = objective.preprocessing_function(objective_thresholds)
+    else:
+        ref_point = objective(objective_thresholds)
+
     return {
         "model": model,
-        "ref_point": objective(objective_thresholds),
+        "ref_point": ref_point,
         "X_baseline": X_baseline,
         "sampler": sampler,
         "objective": objective,
@@ -1001,12 +1020,42 @@ def construct_inputs_qMFMES(
     }
 
 
+@acqf_input_constructor(AnalyticExpectedUtilityOfBestOption)
+def construct_inputs_analytic_eubo(
+    model: Model,
+    pref_model: Model,
+    previous_winner: Optional[Tensor] = None,
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    r"""Construct kwargs for the `AnalyticExpectedUtilityOfBestOption` constructor.
+
+    Args:
+        model: The outcome model to be used in the acquisition function.
+        pref_model: The preference model to be used in preference exploration
+
+    Returns:
+        A dict mapping kwarg names of the constructor to values.
+    """
+    # construct a deterministic fixed single sample model from `model`
+    # i.e., performing EUBO-zeta by default as described
+    # in https://arxiv.org/abs/2203.11382
+    one_sample_outcome_model = FixedSingleSampleModel(model=model)
+
+    return {
+        "pref_model": pref_model,
+        "outcome_model": one_sample_outcome_model,
+        "previous_winner": previous_winner,
+    }
+
+
 def get_best_f_analytic(
     training_data: MaybeDict[SupervisedDataset],
     posterior_transform: Optional[PosteriorTransform] = None,
     **kwargs,
 ) -> Tensor:
-    if not _field_is_shared(training_data, fieldname="X"):
+    if isinstance(training_data, dict) and not _field_is_shared(
+        training_data, fieldname="X"
+    ):
         raise NotImplementedError("Currently only block designs are supported.")
 
     Y = _get_dataset_field(
@@ -1034,7 +1083,9 @@ def get_best_f_mc(
     objective: Optional[MCAcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
 ) -> Tensor:
-    if not _field_is_shared(training_data, fieldname="X"):
+    if isinstance(training_data, dict) and not _field_is_shared(
+        training_data, fieldname="X"
+    ):
         raise NotImplementedError("Currently only block designs are supported.")
 
     Y = _get_dataset_field(

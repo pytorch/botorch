@@ -11,7 +11,7 @@ from setuptools import find_packages, setup
 
 
 REQUIRED_MAJOR = 3
-REQUIRED_MINOR = 7
+REQUIRED_MINOR = 8
 
 # Check for python version
 if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR):
@@ -27,16 +27,19 @@ if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR):
     sys.exit(error)
 
 
+# Requirements
 TEST_REQUIRES = ["pytest", "pytest-cov"]
 
-DEV_REQUIRES = TEST_REQUIRES + [
-    "flake8",
-    "sphinx",
-    "black==21.4b2",
-    "libcst==0.3.19",
-    "usort==0.6.4",
-    "ufmt",
-]
+FMT_REQUIRES = ["flake8", "ufmt", "flake8-docstrings"]
+
+# Read in the pinned versions of the formatting tools
+root_dir = os.path.dirname(__file__)
+with open(os.path.join(root_dir, "requirements-fmt.txt"), "r") as fh:
+    FMT_REQUIRES += [
+        line.strip() for line in fh.readlines() if not line.startswith("#")
+    ]
+
+DEV_REQUIRES = TEST_REQUIRES + FMT_REQUIRES + ["sphinx"]
 
 TUTORIALS_REQUIRES = [
     "ax-platform",
@@ -48,8 +51,6 @@ TUTORIALS_REQUIRES = [
     "pykeops",
     "torchvision",
 ]
-
-root_dir = os.path.dirname(__file__)
 
 # read in README.md as the long description
 with open(os.path.join(root_dir, "README.md"), "r") as fh:
@@ -77,25 +78,15 @@ setup(
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    python_requires=">=3.7",
-    setup_requires=["setuptools-scm"],
-    use_scm_version={
-        "root": ".",
-        "relative_to": __file__,
-        "write_to": os.path.join(root_dir, "botorch", "version.py"),
-        "local_scheme": (
-            "no-local-version"
-            if os.environ.get("SCM_NO_LOCAL_VERSION", False)
-            else "node-and-date"
-        ),
-    },
+    python_requires=">=3.8",
     packages=find_packages(exclude=["test", "test.*"]),
     install_requires=[
-        "torch>=1.9",
-        "gpytorch>=1.6",
+        "torch>=1.11",
+        "gpytorch==1.9.0",
+        "linear_operator==0.1.1",
         "scipy",
         "multipledispatch",
-        "pyro-ppl==1.8.0",
+        "pyro-ppl>=1.8.2",
     ],
     extras_require={
         "dev": DEV_REQUIRES,

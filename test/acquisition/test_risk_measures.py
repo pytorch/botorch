@@ -8,6 +8,7 @@
 from typing import Optional
 
 import torch
+from botorch.acquisition.objective import LinearMCObjective
 from botorch.acquisition.risk_measures import (
     CVaR,
     Expectation,
@@ -15,6 +16,7 @@ from botorch.acquisition.risk_measures import (
     VaR,
     WorstCase,
 )
+from botorch.exceptions.errors import UnsupportedError
 from botorch.utils.testing import BotorchTestCase
 from torch import Tensor
 
@@ -30,6 +32,21 @@ class TestRiskMeasureMCObjective(BotorchTestCase):
         # abstract raises
         with self.assertRaises(TypeError):
             RiskMeasureMCObjective(n_w=3)
+
+        # DeprecationWarning.
+        with self.assertWarnsRegex(DeprecationWarning, "`weights` argument"):
+            obj = NotSoAbstractRiskMeasure(n_w=2, weights=[0.5])
+        # Preprocessing function is constructed from the weight.
+        self.assertIsInstance(obj.preprocessing_function, LinearMCObjective)
+        self.assertTrue(
+            torch.equal(obj.preprocessing_function.weights, torch.tensor([0.5]))
+        )
+
+        # Error on weights & preprocessing function.
+        with self.assertRaisesRegex(UnsupportedError, "together"):
+            NotSoAbstractRiskMeasure(
+                n_w=2, preprocessing_function=lambda X: X.squeeze(-1), weights=[0.5]
+            )
 
         for dtype in (torch.float, torch.double):
             samples = torch.tensor(
@@ -54,20 +71,21 @@ class TestRiskMeasureMCObjective(BotorchTestCase):
             expected_samples = samples.view(5, 3, 2, 3)
             prepared_samples = obj._prepare_samples(samples)
             self.assertTrue(torch.equal(prepared_samples, expected_samples))
-            # negating with weights
+            # negating with preprocessing function.
             obj = NotSoAbstractRiskMeasure(
-                n_w=3, weights=torch.tensor([-1.0], device=self.device, dtype=dtype)
+                n_w=3,
+                preprocessing_function=LinearMCObjective(
+                    weights=torch.tensor([-1.0], device=self.device, dtype=dtype)
+                ),
             )
-            prepared_samples = obj._prepare_samples(samples)
-            self.assertTrue(torch.equal(prepared_samples, -expected_samples))
-            # List of weights
-            obj = NotSoAbstractRiskMeasure(n_w=3, weights=[-1.0])
             prepared_samples = obj._prepare_samples(samples)
             self.assertTrue(torch.equal(prepared_samples, -expected_samples))
             # MO with weights
             obj = NotSoAbstractRiskMeasure(
                 n_w=2,
-                weights=torch.tensor([1.0, 2.0], device=self.device, dtype=dtype),
+                preprocessing_function=LinearMCObjective(
+                    weights=torch.tensor([1.0, 2.0], device=self.device, dtype=dtype)
+                ),
             )
             samples = torch.tensor(
                 [
@@ -87,13 +105,6 @@ class TestRiskMeasureMCObjective(BotorchTestCase):
                 [[[5.0, 1.9], [5.0, 11.0], [1.0, 11.0]]],
                 device=self.device,
                 dtype=dtype,
-            )
-            prepared_samples = obj._prepare_samples(samples)
-            self.assertTrue(torch.equal(prepared_samples, expected_samples))
-            # List of weights
-            obj = NotSoAbstractRiskMeasure(
-                n_w=2,
-                weights=[1.0, 2.0],
             )
             prepared_samples = obj._prepare_samples(samples)
             self.assertTrue(torch.equal(prepared_samples, expected_samples))
@@ -119,9 +130,14 @@ class TestCVaR(BotorchTestCase):
                     torch.tensor([[0.75, 2.0]], device=self.device, dtype=dtype),
                 )
             )
-            # w/ weights=-1
-            weights = torch.tensor([-1.0], device=self.device, dtype=dtype)
-            obj = CVaR(alpha=0.5, n_w=3, weights=weights)
+            # w/ preprocessing function
+            obj = CVaR(
+                alpha=0.5,
+                n_w=3,
+                preprocessing_function=LinearMCObjective(
+                    weights=torch.tensor([-1.0], device=self.device, dtype=dtype)
+                ),
+            )
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.equal(
@@ -147,9 +163,14 @@ class TestVaR(BotorchTestCase):
                     torch.tensor([[1.0, 3.0]], device=self.device, dtype=dtype),
                 )
             )
-            # w/ weights=-1.0
-            weights = torch.tensor([-1.0], device=self.device, dtype=dtype)
-            obj = VaR(alpha=0.5, n_w=3, weights=weights)
+            # w/ preprocessing function
+            obj = VaR(
+                alpha=0.5,
+                n_w=3,
+                preprocessing_function=LinearMCObjective(
+                    weights=torch.tensor([-1.0], device=self.device, dtype=dtype)
+                ),
+            )
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.equal(
@@ -175,9 +196,13 @@ class TestWorstCase(BotorchTestCase):
                     torch.tensor([[0.5, 1.0]], device=self.device, dtype=dtype),
                 )
             )
-            # w/ weights = -1.0
-            weights = torch.tensor([-1.0], device=self.device, dtype=dtype)
-            obj = WorstCase(n_w=3, weights=weights)
+            # w/ preprocessing function
+            obj = WorstCase(
+                n_w=3,
+                preprocessing_function=LinearMCObjective(
+                    weights=torch.tensor([-1.0], device=self.device, dtype=dtype)
+                ),
+            )
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.equal(
@@ -203,7 +228,7 @@ class TestExpectation(BotorchTestCase):
                     torch.tensor([[1.0, 3.0]], device=self.device, dtype=dtype),
                 )
             )
-            # w/ weights
+            # w/ preprocessing function
             samples = torch.tensor(
                 [
                     [
@@ -218,8 +243,12 @@ class TestExpectation(BotorchTestCase):
                 device=self.device,
                 dtype=dtype,
             )
-            weights = torch.tensor([-1.0, 2.0], device=self.device, dtype=dtype)
-            obj = Expectation(n_w=3, weights=weights)
+            obj = Expectation(
+                n_w=3,
+                preprocessing_function=LinearMCObjective(
+                    weights=torch.tensor([-1.0, 2.0], device=self.device, dtype=dtype)
+                ),
+            )
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.equal(

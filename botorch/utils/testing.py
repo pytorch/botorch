@@ -21,7 +21,7 @@ from botorch.posteriors.posterior import Posterior
 from botorch.test_functions.base import BaseTestProblem
 from botorch.utils.transforms import unnormalize
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy import AddedDiagLazyTensor, DiagLazyTensor
+from linear_operator.operators import AddedDiagLinearOperator, DiagLinearOperator
 from torch import Tensor
 
 
@@ -98,6 +98,13 @@ class MockPosterior(Posterior):
     r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
     def __init__(self, mean=None, variance=None, samples=None):
+        r"""
+        Args:
+            mean: The mean of the posterior.
+            variance: The variance of the posterior.
+            samples: Samples to return from `rsample`, unless `base_samples` is
+                provided.
+        """
         self._mean = mean
         self._variance = variance
         self._samples = samples
@@ -153,7 +160,7 @@ class MockPosterior(Posterior):
 class MockModel(Model):
     r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
-    def __init__(self, posterior: MockPosterior) -> None:
+    def __init__(self, posterior: MockPosterior) -> None:  # noqa: D107
         super(Model, self).__init__()
         self._posterior = posterior
 
@@ -191,7 +198,7 @@ class MockModel(Model):
 class MockAcquisitionFunction:
     r"""Mock acquisition function object that implements dummy methods."""
 
-    def __init__(self):
+    def __init__(self):  # noqa: D107
         self.model = None
         self.X_pending = None
 
@@ -234,7 +241,7 @@ def _get_test_posterior(
     interleaved: bool = True,
     lazy: bool = False,
     independent: bool = False,
-    **tkwargs
+    **tkwargs,
 ) -> GPyTorchPosterior:
     r"""Generate a Posterior for testing purposes.
 
@@ -266,7 +273,7 @@ def _get_test_posterior(
         covar = a @ a.transpose(-1, -2)
         flat_diag = torch.rand(*batch_shape, q * m, **tkwargs)
         if lazy:
-            covar = AddedDiagLazyTensor(covar, DiagLazyTensor(flat_diag))
+            covar = AddedDiagLinearOperator(covar, DiagLinearOperator(flat_diag))
         else:
             covar = covar + torch.diag_embed(flat_diag)
         mtmvn = MultitaskMultivariateNormal(mean, covar, interleaved=interleaved)

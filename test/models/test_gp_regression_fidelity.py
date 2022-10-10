@@ -9,9 +9,9 @@ import warnings
 from typing import Tuple
 
 import torch
-from botorch import fit_gpytorch_model
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.gp_regression_fidelity import (
     FixedNoiseMultiFidelityGP,
@@ -123,7 +123,11 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 mll.to(**tkwargs)
                 with warnings.catch_warnings():
                     warnings.filterwarnings("ignore", category=OptimizationWarning)
-                    fit_gpytorch_model(mll, sequential=False, options={"maxiter": 1})
+                    fit_gpytorch_mll(
+                        mll,
+                        optimizer_kwargs={"options": {"maxiter": 1}},
+                        sequential=False,
+                    )
 
                 # test init
                 self.assertIsInstance(model.mean_module, ConstantMean)

@@ -37,7 +37,7 @@ def is_non_dominated(Y: Tensor, deduplicate: bool = True) -> Tensor:
     if n == 0:
         return torch.zeros(Y.shape[:-1], dtype=torch.bool, device=Y.device)
     el_size = 64 if Y.dtype == torch.double else 32
-    if n > 1000 or n ** 2 * Y.shape[:-2].numel() * el_size / 8 > MAX_BYTES:
+    if n > 1000 or n**2 * Y.shape[:-2].numel() * el_size / 8 > MAX_BYTES:
         return _is_non_dominated_loop(Y)
 
     Y1 = Y.unsqueeze(-3)

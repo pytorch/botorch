@@ -5,9 +5,23 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Deterministic Models. Simple wrappers that allow the usage of deterministic
-mappings via the BoTorch Model and Posterior APIs. Useful e.g. for defining
-known cost functions for cost-aware acquisition utilities.
+Deterministic Models: Simple wrappers that allow the usage of deterministic
+mappings via the BoTorch Model and Posterior APIs.
+
+Deterministic models are useful for expressing known input-output relationships
+within the BoTorch Model API. This is useful e.g. for multi-objective
+optimization with known objective functions (e.g. the number of parameters of a
+Neural Network in the context of Neural Architecture Search is usually a known
+function of the architecture configuration), or to encode cost functions for
+cost-aware acquisition utilities. Cost-aware optimization is desirable when
+evaluations have a cost that is heterogeneous, either in the inputs `X` or in a
+particular fidelity parameter that directly encodes the fidelity of the
+observation. `GenericDeterministicModel` supports arbitrary deterministic
+functions, while `AffineFidelityCostModel` is a particular cost model for
+multi-fidelity optimization. Other use cases of deterministic models include
+representing approximate GP sample paths, e.g. random Fourier features obtained
+with `get_gp_samples`, which allows them to be substituted in acquisition
+functions or in other places where a `Model` is expected.
 """
 
 from __future__ import annotations
@@ -24,7 +38,11 @@ from torch import Tensor
 
 
 class DeterministicModel(Model, ABC):
-    r"""Abstract base class for deterministic models."""
+    r"""
+    Abstract base class for deterministic models.
+
+    :meta private:
+    """
 
     @abstractmethod
     def forward(self, X: Tensor) -> Tensor:
@@ -49,7 +67,7 @@ class DeterministicModel(Model, ABC):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> DeterministicPosterior:
         r"""Compute the (deterministic) posterior at X.
 
@@ -91,20 +109,20 @@ class DeterministicModel(Model, ABC):
 
 
 class GenericDeterministicModel(DeterministicModel):
-    r"""A generic deterministic model constructed from a callable."""
+    r"""A generic deterministic model constructed from a callable.
+
+    Example:
+        >>> f = lambda x: x.sum(dim=-1, keep_dims=True)
+        >>> model = GenericDeterministicModel(f)
+    """
 
     def __init__(self, f: Callable[[Tensor], Tensor], num_outputs: int = 1) -> None:
-        r"""A generic deterministic model constructed from a callable.
-
+        r"""
         Args:
             f: A callable mapping a `batch_shape x n x d`-dim input tensor `X`
                 to a `batch_shape x n x m`-dimensional output tensor (the
                 outcome dimension `m` must be explicit, even if `m=1`).
             num_outputs: The number of outputs `m`.
-
-        Example:
-            >>> f = lambda x: x.sum(dim=-1, keep_dims=True)
-            >>> model = GenericDeterministicModel(f)
         """
         super().__init__()
         self._f = f
@@ -183,9 +201,10 @@ class AffineDeterministicModel(DeterministicModel):
 
 
 class PosteriorMeanModel(DeterministicModel):
-    def __init__(self, model: Model) -> None:
-        r"""A deterministic model that always return the posterior mean.
+    """A deterministic model that always returns the posterior mean."""
 
+    def __init__(self, model: Model) -> None:
+        r"""
         Args:
             model: The base model.
         """
@@ -197,15 +216,18 @@ class PosteriorMeanModel(DeterministicModel):
 
 
 class FixedSingleSampleModel(DeterministicModel):
+    r"""
+    A deterministic model defined by a single sample `w`.
+
+    Given a base model `f` and a fixed sample `w`, the model always outputs
+
+        y = f_mean(x) + f_stddev(x) * w
+
+    We assume the outcomes are uncorrelated here.
+    """
+
     def __init__(self, model: Model, w: Optional[Tensor] = None) -> None:
-        r"""A deterministic model defined by a single sample w.
-
-        Given a base model f and a fixed sample w, the model always outputs
-
-            y = f_mean(x) + f_stddev(x) * w
-
-        We assume the outcomes are uncorrelated here.
-
+        r"""
         Args:
             model: The base model.
             w: A 1-d tensor with length model.num_outputs.
@@ -215,10 +237,7 @@ class FixedSingleSampleModel(DeterministicModel):
         self.model = model
         self._num_outputs = model.num_outputs
         self.w = torch.randn(model.num_outputs)
-        # Check since Model doesn't guarantee a train_inputs attribute
-        if hasattr(model, "train_inputs"):
-            self.w = self.w.to(model.train_inputs[0])
 
     def forward(self, X: Tensor) -> Tensor:
         post = self.model.posterior(X)
-        return post.mean + post.variance.sqrt() * self.w
+        return post.mean + post.variance.sqrt() * self.w.to(X)

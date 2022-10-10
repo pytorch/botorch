@@ -10,7 +10,7 @@ import warnings
 import torch
 from botorch.acquisition import ExpectedImprovement, qExpectedImprovement
 from botorch.exceptions.warnings import OptimizationWarning
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models import FixedNoiseGP, SingleTaskGP
 from botorch.optim import optimize_acqf
 from botorch.utils.testing import BotorchTestCase
@@ -40,7 +40,7 @@ class TestEndToEnd(BotorchTestCase):
             -1
         )
         train_y = torch.sin(train_x * (2 * math.pi))
-        train_yvar = torch.tensor(0.1 ** 2, device=self.device)
+        train_yvar = torch.tensor(0.1**2, device=self.device)
         noise = torch.tensor(NOISE, device=self.device, dtype=dtype)
         self.train_x = train_x
         self.train_y = train_y + noise
@@ -53,8 +53,10 @@ class TestEndToEnd(BotorchTestCase):
         )
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=OptimizationWarning)
-            self.mll_st = fit_gpytorch_model(
-                self.mll_st, options={"maxiter": 5}, max_retries=1
+            self.mll_st = fit_gpytorch_mll(
+                self.mll_st,
+                optimizer_kwargs={"options": {"maxiter": 5}},
+                max_attempts=1,
             )
         model_fn = FixedNoiseGP(
             self.train_x, self.train_y, self.train_yvar.expand_as(self.train_y)
@@ -65,8 +67,10 @@ class TestEndToEnd(BotorchTestCase):
         )
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=OptimizationWarning)
-            self.mll_fn = fit_gpytorch_model(
-                self.mll_fn, options={"maxiter": 5}, max_retries=1
+            self.mll_fn = fit_gpytorch_mll(
+                self.mll_fn,
+                optimizer_kwargs={"options": {"maxiter": 5}},
+                max_attempts=1,
             )
 
     def test_qEI(self):

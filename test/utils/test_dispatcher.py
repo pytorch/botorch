@@ -56,7 +56,7 @@ class TestDispatcher(BotorchTestCase):
 
             @self.dispatcher.register(*signature)
             def _pow(a: int, b: int):
-                return a ** b
+                return a**b
 
             for type_a, type_b in product(*signature):
                 args = type_a(2), type_b(3)

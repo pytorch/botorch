@@ -23,7 +23,7 @@ from botorch.acquisition.multi_objective.monte_carlo import (
     qNoisyExpectedHypervolumeImprovement,
 )
 from botorch.exceptions import BadInitialCandidatesWarning, SamplingWarning
-from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import SingleTaskGP
 from botorch.optim import initialize_q_batch, initialize_q_batch_nonneg
@@ -123,6 +123,22 @@ class TestInitializeQBatch(BotorchTestCase):
 
 
 class TestGenBatchInitialCandidates(BotorchTestCase):
+    def test_gen_batch_initial_inf_bounds(self):
+        bounds = torch.rand(2, 2)
+        bounds[0, 1] = float("inf")
+        with self.assertRaisesRegex(
+            NotImplementedError,
+            r"Currently only finite values in `bounds` are supported for "
+            r"generating initial conditions for optimization.",
+        ):
+            gen_batch_initial_conditions(
+                acq_function=mock.Mock(),
+                bounds=bounds,
+                q=1,
+                num_restarts=2,
+                raw_samples=2,
+            )
+
     def test_gen_batch_initial_conditions(self):
         bounds = torch.stack([torch.zeros(2), torch.ones(2)])
         mock_acqf = MockAcquisitionFunction()
@@ -259,14 +275,14 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
             bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
             inequality_constraints = [
                 (
-                    torch.tensor([1], device=self.device, dtype=dtype),
+                    torch.tensor([1], device=self.device, dtype=torch.int64),
                     torch.tensor([-4], device=self.device, dtype=dtype),
                     torch.tensor(-3, device=self.device, dtype=dtype),
                 )
             ]
             equality_constraints = [
                 (
-                    torch.tensor([0], device=self.device, dtype=dtype),
+                    torch.tensor([0], device=self.device, dtype=torch.int64),
                     torch.tensor([1], device=self.device, dtype=dtype),
                     torch.tensor(0.5, device=self.device, dtype=dtype),
                 )
@@ -322,6 +338,32 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                             self.assertTrue(
                                 torch.all(batch_initial_conditions[..., idx] == val)
                             )
+
+    def test_error_equality_constraints_with_sample_around_best(self):
+        tkwargs = {"device": self.device, "dtype": torch.double}
+        # this will give something that does not respect the constraints
+        # TODO: it would be good to have a utils function to check if the
+        # constraints are obeyed
+        with self.assertRaises(UnsupportedError) as e:
+            gen_batch_initial_conditions(
+                MockAcquisitionFunction(),
+                bounds=torch.tensor([[0, 0], [1, 1]], **tkwargs),
+                q=1,
+                num_restarts=1,
+                raw_samples=1,
+                equality_constraints=[
+                    (
+                        torch.tensor([0], **tkwargs),
+                        torch.tensor([1], **tkwargs),
+                        torch.tensor(0.5, **tkwargs),
+                    )
+                ],
+                options={"sample_around_best": True},
+            )
+        self.assertTrue(
+            "Option 'sample_around_best' is not supported when equality"
+            "constraints are present." in str(e.exception)
+        )
 
 
 class TestGenOneShotKGInitialConditions(BotorchTestCase):
@@ -710,12 +752,12 @@ class TestSampleAroundBest(BotorchTestCase):
                     self.assertEqual(eq_mask[idcs].sum(), 4)
                 self.assertTrue((X_rnd >= 1).all())
                 self.assertTrue((X_rnd <= 2).all())
-            # test that subset_dims is called if d>=21
-            X_train = 1 + torch.rand(20, 21, **tkwargs)
+            # test that subset_dims is called if d>=20
+            X_train = 1 + torch.rand(10, 20, **tkwargs)
             model = MockModel(
                 MockPosterior(mean=(2 * X_train + 1).sum(dim=-1, keepdim=True))
             )
-            bounds = torch.ones(2, 21, **tkwargs)
+            bounds = torch.ones(2, 20, **tkwargs)
             bounds[1] = 2
             # test NEI with X_baseline
             acqf = qNoisyExpectedImprovement(
@@ -728,7 +770,7 @@ class TestSampleAroundBest(BotorchTestCase):
                 X_rnd = sample_points_around_best(
                     acq_function=acqf, n_discrete_points=5, sigma=1e-3, bounds=bounds
                 )
-            self.assertTrue(X_rnd.shape, torch.Size([5, 2]))
+            self.assertEqual(X_rnd.shape, torch.Size([5, 20]))
             self.assertTrue((X_rnd >= 1).all())
             self.assertTrue((X_rnd <= 2).all())
             mock_subset_dims.assert_called_once()

@@ -14,8 +14,8 @@ from botorch.acquisition.max_value_entropy_search import (
     _sample_max_value_Thompson,
     qLowerBoundMaxValueEntropy,
     qMaxValueEntropy,
-    qMultiFidelityMaxValueEntropy,
     qMultiFidelityLowerBoundMaxValueEntropy,
+    qMultiFidelityMaxValueEntropy,
 )
 from botorch.acquisition.objective import (
     PosteriorTransform,
@@ -33,6 +33,12 @@ class MESMockModel(MockModel):
     r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
     def __init__(self, num_outputs=1, batch_shape=None):
+        r"""
+        Args:
+            num_outputs: The number of outputs.
+            batch_shape: The batch shape of the model. For details see
+                `botorch.models.model.Model.batch_shape`.
+        """
         super().__init__(None)
         self._num_outputs = num_outputs
         self._batch_shape = torch.Size() if batch_shape is None else batch_shape

@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import warnings
 from unittest import mock
 
 import numpy as np
@@ -13,7 +14,7 @@ from botorch.acquisition.acquisition import (
     AcquisitionFunction,
     OneShotAcquisitionFunction,
 )
-from botorch.exceptions import UnsupportedError
+from botorch.exceptions import InputDataError, UnsupportedError
 from botorch.optim.optimize import (
     _filter_infeasible,
     _filter_invalid,
@@ -39,6 +40,10 @@ class MockOneShotAcquisitionFunction(
     MockAcquisitionFunction, OneShotAcquisitionFunction
 ):
     def __init__(self, num_fantasies=2):
+        r"""
+        Args:
+            num_fantasies: The number of fantasies.
+        """
         super().__init__()
         self.num_fantasies = num_fantasies
 
@@ -53,7 +58,7 @@ class MockOneShotAcquisitionFunction(
 
 
 class SquaredAcquisitionFunction(AcquisitionFunction):
-    def __init__(self, model=None):
+    def __init__(self, model=None):  # noqa: D107
         super().__init__(model=model)
 
     def forward(self, X):
@@ -63,6 +68,19 @@ class SquaredAcquisitionFunction(AcquisitionFunction):
 class MockOneShotEvaluateAcquisitionFunction(MockOneShotAcquisitionFunction):
     def evaluate(self, X: Tensor, bounds: Tensor):
         return X.sum()
+
+
+class SinOneOverXAcqusitionFunction(MockAcquisitionFunction):
+    """
+    Acquisition function for sin(1/x).
+
+    This is useful for testing because it behaves pathologically only zero, so
+    optimization is likely to fail when initializing near zero but not
+    elsewhere.
+    """
+
+    def __call__(self, X):
+        return torch.sin(1 / X[..., 0].max(dim=-1).values)
 
 
 def rounding_func(X: Tensor) -> Tensor:
@@ -222,7 +240,7 @@ class TestOptimizeAcqf(BotorchTestCase):
             ]
             mock_gen_candidates_scipy.side_effect = gcs_return_vals
             expected_candidates = torch.cat(
-                [rv[0][0] for rv in gcs_return_vals], dim=-2
+                [cands[0] for cands, _ in gcs_return_vals], dim=-2
             ).round()
             bounds = torch.stack(
                 [
@@ -231,7 +249,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                 ]
             )
             inequality_constraints = [
-                (torch.tensor([3]), torch.tensor([4]), torch.tensor(5))
+                (torch.tensor([2]), torch.tensor([4]), torch.tensor(5))
             ]
             candidates, acq_value = optimize_acqf(
                 acq_function=mock_acq_function,
@@ -246,7 +264,9 @@ class TestOptimizeAcqf(BotorchTestCase):
             )
             self.assertTrue(torch.equal(candidates, expected_candidates))
             self.assertTrue(
-                torch.equal(acq_value, torch.cat([rv[1] for rv in gcs_return_vals]))
+                torch.equal(
+                    acq_value, torch.cat([acqval for _, acqval in gcs_return_vals])
+                )
             )
         # verify error when using a OneShotAcquisitionFunction
         with self.assertRaises(NotImplementedError):
@@ -272,7 +292,29 @@ class TestOptimizeAcqf(BotorchTestCase):
                 sequential=True,
             )
 
+        # Veryify error when using sequential=True in
+        # conjunction with user-supplied batch_initial_conditions
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "`batch_initial_conditions` is not supported for sequential "
+            "optimization. Either avoid specifying `batch_initial_conditions` "
+            "to use the custom initializer or use the `ic_generator` kwarg to "
+            "generate initial conditions for the case of "
+            "nonlinear inequality constraints.",
+        ):
+            optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                batch_initial_conditions=mock_gen_batch_initial_conditions,
+                sequential=True,
+            )
+
     def test_optimize_acqf_sequential_notimplemented(self):
+        # Sequential acquisition function optimization only supported
+        # when return_best_only=True
         with self.assertRaises(NotImplementedError):
             optimize_acqf(
                 acq_function=MockAcquisitionFunction(),
@@ -283,6 +325,173 @@ class TestOptimizeAcqf(BotorchTestCase):
                 return_best_only=False,
                 sequential=True,
             )
+
+    def test_optimize_acqf_runs_given_batch_initial_conditions(self):
+        num_restarts, raw_samples, dim = 1, 1, 1
+
+        opt_x = 2 / np.pi
+        # start near one (of many) optima
+        initial_conditions = (opt_x * 1.01) * torch.ones(
+            (num_restarts, raw_samples, dim)
+        )
+        torch.manual_seed(0)
+        batch_candidates, acq_value_list = optimize_acqf(
+            acq_function=SinOneOverXAcqusitionFunction(),
+            bounds=torch.stack([-1 * torch.ones(dim), torch.ones(dim)]),
+            q=1,
+            num_restarts=num_restarts,
+            raw_samples=raw_samples,
+            batch_initial_conditions=initial_conditions,
+        )
+        self.assertAlmostEqual(batch_candidates.item(), opt_x, delta=1e-5)
+        self.assertAlmostEqual(acq_value_list.item(), 1)
+
+    def test_optimize_acqf_warns_on_opt_failure(self):
+        """
+        Test error handling in `scipy.optimize.minimize`.
+
+        Expected behavior is that a warning is raised when optimization fails
+        in `scipy.optimize.minimize`, and then it restarts and tries again.
+
+        This is a test case cooked up to fail. It is trying to optimize
+        sin(1/x), which is pathological near zero, given a starting point near
+        zero.
+        """
+        num_restarts, raw_samples, dim = 1, 1, 1
+
+        initial_conditions = 1e-8 * torch.ones((num_restarts, raw_samples, dim))
+        torch.manual_seed(0)
+        with warnings.catch_warnings(record=True) as ws:
+            batch_candidates, acq_value_list = optimize_acqf(
+                acq_function=SinOneOverXAcqusitionFunction(),
+                bounds=torch.stack([-1 * torch.ones(dim), torch.ones(dim)]),
+                q=1,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                batch_initial_conditions=initial_conditions,
+            )
+
+        message = (
+            "Optimization failed in `gen_candidates_scipy` with the following "
+            "warning(s):\n[OptimizationWarning('Optimization failed within "
+            "`scipy.optimize.minimize` with status 2.')]\nBecause you specified"
+            " `batch_initial_conditions`, optimization will not be retried with"
+            " new initial conditions and will proceed with the current "
+            "solution. Suggested remediation: Try again with different "
+            "`batch_initial_conditions`, or don't provide "
+            "`batch_initial_conditions.`"
+        )
+        expected_warning_raised = any(
+            (
+                issubclass(w.category, RuntimeWarning) and message in str(w.message)
+                for w in ws
+            )
+        )
+        self.assertTrue(expected_warning_raised)
+
+    def test_optimize_acqf_successfully_restarts_on_opt_failure(self):
+        """
+        Test that `optimize_acqf` can succeed after restarting on opt failure.
+
+        With the given seed (5), `optimize_acqf` will choose an initial
+        condition that causes failure in the first run of
+        `gen_candidates_scipy`, then re-tries with a new starting point and
+        succeed.
+        """
+        num_restarts, raw_samples, dim = 1, 1, 1
+
+        bounds = torch.stack(
+            [
+                -1 * torch.ones(dim, dtype=torch.double),
+                torch.ones(dim, dtype=torch.double),
+            ]
+        )
+        torch.manual_seed(5)
+
+        with warnings.catch_warnings(record=True) as ws:
+            batch_candidates, acq_value_list = optimize_acqf(
+                acq_function=SinOneOverXAcqusitionFunction(),
+                bounds=bounds,
+                q=1,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                # shorten the line search to make it faster and make failure
+                # more likely
+                options={"maxls": 2},
+            )
+        message = (
+            "Optimization failed in `gen_candidates_scipy` with the following "
+            "warning(s):\n[OptimizationWarning('Optimization failed within "
+            "`scipy.optimize.minimize` with status 2.')]\nTrying again with a "
+            "new set of initial conditions."
+        )
+        expected_warning_raised = any(
+            (
+                issubclass(w.category, RuntimeWarning) and message in str(w.message)
+                for w in ws
+            )
+        )
+        self.assertTrue(expected_warning_raised)
+        # check if it succeeded on restart -- the maximum value of sin(1/x) is 1
+        self.assertAlmostEqual(acq_value_list.item(), 1.0)
+
+    def test_optimize_acqf_warns_on_second_opt_failure(self):
+        """
+        Test that `optimize_acqf` warns if it fails on a second optimization try.
+
+        With the given seed (230), `optimize_acqf` will choose an initial
+        condition that causes failure in the first run of
+        `gen_candidates_scipy`, then re-tries and still does not succeed. Since
+        this doesn't happen with seeds 0 - 229, this test might be broken by
+        future refactorings affecting calls to `torch`.
+        """
+        num_restarts, raw_samples, dim = 1, 1, 1
+
+        bounds = torch.stack(
+            [
+                -1 * torch.ones(dim, dtype=torch.double),
+                torch.ones(dim, dtype=torch.double),
+            ]
+        )
+
+        with warnings.catch_warnings(record=True) as ws:
+            torch.manual_seed(230)
+            batch_candidates, acq_value_list = optimize_acqf(
+                acq_function=SinOneOverXAcqusitionFunction(),
+                bounds=bounds,
+                q=1,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                # shorten the line search to make it faster and make failure
+                # more likely
+                options={"maxls": 2},
+            )
+
+        message_1 = (
+            "Optimization failed in `gen_candidates_scipy` with the following "
+            "warning(s):\n[OptimizationWarning('Optimization failed within "
+            "`scipy.optimize.minimize` with status 2.')]\nTrying again with a "
+            "new set of initial conditions."
+        )
+
+        message_2 = (
+            "Optimization failed on the second try, after generating a new set "
+            "of initial conditions."
+        )
+        first_expected_warning_raised = any(
+            (
+                issubclass(w.category, RuntimeWarning) and message_1 in str(w.message)
+                for w in ws
+            )
+        )
+        second_expected_warning_raised = any(
+            (
+                issubclass(w.category, RuntimeWarning) and message_2 in str(w.message)
+                for w in ws
+            )
+        )
+        self.assertTrue(first_expected_warning_raised)
+        self.assertTrue(second_expected_warning_raised)
 
     def test_optimize_acqf_nonlinear_constraints(self):
         num_restarts = 2
@@ -333,7 +542,12 @@ class TestOptimizeAcqf(BotorchTestCase):
             # Make sure we return the initial solution if SLSQP fails to return
             # a feasible point.
             with mock.patch("botorch.generation.gen.minimize") as mock_minimize:
-                mock_minimize.return_value = OptimizeResult(x=np.array([4, 4, 4]))
+                # By setting "success" to True and "status" to 0, we prevent a
+                # warning that `minimize` failed, which isn't the behavior
+                # we're looking to test here.
+                mock_minimize.return_value = OptimizeResult(
+                    x=np.array([4, 4, 4]), success=True, status=0
+                )
                 candidates, acq_value = optimize_acqf(
                     acq_function=mock_acq_function,
                     bounds=bounds,
@@ -378,6 +592,23 @@ class TestOptimizeAcqf(BotorchTestCase):
                 torch.allclose(acq_value, torch.tensor(2.45, **tkwargs), atol=1e-3)
             )
 
+            # Test that an ic_generator object with the same API as
+            # gen_batch_initial_conditions returns candidates of the
+            # required shape.
+            with mock.patch(
+                "botorch.optim.optimize.gen_batch_initial_conditions"
+            ) as ic_generator:
+                ic_generator.return_value = batch_initial_conditions
+                candidates, acq_value = optimize_acqf(
+                    acq_function=mock_acq_function,
+                    bounds=bounds,
+                    q=3,
+                    nonlinear_inequality_constraints=[nlc1],
+                    num_restarts=1,
+                    ic_generator=ic_generator,
+                )
+                self.assertEqual(candidates.size(), torch.Size([1, 3]))
+
             # Make sure fixed features aren't supported
             with self.assertRaisesRegex(
                 NotImplementedError,
@@ -409,20 +640,6 @@ class TestOptimizeAcqf(BotorchTestCase):
                     batch_initial_conditions=batch_initial_conditions,
                 )
 
-            # batch_initial_conditions must be given
-            with self.assertRaisesRegex(
-                NotImplementedError,
-                "`batch_initial_conditions` must be given if there are non-linear "
-                "inequality constraints.",
-            ):
-                optimize_acqf(
-                    acq_function=mock_acq_function,
-                    bounds=bounds,
-                    q=1,
-                    nonlinear_inequality_constraints=[nlc1],
-                    num_restarts=num_restarts,
-                )
-
             # batch_initial_conditions must be feasible
             with self.assertRaisesRegex(
                 ValueError,
@@ -452,6 +669,88 @@ class TestOptimizeAcqf(BotorchTestCase):
                     num_restarts=5,
                     options={"batch_limit": 5},
                 )
+            # If there are non-linear inequality constraints an initial condition
+            # generator object `ic_generator` must be supplied.
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "`ic_generator` must be given if "
+                "there are non-linear inequality constraints.",
+            ):
+                optimize_acqf(
+                    acq_function=mock_acq_function,
+                    bounds=bounds,
+                    q=1,
+                    nonlinear_inequality_constraints=[nlc1],
+                    num_restarts=1,
+                    raw_samples=16,
+                )
+
+    @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
+    @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
+    def test_optimize_acqf_non_linear_constraints_sequential(
+        self, mock_gen_candidates_scipy, mock_gen_batch_initial_conditions
+    ):
+        def nlc(x):
+            return 4 * x[..., 2] - 5
+
+        q = 3
+        num_restarts = 2
+        raw_samples = 10
+        options = {}
+        for dtype in (torch.float, torch.double):
+            mock_acq_function = MockAcquisitionFunction()
+            mock_gen_batch_initial_conditions.side_effect = [
+                torch.zeros(num_restarts, device=self.device, dtype=dtype)
+                for _ in range(q)
+            ]
+            gcs_return_vals = [
+                (
+                    torch.tensor([[[1.0, 2.0, 3.0]]], device=self.device, dtype=dtype),
+                    torch.tensor([i], device=self.device, dtype=dtype),
+                )
+                # for nonlinear inequality constraints the batch_limit variable is
+                # currently set to 1 by default and hence gen_candidates_scipy is
+                # called num_restarts*q times
+                for i in range(num_restarts * q)
+            ]
+            mock_gen_candidates_scipy.side_effect = gcs_return_vals
+            expected_candidates = torch.cat(
+                [cands[0] for cands, _ in gcs_return_vals[::num_restarts]], dim=-2
+            )
+            bounds = torch.stack(
+                [
+                    torch.zeros(3, device=self.device, dtype=dtype),
+                    4 * torch.ones(3, device=self.device, dtype=dtype),
+                ]
+            )
+
+            candidates, acq_value = optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options,
+                nonlinear_inequality_constraints=[nlc],
+                sequential=True,
+                ic_generator=mock_gen_batch_initial_conditions,
+            )
+            self.assertTrue(torch.equal(candidates, expected_candidates))
+            # Extract the relevant entries from gcs_return_vals to
+            # perform comparison with.
+            self.assertTrue(
+                torch.equal(
+                    acq_value,
+                    torch.cat(
+                        [
+                            expected_acq_value
+                            for _, expected_acq_value in gcs_return_vals[
+                                num_restarts - 1 :: num_restarts
+                            ]
+                        ]
+                    ),
+                ),
+            )
 
     def test_constraint_caching(self):
         def nlc(x):
@@ -879,6 +1178,14 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
 
             mock_acq_function = SquaredAcquisitionFunction()
             mock_acq_function.set_X_pending(None)
+
+            # ensure proper raising of errors if no choices
+            with self.assertRaisesRegex(InputDataError, "`choices` must be non-emtpy."):
+                optimize_acqf_discrete(
+                    acq_function=mock_acq_function,
+                    q=q,
+                    choices=torch.empty(0, 2),
+                )
 
             choices = torch.rand(5, 2, **tkwargs)
             exp_acq_vals = mock_acq_function(choices)

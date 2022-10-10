@@ -24,7 +24,7 @@ from torch.distributions.multivariate_normal import MultivariateNormal
 class DummyModel(GPyTorchModel):
     num_outputs = 1
 
-    def __init__(self):
+    def __init__(self):  # noqa: D107
         super(GPyTorchModel, self).__init__()
 
     def subset_output(self, idcs: List[int]) -> Model:
@@ -136,7 +136,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     self.assertTrue(
                         torch.allclose(qei_prox, qei * test_prox_weight.flatten())
                     )
-                    self.assertTrue(qei_prox.shape == torch.Size([4]))
+                    self.assertEqual(qei_prox.shape, torch.Size([4]))
 
             # test gradient
             test_X = torch.rand(
@@ -188,18 +188,14 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             train_X = torch.rand(5, 3, device=self.device, dtype=dtype)
             train_Y = torch.rand(5, 2, device=self.device, dtype=dtype)
 
-            multi_output_model = (
-                SingleTaskGP(train_X, train_Y).to(device=self.device).eval()
-            )
+            multi_output_model = SingleTaskGP(train_X, train_Y).to(device=self.device)
             ptransform = ScalarizedPosteriorTransform(
-                weights=torch.ones(2, dtype=dtype)
+                weights=torch.ones(2, dtype=dtype, device=self.device)
             )
-            acq = ProximalAcquisitionFunction(
-                ExpectedImprovement(
-                    multi_output_model, 0.0, posterior_transform=ptransform
-                ),
-                proximal_weights,
+            ei = ExpectedImprovement(
+                multi_output_model, 0.0, posterior_transform=ptransform
             )
+            acq = ProximalAcquisitionFunction(ei, proximal_weights)
             acq(test_X)
 
     def test_proximal_model_list(self):

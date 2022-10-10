@@ -55,12 +55,13 @@ Optimization simply use Ax.
 ## Installation
 
 **Installation Requirements**
-- Python >= 3.7
-- PyTorch >= 1.9
-- gpytorch >= 1.6
+- Python >= 3.8
+- PyTorch >= 1.11
+- gpytorch == 1.9.0
+- linear_operator == 0.1.1
+- pyro-ppl >= 1.8.2
 - scipy
 - multiple-dispatch
-- pyro-ppl == 1.8.0
 
 
 ##### Installing the latest release
@@ -94,6 +95,7 @@ running into the occasional bug here or there), you can install the latest
 development version directly from GitHub (this will also require installing
 the current GPyTorch development version):
 ```bash
+pip install --upgrade git+https://github.com/cornellius-gp/linear_operator.git
 pip install --upgrade git+https://github.com/cornellius-gp/gpytorch.git
 pip install --upgrade git+https://github.com/pytorch/botorch.git
 ```
@@ -124,7 +126,7 @@ For more details see our [Documentation](https://botorch.org/docs/introduction) 
   ```python
   import torch
   from botorch.models import SingleTaskGP
-  from botorch.fit import fit_gpytorch_model
+  from botorch.fit import fit_gpytorch_mll
   from gpytorch.mlls import ExactMarginalLogLikelihood
 
   train_X = torch.rand(10, 2)
@@ -134,7 +136,7 @@ For more details see our [Documentation](https://botorch.org/docs/introduction) 
 
   gp = SingleTaskGP(train_X, train_Y)
   mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-  fit_gpytorch_model(mll)
+  fit_gpytorch_mll(mll)
   ```
 
 2. Construct an acquisition function

@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import Any, Dict, NamedTuple, Optional, Type
 
 import torch
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.optim.utils import _filter_kwargs
 from botorch.posteriors.gpytorch import GPyTorchPosterior
@@ -119,7 +119,7 @@ def batch_cross_validation(
             internally. Note: Multi-task GPs are not currently supported.
         mll_cls: A MarginalLogLikelihood class.
         cv_folds: A CVFolds tuple.
-        fit_args: Arguments passed along to fit_gpytorch_model
+        fit_args: Arguments passed along to fit_gpytorch_mll.
 
     Returns:
         A CVResults tuple with the following fields
@@ -153,7 +153,7 @@ def batch_cross_validation(
     model_cv = model_cls(**_filter_kwargs(model_cls, **kwargs))
     mll_cv = mll_cls(model_cv.likelihood, model_cv)
     mll_cv.to(cv_folds.train_X)
-    mll_cv = fit_gpytorch_model(mll_cv, **fit_args)
+    mll_cv = fit_gpytorch_mll(mll_cv, **fit_args)
 
     # Evaluate on the hold-out set in batch mode
     with torch.no_grad():

@@ -203,7 +203,7 @@ def draw_sobol_normal_samples(
     dtype: Optional[torch.dtype] = None,
     seed: Optional[int] = None,
 ) -> Tensor:
-    r"""Draw qMC samples from a multi-variate standard normal N(0, I_d)
+    r"""Draw qMC samples from a multi-variate standard normal N(0, I_d).
 
     A primary use-case for this functionality is to compute an QMC average
     of f(X) over X where each element of X is drawn N(0, 1).
@@ -476,7 +476,13 @@ def find_interior_point(
     A_ub[-1, -1] = -1.0
 
     result = scipy.optimize.linprog(
-        c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=(None, None)
+        c=c,
+        A_ub=A_ub,
+        b_ub=b_ub,
+        A_eq=A_eq,
+        b_eq=b_eq,
+        bounds=(None, None),
+        method="highs",
     )
 
     if result.status == 3:
@@ -486,7 +492,13 @@ def find_interior_point(
         A_ub = np.concatenate([A_ub, A_s], axis=0)
         b_ub = np.concatenate([b_ub, np.ones(1)], axis=-1)
         result = scipy.optimize.linprog(
-            c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=(None, None)
+            c=c,
+            A_ub=A_ub,
+            b_ub=b_ub,
+            A_eq=A_eq,
+            b_eq=b_eq,
+            bounds=(None, None),
+            method="highs",
         )
 
     if result.status == 2:
@@ -504,7 +516,11 @@ def find_interior_point(
 
 
 class PolytopeSampler(ABC):
-    r"""Base class for samplers that sample points from a polytope."""
+    r"""
+    Base class for samplers that sample points from a polytope.
+
+    :meta private:
+    """
 
     def __init__(
         self,
@@ -513,8 +529,7 @@ class PolytopeSampler(ABC):
         bounds: Optional[Tensor] = None,
         interior_point: Optional[Tensor] = None,
     ) -> None:
-        r"""Initialize PolytopeSampler.
-
+        r"""
         Args:
             inequality_constraints: Tensors `(A, b)` describing inequality
                 constraints `A @ x <= b`, where `A` is a `n_ineq_con x d`-dim
@@ -815,6 +830,30 @@ class DelaunayPolytopeSampler(PolytopeSampler):
         return samples
 
 
+def normalize_linear_constraints(
+    bounds: Tensor, constraints: List[Tuple[Tensor, Tensor, float]]
+) -> List[Tuple[Tensor, Tensor, float]]:
+    r"""Normalize linear constraints to the unit cube.
+
+    Args:
+        bounds (Tensor): A `2 x d`-dim tensor containing the box bounds.
+        constraints (List[Tuple[Tensor, Tensor, float]]): A list of
+            tuples (indices, coefficients, rhs), with each tuple encoding
+            an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs` or
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
+    """
+
+    new_constraints = []
+    for index, coefficient, rhs in constraints:
+        lower, upper = bounds[:, index]
+        s = upper - lower
+        new_constraints.append(
+            (index, s * coefficient, (rhs - torch.dot(coefficient, lower)).item())
+        )
+    return new_constraints
+
+
 def get_polytope_samples(
     n: int,
     bounds: Tensor,
@@ -849,10 +888,28 @@ def get_polytope_samples(
     """
     # create tensors representing linear inequality constraints
     # of the form Ax >= b.
+    # TODO: remove this error handling functionality in a few releases.
+    # Context: BoTorch inadvertently supported indices with unusual dtypes.
+    # This is now not supported.
+    index_dtype_error = (
+        "Normalizing {var_name} failed. Check that the first "
+        "element of {var_name} is the correct dtype following "
+        "the previous IndexError."
+    )
     if inequality_constraints:
+        # normalize_linear_constraints is called to solve this issue:
+        # https://github.com/pytorch/botorch/issues/1225
+        try:
+            # non-standard dtypes used to be supported for indices in constraints;
+            # this is no longer true
+            constraints = normalize_linear_constraints(bounds, inequality_constraints)
+        except IndexError as e:
+            msg = index_dtype_error.format(var_name="`inequality_constraints`")
+            raise ValueError(msg) from e
+
         A, b = sparse_to_dense_constraints(
             d=bounds.shape[-1],
-            constraints=inequality_constraints,
+            constraints=constraints,
         )
         # Note the inequality constraints are of the form Ax >= b,
         # but PolytopeSampler expects inequality constraints of the
@@ -861,19 +918,31 @@ def get_polytope_samples(
     else:
         dense_inequality_constraints = None
     if equality_constraints:
+        try:
+            # non-standard dtypes used to be supported for indices in constraints;
+            # this is no longer true
+            constraints = normalize_linear_constraints(bounds, equality_constraints)
+        except IndexError as e:
+            msg = index_dtype_error.format(var_name="`equality_constraints`")
+            raise ValueError(msg) from e
+
+        # normalize_linear_constraints is called to solve this issue:
+        # https://github.com/pytorch/botorch/issues/1225
         dense_equality_constraints = sparse_to_dense_constraints(
-            d=bounds.shape[-1],
-            constraints=equality_constraints,
+            d=bounds.shape[-1], constraints=constraints
         )
     else:
         dense_equality_constraints = None
+    normalized_bounds = torch.zeros_like(bounds)
+    normalized_bounds[1, :] = 1.0
     polytope_sampler = HitAndRunPolytopeSampler(
+        bounds=normalized_bounds,
         inequality_constraints=dense_inequality_constraints,
-        bounds=bounds,
         equality_constraints=dense_equality_constraints,
         n_burnin=n_burnin,
     )
-    return polytope_sampler.draw(n=n * thinning, seed=seed)[::thinning]
+    samples = polytope_sampler.draw(n=n * thinning, seed=seed)[::thinning]
+    return bounds[0] + samples * (bounds[1] - bounds[0])
 
 
 def sparse_to_dense_constraints(

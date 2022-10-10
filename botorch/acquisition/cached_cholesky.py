@@ -29,7 +29,7 @@ from gpytorch import settings as gpt_settings
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
 )
-from gpytorch.utils.errors import NanError, NotPSDError
+from linear_operator.utils.errors import NanError, NotPSDError
 from torch import Tensor
 
 
@@ -39,6 +39,8 @@ class CachedCholeskyMCAcquisitionFunction(ABC):
     Specifically, this is for acquisition functions that require sampling from
     the posterior P(f(X_baseline, X) | D). The Cholesky of the posterior
     covariance over f(X_baseline) is cached.
+
+    :meta private:
     """
 
     def _check_sampler(self) -> None:
@@ -110,7 +112,7 @@ class CachedCholeskyMCAcquisitionFunction(ABC):
             lazy_covar = posterior.mvn.lazy_covariance_matrix
         with gpt_settings.fast_computations.covar_root_decomposition(False):
             lazy_covar_root = lazy_covar.root_decomposition()
-            baseline_L = lazy_covar_root.root.evaluate()
+            baseline_L = lazy_covar_root.root.to_dense()
         self.register_buffer("_baseline_L", baseline_L)
 
     def _get_f_X_samples(self, posterior: GPyTorchPosterior, q_in: int) -> Tensor:

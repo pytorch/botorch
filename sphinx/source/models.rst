@@ -10,7 +10,7 @@ botorch.models
 Model APIs
 -------------------------------------------
 
-Abstract Model API
+Base Model API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.model
     :members:
@@ -89,6 +89,11 @@ Fully Bayesian GP Models
 .. automodule:: botorch.models.fully_bayesian
     :members:
 
+Fully Bayesian Multitask GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.fully_bayesian_multitask
+    :members:
+
 
 Model Components
 -------------------------------------------
@@ -113,6 +118,10 @@ Kernels
 .. automodule:: botorch.models.kernels.contextual_sac
 .. autoclass:: SACKernel
 
+Likelihoods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.likelihoods.pairwise
+    :members:
 
 Transforms
 -------------------------------------------

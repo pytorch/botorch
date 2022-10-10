@@ -18,6 +18,8 @@ class StoppingCriterion(ABC):
 
     Stopping criteria are implemented as a objects rather than a function, so that they
     can keep track of past function values between optimization steps.
+
+    :meta private:
     """
 
     @abstractmethod

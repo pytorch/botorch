@@ -6,14 +6,16 @@
 
 import itertools
 import warnings
+from typing import Optional
 
 import torch
-from botorch import fit_gpytorch_model, settings
+from botorch import settings
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions import (
     BotorchTensorDimensionError,
     BotorchTensorDimensionWarning,
 )
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.gpytorch import (
     BatchedMultiOutputGPyTorchModel,
     GPyTorchModel,
@@ -36,6 +38,11 @@ from torch import Tensor
 
 class SimpleInputTransform(InputTransform, torch.nn.Module):
     def __init__(self, transform_on_train: bool) -> None:
+        r"""
+        Args:
+            transform_on_train: A boolean indicating whether to apply the
+                transform in train() mode.
+        """
         super().__init__()
         self.transform_on_train = transform_on_train
         self.transform_on_eval = True
@@ -51,6 +58,14 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
     last_fantasize_flag: bool = False
 
     def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
+        r"""
+        Args:
+            train_X: A tensor of inputs, passed to self.transform_inputs.
+            train_Y: Passed to outcome_transform.
+            outcome_transform: Transform applied to train_Y.
+            input_transform: A Module that performs the input transformation, passed to
+                self.transform_inputs.
+        """
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
@@ -82,7 +97,17 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
 
 
 class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, ExactGP):
+    _batch_shape: Optional[torch.Size] = None
+
     def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
+        r"""
+        Args:
+            train_X: A tensor of inputs, passed to self.transform_inputs.
+            train_Y: Passed to outcome_transform.
+            outcome_transform: Transform applied to train_Y.
+            input_transform: A Module that performs the input transformation, passed to
+                self.transform_inputs.
+        """
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
@@ -112,9 +137,19 @@ class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, Exa
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
 
+    @property
+    def batch_shape(self) -> torch.Size:
+        if self._batch_shape is not None:
+            return self._batch_shape
+        return super().batch_shape
+
 
 class SimpleModelListGPyTorchModel(IndependentModelList, ModelListGPyTorchModel):
     def __init__(self, *gp_models: GPyTorchModel):
+        r"""
+        Args:
+            gp_models: Arbitrary number of GPyTorchModels.
+        """
         super().__init__(*gp_models)
 
 
@@ -215,6 +250,13 @@ class TestGPyTorchModel(BotorchTestCase):
                     BotorchTensorDimensionWarning
                 ):
                     GPyTorchModel._validate_tensor_args(X, Y[0], strict=False)
+            # with Yvar
+            if len(output_dim_shape) > 0:
+                Yvar = torch.empty(torch.Size([n]) + output_dim_shape, **tkwargs)
+                GPyTorchModel._validate_tensor_args(X, Y, Yvar)
+                Yvar = torch.empty(n, 5, **tkwargs)
+                with self.assertRaises(BotorchTensorDimensionError):
+                    GPyTorchModel._validate_tensor_args(X, Y, Yvar)
 
     def test_fantasize_flag(self):
         train_X = torch.rand(5, 1)
@@ -245,7 +287,7 @@ class TestGPyTorchModel(BotorchTestCase):
             intf = SimpleInputTransform(transform_on_train)
             model = SimpleGPyTorchModel(train_X, train_Y, input_transform=intf)
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            fit_gpytorch_model(mll, options={"maxiter": 2})
+            fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 2}})
 
             test_X = torch.rand(2, 1, **tkwargs)
             model.posterior(test_X)
@@ -364,6 +406,13 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             )
             train_Y1 = torch.sin(train_X1)
             train_Y2 = torch.cos(train_X2)
+            # test SAAS type batch shape
+            m1 = SimpleBatchedMultiOutputGPyTorchModel(train_X1, train_Y1)
+            m2 = SimpleBatchedMultiOutputGPyTorchModel(train_X2, train_Y2)
+            m1._batch_shape = torch.Size([2])
+            m2._batch_shape = torch.Size([2])
+            model = SimpleModelListGPyTorchModel(m1, m2)
+            self.assertEqual(model.batch_shape, torch.Size([2]))
             # test different batch shapes (broadcastable)
             m1 = SimpleGPyTorchModel(
                 train_X1.expand(2, *train_X1.shape), train_Y1.expand(2, *train_Y1.shape)
@@ -445,7 +494,7 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             # train models to have the train inputs preprocessed
             for m in [m1, m2]:
                 mll = ExactMarginalLogLikelihood(m.likelihood, m)
-                fit_gpytorch_model(mll, options={"maxiter": 2})
+                fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 2}})
             model = SimpleModelListGPyTorchModel(m1, m2)
 
             test_X = torch.rand(2, 1, **tkwargs)
@@ -475,7 +524,7 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             m2 = SimpleGPyTorchModel(train_X2, train_Y2, input_transform=m2_tf)
             for m in [m1, m2]:
                 mll = ExactMarginalLogLikelihood(m.likelihood, m)
-                fit_gpytorch_model(mll, options={"maxiter": 2})
+                fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 2}})
             model = SimpleModelListGPyTorchModel(m1, m2)
             model.posterior(test_X)
             for m, t_X in [[m1, train_X1], [m2, train_X2]]:

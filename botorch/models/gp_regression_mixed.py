@@ -28,7 +28,9 @@ from torch import Tensor
 class MixedSingleTaskGP(SingleTaskGP):
     r"""A single-task exact GP model for mixed search spaces.
 
-    This model uses a kernel that combines a CategoricalKernel (based on
+    This model is similar to `SingleTaskGP`, but supports mixed search spaces,
+    which combine discrete and continuous features, as well as solely discrete
+    spaces. It uses a kernel that combines a CategoricalKernel (based on
     Hamming distances) and a regular kernel into a kernel of the form
 
         K((x1, c1), (x2, c2)) =
@@ -42,7 +44,17 @@ class MixedSingleTaskGP(SingleTaskGP):
     Since this model does not provide gradients for the categorical features,
     optimization of the acquisition function will need to be performed in
     a mixed fashion, i.e., treating the categorical features properly as
-    discrete optimization variables.
+    discrete optimization variables. We recommend using `optimize_acqf_mixed.`
+
+    Example:
+        >>> train_X = torch.cat(
+                [torch.rand(20, 2), torch.randint(3, (20, 1))], dim=-1)
+            )
+        >>> train_Y = (
+                torch.sin(train_X[..., :-1]).sum(dim=1, keepdim=True)
+                + train_X[..., -1:]
+            )
+        >>> model = MixedSingleTaskGP(train_X, train_Y, cat_dims=[-1])
     """
 
     def __init__(
@@ -63,7 +75,7 @@ class MixedSingleTaskGP(SingleTaskGP):
             cat_dims: A list of indices corresponding to the columns of
                 the input `X` that should be considered categorical features.
             cont_kernel_factory: A method that accepts `ard_num_dims` and
-                `active_dims` arguments and returns an instatiated GPyTorch
+                `active_dims` arguments and returns an instantiated GPyTorch
                 `Kernel` object to be used as the ase kernel for the continuous
                 dimensions. If omitted, this model uses a Matern-2.5 kernel as
                 the kernel for the ordinal parameters.
@@ -77,16 +89,6 @@ class MixedSingleTaskGP(SingleTaskGP):
                 forward pass. Only input transforms are allowed which do not
                 transform the categorical dimensions. This can be achieved
                 by using the `indices` argument when constructing the transform.
-
-        Example:
-            >>> train_X = torch.cat(
-                    [torch.rand(20, 2), torch.randint(3, (20, 1))], dim=-1)
-                )
-            >>> train_Y = (
-                    torch.sin(train_X[..., :-1]).sum(dim=1, keepdim=True)
-                    + train_X[..., -1:]
-                )
-            >>> model = MixedSingleTaskGP(train_X, train_Y, cat_dims=[-1])
         """
         if input_transform is not None:
             if not hasattr(input_transform, "indices"):
@@ -191,7 +193,7 @@ class MixedSingleTaskGP(SingleTaskGP):
         training_data: SupervisedDataset,
         categorical_features: List[int],
         likelihood: Optional[Likelihood] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dict of `BotorchDataset`.
 

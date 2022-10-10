@@ -27,6 +27,17 @@ class DummyDeterministicModel(DeterministicModel):
     r"""A dummy deterministic model that uses transforms."""
 
     def __init__(self, outcome_transform, input_transform):
+        r"""
+        Args:
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
+            input_transform: An input transform that is applied in the model's
+                forward pass. Only input transforms are allowed which do not
+                transform the categorical dimensions. This can be achieved
+                by using the `indices` argument when constructing the transform.
+        """
         super().__init__()
         self.input_transform = input_transform
         self.outcome_transform = outcome_transform
@@ -168,4 +179,7 @@ class TestDeterministicModels(BotorchTestCase):
         train_Y_double = torch.rand(2, 2, dtype=torch.double)
         model_double = SingleTaskGP(train_X=train_X_double, train_Y=train_Y_double)
         fss_model_double = FixedSingleSampleModel(model=model_double)
-        self.assertTrue(fss_model_double.w.dtype == train_X_double.dtype)
+        test_X_float = torch.rand(2, 3, dtype=torch.float)
+
+        # the following line should execute fine
+        fss_model_double.posterior(test_X_float)

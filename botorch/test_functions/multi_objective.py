@@ -116,8 +116,7 @@ class BraninCurrin(MultiObjectiveTestProblem):
     _max_hv = 59.36011874867746  # this is approximated using NSGA-II
 
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
-        r"""Constructor for Branin-Currin.
-
+        r"""
         Args:
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the objectives.
@@ -177,6 +176,12 @@ class DH(MultiObjectiveTestProblem, ABC):
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:
+        r"""
+        Args:
+            dim: The (input) dimension.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
+        """
         if dim < self._min_dim:
             raise ValueError(f"dim must be >= {self._min_dim}, but got dim={dim}!")
         self.dim = dim
@@ -331,6 +336,13 @@ class DTLZ(MultiObjectiveTestProblem):
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:
+        r"""
+        Args:
+            dim: The (input) dimension of the function.
+            num_objectives: Must be less than dim.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
+        """
         if dim <= num_objectives:
             raise ValueError(
                 f"dim must be > num_objectives, but got {dim} and {num_objectives}."
@@ -364,7 +376,7 @@ class DTLZ1(DTLZ):
 
     @property
     def _max_hv(self) -> float:
-        return self._ref_val ** self.num_objectives - 1 / 2 ** self.num_objectives
+        return self._ref_val**self.num_objectives - 1 / 2**self.num_objectives
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         X_m = X[..., -self.k :]
@@ -420,11 +432,11 @@ class DTLZ2(DTLZ):
     def _max_hv(self) -> float:
         # hypercube - volume of hypersphere in R^d such that all coordinates are
         # positive
-        hypercube_vol = self._ref_val ** self.num_objectives
+        hypercube_vol = self._ref_val**self.num_objectives
         pos_hypersphere_vol = (
             math.pi ** (self.num_objectives / 2)
             / gamma(self.num_objectives / 2 + 1)
-            / 2 ** self.num_objectives
+            / 2**self.num_objectives
         )
         return hypercube_vol - pos_hypersphere_vol
 
@@ -591,8 +603,7 @@ class GMM(MultiObjectiveTestProblem):
         negate: bool = False,
         num_objectives: int = 2,
     ) -> None:
-        r"""Constructor.
-
+        r"""
         Args:
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the objectives.
@@ -709,9 +720,9 @@ class Penicillin(MultiObjectiveTestProblem):
     K_p = 0.0002
     K_I = 0.10
     K = 0.04
-    k_g = 7.0 * 10 ** 3
+    k_g = 7.0 * 10**3
     E_g = 5100.0
-    k_d = 10.0 ** 33
+    k_d = 10.0**33
     E_d = 50000.0
     lambd = 2.5 * 10 ** (-4)
     T_v = 273.0  # Kelvin
@@ -917,6 +928,13 @@ class ZDT(MultiObjectiveTestProblem):
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:
+        r"""
+        Args:
+            dim: The (input) dimension of the function.
+            num_objectives: Number of objectives. Must not be larger than dim.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
+        """
         if num_objectives != 2:
             raise NotImplementedError(
                 f"{type(self).__name__} currently only supports 2 objectives."
@@ -1098,7 +1116,7 @@ class CarSideImpact(MultiObjectiveTestProblem):
             + 6.98 * X3
             + 4.01 * X4
             + 1.78 * X5
-            + 10 ** -5 * X6
+            + 10**-5 * X6
             + 2.73 * X7
         )
         f2 = 4.72 - 0.5 * X4 - 0.19 * X2 * X3
@@ -1168,7 +1186,7 @@ class BNH(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         return torch.stack(
-            [4.0 * (X ** 2).sum(dim=-1), ((X - 5.0) ** 2).sum(dim=-1)], dim=-1
+            [4.0 * (X**2).sum(dim=-1), ((X - 5.0) ** 2).sum(dim=-1)], dim=-1
         )
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
@@ -1216,6 +1234,11 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
     _max_hv = 608.4004237022673  # from NSGA-II with 90k evaluations
 
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+        r"""
+        Args:
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
+        """
         super().__init__(noise_std=noise_std, negate=negate)
         con_bounds = torch.tensor(self._con_bounds, dtype=torch.float).transpose(-1, -2)
         self.register_buffer("con_bounds", con_bounds)
@@ -1245,9 +1268,9 @@ class C2DTLZ2(DTLZ2, ConstrainedBaseTestProblem):
             .expand(f_X.shape[0], f_X.shape[-1], f_X.shape[-1])
             .gather(dim=-1, index=indexer.repeat(f_X.shape[0], 1, 1))
         )
-        term2 = (term2_inner.pow(2) - self._r ** 2).sum(dim=-1)
+        term2 = (term2_inner.pow(2) - self._r**2).sum(dim=-1)
         min1 = (term1 + term2).min(dim=-1).values
-        min2 = ((f_X - 1 / math.sqrt(f_X.shape[-1])).pow(2) - self._r ** 2).sum(dim=-1)
+        min2 = ((f_X - 1 / math.sqrt(f_X.shape[-1])).pow(2) - self._r**2).sum(dim=-1)
         return -torch.min(min1, min2).unsqueeze(-1)
 
 
@@ -1316,6 +1339,12 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         noise_std: Optional[float] = None,
         negate: bool = False,
     ) -> None:
+        r"""
+        Args:
+            dim: The (input) dimension of the function. Must be at least 2.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
+        """
         if dim < 2:
             raise ValueError("dim must be greater than or equal to 2.")
         self.dim = dim
@@ -1375,7 +1404,7 @@ class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
             + (X[..., 3] - 4) ** 2
             + (X[..., 4] - 1) ** 2
         )
-        f2 = (X ** 2).sum(-1)
+        f2 = (X**2).sum(-1)
         return torch.stack([f1, f2], dim=-1)
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
@@ -1407,7 +1436,7 @@ class SRN(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         return torch.stack([obj1, obj2], dim=-1)
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
-        c1 = 225.0 - ((X ** 2) ** 2).sum(dim=-1)
+        c1 = 225.0 - ((X**2) ** 2).sum(dim=-1)
         c2 = -10.0 - X[..., 0] + 3 * X[..., 1]
         return torch.stack([c1, c2], dim=-1)
 
@@ -1455,7 +1484,7 @@ class WeldedBeam(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         )
         t1 = P / (math.sqrt(2) * X[..., 0] * X[..., 1])
         t2 = M * R / J
-        t = torch.sqrt(t1 ** 2 + t2 ** 2 + t1 * t2 * X[..., 1] / R)
+        t = torch.sqrt(t1**2 + t2**2 + t1 * t2 * X[..., 1] / R)
         s = 6 * P * L / (X[..., 3] * X[..., 2] ** 2)
         P_c = 64746.022 * (1 - 0.0282346 * X[..., 2]) * X[..., 2] * X[..., 3] ** 3
 

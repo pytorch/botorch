@@ -12,13 +12,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
 from typing import Any
 
-from torch import (
-    device as Device,
-    dtype as Dtype,
-    LongTensor,
-    Size,
-    Tensor,
-)
+from torch import device as Device, dtype as Dtype, LongTensor, Size, Tensor
 
 
 class BotorchContainer(ABC):
@@ -31,6 +25,8 @@ class BotorchContainer(ABC):
 
     Notice: Once version 3.10 becomes standard, this class should
     be reworked to take advantage of dataclasses' `kw_only` flag.
+
+    :meta private:
     """
 
     def __post_init__(self, validate_init: bool = True) -> None:

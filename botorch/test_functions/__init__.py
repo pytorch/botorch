@@ -35,6 +35,10 @@ from botorch.test_functions.multi_objective import (
     ZDT2,
     ZDT3,
 )
+from botorch.test_functions.multi_objective_multi_fidelity import (
+    MOMFBraninCurrin,
+    MOMFPark,
+)
 from botorch.test_functions.synthetic import (
     Ackley,
     Beale,
@@ -109,4 +113,6 @@ __all__ = [
     "ZDT1",
     "ZDT2",
     "ZDT3",
+    "MOMFBraninCurrin",
+    "MOMFPark",
 ]

@@ -46,12 +46,12 @@ class AugmentedBranin(SyntheticTestFunction):
     def evaluate_true(self, X: Tensor) -> Tensor:
         t1 = (
             X[..., 1]
-            - (5.1 / (4 * math.pi ** 2) - 0.1 * (1 - X[:, 2])) * X[:, 0] ** 2
+            - (5.1 / (4 * math.pi**2) - 0.1 * (1 - X[:, 2])) * X[:, 0] ** 2
             + 5 / math.pi * X[..., 0]
             - 6
         )
         t2 = 10 * (1 - 1 / (8 * math.pi)) * torch.cos(X[..., 0])
-        return t1 ** 2 + t2 + 10
+        return t1**2 + t2 + 10
 
 
 class AugmentedHartmann(SyntheticTestFunction):
@@ -76,6 +76,11 @@ class AugmentedHartmann(SyntheticTestFunction):
     _check_grad_at_opt = False
 
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+        r"""
+        Args:
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
+        """
         super().__init__(noise_std=noise_std, negate=negate)
         self.register_buffer("ALPHA", torch.tensor([1.0, 1.2, 3.0, 3.2]))
         A = [
@@ -124,6 +129,12 @@ class AugmentedRosenbrock(SyntheticTestFunction):
     def __init__(
         self, dim=3, noise_std: Optional[float] = None, negate: bool = False
     ) -> None:
+        r"""
+        Args:
+            dim: The (input) dimension. Must be at least 3.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
+        """
         if dim < 3:
             raise ValueError(
                 "AugmentedRosenbrock must be defined it at least 3 dimensions"
@@ -136,6 +147,6 @@ class AugmentedRosenbrock(SyntheticTestFunction):
     def evaluate_true(self, X: Tensor) -> Tensor:
         X_curr = X[..., :-3]
         X_next = X[..., 1:-2]
-        t1 = 100 * (X_next - X_curr ** 2 + 0.1 * (1 - X[..., -2:-1])) ** 2
+        t1 = 100 * (X_next - X_curr**2 + 0.1 * (1 - X[..., -2:-1])) ** 2
         t2 = (X_curr - 1 + 0.1 * (1 - X[..., -1:]) ** 2) ** 2
         return -((t1 + t2).sum(dim=-1))

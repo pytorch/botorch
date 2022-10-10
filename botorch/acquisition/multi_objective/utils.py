@@ -23,10 +23,11 @@ from botorch.acquisition.multi_objective.objective import (
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning, SamplingWarning
+from botorch.models.fully_bayesian import MCMC_DIM
 from botorch.models.model import Model
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.multi_objective.pareto import is_non_dominated
-from botorch.utils.transforms import normalize_indices
+from botorch.utils.transforms import is_fully_bayesian, normalize_indices
 from torch import Tensor
 from torch.quasirandom import SobolEngine
 
@@ -97,6 +98,10 @@ def prune_inferior_points_multi_objective(
         with `N_nz` the number of points in `X` that have non-zero (empirical,
         under `num_samples` samples) probability of being pareto optimal.
     """
+    if marginalize_dim is None and is_fully_bayesian(model):
+        # TODO: Properly deal with marginalizing fully Bayesian models
+        marginalize_dim = MCMC_DIM
+
     if X.ndim > 2:
         # TODO: support batched inputs (req. dealing with ragged tensors)
         raise UnsupportedError(

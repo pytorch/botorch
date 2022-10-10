@@ -41,7 +41,6 @@ from botorch.sampling import MCSampler
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import Kernel, MaternKernel, ScaleKernel
-from gpytorch.lazy import LazyTensor
 from gpytorch.likelihoods import (
     GaussianLikelihood,
     Likelihood,
@@ -59,6 +58,7 @@ from gpytorch.variational import (
     IndependentMultitaskVariationalStrategy,
     VariationalStrategy,
 )
+from linear_operator.operators import LinearOperator
 from torch import Tensor
 
 
@@ -67,6 +67,14 @@ NEG_INF = -(torch.tensor(float("inf")))
 
 
 class ApproximateGPyTorchModel(GPyTorchModel):
+    r"""
+    Botorch wrapper class for various (variational) approximate GP models in
+    GPyTorch.
+
+    This can either include stochastic variational GPs (SVGPs) or
+    variational implementations of weight space approximate GPs.
+    """
+
     def __init__(
         self,
         model: Optional[ApproximateGP] = None,
@@ -76,14 +84,10 @@ class ApproximateGPyTorchModel(GPyTorchModel):
         **kwargs,
     ) -> None:
         r"""
-        Botorch wrapper class for various (variational) approximate GP models in
-        gpytorch. This can either include stochastic variational GPs (SVGPs) or
-        variational implementations of weight space approximate GPs.
-
         Args:
             model: Instance of gpytorch.approximate GP models. If omitted,
                 constructs a `_SingleTaskVariationalGP`.
-            likelihood: Instance of a GPyYorch likelihood. If omitted, uses a
+            likelihood: Instance of a GPyTorch likelihood. If omitted, uses a
                 either a `GaussianLikelihood` (if `num_outputs=1`) or a
                 `MultitaskGaussianLikelihood`(if `num_outputs>1`).
             num_outputs: Number of outputs expected for the GP model.
@@ -146,6 +150,13 @@ class ApproximateGPyTorchModel(GPyTorchModel):
 
 
 class _SingleTaskVariationalGP(ApproximateGP):
+    """
+    Base class wrapper for a stochastic variational Gaussian Process (SVGP)
+    model [hensman2013svgp]_.
+
+    Uses pivoted Cholesky initialization for the inducing points.
+    """
+
     def __init__(
         self,
         train_X: Tensor,
@@ -159,10 +170,6 @@ class _SingleTaskVariationalGP(ApproximateGP):
         inducing_points: Optional[Union[Tensor, int]] = None,
     ) -> None:
         r"""
-        Base class wrapper for a stochastic variational Gaussian Process (SVGP)
-        model [hensman2013svgp]_. Uses pivoted cholesky initialization for the
-        inducing points.
-
         Args:
             train_X: Training inputs (due to the ability of the SVGP to sub-sample
                 this does not have to be all of the training inputs).
@@ -255,7 +262,7 @@ class _SingleTaskVariationalGP(ApproximateGP):
 
 class SingleTaskVariationalGP(ApproximateGPyTorchModel):
     r"""A single-task variational GP model following [hensman2013svgp]_ with pivoted
-    cholesky initialization following [chen2018dpp]_ and [burt2020svgp]_.
+    Cholesky initialization following [chen2018dpp]_ and [burt2020svgp]_.
 
     A single-task variational GP using relatively strong priors on the Kernel
     hyperparameters, which work best when covariates are normalized to the unit
@@ -269,11 +276,19 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
 
     Use this model if you have a lot of data or if your responses are non-Gaussian.
 
-    To train this model, you should use `gpytorch.mlls.VariationalELBO` and not the
-    exact marginal log likelihood. Example mll:
+    To train this model, you should use gpytorch.mlls.VariationalELBO and not
+    the exact marginal log likelihood.
 
-        mll = VariationalELBO(model.likelihood, model.model, num_data=train_X.shape[-2])
-
+    Example:
+        >>> import torch
+        >>> from botorch.models import SingleTaskVariationalGP
+        >>> from gpytorch.mlls import VariationalELBO
+        >>>
+        >>> train_X = torch.rand(20, 2)
+        >>> model = SingleTaskVariationalGP(train_X)
+        >>> mll = VariationalELBO(
+        >>>     model.likelihood, model.model, num_data=train_X.shape[-2]
+        >>> )
     """
 
     def __init__(
@@ -292,15 +307,11 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         input_transform: Optional[InputTransform] = None,
     ) -> None:
         r"""
-        A single task stochastic variational Gaussian process model (SVGP) as described
-        by [hensman2013svgp]_. We use pivoted cholesky initialization [burt2020svgp]_ to
-        initialize the inducing points of the model.
-
         Args:
             train_X: Training inputs (due to the ability of the SVGP to sub-sample
                 this does not have to be all of the training inputs).
             train_Y: Training targets (optional).
-            likelihood: Instance of a GPyYorch likelihood. If omitted, uses a
+            likelihood: Instance of a GPyTorch likelihood. If omitted, uses a
                 either a `GaussianLikelihood` (if `num_outputs=1`) or a
                 `MultitaskGaussianLikelihood`(if `num_outputs>1`).
             num_outputs: Number of output responses per input (default: 1).
@@ -426,7 +437,7 @@ def _select_inducing_points(
 
     Args:
         inputs: A (*batch_shape, n, d)-dim input data tensor.
-        covar_module: GPyTorch Module returning a LazyTensor kernel matrix.
+        covar_module: GPyTorch Module returning a LinearOperator kernel matrix.
         num_inducing: The maximun number (m) of inducing points (m <= n).
         input_batch_shape: The non-task-related batch shape.
 
@@ -487,7 +498,7 @@ def _select_inducing_points(
 
 def _pivoted_cholesky_init(
     train_inputs: Tensor,
-    kernel_matrix: Union[Tensor, LazyTensor],
+    kernel_matrix: Union[Tensor, LinearOperator],
     max_length: int,
     epsilon: float = 1e-6,
 ) -> Tensor:

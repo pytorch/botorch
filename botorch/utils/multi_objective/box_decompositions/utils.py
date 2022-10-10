@@ -222,7 +222,8 @@ def update_local_upper_bounds_incremental(
 def compute_non_dominated_hypercell_bounds_2d(
     pareto_Y_sorted: Tensor, ref_point: Tensor
 ) -> Tensor:
-    r"""Compute an axis-aligned partitioning of the non-dominated space for 2 objectives.
+    r"""Compute an axis-aligned partitioning of the non-dominated space for 2
+    objectives.
 
     Args:
         pareto_Y_sorted: A `(batch_shape) x n_pareto x 2`-dim tensor of pareto outcomes

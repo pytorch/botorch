@@ -13,8 +13,8 @@ from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.constraints import Interval
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
-from gpytorch.lazy import InterpolatedLazyTensor, LazyTensor
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
+from linear_operator.operators import InterpolatedLinearOperator, LinearOperator
 from torch import Tensor
 from torch.nn import ModuleList
 
@@ -22,22 +22,6 @@ from torch.nn import ModuleList
 class LCEMGP(MultiTaskGP):
     r"""The Multi-Task GP with the latent context embedding multioutput
     (LCE-M) kernel.
-
-    Args:
-        train_X: (n x d) X training data.
-        train_Y: (n x 1) Y training data.
-        task_feature: column index of train_X to get context indices.
-        context_cat_feature: (n_contexts x k) one-hot encoded context
-            features. Rows are ordered by context indices. k equals to
-            number of categorical variables. If None, task indices will
-            be used and k = 1
-        context_emb_feature: (n_contexts x m) pre-given continuous
-            embedding features. Rows are ordered by context indices.
-        embs_dim_list: Embedding dimension for each categorical variable.
-            The length equals to k. If None, emb dim is set to 1 for each
-            categorical variable.
-        output_tasks: A list of task indices for which to compute model
-            outputs for. If omitted, return outputs for all task indices.
     """
 
     def __init__(
@@ -52,6 +36,23 @@ class LCEMGP(MultiTaskGP):
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
+        r"""
+        Args:
+            train_X: (n x d) X training data.
+            train_Y: (n x 1) Y training data.
+            task_feature: Column index of train_X to get context indices.
+            context_cat_feature: (n_contexts x k) one-hot encoded context
+                features. Rows are ordered by context indices, where k is the
+                number of categorical variables. If None, task indices will
+                be used and k = 1.
+            context_emb_feature: (n_contexts x m) pre-given continuous
+                embedding features. Rows are ordered by context indices.
+            embs_dim_list: Embedding dimension for each categorical variable.
+                The length equals k. If None, the embedding dimension is set to 1
+                for each categorical variable.
+            output_tasks: A list of task indices for which to compute model
+                outputs for. If omitted, return outputs for all task indices.
+        """
         super().__init__(
             train_X=train_X,
             train_Y=train_Y,
@@ -95,7 +96,7 @@ class LCEMGP(MultiTaskGP):
         )
         self.to(train_X)
 
-    def _eval_context_covar(self) -> LazyTensor:
+    def _eval_context_covar(self) -> LinearOperator:
         """obtain context covariance matrix (num_contexts x num_contexts)"""
         all_embs = self._task_embeddings()
         return self.task_covar_module(all_embs)
@@ -121,17 +122,17 @@ class LCEMGP(MultiTaskGP):
         return embeddings
 
     def task_covar_matrix(self, task_idcs: Tensor) -> Tensor:
-        """compute covariance matrix of a list of given context
+        r"""compute covariance matrix of a list of given context
 
         Args:
             task_idcs: (n x 1) or (b x n x 1) task indices tensor
         """
         covar_matrix = self._eval_context_covar()
-        return InterpolatedLazyTensor(
-            base_lazy_tensor=covar_matrix,
+        return InterpolatedLinearOperator(
+            base_linear_op=covar_matrix,
             left_interp_indices=task_idcs,
             right_interp_indices=task_idcs,
-        ).evaluate()
+        ).to_dense()
 
     def forward(self, x: Tensor) -> MultivariateNormal:
         if self.training:
@@ -149,23 +150,6 @@ class LCEMGP(MultiTaskGP):
 class FixedNoiseLCEMGP(LCEMGP):
     r"""The Multi-Task GP the latent context embedding multioutput
     (LCE-M) kernel, with known observation noise.
-
-    Args:
-        train_X: (n x d) X training data.
-        train_Y: (n x 1) Y training data.
-        train_Yvar: (n x 1) Noise variances of each training Y.
-        task_feature: column index of train_X to get context indices.
-        context_cat_feature: (n_contexts x k) one-hot encoded context
-            features. Rows are ordered by context indices. k equals to
-            number of categorical variables. If None, task indices will
-            be used and k = 1.
-        context_emb_feature: (n_contexts x m) pre-given continuous
-            embedding features. Rows are ordered by context indices.
-        embs_dim_list: Embedding dimension for each categorical variable.
-            The length equals to k. If None, emb dim is set to 1 for each
-            categorical variable.
-        output_tasks: A list of task indices for which to compute model
-            outputs for. If omitted, return outputs for all task indices.
     """
 
     def __init__(
@@ -179,6 +163,24 @@ class FixedNoiseLCEMGP(LCEMGP):
         embs_dim_list: Optional[List[int]] = None,
         output_tasks: Optional[List[int]] = None,
     ) -> None:
+        r"""
+        Args:
+            train_X: (n x d) X training data.
+            train_Y: (n x 1) Y training data.
+            train_Yvar: (n x 1) Noise variances of each training Y.
+            task_feature: Column index of train_X to get context indices.
+            context_cat_feature: (n_contexts x k) one-hot encoded context
+                features. Rows are ordered by context indices, where k is the
+                number of categorical variables. If None, task indices will
+                be used and k = 1.
+            context_emb_feature: (n_contexts x m) pre-given continuous
+                embedding features. Rows are ordered by context indices.
+            embs_dim_list: Embedding dimension for each categorical variable.
+                The length equals to k. If None, the embedding dimension is set to
+                1 for each categorical variable.
+            output_tasks: A list of task indices for which to compute model
+                outputs for. If omitted, return outputs for all task indices.
+        """
         self._validate_tensor_args(X=train_X, Y=train_Y, Yvar=train_Yvar)
         super().__init__(
             train_X=train_X,

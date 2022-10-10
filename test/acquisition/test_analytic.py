@@ -464,7 +464,7 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         train_y = torch.sin(train_x * (2 * math.pi))
         noise = torch.tensor(NEI_NOISE, device=self.device, dtype=dtype)
         train_y += noise
-        train_yvar = torch.full_like(train_y, 0.25 ** 2)
+        train_yvar = torch.full_like(train_y, 0.25**2)
         model = FixedNoiseGP(train_X=train_x, train_Y=train_y, train_Yvar=train_yvar)
         model.load_state_dict(state_dict)
         model.to(train_x)

@@ -20,15 +20,23 @@
     },
     {
       "id": "bope",
-      "title": "Bayesian optimization with preference exploration"
+      "title": "Bayesian optimization with preference exploration (BOPE)"
     },
     {
       "id": "turbo_1",
       "title": "Trust Region Bayesian Optimization (TuRBO)"
     },
     {
+      "id": "scalable_constrained_bo",
+      "title": "Scalable Constrained Bayesian Optimization (SCBO)"
+    },
+    {
       "id": "saasbo",
       "title": "High-dimensional Bayesian optimization with SAASBO"
+    },
+    {
+      "id": "Multi_objective_multi_fidelity_BO",
+      "title": "Multi-Objective-Multi-Fidelity optimization with MOMF"
     },
     {
       "id": "bo_with_warped_gp",
@@ -47,6 +55,10 @@
     {
       "id": "constrained_multi_objective_bo",
       "title": "Constrained multi-objective optimization with qNEHVI and qParEGO"
+    },
+    {
+      "id": "robust_multi_objective_bo",
+      "title": "Robust multi-objective Bayesian optimization under input noise"
     }
   ],
   "Bite-Sized Tutorials": [

@@ -33,13 +33,21 @@ from botorch.models.transforms.utils import (
 )
 from botorch.posteriors import GPyTorchPosterior, Posterior, TransformedPosterior
 from botorch.utils.transforms import normalize_indices
-from gpytorch.lazy import CholLazyTensor, DiagLazyTensor
+from linear_operator.operators import (
+    BlockDiagLinearOperator,
+    CholLinearOperator,
+    DiagLinearOperator,
+)
 from torch import Tensor
 from torch.nn import Module, ModuleDict
 
 
 class OutcomeTransform(Module, ABC):
-    r"""Abstract base class for outcome transforms."""
+    r"""
+    Abstract base class for outcome transforms.
+
+    :meta private:
+    """
 
     @abstractmethod
     def forward(
@@ -374,12 +382,23 @@ class Standardize(OutcomeTransform):
             or mvn._MultivariateNormal__unbroadcasted_scale_tril is not None
         ):
             # if already computed, we can save a lot of time using scale_tril
-            covar_tf = CholLazyTensor(mvn.scale_tril * scale_fac.unsqueeze(-1))
+            covar_tf = CholLinearOperator(mvn.scale_tril * scale_fac.unsqueeze(-1))
         else:
             lcv = mvn.lazy_covariance_matrix
-            # allow batch-evaluation of the model
-            scale_mat = DiagLazyTensor(scale_fac.expand(lcv.shape[:-1]))
-            covar_tf = scale_mat @ lcv @ scale_mat
+            scale_fac = scale_fac.expand(lcv.shape[:-1])
+            # TODO: Remove the custom logic with next GPyTorch release (T126095032).
+            if isinstance(lcv, BlockDiagLinearOperator):
+                # Keep the block diag structure of lcv.
+                base_lcv = lcv.base_linear_op
+                scale_mat = DiagLinearOperator(
+                    scale_fac.view(*scale_fac.shape[:-1], lcv.num_blocks, -1)
+                )
+                base_lcv_tf = scale_mat @ base_lcv @ scale_mat
+                covar_tf = BlockDiagLinearOperator(base_linear_op=base_lcv_tf)
+            else:
+                # allow batch-evaluation of the model
+                scale_mat = DiagLinearOperator(scale_fac)
+                covar_tf = scale_mat @ lcv @ scale_mat
 
         kwargs = {"interleaved": mvn._interleaved} if posterior._is_mt else {}
         mvn_tf = mvn.__class__(mean=mean_tf, covariance_matrix=covar_tf, **kwargs)

@@ -16,6 +16,7 @@ from botorch.acquisition.multi_objective.monte_carlo import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
+from botorch.acquisition.multi_objective.multi_fidelity import MOMF
 from botorch.acquisition.multi_objective.objective import (
     AnalyticMultiOutputObjective,
     IdentityAnalyticMultiOutputObjective,
@@ -36,6 +37,7 @@ __all__ = [
     "prune_inferior_points_multi_objective",
     "qExpectedHypervolumeImprovement",
     "qNoisyExpectedHypervolumeImprovement",
+    "MOMF",
     "qMultiObjectiveMaxValueEntropy",
     "AnalyticMultiOutputObjective",
     "ExpectedHypervolumeImprovement",

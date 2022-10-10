@@ -2,6 +2,157 @@
 
 The release log for BoTorch.
 
+## [0.7.2] - Sep 27, 2022
+
+#### New Features
+* A full refactor of model fitting methods (#1134).
+  * This introduces a new `fit_gpytorch_mll` method that multiple-dispatches
+    on the model type. Users may register custom fitting routines for different
+    combinations of MLLs, Likelihoods, and Models.
+  * Unlike previous fitting helpers, `fit_gpytorch_mll` does **not** pass
+   `kwargs` to `optimizer` and instead introduces an optional `optimizer_kwargs`
+    argument.
+  * When a model fitting attempt fails, `botorch.fit` methods restore modules to their
+    original states.
+  * `fit_gpytorch_mll` throws a `ModelFittingError` when all model fitting attempts fail.
+  * Upon returning from `fit_gpytorch_mll`, `mll.training` will be `True` if fitting failed
+    and `False` otherwise.
+* Allow custom bounds to be passed in to `SyntheticTestFunction` (#1415).
+
+#### Deprecations
+* Deprecate weights argument of risk measures in favor of a `preprocessing_function` (#1400),
+* Deprecate `fit_gyptorch_model`; to be superseded by `fit_gpytorch_mll`.
+
+#### Other Changes
+* Support risk measures in MOO input constructors (#1401).
+
+#### Bug Fixes
+* Fix fully Bayesian state dict loading when there are more than 10 models (#1405).
+* Fix `batch_shape` property of `SaasFullyBayesianSingleTaskGP` (#1413).
+* Fix `model_list_to_batched` ignoring the `covar_module` of the input models (#1419).
+
+
+## [0.7.1] - Sep 13, 2022
+
+#### Compatibility
+* Pin GPyTorch >= 1.9.0 (#1397).
+* Pin linear_operator == 0.1.1 (#1397).
+
+#### New Features
+* Implement `SaasFullyBayesianMultiTaskGP` and related utilities (#1181, #1203).
+
+#### Other Changes
+* Support loading a state dict for `SaasFullyBayesianSingleTaskGP` (#1120).
+* Update `load_state_dict` for `ModelList` to support fully Bayesian models (#1395).
+* Add `is_one_to_many` attribute to input transforms (#1396).
+
+#### Bug Fixes
+* Fix `PairwiseGP` on GPU (#1388).
+
+
+## [0.7.0] - Sep 7, 2022
+
+#### Compatibility
+* Require python >= 3.8 (via #1347).
+* Support for python 3.10 (via #1379).
+* Require PyTorch >= 1.11 (via (#1363).
+* Require GPyTorch >= 1.9.0 (#1347).
+  * GPyTorch 1.9.0 is a major refactor that factors out the lazy tensor
+  functionality into a new `LinearOperator` library, which required
+  a number of adjustments to BoTorch (#1363, #1377).
+* Require pyro >= 1.8.2 (#1379).
+
+#### New Features
+* Add ability to generate the features appended in the `AppendFeatures` input
+transform via a generic callable (#1354).
+* Add new synthetic test functions for sensitivity analysis (#1355, #1361).
+
+#### Other Changes
+* Use `time.monotonic()` instead of `time.time()` to measure duration (#1353).
+* Allow passing `Y_samples` directly in `MARS.set_baseline_Y` (#1364).
+
+#### Bug Fixes
+* Patch `state_dict` loading for `PairwiseGP` (#1359).
+* Fix `batch_shape` handling in `Normalize` and `InputStandardize` transforms (#1360).
+
+
+## [0.6.6] - Aug 12, 2022
+
+#### Compatibility
+* Require GPyTorch >= 1.8.1 (#1347).
+
+#### New Features
+* Support batched models in `RandomFourierFeatures` (#1336).
+* Add a `skip_expand` option to `AppendFeatures` (#1344).
+
+#### Other Changes
+* Allow `qProbabilityOfImprovement` to use batch-shaped `best_f` (#1324).
+* Make `optimize_acqf` re-attempt failed optimization runs and handle optimization
+errors in `optimize_acqf` and `gen_candidates_scipy` better (#1325).
+* Reduce memory overhead in `MARS.set_baseline_Y` (#1346).
+
+#### Bug Fixes
+* Fix bug where `outcome_transform` was ignored for `ModelListGP.fantasize` (#1338).
+* Fix bug causing `get_polytope_samples` to sample incorrectly when variables
+live in multiple dimensions (#1341).
+
+#### Documentation
+* Add more descriptive docstrings for models (#1327, #1328, #1329, #1330) and for other
+classes (#1313).
+* Expanded on the model documentation at [botorch.org/docs/models](https://botorch.org/docs/models) (#1337).
+
+## [0.6.5] - Jul 15, 2022
+
+#### Compatibility
+* Require PyTorch >=1.10 (#1293).
+* Require GPyTorch >=1.7 (#1293).
+
+#### New Features
+* Add MOMF (Multi-Objective Multi-Fidelity) acquisition function (#1153).
+* Support `PairwiseLogitLikelihood` and modularize `PairwiseGP` (#1193).
+* Add in transformed weighting flag to Proximal Acquisition function (#1194).
+* Add `FeasibilityWeightedMCMultiOutputObjective` (#1202).
+* Add outcome_transform to `FixedNoiseMultiTaskGP` (#1255).
+* Support Scalable Constrained Bayesian Optimization (#1257).
+* Support `SaasFullyBayesianSingleTaskGP` in `prune_inferior_points` (#1260).
+* Implement MARS as a risk measure (#1303).
+* Add MARS tutorial (#1305).
+
+#### Other Changes
+* Add `Bilog` outcome transform (#1189).
+* Make `get_infeasible_cost` return a cost value for each outcome (#1191).
+* Modify risk measures to accept `List[float]` for weights (#1197).
+* Support `SaasFullyBayesianSingleTaskGP` in prune_inferior_points_multi_objective (#1204).
+* BotorchContainers and BotorchDatasets: Large refactor of the original `TrainingData` API to allow for more diverse types of datasets (#1205, #1221).
+* Proximal biasing support for multi-output `SingleTaskGP` models (#1212).
+* Improve error handling in `optimize_acqf_discrete` with a check that `choices` is non-empty  (#1228).
+* Handle `X_pending` properly in `FixedFeatureAcquisition` (#1233, #1234).
+* PE and PLBO support in Ax (#1240, #1241).
+* Remove `model.train` call from `get_X_baseline` for better caching (#1289).
+* Support `inf` values in `bounds` argument of `optimize_acqf` (#1302).
+
+#### Bug Fixes
+* Update `get_gp_samples` to support input / outcome transforms (#1201).
+* Fix cached Cholesky sampling in `qNEHVI` when using `Standardize` outcome transform (#1215).
+* Make `task_feature` as required input in `MultiTaskGP.construct_inputs` (#1246).
+* Fix CUDA tests (#1253).
+* Fix `FixedSingleSampleModel` dtype/device conversion (#1254).
+* Prevent inappropriate transforms by putting input transforms into train mode before converting models (#1283).
+* Fix `sample_points_around_best` when using 20 dimensional inputs or `prob_perturb` (#1290).
+* Skip bound validation in `optimize_acqf` if inequality constraints are specified (#1297).
+* Properly handle RFFs when used with a `ModelList` with individual transforms (#1299).
+* Update `PosteriorList` to support deterministic-only models and fix `event_shape` (#1300).
+
+#### Documentation
+* Add a note about observation noise in the posterior in `fit_model_with_torch_optimizer` notebook (#1196).
+* Fix custom botorch model in Ax tutorial to support new interface (#1213).
+* Update MOO docs (#1242).
+* Add SMOKE_TEST option to MOMF tutorial (#1243).
+* Fix `ModelListGP.condition_on_observations`/`fantasize` bug (#1250).
+* Replace space with underscore for proper doc generation (#1256).
+* Update PBO tutorial to use EUBO (#1262).
+
+
 ## [0.6.4] - Apr 21, 2022
 
 #### New Features

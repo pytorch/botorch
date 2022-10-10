@@ -136,8 +136,9 @@ class TestQExpectedImprovement(BotorchTestCase):
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+                self.assertEqual(
+                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
+                )
 
     def test_q_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
@@ -152,6 +153,15 @@ class TestQExpectedImprovement(BotorchTestCase):
             # test batch mode
             sampler = IIDNormalSampler(num_samples=2)
             acqf = qExpectedImprovement(model=mm, best_f=0, sampler=sampler)
+            res = acqf(X)
+            self.assertEqual(res[0].item(), 1.0)
+            self.assertEqual(res[1].item(), 0.0)
+
+            # test batch model, batched best_f values
+            sampler = IIDNormalSampler(num_samples=3)
+            acqf = qExpectedImprovement(
+                model=mm, best_f=torch.Tensor([0, 0]), sampler=sampler
+            )
             res = acqf(X)
             self.assertEqual(res[0].item(), 1.0)
             self.assertEqual(res[1].item(), 0.0)
@@ -308,8 +318,9 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+                self.assertEqual(
+                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
+                )
 
     def test_q_noisy_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
@@ -434,8 +445,8 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             "likelihood.noise_covar.raw_noise": torch.tensor(
                 [[0.0895], [0.2594]], dtype=torch.float64
             ),
-            "mean_module.constant": torch.tensor(
-                [[-0.4545], [-0.1285]], dtype=torch.float64
+            "mean_module.raw_constant": torch.tensor(
+                [-0.4545, -0.1285], dtype=torch.float64
             ),
             "covar_module.raw_outputscale": torch.tensor(
                 [1.4876, 1.4897], dtype=torch.float64
@@ -554,8 +565,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 with torch.no_grad():
                     acqf(test_X)
-            self.assertEqual(len(ws), 1)
-            self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+            self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
 
         # test w/ posterior transform
         X_baseline = torch.rand(2, 1)
@@ -643,8 +653,9 @@ class TestQProbabilityOfImprovement(BotorchTestCase):
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+                self.assertEqual(
+                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
+                )
 
     def test_q_probability_of_improvement_batch(self):
         # the event shape is `b x q x t` = 2 x 2 x 1
@@ -659,6 +670,15 @@ class TestQProbabilityOfImprovement(BotorchTestCase):
             # test batch mode
             sampler = IIDNormalSampler(num_samples=2)
             acqf = qProbabilityOfImprovement(model=mm, best_f=0, sampler=sampler)
+            res = acqf(X)
+            self.assertEqual(res[0].item(), 1.0)
+            self.assertEqual(res[1].item(), 0.5)
+
+            # test batch model, batched best_f values
+            sampler = IIDNormalSampler(num_samples=3)
+            acqf = qProbabilityOfImprovement(
+                model=mm, best_f=torch.Tensor([0, 0]), sampler=sampler
+            )
             res = acqf(X)
             self.assertEqual(res[0].item(), 1.0)
             self.assertEqual(res[1].item(), 0.5)
@@ -775,8 +795,9 @@ class TestQSimpleRegret(BotorchTestCase):
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+                self.assertEqual(
+                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
+                )
 
     def test_q_simple_regret_batch(self):
         # the event shape is `b x q x t` = 2 x 2 x 1
@@ -906,8 +927,9 @@ class TestQUpperConfidenceBound(BotorchTestCase):
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+                self.assertEqual(
+                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
+                )
 
     def test_q_upper_confidence_bound_batch(self):
         # TODO: T41739913 Implement tests for all MCAcquisitionFunctions
@@ -991,7 +1013,8 @@ class TestQUpperConfidenceBound(BotorchTestCase):
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+                self.assertEqual(
+                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
+                )
 
     # TODO: Test different objectives (incl. constraints)

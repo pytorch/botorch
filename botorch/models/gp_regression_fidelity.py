@@ -5,7 +5,18 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Gaussian Process Regression models based on GPyTorch models.
+Multi-Fidelity Gaussian Process Regression models based on GPyTorch models.
+
+For more on Multi-Fidelity BO, see the
+`tutorial <https://botorch.org/tutorials/discrete_multi_fidelity_bo>`__.
+
+A common use case of multi-fidelity regression modeling is optimizing a
+"high-fidelity" function that is expensive to simulate when you have access to
+one or more cheaper "lower-fidelity" versions that are not fully accurate but
+are correlated with the high-fidelity function. The multi-fidelity model models
+both the low- and high-fidelity functions together, including the correlation
+between them, which can help you predict and optimize the high-fidelity function
+without having to do too many expensive high-fidelity evaluations.
 
 .. [Wu2019mf]
     J. Wu, S. Toscano-Palmerin, P. I. Frazier, and A. G. Wilson. Practical
@@ -44,28 +55,6 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
 
     This kernel is described in [Wu2019mf]_.
 
-    Args:
-        train_X: A `batch_shape x n x (d + s)` tensor of training features,
-            where `s` is the dimension of the fidelity parameters (either one
-            or two).
-        train_Y: A `batch_shape x n x m` tensor of training observations.
-        iteration_fidelity: The column index for the training iteration fidelity
-            parameter (optional).
-        data_fidelity: The column index for the downsampling fidelity parameter
-            (optional).
-        linear_truncated: If True, use a `LinearTruncatedFidelityKernel` instead
-            of the default kernel.
-        nu: The smoothness parameter for the Matern kernel: either 1/2, 3/2, or
-            5/2. Only used when `linear_truncated=True`.
-        likelihood: A likelihood. If omitted, use a standard GaussianLikelihood
-            with inferred noise level.
-        outcome_transform: An outcome transform that is applied to the
-                training data during instantiation and to the posterior during
-                inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
-        input_transform: An input transform that is applied in the model's
-                forward pass.
-
     Example:
         >>> train_X = torch.rand(20, 4)
         >>> train_Y = train_X.pow(2).sum(dim=-1, keepdim=True)
@@ -84,6 +73,29 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
     ) -> None:
+        r"""
+        Args:
+            train_X: A `batch_shape x n x (d + s)` tensor of training features,
+                where `s` is the dimension of the fidelity parameters (either one
+                or two).
+            train_Y: A `batch_shape x n x m` tensor of training observations.
+            iteration_fidelity: The column index for the training iteration fidelity
+                parameter (optional).
+            data_fidelity: The column index for the downsampling fidelity parameter
+                (optional).
+            linear_truncated: If True, use a `LinearTruncatedFidelityKernel` instead
+                of the default kernel.
+            nu: The smoothness parameter for the Matern kernel: either 1/2, 3/2, or
+                5/2. Only used when `linear_truncated=True`.
+            likelihood: A likelihood. If omitted, use a standard GaussianLikelihood
+                with inferred noise level.
+            outcome_transform: An outcome transform that is applied to the
+                    training data during instantiation and to the posterior during
+                    inference (that is, the `Posterior` obtained by calling
+                    `.posterior` on the model will be on the original scale).
+            input_transform: An input transform that is applied in the model's
+                    forward pass.
+        """
         self._init_args = {
             "iteration_fidelity": iteration_fidelity,
             "data_fidelity": data_fidelity,
@@ -119,7 +131,7 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
         )
         self._subset_batch_dict = {
             "likelihood.noise_covar.raw_noise": -2,
-            "mean_module.constant": -2,
+            "mean_module.raw_constant": -1,
             "covar_module.raw_outputscale": -1,
             **subset_batch_dict,
         }
@@ -155,28 +167,6 @@ class FixedNoiseMultiFidelityGP(FixedNoiseGP):
 
     This kernel is described in [Wu2019mf]_.
 
-    Args:
-        train_X: A `batch_shape x n x (d + s)` tensor of training features,
-            where `s` is the dimension of the fidelity parameters (either one
-            or two).
-        train_Y: A `batch_shape x n x m` tensor of training observations.
-        train_Yvar: A `batch_shape x n x m` tensor of observed measurement noise.
-        iteration_fidelity: The column index for the training iteration fidelity
-            parameter (optional).
-        data_fidelity: The column index for the downsampling fidelity parameter
-            (optional).
-        linear_truncated: If True, use a `LinearTruncatedFidelityKernel` instead
-            of the default kernel.
-        nu: The smoothness parameter for the Matern kernel: either 1/2, 3/2, or
-            5/2. Only used when `linear_truncated=True`.
-        outcome_transform: An outcome transform that is applied to the
-            training data during instantiation and to the posterior during
-            inference (that is, the `Posterior` obtained by calling
-            `.posterior` on the model will be on the original scale).
-        input_transform: An input transform that is applied in the model's
-                forward pass.
-
-
     Example:
         >>> train_X = torch.rand(20, 4)
         >>> train_Y = train_X.pow(2).sum(dim=-1, keepdim=True)
@@ -201,6 +191,28 @@ class FixedNoiseMultiFidelityGP(FixedNoiseGP):
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
     ) -> None:
+        r"""
+        Args:
+            train_X: A `batch_shape x n x (d + s)` tensor of training features,
+                where `s` is the dimension of the fidelity parameters (either one
+                or two).
+            train_Y: A `batch_shape x n x m` tensor of training observations.
+            train_Yvar: A `batch_shape x n x m` tensor of observed measurement noise.
+            iteration_fidelity: The column index for the training iteration fidelity
+                parameter (optional).
+            data_fidelity: The column index for the downsampling fidelity parameter
+                (optional).
+            linear_truncated: If True, use a `LinearTruncatedFidelityKernel` instead
+                of the default kernel.
+            nu: The smoothness parameter for the Matern kernel: either 1/2, 3/2, or
+                5/2. Only used when `linear_truncated=True`.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
+            input_transform: An input transform that is applied in the model's
+                forward pass.
+        """
         if iteration_fidelity is None and data_fidelity is None:
             raise UnsupportedError(
                 "FixedNoiseMultiFidelityGP requires at least one fidelity parameter."
@@ -228,7 +240,7 @@ class FixedNoiseMultiFidelityGP(FixedNoiseGP):
         )
         self._subset_batch_dict = {
             "likelihood.noise_covar.raw_noise": -2,
-            "mean_module.constant": -2,
+            "mean_module.raw_constant": -1,
             "covar_module.raw_outputscale": -1,
             **subset_batch_dict,
         }
