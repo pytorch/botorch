@@ -359,11 +359,15 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
         validate_input_scaling(
             train_X=transformed_X, train_Y=train_Y, train_Yvar=train_Yvar
         )
-        self._set_dimensions(train_X=train_X, train_Y=train_Y)
+        self._num_outputs = train_Y.shape[-1]
+        self._input_batch_shape = train_X.shape[:-2]
         if train_Yvar is not None:  # Clamp after transforming
             train_Yvar = train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
 
-        super().__init__(train_X, train_Y)
+        X_tf, Y_tf, _ = self._transform_tensor_args(X=train_X, Y=train_Y)
+        super(SingleTaskGP, self).__init__(
+            train_inputs=X_tf, train_targets=Y_tf, likelihood=GaussianLikelihood()
+        )
         self.mean_module = None
         self.covar_module = None
         self.likelihood = None
@@ -404,8 +408,15 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
         r"""Batch shape of the model, equal to the number of MCMC samples.
         Note that `SaasFullyBayesianSingleTaskGP` does not support batching
         over input data at this point."""
-        self._check_if_fitted()
         return torch.Size([self.num_mcmc_samples])
+
+    @property
+    def _aug_batch_shape(self) -> torch.Size:
+        r"""The batch shape of the model, augmented to include the output dim."""
+        aug_batch_shape = self.batch_shape
+        if self.num_outputs > 1:
+            aug_batch_shape += torch.Size([self.num_outputs])
+        return aug_batch_shape
 
     def fantasize(
         self,

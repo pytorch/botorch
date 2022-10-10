@@ -6,6 +6,7 @@
 
 
 import itertools
+from unittest import mock
 
 import torch
 from botorch import fit_fully_bayesian_model_nuts
@@ -206,6 +207,10 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 model, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
             )
             self.assertEqual(model.batch_shape, torch.Size([3]))
+            self.assertEqual(model._aug_batch_shape, torch.Size([3]))
+            # Using mock here since multi-output is currently not supported.
+            with mock.patch.object(model, "_num_outputs", 2):
+                self.assertEqual(model._aug_batch_shape, torch.Size([3, 2]))
             self.assertIsInstance(model.mean_module, ConstantMean)
             self.assertEqual(model.mean_module.raw_constant.shape, model.batch_shape)
             self.assertIsInstance(model.covar_module, ScaleKernel)
