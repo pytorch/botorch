@@ -78,13 +78,6 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
                 )
             self.X_pending = acq_function.X_pending
 
-        if hasattr(acq_function, "X_pending"):
-            if acq_function.X_pending is not None:
-                raise UnsupportedError(
-                    "Proximal acquisition function requires `X_pending` to be None."
-                )
-            self.X_pending = acq_function.X_pending
-
         self.register_buffer("proximal_weights", proximal_weights)
         self.register_buffer(
             "transformed_weighting", torch.tensor(transformed_weighting)
