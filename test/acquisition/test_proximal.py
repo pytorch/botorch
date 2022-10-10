@@ -36,11 +36,6 @@ class DummyAcquisitionFunction(AcquisitionFunction):
         pass
 
 
-class DummyAcquisitionFunction(AcquisitionFunction):
-    def forward(self, X):
-        pass
-
-
 class TestProximalAcquisitionFunction(BotorchTestCase):
     def test_proximal(self):
         for dtype in (torch.float, torch.double):
@@ -73,7 +68,8 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                         transformed_weighting=transformed_weighting,
                     )
 
-                    ei = EI(test_X)
+                    # softplus transformed value of the acquisition function
+                    ei = torch.nn.functional.softplus(EI(test_X), beta=1.0)
 
                     # modify last_X/test_X depending on transformed_weighting
                     proximal_test_X = test_X.clone()
@@ -99,7 +95,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                             last_X = input_transform(train_X[-1])
                             proximal_test_X = input_transform(test_X)
 
-                    ei = EI(test_X)
+                    ei = torch.nn.functional.softplus(EI(test_X), beta=1.0)
                     mv_normal = MultivariateNormal(last_X, torch.diag(proximal_weights))
                     test_prox_weight = torch.exp(
                         mv_normal.log_prob(proximal_test_X)
@@ -126,7 +122,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                         transformed_weighting=transformed_weighting,
                     )
 
-                    qei = qEI(test_X)
+                    qei = torch.nn.functional.softplus(qEI(test_X), beta=1.0)
                     mv_normal = MultivariateNormal(last_X, torch.diag(proximal_weights))
                     test_prox_weight = torch.exp(
                         mv_normal.log_prob(proximal_test_X)
@@ -223,7 +219,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             test_X = torch.rand(1, 3, device=self.device, dtype=dtype)
             EI_prox = ProximalAcquisitionFunction(EI, proximal_weights=proximal_weights)
 
-            ei = EI(test_X)
+            ei = torch.nn.functional.softplus(EI(test_X), beta=1.0)
             mv_normal = MultivariateNormal(train_X[-1], torch.diag(proximal_weights))
             test_prox_weight = torch.exp(mv_normal.log_prob(test_X)) / torch.exp(
                 mv_normal.log_prob(train_X[-1])
@@ -242,7 +238,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                 qEI, proximal_weights=proximal_weights
             )
 
-            qei = qEI(test_X)
+            qei = torch.nn.functional.softplus(qEI(test_X), beta=1.0)
             mv_normal = MultivariateNormal(train_X[-1], torch.diag(proximal_weights))
             test_prox_weight = torch.exp(mv_normal.log_prob(test_X)) / torch.exp(
                 mv_normal.log_prob(train_X[-1])
@@ -338,4 +334,3 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     ),
                     proximal_weights,
                 )
-                
