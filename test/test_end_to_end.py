@@ -36,11 +36,9 @@ NOISE = [
 class TestEndToEnd(BotorchTestCase):
     def _setUp(self, double=False):
         dtype = torch.double if double else torch.float
-        train_x = torch.linspace(0, 1, 10, device=self.device, dtype=dtype).unsqueeze(
-            -1
-        )
+        train_x = torch.linspace(0, 1, 10, device=self.device, dtype=dtype).view(-1, 1)
         train_y = torch.sin(train_x * (2 * math.pi))
-        train_yvar = torch.tensor(0.1**2, device=self.device)
+        train_yvar = torch.tensor(0.1**2, device=self.device, dtype=dtype)
         noise = torch.tensor(NOISE, device=self.device, dtype=dtype)
         self.train_x = train_x
         self.train_y = train_y + noise
