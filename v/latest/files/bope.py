@@ -26,7 +26,7 @@
 # 
 # [1] [Z.J. Lin, R. Astudillo, P.I. Frazier, and E. Bakshy, Preference Exploration for Efficient Bayesian Optimization with Multiple Outcomes. AISTATS, 2022.](https://arxiv.org/abs/2203.11382)
 
-# In[ ]:
+# In[1]:
 
 
 import os
@@ -49,6 +49,7 @@ from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.test_functions.multi_objective import DTLZ2
 from botorch.utils.sampling import draw_sobol_samples
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+
 
 get_ipython().run_line_magic('matplotlib', 'inline')
 
@@ -272,9 +273,9 @@ def find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=False):
 
 verbose = False
 # Number of pairwise comparisons performed before checking posterior mean
-every_n_comps = 4
+every_n_comps = 3
 # Total number of checking the maximum posterior mean
-n_check_post_mean = 2
+n_check_post_mean = 3
 n_reps = 1
 within_session_results = []
 exp_candidate_results = []
@@ -377,8 +378,11 @@ within_df
 # Plotting
 plt.figure(figsize=(8, 6))
 for name, group in within_df.groupby("pe_strategy", sort=True):
+    yerr=1.96 * group["sem"]
+    if np.any(np.isnan(yerr)):
+        yerr = None
     plt.errorbar(
-        x=group["n_comps"], y=group["mean"], yerr=1.96 * group["sem"], label=name, linewidth=1.5, capsize=3, alpha=0.6
+        x=group["n_comps"], y=group["mean"], yerr=yerr, label=name, linewidth=1.5, capsize=3, alpha=0.6
     )
 plt.xlabel("Number of comparisons")
 plt.ylabel("Max value identified")
@@ -406,10 +410,13 @@ exp_df = exp_df.groupby(["strategy"]).agg({"util": ["mean", "sem"]}).droplevel(l
 # Plotting
 plt.figure(figsize=(8, 6))
 for name, group in exp_df.groupby("strategy", sort=True):
+    yerr=1.96 * group["sem"]
+    if np.any(np.isnan(yerr)):
+        yerr = None
     plt.errorbar(
         x=group["strategy"],
         y=group["mean"],
-        yerr=1.96 * group["sem"],
+        yerr=yerr,
         fmt="o",
         markersize=10,
         label=name,
