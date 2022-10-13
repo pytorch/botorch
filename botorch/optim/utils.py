@@ -39,7 +39,7 @@ ParameterBounds = Dict[str, Tuple[Optional[float], Optional[float]]]
 Tkwargs = Dict[str, Union[torch.device, torch.dtype]]
 
 
-def sample_all_priors(model: GPyTorchModel) -> None:
+def sample_all_priors(model: GPyTorchModel, max_retries: int = 100) -> None:
     r"""Sample from hyperparameter priors (in-place).
 
     Args:
@@ -50,13 +50,25 @@ def sample_all_priors(model: GPyTorchModel) -> None:
             raise RuntimeError(
                 "Must provide inverse transform to be able to sample from prior."
             )
-        try:
-            setting_closure(module, prior.sample(closure(module).shape))
-        except NotImplementedError:
-            warnings.warn(
-                f"`rsample` not implemented for {type(prior)}. Skipping.",
-                BotorchWarning,
-            )
+        for i in range(max_retries):
+            try:
+                setting_closure(module, prior.sample(closure(module).shape))
+                break
+            except NotImplementedError:
+                warnings.warn(
+                    f"`rsample` not implemented for {type(prior)}. Skipping.",
+                    BotorchWarning,
+                )
+                break
+            except RuntimeError as e:
+                if "out of bounds of its current constraints" in str(e):
+                    if i == max_retries - 1:
+                        raise RuntimeError(
+                            "Failed to sample a feasible parameter value "
+                            f"from the prior after {max_retries} attempts."
+                        )
+                else:
+                    raise e
 
 
 def columnwise_clamp(
