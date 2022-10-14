@@ -65,7 +65,7 @@
 <span class="n">Tkwargs</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">]]</span>
 
 
-<div class="viewcode-block" id="sample_all_priors"><a class="viewcode-back" href="../../../optim.html#botorch.optim.utils.sample_all_priors">[docs]</a><span class="k">def</span> <span class="nf">sample_all_priors</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="sample_all_priors"><a class="viewcode-back" href="../../../optim.html#botorch.optim.utils.sample_all_priors">[docs]</a><span class="k">def</span> <span class="nf">sample_all_priors</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Sample from hyperparameter priors (in-place).</span>
 
 <span class="sd">    Args:</span>
@@ -76,13 +76,25 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="s2">"Must provide inverse transform to be able to sample from prior."</span>
             <span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">setting_closure</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">prior</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">closure</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
-        <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"`rsample` not implemented for </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">prior</span><span class="p">)</span><span class="si">}</span><span class="s2">. Skipping."</span><span class="p">,</span>
-                <span class="n">BotorchWarning</span><span class="p">,</span>
-            <span class="p">)</span></div>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_retries</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">setting_closure</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">prior</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">closure</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"`rsample` not implemented for </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">prior</span><span class="p">)</span><span class="si">}</span><span class="s2">. Skipping."</span><span class="p">,</span>
+                    <span class="n">BotorchWarning</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">"out of bounds of its current constraints"</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">max_retries</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                            <span class="s2">"Failed to sample a feasible parameter value "</span>
+                            <span class="sa">f</span><span class="s2">"from the prior after </span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s2"> attempts."</span>
+                        <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">e</span></div>
 
 
 <div class="viewcode-block" id="columnwise_clamp"><a class="viewcode-back" href="../../../optim.html#botorch.optim.utils.columnwise_clamp">[docs]</a><span class="k">def</span> <span class="nf">columnwise_clamp</span><span class="p">(</span>
