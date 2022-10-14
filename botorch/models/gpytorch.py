@@ -21,7 +21,7 @@ from typing import Any, Iterator, List, Optional, Tuple, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.errors import BotorchTensorDimensionError, InputDataError
 from botorch.exceptions.warnings import BotorchTensorDimensionWarning
 from botorch.models.model import Model, ModelList
 from botorch.models.utils import (
@@ -53,6 +53,7 @@ class GPyTorchModel(Model, ABC):
         X: Tensor, Y: Tensor, Yvar: Optional[Tensor] = None, strict: bool = True
     ) -> None:
         r"""Checks that `Y` and `Yvar` have an explicit output dimension if strict.
+        Checks that the dtypes of the inputs match, and warns if using float.
 
         This also checks that `Yvar` has the same trailing dimensions as `Y`. Note
         we only infer that an explicit output dimension exists when `X` and `Y` have
@@ -99,6 +100,22 @@ class GPyTorchModel(Model, ABC):
                 "An explicit output dimension is required for observation noise."
                 f" Expected Yvar with shape: {Y.shape[-Yvar.dim() :]} (got"
                 f" {Yvar.shape})."
+            )
+        # Check the dtypes.
+        if X.dtype != Y.dtype or (Yvar is not None and Y.dtype != Yvar.dtype):
+            raise InputDataError(
+                "Expected all inputs to share the same dtype. Got "
+                f"{X.dtype} for X, {Y.dtype} for Y, and "
+                f"{Yvar.dtype if Yvar is not None else None} for Yvar."
+            )
+        if X.dtype != torch.float64:
+            # NOTE: Not using a BotorchWarning since those get ignored.
+            warnings.warn(
+                f"The model inputs are of type {X.dtype}. It is strongly recommended "
+                "to use double precision in BoTorch, as this improves both "
+                "precision and stability and can help avoid numerical errors. "
+                "See https://github.com/pytorch/botorch/discussions/1444",
+                UserWarning,
             )
 
     @property

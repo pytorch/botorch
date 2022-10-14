@@ -15,6 +15,7 @@ from botorch.exceptions import (
     BotorchTensorDimensionError,
     BotorchTensorDimensionWarning,
 )
+from botorch.exceptions.errors import InputDataError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.gpytorch import (
     BatchedMultiOutputGPyTorchModel,
@@ -313,6 +314,12 @@ class TestGPyTorchModel(BotorchTestCase):
         post_tf = ScalarizedPosteriorTransform(weights=torch.zeros(1, **tkwargs))
         post = model.posterior(torch.rand(3, 1, **tkwargs), posterior_transform=post_tf)
         self.assertTrue(torch.equal(post.mean, torch.zeros(3, 1, **tkwargs)))
+
+    def test_float_warning_and_dtype_error(self):
+        with self.assertWarnsRegex(UserWarning, "double precision"):
+            SimpleGPyTorchModel(torch.rand(5, 1), torch.randn(5, 1))
+        with self.assertRaisesRegex(InputDataError, "same dtype"):
+            SimpleGPyTorchModel(torch.rand(5, 1), torch.randn(5, 1, dtype=torch.double))
 
 
 class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):

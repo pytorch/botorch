@@ -53,11 +53,13 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
+from gpytorch.constraints import GreaterThan
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
+from gpytorch.priors import UniformPrior
 from gpytorch.priors.prior import Prior
 from gpytorch.priors.torch_priors import GammaPrior
 from linear_operator.utils.errors import NanError, NotPSDError
@@ -69,6 +71,13 @@ class DummyPrior(Prior):
 
     def rsample(self, sample_shape=torch.Size()):  # noqa: B008
         raise NotImplementedError
+
+
+class DummyPriorRuntimeError(Prior):
+    arg_constraints = {}
+
+    def rsample(self, sample_shape=torch.Size()):  # noqa: B008
+        raise RuntimeError("Another runtime error.")
 
 
 class TestColumnWiseClamp(BotorchTestCase):
@@ -281,6 +290,20 @@ class TestSampleAllPriors(BotorchTestCase):
                 self.assertEqual(len(ws), 1)
                 self.assertTrue("rsample" in str(ws[0].message))
 
+            # change to dummy prior that raises an unrecognized RuntimeError
+            model.covar_module = ScaleKernel(
+                MaternKernel(
+                    nu=2.5,
+                    ard_num_dims=model.train_inputs[0].shape[-1],
+                    batch_shape=model._aug_batch_shape,
+                    lengthscale_prior=DummyPriorRuntimeError(),
+                ),
+                batch_shape=model._aug_batch_shape,
+                outputscale_prior=GammaPrior(2.0, 0.15),
+            )
+            with self.assertRaises(RuntimeError):
+                sample_all_priors(model)
+
             # the lengthscale should not have changed because sampling is
             # not implemented for DummyPrior
             self.assertTrue(
@@ -299,6 +322,25 @@ class TestSampleAllPriors(BotorchTestCase):
                 prior_tuple[1],
                 None,
             )
+            with self.assertRaises(RuntimeError):
+                sample_all_priors(model)
+
+            # test for error when sampling violates constraint
+            model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
+            mll = ExactMarginalLogLikelihood(model.likelihood, model)
+            mll.to(device=self.device, dtype=dtype)
+            model.covar_module = ScaleKernel(
+                MaternKernel(
+                    nu=2.5,
+                    ard_num_dims=model.train_inputs[0].shape[-1],
+                    batch_shape=model._aug_batch_shape,
+                    lengthscale_prior=GammaPrior(3.0, 6.0),
+                ),
+                batch_shape=model._aug_batch_shape,
+                outputscale_prior=UniformPrior(1.0, 2.0),
+                outputscale_constraint=GreaterThan(3.0),
+            )
+            original_state_dict = dict(deepcopy(mll.model.state_dict()))
             with self.assertRaises(RuntimeError):
                 sample_all_priors(model)
 
@@ -364,7 +406,7 @@ class TestGetXBaseline(BotorchTestCase):
             )
             self.assertTrue(torch.equal(X, X_train))
 
-            # test acquisitipon function without X_baseline or model
+            # test acquisition function without X_baseline or model
             acqf = FixedFeatureAcquisitionFunction(acqf, d=2, columns=[0], values=[0])
             with warnings.catch_warnings(record=True) as w, settings.debug(True):
                 X_rnd = get_X_baseline(
