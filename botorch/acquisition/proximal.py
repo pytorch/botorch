@@ -27,15 +27,18 @@ from torch.nn import Module
 
 class ProximalAcquisitionFunction(AcquisitionFunction):
     """A wrapper around AcquisitionFunctions to add proximal weighting of the
-    acquisition function. First a SoftPlus transform is applied to the
-    acquisition function to ensure that it is positive. Then the acquisition function is
+    acquisition function. Then the acquisition function is
     weighted via a squared exponential centered at the last training point,
     with varying lengthscales corresponding to `proximal_weights`. Can only be used
-    with acquisition functions based on single batch models.
+    with acquisition functions based on single batch models. Acquisition functions
+    must be positive or `beta` is specified to apply a SoftPlus transform before
+    proximal weighting.
 
     Small values of `proximal_weights` corresponds to strong biasing towards recently
     observed points, which smoothes optimization with a small potential decrese in
     convergence rate.
+
+
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
@@ -64,7 +67,8 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
                 the transformed input space given by
                 `acq_function.model.input_transform` (if available), otherwise
                 proximal weights are applied in real input space.
-            beta: Beta factor passed to softplus transform.
+            beta: If not None, apply a softplus transform to the base acquisition
+                function, allows negative base acquisition function values.
         """
         Module.__init__(self)
 
