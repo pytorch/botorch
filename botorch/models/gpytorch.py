@@ -579,7 +579,7 @@ class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
         with gpt_posterior_settings():
             # only compute what's necessary
             if output_indices is not None:
-                mvns = [self.forward_i(i, transformed_X[i]) for i in output_indices]
+                mvns = [self.models[i](transformed_X[i]) for i in output_indices]
                 if observation_noise is not False:
                     if torch.is_tensor(observation_noise):
                         lh_kwargs = [

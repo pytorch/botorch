@@ -458,9 +458,25 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
             # test output indices
-            posterior = model.posterior(test_X, output_indices=[0])
-            self.assertIsInstance(posterior, GPyTorchPosterior)
-            self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))
+            for output_indices in ([0], [1], [0, 1]):
+                posterior_subset = model.posterior(
+                    test_X, output_indices=output_indices
+                )
+                self.assertIsInstance(posterior_subset, GPyTorchPosterior)
+                self.assertEqual(
+                    posterior_subset.mean.shape, torch.Size([2, len(output_indices)])
+                )
+                self.assertTrue(
+                    torch.equal(
+                        posterior_subset.mean, posterior.mean[..., output_indices]
+                    )
+                )
+                self.assertTrue(
+                    torch.equal(
+                        posterior_subset.variance,
+                        posterior.variance[..., output_indices],
+                    )
+                )
             # test observation noise
             posterior = model.posterior(test_X, observation_noise=True)
             self.assertIsInstance(posterior, GPyTorchPosterior)
