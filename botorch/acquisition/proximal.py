@@ -27,11 +27,11 @@ from torch.nn import Module
 
 class ProximalAcquisitionFunction(AcquisitionFunction):
     """A wrapper around AcquisitionFunctions to add proximal weighting of the
-    acquisition function. Then the acquisition function is
+    acquisition function. The acquisition function is
     weighted via a squared exponential centered at the last training point,
     with varying lengthscales corresponding to `proximal_weights`. Can only be used
     with acquisition functions based on single batch models. Acquisition functions
-    must be positive or `beta` is specified to apply a SoftPlus transform before
+    must be positive or `beta` must be specified to apply a SoftPlus transform before
     proximal weighting.
 
     Small values of `proximal_weights` corresponds to strong biasing towards recently
@@ -52,8 +52,8 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
         self,
         acq_function: AcquisitionFunction,
         proximal_weights: Tensor,
-        transformed_weighting: bool = True,
-        beta: float = None,
+        transformed_weighting: Optional[bool] = True,
+        beta: Optional[float] = None,
     ) -> None:
         r"""Derived Acquisition Function weighted by proximity to recently
         observed point.
