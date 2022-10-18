@@ -27,14 +27,18 @@ from torch.nn import Module
 
 class ProximalAcquisitionFunction(AcquisitionFunction):
     """A wrapper around AcquisitionFunctions to add proximal weighting of the
-    acquisition function. Acquisition function is weighted via a squared exponential
-    centered at the last training point, with varying lengthscales corresponding to
-    `proximal_weights`. Can only be used with acquisition functions based on single
-    batch models.
+    acquisition function. The acquisition function is
+    weighted via a squared exponential centered at the last training point,
+    with varying lengthscales corresponding to `proximal_weights`. Can only be used
+    with acquisition functions based on single batch models. Acquisition functions
+    must be positive or `beta` must be specified to apply a SoftPlus transform before
+    proximal weighting.
 
     Small values of `proximal_weights` corresponds to strong biasing towards recently
     observed points, which smoothes optimization with a small potential decrese in
     convergence rate.
+
+
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
@@ -48,7 +52,8 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
         self,
         acq_function: AcquisitionFunction,
         proximal_weights: Tensor,
-        transformed_weighting: bool = True,
+        transformed_weighting: Optional[bool] = True,
+        beta: Optional[float] = None,
     ) -> None:
         r"""Derived Acquisition Function weighted by proximity to recently
         observed point.
@@ -62,6 +67,8 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
                 the transformed input space given by
                 `acq_function.model.input_transform` (if available), otherwise
                 proximal weights are applied in real input space.
+            beta: If not None, apply a softplus transform to the base acquisition
+                function, allows negative base acquisition function values.
         """
         Module.__init__(self)
 
@@ -79,6 +86,9 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
         self.register_buffer(
             "transformed_weighting", torch.tensor(transformed_weighting)
         )
+
+        self.register_buffer("beta", None if beta is None else torch.tensor(beta))
+
         _validate_model(model, proximal_weights)
 
     @t_batch_mode_transform(expected_q=1, assert_output_shape=False)
@@ -127,7 +137,20 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
 
         M = torch.linalg.norm(diff / self.proximal_weights, dim=-1) ** 2
         proximal_acq_weight = torch.exp(-0.5 * M)
-        return self.acq_func(X) * proximal_acq_weight.flatten()
+
+        base_acqf = self.acq_func(X)
+        if self.beta is None:
+            if torch.any(base_acqf < 0):
+                raise RuntimeError(
+                    "Cannot use proximal biasing for negative "
+                    "acquisition function values, set a value for beta to "
+                    "fix this with a softplus transform"
+                )
+
+        else:
+            base_acqf = torch.nn.functional.softplus(base_acqf, beta=self.beta)
+
+        return base_acqf * proximal_acq_weight.flatten()
 
 
 def _validate_model(model: Model, proximal_weights: Tensor) -> None:

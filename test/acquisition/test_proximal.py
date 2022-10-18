@@ -36,6 +36,11 @@ class DummyAcquisitionFunction(AcquisitionFunction):
         pass
 
 
+class NegativeAcquisitionFunction(AcquisitionFunction):
+    def forward(self, X):
+        return torch.ones(*X.shape[:-1]) * -1.0
+
+
 class TestProximalAcquisitionFunction(BotorchTestCase):
     def test_proximal(self):
         for dtype in (torch.float, torch.double):
@@ -68,6 +73,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                         transformed_weighting=transformed_weighting,
                     )
 
+                    # softplus transformed value of the acquisition function
                     ei = EI(test_X)
 
                     # modify last_X/test_X depending on transformed_weighting
@@ -84,7 +90,34 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
 
                     ei_prox = EI_prox(test_X)
                     self.assertTrue(torch.allclose(ei_prox, ei * test_prox_weight))
-                    self.assertTrue(ei_prox.shape == torch.Size([1]))
+                    self.assertEqual(ei_prox.shape, torch.Size([1]))
+
+                    # test with beta specified
+                    EI_prox_beta = ProximalAcquisitionFunction(
+                        EI,
+                        proximal_weights=proximal_weights,
+                        transformed_weighting=transformed_weighting,
+                        beta=1.0,
+                    )
+
+                    # SoftPlus transformed value of the acquisition function
+                    ei = torch.nn.functional.softplus(EI(test_X), beta=1.0)
+
+                    # modify last_X/test_X depending on transformed_weighting
+                    proximal_test_X = test_X.clone()
+                    if transformed_weighting:
+                        if input_transform is not None:
+                            last_X = input_transform(train_X[-1])
+                            proximal_test_X = input_transform(test_X)
+
+                    mv_normal = MultivariateNormal(last_X, torch.diag(proximal_weights))
+                    test_prox_weight = torch.exp(
+                        mv_normal.log_prob(proximal_test_X) - mv_normal.log_prob(last_X)
+                    )
+
+                    ei_prox_beta = EI_prox_beta(test_X)
+                    self.assertTrue(torch.allclose(ei_prox_beta, ei * test_prox_weight))
+                    self.assertEqual(ei_prox_beta.shape, torch.Size([1]))
 
                     # test t-batch with broadcasting
                     test_X = torch.rand(4, 1, 3, device=self.device, dtype=dtype)
@@ -104,7 +137,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     self.assertTrue(
                         torch.allclose(ei_prox, ei * test_prox_weight.flatten())
                     )
-                    self.assertTrue(ei_prox.shape == torch.Size([4]))
+                    self.assertEqual(ei_prox.shape, torch.Size([4]))
 
                     # test q-based MC acquisition function
                     qEI = qExpectedImprovement(model, best_f=0.0)
@@ -132,6 +165,18 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                         torch.allclose(qei_prox, qei * test_prox_weight.flatten())
                     )
                     self.assertEqual(qei_prox.shape, torch.Size([4]))
+
+                    # test acquisition function with
+                    # negative values w/o SoftPlus transform specified
+                    negative_acqf = NegativeAcquisitionFunction(model)
+                    bad_neg_prox = ProximalAcquisitionFunction(
+                        negative_acqf, proximal_weights=proximal_weights
+                    )
+
+                    with self.assertRaisesRegex(
+                        RuntimeError, "Cannot use proximal biasing for negative"
+                    ):
+                        bad_neg_prox(test_X)
 
             # test gradient
             test_X = torch.rand(
@@ -228,7 +273,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             ei_prox = EI_prox(test_X)
 
             self.assertTrue(torch.allclose(ei_prox, ei * test_prox_weight))
-            self.assertTrue(ei_prox.shape == torch.Size([1]))
+            self.assertEqual(ei_prox.shape, torch.Size([1]))
 
             # test MC acquisition function
             qEI = qExpectedImprovement(model, best_f=0.0, objective=mc_linear_objective)
@@ -245,7 +290,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
 
             qei_prox = qEI_prox(test_X)
             self.assertTrue(torch.allclose(qei_prox, qei * test_prox_weight.flatten()))
-            self.assertTrue(qei_prox.shape == torch.Size([4]))
+            self.assertEqual(qei_prox.shape, torch.Size([4]))
 
             # test gradient
             test_X = torch.rand(
