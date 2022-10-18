@@ -338,7 +338,7 @@ def _fit_multioutput_independent(
             unpacked_mll = fit_gpytorch_mll(unpacked_mll, **kwargs)
 
             # Repackage submodels and copy over state_dict
-            repacked_model = model_list_to_batched(unpacked_mll.model)
+            repacked_model = model_list_to_batched(unpacked_mll.model.train())
             repacked_mll = type(mll)(repacked_model.likelihood, repacked_model)
             with state_rollback_ctx(mll, device=device("cpu")) as ckpt:
                 mll.load_state_dict(repacked_mll.state_dict())
