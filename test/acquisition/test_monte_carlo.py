@@ -83,6 +83,10 @@ class TestQExpectedImprovement(BotorchTestCase):
             # basic test
             sampler = IIDNormalSampler(num_samples=2)
             acqf = qExpectedImprovement(model=mm, best_f=0, sampler=sampler)
+            # test initialization
+            for k in ["objective", "sampler"]:
+                self.assertIn(k, acqf._modules)
+
             res = acqf(X)
             self.assertEqual(res.item(), 0.0)
 

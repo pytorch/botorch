@@ -159,6 +159,9 @@ class TestQExpectedHypervolumeImprovement(BotorchTestCase):
             samples2 = torch.zeros(1, 2, 2, **tkwargs)
             mm2 = MockModel(MockPosterior(samples=samples2))
             acqf.model = mm2
+            self.assertEqual(acqf.model, mm2)
+            self.assertIn("model", acqf._modules)
+            self.assertEqual(acqf._modules["model"], mm2)
             res = acqf(X2)
             self.assertEqual(res.item(), 0.0)
             # check cached indices

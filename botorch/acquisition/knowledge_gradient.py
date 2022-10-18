@@ -150,12 +150,13 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
                     "If using a multi-output model without an objective, "
                     "posterior_transform must scalarize the output."
                 )
-        self.sampler = sampler
+        self.sampler: MCSampler = sampler
         self.objective = objective
         self.posterior_transform = posterior_transform
         self.set_X_pending(X_pending)
+        self.X_pending: Tensor = self.X_pending
         self.inner_sampler = inner_sampler
-        self.num_fantasies = num_fantasies
+        self.num_fantasies: int = num_fantasies
         self.current_value = current_value
 
     @t_batch_mode_transform()
@@ -338,7 +339,7 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         project: Callable[[Tensor], Tensor] = lambda X: X,
         expand: Callable[[Tensor], Tensor] = lambda X: X,
         valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
-        valfunc_argfac: Optional[Callable[[Model, Dict[str, Any]]]] = None,
+        valfunc_argfac: Optional[Callable[[Model], Dict[str, Any]]] = None,
         **kwargs: Any,
     ) -> None:
         r"""Multi-Fidelity q-Knowledge Gradient (one-shot optimization).
@@ -529,7 +530,7 @@ def _get_value_function(
     sampler: Optional[MCSampler] = None,
     project: Optional[Callable[[Tensor], Tensor]] = None,
     valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
-    valfunc_argfac: Optional[Callable[[Model, Dict[str, Any]]]] = None,
+    valfunc_argfac: Optional[Callable[[Model], Dict[str, Any]]] = None,
 ) -> AcquisitionFunction:
     r"""Construct value function (i.e. inner acquisition function)."""
     if valfunc_cls is not None:

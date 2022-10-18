@@ -76,7 +76,7 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
         super().__init__(model=model)
         if sampler is None:
             sampler = SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)
-        self.add_module("sampler", sampler)
+        self.sampler: MCSampler = sampler
         if objective is None and model.num_outputs != 1:
             if posterior_transform is None:
                 raise UnsupportedError(
@@ -91,7 +91,7 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
         if objective is None:
             objective = IdentityMCObjective()
         self.posterior_transform = posterior_transform
-        self.add_module("objective", objective)
+        self.objective: MCAcquisitionObjective = objective
         self.set_X_pending(X_pending)
 
     @abstractmethod
