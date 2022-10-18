@@ -127,6 +127,8 @@ def model_list_to_batched(model_list: ModelListGP) -> BatchedMultiOutputGPyTorch
         >>> list_gp = ModelListGP(gp1, gp2)
         >>> batch_gp = model_list_to_batched(list_gp)
     """
+    was_training = model_list.training
+    model_list.train()
     models = model_list.models
     _check_compatibility(models)
 
@@ -159,9 +161,6 @@ def model_list_to_batched(model_list: ModelListGP) -> BatchedMultiOutputGPyTorch
 
     # construct the batched GP model
     input_transform = getattr(models[0], "input_transform", None)
-    if input_transform is not None:
-        input_transform.train()
-
     batch_gp = models[0].__class__(input_transform=input_transform, **kwargs)
     adjusted_batch_keys, non_adjusted_batch_keys = _get_adjusted_batch_keys(
         batch_state_dict=batch_gp.state_dict(), input_transform=input_transform
@@ -201,7 +200,7 @@ def model_list_to_batched(model_list: ModelListGP) -> BatchedMultiOutputGPyTorch
     # load the state dict into the new model
     batch_gp.load_state_dict(batch_state_dict)
 
-    return batch_gp
+    return batch_gp.train(mode=was_training)
 
 
 def _batched_kernel(kernel, batch_length: int):
@@ -260,6 +259,8 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
         >>> batch_gp = SingleTaskGP(train_X, train_Y)
         >>> list_gp = batched_to_model_list(batch_gp)
     """
+    was_training = batch_model.training
+    batch_model.train()
     # TODO: Add support for HeteroskedasticSingleTaskGP.
     if isinstance(batch_model, HeteroskedasticSingleTaskGP):
         raise NotImplementedError(
@@ -270,8 +271,6 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
             "Conversion of MixedSingleTaskGP is currently not supported."
         )
     input_transform = getattr(batch_model, "input_transform", None)
-    if input_transform is not None:
-        input_transform.train()
     outcome_transform = getattr(batch_model, "outcome_transform", None)
     batch_sd = batch_model.state_dict()
 
@@ -326,7 +325,7 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
         model.load_state_dict(sd)
         models.append(model)
 
-    return ModelListGP(*models)
+    return ModelListGP(*models).train(mode=was_training)
 
 
 def batched_multi_output_to_single_output(
@@ -363,6 +362,8 @@ def batched_multi_output_to_single_output(
         >>> batch_mo_gp = SingleTaskGP(train_X, train_Y)
         >>> batch_so_gp = batched_multioutput_to_single_output(batch_gp)
     """
+    was_training = batch_mo_model.training
+    batch_mo_model.train()
     # TODO: Add support for HeteroskedasticSingleTaskGP.
     if isinstance(batch_mo_model, HeteroskedasticSingleTaskGP):
         raise NotImplementedError(
@@ -376,8 +377,6 @@ def batched_multi_output_to_single_output(
             "Conversion of models with custom likelihoods is currently unsupported."
         )
     input_transform = getattr(batch_mo_model, "input_transform", None)
-    if input_transform is not None:
-        input_transform.train()
     batch_sd = batch_mo_model.state_dict()
 
     # TODO: add support for outcome transforms.
@@ -400,7 +399,7 @@ def batched_multi_output_to_single_output(
         input_transform=input_transform, **kwargs
     )
     single_outcome_model.load_state_dict(batch_sd)
-    return single_outcome_model
+    return single_outcome_model.train(mode=was_training)
 
 
 def _get_adjusted_batch_keys(
