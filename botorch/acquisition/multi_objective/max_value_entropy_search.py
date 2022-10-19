@@ -6,7 +6,7 @@
 
 r"""
 Acquisition functions for max-value entropy search for multi-objective
-Bayesian optimization (MESMO).
+Bayesian optimization.
 
 References
 
@@ -14,6 +14,11 @@ References
     S. Belakaria, A. Deshwal, J. R. Doppa. Max-value Entropy Search
     for Multi-Objective Bayesian Optimization. Advances in Neural
     Information Processing Systems, 32. 2019.
+
+.. [Tu2022]
+    B. Tu, A. Gandy, N. Kantas and B.Shafei. Joint Entropy Search for
+    Multi-Objective Bayesian Optimization. Advances in Neural
+    Information Processing Systems, 35. 2022.
 """
 
 from __future__ import annotations
@@ -32,9 +37,19 @@ from botorch.models.converter import (
 from botorch.models.model import Model
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
-from botorch.utils.transforms import t_batch_mode_transform
+from botorch.utils.transforms import (
+    t_batch_mode_transform,
+    concatenate_pending_points,
+)
 from torch import Tensor
-
+from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.multi_objective.joint_entropy_search import (
+    _compute_entropy_noiseless,
+    _compute_entropy_upper_bound,
+    _compute_entropy_monte_carlo
+)
+from math import pi
+CLAMP_LB = 1.0e-8
 
 class qMultiObjectiveMaxValueEntropy(
     qMaxValueEntropy, MultiObjectiveMCAcquisitionFunction
@@ -175,3 +190,187 @@ class qMultiObjectiveMaxValueEntropy(
         igs = qMaxValueEntropy.forward(self, X=X.unsqueeze(-3))
         # sum over objectives
         return igs.sum(dim=-1)
+
+
+class qLowerBoundMaxValueEntropySearch(AcquisitionFunction):
+    r"""The acquisition function for the Max-value Entropy Search, where the batches
+    `q > 1` are supported through the lower bound formulation.
+
+    This acquisition function computes the mutual information between the observation
+    at a candidate point X and the Pareto optimal outputs.
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        pareto_fronts: Tensor,
+        hypercell_bounds: Tensor,
+        maximize: bool = True,
+        X_pending: Optional[Tensor] = None,
+        estimation_type: str = "Lower bound",
+        only_diagonal: Optional[bool] = False,
+        sampler: Optional[MCSampler] = None,
+        num_samples: Optional[int] = 64,
+        num_constraints: Optional[int] = 0,
+        **kwargs: Any,
+    ) -> None:
+        r"""Max-value entropy search acquisition function.
+
+        Args:
+            model: A fitted batch model with 'M + K' number of outputs. The
+                first `M` corresponds to the objectives and the rest corresponds
+                to the constraints. The number `K` is specified the variable
+                `num_constraints`.
+            pareto_fronts: A `num_pareto_samples x num_pareto_points x M`-dim Tensor.
+            hypercell_bounds:  A `num_pareto_samples x 2 x J x (M + K)`-dim
+                Tensor containing the hyper-rectangle bounds for integration. In the
+                unconstrained case, this gives the partition of the dominated space.
+                In the constrained case, this gives the partition of the feasible
+                dominated space union the infeasible space.
+            maximize: If True, consider the problem a maximization problem.
+            X_pending: A `m x d`-dim Tensor of `m` design points that have been
+                submitted for function evaluation but have not yet been evaluated.
+            estimation_type: A string to determine which entropy estimate is
+                computed: "Noiseless", "Noiseless lower bound", "Lower bound" or
+                "Monte Carlo".
+            only_diagonal: If true we only compute the diagonal elements of the
+                variance for the `Lower bound` estimation strategy.
+            sampler: The sampler used if Monte Carlo is used to estimate the entropy.
+                Defaults to 'SobolQMCNormalSampler(num_samples=64,
+                collapse_batch_dims=True)'.
+            num_samples: The number of Monte Carlo samples if using the default Monte
+                Carlo sampler.
+            num_constraints: The number of constraints.
+        """
+        super().__init__(model=model)
+        self.model = model
+
+        self.pareto_fronts = pareto_fronts
+        self.num_pareto_samples = pareto_fronts.shape[0]
+        self.num_pareto_points = pareto_fronts.shape[-2]
+
+        self.hypercell_bounds = hypercell_bounds
+        self.maximize = maximize
+        self.weight = 1.0 if maximize else -1.0
+
+        self.estimation_type = estimation_type
+        estimation_types = [
+            "Noiseless",
+            "Lower bound",
+            "Monte Carlo"
+        ]
+
+        if estimation_type not in estimation_types:
+            raise NotImplementedError(
+                "Currently the only supported estimation type are: "
+                + " ".joint(estimation_types) + "."
+            )
+        self.only_diagonal = only_diagonal
+        if sampler is None:
+            self.sampler = SobolQMCNormalSampler(
+                num_samples=num_samples, collapse_batch_dims=True
+            )
+        else:
+            self.sampler = sampler
+
+        self.num_constraints = num_constraints
+        self.set_X_pending(X_pending)
+
+    @concatenate_pending_points
+    @t_batch_mode_transform()
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Compute maximum entropy search at the design points `X`.
+
+        Args:
+            X: A `batch_shape x q x d`-dim Tensor of `batch_shape` t-batches with `1`
+            `d`-dim design points each.
+
+        Returns:
+            A `batch_shape`-dim Tensor of MES values at the given design points `X`.
+        """
+        K = self.num_constraints
+        M = self.model.num_outputs - K
+
+        # Compute the initial entropy term depending on `X`.
+        posterior_plus_noise = self.model.posterior(X, observation_noise=True)
+
+        # Additional constant term.
+        add_term = .5 * (M + K) * (1 + torch.log(torch.ones(1) * 2 * pi))
+        # The variance initially has shape `batch_shape x (q*(M+K)) x (q*(M+K))`
+        # prior_entropy has shape `batch_shape x num_fantasies`
+        prior_entropy = add_term + .5 * torch.logdet(
+            posterior_plus_noise.mvn.covariance_matrix
+        )
+
+        # Compute the posterior entropy term.
+        posterior = self.model.posterior(X.unsqueeze(-2), observation_noise=False)
+        posterior_plus_noise = self.model.posterior(
+            X.unsqueeze(-2), observation_noise=True
+        )
+
+        # `batch_shape x q x 1 x (M+K)`
+        mean = posterior.mean
+        var = posterior.variance.clamp_min(CLAMP_LB)
+        var_plus_noise = posterior_plus_noise.variance.clamp_min(CLAMP_LB)
+
+        # Expand shapes to `batch_shape x num_pareto_samples x q x 1 x (M + K)`
+        new_shape = mean.shape[:-3] + torch.Size([self.num_pareto_samples]) + \
+            mean.shape[-3:]
+        mean = mean.unsqueeze(-4).expand(new_shape)
+        var = var.unsqueeze(-4).expand(new_shape)
+        var_plus_noise = var_plus_noise.unsqueeze(-4).expand(new_shape)
+
+        # `batch_shape x q` dim Tensor of entropy estimates
+        if self.estimation_type == "Noiseless":
+            post_entropy = _compute_entropy_noiseless(
+                hypercell_bounds=self.hypercell_bounds.unsqueeze(1),
+                mean=mean,
+                variance=var,
+                variance_plus_noise=var_plus_noise,
+            )
+
+        if self.estimation_type == "Lower bound":
+            post_entropy = _compute_entropy_upper_bound(
+                hypercell_bounds=self.hypercell_bounds.unsqueeze(1),
+                mean=mean,
+                variance=var,
+                variance_plus_noise=var_plus_noise,
+                only_diagonal=self.only_diagonal
+            )
+
+        if self.estimation_type == "Monte Carlo":
+            # `num_mc_samples x batch_shape x q x 1 x (M+K)`
+            samples = self.sampler(posterior_plus_noise)
+
+            # `num_mc_samples x batch_shape x q`
+            if (M + K) == 1:
+                samples_log_prob = posterior_plus_noise.mvn.log_prob(
+                    samples.squeeze(-1)
+                )
+            else:
+                samples_log_prob = posterior_plus_noise.mvn.log_prob(
+                    samples
+                )
+
+            # Expand shape to `num_mc_samples x batch_shape x num_pareto_samples x
+            # q x 1 x (M+K)`
+            new_shape = samples.shape[:-3] \
+                + torch.Size([self.num_pareto_samples]) + samples.shape[-3:]
+            samples = samples.unsqueeze(-4).expand(new_shape)
+
+            # Expand shape to `num_mc_samples x batch_shape x num_pareto_samples x q`
+            new_shape = samples_log_prob.shape[:-1] \
+                + torch.Size([self.num_pareto_samples]) + samples_log_prob.shape[-1:]
+            samples_log_prob = samples_log_prob.unsqueeze(-2).expand(new_shape)
+
+            post_entropy = _compute_entropy_monte_carlo(
+                hypercell_bounds=self.hypercell_bounds.unsqueeze(1),
+                mean=mean,
+                variance=var,
+                variance_plus_noise=var_plus_noise,
+                samples=samples,
+                samples_log_prob=samples_log_prob
+            )
+
+        # Sum over the batch.
+        return prior_entropy - post_entropy.sum(dim=-1)
