@@ -10,11 +10,11 @@ import math
 from abc import abstractmethod
 from itertools import combinations, product
 from typing import Callable
-from unittest import TestCase
 
 import torch
 from botorch.utils import safe_math
 from botorch.utils.constants import get_constants_like
+from botorch.utils.testing import BotorchTestCase
 from torch import finfo, Tensor
 
 INF = float("inf")
@@ -31,7 +31,7 @@ class UnaryOpTestMixin:
     def test_generic(self, m: int = 3, n: int = 4):
         for dtype in (torch.float32, torch.float64):
             # Test forward
-            x = torch.rand(n, m, dtype=dtype, requires_grad=True)
+            x = torch.rand(n, m, dtype=dtype, requires_grad=True, device=self.device)
             y = self.safe_op(x)
 
             _x = x.detach().clone().requires_grad_(True)
@@ -65,8 +65,8 @@ class BinaryOpTestMixin:
     def test_generic(self, m: int = 3, n: int = 4):
         for dtype in (torch.float32, torch.float64):
             # Test equality for generic cases
-            a = torch.rand(n, m, dtype=dtype, requires_grad=True)
-            b = torch.rand(n, m, dtype=dtype, requires_grad=True)
+            a = torch.rand(n, m, dtype=dtype, requires_grad=True, device=self.device)
+            b = torch.rand(n, m, dtype=dtype, requires_grad=True, device=self.device)
             y = self.safe_op(a, b)
 
             _a = a.detach().clone().requires_grad_(True)
@@ -85,10 +85,12 @@ class BinaryOpTestMixin:
         pass  # pragma: no cover
 
 
-class TestSafeExp(TestCase, UnaryOpTestMixin, op=torch.exp, safe_op=safe_math.exp):
+class TestSafeExp(
+    BotorchTestCase, UnaryOpTestMixin, op=torch.exp, safe_op=safe_math.exp
+):
     def test_special(self):
         for dtype in (torch.float32, torch.float64):
-            x = torch.full([], INF, dtype=dtype, requires_grad=True)
+            x = torch.full([], INF, dtype=dtype, requires_grad=True, device=self.device)
             y = self.safe_op(x)
             self.assertEqual(
                 y, get_constants_like(math.log(finfo(dtype).max) - 1e-4, x).exp()
@@ -98,10 +100,12 @@ class TestSafeExp(TestCase, UnaryOpTestMixin, op=torch.exp, safe_op=safe_math.ex
             self.assertEqual(x.grad, 0)
 
 
-class TestSafeLog(TestCase, UnaryOpTestMixin, op=torch.log, safe_op=safe_math.log):
+class TestSafeLog(
+    BotorchTestCase, UnaryOpTestMixin, op=torch.log, safe_op=safe_math.log
+):
     def test_special(self):
         for dtype in (torch.float32, torch.float64):
-            x = torch.zeros([], dtype=dtype, requires_grad=True)
+            x = torch.zeros([], dtype=dtype, requires_grad=True, device=self.device)
             y = self.safe_op(x)
             self.assertEqual(y, math.log(finfo(dtype).tiny))
 
@@ -109,12 +113,18 @@ class TestSafeLog(TestCase, UnaryOpTestMixin, op=torch.log, safe_op=safe_math.lo
             self.assertEqual(x.grad, 0)
 
 
-class TestSafeAdd(TestCase, BinaryOpTestMixin, op=torch.add, safe_op=safe_math.add):
+class TestSafeAdd(
+    BotorchTestCase, BinaryOpTestMixin, op=torch.add, safe_op=safe_math.add
+):
     def test_special(self):
         for dtype in (torch.float32, torch.float64):
             for _a in (INF, -INF):
-                a = torch.tensor(_a, dtype=dtype, requires_grad=True)
-                b = torch.tensor(INF, dtype=dtype, requires_grad=True)
+                a = torch.tensor(
+                    _a, dtype=dtype, requires_grad=True, device=self.device
+                )
+                b = torch.tensor(
+                    INF, dtype=dtype, requires_grad=True, device=self.device
+                )
 
                 out = self.safe_op(a, b)
                 self.assertEqual(out, 0 if a != b else b)
@@ -124,12 +134,18 @@ class TestSafeAdd(TestCase, BinaryOpTestMixin, op=torch.add, safe_op=safe_math.a
                 self.assertEqual(b.grad, 0 if a != b else 1)
 
 
-class TestSafeSub(TestCase, BinaryOpTestMixin, op=torch.sub, safe_op=safe_math.sub):
+class TestSafeSub(
+    BotorchTestCase, BinaryOpTestMixin, op=torch.sub, safe_op=safe_math.sub
+):
     def test_special(self):
         for dtype in (torch.float32, torch.float64):
             for _a in (INF, -INF):
-                a = torch.tensor(_a, dtype=dtype, requires_grad=True)
-                b = torch.tensor(INF, dtype=dtype, requires_grad=True)
+                a = torch.tensor(
+                    _a, dtype=dtype, requires_grad=True, device=self.device
+                )
+                b = torch.tensor(
+                    INF, dtype=dtype, requires_grad=True, device=self.device
+                )
 
                 out = self.safe_op(a, b)
                 self.assertEqual(out, 0 if a == b else -b)
@@ -139,12 +155,18 @@ class TestSafeSub(TestCase, BinaryOpTestMixin, op=torch.sub, safe_op=safe_math.s
                 self.assertEqual(b.grad, 0 if a == b else -1)
 
 
-class TestSafeMul(TestCase, BinaryOpTestMixin, op=torch.mul, safe_op=safe_math.mul):
+class TestSafeMul(
+    BotorchTestCase, BinaryOpTestMixin, op=torch.mul, safe_op=safe_math.mul
+):
     def test_special(self):
         for dtype in (torch.float32, torch.float64):
             for _a, _b in product([0, 2], [INF, -INF]):
-                a = torch.tensor(_a, dtype=dtype, requires_grad=True)
-                b = torch.tensor(_b, dtype=dtype, requires_grad=True)
+                a = torch.tensor(
+                    _a, dtype=dtype, requires_grad=True, device=self.device
+                )
+                b = torch.tensor(
+                    _b, dtype=dtype, requires_grad=True, device=self.device
+                )
 
                 out = self.safe_op(a, b)
                 self.assertEqual(out, a if a == 0 else b)
@@ -154,12 +176,18 @@ class TestSafeMul(TestCase, BinaryOpTestMixin, op=torch.mul, safe_op=safe_math.m
                 self.assertEqual(b.grad, 0 if a == 0 else a)
 
 
-class TestSafeDiv(TestCase, BinaryOpTestMixin, op=torch.div, safe_op=safe_math.div):
+class TestSafeDiv(
+    BotorchTestCase, BinaryOpTestMixin, op=torch.div, safe_op=safe_math.div
+):
     def test_special(self):
         for dtype in (torch.float32, torch.float64):
             for _a, _b in combinations([0, INF, -INF], 2):
-                a = torch.tensor(_a, dtype=dtype, requires_grad=True)
-                b = torch.tensor(_b, dtype=dtype, requires_grad=True)
+                a = torch.tensor(
+                    _a, dtype=dtype, requires_grad=True, device=self.device
+                )
+                b = torch.tensor(
+                    _b, dtype=dtype, requires_grad=True, device=self.device
+                )
 
                 out = self.safe_op(a, b)
                 if a == b:

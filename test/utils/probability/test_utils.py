@@ -50,6 +50,29 @@ class TestProbabilityUtils(BotorchTestCase):
             active[mask] = False
         self.assertTrue(~active.any() or output[active].eq(len(levels)).all())
 
+        # testing mask.all() branch
+        edge_cases = [
+            (lambda: torch.full(values.shape, True), lambda mask: float("nan"))
+        ]
+        output = utils.case_dispatcher(
+            out=torch.full_like(values, float("nan")),
+            cases=edge_cases,
+            default=lambda mask: len(levels),
+        )
+
+        # testing if not active.any() branch
+        pred = torch.full(values.shape, True)
+        pred[0] = False
+        edge_cases = [
+            (lambda: pred, lambda mask: False),
+            (lambda: torch.full(values.shape, True), lambda mask: False),
+        ]
+        output = utils.case_dispatcher(
+            out=torch.full_like(values, float("nan")),
+            cases=edge_cases,
+            default=lambda mask: len(levels),
+        )
+
     def test_build_positional_indices(self):
         with torch.random.fork_rng():
             torch.random.manual_seed(0)

@@ -72,6 +72,16 @@ Feasible Volume
 .. automodule:: botorch.utils.feasible_volume
 		:members:
 
+Constants
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.constants
+		:members:
+
+Safe Math
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.safe_math
+		:members:
+
 Multi-Objective Utilities
 -------------------------------------------
 
@@ -114,3 +124,41 @@ Scalarization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.multi_objective.scalarization
 		:members:
+
+Probability Utilities
+-------------------------------------------
+
+Multivariate Gaussian Probabilities via Bivariate Conditioning
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.probability.mvnxpb
+    	:members:
+
+Truncated Multivariate Normal Distribution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.probability.truncated_multivariate_normal
+    	:members:
+
+Unified Skew Normal Distribution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.probability.unified_skew_normal
+    	:members:
+
+Bivariate Normal Probabilities and Statistics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.probability.bvn
+    	:members:
+
+Elliptic Slice Sampler with Linear Constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.probability.lin_ess
+    	:members:
+
+Linear Algebra Helpers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.probability.linalg
+    	:members:
+
+Probability Helpers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.probability.utils
+    	:members:

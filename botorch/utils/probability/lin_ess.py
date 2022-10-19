@@ -94,13 +94,13 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
             try:
                 covariance_root = torch.linalg.cholesky(covariance_matrix)
             except RuntimeError as e:
-                if "positive-definite" in str(e):
-                    raise ValueError(
+                raise_e = e
+                if "positive-definite" in str(raise_e):
+                    raise_e = ValueError(
                         "Covariance matrix is not positive definite. "
                         "Currently only non-degenerate distributions are supported."
                     )
-                else:
-                    raise e
+                raise raise_e
         self._covariance_root = covariance_root
         self._x = self.x0.clone()  # state of the sampler ("current point")
         # We will need the following repeatedly, let's allocate them once
@@ -216,11 +216,12 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
             nu=nu, theta=theta, delta_theta=_delta_theta
         )
         theta_active = theta[active_directions.nonzero()]
-
+        delta_theta = _delta_theta
         while theta_active.numel() % 2 == 1:
             # Almost tangential ellipses, reduce delta_theta
+            delta_theta /= 10
             active_directions = self._index_active(
-                theta=theta, nu=nu, delta_theta=0.1 * _delta_theta
+                theta=theta, nu=nu, delta_theta=delta_theta
             )
             theta_active = theta[active_directions.nonzero()]
 
@@ -235,6 +236,9 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
     def _find_intersection_angles(self, nu: Tensor) -> Tensor:
         """Compute all of the up to 2*n_ineq_con intersections of the ellipse
         and the linear constraints.
+
+        For background, see equation (2) in
+        http://proceedings.mlr.press/v108/gessner20a/gessner20a.pdf
 
         Args:
             nu: A `d x 1`-dim tensor (the "new" direction, drawn from N(0, I)).
@@ -264,7 +268,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         return torch.sort(theta).values
 
     def _index_active(
-        self, nu: Tensor, theta: Tensor, delta_theta: float = 1e-4
+        self, nu: Tensor, theta: Tensor, delta_theta: float = _delta_theta
     ) -> Tensor:
         r"""Determine active indices.
 

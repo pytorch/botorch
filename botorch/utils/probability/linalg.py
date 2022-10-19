@@ -50,9 +50,8 @@ def augment_cholesky(
         raise ValueError("One and only one of `Kba` or `Lba` must be provided.")
 
     if jitter is not None:
-        diag = Kbb.diagonal(dim1=-2, dim2=-1)
         Kbb = Kbb.clone()
-        Kbb.fill_diagonal_(diag + jitter)
+        Kbb.diagonal(dim1=-2, dim2=-1).add_(jitter)
 
     if Lba is None:
         Lba = torch.linalg.solve_triangular(
@@ -62,7 +61,7 @@ def augment_cholesky(
     Lbb, info = torch.linalg.cholesky_ex(Kbb - Lba @ Lba.transpose(-2, -1))
     if info.any():
         raise NotPSDError(
-            "Schur complement of `K` with respect to `Kaa` not PSD for the given"
+            "Schur complement of `K` with respect to `Kaa` not PSD for the given "
             "Cholesky factor `Laa`"
             f"{'.' if jitter is None else f' and nugget jitter={jitter}.'}"
         )
@@ -85,19 +84,19 @@ class PivotedCholesky:
 
         if self.tril.shape[-2] != self.tril.shape[-1]:
             raise ValueError(
-                f"Expected square matrices but `matrix` has shape {self.tril.shape}."
+                f"Expected square matrices but `matrix` has shape `{self.tril.shape}`."
             )
 
         if self.perm.shape != self.tril.shape[:-1]:
             raise ValueError(
                 f"`perm` of shape `{self.perm.shape}` incompatible with "
-                f"`matrix` of shape `{self.tril.shape}."
+                f"`matrix` of shape `{self.tril.shape}`."
             )
 
         if self.diag is not None and self.diag.shape != self.tril.shape[:-1]:
             raise ValueError(
                 f"`diag` of shape `{self.diag.shape}` incompatible with "
-                f"`matrix` of shape `{self.tril.shape}."
+                f"`matrix` of shape `{self.tril.shape}`."
             )
 
     def __getitem__(self, key: Any) -> PivotedCholesky:
@@ -135,9 +134,8 @@ class PivotedCholesky:
         # Perform basic swaps
         for key in ("perm", "diag"):
             tnsr = getattr(self, key, None)
-            if tnsr is None:
-                continue
-            swap_along_dim_(tnsr, i=self.step, j=pivot, dim=pivot.ndim)
+            if tnsr is not None:
+                swap_along_dim_(tnsr, i=self.step, j=pivot, dim=tnsr.ndim - 1)
 
         # Perform matrix swaps; prealloacte buffers for row/column linear indices
         size2 = size**2

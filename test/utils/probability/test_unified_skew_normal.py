@@ -6,7 +6,10 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
+
 from itertools import count
+
 from typing import Any, Dict, Optional, Sequence, Tuple
 
 import torch
@@ -16,6 +19,7 @@ from botorch.utils.probability.truncated_multivariate_normal import (
 )
 from botorch.utils.probability.unified_skew_normal import UnifiedSkewNormal
 from botorch.utils.testing import BotorchTestCase
+from linear_operator.operators import DenseLinearOperator
 from torch import Tensor
 from torch.distributions import MultivariateNormal
 from torch.special import ndtri
@@ -124,6 +128,12 @@ class TestUnifiedSkewNormal(BotorchTestCase):
                 # Compare with log probabilities returned by class
                 self.assertTrue(log_probs.allclose(usn.log_prob(vals)))
 
+                # checking error handling when incorrectly shaped value is passed
+                wrong_vals = torch.cat((vals, vals), dim=-1)
+                error_msg = ".*with shape.*does not comply with the instance.*"
+                with self.assertRaisesRegex(ValueError, error_msg):
+                    usn.log_prob(wrong_vals)
+
     def test_rsample(self):
         # TODO: Replace with e.g. two-sample test.
         with torch.random.fork_rng():
@@ -163,6 +173,11 @@ class TestUnifiedSkewNormal(BotorchTestCase):
 
     def test_expand(self):
         usn = next(iter(self.distributions))
+        # calling these lazy properties to cached them and
+        #  hit associated branches in expand
+        usn._orthogonalized_gauss
+        usn.covariance_matrix
+
         other = usn.expand(torch.Size([2]))
         for key in ("loc", "covariance_matrix"):
             a = getattr(usn.gauss, key)
@@ -174,3 +189,98 @@ class TestUnifiedSkewNormal(BotorchTestCase):
 
         for b in other.cross_covariance_matrix.unbind():
             self.assertTrue(usn.cross_covariance_matrix.equal(b))
+
+        fake_usn = deepcopy(usn)
+        fake_usn.covariance_matrix = -1
+        error_msg = (
+            f"Type {type(-1)} of UnifiedSkewNormal's lazy property "
+            "covariance_matrix not supported.*"
+        )
+        with self.assertRaisesRegex(TypeError, error_msg):
+            other = fake_usn.expand(torch.Size([2]))
+
+    def test_validate_args(self):
+        for d in self.distributions:
+            error_msg = ".*is only well-defined for positive definite.*"
+            with self.assertRaisesRegex(ValueError, error_msg):
+                gauss = deepcopy(d.gauss)
+                gauss.covariance_matrix *= -1
+                UnifiedSkewNormal(d.trunc, gauss, d.cross_covariance_matrix)
+
+            error_msg = ".*-dimensional `trunc` incompatible with.*-dimensional `gauss"
+            with self.assertRaisesRegex(ValueError, error_msg):
+                gauss = deepcopy(d.gauss)
+                gauss._event_shape = (*gauss._event_shape, 1)
+                UnifiedSkewNormal(d.trunc, gauss, d.cross_covariance_matrix)
+
+            error_msg = "Incompatible batch shapes"
+            with self.assertRaisesRegex(ValueError, error_msg):
+                gauss = deepcopy(d.gauss)
+                trunc = deepcopy(d.trunc)
+                gauss._batch_shape = (*gauss._batch_shape, 2)
+                trunc._batch_shape = (*trunc._batch_shape, 3)
+                UnifiedSkewNormal(trunc, gauss, d.cross_covariance_matrix)
+
+    def test_properties(self):
+        orth = "_orthogonalized_gauss"
+        scal = "scale_tril"
+        for d in self.distributions:
+            # testing calling orthogonalized_gauss and scale_tril
+            usn = UnifiedSkewNormal(
+                d.trunc, d.gauss, d.cross_covariance_matrix, validate_args=False
+            )
+            self.assertTrue(orth not in usn.__dict__)
+            self.assertTrue(scal not in usn.__dict__)
+            usn._orthogonalized_gauss
+            self.assertTrue(orth in usn.__dict__)
+            self.assertTrue(scal not in usn.__dict__)
+            usn.scale_tril
+            self.assertTrue(orth in usn.__dict__)
+            self.assertTrue(scal in usn.__dict__)
+
+            # testing calling orthogonalized_gauss and scale_tril in reverse order
+            usn = UnifiedSkewNormal(
+                d.trunc, d.gauss, d.cross_covariance_matrix, validate_args=False
+            )
+            usn.scale_tril
+            self.assertTrue(orth not in usn.__dict__)
+            self.assertTrue(scal in usn.__dict__)
+            usn._orthogonalized_gauss
+            self.assertTrue(orth in usn.__dict__)
+            self.assertTrue(scal in usn.__dict__)
+
+    def test_covariance_matrix(self):
+        for d in self.distributions:
+            cov = d.covariance_matrix
+            self.assertTrue(isinstance(cov, Tensor))
+
+            # testing for symmetry
+            self.assertTrue(torch.allclose(cov, cov.mT))
+
+            # testing for positive-definiteness
+            ispd = False
+            try:
+                torch.linalg.cholesky(cov)
+                ispd = True
+            except RuntimeError:
+                pass
+            self.assertTrue(ispd)
+
+            # checking that linear operator to tensor conversion
+            # leads to same covariance matrix
+            xcov_linop = DenseLinearOperator(d.cross_covariance_matrix)
+            usn_linop = UnifiedSkewNormal(
+                trunc=d.trunc, gauss=d.gauss, cross_covariance_matrix=xcov_linop
+            )
+            cov_linop = usn_linop.covariance_matrix
+            self.assertTrue(isinstance(cov_linop, Tensor))
+            self.assertTrue(torch.allclose(cov, cov_linop))
+
+    def test_repr(self):
+        for d in self.distributions:
+            r = repr(d)
+            self.assertTrue(f"trunc: {d.trunc}" in r)
+            self.assertTrue(f"gauss: {d.gauss}" in r)
+            self.assertTrue(
+                f"cross_covariance_matrix: {d.cross_covariance_matrix.shape}" in r
+            )

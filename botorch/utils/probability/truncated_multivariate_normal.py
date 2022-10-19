@@ -145,4 +145,4 @@ class TruncatedMultivariateNormal(MultivariateNormal):
         return new
 
     def __repr__(self) -> str:
-        return super().__repr__()[:-1] + f"bounds: {self.bounds.shape})"
+        return super().__repr__()[:-1] + f", bounds: {self.bounds.shape})"

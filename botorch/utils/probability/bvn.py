@@ -92,16 +92,16 @@ def bvn(r: Tensor, xl: Tensor, yl: Tensor, xu: Tensor, yu: Tensor) -> Tensor:
 def bvnu(r: Tensor, h: Tensor, k: Tensor) -> Tensor:
     r"""Solves for `P(x > h, y > k)` where `x` and `y` are standard bivariate normal
     random variables with correlation coefficient `r`. In [Genz2004bvnt]_, this is (1)
-    ```
-    L(h, k, r) = P(x < -h, y < -k)
-               = 1/(a 2\pi) \int_{h}^{\infty} \int_{k}^{\infty} f(x, y, r) dy dx,
-    ```
+
+        `L(h, k, r) = P(x < -h, y < -k) \
+        = 1/(a 2\pi) \int_{h}^{\infty} \int_{k}^{\infty} f(x, y, r) dy dx,`
+
     where `f(x, y, r) = e^{-1/(2a^2) (x^2 - 2rxy + y^2)}` and `a = (1 - r^2)^{1/2}`.
 
     [Genz2004bvnt]_ report the following integation scheme incurs a maximum of 5e-16
-    error when run in double precision: if |r| >= 0.925, use a 20-point quadrature rule
-    on a 5th order Taylor expansion; else, numerically integrate in polar coordinates
-    using no more than 20 quadrature points.
+    error when run in double precision: if `|r| >= 0.925`, use a 20-point quadrature
+    rule on a 5th order Taylor expansion; else, numerically integrate in polar
+    coordinates using no more than 20 quadrature points.
 
     Args:
         r: Tensor of correlation coefficients.
@@ -137,10 +137,10 @@ def _bvnu_polar(
     r: Tensor, h: Tensor, k: Tensor, num_points: Optional[int] = None
 ) -> Tensor:
     r"""Solves for `P(x > h, y > k)` by integrating in polar coordinates as
-    ```
-        L(h, k, r) = \Phi(-h)\Phi(-k) + 1/(2\pi) \int_{0}^{sin^{-1}(r)} f(t) dt
-        f(t) = e^{-0.5 cos(t)^{-2} (h^2 + k^2 - 2hk sin(t))}
-    ```
+
+        `L(h, k, r) = \Phi(-h)\Phi(-k) + 1/(2\pi) \int_{0}^{sin^{-1}(r)} f(t) dt \
+        f(t) = e^{-0.5 cos(t)^{-2} (h^2 + k^2 - 2hk sin(t))}`
+
     For details, see Section 2.2 of [Genz2004bvnt]_.
     """
     if num_points is None:
@@ -168,12 +168,13 @@ def _bvnu_taylor(r: Tensor, h: Tensor, k: Tensor, num_points: int = 20) -> Tenso
     r"""Solves for `P(x > h, y > k)` via Taylor expansion.
 
     Per Section 2.3 of [Genz2004bvnt]_, the bvnu equation (1) may be rewritten as
-    ```
-        L(h, k, r) = L(h, k, s) - s/(2\pi) \int_{0}^{a} f(x) dx
-        f(x) = (1 - x^2){-1/2} e^{-0.5 ((h - sk)/ x)^2} e^{-shk/(1 + (1 - x^2)^{1/2})},
-    ```
+
+        `L(h, k, r) = L(h, k, s) - s/(2\pi) \int_{0}^{a} f(x) dx \
+        f(x) = (1 - x^2){-1/2} e^{-0.5 ((h - sk)/ x)^2} e^{-shk/(1 + (1 - x^2)^{1/2})},`
+
     where `s = sign(r)` and `a = sqrt(1 - r^{2})`. The term `L(h, k, s)` is analytic.
-    The second integral is approximated via Taylor expansion.
+    The second integral is approximated via Taylor expansion. See Sections 2.3 and
+    2.4 of [Genz2004bvnt]_.
     """
     _0, _1, _ni2, _i2pi, _sq2pi = get_constants_like(
         values=(0, 1, -0.5, _inv_2pi, _sqrt_2pi), ref=r
@@ -246,13 +247,13 @@ def bvnmom(
     r"""Computes the expected values of truncated, bivariate normal random variables.
 
     Let `x` and `y` be a pair of standard bivariate normal random variables having
-    correlation `r`. This function computes `E([x,y] | [xl,yl] < [x,y] < [xu,yu])`.
+    correlation `r`. This function computes `E([x,y] \| [xl,yl] < [x,y] < [xu,yu])`.
 
     Following [Muthen1990moments]_ equations (4) and (5), we have
-    ```
-    E(x | [xl, yl] < [x, y] < [xu, yu])
-        = Z^{-1} \phi(xl) P(yl < y < yu | x=xl) - \phi(xu) P(yl < y < yu | x=xu)
-    ```
+
+        `E(x \| [xl, yl] < [x, y] < [xu, yu]) \
+        = Z^{-1} \phi(xl) P(yl < y < yu \| x=xl) - \phi(xu) P(yl < y < yu \| x=xu),`
+
     where `Z = P([xl, yl] < [x, y] < [xu, yu])` and `\phi` is the standard normal PDF.
 
     Args:
@@ -264,7 +265,8 @@ def bvnmom(
         p: Tensor of probabilities `P(xl < x < xu, yl < y < yu)`, same shape as `r`.
 
     Returns:
-        `E(x | [xl, yl] < [x, y] < [xu, yu])` and `E(y | [xl, yl] < [x, y] < [xu, yu])`.
+        `E(x \| [xl, yl] < [x, y] < [xu, yu])` and
+        `E(y \| [xl, yl] < [x, y] < [xu, yu])`.
     """
     if not (r.shape == xl.shape == xu.shape == yl.shape == yu.shape):
         raise UnsupportedError("Arguments to `bvn` must have the same shape.")
