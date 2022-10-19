@@ -68,7 +68,9 @@ def gen_candidates_scipy(
         options: Options used to control the optimization including "method"
             and "maxiter". Select method for `scipy.minimize` using the
             "method" key. By default uses L-BFGS-B for box-constrained problems
-            and SLSQP if inequality or equality constraints are present.
+            and SLSQP if inequality or equality constraints are present. If
+            `with_grad=False`, then we use a two-point finite difference estimate
+            of the gradient.
         fixed_features: This is a dictionary of feature indices to values, where
             all generated candidates will have features fixed to these values.
             If the dictionary value is None, then that feature will just be
@@ -154,34 +156,44 @@ def gen_candidates_scipy(
         equality_constraints=equality_constraints,
     )
 
-    def f_np_wrapper(x: np.ndarray, f: Callable):
-        """Given a torch callable, compute value + grad given a numpy array."""
-        if np.isnan(x).any():
-            raise RuntimeError(
-                f"{np.isnan(x).sum()} elements of the {x.size} element array "
-                f"`x` are NaN."
+    with_grad = options.get("with_grad", True)
+    if with_grad:
+        def f_np_wrapper(x: np.ndarray, f: Callable):
+            """Given a torch callable, compute value + grad given a numpy array."""
+            if np.isnan(x).any():
+                raise RuntimeError(
+                    f"{np.isnan(x).sum()} elements of the {x.size} element array "
+                    f"`x` are NaN."
+                )
+            X = (
+                torch.from_numpy(x)
+                .to(initial_conditions)
+                .view(shapeX)
+                .contiguous()
+                .requires_grad_(True)
             )
-        X = (
-            torch.from_numpy(x)
-            .to(initial_conditions)
-            .view(shapeX)
-            .contiguous()
-            .requires_grad_(True)
-        )
-        X_fix = fix_features(X, fixed_features=fixed_features)
-        loss = f(X_fix).sum()
-        # compute gradient w.r.t. the inputs (does not accumulate in leaves)
-        gradf = _arrayify(torch.autograd.grad(loss, X)[0].contiguous().view(-1))
-        if np.isnan(gradf).any():
-            msg = (
-                f"{np.isnan(gradf).sum()} elements of the {x.size} element "
-                "gradient array `gradf` are NaN. This often indicates numerical issues."
-            )
-            if initial_conditions.dtype != torch.double:
-                msg += " Consider using `dtype=torch.double`."
-            raise RuntimeError(msg)
-        fval = loss.item()
-        return fval, gradf
+            X_fix = fix_features(X, fixed_features=fixed_features)
+            loss = f(X_fix).sum()
+            # compute gradient w.r.t. the inputs (does not accumulate in leaves)
+            gradf = _arrayify(torch.autograd.grad(loss, X)[0].contiguous().view(-1))
+            if np.isnan(gradf).any():
+                msg = (
+                    f"{np.isnan(gradf).sum()} elements of the {x.size} element "
+                    "gradient array `gradf` are NaN. This often indicates numerical issues."
+                )
+                if initial_conditions.dtype != torch.double:
+                    msg += " Consider using `dtype=torch.double`."
+                raise RuntimeError(msg)
+            fval = loss.item()
+            return fval, gradf
+    else:
+        def f_np_wrapper(x: np.ndarray, f: Callable):
+            X = torch.from_numpy(x).to(initial_conditions).view(shapeX).contiguous()
+            with torch.no_grad():
+                X_fix = fix_features(X=X, fixed_features=fixed_features)
+                loss = f(X_fix).sum()
+            fval = loss.item()
+            return fval
 
     if nonlinear_inequality_constraints:
         # Make sure `batch_limit` is 1 for now.
@@ -205,11 +217,13 @@ def gen_candidates_scipy(
         args=(f,),
         x0=x0,
         method=options.get("method", "SLSQP" if constraints else "L-BFGS-B"),
-        jac=True,
+        jac=with_grad,
         bounds=bounds,
         constraints=constraints,
         callback=options.get("callback", None),
-        options={k: v for k, v in options.items() if k not in ["method", "callback"]},
+        options={k: v for k, v in options.items() if k not in [
+            "method", "callback", "with_grad"
+        ]},
     )
 
     if "success" not in res.keys() or "status" not in res.keys():
