@@ -30,6 +30,12 @@ from botorch.utils.multi_objective.pareto import is_non_dominated
 from botorch.utils.transforms import is_fully_bayesian, normalize_indices
 from torch import Tensor
 from torch.quasirandom import SobolEngine
+from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
+    BoxDecomposition,
+)
+from botorch.utils.multi_objective.box_decompositions.dominated import (
+    DominatedPartitioning
+)
 
 
 def get_default_partitioning_alpha(num_objectives: int) -> float:
@@ -161,3 +167,104 @@ def prune_inferior_points_multi_objective(
     effective_n_w = obj_vals.shape[-2] // X.shape[-2]
     idcs = (idcs / effective_n_w).long().unique()
     return X[idcs]
+
+
+def compute_sample_box_decomposition(
+        pareto_fronts: Tensor,
+        partitioning: BoxDecomposition = DominatedPartitioning,
+        maximize: bool = True,
+        num_constraints: Optional[int] = 0,
+) -> Tensor:
+    r"""Compute the box decomposition associated with some sampled Pareto fronts.
+    The resulting hypercell bounds is a Tensor of shape `num_pareto_samples x 2 x J
+    x (M + K)`, where `J`= max(num_boxes) i.e. the smallest number of boxes needed to
+    partition all the Pareto samples.
+
+    To take advantage of batch computations, we pad the bounds with a `2 x (M + K)`
+    -dim Tensor [ref_point, ref_point], when the number of boxes required is smaller
+    than `max(num_boxes)`.
+
+    An input x is considered feasible if f_k(x) <= 0.
+
+    Args:
+        pareto_fronts: A num_pareto_samples x num_pareto_points x M`
+            -dim Tensor containing the sampled pareto fronts.
+        partitioning: A `BoxDecomposition` module that is used to obtain the
+            hyper-rectangle bounds for integration. In the unconstrained case, this
+            gives the partition of the dominated space. In the constrained case, this
+            gives the partition of the feasible dominated space union the infeasible
+            space.
+        maximize: If true the box-decomposition is computed assuming maximization.
+        num_constraints: the number of constraints.
+
+    Returns:
+        A `num_pareto_samples x 2 x J x (M + K)`-dim Tensor containing the hyper
+        box bounds.
+    """
+    NEG_INF = -1e+10
+    num_pareto_samples = pareto_fronts.shape[0]
+    M = pareto_fronts.shape[-1]
+    K = num_constraints
+    ref_point = (torch.ones(M) * NEG_INF).to(pareto_fronts)
+    weight = 1.0 if maximize else -1.0
+
+    if M == 1:
+        # Only consider a Pareto front with one element.
+        extreme_values = torch.max(weight * pareto_fronts, dim=-2).values
+        ref_point = weight * ref_point.expand(extreme_values.shape)
+
+        if maximize:
+            hypercell_bounds = torch.stack(
+                [ref_point, extreme_values], axis=-2
+            ).unsqueeze(-1)
+        else:
+            hypercell_bounds = torch.stack(
+                [extreme_values, ref_point], axis=-2
+            ).unsqueeze(-1)
+    else:
+        box_bounds = []
+        num_boxes = []
+
+        # Iterate through the samples and compute the box decompositions.
+        for i in range(num_pareto_samples):
+            # Dominated partitioning assumes maximization.
+            # If minimizing we consider negative the Pareto front.
+            box_bounds_i = partitioning(
+                ref_point, weight * pareto_fronts[i, :, :]
+            ).hypercell_bounds
+
+            # Reverse the transformation.
+            if not maximize:
+                box_bounds_i = weight * torch.flip(box_bounds_i, dims=[0])
+
+            num_boxes = num_boxes + [box_bounds_i.shape[-2]]
+            box_bounds = box_bounds + [box_bounds_i]
+
+        # Create a Tensor containing to contain the padded box bounds.
+        hypercell_bounds = torch.ones(
+            (num_pareto_samples, 2, max(num_boxes), M)
+        ) * NEG_INF
+
+        for i in range(num_pareto_samples):
+            box_bounds_i = box_bounds[i]
+            num_boxes_i = num_boxes[i]
+            hypercell_bounds[i, 0:num_boxes_i, :] = box_bounds_i
+
+    # Add an extra box for each inequality constraint.
+    if K > 0:
+        # `num_pareto_samples x 2 x (J - 1) x K`
+        feasible_boxes = torch.zeros(hypercell_bounds.shape[:-1] + torch.Size([K]))
+        feasible_boxes[..., 0, :, :] = NEG_INF
+        # `num_pareto_samples x 2 x (J - 1) x (M + K)`
+        hypercell_bounds = torch.cat([hypercell_bounds, feasible_boxes], dim=-1)
+
+        # `num_pareto_samples x 2 x 1 x (M + K)`
+        infeasible_box = torch.zeros(
+            hypercell_bounds.shape[:-2] + torch.Size([1, M + K])
+        )
+        infeasible_box[..., 1, :, :] = -NEG_INF
+        # `num_pareto_samples x 2 x J x (M + K)`
+        hypercell_bounds = torch.cat([hypercell_bounds, infeasible_box], dim=-2)
+
+    # `num_pareto_samples x 2 x J x (M + K)`
+    return hypercell_bounds
