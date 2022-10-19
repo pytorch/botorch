@@ -4998,13 +4998,15 @@ with penalty added for each point.</p>
 acquisition function.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.proximal.ProximalAcquisitionFunction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.proximal.</span></span><span class="sig-name descname"><span class="pre">ProximalAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proximal_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transformed_weighting</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/proximal.html#ProximalAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.proximal.ProximalAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.proximal.</span></span><span class="sig-name descname"><span class="pre">ProximalAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proximal_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transformed_weighting</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/proximal.html#ProximalAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.proximal.ProximalAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></p>
 <p>A wrapper around AcquisitionFunctions to add proximal weighting of the
-acquisition function. Acquisition function is weighted via a squared exponential
-centered at the last training point, with varying lengthscales corresponding to
-<cite>proximal_weights</cite>. Can only be used with acquisition functions based on single
-batch models.</p>
+acquisition function. The acquisition function is
+weighted via a squared exponential centered at the last training point,
+with varying lengthscales corresponding to <cite>proximal_weights</cite>. Can only be used
+with acquisition functions based on single batch models. Acquisition functions
+must be positive or <cite>beta</cite> must be specified to apply a SoftPlus transform before
+proximal weighting.</p>
 <p>Small values of <cite>proximal_weights</cite> corresponds to strong biasing towards recently
 observed points, which smoothes optimization with a small potential decrese in
 convergence rate.</p>
@@ -5025,10 +5027,12 @@ observed point.</p>
 of feature dimension <cite>d</cite>.</p></li>
 <li><p><strong>proximal_weights</strong> (<em>Tensor</em>) – A <cite>d</cite> dim tensor used to bias locality
 along each axis.</p></li>
-<li><p><strong>transformed_weighting</strong> (<em>bool</em>) – If True, the proximal weights are applied in
+<li><p><strong>transformed_weighting</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – If True, the proximal weights are applied in
 the transformed input space given by
 <cite>acq_function.model.input_transform</cite> (if available), otherwise
 proximal weights are applied in real input space.</p></li>
+<li><p><strong>beta</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – If not None, apply a softplus transform to the base acquisition
+function, allows negative base acquisition function values.</p></li>
 </ul>
 </dd>
 </dl>
