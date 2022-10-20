@@ -140,4 +140,4 @@ class TestTruncatedMultivariateNormal(BotorchTestCase):
         other = trunc.expand(torch.Size([2]))
         for key in ("loc", "covariance_matrix", "bounds", "log_partition"):
             a = getattr(trunc, key)
-            self.assertTrue(all(a.equal(b) for b in getattr(other, key).unbind()))
+            self.assertTrue(all(a.allclose(b) for b in getattr(other, key).unbind()))

@@ -80,23 +80,19 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
             # non-standard mean / variance
             mean = torch.tensor([[0.25]], **tkwargs)
             covariance_matrix = torch.tensor([[4.0]], **tkwargs)
-            with self.assertRaises(ValueError) as e:
+            error_msg = ".*either covariance_matrix or covariance_root, not both.*"
+            with self.assertRaisesRegex(ValueError, error_msg):
                 LinearEllipticalSliceSampler(
                     bounds=torch.tensor([[0.0], [float("inf")]], **tkwargs),
                     covariance_matrix=covariance_matrix,
                     covariance_root=covariance_matrix.sqrt(),
                 )
-                self.assertTrue(
-                    "either covariance_matrix or covariance_root, not both" in str(e)
+            error_msg = ".*Covariance matrix is not positive definite.*"
+            with self.assertRaisesRegex(ValueError, error_msg):
+                LinearEllipticalSliceSampler(
+                    bounds=torch.tensor([[0.0], [float("inf")]], **tkwargs),
+                    covariance_matrix=-covariance_matrix,
                 )
-                with self.assertRaises(ValueError) as e:
-                    LinearEllipticalSliceSampler(
-                        bounds=torch.tensor([[0.0], [float("inf")]], **tkwargs),
-                        covariance_matrix=-covariance_matrix,
-                    )
-                    self.assertTrue(
-                        "Covariance matrix is not positive definite" in str(e)
-                    )
             sampler = LinearEllipticalSliceSampler(
                 bounds=torch.tensor([[0.0], [float("inf")]], **tkwargs),
                 mean=mean,
@@ -160,3 +156,62 @@ class TestLinearEllipticalSliceSampler(BotorchTestCase):
             self.assertEqual(samples.shape, torch.Size([3, 2]))
             self.assertTrue(sampler._is_feasible(samples.t()).all())
             self.assertFalse(torch.equal(sampler._x, sampler.x0))
+
+    def test_multivariate(self):
+        d = 3
+        lower_bound = 1
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            # special case: N(0, I) truncated to greater than lower_bound
+            A = -torch.eye(d, **tkwargs)
+            b = -torch.full((d, 1), lower_bound, **tkwargs)
+            sampler = LinearEllipticalSliceSampler(inequality_constraints=(A, b))
+            self.assertIsNone(sampler._mean)
+            self.assertIsNone(sampler._covariance_root)
+            self.assertTrue(torch.all(sampler._is_feasible(sampler.x0)))
+            samples = sampler.draw(n=3)
+            self.assertEqual(samples.shape, torch.Size([3, d]))
+            self.assertGreaterEqual(samples.min().item(), lower_bound)
+            self.assertFalse(torch.equal(sampler._x, sampler.x0))
+            # same case as above, but instantiated with bounds
+            sampler = LinearEllipticalSliceSampler(
+                bounds=torch.tensor(
+                    [[lower_bound for _ in range(d)], [float("inf") for _ in range(d)]],
+                    **tkwargs,
+                ),
+            )
+            self.assertIsNone(sampler._mean)
+            self.assertIsNone(sampler._covariance_root)
+            self.assertTrue(torch.all(sampler._is_feasible(sampler.x0)))
+            samples = sampler.draw(n=3)
+            self.assertEqual(samples.shape, torch.Size([3, d]))
+            self.assertGreaterEqual(samples.min().item(), lower_bound)
+            self.assertFalse(torch.equal(sampler._x, sampler.x0))
+
+            # two special cases of _find_intersection_angles below:
+            # testing _find_intersection_angles with a proposal "nu"
+            # that ensures that the full ellipse is feasible
+            # NOTE: this test passes even though the full ellipse might
+            # not be feasible, which should be investigated further.
+            # However, this case is unlikely to be of much practical
+            # importance, as sampling a bound that is *exactly* on the
+            # constraint boundary is highly unlikely.
+            nu = torch.full((d, 1), lower_bound, **tkwargs)
+            sampler = LinearEllipticalSliceSampler(
+                interior_point=nu, inequality_constraints=(A, b)
+            )
+            nu = torch.tensor([[-0.9199], [1.3555], [1.3738]], **tkwargs)
+            theta_active = sampler._find_active_intersections(nu)
+            self.assertTrue(
+                torch.equal(theta_active, sampler._full_angular_range.view(-1))
+            )
+
+            # testing tangential intersection of ellipse with constraint
+            nu = torch.full((d, 1), lower_bound, **tkwargs)
+            sampler = LinearEllipticalSliceSampler(
+                interior_point=nu, inequality_constraints=(A, b)
+            )
+            nu = torch.full((d, 1), lower_bound, **tkwargs)
+            nu[1] += 1
+            theta_active = sampler._find_active_intersections(nu)
+            self.assertTrue(theta_active.numel() % 2 == 0)

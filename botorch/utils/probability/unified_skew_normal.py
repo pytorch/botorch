@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from inspect import getmembers
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
 
 import torch
 from botorch.utils.probability.linalg import augment_cholesky, block_matrix_concat
@@ -15,6 +15,8 @@ from botorch.utils.probability.mvnxpb import MVNXPB
 from botorch.utils.probability.truncated_multivariate_normal import (
     TruncatedMultivariateNormal,
 )
+from linear_operator.operators import LinearOperator
+from linear_operator.utils.errors import NotPSDError
 from torch import Tensor
 from torch.distributions.multivariate_normal import Distribution, MultivariateNormal
 from torch.distributions.utils import lazy_property
@@ -28,7 +30,7 @@ class UnifiedSkewNormal(Distribution):
         self,
         trunc: TruncatedMultivariateNormal,
         gauss: MultivariateNormal,
-        cross_covariance_matrix: Tensor,
+        cross_covariance_matrix: Union[Tensor, LinearOperator],
         validate_args: Optional[bool] = None,
     ):
         r"""Unified Skew Normal distribution of `Y | a < X < b` for jointly Gaussian
@@ -52,7 +54,10 @@ class UnifiedSkewNormal(Distribution):
                 f"{len(trunc.event_shape)}-dimensional `trunc` incompatible with"
                 f"{len(gauss.event_shape)}-dimensional `gauss`."
             )
-
+        # LinearOperator currently doesn't support torch.linalg.solve_triangular,
+        # so for the time being, we cast the operator to dense here
+        if isinstance(cross_covariance_matrix, LinearOperator):
+            cross_covariance_matrix = cross_covariance_matrix.to_dense()
         try:
             batch_shape = torch.broadcast_shapes(trunc.batch_shape, gauss.batch_shape)
         except RuntimeError as e:
@@ -66,13 +71,21 @@ class UnifiedSkewNormal(Distribution):
         self.trunc = trunc
         self.gauss = gauss
         self.cross_covariance_matrix = cross_covariance_matrix
-        if validate_args:
+        if self._validate_args:
             try:
+                # calling _orthogonalized_gauss first makes the following call
+                # _orthogonalized_gauss.scale_tril which is used by self.rsample
                 self._orthogonalized_gauss
                 self.scale_tril
-            except RuntimeError as e:
-                if "positive-definite" in str(e):
-                    raise ValueError(
+            except Exception as e:
+                # error could be thrown by linalg.augment_cholesky (NotPSDError)
+                # or torch.linalg.cholesky (with "positive-definite" in the message)
+                if (
+                    isinstance(e, NotPSDError)
+                    or "positive-definite" in str(e)
+                    or "PositiveDefinite" in str(e)
+                ):
+                    e = ValueError(
                         "UnifiedSkewNormal is only well-defined for positive definite"
                         " joint covariance matrices."
                     )
@@ -158,7 +171,10 @@ class UnifiedSkewNormal(Distribution):
             elif isinstance(obj, Distribution):
                 new_obj = obj.expand(batch_shape=batch_shape)
             else:
-                raise TypeError
+                raise TypeError(
+                    f"Type {type(obj)} of UnifiedSkewNormal's lazy property "
+                    f"{name} not supported."
+                )
 
             setattr(new, name, new_obj)
         return new
@@ -203,12 +219,6 @@ class UnifiedSkewNormal(Distribution):
             parameters["covariance_matrix"] = (
                 self.gauss.covariance_matrix - beta.transpose(-1, -2) @ beta
             )
-            return MultivariateNormal(
-                loc=torch.zeros_like(self.gauss.loc),
-                scale_tril=self.scale_tril[..., -n:, -n:],
-                validate_args=self._validate_args,
-            )
-
         return MultivariateNormal(**parameters, validate_args=self._validate_args)
 
     @lazy_property

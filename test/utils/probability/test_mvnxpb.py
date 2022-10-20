@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
+
 from functools import partial
 from itertools import count
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
@@ -15,6 +17,7 @@ import torch
 from botorch.utils.probability.linalg import PivotedCholesky
 from botorch.utils.probability.mvnxpb import MVNXPB
 from botorch.utils.testing import BotorchTestCase
+from linear_operator.utils.errors import NotPSDError
 from torch import Tensor
 
 
@@ -270,6 +273,30 @@ class TestMVNXPB(BotorchTestCase):
             ):
                 self.assertEqualMXNBPB(full, augm)
 
+            # testing errors
+            fake_init = deepcopy(init)
+            fake_init.piv_chol.step = fake_init.perm.shape[-1] + 1
+            error_msg = "Augmentation of incomplete solutions not implemented yet."
+            with self.assertRaisesRegex(NotImplementedError, error_msg):
+                augm = fake_init.augment(
+                    covariance_matrix=_cov[..., n:, n:],
+                    cross_covariance_matrix=_cov[..., n:, :n],
+                    bounds=_bounds[..., n:, :],
+                )
+
+            # Testing that solver will try to recover if it encounters
+            # a non-psd matrix, even if it ultimately fails in this case
+            error_msg = (
+                "Matrix not positive definite after repeatedly adding jitter up to.*"
+            )
+            with self.assertRaisesRegex(NotPSDError, error_msg):
+                fake_cov = torch.ones_like(_cov[..., n:, n:])
+                augm = init.augment(
+                    covariance_matrix=fake_cov,
+                    cross_covariance_matrix=_cov[..., n:, :n],
+                    bounds=_bounds[..., n:, :],
+                )
+
     def test_getitem(self):
         with torch.random.fork_rng():
             torch.random.manual_seed(1)
@@ -289,6 +316,11 @@ class TestMVNXPB(BotorchTestCase):
             a = getattr(self.toy_solver.piv_chol, key)[mask]
             b = getattr(other.piv_chol, key)
             self.assertTrue(a.equal(b))
+
+        fake_solver = deepcopy(self.toy_solver)
+        fake_solver.log_prob_extra = torch.tensor([-1])
+        fake_solver_1 = fake_solver[:1]
+        self.assertEqual(fake_solver_1.log_prob_extra, fake_solver.log_prob_extra[:1])
 
     def test_concat(self):
         split = len(self.toy_solver.log_prob) // 2
@@ -358,3 +390,20 @@ class TestMVNXPB(BotorchTestCase):
     def test_build(self):
         other = MVNXPB.build(**self.toy_solver.asdict())
         self.assertEqualMXNBPB(self.toy_solver, other)
+
+    def test_exceptions(self):
+        # in solve
+        fake_solver = deepcopy(self.toy_solver)
+        fake_solver.step = fake_solver.piv_chol.step + 1
+        error_msg = "Invalid state: solver ran ahead of matrix decomposition."
+        with self.assertRaises(ValueError, msg=error_msg):
+            fake_solver.solve()
+
+        # in _pivot
+        with self.assertRaises(ValueError):
+            pivot = torch.LongTensor([-1])  # this will not be used before the raise
+            fake_solver.pivot_(pivot)
+
+        error_msg = f"Expected `other` to be {type(fake_solver)} typed but was.*"
+        with self.assertRaisesRegex(TypeError, error_msg):
+            fake_solver.concat(1, 1)
