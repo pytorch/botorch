@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+import warnings
 from contextlib import nullcontext
 from copy import deepcopy
 from itertools import product
@@ -16,7 +17,7 @@ from warnings import catch_warnings, warn, WarningMessage
 import torch
 from botorch import fit
 from botorch.exceptions.errors import ModelFittingError, UnsupportedError
-from botorch.exceptions.warnings import OptimizationWarning
+from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import FixedNoiseGP, HeteroskedasticSingleTaskGP, SingleTaskGP
 from botorch.models.converter import batched_to_model_list
@@ -412,7 +413,10 @@ class TestFitMultioutputIndependent(BotorchTestCase):
             return
 
         optimizer = MockOptimizer()
-        with state_rollback_ctx(mll, checkpoint=ckpt), debug(True):
+        with state_rollback_ctx(mll, checkpoint=ckpt), debug(
+            True
+        ), warnings.catch_warnings(record=True) as ws:
+            warnings.simplefilter("always", BotorchWarning)
             try:
                 fit._fit_multioutput_independent(
                     mll,
@@ -425,6 +429,7 @@ class TestFitMultioutputIndependent(BotorchTestCase):
             except Exception:
                 pass  # exception handling tested separately
             else:
+                self.assertEqual(len(ws), 0)  # Model repacking did not fail.
                 self.assertFalse(mll.training)
                 self.assertEqual(optimizer.call_count, mll.model.num_outputs)
                 self.assertTrue(
@@ -519,8 +524,13 @@ class TestFitOther(BotorchTestCase):
             with mock.patch(
                 f"{fit_gpytorch_mll.__module__}.batched_to_model_list",
                 wraps=batched_to_model_list,
-            ) as wrapped_converter:
+            ) as wrapped_converter, warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always", BotorchWarning)
                 fit_gpytorch_mll(mll)
+            # Check that MLL repacking succeeded.
+            self.assertFalse(
+                any("Training loss of repacked model" in str(w.message) for w in ws)
+            )
             wrapped_converter.assert_called_once()
             self.assertFalse(torch.allclose(intf.mins, torch.zeros(1, 2, **tkwargs)))
             self.assertFalse(torch.allclose(intf.ranges, torch.ones(1, 2, **tkwargs)))
