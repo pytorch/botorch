@@ -36,7 +36,7 @@ class AcquisitionFunction(Module, ABC):
             model: A fitted model.
         """
         super().__init__()
-        self.add_module("model", model)
+        self.model: Model = model
 
     @classmethod
     def _deprecate_acqf_objective(
