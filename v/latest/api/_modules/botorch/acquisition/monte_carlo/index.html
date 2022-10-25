@@ -102,7 +102,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">collapse_batch_dims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">add_module</span><span class="p">(</span><span class="s2">"sampler"</span><span class="p">,</span> <span class="n">sampler</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">:</span> <span class="n">MCSampler</span> <span class="o">=</span> <span class="n">sampler</span>
         <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">posterior_transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
@@ -117,7 +117,7 @@
         <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">objective</span> <span class="o">=</span> <span class="n">IdentityMCObjective</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span> <span class="o">=</span> <span class="n">posterior_transform</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">add_module</span><span class="p">(</span><span class="s2">"objective"</span><span class="p">,</span> <span class="n">objective</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span> <span class="o">=</span> <span class="n">objective</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">X_pending</span><span class="p">)</span>
 
 <div class="viewcode-block" id="MCAcquisitionFunction.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
