@@ -46,19 +46,19 @@ root_dir = os.path.dirname(__file__)
 def read_deps_from_file(filname):
     """Read in requirements file and return items as list of strings"""
     with open(os.path.join(root_dir, filname), "r") as fh:
-        return [
-            line.strip() for line in fh.readlines() if not line.startswith("#")
-        ]
+        return [line.strip() for line in fh.readlines() if not line.startswith("#")]
+
 
 # Read in the requirements from the requirements.txt file
 install_requires = read_deps_from_file("requirements.txt")
 
-# Allow non-pinned (usually dev) versions
+# Allow non-pinned (usually dev) versions of gpytorch and linear_operator
 if os.environ.get("ALLOW_LATEST_GPYTORCH_LINOP"):
-    # Allows a more recent previously installed version of gpytorch and linear_operator
-    # to remain. If there is no previously installed version, installs the latest release
+    # Allows more recent previously installed versions. If there is no
+    # previously installed version, installs the latest release.
     install_requires = [
-        dep.replace("==", ">=") if "gpytorch" in dep or "linear_operator" in dep
+        dep.replace("==", ">=")
+        if "gpytorch" in dep or "linear_operator" in dep
         else dep
         for dep in install_requires
     ]
