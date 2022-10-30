@@ -43,6 +43,7 @@ if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR):
 # Assign root dir location for later use
 root_dir = os.path.dirname(__file__)
 
+
 def read_deps_from_file(filname):
     """Read in requirements file and return items as list of strings"""
     with open(os.path.join(root_dir, filname), "r") as fh:
