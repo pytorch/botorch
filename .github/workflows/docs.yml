@@ -22,6 +22,8 @@ jobs:
       with:
         python-version: "3.8"
     - name: Install dependencies
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
