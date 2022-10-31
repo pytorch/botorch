@@ -15,11 +15,12 @@ from typing import Any, List
 
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.gpytorch import GPyTorchModel, ModelListGPyTorchModel
+from botorch.models.model import FantasizeMixin
 from gpytorch.models import IndependentModelList
 from torch import Tensor
 
 
-class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
+class ModelListGP(IndependentModelList, ModelListGPyTorchModel, FantasizeMixin):
     r"""A multi-output GP model with independent GPs for the outputs.
 
     This model supports different-shaped training inputs for each of its

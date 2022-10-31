@@ -32,7 +32,7 @@ from botorch.models.likelihoods.pairwise import (
     PairwiseLikelihood,
     PairwiseProbitLikelihood,
 )
-from botorch.models.model import Model
+from botorch.models.model import FantasizeMixin, Model
 from botorch.models.transforms.input import InputTransform
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
@@ -44,7 +44,6 @@ from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.mlls import MarginalLogLikelihood
 from gpytorch.models.gp import GP
-from gpytorch.module import Module
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
 from linear_operator.operators import LinearOperator, RootLinearOperator
@@ -54,7 +53,12 @@ from torch import float32, float64, Tensor
 from torch.nn.modules.module import _IncompatibleKeys
 
 
-class PairwiseGP(Model, GP):
+# Why we subclass GP even though it provides no functionality:
+# if this subclassing is removed, we get the following GPyTorch error:
+# "RuntimeError: All MarginalLogLikelihood objects must be given a GP object as
+# a model. If you are using a more complicated model involving a GP, pass the
+# underlying GP object as the model, not a full PyTorch module."
+class PairwiseGP(Model, GP, FantasizeMixin):
     r"""Probit GP for preference learning with Laplace approximation
 
     A probit-likelihood GP that learns via pairwise comparison data, using a
@@ -100,7 +104,7 @@ class PairwiseGP(Model, GP):
         datapoints: Tensor,
         comparisons: Tensor,
         likelihood: Optional[PairwiseLikelihood] = None,
-        covar_module: Optional[Module] = None,
+        covar_module: Optional[ScaleKernel] = None,
         input_transform: Optional[InputTransform] = None,
         **kwargs,
     ) -> None:

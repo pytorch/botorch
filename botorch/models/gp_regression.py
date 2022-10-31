@@ -30,11 +30,12 @@ model like `MultiTaskGP`.
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, Union
+from typing import Any, List, NoReturn, Optional, Union
 
 import torch
 from botorch import settings
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
+from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import Log, OutcomeTransform
 from botorch.models.utils import fantasize as fantasize_flag, validate_input_scaling
@@ -63,7 +64,7 @@ from torch import Tensor
 MIN_INFERRED_NOISE_LEVEL = 1e-4
 
 
-class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
+class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     r"""A single-task exact GP model.
 
     A single-task exact GP using relatively strong priors on the Kernel
@@ -139,7 +140,9 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             )
         else:
             self._is_custom_likelihood = True
-        ExactGP.__init__(self, train_X, train_Y, likelihood)
+        ExactGP.__init__(
+            self, train_inputs=train_X, train_targets=train_Y, likelihood=likelihood
+        )
         if mean_module is None:
             mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
         self.mean_module = mean_module
@@ -333,6 +336,8 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             )
 
     def forward(self, x: Tensor) -> MultivariateNormal:
+        # TODO: reduce redundancy with the 'forward' method of
+        # SingleTaskGP, which is identical
         if self.training:
             x = self.transform_inputs(x)
         mean_x = self.mean_module(x)
@@ -432,10 +437,15 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             self.outcome_transform = outcome_transform
         self.to(train_X)
 
-    def condition_on_observations(
-        self, X: Tensor, Y: Tensor, **kwargs: Any
-    ) -> HeteroskedasticSingleTaskGP:
+    # TODO: HeteroskedasticSingleTaskGP should not be a subclass of
+    # SingleTaskGP because it can't function the way a SingleTaskGP does
+    # pyre-fixme[15]: Inconsistent override
+    def condition_on_observations(self, *_, **__) -> NoReturn:
         raise NotImplementedError
 
-    def subset_output(self, idcs: List[int]) -> HeteroskedasticSingleTaskGP:
+    def fantasize(self, *_, **__) -> NoReturn:
+        raise NotImplementedError
+
+    # pyre-fixme[15]: Inconsistent override
+    def subset_output(self, idcs) -> NoReturn:
         raise NotImplementedError
