@@ -21,6 +21,7 @@ from typing import Any, List, Optional, Tuple, Union
 import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
+from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 from botorch.models.utils import gpt_posterior_settings
@@ -138,7 +139,7 @@ class FlattenedStandardize(Standardize):
         )
 
 
-class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
+class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     r"""
     A model for high-dimensional output regression.
 

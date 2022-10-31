@@ -15,7 +15,7 @@ from unittest import TestCase
 import torch
 from botorch import settings
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.models.model import Model
+from botorch.models.model import FantasizeMixin, Model
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
 from botorch.test_functions.base import BaseTestProblem
@@ -157,7 +157,7 @@ class MockPosterior(Posterior):
         return self._samples.expand(sample_shape + self._samples.shape)
 
 
-class MockModel(Model):
+class MockModel(Model, FantasizeMixin):
     r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
     def __init__(self, posterior: MockPosterior) -> None:  # noqa: D107
