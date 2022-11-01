@@ -176,8 +176,8 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue(nlz.learn_bounds)
             self.assertTrue(nlz.training)
             self.assertEqual(nlz._d, 2)
-            self.assertEqual(nlz.mins.shape, torch.Size([1, 2]))
-            self.assertEqual(nlz.ranges.shape, torch.Size([1, 2]))
+            self.assertEqual(nlz.mins.shape, torch.Size([1, 1]))
+            self.assertEqual(nlz.ranges.shape, torch.Size([1, 1]))
             self.assertEqual(len(nlz.indices), 1)
             self.assertTrue((nlz.indices == torch.tensor([0], dtype=torch.long)).all())
 
@@ -284,7 +284,7 @@ class TestInputTransforms(BotorchTestCase):
                 expected_bounds = torch.cat(
                     [X.min(dim=-2, keepdim=True)[0], X.max(dim=-2, keepdim=True)[0]],
                     dim=-2,
-                )
+                )[..., indices]
                 self.assertTrue(
                     torch.allclose(nlz.bounds, expected_bounds, atol=1e-4, rtol=1e-4)
                 )
@@ -349,8 +349,8 @@ class TestInputTransforms(BotorchTestCase):
             stdz = InputStandardize(d=2, indices=[0])
             self.assertTrue(stdz.training)
             self.assertEqual(stdz._d, 2)
-            self.assertEqual(stdz.means.shape, torch.Size([1, 2]))
-            self.assertEqual(stdz.stds.shape, torch.Size([1, 2]))
+            self.assertEqual(stdz.means.shape, torch.Size([1, 1]))
+            self.assertEqual(stdz.stds.shape, torch.Size([1, 1]))
             self.assertEqual(len(stdz.indices), 1)
             self.assertTrue(
                 torch.equal(stdz.indices, torch.tensor([0], dtype=torch.long))
@@ -358,8 +358,8 @@ class TestInputTransforms(BotorchTestCase):
             stdz = InputStandardize(d=2, indices=[0], batch_shape=torch.Size([3]))
             self.assertTrue(stdz.training)
             self.assertEqual(stdz._d, 2)
-            self.assertEqual(stdz.means.shape, torch.Size([3, 1, 2]))
-            self.assertEqual(stdz.stds.shape, torch.Size([3, 1, 2]))
+            self.assertEqual(stdz.means.shape, torch.Size([3, 1, 1]))
+            self.assertEqual(stdz.stds.shape, torch.Size([3, 1, 1]))
             self.assertEqual(len(stdz.indices), 1)
             self.assertTrue(
                 torch.equal(stdz.indices, torch.tensor([0], dtype=torch.long))
@@ -1308,3 +1308,19 @@ class TestInputPerturbation(BotorchTestCase):
                 dim=-2,
             )
             self.assertTrue(torch.allclose(transformed, expected))
+
+            # testing same heteroscedastic transform with subset of indices
+            indices = [0, 1]
+            subset_transform = InputPerturbation(
+                perturbation_set=perturbation_generator, indices=indices
+            ).eval()
+            X_repeat = X.repeat(1, 1, 2)
+            subset_transformed = subset_transform(X_repeat)
+            # first set of two indices are the same as with previous transform
+            self.assertTrue(torch.allclose(subset_transformed[..., :2], expected))
+
+            # second set of two indices are untransformed but have expanded batch shape
+            num_pert = subset_transform.batch_shape[-1]
+            sec_expected = X.unsqueeze(-2).expand(*X.shape[:-1], num_pert, -1)
+            sec_expected = sec_expected.flatten(-3, -2)
+            self.assertTrue(torch.allclose(subset_transformed[..., 2:], sec_expected))
