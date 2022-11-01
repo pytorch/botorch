@@ -58,7 +58,7 @@
     <span class="n">PairwiseLikelihood</span><span class="p">,</span>
     <span class="n">PairwiseProbitLikelihood</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">FantasizeMixin</span><span class="p">,</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
@@ -70,7 +70,6 @@
 <span class="kn">from</span> <span class="nn">gpytorch.means.constant_mean</span> <span class="kn">import</span> <span class="n">ConstantMean</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.models.gp</span> <span class="kn">import</span> <span class="n">GP</span>
-<span class="kn">from</span> <span class="nn">gpytorch.module</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.smoothed_box_prior</span> <span class="kn">import</span> <span class="n">SmoothedBoxPrior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
 <span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">LinearOperator</span><span class="p">,</span> <span class="n">RootLinearOperator</span>
@@ -80,7 +79,12 @@
 <span class="kn">from</span> <span class="nn">torch.nn.modules.module</span> <span class="kn">import</span> <span class="n">_IncompatibleKeys</span>
 
 
-<div class="viewcode-block" id="PairwiseGP"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP">[docs]</a><span class="k">class</span> <span class="nc">PairwiseGP</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">GP</span><span class="p">):</span>
+<span class="c1"># Why we subclass GP even though it provides no functionality:</span>
+<span class="c1"># if this subclassing is removed, we get the following GPyTorch error:</span>
+<span class="c1"># "RuntimeError: All MarginalLogLikelihood objects must be given a GP object as</span>
+<span class="c1"># a model. If you are using a more complicated model involving a GP, pass the</span>
+<span class="c1"># underlying GP object as the model, not a full PyTorch module."</span>
+<div class="viewcode-block" id="PairwiseGP"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP">[docs]</a><span class="k">class</span> <span class="nc">PairwiseGP</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">GP</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Probit GP for preference learning with Laplace approximation</span>
 
 <span class="sd">    A probit-likelihood GP that learns via pairwise comparison data, using a</span>
@@ -126,7 +130,7 @@
         <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">comparisons</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">likelihood</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PairwiseLikelihood</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">covar_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">covar_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ScaleKernel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

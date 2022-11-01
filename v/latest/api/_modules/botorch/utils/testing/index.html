@@ -41,7 +41,7 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">FantasizeMixin</span><span class="p">,</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
 <span class="kn">from</span> <span class="nn">botorch.test_functions.base</span> <span class="kn">import</span> <span class="n">BaseTestProblem</span>
@@ -183,7 +183,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="MockModel"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockModel">[docs]</a><span class="k">class</span> <span class="nc">MockModel</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+<div class="viewcode-block" id="MockModel"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.MockModel">[docs]</a><span class="k">class</span> <span class="nc">MockModel</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Mock object that implements dummy methods and feeds through specified outputs"""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">MockPosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: D107</span>

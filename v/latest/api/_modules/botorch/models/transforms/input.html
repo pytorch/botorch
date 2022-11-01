@@ -167,13 +167,13 @@
 <span class="sd">            A `batch_shape x n x d`-dim tensor of (transformed) inputs.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span><span class="p">:</span>
-            <span class="c1"># We need to disable learning of bounds here.</span>
+            <span class="c1"># We need to disable learning of bounds / affine coefficients here.</span>
             <span class="c1"># See why: https://github.com/pytorch/botorch/issues/1078.</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"learn_bounds"</span><span class="p">):</span>
-                <span class="n">learn_bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">learn_bounds</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">learn_bounds</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"learn_coefficients"</span><span class="p">):</span>
+                <span class="n">learn_coefficients</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">learn_coefficients</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">learn_coefficients</span> <span class="o">=</span> <span class="kc">False</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">learn_bounds</span> <span class="o">=</span> <span class="n">learn_bounds</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">learn_coefficients</span> <span class="o">=</span> <span class="n">learn_coefficients</span>
                 <span class="k">return</span> <span class="n">result</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
@@ -342,7 +342,171 @@
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">reverse</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Normalize"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Normalize">[docs]</a><span class="k">class</span> <span class="nc">Normalize</span><span class="p">(</span><span class="n">ReversibleInputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">AffineInputTransform</span><span class="p">(</span><span class="n">ReversibleInputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">coefficient</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">offset</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">(),</span>  <span class="c1"># noqa: B008</span>
+        <span class="n">transform_on_train</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">transform_on_fantasize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Apply affine transformation to input:</span>
+
+<span class="sd">            `output = (input - offset) / coefficient`</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            d: The dimension of the input space.</span>
+<span class="sd">            coefficient: Tensor of linear coefficients, shape must to be</span>
+<span class="sd">                broadcastable with `(batch_shape x n x d)`-dim input tensors.</span>
+<span class="sd">            offset: Tensor of offset coefficients, shape must to be</span>
+<span class="sd">                broadcastable with `(batch_shape x n x d)`-dim input tensors.</span>
+<span class="sd">            indices: The indices of the inputs to transform. If omitted,</span>
+<span class="sd">                take all dimensions of the inputs into account.</span>
+<span class="sd">            batch_shape: The batch shape of the inputs (assuming input tensors</span>
+<span class="sd">                of shape `batch_shape x n x d`). If provided, perform individual</span>
+<span class="sd">                transformation per batch, otherwise uses a single transformation.</span>
+<span class="sd">            transform_on_train: A boolean indicating whether to apply the</span>
+<span class="sd">                transform in train() mode. Default: True.</span>
+<span class="sd">            transform_on_eval: A boolean indicating whether to apply the</span>
+<span class="sd">                transform in eval() mode. Default: True.</span>
+<span class="sd">            transform_on_fantasize: A boolean indicating whether to apply the</span>
+<span class="sd">                transform when called from within a `fantasize` call. Default: True.</span>
+<span class="sd">            reverse: A boolean indicating whether the forward pass should untransform</span>
+<span class="sd">                the inputs.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`indices` list is empty!"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">d</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Can provide at most `d` indices!"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">indices</span> <span class="o">&gt;</span> <span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Elements of `indices` have to be smaller than `d`!"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Elements of `indices` tensor must be unique!"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">broadcast_shapes</span><span class="p">(</span><span class="n">coefficient</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">offset</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">=</span> <span class="n">d</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"coefficient"</span><span class="p">,</span> <span class="n">coefficient</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"offset"</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">=</span> <span class="n">transform_on_train</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">=</span> <span class="n">transform_on_eval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_fantasize</span> <span class="o">=</span> <span class="n">transform_on_fantasize</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="o">=</span> <span class="n">reverse</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">learn_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_learn_coefficients"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+    <span class="nd">@learn_coefficients</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">learn_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""A boolean denoting whether to learn the coefficients</span>
+<span class="sd">        from inputs during model training.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_learn_coefficients</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Apply affine transformation to input.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x n x d`-dim tensor of transformed inputs.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">learn_coefficients</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_shape</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_coefficients</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
+            <span class="n">X_new</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span>
+            <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="n">a</span>
+            <span class="k">return</span> <span class="n">X_new</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span>
+
+    <span class="k">def</span> <span class="nf">_untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Apply inverse of affine transformation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of transformed inputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x n x d`-dim tensor of un-transformed inputs.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
+            <span class="n">X_new</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span>
+            <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span>
+            <span class="k">return</span> <span class="n">X_new</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span> <span class="o">*</span> <span class="n">X</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span>
+
+    <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            other: Another input transform.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A boolean indicating if the other transform is equivalent.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">isequal</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="n">other</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_d</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">coefficient</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">offset</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">learn_coefficients</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">learn_coefficients</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
+            <span class="n">isequal</span> <span class="o">=</span> <span class="n">isequal</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">isequal</span>
+
+    <span class="k">def</span> <span class="nf">_check_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">"""Checking input dimensions, included to increase code sharing</span>
+<span class="sd">        among the derived classes Normalize and InputStandardize.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Wrong input dimension. Received </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"`X` must have at least </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> dimensions, </span><span class="si">{</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="si">}</span><span class="s2"> batch and 2 innate"</span>
+                <span class="sa">f</span><span class="s2">" , but has </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+
+        <span class="n">torch</span><span class="o">.</span><span class="n">broadcast_shapes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Makes coefficient and offset have same device and dtype as X."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_update_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Updates affine coefficients. Implemented by subclasses,</span>
+<span class="sd">        e.g. Normalize and InputStandardize.</span>
+<span class="sd">        """</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"Only subclasses of AffineInputTransform implement "</span>
+            <span class="s2">"_update_coefficients, e.g. Normalize and InputStandardize."</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="Normalize"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Normalize">[docs]</a><span class="k">class</span> <span class="nc">Normalize</span><span class="p">(</span><span class="n">AffineInputTransform</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Normalize the inputs to the unit cube.</span>
 
 <span class="sd">    If no explicit bounds are provided this module is stateful: If in train mode,</span>
@@ -385,140 +549,63 @@
 <span class="sd">            min_range: Amount of noise to add to the range to ensure no division by</span>
 <span class="sd">                zero errors.</span>
 <span class="sd">        """</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`indices` list is empty!"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">d</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Can provide at most `d` indices!"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">indices</span> <span class="o">&gt;</span> <span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Elements of `indices` have to be smaller than `d`!"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Elements of `indices` tensor must be unique!"</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span>
         <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">bounds</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="n">d</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
                     <span class="s2">"Dimensions of provided `bounds` are incompatible with `d`!"</span>
                 <span class="p">)</span>
-            <span class="n">mins</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
-            <span class="n">ranges</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">mins</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">learn_bounds</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="n">coefficient</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">offset</span>
+            <span class="k">if</span> <span class="n">coefficient</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">coefficient</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">mins</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
-            <span class="n">ranges</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">learn_bounds</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"mins"</span><span class="p">,</span> <span class="n">mins</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"ranges"</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">=</span> <span class="n">d</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">=</span> <span class="n">transform_on_train</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">=</span> <span class="n">transform_on_eval</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_fantasize</span> <span class="o">=</span> <span class="n">transform_on_fantasize</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="o">=</span> <span class="n">reverse</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
+            <span class="n">coefficient</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">learn_coefficients</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
+            <span class="n">coefficient</span><span class="o">=</span><span class="n">coefficient</span><span class="p">,</span>
+            <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
+            <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span>
+            <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
+            <span class="n">transform_on_train</span><span class="o">=</span><span class="n">transform_on_train</span><span class="p">,</span>
+            <span class="n">transform_on_eval</span><span class="o">=</span><span class="n">transform_on_eval</span><span class="p">,</span>
+            <span class="n">transform_on_fantasize</span><span class="o">=</span><span class="n">transform_on_fantasize</span><span class="p">,</span>
+            <span class="n">reverse</span><span class="o">=</span><span class="n">reverse</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">min_range</span> <span class="o">=</span> <span class="n">min_range</span>
 
-    <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Normalize the inputs.</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ranges</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span>
 
-<span class="sd">        If no explicit bounds are provided, this is stateful: In train mode,</span>
-<span class="sd">        calling `forward` updates the module state (i.e. the normalizing bounds).</span>
-<span class="sd">        In eval mode, calling `forward` simply applies the normalization using</span>
-<span class="sd">        the current module state.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            A `batch_shape x n x d`-dim tensor of inputs normalized to the</span>
-<span class="sd">            module's bounds.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">learn_bounds</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Wrong input dimension. Received </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">, "</span>
-                    <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mins</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
-                <span class="p">)</span>
-
-            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
-            <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"`X` must have at least </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> dimensions, </span><span class="si">{</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="si">}</span><span class="s2"> batch and 2 innate"</span>
-                    <span class="sa">f</span><span class="s2">" , but has </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">."</span>
-                <span class="p">)</span>
-
-            <span class="c1"># Move extra batch and innate batch (i.e. marginal) dimensions to the right</span>
-            <span class="n">batch_ndim</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># batch rank of `X`</span>
-            <span class="n">_X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span>
-                <span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">batch_ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span>  <span class="c1"># module batch dims</span>
-                <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># input dim</span>
-                <span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">batch_ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span>  <span class="c1"># other dims, to be reduced over</span>
-                <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span>  <span class="c1"># marginal dim</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-
-            <span class="c1"># Extract minimums and ranges</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mins</span> <span class="o">=</span> <span class="n">_X</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>  <span class="c1"># batch_shape x (1, d)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span> <span class="o">=</span> <span class="p">(</span><span class="n">_X</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_range</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
-            <span class="n">X_new</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-            <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span>
-            <span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span>
-            <span class="k">return</span> <span class="n">X_new</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span>
-
-    <span class="k">def</span> <span class="nf">_untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Un-normalize the inputs.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            X: A `batch_shape x n x d`-dim tensor of normalized inputs.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            A `batch_shape x n x d`-dim tensor of un-normalized inputs.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
-            <span class="n">X_new</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-            <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">mins</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span>
-                <span class="o">+</span> <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span>
-            <span class="p">)</span>
-            <span class="k">return</span> <span class="n">X_new</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span> <span class="o">+</span> <span class="n">X</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""The bounds used for normalizing the inputs."""</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">mins</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Normalize.equals"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Normalize.equals">[docs]</a>    <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">learn_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">learn_coefficients</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">            other: Another input transform.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            A boolean indicating if the other transform is equivalent.</span>
+    <span class="k">def</span> <span class="nf">_update_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">"""Computes the normalization bounds and updates the affine</span>
+<span class="sd">        coefficients, which determine the base class's behavior.</span>
+<span class="sd">        NOTE: could drop inactive indices from bounds computation.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">)</span> <span class="o">==</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
-                <span class="k">return</span> <span class="p">(</span>
-                    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="n">other</span><span class="p">)</span>
-                    <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_d</span><span class="p">)</span>
-                    <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">learn_bounds</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">learn_bounds</span><span class="p">)</span>
-                    <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="p">(</span>
-                    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="n">other</span><span class="p">)</span>
-                    <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_d</span><span class="p">)</span>
-                    <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">learn_bounds</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">learn_bounds</span><span class="p">)</span>
-                <span class="p">)</span>
-        <span class="k">return</span> <span class="kc">False</span></div></div>
+        <span class="c1"># Aggregate mins and ranges over extra batch and marginal dims</span>
+        <span class="n">batch_ndim</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># batch rank of `X`</span>
+        <span class="n">reduce_dims</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">batch_ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">reduce_dims</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">reduce_dims</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_range</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="InputStandardize"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.InputStandardize">[docs]</a><span class="k">class</span> <span class="nc">InputStandardize</span><span class="p">(</span><span class="n">ReversibleInputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
+<div class="viewcode-block" id="InputStandardize"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.InputStandardize">[docs]</a><span class="k">class</span> <span class="nc">InputStandardize</span><span class="p">(</span><span class="n">AffineInputTransform</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Standardize inputs (zero mean, unit variance).</span>
 
 <span class="sd">    In train mode, calling `forward` updates the module state</span>
@@ -555,111 +642,41 @@
 <span class="sd">            min_std: Amount of noise to add to the standard deviation to ensure no</span>
 <span class="sd">                division by zero errors.</span>
 <span class="sd">        """</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`indices` list is empty!"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">d</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Can provide at most `d` indices!"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">indices</span> <span class="o">&gt;</span> <span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Elements of `indices` have to be smaller than `d`!"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Elements of `indices` tensor must be unique!"</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"means"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"stds"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">=</span> <span class="n">d</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">=</span> <span class="n">transform_on_train</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">=</span> <span class="n">transform_on_eval</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_fantasize</span> <span class="o">=</span> <span class="n">transform_on_fantasize</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
+            <span class="n">coefficient</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">d</span><span class="p">),</span>
+            <span class="n">offset</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">d</span><span class="p">),</span>
+            <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span>
+            <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
+            <span class="n">transform_on_train</span><span class="o">=</span><span class="n">transform_on_train</span><span class="p">,</span>
+            <span class="n">transform_on_eval</span><span class="o">=</span><span class="n">transform_on_eval</span><span class="p">,</span>
+            <span class="n">transform_on_fantasize</span><span class="o">=</span><span class="n">transform_on_fantasize</span><span class="p">,</span>
+            <span class="n">reverse</span><span class="o">=</span><span class="n">reverse</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">min_std</span> <span class="o">=</span> <span class="n">min_std</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="o">=</span> <span class="n">reverse</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">learn_bounds</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">learn_coefficients</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Standardize the inputs.</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">stds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span>
 
-<span class="sd">        In train mode, calling `forward` updates the module state</span>
-<span class="sd">        (i.e. the mean/std normalizing constants). If in eval mode, calling `forward`</span>
-<span class="sd">        simply applies the standardization using the current module state.</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">means</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            A `batch_shape x n x d`-dim tensor of inputs normalized to the</span>
-<span class="sd">            module's bounds.</span>
+    <span class="k">def</span> <span class="nf">_update_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">"""Computes the normalization bounds and updates the affine</span>
+<span class="sd">        coefficients, which determine the base class's behavior.</span>
+<span class="sd">        NOTE: could drop inactive indices from bounds computation.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">learn_bounds</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Wrong input. dimension. Received </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">, "</span>
-                    <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">means</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
-                <span class="p">)</span>
-
-            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
-            <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"`X` must have at least </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> dimensions, </span><span class="si">{</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="si">}</span><span class="s2"> batch and 2 innate"</span>
-                    <span class="sa">f</span><span class="s2">" , but has </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">."</span>
-                <span class="p">)</span>
-
-            <span class="c1"># Aggregate means and standard deviations over extra batch and marginal dims</span>
-            <span class="n">batch_ndim</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># batch rank of `X`</span>
-            <span class="n">reduce_dims</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">batch_ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">stds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">values</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">torch</span><span class="o">.</span><span class="n">std_mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">reduce_dims</span><span class="p">,</span> <span class="n">unbiased</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">stds</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_std</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
-            <span class="n">X_new</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-            <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span>
-            <span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">stds</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span>
-            <span class="k">return</span> <span class="n">X_new</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">stds</span>
-
-    <span class="k">def</span> <span class="nf">_untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Un-standardize the inputs.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            X: A `batch_shape x n x d`-dim tensor of normalized inputs.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            A `batch_shape x n x d`-dim tensor of un-normalized inputs.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
-            <span class="n">X_new</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-            <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">means</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span>
-                <span class="o">+</span> <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">stds</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span>
-            <span class="p">)</span>
-            <span class="k">return</span> <span class="n">X_new</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stds</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span>
-
-<div class="viewcode-block" id="InputStandardize.equals"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.InputStandardize.equals">[docs]</a>    <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            other: Another input transform.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            A boolean indicating if the other transform is equivalent.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">)</span> <span class="o">==</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
-                <span class="k">return</span> <span class="p">(</span>
-                    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="n">other</span><span class="p">)</span>
-                    <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_d</span><span class="p">)</span>
-                    <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_d</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">False</span></div></div>
+        <span class="c1"># Aggregate means and standard deviations over extra batch and marginal dims</span>
+        <span class="n">batch_ndim</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># batch rank of `X`</span>
+        <span class="n">reduce_dims</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">batch_ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">coefficient</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">torch</span><span class="o">.</span><span class="n">std_mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">reduce_dims</span><span class="p">,</span> <span class="n">unbiased</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span> <span class="o">=</span> <span class="n">coefficient</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_std</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Round"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Round">[docs]</a><span class="k">class</span> <span class="nc">Round</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
