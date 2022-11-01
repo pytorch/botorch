@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+from functools import wraps
+
 from typing import Tuple
 
 import torch
@@ -111,3 +113,18 @@ def expand_and_copy_tensor(X: Tensor, batch_shape: torch.Size) -> Tensor:
         )
     expand_shape = batch_shape + X.shape[-2:]
     return X.expand(expand_shape).clone()
+
+
+def subset_transform(transform):
+    r"""Decorator of an input transform function to separate out indexing logic."""
+
+    @wraps(transform)
+    def f(self, X: Tensor) -> Tensor:
+        if not hasattr(self, "indices") or self.indices is None:
+            return transform(self, X)
+        has_shape = hasattr(self, "batch_shape")
+        Y = expand_and_copy_tensor(X, self.batch_shape) if has_shape else X.clone()
+        Y[..., self.indices] = transform(self, X[..., self.indices])
+        return Y
+
+    return f
