@@ -10,6 +10,7 @@ from copy import deepcopy
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.input import (
+    AffineInputTransform,
     AppendFeatures,
     ChainedInputTransform,
     FilterFeatures,
@@ -124,6 +125,15 @@ class TestInputTransforms(BotorchTestCase):
         self.assertTrue(torch.equal(ipt5(X), X_tf))
         with fantasize():
             self.assertTrue(torch.equal(ipt5(X), X))
+
+        # testing one line of AffineInputTransform
+        # that doesn't have coverage otherwise
+        d = 3
+        coefficient, offset = torch.ones(d), torch.zeros(d)
+        affine = AffineInputTransform(d, coefficient, offset)
+        X = torch.randn(2, d)
+        with self.assertRaises(NotImplementedError):
+            affine._update_coefficients(X)
 
     def test_normalize(self):
         for dtype in (torch.float, torch.double):
