@@ -4608,7 +4608,7 @@ feature indices and filtering out the others.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.InputPerturbation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">InputPerturbation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">perturbation_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiplicative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputPerturbation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.InputPerturbation" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">InputPerturbation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">perturbation_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiplicative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputPerturbation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.InputPerturbation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
 <p>A transform that adds the set of perturbations to the given input.</p>
 <p>Similar to <cite>AppendFeatures</cite>, this can be used with <cite>RiskMeasureMCObjective</cite>
@@ -4627,6 +4627,10 @@ shape <cite>batch x d</cite>. This is useful for heteroscedastic perturbations.<
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>2 x d</cite>-dim tensor of lower and upper bounds for each
 column of the input. If given, the perturbed inputs will be
 clamped to these bounds.</p></li>
+<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices specifying a subset of inputs on which to apply
+the transform. Note that <cite>len(indices)</cite> should be equal to the second
+dimension of <cite>perturbation_set</cite> and <cite>bounds</cite>. The dimensionality of
+the input <cite>X.shape[-1]</cite> can be larger if we only transform a subset.</p></li>
 <li><p><strong>multiplicative</strong> (<em>bool</em>) – A boolean indicating whether the input perturbations
 are additive or multiplicative. If True, inputs will be multiplied
 with the perturbations.</p></li>
@@ -4666,6 +4670,15 @@ GP sample paths.</p>
 <dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.transforms.input.InputPerturbation.batch_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_shape</span></span><a class="headerlink" href="#botorch.models.transforms.input.InputPerturbation.batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a shape tuple such that <cite>subset_transform</cite> pre-allocates
+a (b x n_p x n x d) - dim tensor, where <cite>b</cite> is the batch shape of the
+input <cite>X</cite> of the transform and <cite>n_p</cite> is the number of perturbations.
+NOTE: this function is dependent on calling <cite>_expanded_perturbations(X)</cite>
+because <cite>n_p</cite> is inaccessible otherwise if <cite>perturbation_set</cite> is a function.</p>
 </dd></dl>
 </dd></dl>
 </section>
@@ -4791,6 +4804,11 @@ is <cite>input_batch_shape</cite> against <cite>batch_shape</cite>.</p>
 <dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.transforms.utils.subset_transform">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.utils.</span></span><span class="sig-name descname"><span class="pre">subset_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/utils.html#subset_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.utils.subset_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator of an input transform function to separate out indexing logic.</p>
 </dd></dl>
 </section>
 </section>
