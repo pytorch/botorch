@@ -366,6 +366,7 @@ def fit_fully_bayesian_model_nuts(
     num_samples: int = 256,
     thinning: int = 16,
     disable_progbar: bool = False,
+    jit_compile: bool = False,
 ) -> None:
     r"""Fit a fully Bayesian model using the No-U-Turn-Sampler (NUTS)
 
@@ -379,6 +380,9 @@ def fit_fully_bayesian_model_nuts(
         thinning: The amount of thinning. Every nth sample is retained.
         disable_progbar: A boolean indicating whether to print the progress
             bar and diagnostics during MCMC.
+        jit_compile: Whether to use jit. Using jit may be ~2X faster (rough estimate),
+            but it will also increase the memory usage and sometimes result in runtime
+            errors, e.g., https://github.com/pyro-ppl/pyro/issues/3136.
 
     Example:
         >>> gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)
@@ -389,7 +393,7 @@ def fit_fully_bayesian_model_nuts(
     # Do inference with NUTS
     nuts = NUTS(
         model.pyro_model.sample,
-        jit_compile=True,
+        jit_compile=jit_compile,
         full_mass=True,
         ignore_jit_warnings=True,
         max_tree_depth=max_tree_depth,
