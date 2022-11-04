@@ -6,6 +6,7 @@
 
 import warnings
 from contextlib import ExitStack
+from itertools import product
 from unittest import mock
 
 import torch
@@ -15,6 +16,7 @@ from botorch.acquisition.multi_objective.objective import (
     UnstandardizeMCMultiOutputObjective,
 )
 from botorch.acquisition.multi_objective.utils import (
+    compute_sample_box_decomposition,
     get_default_partitioning_alpha,
     prune_inferior_points_multi_objective,
 )
@@ -180,3 +182,65 @@ class TestMultiObjectiveUtils(BotorchTestCase):
                 marginalize_dim=-3,
             )
             self.assertTrue(torch.equal(X_pruned, X[:2]))
+
+    def test_compute_sample_box_decomposition(self):
+        tkwargs = {"device": self.device}
+        for dtype, maximize in product((torch.float, torch.double), (True, False)):
+            tkwargs["dtype"] = dtype
+
+            # test error when inputting incorrect Pareto front
+            X = torch.rand(4, 3, 2, 1, **tkwargs)
+            with self.assertRaises(UnsupportedError):
+                compute_sample_box_decomposition(pareto_fronts=X, maximize=maximize)
+
+            # test single and multi-objective setting
+            for num_objectives in (1, 5):
+                X = torch.rand(4, 3, num_objectives, **tkwargs)
+                bd1 = compute_sample_box_decomposition(
+                    pareto_fronts=X, maximize=maximize
+                )
+
+                # assess shape
+                self.assertTrue(bd1.ndim == 4)
+                self.assertTrue(bd1.shape[-1] == num_objectives)
+                self.assertTrue(bd1.shape[-3] == 2)
+                if num_objectives == 1:
+                    self.assertTrue(bd1.shape[-2] == 1)
+
+                # assess whether upper bound is greater than lower bound
+                self.assertTrue(torch.all(bd1[:, 1, ...] - bd1[:, 0, ...] >= 0))
+
+                # test constrained setting
+                num_constraints = 7
+                bd2 = compute_sample_box_decomposition(
+                    pareto_fronts=X,
+                    maximize=maximize,
+                    num_constraints=num_constraints,
+                )
+
+                # assess shape
+                self.assertTrue(bd2.ndim == 4)
+                self.assertTrue(bd2.shape[-1] == num_objectives + num_constraints)
+                self.assertTrue(bd2.shape[-2] == bd1.shape[-2] + 1)
+                self.assertTrue(bd2.shape[-3] == 2)
+
+                # assess whether upper bound is greater than lower bound
+                self.assertTrue(torch.all(bd2[:, 1, ...] - bd2[:, 0, ...] >= 0))
+
+                # the constraint padding should not change the box-decomposition
+                # if the box-decomposition procedure is not random
+                self.assertTrue(torch.equal(bd1, bd2[..., 0:-1, 0:num_objectives]))
+
+                # test with a specified optimum
+                opt_X = 2.0 if maximize else -3.0
+
+                X[:, 0, :] = opt_X
+                bd3 = compute_sample_box_decomposition(
+                    pareto_fronts=X, maximize=maximize
+                )
+
+                # check optimum
+                if maximize:
+                    self.assertTrue(torch.all(bd3[:, 1, ...] == opt_X))
+                else:
+                    self.assertTrue(torch.all(bd3[:, 0, ...] == opt_X))

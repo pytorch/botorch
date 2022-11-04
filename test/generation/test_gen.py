@@ -283,6 +283,24 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                     acquisition_function=mock.Mock(),
                 )
 
+    def test_gen_candidates_without_grad(self):
+
+        for gen_candidates in (gen_candidates_scipy, gen_candidates_torch):
+            self.test_gen_candidates(
+                gen_candidates=gen_candidates,
+                options={"disp": False, "with_grad": False},
+            )
+
+            self.test_gen_candidates_with_fixed_features(
+                gen_candidates=gen_candidates,
+                options={"disp": False, "with_grad": False},
+            )
+
+            self.test_gen_candidates_with_none_fixed_features(
+                gen_candidates=gen_candidates,
+                options={"disp": False, "with_grad": False},
+            )
+
 
 class TestRandomRestartOptimization(TestBaseCandidateGeneration):
     def test_random_restart_optimization(self):
