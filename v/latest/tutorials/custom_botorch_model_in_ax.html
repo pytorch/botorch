@@ -928,6 +928,7 @@ Corresponding mean: {'branin': 0.39199786406546977}, covariance: {'branin': {'br
     <span class="n">Runner</span><span class="p">,</span>
     <span class="n">SearchSpace</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">ax.utils.common.result</span> <span class="kn">import</span> <span class="n">Ok</span>
 <span class="kn">from</span> <span class="nn">botorch.test_functions</span> <span class="kn">import</span> <span class="n">Branin</span>
 
 
@@ -949,7 +950,7 @@ Corresponding mean: {'branin': 0.39199786406546977}, covariance: {'branin': {'br
                     <span class="s2">"sem"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span>  <span class="c1"># SEM (observation noise) - NaN indicates unknown</span>
                 <span class="p">}</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">Data</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">records</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">Ok</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">Data</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">records</span><span class="p">)))</span>
 
 
 <span class="c1"># Search space defines the parameters, their types, and acceptable values.</span>

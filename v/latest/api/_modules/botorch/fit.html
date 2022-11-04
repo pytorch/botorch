@@ -392,6 +392,7 @@
     <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
     <span class="n">thinning</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span><span class="p">,</span>
     <span class="n">disable_progbar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">jit_compile</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Fit a fully Bayesian model using the No-U-Turn-Sampler (NUTS)</span>
 
@@ -405,6 +406,9 @@
 <span class="sd">        thinning: The amount of thinning. Every nth sample is retained.</span>
 <span class="sd">        disable_progbar: A boolean indicating whether to print the progress</span>
 <span class="sd">            bar and diagnostics during MCMC.</span>
+<span class="sd">        jit_compile: Whether to use jit. Using jit may be ~2X faster (rough estimate),</span>
+<span class="sd">            but it will also increase the memory usage and sometimes result in runtime</span>
+<span class="sd">            errors, e.g., https://github.com/pyro-ppl/pyro/issues/3136.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)</span>
@@ -415,7 +419,7 @@
     <span class="c1"># Do inference with NUTS</span>
     <span class="n">nuts</span> <span class="o">=</span> <span class="n">NUTS</span><span class="p">(</span>
         <span class="n">model</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">sample</span><span class="p">,</span>
-        <span class="n">jit_compile</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">jit_compile</span><span class="o">=</span><span class="n">jit_compile</span><span class="p">,</span>
         <span class="n">full_mass</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">ignore_jit_warnings</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">max_tree_depth</span><span class="o">=</span><span class="n">max_tree_depth</span><span class="p">,</span>

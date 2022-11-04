@@ -304,6 +304,7 @@ from ax import (
     Runner,
     SearchSpace,
 )
+from ax.utils.common.result import Ok
 from botorch.test_functions import Branin
 
 
@@ -325,7 +326,7 @@ class BraninMetric(Metric):
                     "sem": float("nan"),  # SEM (observation noise) - NaN indicates unknown
                 }
             )
-        return Data(df=pd.DataFrame.from_records(records))
+        return Ok(value=Data(df=pd.DataFrame.from_records(records)))
 
 
 # Search space defines the parameters, their types, and acceptable values.
