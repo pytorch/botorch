@@ -16,7 +16,17 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from copy import deepcopy
-from typing import Any, Callable, Dict, Hashable, List, Mapping, Optional, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Hashable,
+    List,
+    Mapping,
+    Optional,
+    TypeVar,
+    Union,
+)
 
 import numpy as np
 import torch
@@ -29,6 +39,8 @@ from botorch.utils.datasets import BotorchDataset
 from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
 from torch.nn import Module, ModuleList
+
+TFantasizeMixin = TypeVar("TFantasizeMixin", bound="FantasizeMixin")
 
 
 class Model(Module, ABC):
@@ -138,42 +150,6 @@ class Model(Module, ABC):
             f"`condition_on_observations` not implemented for {self.__class__.__name__}"
         )
 
-    def fantasize(
-        self,
-        X: Tensor,
-        sampler: MCSampler,
-        observation_noise: bool = True,
-        **kwargs: Any,
-    ) -> Model:
-        r"""Construct a fantasy model.
-
-        Constructs a fantasy model in the following fashion:
-        (1) compute the model posterior at `X` (including observation noise if
-        `observation_noise=True`).
-        (2) sample from this posterior (using `sampler`) to generate "fake"
-        observations.
-        (3) condition the model on the new fake observations.
-
-        Args:
-            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of
-                the feature space, `n'` is the number of points per batch, and
-                `batch_shape` is the batch shape (must be compatible with the
-                batch shape of the model).
-            sampler: The sampler used for sampling from the posterior at `X`.
-            observation_noise: If True, include observation noise.
-
-        Returns:
-            The constructed fantasy model.
-        """
-        propagate_grads = kwargs.pop("propagate_grads", False)
-        with fantasize_flag():
-            with settings.propagate_grads(propagate_grads):
-                post_X = self.posterior(X, observation_noise=observation_noise)
-            Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
-            return self.condition_on_observations(
-                X=self.transform_inputs(X), Y=Y_fantasized, **kwargs
-            )
-
     @classmethod
     def construct_inputs(
         cls,
@@ -250,6 +226,100 @@ class Model(Module, ABC):
         else:
             self._set_transformed_inputs()
         return super().train(mode=mode)
+
+
+class FantasizeMixin(ABC):
+    """
+    Mixin to add a `fantasize` method to a `Model`.
+
+    Example:
+        class BaseModel:
+            def __init__(self, ...):
+            def condition_on_observations(self, ...):
+            def posterior(self, ...):
+            def transform_inputs(self, ...):
+
+        class ModelThatCanFantasize(BaseModel, FantasizeMixin):
+            def __init__(self, args):
+                super().__init__(args)
+
+        model = ModelThatCanFantasize(...)
+        model.fantasize(X)
+    """
+
+    @abstractmethod
+    def condition_on_observations(
+        self: TFantasizeMixin, X: Tensor, Y: Tensor, **kwargs: Any
+    ) -> TFantasizeMixin:
+        """
+        Classes that inherit from `FantasizeMixin` must implement
+        a `condition_on_observations` method.
+        """
+
+    @abstractmethod
+    def posterior(
+        self,
+        X: Tensor,
+        *args,
+        observation_noise: bool = False,
+        **kwargs: Any,
+    ) -> Posterior:
+        """
+        Classes that inherit from `FantasizeMixin` must implement
+        a `posterior` method.
+        """
+
+    @abstractmethod
+    def transform_inputs(
+        self,
+        X: Tensor,
+        input_transform: Optional[Module] = None,
+    ) -> Tensor:
+        """
+        Classes that inherit from `FantasizeMixin` must implement
+        a `transform_inputs` method.
+        """
+
+    # When Python 3.11 arrives we can start annotating return types like
+    # this as
+    # 'Self', but at this point the verbose 'T...' syntax is needed.
+    def fantasize(
+        self: TFantasizeMixin,
+        # TODO: see if any of these can be imported only if TYPE_CHECKING
+        X: Tensor,
+        sampler: MCSampler,
+        observation_noise: bool = True,
+        **kwargs: Any,
+    ) -> TFantasizeMixin:
+        r"""Construct a fantasy model.
+
+        Constructs a fantasy model in the following fashion:
+        (1) compute the model posterior at `X` (including observation noise if
+        `observation_noise=True`).
+        (2) sample from this posterior (using `sampler`) to generate "fake"
+        observations.
+        (3) condition the model on the new fake observations.
+
+        Args:
+            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of
+                the feature space, `n'` is the number of points per batch, and
+                `batch_shape` is the batch shape (must be compatible with the
+                batch shape of the model).
+            sampler: The sampler used for sampling from the posterior at `X`.
+            observation_noise: If True, include observation noise.
+            kwargs: Will be passed to `model.condition_on_observations`
+
+        Returns:
+            The constructed fantasy model.
+        """
+        propagate_grads = kwargs.pop("propagate_grads", False)
+        with fantasize_flag():
+            with settings.propagate_grads(propagate_grads):
+                post_X = self.posterior(X, observation_noise=observation_noise)
+            Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
+            return self.condition_on_observations(
+                X=self.transform_inputs(X), Y=Y_fantasized, **kwargs
+            )
 
 
 class ModelList(Model):

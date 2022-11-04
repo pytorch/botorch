@@ -93,11 +93,13 @@ by following the [PyTorch installation instructions](https://pytorch.org/get-sta
 
 If you would like to try our bleeding edge features (and don't mind potentially
 running into the occasional bug here or there), you can install the latest
-development version directly from GitHub (this will also require installing
-the current GPyTorch development version):
+development version directly from GitHub. If you want to also install the
+current `gpytorch` and `linear_operator` development versions, you will need
+to ensure that the `ALLOW_LATEST_GPYTORCH_LINOP` environment variable is set):
 ```bash
 pip install --upgrade git+https://github.com/cornellius-gp/linear_operator.git
 pip install --upgrade git+https://github.com/cornellius-gp/gpytorch.git
+export ALLOW_LATEST_GPYTORCH_LINOP=true
 pip install --upgrade git+https://github.com/pytorch/botorch.git
 ```
 

@@ -22,7 +22,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
-from botorch.models.transforms.utils import expand_and_copy_tensor
+from botorch.models.transforms.utils import subset_transform
 from botorch.models.utils import fantasize
 from botorch.utils.rounding import approximate_round
 from gpytorch import Module as GPyTorchModule
@@ -141,13 +141,13 @@ class InputTransform(ABC):
             A `batch_shape x n x d`-dim tensor of (transformed) inputs.
         """
         if self.transform_on_train:
-            # We need to disable learning of bounds here.
+            # We need to disable learning of bounds / affine coefficients here.
             # See why: https://github.com/pytorch/botorch/issues/1078.
-            if hasattr(self, "learn_bounds"):
-                learn_bounds = self.learn_bounds
-                self.learn_bounds = False
+            if hasattr(self, "learn_coefficients"):
+                learn_coefficients = self.learn_coefficients
+                self.learn_coefficients = False
                 result = self.transform(X)
-                self.learn_bounds = learn_bounds
+                self.learn_coefficients = learn_coefficients
                 return result
             else:
                 return self.transform(X)
@@ -316,7 +316,163 @@ class ReversibleInputTransform(InputTransform, ABC):
         return super().equals(other=other) and (self.reverse == other.reverse)
 
 
-class Normalize(ReversibleInputTransform, Module):
+class AffineInputTransform(ReversibleInputTransform, Module):
+    def __init__(
+        self,
+        d: int,
+        coefficient: Tensor,
+        offset: Tensor,
+        indices: Optional[List[int]] = None,
+        batch_shape: torch.Size = torch.Size(),  # noqa: B008
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
+        transform_on_fantasize: bool = True,
+        reverse: bool = False,
+    ) -> None:
+        r"""Apply affine transformation to input:
+
+            `output = (input - offset) / coefficient`
+
+        Args:
+            d: The dimension of the input space.
+            coefficient: Tensor of linear coefficients, shape must to be
+                broadcastable with `(batch_shape x n x d)`-dim input tensors.
+            offset: Tensor of offset coefficients, shape must to be
+                broadcastable with `(batch_shape x n x d)`-dim input tensors.
+            indices: The indices of the inputs to transform. If omitted,
+                take all dimensions of the inputs into account.
+            batch_shape: The batch shape of the inputs (assuming input tensors
+                of shape `batch_shape x n x d`). If provided, perform individual
+                transformation per batch, otherwise uses a single transformation.
+            transform_on_train: A boolean indicating whether to apply the
+                transform in train() mode. Default: True.
+            transform_on_eval: A boolean indicating whether to apply the
+                transform in eval() mode. Default: True.
+            transform_on_fantasize: A boolean indicating whether to apply the
+                transform when called from within a `fantasize` call. Default: True.
+            reverse: A boolean indicating whether the forward pass should untransform
+                the inputs.
+        """
+        super().__init__()
+        if (indices is not None) and (len(indices) == 0):
+            raise ValueError("`indices` list is empty!")
+        if (indices is not None) and (len(indices) > 0):
+            indices = torch.tensor(indices, dtype=torch.long)
+            if len(indices) > d:
+                raise ValueError("Can provide at most `d` indices!")
+            if (indices > d - 1).any():
+                raise ValueError("Elements of `indices` have to be smaller than `d`!")
+            if len(indices.unique()) != len(indices):
+                raise ValueError("Elements of `indices` tensor must be unique!")
+            self.indices = indices
+        torch.broadcast_shapes(coefficient.shape, offset.shape)
+
+        self._d = d
+        self.register_buffer("coefficient", coefficient)
+        self.register_buffer("offset", offset)
+        self.batch_shape = batch_shape
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
+        self.transform_on_fantasize = transform_on_fantasize
+        self.reverse = reverse
+
+    @property
+    def learn_coefficients(self) -> bool:
+        return getattr(self, "_learn_coefficients", False)
+
+    @learn_coefficients.setter
+    def learn_coefficients(self, value: bool) -> None:
+        r"""A boolean denoting whether to learn the coefficients
+        from inputs during model training.
+        """
+        self._learn_coefficients = value
+
+    @subset_transform
+    def _transform(self, X: Tensor) -> Tensor:
+        r"""Apply affine transformation to input.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of transformed inputs.
+        """
+        if self.learn_coefficients and self.training:
+            self._check_shape(X)
+            self._update_coefficients(X)
+        self._to(X)
+        return (X - self.offset) / self.coefficient
+
+    @subset_transform
+    def _untransform(self, X: Tensor) -> Tensor:
+        r"""Apply inverse of affine transformation.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of transformed inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of un-transformed inputs.
+        """
+        self._to(X)
+        return self.coefficient * X + self.offset
+
+    def equals(self, other: InputTransform) -> bool:
+        r"""Check if another input transform is equivalent.
+
+        Args:
+            other: Another input transform.
+
+        Returns:
+            A boolean indicating if the other transform is equivalent.
+        """
+        if hasattr(self, "indices") != hasattr(other, "indices"):
+            return False
+        isequal = (
+            super().equals(other=other)
+            and (self._d == other._d)
+            and torch.allclose(self.coefficient, other.coefficient)
+            and torch.allclose(self.offset, other.offset)
+            and self.learn_coefficients == other.learn_coefficients
+        )
+        if hasattr(self, "indices"):
+            isequal = isequal and (self.indices == other.indices).all()
+        return isequal
+
+    def _check_shape(self, X: Tensor) -> None:
+        """Checking input dimensions, included to increase code sharing
+        among the derived classes Normalize and InputStandardize.
+        """
+        if X.size(-1) != self.offset.size(-1):
+            raise BotorchTensorDimensionError(
+                f"Wrong input dimension. Received {X.size(-1)}, "
+                f"expected {self.offset.size(-1)}."
+            )
+
+        n = len(self.batch_shape) + 2
+        if X.ndim < n:
+            raise ValueError(
+                f"`X` must have at least {n} dimensions, {n - 2} batch and 2 innate"
+                f" , but has {X.ndim}."
+            )
+
+        torch.broadcast_shapes(self.coefficient.shape, self.offset.shape, X.shape)
+
+    def _to(self, X: Tensor) -> None:
+        r"""Makes coefficient and offset have same device and dtype as X."""
+        self.coefficient = self.coefficient.to(X)
+        self.offset = self.offset.to(X)
+
+    def _update_coefficients(self, X: Tensor) -> None:
+        r"""Updates affine coefficients. Implemented by subclasses,
+        e.g. Normalize and InputStandardize.
+        """
+        raise NotImplementedError(
+            "Only subclasses of AffineInputTransform implement "
+            "_update_coefficients, e.g. Normalize and InputStandardize."
+        )
+
+
+class Normalize(AffineInputTransform):
     r"""Normalize the inputs to the unit cube.
 
     If no explicit bounds are provided this module is stateful: If in train mode,
@@ -359,140 +515,66 @@ class Normalize(ReversibleInputTransform, Module):
             min_range: Amount of noise to add to the range to ensure no division by
                 zero errors.
         """
-        super().__init__()
-        if (indices is not None) and (len(indices) == 0):
-            raise ValueError("`indices` list is empty!")
-        if (indices is not None) and (len(indices) > 0):
-            indices = torch.tensor(indices, dtype=torch.long)
-            if len(indices) > d:
-                raise ValueError("Can provide at most `d` indices!")
-            if (indices > d - 1).any():
-                raise ValueError("Elements of `indices` have to be smaller than `d`!")
-            if len(indices.unique()) != len(indices):
-                raise ValueError("Elements of `indices` tensor must be unique!")
-            self.indices = indices
+        transform_dimension = d if indices is None else len(indices)
         if bounds is not None:
-            if bounds.size(-1) != d:
+            if indices is not None and bounds.size(-1) == d:
+                bounds = bounds[..., indices]
+            if bounds.size(-1) != transform_dimension:
                 raise BotorchTensorDimensionError(
-                    "Dimensions of provided `bounds` are incompatible with `d`!"
+                    "Dimensions of provided `bounds` are incompatible with "
+                    f"transform_dimension = {transform_dimension}!"
                 )
-            mins = bounds[..., 0:1, :]
-            ranges = bounds[..., 1:2, :] - mins
-            self.learn_bounds = False
+            offset = bounds[..., 0:1, :]
+            coefficient = bounds[..., 1:2, :] - offset
+            if coefficient.ndim > 2:
+                batch_shape = coefficient.shape[:-2]
         else:
-            mins = torch.zeros(*batch_shape, 1, d)
-            ranges = torch.zeros(*batch_shape, 1, d)
-            self.learn_bounds = True
-        self.register_buffer("mins", mins)
-        self.register_buffer("ranges", ranges)
-        self._d = d
-        self.transform_on_train = transform_on_train
-        self.transform_on_eval = transform_on_eval
-        self.transform_on_fantasize = transform_on_fantasize
-        self.reverse = reverse
-        self.batch_shape = batch_shape
+            coefficient = torch.ones(*batch_shape, 1, transform_dimension)
+            offset = torch.zeros(*batch_shape, 1, transform_dimension)
+            self.learn_coefficients = True
+        super().__init__(
+            d=d,
+            coefficient=coefficient,
+            offset=offset,
+            indices=indices,
+            batch_shape=batch_shape,
+            transform_on_train=transform_on_train,
+            transform_on_eval=transform_on_eval,
+            transform_on_fantasize=transform_on_fantasize,
+            reverse=reverse,
+        )
         self.min_range = min_range
 
-    def _transform(self, X: Tensor) -> Tensor:
-        r"""Normalize the inputs.
+    @property
+    def ranges(self):
+        return self.coefficient
 
-        If no explicit bounds are provided, this is stateful: In train mode,
-        calling `forward` updates the module state (i.e. the normalizing bounds).
-        In eval mode, calling `forward` simply applies the normalization using
-        the current module state.
-
-        Args:
-            X: A `batch_shape x n x d`-dim tensor of inputs.
-
-        Returns:
-            A `batch_shape x n x d`-dim tensor of inputs normalized to the
-            module's bounds.
-        """
-        if self.learn_bounds and self.training:
-            if X.size(-1) != self.mins.size(-1):
-                raise BotorchTensorDimensionError(
-                    f"Wrong input dimension. Received {X.size(-1)}, "
-                    f"expected {self.mins.size(-1)}."
-                )
-
-            n = len(self.batch_shape) + 2
-            if X.ndim < n:
-                raise ValueError(
-                    f"`X` must have at least {n} dimensions, {n - 2} batch and 2 innate"
-                    f" , but has {X.ndim}."
-                )
-
-            # Move extra batch and innate batch (i.e. marginal) dimensions to the right
-            batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
-            _X = X.permute(
-                *range(X.ndim - batch_ndim - 2, X.ndim - 2),  # module batch dims
-                X.ndim - 1,  # input dim
-                *range(X.ndim - batch_ndim - 2),  # other dims, to be reduced over
-                X.ndim - 2,  # marginal dim
-            ).reshape(*self.batch_shape, 1, X.shape[-1], -1)
-
-            # Extract minimums and ranges
-            self.mins = _X.min(dim=-1).values  # batch_shape x (1, d)
-            self.ranges = (_X.max(dim=-1).values - self.mins).clip(min=self.min_range)
-
-        if hasattr(self, "indices"):
-            X_new = X.clone()
-            X_new[..., self.indices] = (
-                X_new[..., self.indices] - self.mins[..., self.indices]
-            ) / self.ranges[..., self.indices]
-            return X_new
-        return (X - self.mins) / self.ranges
-
-    def _untransform(self, X: Tensor) -> Tensor:
-        r"""Un-normalize the inputs.
-
-        Args:
-            X: A `batch_shape x n x d`-dim tensor of normalized inputs.
-
-        Returns:
-            A `batch_shape x n x d`-dim tensor of un-normalized inputs.
-        """
-        if hasattr(self, "indices"):
-            X_new = X.clone()
-            X_new[..., self.indices] = (
-                self.mins[..., self.indices]
-                + X_new[..., self.indices] * self.ranges[..., self.indices]
-            )
-            return X_new
-        return self.mins + X * self.ranges
+    @property
+    def mins(self):
+        return self.offset
 
     @property
     def bounds(self) -> Tensor:
         r"""The bounds used for normalizing the inputs."""
-        return torch.cat([self.mins, self.mins + self.ranges], dim=-2)
+        return torch.cat([self.offset, self.offset + self.coefficient], dim=-2)
 
-    def equals(self, other: InputTransform) -> bool:
-        r"""Check if another input transform is equivalent.
+    @property
+    def learn_bounds(self) -> bool:
+        return self.learn_coefficients
 
-        Args:
-            other: Another input transform.
-
-        Returns:
-            A boolean indicating if the other transform is equivalent.
+    def _update_coefficients(self, X) -> None:
+        """Computes the normalization bounds and updates the affine
+        coefficients, which determine the base class's behavior.
         """
-        if hasattr(self, "indices") == hasattr(other, "indices"):
-            if hasattr(self, "indices"):
-                return (
-                    super().equals(other=other)
-                    and (self._d == other._d)
-                    and (self.learn_bounds == other.learn_bounds)
-                    and (self.indices == other.indices).all()
-                )
-            else:
-                return (
-                    super().equals(other=other)
-                    and (self._d == other._d)
-                    and (self.learn_bounds == other.learn_bounds)
-                )
-        return False
+        # Aggregate mins and ranges over extra batch and marginal dims
+        batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
+        reduce_dims = (*range(X.ndim - batch_ndim - 2), X.ndim - 2)
+        self.offset = torch.amin(X, dim=reduce_dims).unsqueeze(-2)
+        self.coefficient = torch.amax(X, dim=reduce_dims).unsqueeze(-2) - self.offset
+        self.coefficient.clamp_(min=self.min_range)
 
 
-class InputStandardize(ReversibleInputTransform, Module):
+class InputStandardize(AffineInputTransform):
     r"""Standardize inputs (zero mean, unit variance).
 
     In train mode, calling `forward` updates the module state
@@ -529,111 +611,41 @@ class InputStandardize(ReversibleInputTransform, Module):
             min_std: Amount of noise to add to the standard deviation to ensure no
                 division by zero errors.
         """
-        super().__init__()
-        if (indices is not None) and (len(indices) == 0):
-            raise ValueError("`indices` list is empty!")
-        if (indices is not None) and (len(indices) > 0):
-            indices = torch.tensor(indices, dtype=torch.long)
-            if len(indices) > d:
-                raise ValueError("Can provide at most `d` indices!")
-            if (indices > d - 1).any():
-                raise ValueError("Elements of `indices` have to be smaller than `d`!")
-            if len(indices.unique()) != len(indices):
-                raise ValueError("Elements of `indices` tensor must be unique!")
-            self.indices = indices
-        self.register_buffer("means", torch.zeros(*batch_shape, 1, d))
-        self.register_buffer("stds", torch.ones(*batch_shape, 1, d))
-        self._d = d
-        self.transform_on_train = transform_on_train
-        self.transform_on_eval = transform_on_eval
-        self.transform_on_fantasize = transform_on_fantasize
-        self.batch_shape = batch_shape
+        transform_dimension = d if indices is None else len(indices)
+        super().__init__(
+            d=d,
+            coefficient=torch.ones(*batch_shape, 1, transform_dimension),
+            offset=torch.zeros(*batch_shape, 1, transform_dimension),
+            indices=indices,
+            batch_shape=batch_shape,
+            transform_on_train=transform_on_train,
+            transform_on_eval=transform_on_eval,
+            transform_on_fantasize=transform_on_fantasize,
+            reverse=reverse,
+        )
         self.min_std = min_std
-        self.reverse = reverse
-        self.learn_bounds = True
+        self.learn_coefficients = True
 
-    def _transform(self, X: Tensor) -> Tensor:
-        r"""Standardize the inputs.
+    @property
+    def stds(self):
+        return self.coefficient
 
-        In train mode, calling `forward` updates the module state
-        (i.e. the mean/std normalizing constants). If in eval mode, calling `forward`
-        simply applies the standardization using the current module state.
+    @property
+    def means(self):
+        return self.offset
 
-        Args:
-            X: A `batch_shape x n x d`-dim tensor of inputs.
-
-        Returns:
-            A `batch_shape x n x d`-dim tensor of inputs normalized to the
-            module's bounds.
+    def _update_coefficients(self, X: Tensor) -> None:
+        """Computes the normalization bounds and updates the affine
+        coefficients, which determine the base class's behavior.
         """
-        if self.training and self.learn_bounds:
-            if X.size(-1) != self.means.size(-1):
-                raise BotorchTensorDimensionError(
-                    f"Wrong input. dimension. Received {X.size(-1)}, "
-                    f"expected {self.means.size(-1)}"
-                )
-
-            n = len(self.batch_shape) + 2
-            if X.ndim < n:
-                raise ValueError(
-                    f"`X` must have at least {n} dimensions, {n - 2} batch and 2 innate"
-                    f" , but has {X.ndim}."
-                )
-
-            # Aggregate means and standard deviations over extra batch and marginal dims
-            batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
-            reduce_dims = (*range(X.ndim - batch_ndim - 2), X.ndim - 2)
-            self.stds, self.means = (
-                values.unsqueeze(-2)
-                for values in torch.std_mean(X, dim=reduce_dims, unbiased=True)
-            )
-            self.stds.clamp_(min=self.min_std)
-
-        if hasattr(self, "indices"):
-            X_new = X.clone()
-            X_new[..., self.indices] = (
-                X_new[..., self.indices] - self.means[..., self.indices]
-            ) / self.stds[..., self.indices]
-            return X_new
-        return (X - self.means) / self.stds
-
-    def _untransform(self, X: Tensor) -> Tensor:
-        r"""Un-standardize the inputs.
-
-        Args:
-            X: A `batch_shape x n x d`-dim tensor of normalized inputs.
-
-        Returns:
-            A `batch_shape x n x d`-dim tensor of un-normalized inputs.
-        """
-        if hasattr(self, "indices"):
-            X_new = X.clone()
-            X_new[..., self.indices] = (
-                self.means[..., self.indices]
-                + X_new[..., self.indices] * self.stds[..., self.indices]
-            )
-            return X_new
-        return self.means.to(X) + self.stds.to(X) * X
-
-    def equals(self, other: InputTransform) -> bool:
-        r"""Check if another input transform is equivalent.
-
-        Args:
-            other: Another input transform.
-
-        Returns:
-            A boolean indicating if the other transform is equivalent.
-        """
-        if hasattr(self, "indices") == hasattr(other, "indices"):
-            if hasattr(self, "indices"):
-                return (
-                    super().equals(other=other)
-                    and (self._d == other._d)
-                    and (self.indices == other.indices).all()
-                )
-            else:
-                return super().equals(other=other) and (self._d == other._d)
-        return False
+        # Aggregate means and standard deviations over extra batch and marginal dims
+        batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
+        reduce_dims = (*range(X.ndim - batch_ndim - 2), X.ndim - 2)
+        coefficient, self.offset = (
+            values.unsqueeze(-2)
+            for values in torch.std_mean(X, dim=reduce_dims, unbiased=True)
+        )
+        self.coefficient = coefficient.clamp_(min=self.min_std)
 
 
 class Round(InputTransform, Module):
@@ -705,6 +717,7 @@ class Round(InputTransform, Module):
         self.approximate = approximate
         self.tau = tau
 
+    @subset_transform
     def transform(self, X: Tensor) -> Tensor:
         r"""Round the inputs.
 
@@ -714,14 +727,7 @@ class Round(InputTransform, Module):
         Returns:
             A `batch_shape x n x d`-dim tensor of rounded inputs.
         """
-        X_rounded = X.clone()
-        X_int = X_rounded[..., self.indices]
-        if self.approximate:
-            X_int = approximate_round(X_int, tau=self.tau)
-        else:
-            X_int = X_int.round()
-        X_rounded[..., self.indices] = X_int
-        return X_rounded
+        return approximate_round(X, tau=self.tau) if self.approximate else X.round()
 
     def equals(self, other: InputTransform) -> bool:
         r"""Check if another input transform is equivalent.
@@ -770,6 +776,7 @@ class Log10(ReversibleInputTransform, Module):
         self.transform_on_fantasize = transform_on_fantasize
         self.reverse = reverse
 
+    @subset_transform
     def _transform(self, X: Tensor) -> Tensor:
         r"""Log transform the inputs.
 
@@ -779,10 +786,9 @@ class Log10(ReversibleInputTransform, Module):
         Returns:
             A `batch_shape x n x d`-dim tensor of transformed inputs.
         """
-        X_new = X.clone()
-        X_new[..., self.indices] = X_new[..., self.indices].log10()
-        return X_new
+        return X.log10()
 
+    @subset_transform
     def _untransform(self, X: Tensor) -> Tensor:
         r"""Reverse the log transformation.
 
@@ -792,9 +798,7 @@ class Log10(ReversibleInputTransform, Module):
         Returns:
             A `batch_shape x n x d`-dim tensor of un-normalized inputs.
         """
-        X_new = X.clone()
-        X_new[..., self.indices] = 10.0 ** X_new[..., self.indices]
-        return X_new
+        return 10.0**X
 
 
 class Warp(ReversibleInputTransform, GPyTorchModule):
@@ -898,6 +902,7 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
             value = torch.as_tensor(value).to(self.concentration0)
         self.initialize(**{f"concentration{i}": value})
 
+    @subset_transform
     def _transform(self, X: Tensor) -> Tensor:
         r"""Warp the inputs through the Kumaraswamy CDF.
 
@@ -910,20 +915,16 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
             A `input_batch_shape x (batch_shape) x n x d`-dim tensor of transformed
                 inputs.
         """
-        X_tf = expand_and_copy_tensor(X=X, batch_shape=self.batch_shape)
-        k = Kumaraswamy(
-            concentration1=self.concentration1, concentration0=self.concentration0
-        )
-        # normalize to [eps, 1-eps]
-        X_tf[..., self.indices] = k.cdf(
+        # normalize to [eps, 1-eps], IDEA: could use Normalize and ChainedTransform.
+        return self._k.cdf(
             torch.clamp(
-                X_tf[..., self.indices] * self._X_range + self._X_min,
+                X * self._X_range + self._X_min,
                 self._X_min,
                 1.0 - self._X_min,
             )
         )
-        return X_tf
 
+    @subset_transform
     def _untransform(self, X: Tensor) -> Tensor:
         r"""Warp the inputs through the Kumaraswamy inverse CDF.
 
@@ -940,15 +941,16 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
                     "The right most batch dims of X must match self.batch_shape: "
                     f"({self.batch_shape})."
                 )
-        X_tf = X.clone()
-        k = Kumaraswamy(
-            concentration1=self.concentration1, concentration0=self.concentration0
-        )
         # unnormalize from [eps, 1-eps] to [0,1]
-        X_tf[..., self.indices] = (
-            (k.icdf(X_tf[..., self.indices]) - self._X_min) / self._X_range
-        ).clamp(0.0, 1.0)
-        return X_tf
+        return ((self._k.icdf(X) - self._X_min) / self._X_range).clamp(0.0, 1.0)
+
+    @property
+    def _k(self) -> Kumaraswamy:
+        """Returns a Kumaraswamy distribution with the concentration parameters."""
+        return Kumaraswamy(
+            concentration1=self.concentration1,
+            concentration0=self.concentration0,
+        )
 
 
 class AppendFeatures(InputTransform, Module):
@@ -1208,6 +1210,7 @@ class InputPerturbation(InputTransform, Module):
         self,
         perturbation_set: Union[Tensor, Callable[[Tensor], Tensor]],
         bounds: Optional[Tensor] = None,
+        indices: Optional[List[int]] = None,
         multiplicative: bool = False,
         transform_on_train: bool = False,
         transform_on_eval: bool = True,
@@ -1223,6 +1226,10 @@ class InputPerturbation(InputTransform, Module):
             bounds: A `2 x d`-dim tensor of lower and upper bounds for each
                 column of the input. If given, the perturbed inputs will be
                 clamped to these bounds.
+            indices: A list of indices specifying a subset of inputs on which to apply
+                the transform. Note that `len(indices)` should be equal to the second
+                dimension of `perturbation_set` and `bounds`. The dimensionality of
+                the input `X.shape[-1]` can be larger if we only transform a subset.
             multiplicative: A boolean indicating whether the input perturbations
                 are additive or multiplicative. If True, inputs will be multiplied
                 with the perturbations.
@@ -1253,6 +1260,8 @@ class InputPerturbation(InputTransform, Module):
             self.register_buffer("bounds", bounds)
         else:
             self.bounds = None
+        self.register_buffer("_perturbations", None)
+        self.indices = indices
         self.multiplicative = multiplicative
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
@@ -1277,21 +1286,36 @@ class InputPerturbation(InputTransform, Module):
         Returns:
             A `batch_shape x (q * n_p) x d`-dim tensor of perturbed inputs.
         """
-        if isinstance(self.perturbation_set, Tensor):
-            perturbations = self.perturbation_set
-        else:
-            perturbations = self.perturbation_set(X)
-        expanded_X = X.unsqueeze(dim=-2).expand(
-            *X.shape[:-1], perturbations.shape[-2], -1
-        )
-        expanded_perturbations = perturbations.expand(*expanded_X.shape[:-1], -1)
-        if self.multiplicative:
-            perturbed_inputs = expanded_X * expanded_perturbations
-        else:
-            perturbed_inputs = expanded_X + expanded_perturbations
-        perturbed_inputs = perturbed_inputs.reshape(*X.shape[:-2], -1, X.shape[-1])
+        # NOTE: If we had access to n_p without evaluating _perturbations when the
+        # perturbation_set is a function, we could move this into `_transform`.
+        # Further, we could remove the two `transpose` calls below if one were
+        # willing to accept a different ordering of the transformed output.
+        self._perturbations = self._expanded_perturbations(X)
+        # make space for n_p dimension, switch n_p with n after transform, and flatten.
+        return self._transform(X.unsqueeze(-3)).transpose(-3, -2).flatten(-3, -2)
+
+    @subset_transform
+    def _transform(self, X: Tensor):
+        p = self._perturbations
+        Y = X * p if self.multiplicative else X + p
         if self.bounds is not None:
-            perturbed_inputs = torch.maximum(
-                torch.minimum(perturbed_inputs, self.bounds[1]), self.bounds[0]
-            )
-        return perturbed_inputs
+            return torch.maximum(torch.minimum(Y, self.bounds[1]), self.bounds[0])
+        return Y
+
+    @property
+    def batch_shape(self):
+        """Returns a shape tuple such that `subset_transform` pre-allocates
+        a (b x n_p x n x d) - dim tensor, where `b` is the batch shape of the
+        input `X` of the transform and `n_p` is the number of perturbations.
+        NOTE: this function is dependent on calling `_expanded_perturbations(X)`
+        because `n_p` is inaccessible otherwise if `perturbation_set` is a function.
+        """
+        return self._perturbations.shape[:-2]
+
+    def _expanded_perturbations(self, X: Tensor) -> Tensor:
+        p = self.perturbation_set
+        if isinstance(p, Tensor):
+            p = p.expand(X.shape[-2], *p.shape)  # p is batch_shape x n x n_p x d
+        else:
+            p = p(X) if self.indices is None else p(X[..., self.indices])
+        return p.transpose(-3, -2)  # p is batch_shape x n_p x n x d

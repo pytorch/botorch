@@ -610,6 +610,10 @@ class TestKGUtils(BotorchTestCase):
             mm = MockModel(None)
             # test PosteriorMean
             vf = _get_value_function(mm)
+            # test initialization
+            self.assertIn("model", vf._modules)
+            self.assertEqual(vf._modules["model"], mm)
+
             self.assertIsInstance(vf, PosteriorMean)
             self.assertIsNone(vf.posterior_transform)
             # test SimpleRegret

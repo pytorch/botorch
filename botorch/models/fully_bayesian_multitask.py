@@ -8,7 +8,7 @@ r"""Multi-task Gaussian Process Regression models with fully Bayesian inference.
 """
 
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import pyro
 import torch
@@ -24,7 +24,6 @@ from botorch.models.multitask import FixedNoiseMultiTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
-from botorch.sampling.samplers import MCSampler
 from botorch.utils.datasets import SupervisedDataset
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel
@@ -299,15 +298,6 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         over input data at this point."""
         self._check_if_fitted()
         return torch.Size([self.num_mcmc_samples])
-
-    def fantasize(
-        self,
-        X: Tensor,
-        sampler: MCSampler,
-        observation_noise: Union[bool, Tensor] = True,
-        **kwargs: Any,
-    ) -> FixedNoiseMultiTaskGP:
-        raise NotImplementedError("Fantasize is not implemented!")
 
     def _check_if_fitted(self):
         r"""Raise an exception if the model hasn't been fitted."""

@@ -159,16 +159,7 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                 task_feature=4,
             )
         train_X, train_Y, train_Yvar, model = self._get_data_and_model(**tkwargs)
-        sampler = IIDNormalSampler(num_samples=2)
-        with self.assertRaisesRegex(
-            NotImplementedError, "Fantasize is not implemented!"
-        ):
-            model.fantasize(
-                X=torch.cat(
-                    [torch.rand(5, 4, **tkwargs), torch.ones(5, 1, **tkwargs)], dim=1
-                ),
-                sampler=sampler,
-            )
+
         # Make sure an exception is raised if the model has not been fitted
         not_fitted_error_msg = (
             "Model has not been fitted. You need to call "

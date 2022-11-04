@@ -105,9 +105,16 @@ class TestPairwiseGP(BotorchTestCase):
             self.assertEqual(model.num_outputs, 1)
             self.assertEqual(model.batch_shape, batch_shape)
 
+            # test not using a ScaleKernel
+            with self.assertRaisesRegex(UnsupportedError, "used with a ScaleKernel"):
+                PairwiseGP(**model_kwargs, covar_module=LinearKernel())
+
             # test custom models
-            custom_m = PairwiseGP(**model_kwargs, covar_module=LinearKernel())
-            self.assertIsInstance(custom_m.covar_module, LinearKernel)
+            custom_m = PairwiseGP(
+                **model_kwargs, covar_module=ScaleKernel(LinearKernel())
+            )
+            self.assertIsInstance(custom_m.covar_module, ScaleKernel)
+            self.assertIsInstance(custom_m.covar_module.base_kernel, LinearKernel)
 
             # prior prediction
             prior_m = PairwiseGP(None, None).to(**tkwargs)

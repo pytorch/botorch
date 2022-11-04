@@ -37,7 +37,6 @@ from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from botorch.sampling import MCSampler
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import Kernel, MaternKernel, ScaleKernel
@@ -142,11 +141,6 @@ class ApproximateGPyTorchModel(GPyTorchModel):
         if self.training:
             X = self.transform_inputs(X)
         return self.model(X)
-
-    def fantasize(self, X, sampler=MCSampler, observation_noise=True, *args, **kwargs):
-        raise NotImplementedError(
-            "Fantasization of approximate GPs has not been implemented yet."
-        )
 
 
 class _SingleTaskVariationalGP(ApproximateGP):

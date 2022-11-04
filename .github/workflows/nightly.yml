@@ -23,6 +23,8 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
         pip install git+https://github.com/cornellius-gp/linear_operator.git
@@ -50,6 +52,8 @@ jobs:
       with:
         python-version: 3.8
     - name: Install dependencies
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
         pip install git+https://github.com/cornellius-gp/linear_operator.git
@@ -93,6 +97,8 @@ jobs:
       run: git fetch --prune --unshallow
     - name: Install dependencies
       shell: bash -l {0}
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
       # Don't need most deps for conda build, but need them for testing
       # We do need setuptools_scm though to properly parse the version
       run: |
@@ -123,6 +129,7 @@ jobs:
       run: git fetch --prune --unshallow
     - name: Install dependencies
       env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
         ALLOW_BOTORCH_LATEST: true  # allow Ax to install w/ new BoTorch release
       run: |
         pip install git+https://github.com/cornellius-gp/linear_operator.git

@@ -22,6 +22,7 @@ from botorch.models.gpytorch import (
     GPyTorchModel,
     ModelListGPyTorchModel,
 )
+from botorch.models.model import FantasizeMixin
 from botorch.models.transforms import Standardize
 from botorch.models.transforms.input import ChainedInputTransform, InputTransform
 from botorch.models.utils import fantasize
@@ -55,7 +56,7 @@ class SimpleInputTransform(InputTransform, torch.nn.Module):
         return X + self.add_value
 
 
-class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
+class SimpleGPyTorchModel(GPyTorchModel, ExactGP, FantasizeMixin):
     last_fantasize_flag: bool = False
 
     def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
@@ -97,7 +98,9 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
         return MultivariateNormal(mean_x, covar_x)
 
 
-class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, ExactGP):
+class SimpleBatchedMultiOutputGPyTorchModel(
+    BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin
+):
     _batch_shape: Optional[torch.Size] = None
 
     def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):

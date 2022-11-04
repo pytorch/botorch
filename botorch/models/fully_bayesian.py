@@ -33,17 +33,16 @@ References:
 
 import math
 from abc import abstractmethod
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import pyro
 import torch
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling
 from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
-from botorch.sampling.samplers import MCSampler
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -417,15 +416,6 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
         if self.num_outputs > 1:
             aug_batch_shape += torch.Size([self.num_outputs])
         return aug_batch_shape
-
-    def fantasize(
-        self,
-        X: Tensor,
-        sampler: MCSampler,
-        observation_noise: Union[bool, Tensor] = True,
-        **kwargs: Any,
-    ) -> FixedNoiseGP:
-        raise NotImplementedError("Fantasize is not implemented!")
 
     def train(self, mode: bool = True) -> None:
         r"""Puts the model in `train` mode."""

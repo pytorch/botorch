@@ -15,7 +15,6 @@ from botorch.models.approximate_gp import (
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Log
 from botorch.posteriors import GPyTorchPosterior, TransformedPosterior
-from botorch.sampling import IIDNormalSampler
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.likelihoods import GaussianLikelihood, MultitaskGaussianLikelihood
 from gpytorch.mlls import VariationalELBO
@@ -134,14 +133,9 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
                     batched_model.likelihood, MultitaskGaussianLikelihood
                 )
 
-    def test_likelihood_and_fantasize(self):
+    def test_likelihood(self):
         self.assertIsInstance(self.model.likelihood, GaussianLikelihood)
         self.assertTrue(self.model._is_custom_likelihood, True)
-
-        test_X = torch.randn(5, 1, device=self.device)
-
-        with self.assertRaises(NotImplementedError):
-            self.model.fantasize(test_X, sampler=IIDNormalSampler(num_samples=32))
 
     def test_initializations(self):
         train_X = torch.rand(15, 1, device=self.device)
