@@ -15,10 +15,6 @@ References
     for Multi-Objective Bayesian Optimization. Advances in Neural
     Information Processing Systems, 32. 2019.
 
-.. [Tu2022]
-    B. Tu, A. Gandy, N. Kantas and B.Shafei. Joint Entropy Search for
-    Multi-Objective Bayesian Optimization. Advances in Neural
-    Information Processing Systems, 35. 2022.
 """
 
 from __future__ import annotations
@@ -196,6 +192,8 @@ class qLowerBoundMultiObjectiveMaxValueEntropySearch(
 
     This acquisition function computes the mutual information between the observation
     at a candidate point `X` and the Pareto optimal outputs.
+
+    See [Tu2022]_ for a discussion on the estimation procedure.
     """
 
     def __init__(

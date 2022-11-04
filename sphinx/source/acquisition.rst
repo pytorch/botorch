@@ -67,12 +67,12 @@ Multi-Objective Analytic Acquisition Functions
     :exclude-members: MultiObjectiveAnalyticAcquisitionFunction
 	
 Multi-Objective Joint Entropy Search Acquisition Functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.multi_objective.joint_entropy_search
     :members:
 
 Multi-Objective Max-value Entropy Search Acquisition Functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.multi_objective.max_value_entropy_search
     :members:
 
@@ -88,7 +88,7 @@ Multi-Objective Multi-Fidelity Acquisition Functions
     :members:
 	
 Multi-Objective Predictive Entropy Search Acquisition Functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.multi_objective.predictive_entropy_search
     :members:
 
@@ -103,17 +103,17 @@ Multi-Step Lookahead Acquisition Functions
     :members:
 
 Max-value Entropy Search Acquisition Functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.max_value_entropy_search
     :members:
 
 Joint Entropy Search Acquisition Functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.joint_entropy_search
     :members:
 
 Predictive Entropy Search Acquisition Functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.predictive_entropy_search
     :members:
 

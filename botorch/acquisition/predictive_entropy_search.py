@@ -8,13 +8,8 @@ r"""
 Acquisition function for predictive entropy search (PES). The code utilizes the
 implementation designed for the multi-objective batch setting.
 
-References:
-
-.. [Garrido-Merchan2019]
-    E. Garrido-Merchan and D. Hernandez-Lobato. Predictive Entropy Search for
-    Multi-objective Bayesian Optimization with Constraints. Neurocomputing. 2019.
-    The computation follows the procedure described in the supplementary material:
-    https://www.sciencedirect.com/science/article/abs/pii/S0925231219308525
+NOTE: The PES acquisition might not be differentiable. As a result, we recommend
+optimizing the acquisition function using finite differences.
 
 """
 

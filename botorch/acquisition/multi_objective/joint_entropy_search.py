@@ -286,6 +286,8 @@ class qLowerBoundMultiObjectiveJointEntropySearch(
 
     This acquisition function computes the mutual information between the observation
     at a candidate point `X` and the Pareto optimal input-output pairs.
+
+    See [Tu2022]_ for a discussion on the estimation procedure.
     """
 
     def __init__(

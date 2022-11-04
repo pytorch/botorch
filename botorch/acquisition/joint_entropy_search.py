@@ -8,13 +8,6 @@ r"""
 Acquisition function for joint entropy search (JES). The code utilizes the
 implementation designed for the multi-objective batch setting.
 
-References:
-
-.. [Tu2022]
-    B. Tu, A. Gandy, N. Kantas and B.Shafei. Joint Entropy Search for Multi-Objective
-    Bayesian Optimization. Advances in Neural Information Processing Systems, 35.
-    2022.
-
 """
 
 from __future__ import annotations
@@ -36,6 +29,8 @@ class qLowerBoundJointEntropySearch(qLowerBoundMultiObjectiveJointEntropySearch)
 
     This acquisition function computes the mutual information between the observation
     at a candidate point `X` and the optimal input-output pair.
+
+    See [Tu2022]_ for a discussion on the estimation procedure.
     """
 
     def __init__(

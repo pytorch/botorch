@@ -8,6 +8,9 @@ r"""
 Acquisition function for predictive entropy search for multi-objective Bayesian
 optimization (PES). The code does not support constraint handling.
 
+NOTE: The PES acquisition might not be differentiable. As a result, we recommend
+optimizing the acquisition function using finite differences.
+
 References:
 
 .. [Garrido-Merchan2019]
@@ -41,6 +44,9 @@ class qMultiObjectivePredictiveEntropySearch(AcquisitionFunction):
     This acquisition function approximates the mutual information between the
     observation at a candidate point `X` and the Pareto optimal input using the
     moment-matching procedure known as expectation propagation (EP).
+
+    See the Appendix of [Garrido-Merchan2019]_ for the description of the EP
+    procedure.
 
     IMPORTANT NOTES:
     (i) The PES acquisition function estimated using EP is sometimes not
