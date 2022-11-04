@@ -158,6 +158,7 @@ def gen_candidates_scipy(
 
     with_grad = options.get("with_grad", True)
     if with_grad:
+
         def f_np_wrapper(x: np.ndarray, f: Callable):
             """Given a torch callable, compute value + grad given a numpy array."""
             if np.isnan(x).any():
@@ -179,14 +180,17 @@ def gen_candidates_scipy(
             if np.isnan(gradf).any():
                 msg = (
                     f"{np.isnan(gradf).sum()} elements of the {x.size} element "
-                    "gradient array `gradf` are NaN. This often indicates numerical issues."
+                    "gradient array `gradf` are NaN. "
+                    "This often indicates numerical issues."
                 )
                 if initial_conditions.dtype != torch.double:
                     msg += " Consider using `dtype=torch.double`."
                 raise RuntimeError(msg)
             fval = loss.item()
             return fval, gradf
+
     else:
+
         def f_np_wrapper(x: np.ndarray, f: Callable):
             X = torch.from_numpy(x).to(initial_conditions).view(shapeX).contiguous()
             with torch.no_grad():
@@ -221,9 +225,11 @@ def gen_candidates_scipy(
         bounds=bounds,
         constraints=constraints,
         callback=options.get("callback", None),
-        options={k: v for k, v in options.items() if k not in [
-            "method", "callback", "with_grad"
-        ]},
+        options={
+            k: v
+            for k, v in options.items()
+            if k not in ["method", "callback", "with_grad"]
+        },
     )
 
     if "success" not in res.keys() or "status" not in res.keys():

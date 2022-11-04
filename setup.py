@@ -87,6 +87,7 @@ setup(
         "scipy",
         "multipledispatch",
         "pyro-ppl>=1.8.2",
+        "pymoo>=0.6.0",
     ],
     extras_require={
         "dev": DEV_REQUIRES,

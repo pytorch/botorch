@@ -8,30 +8,33 @@ r"""
 Some methods for sampling the Pareto optimal points. This relies on the pymoo
 package for solving multi-objective optimization problems using genetic algorithms.
 
-TODO: Implement a multi-objective solver which takes advantage of derivatives. This
-    could potentially also be parallelized.
+TODO: The Pareto solver relies on pymoo 0.6.0, it might be advantageous to consider
+    alternative approaches for multi-objective optimization such as multiple
+    gradient descent algorithms.
 """
 
 from __future__ import annotations
+
+from math import ceil
 from typing import Optional, Tuple
+
 import torch
+from botorch.exceptions.errors import UnsupportedError
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.model import Model
-from torch import Tensor
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.factory import (
-    get_crossover,
-    get_mutation,
-    get_sampling,
-    get_termination,
-)
-from pymoo.core.problem import Problem
-from pymoo.optimize import minimize
-from math import ceil
-from botorch.utils.multi_objective.box_decompositions.non_dominated import (
-    FastNondominatedPartitioning
-)
 from botorch.utils.gp_sampling import get_gp_samples
+from botorch.utils.multi_objective import is_non_dominated
+from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    FastNondominatedPartitioning,
+)
+from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.core.problem import Problem
+from pymoo.operators.crossover.sbx import SBX
+from pymoo.operators.mutation.pm import PolynomialMutation
+from pymoo.operators.sampling.rnd import FloatRandomSampling
+from pymoo.optimize import minimize
+from pymoo.termination import get_termination
+from torch import Tensor
 
 
 def pareto_solver(
@@ -56,13 +59,14 @@ def pareto_solver(
         maximize: If true we solve for the Pareto maximum.
 
     Returns:
-        The `num_pareto_points` pareto optimal set and front, where
-        `num_pareto_points <= pop_size` depends randomly on the model and
-        parameter choices.
+        A two-element tuple containing
 
-        pareto_set: A `num_pareto_points x d`-dim Tensor.
-        pareto_front: A `num_pareto_points x num_objectives`-dim Tensor.
+        - pareto_sets: A `num_pareto_points x d`-dim Tensor containing the Pareto
+            optimal set of inputs.
+        - pareto_fonts: A `num_pareto_points x num_objectives`-dim Tensor containing
+            the Pareto optimal set of objectives.
     """
+    tkwargs = {"dtype": bounds.dtype, "device": bounds.device}
     d = bounds.shape[-1]
     weight = -1.0 if maximize else 1.0
 
@@ -72,13 +76,13 @@ def pareto_solver(
                 n_var=d,
                 n_obj=num_objectives,
                 n_constr=0,
-                xl=bounds[0].detach().numpy(),
-                xu=bounds[1].detach().numpy(),
+                xl=bounds[0].cpu().detach().numpy(),
+                xu=bounds[1].cpu().detach().numpy(),
             )
 
         def _evaluate(self, x, out, *args, **kwargs):
-            xt = torch.tensor(x, dtype=torch.float)
-            out["F"] = weight * model.posterior(xt).mean.detach().numpy()
+            xt = torch.tensor(x, **tkwargs)
+            out["F"] = weight * model.posterior(xt).mean.cpu().detach().numpy()
             return out
 
     # Use NSGA2 to generate a number of Pareto optimal points.
@@ -87,20 +91,26 @@ def pareto_solver(
         algorithm=NSGA2(
             pop_size=pop_size,
             n_offsprings=num_offsprings,
-            sampling=get_sampling("real_random"),
-            crossover=get_crossover("real_sbx", prob=0.9, eta=15),
-            mutation=get_mutation("real_pm", eta=20),
+            sampling=FloatRandomSampling(),
+            crossover=SBX(prob=0.9, eta=15),
+            mutation=PolynomialMutation(eta=20),
             eliminate_duplicates=True,
         ),
         termination=get_termination("n_gen", num_generations),
     )
-    pareto_set = torch.tensor(results.X, dtype=torch.float)
-    pareto_front = weight * torch.tensor(results.F, dtype=torch.float)
 
-    if pareto_set.ndim == 1:
-        return pareto_set.unsqueeze(0), pareto_front.unsqueeze(0)
+    if model.num_outputs == 1:
+        ps = torch.tensor(results.X, **tkwargs).unsqueeze(0)
+        pf = weight * torch.tensor(results.F, **tkwargs).unsqueeze(0)
     else:
-        return pareto_set, pareto_front
+        ps = torch.tensor(results.X, **tkwargs)
+        pf = weight * torch.tensor(results.F, **tkwargs)
+
+    pareto_mask = is_non_dominated(-1.0 * weight * pf)
+    pareto_set = ps[pareto_mask]
+    pareto_front = pf[pareto_mask]
+
+    return pareto_set, pareto_front
 
 
 def sample_pareto_sets_and_fronts(
@@ -112,9 +122,9 @@ def sample_pareto_sets_and_fronts(
     num_generations: int = 100,
     pop_size: int = 100,
     num_offsprings: int = 10,
-    num_rff_features: int = 500,
-    max_tries: Optional[int] = 3,
-    num_greedy: Optional[int] = 0,
+    num_rff_features: int = 512,
+    max_tries: int = 3,
+    num_greedy: int = 0,
     X_baseline: Optional[Tensor] = None,
     ref_point: Optional[Tensor] = None,
 ) -> Tuple[Tensor, Tensor]:
@@ -138,7 +148,7 @@ def sample_pareto_sets_and_fronts(
         pop_size: The population size maintained at each step of NSGA2.
         num_offsprings: The number of offsprings used in NSGA2.
         num_rff_features: The number of random Fourier features used for GP
-            sampling. Defaults to `500`.
+            sampling. Defaults to `512`.
         max_tries: The maximum number of runs of NSGA2 to find num_pareto_points.
         num_greedy: The number of points to select via the hypervolume improvement
             truncation.
@@ -148,20 +158,40 @@ def sample_pareto_sets_and_fronts(
             containing the reference point.
 
     Returns:
-        pareto_sets: A `num_samples x num_pareto_points x d`-dim Tensor
-        pareto_fronts: A `num_samples x num_pareto_points x M`-dim Tensor.
+        A two-element tuple containing
+
+        - A `num_pareto_samples x num_pareto_points x d`-dim Tensor containing the
+            collection of Pareto optimal inputs.
+        - A `num_pareto_samples x num_pareto_points x M`-dim Tensor containing the
+            collection of Pareto optimal objectives.
     """
+    tkwargs = {"dtype": bounds.dtype, "device": bounds.device}
     M = model.num_outputs
     d = bounds.shape[-1]
-    if M == 1:
-        num_greedy = 0
 
-    pareto_sets = torch.zeros((num_pareto_samples, num_pareto_points, d)).to(bounds)
-    pareto_fronts = torch.zeros((num_pareto_samples, num_pareto_points, M)).to(bounds)
+    if M == 1:
+        if num_greedy > 0:
+            raise UnsupportedError(
+                "For single-objective optimization `num_greedy` should be 0."
+            )
+        if num_pareto_points > 1:
+            raise UnsupportedError(
+                "For single-objective optimization `num_pareto_points` should be 1."
+            )
+
+    if num_greedy > 0:
+        if X_baseline is None or ref_point is None:
+            raise UnsupportedError(
+                "Need to specify the `X_baseline` and `ref_point` in order to take "
+                "advantage of greedy truncation strategy."
+            )
+
+    pareto_sets = torch.zeros((num_pareto_samples, num_pareto_points, d), **tkwargs)
+    pareto_fronts = torch.zeros((num_pareto_samples, num_pareto_points, M), **tkwargs)
+
     for i in range(num_pareto_samples):
         model_sample_i = get_gp_samples(
-            model=model, num_outputs=M, n_samples=1,
-            num_rff_features=num_rff_features
+            model=model, num_outputs=M, n_samples=1, num_rff_features=num_rff_features
         )
 
         ratio = 2
@@ -185,8 +215,13 @@ def sample_pareto_sets_and_fronts(
 
         # If maximum number of retries exceeded throw out a runtime error.
         if ratio > 1:
-            error_text = "Only found " + str(num_pareto_generated) + \
-                " Pareto efficient points instead of " + str(num_pareto_points) + "."
+            error_text = (
+                "Only found "
+                + str(num_pareto_generated)
+                + " Pareto efficient points instead of "
+                + str(num_pareto_points)
+                + "."
+            )
             raise RuntimeError(error_text)
 
         # Randomly truncate the Pareto set and front
@@ -213,10 +248,14 @@ def sample_pareto_sets_and_fronts(
                 up = hypercell_bounds[1].unsqueeze(0)
 
                 # Compute the sample hypervolume improvement.
-                hvi = torch.max(
-                    torch.min(pareto_front_i.unsqueeze(-2), up) - lo,
-                    torch.zeros(lo.shape).to(bounds)
-                ).prod(dim=-1).sum(dim=-1)
+                hvi = (
+                    torch.max(
+                        torch.min(pareto_front_i.unsqueeze(-2), up) - lo,
+                        torch.zeros(lo.shape).to(bounds),
+                    )
+                    .prod(dim=-1)
+                    .sum(dim=-1)
+                )
 
                 # Zero out the pending points.
                 hvi[indices] = 0
@@ -226,10 +265,13 @@ def sample_pareto_sets_and_fronts(
                 indices = indices + [best_index]
 
                 # Update the pareto front.
-                pending_pareto_front_i = torch.cat([
-                    pending_pareto_front_i,
-                    pareto_front_i[best_index:best_index+1, :]
-                ], dim=0)
+                pending_pareto_front_i = torch.cat(
+                    [
+                        pending_pareto_front_i,
+                        pareto_front_i[best_index : best_index + 1, :],
+                    ],
+                    dim=0,
+                )
 
             indices = torch.tensor(indices)
 
