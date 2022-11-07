@@ -690,6 +690,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         c = get_acqf_input_constructor(qNoisyExpectedHypervolumeImprovement)
         objective_thresholds = torch.rand(2)
         mock_model = mock.Mock()
+        mock_model.num_outputs = 2
 
         # Test defaults
         kwargs = c(
@@ -792,6 +793,15 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             )
             self.assertIs(kwargs["objective"], obj)
             self.assertTrue(torch.equal(kwargs["ref_point"], expected_obj_t))
+
+        # Test default alpha for many objectives/
+        mock_model.num_outputs = 5
+        kwargs = c(
+            model=mock_model,
+            training_data=self.blockX_blockY,
+            objective_thresholds=objective_thresholds,
+        )
+        self.assertEqual(kwargs["alpha"], 1e-3)
 
     def test_construct_inputs_kg(self):
         current_value = torch.tensor(1.23)
