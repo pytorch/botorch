@@ -48,6 +48,7 @@ jobs:
       env:
         # This is so Ax's setup doesn't install a pinned BoTorch version.
         ALLOW_BOTORCH_LATEST: true
+        ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         pip install git+https://github.com/facebook/Ax.git
     - if: ${{ inputs.use_stable_ax }}
