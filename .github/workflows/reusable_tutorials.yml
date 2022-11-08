@@ -31,8 +31,6 @@ jobs:
       run: git fetch --prune --unshallow
     - if: ${{ !inputs.use_stable_pytorch_gpytorch }}
       name: Install latest PyTorch & GPyTorch
-      env:
-        ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
         pip install git+https://github.com/cornellius-gp/linear_operator.git
@@ -50,15 +48,19 @@ jobs:
       env:
         # This is so Ax's setup doesn't install a pinned BoTorch version.
         ALLOW_BOTORCH_LATEST: true
+        ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         pip install git+https://github.com/facebook/Ax.git
     - if: ${{ inputs.use_stable_ax }}
       name: Install stable Ax
       env:
         ALLOW_BOTORCH_LATEST: true
+        ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         pip install ax-platform --no-binary ax-platform
     - name: Install BoTorch with tutorials dependencies
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         pip install .[tutorials]
     - if: ${{ inputs.smoke_test }}
