@@ -34,7 +34,7 @@
 <span class="sd">"""</span>
 
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NoReturn</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">pyro</span>
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -325,6 +325,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">num_mcmc_samples</span><span class="p">])</span>
 
+<div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.fantasize"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.fantasize">[docs]</a>    <span class="k">def</span> <span class="nf">fantasize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Fantasize is not implemented!"</span><span class="p">)</span></div>
+
     <span class="k">def</span> <span class="nf">_check_if_fitted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""Raise an exception if the model hasn't been fitted."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -347,6 +350,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">latent_features</span><span class="p">,</span>
         <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">load_mcmc_samples</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">)</span></div>
 
+    <span class="c1"># pyre-fixme[14]: Inconsistent override of</span>
+    <span class="c1"># BatchedMultiOutputGPyTorchModel.posterior</span>
 <div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -371,6 +376,7 @@
         <span class="n">posterior</span> <span class="o">=</span> <span class="n">FullyBayesianPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">posterior</span></div>
 
+    <span class="c1"># pyre-fixme[14]: Inconsistent override</span>
 <div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">)</span>
@@ -399,6 +405,7 @@
         <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="c1"># pyre-fixme[14]: Inconsistent override of `MultiTaskGP.construct_inputs`</span>
     <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">training_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">],</span>

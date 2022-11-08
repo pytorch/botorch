@@ -922,7 +922,7 @@ registered hooks while the latter silently ignores them.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.gp_regression.HeteroskedasticSingleTaskGP">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression.</span></span><span class="sig-name descname"><span class="pre">HeteroskedasticSingleTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#HeteroskedasticSingleTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.HeteroskedasticSingleTaskGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleTaskGP</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BatchedMultiOutputGPyTorchModel</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code></p>
 <p>A single-task exact GP model using a heteroskedastic noise model.</p>
 <p>This model differs from <cite>SingleTaskGP</cite> in that noise levels are provided
 rather than inferred, and differs from <cite>FixedNoiseGP</cite> in that it can
@@ -1000,36 +1000,6 @@ observations passed in via kwargs).</p>
 </div>
 </dd></dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="botorch.models.gp_regression.HeteroskedasticSingleTaskGP.fantasize">
-<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">__</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#HeteroskedasticSingleTaskGP.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.fantasize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construct a fantasy model.</p>
-<p>Constructs a fantasy model in the following fashion:
-(1) compute the model posterior at <cite>X</cite> (including observation noise if
-<cite>observation_noise=True</cite>).
-(2) sample from this posterior (using <cite>sampler</cite>) to generate “fake”
-observations.
-(3) condition the model on the new fake observations.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
-the feature space, <cite>n’</cite> is the number of points per batch, and
-<cite>batch_shape</cite> is the batch shape (must be compatible with the
-batch shape of the model).</p></li>
-<li><p><strong>sampler</strong> – The sampler used for sampling from the posterior at <cite>X</cite>.</p></li>
-<li><p><strong>observation_noise</strong> – If True, include observation noise.</p></li>
-<li><p><strong>kwargs</strong> – Will be passed to <cite>model.condition_on_observations</cite></p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The constructed fantasy model.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>NoReturn</em></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.gp_regression.HeteroskedasticSingleTaskGP.subset_output">
 <span class="sig-name descname"><span class="pre">subset_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idcs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#HeteroskedasticSingleTaskGP.subset_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.subset_output" title="Permalink to this definition">¶</a></dt>
 <dd><p>Subset the model along the output dimension.</p>
@@ -1042,6 +1012,27 @@ batch shape of the model).</p></li>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>NoReturn</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.gp_regression.HeteroskedasticSingleTaskGP.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#HeteroskedasticSingleTaskGP.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>MultivariateNormal</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1376,7 +1367,7 @@ High-Dimensional Outputs. <a class="reference external" href="https://arxiv.org/
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.multitask.MultiTaskGP">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">MultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MultiTaskGPyTorchModel</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MultiTaskGPyTorchModel</span></code>, <a class="reference internal" href="#botorch.models.model.FantasizeMixin" title="botorch.models.model.FantasizeMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FantasizeMixin</span></code></a></p>
 <p>Multi-Task GP model using an ICM kernel, inferring observation noise.</p>
 <p>Multi-task exact GP that uses a simple ICM kernel. Can be single-output or
 multi-output. This model uses relatively strong priors on the base Kernel
@@ -1536,7 +1527,7 @@ inference (that is, the <cite>Posterior</cite> obtained by calling
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.multitask.KroneckerMultiTaskGP">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">KroneckerMultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#KroneckerMultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.KroneckerMultiTaskGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchModel</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchModel</span></code>, <a class="reference internal" href="#botorch.models.model.FantasizeMixin" title="botorch.models.model.FantasizeMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FantasizeMixin</span></code></a></p>
 <p>Multi-task GP with Kronecker structure, using an ICM kernel.</p>
 <p>This model assumes the “block design” case, i.e., it requires that all tasks
 are observed at all data points.</p>
@@ -2691,7 +2682,7 @@ tausq (global shrinkage).</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.fully_bayesian.</span></span><span class="sig-name descname"><span class="pre">SaasFullyBayesianSingleTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyro_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasFullyBayesianSingleTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleTaskGP</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">BatchedMultiOutputGPyTorchModel</span></code></p>
 <p>A fully Bayesian single-task GP model with the SAAS prior.</p>
 <p>This model assumes that the inputs have been normalized to [0, 1]^d and that
 the output has been standardized to have zero mean and unit variance. You can
@@ -2792,15 +2783,10 @@ construction logic into the Pyro model itself.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian.html#SaasFullyBayesianSingleTaskGP.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Defines the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
+<dd><p>Unlike in other classes’ <cite>forward</cite> methods, there is no <cite>if self.training</cite>
+block, because it ought to be unreachable: If <cite>self.train()</cite> has been called,
+then <cite>self.covar_module</cite> will be None, <cite>check_if_fitted()</cite> will fail, and the
+rest of this method will not run.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – </p>
@@ -2990,6 +2976,36 @@ If omitted, set it to be 1.</p></li>
 <dd><p>Batch shape of the model, equal to the number of MCMC samples.
 Note that <cite>SaasFullyBayesianMultiTaskGP</cite> does not support batching
 over input data at this point.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.fantasize">
+<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.fantasize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a fantasy model.</p>
+<p>Constructs a fantasy model in the following fashion:
+(1) compute the model posterior at <cite>X</cite> (including observation noise if
+<cite>observation_noise=True</cite>).
+(2) sample from this posterior (using <cite>sampler</cite>) to generate “fake”
+observations.
+(3) condition the model on the new fake observations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
+the feature space, <cite>n’</cite> is the number of points per batch, and
+<cite>batch_shape</cite> is the batch shape (must be compatible with the
+batch shape of the model).</p></li>
+<li><p><strong>sampler</strong> – The sampler used for sampling from the posterior at <cite>X</cite>.</p></li>
+<li><p><strong>observation_noise</strong> – If True, include observation noise.</p></li>
+<li><p><strong>kwargs</strong> – Will be passed to <cite>model.condition_on_observations</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The constructed fantasy model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>NoReturn</em></p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.load_mcmc_samples">

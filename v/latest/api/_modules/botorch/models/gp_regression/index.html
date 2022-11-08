@@ -386,7 +386,7 @@
         <span class="k">return</span> <span class="n">new_model</span></div></div>
 
 
-<div class="viewcode-block" id="HeteroskedasticSingleTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP">[docs]</a><span class="k">class</span> <span class="nc">HeteroskedasticSingleTaskGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
+<div class="viewcode-block" id="HeteroskedasticSingleTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP">[docs]</a><span class="k">class</span> <span class="nc">HeteroskedasticSingleTaskGP</span><span class="p">(</span><span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""A single-task exact GP model using a heteroskedastic noise model.</span>
 
 <span class="sd">    This model differs from `SingleTaskGP` in that noise levels are provided</span>
@@ -449,7 +449,12 @@
             <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">likelihood</span> <span class="o">=</span> <span class="n">_GaussianLikelihoodBase</span><span class="p">(</span><span class="n">HeteroskedasticNoise</span><span class="p">(</span><span class="n">noise_model</span><span class="p">))</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="c1"># This is hacky -- this class used to inherit from SingleTaskGP, but it</span>
+        <span class="c1"># shouldn't so this is a quick fix to enable getting rid of that</span>
+        <span class="c1"># inheritance</span>
+        <span class="n">SingleTaskGP</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="c1"># pyre-fixme[6]: Incompatible parameter type</span>
+            <span class="bp">self</span><span class="p">,</span>
             <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
             <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
             <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">,</span>
@@ -463,18 +468,20 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
-    <span class="c1"># TODO: HeteroskedasticSingleTaskGP should not be a subclass of</span>
-    <span class="c1"># SingleTaskGP because it can't function the way a SingleTaskGP does</span>
     <span class="c1"># pyre-fixme[15]: Inconsistent override</span>
 <div class="viewcode-block" id="HeteroskedasticSingleTaskGP.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="o">**</span><span class="n">__</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
-<div class="viewcode-block" id="HeteroskedasticSingleTaskGP.fantasize"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.fantasize">[docs]</a>    <span class="k">def</span> <span class="nf">fantasize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="o">**</span><span class="n">__</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
-
     <span class="c1"># pyre-fixme[15]: Inconsistent override</span>
 <div class="viewcode-block" id="HeteroskedasticSingleTaskGP.subset_output"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="HeteroskedasticSingleTaskGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">mean_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">covar_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar_x</span><span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>
