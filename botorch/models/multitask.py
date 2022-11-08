@@ -28,6 +28,7 @@ import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
 from botorch.models.gpytorch import GPyTorchModel, MultiTaskGPyTorchModel
+from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.posteriors.multitask import MultitaskGPPosterior
@@ -71,7 +72,7 @@ from linear_operator.operators import (
 from torch import Tensor
 
 
-class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
+class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
     r"""Multi-Task GP model using an ICM kernel, inferring observation noise.
 
     Multi-task exact GP that uses a simple ICM kernel. Can be single-output or
@@ -377,7 +378,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         self.to(train_X)
 
 
-class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
+class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
     """Multi-task GP with Kronecker structure, using an ICM kernel.
 
     This model assumes the "block design" case, i.e., it requires that all tasks

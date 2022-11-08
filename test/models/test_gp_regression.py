@@ -454,11 +454,22 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
         model = HeteroskedasticSingleTaskGP(**model_kwargs)
         return model, model_kwargs
 
-    def test_custom_init(self):
-        pass
+    def test_custom_init(self) -> None:
+        """
+        This test exists because `TestHeteroskedasticSingleTaskGP` inherits from
+        `TestSingleTaskGP`, which has a `test_custom_init` method that isn't relevant
+        for `TestHeteroskedasticSingleTaskGP`.
+        """
 
     def test_gp(self):
         super().test_gp(double_only=True)
+
+    def test_fantasize(self) -> None:
+        """
+        This test exists because `TestHeteroskedasticSingleTaskGP` inherits from
+        `TestSingleTaskGP`, which has a `fantasize` method that isn't relevant
+        for `TestHeteroskedasticSingleTaskGP`.
+        """
 
     def test_heteroskedastic_likelihood(self):
         for batch_shape, m, dtype in itertools.product(
@@ -479,10 +490,6 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
     def test_condition_on_observations(self):
         with self.assertRaises(NotImplementedError):
             super().test_condition_on_observations()
-
-    def test_fantasize(self):
-        with self.assertRaises(NotImplementedError):
-            super().test_fantasize()
 
     def test_subset_model(self):
         with self.assertRaises(NotImplementedError):

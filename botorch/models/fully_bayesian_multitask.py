@@ -8,7 +8,7 @@ r"""Multi-task Gaussian Process Regression models with fully Bayesian inference.
 """
 
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, NoReturn, Optional, Tuple
 
 import pyro
 import torch
@@ -299,6 +299,9 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         self._check_if_fitted()
         return torch.Size([self.num_mcmc_samples])
 
+    def fantasize(self, *args, **kwargs) -> NoReturn:
+        raise NotImplementedError("Fantasize is not implemented!")
+
     def _check_if_fitted(self):
         r"""Raise an exception if the model hasn't been fitted."""
         if self.covar_module is None:
@@ -321,6 +324,8 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
             self.latent_features,
         ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
 
+    # pyre-fixme[14]: Inconsistent override of
+    # BatchedMultiOutputGPyTorchModel.posterior
     def posterior(
         self,
         X: Tensor,
@@ -345,6 +350,7 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         posterior = FullyBayesianPosterior(mvn=posterior.mvn)
         return posterior
 
+    # pyre-fixme[14]: Inconsistent override
     def forward(self, X: Tensor) -> MultivariateNormal:
         self._check_if_fitted()
         X = X.unsqueeze(MCMC_DIM)
@@ -373,6 +379,7 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         return MultivariateNormal(mean_x, covar)
 
     @classmethod
+    # pyre-fixme[14]: Inconsistent override of `MultiTaskGP.construct_inputs`
     def construct_inputs(
         cls,
         training_data: Dict[str, SupervisedDataset],

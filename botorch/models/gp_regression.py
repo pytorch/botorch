@@ -360,7 +360,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         return new_model
 
 
-class HeteroskedasticSingleTaskGP(SingleTaskGP):
+class HeteroskedasticSingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     r"""A single-task exact GP model using a heteroskedastic noise model.
 
     This model differs from `SingleTaskGP` in that noise levels are provided
@@ -423,7 +423,12 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             input_transform=input_transform,
         )
         likelihood = _GaussianLikelihoodBase(HeteroskedasticNoise(noise_model))
-        super().__init__(
+        # This is hacky -- this class used to inherit from SingleTaskGP, but it
+        # shouldn't so this is a quick fix to enable getting rid of that
+        # inheritance
+        SingleTaskGP.__init__(
+            # pyre-fixme[6]: Incompatible parameter type
+            self,
             train_X=train_X,
             train_Y=train_Y,
             likelihood=likelihood,
@@ -437,15 +442,17 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             self.outcome_transform = outcome_transform
         self.to(train_X)
 
-    # TODO: HeteroskedasticSingleTaskGP should not be a subclass of
-    # SingleTaskGP because it can't function the way a SingleTaskGP does
     # pyre-fixme[15]: Inconsistent override
     def condition_on_observations(self, *_, **__) -> NoReturn:
-        raise NotImplementedError
-
-    def fantasize(self, *_, **__) -> NoReturn:
         raise NotImplementedError
 
     # pyre-fixme[15]: Inconsistent override
     def subset_output(self, idcs) -> NoReturn:
         raise NotImplementedError
+
+    def forward(self, x: Tensor) -> MultivariateNormal:
+        if self.training:
+            x = self.transform_inputs(x)
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return MultivariateNormal(mean_x, covar_x)
