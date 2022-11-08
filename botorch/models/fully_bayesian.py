@@ -38,7 +38,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 import pyro
 import torch
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.models.gp_regression import SingleTaskGP
+from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling
@@ -54,6 +54,7 @@ from gpytorch.likelihoods.gaussian_likelihood import (
 from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.means.mean import Mean
+from gpytorch.models.exact_gp import ExactGP
 from torch import Tensor
 
 MIN_INFERRED_NOISE_LEVEL = 1e-6
@@ -294,7 +295,7 @@ class SaasPyroModel(PyroModel):
         return mean_module, covar_module, likelihood
 
 
-class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
+class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
     r"""A fully Bayesian single-task GP model with the SAAS prior.
 
     This model assumes that the inputs have been normalized to [0, 1]^d and that
@@ -364,7 +365,7 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
             train_Yvar = train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
 
         X_tf, Y_tf, _ = self._transform_tensor_args(X=train_X, Y=train_Y)
-        super(SingleTaskGP, self).__init__(
+        super().__init__(
             train_inputs=X_tf, train_targets=Y_tf, likelihood=GaussianLikelihood()
         )
         self.mean_module = None
@@ -473,9 +474,19 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
         super().load_state_dict(state_dict=state_dict, strict=strict)
 
     def forward(self, X: Tensor) -> MultivariateNormal:
+        """
+        Unlike in other classes' `forward` methods, there is no `if self.training`
+        block, because it ought to be unreachable: If `self.train()` has been called,
+        then `self.covar_module` will be None, `check_if_fitted()` will fail, and the
+        rest of this method will not run.
+        """
         self._check_if_fitted()
-        return super().forward(X.unsqueeze(MCMC_DIM))
+        x = X.unsqueeze(MCMC_DIM)
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return MultivariateNormal(mean_x, covar_x)
 
+    # pyre-ignore[14]: Inconsistent override
     def posterior(
         self,
         X: Tensor,
