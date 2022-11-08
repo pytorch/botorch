@@ -54,6 +54,7 @@ jobs:
       name: Install stable Ax
       env:
         ALLOW_BOTORCH_LATEST: true
+        ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         pip install ax-platform --no-binary ax-platform
     - name: Install BoTorch with tutorials dependencies
