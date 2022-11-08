@@ -826,7 +826,7 @@ def construct_inputs_qNEHVI(
         "X_pending": kwargs.get("X_pending"),
         "eta": kwargs.get("eta", 1e-3),
         "prune_baseline": kwargs.get("prune_baseline", True),
-        "alpha": kwargs.get("alpha", 0.0),
+        "alpha": kwargs.get("alpha", get_default_partitioning_alpha(model.num_outputs)),
         "cache_pending": kwargs.get("cache_pending", True),
         "max_iep": kwargs.get("max_iep", 0),
         "incremental_nehvi": kwargs.get("incremental_nehvi", True),

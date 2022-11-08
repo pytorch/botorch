@@ -31,8 +31,6 @@ jobs:
       run: git fetch --prune --unshallow
     - if: ${{ !inputs.use_stable_pytorch_gpytorch }}
       name: Install latest PyTorch & GPyTorch
-      env:
-        ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
         pip install git+https://github.com/cornellius-gp/linear_operator.git
@@ -45,6 +43,11 @@ jobs:
         min_torch_version=$(grep '\btorch>=' ${req_txt} | sed 's/[^0-9.]//g')
         min_gpytorch_version=$(grep '\bgpytorch>=' ${req_txt} | sed 's/[^0-9.]//g')
         pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}" torchvision
+    - name: Install BoTorch with tutorials dependencies
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
+      run: |
+        pip install .[tutorials]
     - if: ${{ !inputs.use_stable_ax }}
       name: Install latest Ax
       env:
@@ -58,9 +61,6 @@ jobs:
         ALLOW_BOTORCH_LATEST: true
       run: |
         pip install ax-platform --no-binary ax-platform
-    - name: Install BoTorch with tutorials dependencies
-      run: |
-        pip install .[tutorials]
     - if: ${{ inputs.smoke_test }}
       name: Run tutorials with smoke test
       run: |
