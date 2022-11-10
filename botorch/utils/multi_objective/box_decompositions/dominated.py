@@ -56,6 +56,9 @@ class DominatedPartitioning(FastPartitioning):
             A `(batch_shape)`-dim tensor containing the hypervolume dominated by
                 each Pareto frontier.
         """
+        if not hasattr(self, "_neg_pareto_Y"):
+            return torch.tensor(0.0).to(self._neg_ref_point)
+
         if self._neg_pareto_Y.shape[-2] == 0:
             return torch.zeros(
                 self._neg_pareto_Y.shape[:-2],
