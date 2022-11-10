@@ -36,13 +36,14 @@ jobs:
         pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
     - if: ${{ inputs.use_stable_pytorch_gpytorch }}
-      name: Install min required PyTorch & GPyTorch
+      name: Install min required PyTorch, GPyTorch, and linear_operator
       run: |
         python setup.py egg_info
         req_txt="botorch.egg-info/requires.txt"
-        min_torch_version=$(grep '\btorch>=' ${req_txt} | sed 's/[^0-9.]//g')
-        min_gpytorch_version=$(grep '\bgpytorch>=' ${req_txt} | sed 's/[^0-9.]//g')
-        pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}" torchvision
+        min_torch_version=$(grep '\btorch[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
+        min_gpytorch_version=$(grep '\bgpytorch[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
+        min_linear_operator_version=$(grep '\blinear_operator[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
+        pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}" "linear_operator==${min_linear_operator_version}" torchvision
     - name: Install BoTorch with tutorials dependencies
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
