@@ -17,7 +17,7 @@ The release log for BoTorch.
 * Introduce a `subset_transform` decorator to consolidate subsetting of inputs in input transforms (#1468).
 
 #### Other Changes
-* Add a warning when using float dtype (#1193). 
+* Add a warning when using float dtype (#1193).
 * Let Pyre know that `AcquisitionFunction.model` is a `Model` (#1216).
 * Remove custom `BlockDiagLazyTensor` logic when using `Standardize` (#1414).
 * Expose `_aug_batch_shape` in `SaasFullyBayesianSingleTaskGP` (#1448).
