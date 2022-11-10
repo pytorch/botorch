@@ -2,6 +2,41 @@
 
 The release log for BoTorch.
 
+## [0.7.3] - Nov 10, 2022
+
+### Highlights
+* #1454 Fixes a critical bug that affected multi-output `BatchedMultiOutputGPyTorchModel`s that were using a `Normalize` or `InputStandardize` input transform and trained using `fit_gpytorch_model/mll` with `sequential=True` (default). The input transform buffers would be reset after model training, leading to the model being trained on normalized input data but being evaluated on raw inputs. This bug was affecting model fits since the 0.6.5 release.
+* #1462, #1479 change the inheritance structure of `Model`s in a backwards incompatible way. If your code relies on `isinstance` checks with BoTorch `Model`s, you should revisit these checks to make sure they still work as expected.
+
+#### Compatibility
+* Require linear_operator == 0.2.0 (#1491).
+
+#### New Features
+* Introduce `bvn`, `MVNXPB`, `TruncatedMultivariateNormal`, and `UnifiedSkewNormal` classes / methods (#1394, #1408).
+* Introduce `AffineInputTransform` (#1461).
+* Introduce a `subset_transform` decorator to consolidate subsetting of inputs in input transforms (#1468).
+
+#### Other Changes
+* Add a warning when using float dtype (#1193). 
+* Let Pyre know that `AcquisitionFunction.model` is a `Model` (#1216).
+* Remove custom `BlockDiagLazyTensor` logic when using `Standardize` (#1414).
+* Expose `_aug_batch_shape` in `SaasFullyBayesianSingleTaskGP` (#1448).
+* Adjust `PairwiseGP` `ScaleKernel` prior (#1460).
+* Pull out `fantasize` method into a `FantasizeMixin` class, so it isn't so widely inherited (#1462, #1479).
+* Don't use Pyro jit by default (#1474).
+* Use `get_default_partitioning_alpha` for NEHVI input constructor (#1481).
+
+#### Bug Fixes
+* Fix `batch_shape` property of `ModelListGPyTorchModel` (#1441).
+* Tutorial fixes (#1446, #1475).
+* Bug-fix for Proximal acquisition function wrapper for negative base acquisition functions (#1447).
+* Handle `RuntimeError` due to constraint violation while sampling from priors (#1451).
+* Fix bug in model list with output indices (#1453).
+* Fix input transform bug when sequentially training a `BatchedMultiOutputGPyTorchModel` (#1454).
+* Fix a bug in `_fit_multioutput_independent` that failed mll comparison (#1455).
+* Fix box decomposition behavior with empty or None `Y` (#1489).
+
+
 ## [0.7.2] - Sep 27, 2022
 
 #### New Features
