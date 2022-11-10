@@ -56,7 +56,7 @@ jobs:
         pytest -ra
 
   tests-and-coverage-min-req-pip:
-    name: Tests and coverage min req. torch & gpytorch versions (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    name: Tests and coverage min req. torch, gpytorch & linear_operator versions (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -73,9 +73,10 @@ jobs:
       run: |
         python setup.py egg_info
         req_txt="botorch.egg-info/requires.txt"
-        min_torch_version=$(grep '\btorch>=' ${req_txt} | sed 's/[^0-9.]//g')
-        min_gpytorch_version=$(grep '\bgpytorch>=' ${req_txt} | sed 's/[^0-9.]//g')
-        pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}"
+        min_torch_version=$(grep '\btorch[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
+        min_gpytorch_version=$(grep '\bgpytorch[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
+        min_linear_operator_version=$(grep '\blinear_operator[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
+        pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}" "linear_operator==${min_linear_operator_version}"
         pip install .[test]
     - name: Unit tests and coverage
       run: |
