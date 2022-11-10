@@ -16,7 +16,7 @@ from gpytorch.distributions.multitask_multivariate_normal import (
 from linear_operator.operators import BlockDiagLinearOperator, LinearOperator
 
 from linear_operator.utils.cholesky import psd_safe_cholesky
-from linear_operator.utils.errors import NanError, NotPSDError
+from linear_operator.utils.errors import NanError
 from torch import Tensor
 
 
@@ -106,10 +106,11 @@ def sample_cached_cholesky(
             samples at the new points.
     """
     # compute bottom left covariance block
-    if isinstance(posterior.mvn, MultitaskMultivariateNormal):
-        lazy_covar = extract_batch_covar(mt_mvn=posterior.mvn)
-    else:
-        lazy_covar = posterior.mvn.lazy_covariance_matrix
+    lazy_covar = (
+        extract_batch_covar(mt_mvn=posterior.mvn)
+        if isinstance(posterior.mvn, MultitaskMultivariateNormal)
+        else posterior.mvn.lazy_covariance_matrix
+    )
     # Get the `q` new rows of the batched covariance matrix
     bottom_rows = lazy_covar[..., -q:, :].to_dense()
     # The covariance in block form is:
@@ -124,16 +125,10 @@ def sample_cached_cholesky(
     # and bl_chol := x^T
     # bl_chol is the new `(batch_shape) x q x n`-dim bottom left block
     # of the cholesky decomposition
-    # TODO: remove the exception handling, when the pytorch
-    # version requirement is bumped to >= 1.10
-    try:
-        bl_chol = torch.triangular_solve(
-            bl.transpose(-2, -1), baseline_L, upper=False
-        ).solution.transpose(-2, -1)
-    except RuntimeError as e:
-        if "singular" in str(e):
-            raise NotPSDError(f"triangular_solve failed with RuntimeError: {e}")
-        raise e
+    bl_chol = torch.linalg.solve_triangular(
+        baseline_L, bl.transpose(-2, -1), upper=False
+    ).transpose(-2, -1)
+
     # Compute the new bottom right block of the Cholesky
     # decomposition via:
     # Cholesky(K(X, X) - bl_chol @ bl_chol^T)
