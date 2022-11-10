@@ -153,6 +153,8 @@
 <span class="sd">        &gt;&gt;&gt; list_gp = ModelListGP(gp1, gp2)</span>
 <span class="sd">        &gt;&gt;&gt; batch_gp = model_list_to_batched(list_gp)</span>
 <span class="sd">    """</span>
+    <span class="n">was_training</span> <span class="o">=</span> <span class="n">model_list</span><span class="o">.</span><span class="n">training</span>
+    <span class="n">model_list</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
     <span class="n">models</span> <span class="o">=</span> <span class="n">model_list</span><span class="o">.</span><span class="n">models</span>
     <span class="n">_check_compatibility</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
 
@@ -185,9 +187,6 @@
 
     <span class="c1"># construct the batched GP model</span>
     <span class="n">input_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">input_transform</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-
     <span class="n">batch_gp</span> <span class="o">=</span> <span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="n">adjusted_batch_keys</span><span class="p">,</span> <span class="n">non_adjusted_batch_keys</span> <span class="o">=</span> <span class="n">_get_adjusted_batch_keys</span><span class="p">(</span>
         <span class="n">batch_state_dict</span><span class="o">=</span><span class="n">batch_gp</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
@@ -227,7 +226,7 @@
     <span class="c1"># load the state dict into the new model</span>
     <span class="n">batch_gp</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">batch_state_dict</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">batch_gp</span></div>
+    <span class="k">return</span> <span class="n">batch_gp</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">was_training</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">_batched_kernel</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">batch_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
@@ -286,6 +285,8 @@
 <span class="sd">        &gt;&gt;&gt; batch_gp = SingleTaskGP(train_X, train_Y)</span>
 <span class="sd">        &gt;&gt;&gt; list_gp = batched_to_model_list(batch_gp)</span>
 <span class="sd">    """</span>
+    <span class="n">was_training</span> <span class="o">=</span> <span class="n">batch_model</span><span class="o">.</span><span class="n">training</span>
+    <span class="n">batch_model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
     <span class="c1"># TODO: Add support for HeteroskedasticSingleTaskGP.</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_model</span><span class="p">,</span> <span class="n">HeteroskedasticSingleTaskGP</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
@@ -296,8 +297,6 @@
             <span class="s2">"Conversion of MixedSingleTaskGP is currently not supported."</span>
         <span class="p">)</span>
     <span class="n">input_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch_model</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">input_transform</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
     <span class="n">outcome_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch_model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">batch_sd</span> <span class="o">=</span> <span class="n">batch_model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
 
@@ -352,7 +351,7 @@
         <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">sd</span><span class="p">)</span>
         <span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">ModelListGP</span><span class="p">(</span><span class="o">*</span><span class="n">models</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">ModelListGP</span><span class="p">(</span><span class="o">*</span><span class="n">models</span><span class="p">)</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">was_training</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="batched_multi_output_to_single_output"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.batched_multi_output_to_single_output">[docs]</a><span class="k">def</span> <span class="nf">batched_multi_output_to_single_output</span><span class="p">(</span>
@@ -389,6 +388,8 @@
 <span class="sd">        &gt;&gt;&gt; batch_mo_gp = SingleTaskGP(train_X, train_Y)</span>
 <span class="sd">        &gt;&gt;&gt; batch_so_gp = batched_multioutput_to_single_output(batch_gp)</span>
 <span class="sd">    """</span>
+    <span class="n">was_training</span> <span class="o">=</span> <span class="n">batch_mo_model</span><span class="o">.</span><span class="n">training</span>
+    <span class="n">batch_mo_model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
     <span class="c1"># TODO: Add support for HeteroskedasticSingleTaskGP.</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="n">HeteroskedasticSingleTaskGP</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
@@ -402,8 +403,6 @@
             <span class="s2">"Conversion of models with custom likelihoods is currently unsupported."</span>
         <span class="p">)</span>
     <span class="n">input_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">input_transform</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
     <span class="n">batch_sd</span> <span class="o">=</span> <span class="n">batch_mo_model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
 
     <span class="c1"># TODO: add support for outcome transforms.</span>
@@ -426,7 +425,7 @@
         <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span>
     <span class="n">single_outcome_model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">batch_sd</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">single_outcome_model</span></div>
+    <span class="k">return</span> <span class="n">single_outcome_model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">was_training</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">_get_adjusted_batch_keys</span><span class="p">(</span>

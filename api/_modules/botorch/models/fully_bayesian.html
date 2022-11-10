@@ -59,17 +59,16 @@
 
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">pyro</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">FixedNoiseGP</span><span class="p">,</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">validate_input_scaling</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.fully_bayesian</span> <span class="kn">import</span> <span class="n">FullyBayesianPosterior</span><span class="p">,</span> <span class="n">MCMC_DIM</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
@@ -81,6 +80,7 @@
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.likelihood</span> <span class="kn">import</span> <span class="n">Likelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.means.constant_mean</span> <span class="kn">import</span> <span class="n">ConstantMean</span>
 <span class="kn">from</span> <span class="nn">gpytorch.means.mean</span> <span class="kn">import</span> <span class="n">Mean</span>
+<span class="kn">from</span> <span class="nn">gpytorch.models.exact_gp</span> <span class="kn">import</span> <span class="n">ExactGP</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="n">MIN_INFERRED_NOISE_LEVEL</span> <span class="o">=</span> <span class="mf">1e-6</span>
@@ -321,7 +321,7 @@
         <span class="k">return</span> <span class="n">mean_module</span><span class="p">,</span> <span class="n">covar_module</span><span class="p">,</span> <span class="n">likelihood</span></div></div>
 
 
-<div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP">[docs]</a><span class="k">class</span> <span class="nc">SaasFullyBayesianSingleTaskGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
+<div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP">[docs]</a><span class="k">class</span> <span class="nc">SaasFullyBayesianSingleTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""A fully Bayesian single-task GP model with the SAAS prior.</span>
 
 <span class="sd">    This model assumes that the inputs have been normalized to [0, 1]^d and that</span>
@@ -385,11 +385,15 @@
         <span class="n">validate_input_scaling</span><span class="p">(</span>
             <span class="n">train_X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">train_Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Clamp after transforming</span>
             <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">train_Yvar</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">)</span>
 
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+        <span class="n">X_tf</span><span class="p">,</span> <span class="n">Y_tf</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">train_inputs</span><span class="o">=</span><span class="n">X_tf</span><span class="p">,</span> <span class="n">train_targets</span><span class="o">=</span><span class="n">Y_tf</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">GaussianLikelihood</span><span class="p">()</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="kc">None</span>
@@ -430,17 +434,15 @@
         <span class="sa">r</span><span class="sd">"""Batch shape of the model, equal to the number of MCMC samples.</span>
 <span class="sd">        Note that `SaasFullyBayesianSingleTaskGP` does not support batching</span>
 <span class="sd">        over input data at this point."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">num_mcmc_samples</span><span class="p">])</span>
 
-<div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP.fantasize"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.fantasize">[docs]</a>    <span class="k">def</span> <span class="nf">fantasize</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">sampler</span><span class="p">:</span> <span class="n">MCSampler</span><span class="p">,</span>
-        <span class="n">observation_noise</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FixedNoiseGP</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Fantasize is not implemented!"</span><span class="p">)</span></div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_aug_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""The batch shape of the model, augmented to include the output dim."""</span>
+        <span class="n">aug_batch_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">aug_batch_shape</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">aug_batch_shape</span>
 
 <div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP.train"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Puts the model in `train` mode."""</span>
@@ -498,9 +500,19 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="o">=</span><span class="n">state_dict</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
+        <span class="sd">"""</span>
+<span class="sd">        Unlike in other classes' `forward` methods, there is no `if self.training`</span>
+<span class="sd">        block, because it ought to be unreachable: If `self.train()` has been called,</span>
+<span class="sd">        then `self.covar_module` will be None, `check_if_fitted()` will fail, and the</span>
+<span class="sd">        rest of this method will not run.</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">))</span></div>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">)</span>
+        <span class="n">mean_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">covar_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar_x</span><span class="p">)</span></div>
 
+    <span class="c1"># pyre-ignore[14]: Inconsistent override</span>
 <div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>

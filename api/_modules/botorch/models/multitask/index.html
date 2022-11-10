@@ -54,6 +54,7 @@
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">MIN_INFERRED_NOISE_LEVEL</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">MultiTaskGPyTorchModel</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">FantasizeMixin</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.multitask</span> <span class="kn">import</span> <span class="n">MultitaskGPPosterior</span>
@@ -97,7 +98,7 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="MultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">MultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">MultiTaskGPyTorchModel</span><span class="p">):</span>
+<div class="viewcode-block" id="MultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">MultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">MultiTaskGPyTorchModel</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel, inferring observation noise.</span>
 
 <span class="sd">    Multi-task exact GP that uses a simple ICM kernel. Can be single-output or</span>
@@ -403,7 +404,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="KroneckerMultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">KroneckerMultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">GPyTorchModel</span><span class="p">):</span>
+<div class="viewcode-block" id="KroneckerMultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">KroneckerMultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
     <span class="sd">"""Multi-task GP with Kronecker structure, using an ICM kernel.</span>
 
 <span class="sd">    This model assumes the "block design" case, i.e., it requires that all tasks</span>

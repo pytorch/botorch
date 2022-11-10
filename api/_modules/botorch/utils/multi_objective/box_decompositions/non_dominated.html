@@ -373,6 +373,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            `(batch_shape)`-dim tensor containing the dominated hypervolume.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_neg_pareto_Y"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_neg_ref_point</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neg_pareto_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_neg_pareto_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
@@ -486,13 +489,15 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"hypercell_bounds"</span><span class="p">,</span> <span class="n">cell_bounds</span><span class="p">)</span>
 
-<div class="viewcode-block" id="FastNondominatedPartitioning.compute_hypervolume"><a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning.compute_hypervolume">[docs]</a>    <span class="k">def</span> <span class="nf">compute_hypervolume</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="FastNondominatedPartitioning.compute_hypervolume"><a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning.compute_hypervolume">[docs]</a>    <span class="k">def</span> <span class="nf">compute_hypervolume</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Compute hypervolume that is dominated by the Pareto Froniter.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A `(batch_shape)`-dim tensor containing the hypervolume dominated by</span>
 <span class="sd">                each Pareto frontier.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_neg_pareto_Y"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_neg_ref_point</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neg_pareto_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_neg_pareto_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
