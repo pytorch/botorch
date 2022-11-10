@@ -5,8 +5,8 @@ The release log for BoTorch.
 ## [0.7.3] - Nov 10, 2022
 
 ### Highlights
-* #1454 Fixes a critical bug that affected multi-output `BatchedMultiOutputGPyTorchModel`s that were using a `Normalize` or `InputStandardize` input transform and trained using `fit_gpytorch_model/mll` with `sequential=True` (was the default until 0.7.3). The input transform buffers would be reset after model training, leading to the model being trained on normalized input data but being evaluated on raw inputs. This bug was affecting model fits since the 0.6.5 release.
-* #1462, #1479 change the inheritance structure of `Model`s in a backwards incompatible way. If your code relies on `isinstance` checks with BoTorch `Model`s, you should revisit these checks to make sure they still work as expected.
+* #1454 fixes a critical bug that affected multi-output `BatchedMultiOutputGPyTorchModel`s that were using a `Normalize` or `InputStandardize` input transform and trained using `fit_gpytorch_model/mll` with `sequential=True` (which was the default until 0.7.3). The input transform buffers would be reset after model training, leading to the model being trained on normalized input data but evaluated on raw inputs. This bug had been affecting model fits since the 0.6.5 release.
+* #1479 changes the inheritance structure of `Model`s in a backwards-incompatible way. If your code relies on `isinstance` checks with BoTorch `Model`s, especially `SingleTaskGP`, you should revisit these checks to make sure they still work as expected.
 
 #### Compatibility
 * Require linear_operator == 0.2.0 (#1491).
@@ -23,7 +23,7 @@ The release log for BoTorch.
 * Expose `_aug_batch_shape` in `SaasFullyBayesianSingleTaskGP` (#1448).
 * Adjust `PairwiseGP` `ScaleKernel` prior (#1460).
 * Pull out `fantasize` method into a `FantasizeMixin` class, so it isn't so widely inherited (#1462, #1479).
-* Don't use Pyro jit by default (#1474).
+* Don't use Pyro JIT by default , since it was causing a memory leak (#1474).
 * Use `get_default_partitioning_alpha` for NEHVI input constructor (#1481).
 
 #### Bug Fixes
