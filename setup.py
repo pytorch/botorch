@@ -76,7 +76,7 @@ with open(os.path.join(root_dir, "README.md"), "r") as fh:
 setup(
     name="botorch",
     description="Bayesian Optimization in PyTorch",
-    author="Facebook, Inc.",
+    author="Meta Platforms, Inc.",
     license="MIT",
     url="https://botorch.org",
     project_urls={
