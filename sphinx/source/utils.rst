@@ -17,6 +17,11 @@ Containers
 .. automodule:: botorch.utils.containers
 		:members:
 
+Context Managers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.context_managers
+		:members:
+
 Datasets
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.datasets
