@@ -46,8 +46,21 @@ TFantasizeMixin = TypeVar("TFantasizeMixin", bound="FantasizeMixin")
 class Model(Module, ABC):
     r"""Abstract base class for BoTorch models.
 
-    Model cannot be used directly; it only defines an API for other BoTorch
+    `Model` cannot be used directly; it only defines an API for other BoTorch
     models.
+
+    `Model` subclasses `torch.nn.Module`. While a `Module` is most typically
+    encountered as a representation of a neural network layer, it can be used more
+    generally: see `documentation<NN>`_ on custom NN Modules.
+
+    Subclassing `Module` provides several pieces of  useful functionality: Attributes
+    of `Tensor` or `Module` type are automatically registered so they can be moved
+    and/or cast with `to`, automatically differentiated, and used with CUDA. Also,
+    `Model` subclasses are callable, provided that they implement a `forward` method. In
+    BoTorch, this typically computes the prior latent distribution at a point, e.g.
+    `multivariate_normal = SingleTaskGP(x)`.
+
+    .. _NN: https://pytorch.org/tutorials/beginner/examples_nn/polynomial_module.html
 
     Args:
         _has_transformed_inputs: A boolean denoting whether `train_inputs` are currently
@@ -215,7 +228,8 @@ class Model(Module, ABC):
         return super().eval()
 
     def train(self, mode: bool = True) -> Model:
-        r"""Puts the model in `train` mode and reverts to the original inputs.
+        r"""Put the model in `train` mode. Reverts to the original inputs if in `train`
+        mode (`mode=True`) or sets transformed inputs if in `eval` mode (`mode=False`).
 
         Args:
             mode: A boolean denoting whether to put in `train` or `eval` mode.
