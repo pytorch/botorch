@@ -6,7 +6,7 @@
 
 r"""Abstract base module for all BoTorch models.
 
-The base API module contains `Model`, the abstract base class for all BoTorch models,
+This module contains `Model`, the abstract base class for all BoTorch models,
 and `ModelList`, a container for a list of Models.
 """
 
