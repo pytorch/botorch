@@ -24,8 +24,8 @@ sys.path.append(base_path)
 # -- Project information -----------------------------------------------------
 
 project = "BoTorch"
-copyright = "2019, Facebook, Inc."
-author = "Facebook, Inc."
+copyright = "2019, Meta Platforms, Inc."
+author = "Meta Platforms, Inc."
 
 # get version string
 version = get_distribution("botorch").version
@@ -140,7 +140,13 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (index_doc, "botorch.tex", "BoTorch Documentation", "Facebook, Inc.", "manual")
+    (
+        index_doc,
+        "botorch.tex",
+        "BoTorch Documentation",
+        "Meta Platforms, Inc.",
+        "manual",
+    )
 ]
 
 
