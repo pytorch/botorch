@@ -57,7 +57,7 @@ class Model(Module, ABC):
 
     `Module` provides several pieces of useful functionality: A `Model`'s attributes of
     `Tensor` or `Module` type are automatically registered so they can be moved and/or
-     cast with the `to` method, automatically differentiated, and used with CUDA.
+    cast with the `to` method, automatically differentiated, and used with CUDA.
 
     Args:
         _has_transformed_inputs: A boolean denoting whether `train_inputs` are currently
