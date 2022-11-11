@@ -373,9 +373,10 @@ def get_weights_posterior(X: Tensor, y: Tensor, sigma_sq: Tensor) -> Multivariat
         L_A = psd_safe_cholesky(A)
         # solve L_A @ u = I
         Iw = torch.eye(L_A.shape[-1], dtype=X.dtype, device=X.device)
-        u = torch.triangular_solve(Iw, L_A, upper=False).solution
+        u = torch.linalg.solve_triangular(L_A, Iw, upper=False)
+
         # solve L_A^T @ S = u
-        A_inv = torch.triangular_solve(u, L_A.transpose(-2, -1)).solution
+        A_inv = torch.linalg.solve_triangular(L_A.transpose(-2, -1), u, upper=True)
         m = (A_inv @ X_trans @ y.unsqueeze(-1)).squeeze(-1)
         L = psd_safe_cholesky(A_inv * sigma_sq)
         return MultivariateNormal(loc=m, scale_tril=L)
