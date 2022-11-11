@@ -15,120 +15,25 @@ from __future__ import annotations
 from collections import OrderedDict
 from math import inf
 from numbers import Number
-from re import Pattern
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    NamedTuple,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-)
+from typing import Dict, List, Optional, Set, Tuple
+from warnings import warn
 
 import numpy as np
 import torch
-from torch.nn import Module, Parameter
-
-ParameterBounds = Dict[str, Tuple[Optional[float], Optional[float]]]
-
-
-class TorchAttr(NamedTuple):
-    shape: torch.Size
-    dtype: torch.dtype
-    device: torch.device
-
-
-def create_name_filter(
-    patterns: Iterator[Union[Pattern, str]]
-) -> Callable[[Union[str, Tuple[str, Any, ...]]], bool]:
-    r"""Returns a binary function that filters strings (or iterables whose first
-    element is a string) according to a bank of excluded patterns. Typically, used
-    in conjunction with generators such as `module.named_parameters()`.
-
-    Args:
-        patterns: A collection of regular expressions or strings that
-            define the set of names to be excluded.
-
-    Returns:
-        A binary function indicating whether or not an item should be filtered.
-    """
-    names = set()
-    _patterns = set()
-    for pattern in patterns:
-        if isinstance(pattern, str):
-            names.add(pattern)
-        elif isinstance(pattern, Pattern):
-            _patterns.add(pattern)
-        else:
-            raise TypeError
-
-    def name_filter(item: Union[str, Tuple[str, Any, ...]]) -> bool:
-        name = item if isinstance(item, str) else next(iter(item))
-        if name in names:
-            return False
-
-        for pattern in _patterns:
-            if pattern.search(name):
-                return False
-
-        return True
-
-    return name_filter
-
-
-def get_parameters_and_bounds(
-    module: Module,
-    name_filter: Optional[Callable[[str], bool]] = None,
-    requires_grad: Optional[bool] = None,
-    default_bounds: Tuple[float, float] = (-float("inf"), float("inf")),
-) -> Tuple[Dict[str, Parameter], Dict[str, ParameterBounds]]:
-    r"""Helper method for extracting parameters and feasible ranges thereof.
-
-    Args:
-        module: The target module from which parameters are to be extracted.
-        name_filter: Optional Boolean function used to filter parameters by name.
-        requires_grad: Optional Boolean used to filter parameters based on whether
-            or not their require_grad attribute matches the user provided value.
-        default_bounds: Default lower and upper bounds for constrained parameters
-            with `None` typed bounds.
-
-    Returns:
-        0: Dictionary mapping names to Parameters.
-        1: Dictionary mapping names of constrained parameters to ParameterBounds.
-    """
-    if hasattr(module, "named_parameters_and_constraints"):
-        bounds = {}
-        params = {}
-        for name, param, constraint in module.named_parameters_and_constraints():
-            if (requires_grad is None or (param.requires_grad == requires_grad)) and (
-                name_filter is None or name_filter(name)
-            ):
-                params[name] = param
-                if constraint is None:
-                    continue
-
-                bounds[name] = tuple(
-                    default if bound is None else constraint.inverse_transform(bound)
-                    for (bound, default) in zip(constraint, default_bounds)
-                )
-    else:
-        bounds = {}
-        params = {
-            name: param
-            for name, param in module.named_parameters()
-            if name_filter is None or name_filter(name)
-        }
-
-    return params, bounds
+from botorch.optim.utils import (
+    _get_extra_mll_args,
+    _handle_numerical_errors,
+    get_name_filter,
+    get_parameters_and_bounds,
+    TorchAttr,
+)
+from gpytorch.mlls import MarginalLogLikelihood
+from torch.nn import Module
 
 
 def module_to_array(
     module: Module,
-    bounds: Optional[ParameterBounds] = None,
+    bounds: Optional[Dict[str, Tuple[Optional[float], Optional[float]]]] = None,
     exclude: Optional[Set[str]] = None,
 ) -> Tuple[np.ndarray, Dict[str, TorchAttr], Optional[np.ndarray]]:
     r"""Extract named parameters from a module into a numpy array.
@@ -138,7 +43,7 @@ def module_to_array(
     Args:
         module: A module with parameters. May specify parameter constraints in
             a `named_parameters_and_constraints` method.
-        bounds: A ParameterBounds dictionary mapping parameter names to tuples
+        bounds: A dictionary mapping parameter names t lower and upper bounds.
             of lower and upper bounds. Bounds specified here take precedence
             over bounds on the same parameters specified in the constraints
             registered with the module.
@@ -156,9 +61,15 @@ def module_to_array(
         >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
         >>> parameter_array, property_dict, bounds_out = module_to_array(mll)
     """
+    warn(
+        "`module_to_array` is marked for deprecation, consider using "
+        "`get_parameters_and_bounds`, `get_parameters_as_ndarray_1d`, or "
+        "`get_bounds_as_ndarray` instead.",
+        DeprecationWarning,
+    )
     param_dict, bounds_dict = get_parameters_and_bounds(
         module=module,
-        name_filter=None if exclude is None else create_name_filter(exclude),
+        name_filter=None if exclude is None else get_name_filter(exclude),
         requires_grad=True,
     )
     if bounds is not None:
@@ -220,6 +131,11 @@ def set_params_with_array(
         >>> parameter_array += 0.1  # perturb parameters (for example only)
         >>> mll = set_params_with_array(mll, parameter_array,  property_dict)
     """
+    warn(
+        "`_set_params_with_array` is marked for deprecation, consider using "
+        "`set_parameters_from_ndarray_1d` instead.",
+        DeprecationWarning,
+    )
     param_dict = OrderedDict(module.named_parameters())
     start_idx = 0
     for p_name, attrs in property_dict.items():
@@ -240,3 +156,46 @@ def set_params_with_array(
         param_dict[p_name].copy_(new_data)
         param_dict[p_name].requires_grad_(True)
     return module
+
+
+def _scipy_objective_and_grad(
+    x: np.ndarray, mll: MarginalLogLikelihood, property_dict: Dict[str, TorchAttr]
+) -> Tuple[float, np.ndarray]:
+    r"""Get objective and gradient in format that scipy expects.
+
+    Args:
+        x: The (flattened) input parameters.
+        mll: The MarginalLogLikelihood module to evaluate.
+        property_dict: The property dictionary required to "unflatten" the input
+            parameter vector, as generated by `module_to_array`.
+
+    Returns:
+        2-element tuple containing
+
+        - The objective value.
+        - The gradient of the objective.
+    """
+    warn("`_scipy_objective_and_grad` is marked for deprecation.", DeprecationWarning)
+    mll = set_params_with_array(mll, x, property_dict)
+    train_inputs, train_targets = mll.model.train_inputs, mll.model.train_targets
+    mll.zero_grad()
+    try:  # catch linear algebra errors in gpytorch
+        output = mll.model(*train_inputs)
+        args = [output, train_targets] + _get_extra_mll_args(mll)
+        loss = -mll(*args).sum()
+    except RuntimeError as e:
+        return _handle_numerical_errors(error=e, x=x)
+    loss.backward()
+
+    i = 0
+    param_dict = OrderedDict(mll.named_parameters())
+    grad = np.zeros(sum([tattr.shape.numel() for tattr in property_dict.values()]))
+    for p_name in property_dict:
+        t = param_dict[p_name]
+        size = t.numel()
+        if t.requires_grad and t.grad is not None:
+            grad[i : i + size] = t.grad.detach().view(-1).cpu().double().clone().numpy()
+        i += size
+
+    mll.zero_grad()
+    return loss.item(), grad

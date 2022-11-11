@@ -13,7 +13,7 @@ from botorch.models import HigherOrderGP
 from botorch.models.higher_order_gp import FlattenedStandardize
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
-from botorch.optim.fit import fit_gpytorch_torch
+from botorch.optim.fit import fit_gpytorch_mll_torch
 from botorch.posteriors import GPyTorchPosterior, TransformedPosterior
 from botorch.sampling import IIDNormalSampler
 from botorch.utils.testing import BotorchTestCase
@@ -59,7 +59,7 @@ class TestHigherOrderGP(BotorchTestCase):
 
         for m in [self.model, model_2, model_3]:
             mll = ExactMarginalLogLikelihood(m.likelihood, m)
-            fit_gpytorch_torch(mll, options={"maxiter": 1, "disp": False})
+            fit_gpytorch_mll_torch(mll, step_limit=1)
 
     def test_num_output_dims(self):
         for dtype in [torch.float, torch.double]:
@@ -137,7 +137,7 @@ class TestHigherOrderGP(BotorchTestCase):
                 outcome_transform=FlattenedStandardize(train_y.shape[1:]),
             )
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            fit_gpytorch_torch(mll, options={"maxiter": 1, "disp": False})
+            fit_gpytorch_mll_torch(mll, step_limit=1)
 
             test_x = torch.rand(2, 5, 3, device=self.device, dtype=dtype)
             test_y = torch.randn(2, 5, 4, 5, device=self.device, dtype=dtype)

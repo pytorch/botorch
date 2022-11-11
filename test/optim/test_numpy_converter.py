@@ -4,15 +4,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from re import compile
-from string import ascii_lowercase
-from unittest.mock import MagicMock
+from math import pi
+from unittest.mock import MagicMock, patch
+from warnings import catch_warnings, simplefilter
 
 import numpy as np
 import torch
+from botorch.models import SingleTaskGP
+from botorch.optim import numpy_converter
 from botorch.optim.numpy_converter import (
-    create_name_filter,
-    get_parameters_and_bounds,
+    _scipy_objective_and_grad,
     module_to_array,
     set_params_with_array,
 )
@@ -34,43 +35,6 @@ def _get_index(property_dict, parameter_name):
     return idx
 
 
-class TestCreateNameFilter(BotorchTestCase):
-    def test_create_name_filter(self):
-        with self.assertRaises(TypeError):
-            create_name_filter(("foo", compile("bar"), 1))
-
-        names = ascii_lowercase
-        name_filter = create_name_filter(iter(names[1::2]))
-        self.assertEqual(names[::2], "".join(filter(name_filter, names)))
-
-        items = tuple(zip(names, range(len(names))))
-        self.assertEqual(items[::2], tuple(filter(name_filter, items)))
-
-
-class TestGetParametersAndBounds(BotorchTestCase):
-    def setUp(self):
-        self.module = GaussianLikelihood(
-            noise_constraint=GreaterThan(1e-6, initial_value=0.123),
-        )
-
-    def test_get_parameters_and_bounds(self):
-        module = GaussianLikelihood(
-            noise_constraint=GreaterThan(1e-6, initial_value=0.123),
-        )
-        param_dict, bounds_dict = get_parameters_and_bounds(module)
-        self.assertTrue(1 == len(param_dict) == len(bounds_dict))
-
-        name, bounds = next(iter(bounds_dict.items()))
-        self.assertEqual(name, "noise_covar.raw_noise")
-        self.assertEqual(bounds, (-float("inf"), float("inf")))
-
-        mock_module = torch.nn.Module()
-        mock_module.named_parameters = MagicMock(return_value=module.named_parameters())
-        param_dict2, bounds_dict2 = get_parameters_and_bounds(mock_module)
-        self.assertEqual(param_dict, param_dict2)
-        self.assertTrue(len(bounds_dict2) == 0)
-
-
 class TestModuleToArray(BotorchTestCase):
     def test_basic(self):
         for dtype in (torch.float, torch.double):
@@ -84,7 +48,9 @@ class TestModuleToArray(BotorchTestCase):
             model.to(device=self.device, dtype=dtype)
             mll = ExactMarginalLogLikelihood(likelihood, model)
             # test the basic case
-            x, pdict, bounds = module_to_array(module=mll)
+            with catch_warnings():
+                simplefilter("ignore", category=DeprecationWarning)
+                x, pdict, bounds = module_to_array(module=mll)
             self.assertTrue(np.array_equal(x, np.zeros(5)))
             expected_sizes = {
                 "likelihood.noise_covar.raw_noise": torch.Size([1]),
@@ -110,9 +76,11 @@ class TestModuleToArray(BotorchTestCase):
             model.to(device=self.device, dtype=dtype)
             mll = ExactMarginalLogLikelihood(likelihood, model)
             # test the basic case
-            x, pdict, bounds = module_to_array(
-                module=mll, exclude={"model.mean_module.raw_constant"}
-            )
+            with catch_warnings():
+                simplefilter("ignore", category=DeprecationWarning)
+                x, pdict, bounds = module_to_array(
+                    module=mll, exclude={"model.mean_module.raw_constant"}
+                )
             self.assertTrue(np.array_equal(x, np.zeros(4)))
             expected_sizes = {
                 "likelihood.noise_covar.raw_noise": torch.Size([1]),
@@ -137,9 +105,12 @@ class TestModuleToArray(BotorchTestCase):
             model.to(device=self.device, dtype=dtype)
             mll = ExactMarginalLogLikelihood(likelihood, model)
             # test the basic case
-            x, pdict, bounds = module_to_array(
-                module=mll, bounds={"model.covar_module.raw_lengthscale": (0.1, None)}
-            )
+            with catch_warnings():
+                simplefilter("ignore", category=DeprecationWarning)
+                x, pdict, bounds = module_to_array(
+                    module=mll,
+                    bounds={"model.covar_module.raw_lengthscale": (0.1, None)},
+                )
             self.assertTrue(np.array_equal(x, np.zeros(5)))
             expected_sizes = {
                 "likelihood.noise_covar.raw_noise": torch.Size([1]),
@@ -160,13 +131,15 @@ class TestModuleToArray(BotorchTestCase):
             self.assertTrue(np.equal(bounds[0], lower_exp).all())
             self.assertTrue(np.equal(bounds[1], np.full_like(x, np.inf)).all())
 
-            x, pdict, bounds = module_to_array(
-                module=mll,
-                bounds={
-                    key: (-float("inf"), float("inf"))
-                    for key, _ in mll.named_parameters()
-                },
-            )
+            with catch_warnings():
+                simplefilter("ignore", category=DeprecationWarning)
+                x, pdict, bounds = module_to_array(
+                    module=mll,
+                    bounds={
+                        key: (-float("inf"), float("inf"))
+                        for key, _ in mll.named_parameters()
+                    },
+                )
             self.assertIsNone(bounds)
 
     def test_module_bounds(self):
@@ -183,9 +156,12 @@ class TestModuleToArray(BotorchTestCase):
             model.to(device=self.device, dtype=dtype)
             mll = ExactMarginalLogLikelihood(likelihood, model)
             # test the basic case
-            x, pdict, bounds = module_to_array(
-                module=mll, bounds={"model.covar_module.raw_lengthscale": (0.1, None)}
-            )
+            with catch_warnings():
+                simplefilter("ignore", category=DeprecationWarning)
+                x, pdict, bounds = module_to_array(
+                    module=mll,
+                    bounds={"model.covar_module.raw_lengthscale": (0.1, None)},
+                )
             self.assertTrue(np.array_equal(x, np.zeros(5)))
             expected_sizes = {
                 "likelihood.noise_covar.raw_noise": torch.Size([1]),
@@ -216,12 +192,17 @@ class TestSetParamsWithArray(BotorchTestCase):
             model.mean_module = ConstantMean()
             model.to(device=self.device, dtype=dtype)
             mll = ExactMarginalLogLikelihood(likelihood, model)
-            # get parameters
-            x, pdict, bounds = module_to_array(module=mll)
 
-            # Set parameters
-            mll = set_params_with_array(mll, np.array([1.0, 2.0, 3.0, 4.0, 5.0]), pdict)
-            z = dict(mll.named_parameters())
+            with catch_warnings():
+                # Get parameters
+                simplefilter("ignore", category=DeprecationWarning)
+                x, pdict, bounds = module_to_array(module=mll)
+
+                # Set parameters
+                mll = set_params_with_array(
+                    mll, np.array([1.0, 2.0, 3.0, 4.0, 5.0]), pdict
+                )
+                z = dict(mll.named_parameters())
             self.assertTrue(
                 torch.equal(
                     z["likelihood.noise_covar.raw_noise"],
@@ -242,5 +223,48 @@ class TestSetParamsWithArray(BotorchTestCase):
             )
 
             # Extract again
-            x2, pdict2, bounds2 = module_to_array(module=mll)
+            with catch_warnings():
+                simplefilter("ignore", category=DeprecationWarning)
+                x2, pdict2, bounds2 = module_to_array(module=mll)
             self.assertTrue(np.array_equal(x2, np.array([1.0, 2.0, 3.0, 4.0, 5.0])))
+
+
+class TestScipyObjectiveAndGrad(BotorchTestCase):
+    def setUp(self):
+        with torch.random.fork_rng():
+            torch.manual_seed(0)
+            train_X = torch.linspace(0, 1, 10).unsqueeze(-1)
+            train_Y = torch.sin((2 * pi) * train_X)
+            train_Y = train_Y + 0.1 * torch.randn_like(train_Y)
+
+        model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
+        self.mll = ExactMarginalLogLikelihood(model.likelihood, model)
+
+    def test_scipy_objective_and_grad(self):
+        with catch_warnings():
+            simplefilter("ignore", category=DeprecationWarning)
+            x, property_dict, bounds = module_to_array(module=self.mll)
+            loss, grad = _scipy_objective_and_grad(x, self.mll, property_dict)
+
+        _dist = self.mll.model(*self.mll.model.train_inputs)
+        _loss = -self.mll(_dist, self.mll.model.train_targets)
+        _loss.sum().backward()
+        _grad = torch.concat(
+            [self.mll.get_parameter(name).grad.view(-1) for name in property_dict]
+        )
+        self.assertEqual(loss, _loss.detach().sum().item())
+        self.assertTrue(np.allclose(grad, _grad.detach().numpy()))
+
+        def _getter(*args, **kwargs):
+            raise RuntimeError("foo")
+
+        _handler = MagicMock()
+
+        with catch_warnings(), patch.multiple(
+            numpy_converter,
+            _get_extra_mll_args=_getter,
+            _handle_numerical_errors=_handler,
+        ):
+            simplefilter("ignore", category=DeprecationWarning)
+            _scipy_objective_and_grad(x, self.mll, property_dict)
+        self.assertEqual(_handler.call_count, 1)
