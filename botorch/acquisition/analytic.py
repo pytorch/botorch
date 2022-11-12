@@ -373,7 +373,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         r"""Analytic Constrained Expected Improvement.
 
         Args:
-            model: A fitted single-outcome model.
+            model: A fitted multi-output model.
             best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
                 the best feasible function value observed so far (assumed noiseless).
             objective_index: The index of the objective.
