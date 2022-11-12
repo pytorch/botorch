@@ -195,7 +195,7 @@ class LinearTruncatedFidelityKernel(Kernel):
         if len(active_dimsM) == 0:
             raise RuntimeError(
                 "Input to LinearTruncatedFidelityKernel must have at least one "
-                " non-fidelity dimension"
+                "non-fidelity dimension."
             )
         x1_ = x1.index_select(dim=-1, index=active_dimsM)
         x2_ = x2.index_select(dim=-1, index=active_dimsM)
@@ -237,13 +237,3 @@ class LinearTruncatedFidelityKernel(Kernel):
             bias_factor = bias_factor.view(covar_biased.shape)
 
         return covar_unbiased + bias_factor * covar_biased
-
-    def __getitem__(self, index) -> LinearTruncatedFidelityKernel:
-        new_kernel = deepcopy(self)
-        new_kernel.covar_module_unbiased = new_kernel.covar_module_unbiased[index]
-        new_kernel.covar_module_biased = new_kernel.covar_module_biased[index]
-        new_kernel.raw_power = torch.nn.Parameter(new_kernel.raw_power[index])
-        new_kernel.batch_shape = new_kernel.batch_shape[
-            1 if isinstance(index, int) else len(index) :
-        ]
-        return new_kernel
