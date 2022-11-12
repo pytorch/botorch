@@ -67,7 +67,6 @@ from botorch.acquisition.multi_objective.objective import (
 )
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
 from botorch.acquisition.objective import (
-    AcquisitionObjective,
     IdentityMCObjective,
     MCAcquisitionObjective,
     PosteriorTransform,
@@ -205,40 +204,6 @@ def _register_acqf_input_constructor(
     ACQF_INPUT_CONSTRUCTOR_REGISTRY[acqf_cls] = input_constructor
 
 
-# ------------------------- Deprecation Helpers ------------------------- #
-
-
-def _deprecate_objective_arg(
-    posterior_transform: Optional[PosteriorTransform] = None,
-    objective: Optional[AcquisitionObjective] = None,
-) -> Optional[PosteriorTransform]:
-    if posterior_transform is not None:
-        if objective is None:
-            return posterior_transform
-        else:
-            raise RuntimeError(
-                "Got both a non-MC objective (DEPRECATED) and a posterior "
-                "transform. Use only a posterior transform instead."
-            )
-    elif objective is not None:
-        warnings.warn(
-            "The `objective` argument to AnalyticAcquisitionFunctions is deprecated "
-            "and will be removed in the next version. Use `posterior_transform` "
-            "instead.",
-            DeprecationWarning,
-        )
-        if not isinstance(objective, ScalarizedObjective):
-            raise UnsupportedError(
-                "Analytic acquisition functions only support ScalarizedObjective "
-                "(DEPRECATED) type objectives."
-            )
-        return ScalarizedPosteriorTransform(
-            weights=objective.weights, offset=objective.offset
-        )
-    else:
-        return None
-
-
 # --------------------- Input argument constructors --------------------- #
 
 
@@ -262,10 +227,7 @@ def construct_inputs_analytic_base(
     """
     return {
         "model": model,
-        "posterior_transform": _deprecate_objective_arg(
-            posterior_transform=posterior_transform,
-            objective=kwargs.get("objective"),
-        ),
+        "posterior_transform": posterior_transform,
     }
 
 
@@ -1065,9 +1027,6 @@ def get_best_f_analytic(
         join_rule=lambda field_tensors: torch.cat(field_tensors, dim=-1),
     )
 
-    posterior_transform = _deprecate_objective_arg(
-        posterior_transform=posterior_transform, objective=kwargs.get("objective", None)
-    )
     if posterior_transform is not None:
         return posterior_transform.evaluate(Y).max(-1).values
     if Y.shape[-1] > 1:
@@ -1095,12 +1054,6 @@ def get_best_f_mc(
         join_rule=lambda field_tensors: torch.cat(field_tensors, dim=-1),
     )
 
-    posterior_transform = _deprecate_objective_arg(
-        posterior_transform=posterior_transform,
-        objective=objective
-        if not isinstance(objective, MCAcquisitionObjective)
-        else None,
-    )
     if posterior_transform is not None:
         # retain the original tensor dimension since objective expects explicit
         # output dimension.

@@ -39,7 +39,6 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
         self,
         model: Model,
         posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs,
     ) -> None:
         r"""Base constructor for analytic acquisition functions.
 
@@ -50,10 +49,6 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
                 single-output posterior is required.
         """
         super().__init__(model=model)
-        posterior_transform = self._deprecate_acqf_objective(
-            posterior_transform=posterior_transform,
-            objective=kwargs.get("objective"),
-        )
         if posterior_transform is None:
             if model.num_outputs != 1:
                 raise UnsupportedError(

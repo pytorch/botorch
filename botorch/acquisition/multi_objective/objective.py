@@ -11,7 +11,6 @@ from typing import List, Optional
 
 import torch
 from botorch.acquisition.objective import (
-    AcquisitionObjective,
     GenericMCObjective,
     MCAcquisitionObjective,
 )

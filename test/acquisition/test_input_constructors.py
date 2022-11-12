@@ -57,7 +57,6 @@ from botorch.acquisition.multi_objective.objective import (
 )
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
 from botorch.acquisition.objective import (
-    AcquisitionObjective,
     LinearMCObjective,
     ScalarizedObjective,
     ScalarizedPosteriorTransform,
@@ -80,10 +79,6 @@ from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
 class DummyAcquisitionFunction(AcquisitionFunction):
-    ...
-
-
-class DummyObjective(AcquisitionObjective):
     ...
 
 
@@ -156,21 +151,6 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
         )
         best_f_expected = (multi_Y.sum(dim=-1)).max()
         self.assertEqual(best_f, best_f_expected)
-
-    def test_deprecate_objective_arg(self):
-        objective = ScalarizedObjective(weights=torch.ones(1))
-        post_tf = ScalarizedPosteriorTransform(weights=torch.zeros(1))
-        with self.assertRaises(RuntimeError):
-            _deprecate_objective_arg(posterior_transform=post_tf, objective=objective)
-        with self.assertWarns(DeprecationWarning):
-            new_tf = _deprecate_objective_arg(objective=objective)
-        self.assertTrue(torch.equal(new_tf.weights, objective.weights))
-        self.assertIsInstance(new_tf, ScalarizedPosteriorTransform)
-        new_tf = _deprecate_objective_arg(posterior_transform=post_tf)
-        self.assertEqual(id(new_tf), id(post_tf))
-        self.assertIsNone(_deprecate_objective_arg())
-        with self.assertRaises(UnsupportedError):
-            _deprecate_objective_arg(objective=DummyObjective())
 
     @mock.patch("botorch.acquisition.input_constructors.optimize_acqf")
     def test_optimize_objective(self, mock_optimize_acqf):

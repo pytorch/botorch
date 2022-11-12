@@ -17,7 +17,6 @@ from botorch.utils.sampling import (
     manual_seed,
 )
 from botorch.utils.transforms import (
-    squeeze_last_dim,
     standardize,
     t_batch_mode_transform,
 )
@@ -35,7 +34,6 @@ __all__ = [
     "get_objective_weights_transform",
     "get_outcome_constraint_transforms",
     "manual_seed",
-    "squeeze_last_dim",
     "standardize",
     "t_batch_mode_transform",
 ]
