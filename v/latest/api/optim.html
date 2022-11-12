@@ -27,6 +27,122 @@
 <span id="botorch-optim"></span><h1>botorch.optim<a class="headerlink" href="#module-botorch.optim" title="Permalink to this heading">¶</a></h1>
 <section id="optimization">
 <h2>Optimization<a class="headerlink" href="#optimization" title="Permalink to this heading">¶</a></h2>
+<section id="module-botorch.optim.core">
+<span id="core"></span><h3>Core<a class="headerlink" href="#module-botorch.optim.core" title="Permalink to this heading">¶</a></h3>
+<p>Core abstractions and generic optimizers.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.optim.core.OptimizationStatus">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.core.</span></span><span class="sig-name descname"><span class="pre">OptimizationStatus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/core.html#OptimizationStatus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.core.OptimizationStatus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.optim.core.OptimizationStatus.RUNNING">
+<span class="sig-name descname"><span class="pre">RUNNING</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#botorch.optim.core.OptimizationStatus.RUNNING" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.optim.core.OptimizationStatus.SUCCESS">
+<span class="sig-name descname"><span class="pre">SUCCESS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#botorch.optim.core.OptimizationStatus.SUCCESS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.optim.core.OptimizationStatus.FAILURE">
+<span class="sig-name descname"><span class="pre">FAILURE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#botorch.optim.core.OptimizationStatus.FAILURE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.optim.core.OptimizationStatus.STOPPED">
+<span class="sig-name descname"><span class="pre">STOPPED</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#botorch.optim.core.OptimizationStatus.STOPPED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.optim.core.OptimizationResult">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.core.</span></span><span class="sig-name descname"><span class="pre">OptimizationResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Union[float,</span> <span class="pre">int]'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'OptimizationStatus'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runtime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[float]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[str]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/core.html#OptimizationResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.core.OptimizationResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>step</strong> (<em>int</em>) – </p></li>
+<li><p><strong>fval</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>int</em><em>]</em>) – </p></li>
+<li><p><strong>status</strong> (<a class="reference internal" href="#botorch.optim.core.OptimizationStatus" title="botorch.optim.core.OptimizationStatus"><em>OptimizationStatus</em></a>) – </p></li>
+<li><p><strong>runtime</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – </p></li>
+<li><p><strong>message</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.optim.core.OptimizationResult.step">
+<span class="sig-name descname"><span class="pre">step</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.optim.core.OptimizationResult.step" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.optim.core.OptimizationResult.fval">
+<span class="sig-name descname"><span class="pre">fval</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.optim.core.OptimizationResult.fval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.optim.core.OptimizationResult.status">
+<span class="sig-name descname"><span class="pre">status</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#botorch.optim.core.OptimizationStatus" title="botorch.optim.core.OptimizationStatus"><span class="pre">OptimizationStatus</span></a></em><a class="headerlink" href="#botorch.optim.core.OptimizationResult.status" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.optim.core.OptimizationResult.runtime">
+<span class="sig-name descname"><span class="pre">runtime</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.core.OptimizationResult.runtime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.optim.core.OptimizationResult.message">
+<span class="sig-name descname"><span class="pre">message</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.core.OptimizationResult.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.core.scipy_minimize">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.core.</span></span><span class="sig-name descname"><span class="pre">scipy_minimize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'L-BFGS-B'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/core.html#scipy_minimize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.core.scipy_minimize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generic scipy.optimize.minimize-based optimization routine.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>closure</strong> (<em>Union</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.closures.core.NdarrayOptimizationClosure" title="botorch.optim.closures.core.NdarrayOptimizationClosure"><em>NdarrayOptimizationClosure</em></a><em>]</em>) – Callable that returns a tensor and an iterable of gradient tensors or
+NdarrayOptimizationClosure instance.</p></li>
+<li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – A dictionary of tensors to be optimized.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A dictionary mapping parameter names to lower and upper bounds.</p></li>
+<li><p><strong>callback</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – A callable taking <cite>parameters</cite> and an OptimizationResult as arguments.</p></li>
+<li><p><strong>x0</strong> (<em>Optional</em><em>[</em><em>ndarray</em><em>]</em>) – An optional initialization vector passed to scipy.optimize.minimize.</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – Solver type, passed along to scipy.minimize.</p></li>
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Dictionary of solver options, passed along to scipy.minimize.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An OptimizationResult summarizing the final state of the run.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.core.torch_minimize">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.core.</span></span><span class="sig-name descname"><span class="pre">torch_minimize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer=&lt;class</span> <span class="pre">'torch.optim.adam.Adam'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_limit=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stopping_criterion=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/core.html#torch_minimize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.core.torch_minimize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generic torch.optim-based optimization routine.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>closure</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em>) – Callable that returns a tensor and an iterable of gradient tensors.
+Responsible for setting relevant parameters’ <cite>grad</cite> attributes.</p></li>
+<li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – A dictionary of tensors to be optimized.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – An optional dictionary of bounds for elements of <cite>parameters</cite>.</p></li>
+<li><p><strong>callback</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – A callable taking <cite>parameters</cite> and an OptimizationResult as arguments.</p></li>
+<li><p><strong>step_limit</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Integer specifying a maximum number of optimization steps.
+One of <cite>step_limit</cite> or <cite>stopping_criterion</cite> must be passed.</p></li>
+<li><p><strong>stopping_criterion</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>bool</em><em>]</em><em>]</em>) – A StoppingCriterion for the optimization loop.</p></li>
+<li><p><strong>optimizer</strong> (<em>Union</em><em>[</em><em>Optimizer</em><em>, </em><em>Callable</em><em>[</em><em>[</em><em>List</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>, </em><em>Optimizer</em><em>]</em><em>]</em>) – A <cite>torch.optim.Optimizer</cite> instance or a factory that takes
+a list of parameters and returns an <cite>Optimizer</cite> instance.</p></li>
+<li><p><strong>scheduler</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>_LRScheduler</em><em>, </em><em>Callable</em><em>[</em><em>[</em><em>Optimizer</em><em>]</em><em>, </em><em>_LRScheduler</em><em>]</em><em>]</em><em>]</em>) – A <cite>torch.optim.lr_scheduler._LRScheduler</cite> instance or a factory
+that takes a <cite>Optimizer</cite> instance and returns a <cite>_LRSchedule</cite> instance.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An OptimizationResult summarizing the final state of the run.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+</section>
 <section id="module-botorch.optim.optimize">
 <span id="acquisition-function-optimization"></span><h3>Acquisition Function Optimization<a class="headerlink" href="#module-botorch.optim.optimize" title="Permalink to this heading">¶</a></h3>
 <p>Methods for optimizing acquisition functions.</p>
@@ -366,28 +482,93 @@ a large training set.</p></li>
 <span id="model-fitting-optimization"></span><h3>Model Fitting Optimization<a class="headerlink" href="#module-botorch.optim.fit" title="Permalink to this heading">¶</a></h3>
 <p>Tools for model fitting.</p>
 <dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.fit.fit_gpytorch_mll_scipy">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_mll_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">closure_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'L-BFGS-B'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/fit.html#fit_gpytorch_mll_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.fit.fit_gpytorch_mll_scipy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generic scipy.optimized-based fitting routine for GPyTorch MLLs.</p>
+<p>The model and likelihood in mll must already be in train mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
+<li><p><strong>parameters</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Optional dictionary of parameters to be optimized. Defaults
+to all parameters of <cite>mll</cite> that require gradients.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A dictionary of user-specified bounds for <cite>parameters</cite>. Used to update
+default parameter bounds obtained from <cite>mll</cite>.</p></li>
+<li><p><strong>closure</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – Callable that returns a tensor and an iterable of gradient tensors.
+Responsible for setting the <cite>grad</cite> attributes of <cite>parameters</cite>. If no closure
+is provided, one will be obtained by calling <cite>get_loss_closure_with_grads</cite>.</p></li>
+<li><p><strong>closure_kwargs</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Keyword arguments passed to <cite>closure</cite>.</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – Solver type, passed along to scipy.minimize.</p></li>
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Dictionary of solver options, passed along to scipy.minimize.</p></li>
+<li><p><strong>callback</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – Optional callback taking <cite>parameters</cite> and an OptimizationResult as its
+sole arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The final OptimizationResult.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.fit.fit_gpytorch_mll_torch">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_mll_torch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">closure=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">closure_kwargs=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_limit=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stopping_criterion=&lt;botorch.optim.utils.common._TDefault</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer=&lt;class</span> <span class="pre">'torch.optim.adam.Adam'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/fit.html#fit_gpytorch_mll_torch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.fit.fit_gpytorch_mll_torch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generic torch.optim-based fitting routine for GPyTorch MLLs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
+<li><p><strong>parameters</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Optional dictionary of parameters to be optimized. Defaults
+to all parameters of <cite>mll</cite> that require gradients.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A dictionary of user-specified bounds for <cite>parameters</cite>. Used to update
+default parameter bounds obtained from <cite>mll</cite>.</p></li>
+<li><p><strong>closure</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – Callable that returns a tensor and an iterable of gradient tensors.
+Responsible for setting the <cite>grad</cite> attributes of <cite>parameters</cite>. If no closure
+is provided, one will be obtained by calling <cite>get_loss_closure_with_grads</cite>.</p></li>
+<li><p><strong>closure_kwargs</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Keyword arguments passed to <cite>closure</cite>.</p></li>
+<li><p><strong>step_limit</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Optional upper bound on the number of optimization steps.</p></li>
+<li><p><strong>stopping_criterion</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>bool</em><em>]</em><em>]</em>) – A StoppingCriterion for the optimization loop.</p></li>
+<li><p><strong>optimizer</strong> (<em>Union</em><em>[</em><em>Optimizer</em><em>, </em><em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Optimizer</em><em>]</em><em>]</em>) – A <cite>torch.optim.Optimizer</cite> instance or a factory that takes
+a list of parameters and returns an <cite>Optimizer</cite> instance.</p></li>
+<li><p><strong>scheduler</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>_LRScheduler</em><em>, </em><em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>_LRScheduler</em><em>]</em><em>]</em><em>]</em>) – A <cite>torch.optim.lr_scheduler._LRScheduler</cite> instance or a factory
+that takes an <cite>Optimizer</cite> instance and returns an <cite>_LRSchedule</cite>.</p></li>
+<li><p><strong>callback</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – Optional callback taking <cite>parameters</cite> and an OptimizationResult as its
+sole arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The final OptimizationResult.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.fit.fit_gpytorch_scipy">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='L-BFGS-B'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track_iterations=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approx_mll=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scipy_objective=&lt;function</span> <span class="pre">_scipy_objective_and_grad&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_to_array_func=&lt;function</span> <span class="pre">module_to_array&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_from_array_func=&lt;function</span> <span class="pre">set_params_with_array&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/fit.html#fit_gpytorch_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.fit.fit_gpytorch_scipy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fit a gpytorch model by maximizing MLL with a scipy optimizer.</p>
-<p>The model and likelihood in mll must already be in train mode.
-This method requires that the model has <cite>train_inputs</cite> and <cite>train_targets</cite>.</p>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='L-BFGS-B'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track_iterations=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approx_mll=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scipy_objective=&lt;function</span> <span class="pre">_scipy_objective_and_grad&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_to_array_func=&lt;function</span> <span class="pre">module_to_array&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_from_array_func=&lt;function</span> <span class="pre">set_params_with_array&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/fit.html#fit_gpytorch_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.fit.fit_gpytorch_scipy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Legacy method for scipy-based fitting of gpytorch models.</p>
+<p>The model and likelihood in mll must already be in train mode. This method requires
+that the model has <cite>train_inputs</cite> and <cite>train_targets</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
 <li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A dictionary mapping parameter names to tuples of lower and upper
 bounds.</p></li>
-<li><p><strong>method</strong> (<em>str</em>) – Solver type, passed along to scipy.minimize.</p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Dictionary of solver options, passed along to scipy.minimize.</p></li>
-<li><p><strong>track_iterations</strong> (<em>bool</em>) – Track the function values and wall time for each
-iteration.</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – Solver type, passed along to scipy.optimize.minimize.</p></li>
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Dictionary of solver options, passed along to scipy.optimize.minimize.</p></li>
 <li><p><strong>approx_mll</strong> (<em>bool</em>) – If True, use gpytorch’s approximate MLL computation. This is
 disabled by default since the stochasticity is an issue for
 determistic optimizers). Enabling this is only recommended when
 working with large training data sets (n&gt;2000).</p></li>
-<li><p><strong>scipy_objective</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>, </em><em>MarginalLogLikelihood</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.numpy_converter.TorchAttr" title="botorch.optim.numpy_converter.TorchAttr"><em>TorchAttr</em></a><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>ndarray</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>module_to_array_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Module</em><em>, </em><em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Set</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>ndarray</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.numpy_converter.TorchAttr" title="botorch.optim.numpy_converter.TorchAttr"><em>TorchAttr</em></a><em>]</em><em>, </em><em>Optional</em><em>[</em><em>ndarray</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>module_from_array_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Module</em><em>, </em><em>ndarray</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.numpy_converter.TorchAttr" title="botorch.optim.numpy_converter.TorchAttr"><em>TorchAttr</em></a><em>]</em><em>]</em><em>, </em><em>Module</em><em>]</em>) – </p></li>
+<li><p><strong>track_iterations</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>scipy_objective</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>, </em><em>MarginalLogLikelihood</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.utils.model_utils.TorchAttr" title="botorch.optim.utils.model_utils.TorchAttr"><em>TorchAttr</em></a><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>ndarray</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>module_to_array_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Module</em><em>, </em><em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Set</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>ndarray</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.utils.model_utils.TorchAttr" title="botorch.optim.utils.model_utils.TorchAttr"><em>TorchAttr</em></a><em>]</em><em>, </em><em>Optional</em><em>[</em><em>ndarray</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>module_from_array_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Module</em><em>, </em><em>ndarray</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.utils.model_utils.TorchAttr" title="botorch.optim.utils.model_utils.TorchAttr"><em>TorchAttr</em></a><em>]</em><em>]</em><em>, </em><em>Module</em><em>]</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -396,34 +577,26 @@ working with large training data sets (n&gt;2000).</p></li>
 - Dictionary with the following key/values:
 “fopt”: Best mll value.
 “wall_time”: Wall time of fitting.
-“iterations”: List of OptimizationIteration objects with information on each
+“iterations”: List of OptimizationResult objects with information on each
 iteration. If track_iterations is False, will be empty.
 “OptimizeResult”: The result returned by <cite>scipy.optim.minimize</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>MarginalLogLikelihood</em>, <em>Dict</em>[str, <em>Union</em>[float, <em>List</em>[<em>OptimizationIteration</em>]]]]</p>
+<dd class="field-odd"><p><em>Tuple</em>[<em>MarginalLogLikelihood</em>, <em>Dict</em>[str, <em>Union</em>[float, <em>List</em>[<a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a>]]]]</p>
 </dd>
 </dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gp</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">gp</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">gp</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fit_gpytorch_scipy</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-</pre></div>
-</div>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.fit.fit_gpytorch_torch">
 <span class="sig-prename descclassname"><span class="pre">botorch.optim.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_torch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_cls=&lt;class</span> <span class="pre">'torch.optim.adam.Adam'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track_iterations=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approx_mll=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/fit.html#fit_gpytorch_torch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.fit.fit_gpytorch_torch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fit a gpytorch model by maximizing MLL with a torch optimizer.</p>
+<dd><p>Legacy method for torch-based fitting of gpytorch models.</p>
 <p>The model and likelihood in mll must already be in train mode.
 Note: this method requires that the model has <cite>train_inputs</cite> and <cite>train_targets</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A ParameterBounds dictionary mapping parameter names to tuples
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – An optional dictionary mapping parameter names to tuples
 of lower and upper bounds. Bounds specified here take precedence
 over bounds on the same parameters specified in the constraints
 registered with the module.</p></li>
@@ -432,12 +605,8 @@ registered with the module.</p></li>
 the <cite>optimizer_cls</cite>. Additionally, options can include: “disp”
 to specify whether to display model fitting diagnostics and “maxiter”
 to specify the maximum number of iterations.</p></li>
-<li><p><strong>track_iterations</strong> (<em>bool</em>) – Track the function values and wall time for each
-iteration.</p></li>
-<li><p><strong>approx_mll</strong> (<em>bool</em>) – If True, use gpytorch’s approximate MLL computation (
-according to the gpytorch defaults based on the training at size).
-Unlike for the deterministic algorithms used in fit_gpytorch_scipy,
-this is not an issue for stochastic optimizers.</p></li>
+<li><p><strong>track_iterations</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>approx_mll</strong> (<em>bool</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -446,11 +615,11 @@ this is not an issue for stochastic optimizers.</p></li>
 - Dictionary with the following key/values:
 “fopt”: Best mll value.
 “wall_time”: Wall time of fitting.
-“iterations”: List of OptimizationIteration objects with information on each
+“iterations”: List of OptimizationResult objects with information on each
 iteration. If track_iterations is False, will be empty.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>MarginalLogLikelihood</em>, <em>Dict</em>[str, <em>Union</em>[float, <em>List</em>[<em>OptimizationIteration</em>]]]]</p>
+<dd class="field-odd"><p><em>Tuple</em>[<em>MarginalLogLikelihood</em>, <em>Dict</em>[str, <em>Union</em>[float, <em>List</em>[<a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a>]]]]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -882,16 +1051,228 @@ true for all elements.</p>
 </dd></dl>
 </section>
 </section>
+<section id="closures">
+<h2>Closures<a class="headerlink" href="#closures" title="Permalink to this heading">¶</a></h2>
+<section id="id2">
+<h3>Core<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h3>
+<span class="target" id="module-botorch.optim.closures.core"></span><p>Core methods for building closures in torch and interfacing with numpy.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.optim.closures.core.ForwardBackwardClosure">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.closures.core.</span></span><span class="sig-name descname"><span class="pre">ForwardBackwardClosure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forward</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backward=&lt;function</span> <span class="pre">Tensor.backward&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reducer=&lt;built-in</span> <span class="pre">method</span> <span class="pre">sum</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_manager=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/closures/core.html#ForwardBackwardClosure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.closures.core.ForwardBackwardClosure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Wrapper for fused forward and backward closures.</p>
+<p>Initializes a ForwardBackwardClosure instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>closure</strong> – Callable that returns a tensor.</p></li>
+<li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – A dictionary of tensors whose <cite>grad</cite> fields are to be returned.</p></li>
+<li><p><strong>backward</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>None</em><em>]</em>) – Callable that takes the (reduced) output of <cite>forward</cite> and sets the
+<cite>grad</cite> attributes of tensors in <cite>parameters</cite>.</p></li>
+<li><p><strong>reducer</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Optional callable used to reduce the output of the forward pass.</p></li>
+<li><p><strong>callback</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – Optional callable that takes the reduced output of <cite>forward</cite> and
+the gradients of <cite>parameters</cite> as positional arguments.</p></li>
+<li><p><strong>context_manager</strong> (<em>Callable</em>) – A ContextManager used to wrap each forward-backward call.
+When passed as <cite>None</cite>, <cite>context_manager</cite> defaults to a <cite>zero_grad_ctx</cite>
+that zeroes the gradients of <cite>parameters</cite> upon entry.</p></li>
+<li><p><strong>forward</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.optim.closures.core.NdarrayOptimizationClosure">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.closures.core.</span></span><span class="sig-name descname"><span class="pre">NdarrayOptimizationClosure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_array=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_tensor=&lt;built-in</span> <span class="pre">method</span> <span class="pre">as_tensor</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_state=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_state=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_value=0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persistent=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/closures/core.html#NdarrayOptimizationClosure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.closures.core.NdarrayOptimizationClosure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Adds stateful behavior and a numpy.ndarray-typed API to a closure with an
+expected return type Tuple[Tensor, Union[Tensor, Sequence[Optional[Tensor]]]].</p>
+<p>Initializes a NdarrayOptimizationClosure instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>closure</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A ForwardBackwardClosure instance.</p></li>
+<li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – A dictionary of tensors representing the closure’s state.
+Expected to correspond with the first <cite>len(parameters)</cite> optional
+gradient tensors returned by <cite>closure</cite>.</p></li>
+<li><p><strong>as_array</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>ndarray</em><em>]</em>) – Callable used to convert tensors to ndarrays.</p></li>
+<li><p><strong>as_tensor</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – Callable used to convert ndarrays to tensors.</p></li>
+<li><p><strong>get_state</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>ndarray</em><em>]</em>) – Callable that returns the closure’s state as an ndarray. When
+passed as <cite>None</cite>, defaults to calling <cite>get_tensors_as_ndarray_1d</cite>
+on <cite>closure.parameters</cite> while passing <cite>as_array</cite> (if given by the user).</p></li>
+<li><p><strong>set_state</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>]</em><em>, </em><em>None</em><em>]</em>) – Callable that takes a 1-dimensional ndarray and sets the
+closure’s state. When passed as <cite>None</cite>, <cite>set_state</cite> defaults to
+calling <cite>set_tensors_from_ndarray_1d</cite> with <cite>closure.parameters</cite> and
+a given ndarray while passing <cite>as_tensor</cite>.</p></li>
+<li><p><strong>fill_value</strong> (<em>float</em>) – Fill value for parameters whose gradients are None. In most
+cases, <cite>fill_value</cite> should either be zero or NaN.</p></li>
+<li><p><strong>persistent</strong> (<em>bool</em>) – Boolean specifying whether an ndarray should be retained
+as a persistent buffer for gradients.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.optim.closures.core.NdarrayOptimizationClosure.state">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#botorch.optim.closures.core.NdarrayOptimizationClosure.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
+<section id="module-botorch.optim.closures.model_closures">
+<span id="model-fitting-closures"></span><h3>Model Fitting Closures<a class="headerlink" href="#module-botorch.optim.closures.model_closures" title="Permalink to this heading">¶</a></h3>
+<p>Utilities for building model-based closures.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.closures.model_closures.get_loss_closure">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.closures.model_closures.</span></span><span class="sig-name descname"><span class="pre">get_loss_closure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/closures/model_closures.html#get_loss_closure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.closures.model_closures.get_loss_closure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Public API for GetLossClosure dispatcher.</p>
+<p>This method, and the dispatcher that powers it, acts as a clearing house
+for factory functions that define how <cite>mll</cite> is evaluated.</p>
+<p>Users may specify custom evaluation routines by registering a factory function
+with GetLossClosure. These factories should be registered using the type signature</p>
+<blockquote>
+<div><p><cite>Type[MarginalLogLikeLihood], Type[Likelihood], Type[Model], Type[DataLoader]</cite>.</p>
+</div></blockquote>
+<p>The final argument, Type[DataLoader], is optional. Evaluation routines that obtain
+training data from, e.g., <cite>mll.model</cite> should register this argument as <cite>type(None)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A MarginalLogLikelihood instance whose negative defines the loss.</p></li>
+<li><p><strong>data_loader</strong> (<em>Optional</em><em>[</em><em>DataLoader</em><em>]</em>) – An optional DataLoader instance for cases where training
+data is passed in rather than obtained from <cite>mll.model</cite>.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A closure that takes zero positional arguments and returns the negated
+value of <cite>mll</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Callable</em>[[], <em>Tensor</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.closures.model_closures.get_loss_closure_with_grads">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.closures.model_closures.</span></span><span class="sig-name descname"><span class="pre">get_loss_closure_with_grads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backward=&lt;function</span> <span class="pre">Tensor.backward&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reducer=&lt;method</span> <span class="pre">'sum'</span> <span class="pre">of</span> <span class="pre">'torch._C._TensorBase'</span> <span class="pre">objects&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context_manager=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/closures/model_closures.html#get_loss_closure_with_grads"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.closures.model_closures.get_loss_closure_with_grads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Public API for GetLossClosureWithGrads dispatcher.</p>
+<p>In most cases, this method simply adds a backward pass to a loss closure obtained by
+calling <cite>get_loss_closure</cite>. For further details, see <cite>get_loss_closure</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A MarginalLogLikelihood instance whose negative defines the loss.</p></li>
+<li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – A dictionary of tensors whose <cite>grad</cite> fields are to be returned.</p></li>
+<li><p><strong>reducer</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Optional callable used to reduce the output of the forward pass.</p></li>
+<li><p><strong>data_loader</strong> (<em>Optional</em><em>[</em><em>DataLoader</em><em>]</em>) – An optional DataLoader instance for cases where training
+data is passed in rather than obtained from <cite>mll.model</cite>.</p></li>
+<li><p><strong>context_manager</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – An optional ContextManager used to wrap each forward-backward
+pass. Defaults to a <cite>zero_grad_ctx</cite> that zeroes the gradients of
+<cite>parameters</cite> upon entry. None may be passed as an alias for <cite>nullcontext</cite>.</p></li>
+<li><p><strong>backward</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>None</em><em>]</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A closure that takes zero positional arguments and returns the reduced and
+negated value of <cite>mll</cite> along with the gradients of <cite>parameters</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Callable</em>[[], <em>Tuple</em>[<em>Tensor</em>, <em>Tuple</em>[<em>Tensor</em>, …]]]</p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+</section>
 <section id="utilities">
 <h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this heading">¶</a></h2>
-<section id="module-botorch.optim.numpy_converter">
-<span id="numpy-torch-conversion-tools"></span><h3>Numpy - Torch Conversion Tools<a class="headerlink" href="#module-botorch.optim.numpy_converter" title="Permalink to this heading">¶</a></h3>
-<p>A converter that simplifies using numpy-based optimizers with generic torch
-<cite>nn.Module</cite> classes. This enables using a <cite>scipy.optim.minimize</cite> optimizer
-for optimizing module parameters.</p>
+<section id="module-botorch.optim.utils.common">
+<span id="general-optimization-utilities"></span><h3>General Optimization Utilities<a class="headerlink" href="#module-botorch.optim.utils.common" title="Permalink to this heading">¶</a></h3>
+<p>General-purpose optimization utilities.</p>
+</section>
+<section id="module-botorch.optim.utils.acquisition_utils">
+<span id="acquisition-optimization-utilities"></span><h3>Acquisition Optimization Utilities<a class="headerlink" href="#module-botorch.optim.utils.acquisition_utils" title="Permalink to this heading">¶</a></h3>
+<p>Utilities for maximizing acquisition functions.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.utils.acquisition_utils.columnwise_clamp">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.acquisition_utils.</span></span><span class="sig-name descname"><span class="pre">columnwise_clamp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_on_violation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/acquisition_utils.html#columnwise_clamp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.acquisition_utils.columnwise_clamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clamp values of a Tensor in column-wise fashion (with support for t-batches).</p>
+<p>This function is useful in conjunction with optimizers from the torch.optim
+package, which don’t natively handle constraints. If you apply this after
+a gradient step you can be fancy and call it “projected gradient descent”.
+This funtion is also useful for post-processing candidates generated by the
+scipy optimizer that satisfy bounds only up to numerical accuracy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – The <cite>b x n x d</cite> input tensor. If 2-dimensional, <cite>b</cite> is assumed to be 1.</p></li>
+<li><p><strong>lower</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The column-wise lower bounds. If scalar, apply bound to all columns.</p></li>
+<li><p><strong>upper</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The column-wise upper bounds. If scalar, apply bound to all columns.</p></li>
+<li><p><strong>raise_on_violation</strong> (<em>bool</em>) – If <cite>True</cite>, raise an exception when the elments in <cite>X</cite>
+are out of the specified bounds (up to numerical accuracy). This is
+useful for post-processing candidates generated by optimizers that
+satisfy imposed bounds only up to numerical accuracy.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The clamped tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.utils.acquisition_utils.fix_features">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.acquisition_utils.</span></span><span class="sig-name descname"><span class="pre">fix_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/acquisition_utils.html#fix_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.acquisition_utils.fix_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fix feature values in a Tensor.</p>
+<p>The fixed features will have zero gradient in downstream calculations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – input Tensor with shape <cite>… x p</cite>, where <cite>p</cite> is the number of features</p></li>
+<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em>) – A dictionary with keys as column indices and values
+equal to what the feature should be set to in <cite>X</cite>. If the value is
+None, that column is just considered fixed. Keys should be in the
+range <cite>[0, p - 1]</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The tensor X with fixed features.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.utils.acquisition_utils.get_X_baseline">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.acquisition_utils.</span></span><span class="sig-name descname"><span class="pre">get_X_baseline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/acquisition_utils.html#get_X_baseline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.acquisition_utils.get_X_baseline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract X_baseline from an acquisition function.</p>
+<p>This tries to find the baseline set of points. First, this checks if the
+acquisition function has an <cite>X_baseline</cite> attribute. If it does not,
+then this method attempts to use the model’s <cite>train_inputs</cite> as <cite>X_baseline</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>acq_function</strong> (<em>AcquisitionFunction</em>) – The acquisition function.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Optional</em>[<em>Tensor</em>]</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Returns</dt><dd><dl class="simple">
+<dt>An optional <cite>n x d</cite>-dim tensor of baseline points. This is None if no</dt><dd><p>baseline points are found.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+</section>
+<section id="module-botorch.optim.utils.model_utils">
+<span id="model-fitting-utilities"></span><h3>Model Fitting Utilities<a class="headerlink" href="#module-botorch.optim.utils.model_utils" title="Permalink to this heading">¶</a></h3>
+<p>Utilities for fitting and manipulating models.</p>
 <dl class="py class">
-<dt class="sig sig-object py" id="botorch.optim.numpy_converter.TorchAttr">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.numpy_converter.</span></span><span class="sig-name descname"><span class="pre">TorchAttr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/numpy_converter.html#TorchAttr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.optim.utils.model_utils.TorchAttr">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.model_utils.</span></span><span class="sig-name descname"><span class="pre">TorchAttr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/model_utils.html#TorchAttr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.model_utils.TorchAttr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <p>Create new instance of TorchAttr(shape, dtype, device)</p>
 <dl class="field-list simple">
@@ -904,24 +1285,84 @@ for optimizing module parameters.</p>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.optim.numpy_converter.TorchAttr.shape">
-<span class="sig-name descname"><span class="pre">shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Size</span></em><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr.shape" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.optim.utils.model_utils.TorchAttr.shape">
+<span class="sig-name descname"><span class="pre">shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Size</span></em><a class="headerlink" href="#botorch.optim.utils.model_utils.TorchAttr.shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.optim.numpy_converter.TorchAttr.dtype">
-<span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dtype</span></em><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr.dtype" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.optim.utils.model_utils.TorchAttr.dtype">
+<span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dtype</span></em><a class="headerlink" href="#botorch.optim.utils.model_utils.TorchAttr.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.optim.numpy_converter.TorchAttr.device">
-<span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">device</span></em><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr.device" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.optim.utils.model_utils.TorchAttr.device">
+<span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">device</span></em><a class="headerlink" href="#botorch.optim.utils.model_utils.TorchAttr.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 2</p>
 </dd></dl>
 </dd></dl>
 <dl class="py function">
-<dt class="sig sig-object py" id="botorch.optim.numpy_converter.create_name_filter">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.numpy_converter.</span></span><span class="sig-name descname"><span class="pre">create_name_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">patterns</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/numpy_converter.html#create_name_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.numpy_converter.create_name_filter" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.optim.utils.model_utils.get_data_loader">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.model_utils.</span></span><span class="sig-name descname"><span class="pre">get_data_loader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1024</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/model_utils.html#get_data_loader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.model_utils.get_data_loader" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>GPyTorchModel</em>) – </p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>DataLoader</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.utils.model_utils.get_parameters">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.model_utils.</span></span><span class="sig-name descname"><span class="pre">get_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requires_grad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/model_utils.html#get_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.model_utils.get_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper method for obtaining a module’s parameters and their respective ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<em>Module</em>) – The target module from which parameters are to be extracted.</p></li>
+<li><p><strong>requires_grad</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – Optional Boolean used to filter parameters based on whether
+or not their require_grad attribute matches the user provided value.</p></li>
+<li><p><strong>name_filter</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>bool</em><em>]</em><em>]</em>) – Optional Boolean function used to filter parameters by name.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary of parameters.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Tensor</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.utils.model_utils.get_parameters_and_bounds">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.model_utils.</span></span><span class="sig-name descname"><span class="pre">get_parameters_and_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requires_grad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(-inf,</span> <span class="pre">inf)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/model_utils.html#get_parameters_and_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.model_utils.get_parameters_and_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper method for obtaining a module’s parameters and their respective ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<em>Module</em>) – The target module from which parameters are to be extracted.</p></li>
+<li><p><strong>name_filter</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>bool</em><em>]</em><em>]</em>) – Optional Boolean function used to filter parameters by name.</p></li>
+<li><p><strong>requires_grad</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – Optional Boolean used to filter parameters based on whether
+or not their require_grad attribute matches the user provided value.</p></li>
+<li><p><strong>default_bounds</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Default lower and upper bounds for constrained parameters
+with <cite>None</cite> typed bounds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary of parameters and a dictionary of parameter bounds.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Tensor</em>], <em>Dict</em>[str, <em>Tuple</em>[<em>Optional</em>[float], <em>Optional</em>[float]]]]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.utils.model_utils.get_name_filter">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.model_utils.</span></span><span class="sig-name descname"><span class="pre">get_name_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">patterns</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/model_utils.html#get_name_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.model_utils.get_name_filter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a binary function that filters strings (or iterables whose first
 element is a string) according to a bank of excluded patterns. Typically, used
 in conjunction with generators such as <cite>module.named_parameters()</cite>.</p>
@@ -939,29 +1380,136 @@ define the set of names to be excluded.</p>
 </dl>
 </dd></dl>
 <dl class="py function">
-<dt class="sig sig-object py" id="botorch.optim.numpy_converter.get_parameters_and_bounds">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.numpy_converter.</span></span><span class="sig-name descname"><span class="pre">get_parameters_and_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requires_grad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(-inf,</span> <span class="pre">inf)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/numpy_converter.html#get_parameters_and_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.numpy_converter.get_parameters_and_bounds" title="Permalink to this definition">¶</a></dt>
-<dd><p>Helper method for extracting parameters and feasible ranges thereof.</p>
+<dt class="sig sig-object py" id="botorch.optim.utils.model_utils.sample_all_priors">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.model_utils.</span></span><span class="sig-name descname"><span class="pre">sample_all_priors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/model_utils.html#sample_all_priors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.model_utils.sample_all_priors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample from hyperparameter priors (in-place).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>Module</em>) – The target module from which parameters are to be extracted.</p></li>
-<li><p><strong>name_filter</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>bool</em><em>]</em><em>]</em>) – Optional Boolean function used to filter parameters by name.</p></li>
-<li><p><strong>requires_grad</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – Optional Boolean used to filter parameters based on whether
-or not their require_grad attribute matches the user provided value.</p></li>
-<li><p><strong>default_bounds</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Default lower and upper bounds for constrained parameters
-with <cite>None</cite> typed bounds.</p></li>
+<li><p><strong>model</strong> (<em>GPyTorchModel</em>) – A GPyTorchModel.</p></li>
+<li><p><strong>max_retries</strong> (<em>int</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Dictionary mapping names to Parameters.
-1: Dictionary mapping names of constrained parameters to ParameterBounds.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>0</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.utils.model_utils.allclose_mll">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.model_utils.</span></span><span class="sig-name descname"><span class="pre">allclose_mll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/model_utils.html#allclose_mll"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.model_utils.allclose_mll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience method for testing whether the log likelihoods produced by different
+MarginalLogLikelihood instances, when evaluated on their respective models’ training
+sets, are allclose.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>MarginalLogLikelihood</em>) – A MarginalLogLikelihood instance.</p></li>
+<li><p><strong>b</strong> (<em>MarginalLogLikelihood</em>) – A second MarginalLogLikelihood instance.</p></li>
+<li><p><strong>transform_a</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Optional callable used to post-transform log likelihoods under <cite>a</cite>.</p></li>
+<li><p><strong>transform_b</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Optional callable used to post-transform log likelihoods under <cite>b</cite>.</p></li>
+<li><p><strong>rtol</strong> (<em>float</em>) – Relative tolerance.</p></li>
+<li><p><strong>atol</strong> (<em>float</em>) – Absolute tolerance.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Boolean result of the allclose test.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+<section id="module-botorch.optim.utils.numpy_utils">
+<span id="numpy-torch-conversion-tools"></span><h3>Numpy - Torch Conversion Tools<a class="headerlink" href="#module-botorch.optim.utils.numpy_utils" title="Permalink to this heading">¶</a></h3>
+<p>Utilities for interfacing Numpy and Torch.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.utils.numpy_utils.as_ndarray">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.numpy_utils.</span></span><span class="sig-name descname"><span class="pre">as_ndarray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/numpy_utils.html#as_ndarray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.numpy_utils.as_ndarray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper for going from torch.Tensor to numpy.ndarray.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>values</strong> (<em>Tensor</em>) – Tensor to be converted to ndarray.</p></li>
+<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>dtype</em><em>]</em>) – Optional numpy.dtype for the converted tensor.</p></li>
+<li><p><strong>inplace</strong> (<em>bool</em>) – Boolean indicating whether memory should be shared if possible.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An ndarray with the same data as <cite>values</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.utils.numpy_utils.get_tensors_as_ndarray_1d">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.numpy_utils.</span></span><span class="sig-name descname"><span class="pre">get_tensors_as_ndarray_1d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_array=&lt;function</span> <span class="pre">as_ndarray&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/numpy_utils.html#get_tensors_as_ndarray_1d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.numpy_utils.get_tensors_as_ndarray_1d" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensors</strong> (<em>Union</em><em>[</em><em>Iterator</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>out</strong> (<em>Optional</em><em>[</em><em>ndarray</em><em>]</em>) – </p></li>
+<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>dtype</em><em>, </em><em>str</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>as_array</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>ndarray</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.utils.numpy_utils.set_tensors_from_ndarray_1d">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.numpy_utils.</span></span><span class="sig-name descname"><span class="pre">set_tensors_from_ndarray_1d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_tensor=&lt;built-in</span> <span class="pre">method</span> <span class="pre">as_tensor</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">object&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/numpy_utils.html#set_tensors_from_ndarray_1d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.numpy_utils.set_tensors_from_ndarray_1d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the values of one more tensors based off of a vector of assignments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensors</strong> (<em>Union</em><em>[</em><em>Iterator</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>array</strong> (<em>ndarray</em>) – </p></li>
+<li><p><strong>as_tensor</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.utils.numpy_utils.get_bounds_as_ndarray">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.numpy_utils.</span></span><span class="sig-name descname"><span class="pre">get_bounds_as_ndarray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/numpy_utils.html#get_bounds_as_ndarray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.numpy_utils.get_bounds_as_ndarray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper method for extracting a module’s parameters and their respective
+ranges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> – The target module from which parameters are to be extracted.</p></li>
+<li><p><strong>name_filter</strong> – Optional Boolean function used to filter parameters by name.</p></li>
+<li><p><strong>requires_grad</strong> – Optional Boolean used to filter parameters based on whether
+or not their require_grad attribute matches the user provided value.</p></li>
+<li><p><strong>default_bounds</strong> – Default lower and upper bounds for constrained parameters
+with <cite>None</cite> typed bounds.</p></li>
+<li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>bounds</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary of parameters and a dictionary of parameter bounds.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Optional</em>[<em>ndarray</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+<section id="module-botorch.optim.numpy_converter">
+<span id="numpy-torch-conversion-tools-old"></span><h3>Numpy - Torch Conversion Tools (OLD)<a class="headerlink" href="#module-botorch.optim.numpy_converter" title="Permalink to this heading">¶</a></h3>
+<p>A converter that simplifies using numpy-based optimizers with generic torch
+<cite>nn.Module</cite> classes. This enables using a <cite>scipy.optim.minimize</cite> optimizer
+for optimizing module parameters.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.numpy_converter.module_to_array">
 <span class="sig-prename descclassname"><span class="pre">botorch.optim.numpy_converter.</span></span><span class="sig-name descname"><span class="pre">module_to_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/numpy_converter.html#module_to_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.numpy_converter.module_to_array" title="Permalink to this definition">¶</a></dt>
@@ -972,7 +1520,7 @@ with <cite>None</cite> typed bounds.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>module</strong> (<em>Module</em>) – A module with parameters. May specify parameter constraints in
 a <cite>named_parameters_and_constraints</cite> method.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A ParameterBounds dictionary mapping parameter names to tuples
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A dictionary mapping parameter names t lower and upper bounds.
 of lower and upper bounds. Bounds specified here take precedence
 over bounds on the same parameters specified in the constraints
 registered with the module.</p></li>
@@ -988,7 +1536,7 @@ parameter.
 one constraint is finite, and None otherwise.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>ndarray</em>, <em>Dict</em>[str, <a class="reference internal" href="#botorch.optim.numpy_converter.TorchAttr" title="botorch.optim.numpy_converter.TorchAttr"><em>TorchAttr</em></a>], <em>Optional</em>[<em>ndarray</em>]]</p>
+<dd class="field-odd"><p><em>Tuple</em>[<em>ndarray</em>, <em>Dict</em>[str, <a class="reference internal" href="#botorch.optim.utils.model_utils.TorchAttr" title="botorch.optim.utils.model_utils.TorchAttr"><em>TorchAttr</em></a>], <em>Optional</em>[<em>ndarray</em>]]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -1006,7 +1554,7 @@ one constraint is finite, and None otherwise.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>module</strong> (<em>Module</em>) – Module with parameters to be set</p></li>
 <li><p><strong>x</strong> (<em>ndarray</em>) – Numpy array with parameter values</p></li>
-<li><p><strong>property_dict</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.numpy_converter.TorchAttr" title="botorch.optim.numpy_converter.TorchAttr"><em>TorchAttr</em></a><em>]</em>) – Dictionary of parameter names and torch attributes as
+<li><p><strong>property_dict</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.utils.model_utils.TorchAttr" title="botorch.optim.utils.model_utils.TorchAttr"><em>TorchAttr</em></a><em>]</em>) – Dictionary of parameter names and torch attributes as
 returned by module_to_array.</p></li>
 </ul>
 </dd>
@@ -1183,214 +1731,6 @@ type (“eq”, “ineq”), as expected by <cite>scipy.minimize</cite>.</p>
 </dl>
 </dd></dl>
 </section>
-<section id="module-botorch.optim.utils">
-<span id="general-optimization-utilities"></span><h3>General Optimization Utilities<a class="headerlink" href="#module-botorch.optim.utils" title="Permalink to this heading">¶</a></h3>
-<p>Utilities for optimization.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.optim.utils.sample_all_priors">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.</span></span><span class="sig-name descname"><span class="pre">sample_all_priors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#sample_all_priors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.sample_all_priors" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sample from hyperparameter priors (in-place).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>GPyTorchModel</em>) – A GPyTorchModel.</p></li>
-<li><p><strong>max_retries</strong> (<em>int</em>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.optim.utils.columnwise_clamp">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.</span></span><span class="sig-name descname"><span class="pre">columnwise_clamp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raise_on_violation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#columnwise_clamp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.columnwise_clamp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Clamp values of a Tensor in column-wise fashion (with support for t-batches).</p>
-<p>This function is useful in conjunction with optimizers from the torch.optim
-package, which don’t natively handle constraints. If you apply this after
-a gradient step you can be fancy and call it “projected gradient descent”.
-This funtion is also useful for post-processing candidates generated by the
-scipy optimizer that satisfy bounds only up to numerical accuracy.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – The <cite>b x n x d</cite> input tensor. If 2-dimensional, <cite>b</cite> is assumed to be 1.</p></li>
-<li><p><strong>lower</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The column-wise lower bounds. If scalar, apply bound to all columns.</p></li>
-<li><p><strong>upper</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The column-wise upper bounds. If scalar, apply bound to all columns.</p></li>
-<li><p><strong>raise_on_violation</strong> (<em>bool</em>) – If <cite>True</cite>, raise an exception when the elments in <cite>X</cite>
-are out of the specified bounds (up to numerical accuracy). This is
-useful for post-processing candidates generated by optimizers that
-satisfy imposed bounds only up to numerical accuracy.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The clamped tensor.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tensor</em></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.optim.utils.fix_features">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.</span></span><span class="sig-name descname"><span class="pre">fix_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#fix_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.fix_features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fix feature values in a Tensor.</p>
-<p>The fixed features will have zero gradient in downstream calculations.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – input Tensor with shape <cite>… x p</cite>, where <cite>p</cite> is the number of features</p></li>
-<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em>) – A dictionary with keys as column indices and values
-equal to what the feature should be set to in <cite>X</cite>. If the value is
-None, that column is just considered fixed. Keys should be in the
-range <cite>[0, p - 1]</cite>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The tensor X with fixed features.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tensor</em></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.optim.utils.get_X_baseline">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.</span></span><span class="sig-name descname"><span class="pre">get_X_baseline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#get_X_baseline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.get_X_baseline" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extract X_baseline from an acquisition function.</p>
-<p>This tries to find the baseline set of points. First, this checks if the
-acquisition function has an <cite>X_baseline</cite> attribute. If it does not,
-then this method attempts to use the model’s <cite>train_inputs</cite> as <cite>X_baseline</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>acq_function</strong> (<em>AcquisitionFunction</em>) – The acquisition function.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Optional</em>[<em>Tensor</em>]</p>
-</dd>
-</dl>
-<dl class="simple">
-<dt>Returns</dt><dd><dl class="simple">
-<dt>An optional <cite>n x d</cite>-dim tensor of baseline points. This is None if no</dt><dd><p>baseline points are found.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.optim.utils.del_attribute_ctx">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.</span></span><span class="sig-name descname"><span class="pre">del_attribute_ctx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enforce_hasattr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#del_attribute_ctx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.del_attribute_ctx" title="Permalink to this definition">¶</a></dt>
-<dd><p>Contextmanager for temporarily deleting attributes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>instance</strong> (<em>object</em>) – </p></li>
-<li><p><strong>attrs</strong> (<em>str</em>) – </p></li>
-<li><p><strong>enforce_hasattr</strong> (<em>bool</em>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Generator</em>[None, None, None]</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.optim.utils.requires_grad_ctx">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.</span></span><span class="sig-name descname"><span class="pre">requires_grad_ctx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assignments</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#requires_grad_ctx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.requires_grad_ctx" title="Permalink to this definition">¶</a></dt>
-<dd><p>Contextmanager for temporarily setting the requires_grad field of a module’s
-parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>Module</em>) – </p></li>
-<li><p><strong>assignments</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em>]</em>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Generator</em>[None, None, None]</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.optim.utils.parameter_rollback_ctx">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.</span></span><span class="sig-name descname"><span class="pre">parameter_rollback_ctx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requires_grad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#parameter_rollback_ctx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.parameter_rollback_ctx" title="Permalink to this definition">¶</a></dt>
-<dd><p>Contextmanager that exits by rolling back parameter values.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>Module</em>) – Module instance.</p></li>
-<li><p><strong>name_filter</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>bool</em><em>]</em><em>]</em>) – Optional Boolean function used to filter parameters by name.</p></li>
-<li><p><strong>requires_grad</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – Optional Boolean used to filter parameters based on whether
-or not their require_grad attribute matches the user provided value.</p></li>
-<li><p><strong>checkpoint</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>device</em><em>, </em><em>dtype</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – Optional cache of values and tensor metadata specifying the rollback
-state for the module (or some subset thereof).</p></li>
-<li><p><strong>**tkwargs</strong> (<em>Any</em>) – Keyword arguments passed to <cite>torch.Tensor.to</cite> when copying data from
-each tensor in <cite>module.state_dict()</cite> to the internally created checkpoint.
-Only adhered to when the <cite>checkpoint</cite> argument is None.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Yields<span class="colon">:</span></dt>
-<dd class="field-even"><p>A checkpoint dictionary for the module, mapping qualified names to cached values
-and tensor metadata. Any in-places changes to the checkpoint will be observed at
-rollback time. If the checkpoint is cleared, no rollback will occur.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Generator</em>[<em>Dict</em>[str, <em>Tensor</em>], None, None]</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.optim.utils.state_rollback_ctx">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.</span></span><span class="sig-name descname"><span class="pre">state_rollback_ctx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">tkwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#state_rollback_ctx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.state_rollback_ctx" title="Permalink to this definition">¶</a></dt>
-<dd><p>Contextmanager that exits by rolling back a module’s state_dict.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<em>Module</em>) – Module instance.</p></li>
-<li><p><strong>name_filter</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>bool</em><em>]</em><em>]</em>) – Optional Boolean function used to filter items by name.</p></li>
-<li><p><strong>checkpoint</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>device</em><em>, </em><em>dtype</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – Optional cache of values and tensor metadata specifying the rollback
-state for the module (or some subset thereof).</p></li>
-<li><p><strong>**tkwargs</strong> (<em>Any</em>) – Keyword arguments passed to <cite>torch.Tensor.to</cite> when copying data from
-each tensor in <cite>module.state_dict()</cite> to the internally created checkpoint.
-Only adhered to when the <cite>checkpoint</cite> argument is None.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Yields<span class="colon">:</span></dt>
-<dd class="field-even"><p>A checkpoint dictionary for the module, mapping qualified names to cached values
-and tensor metadata. Any in-places changes to the checkpoint will be observed at
-rollback time. If the checkpoint is cleared, no rollback will occur.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Generator</em>[<em>Dict</em>[str, <em>Tuple</em>[<em>Tensor</em>, <em>Dict</em>[str, <em>Union</em>[<em>device</em>, <em>dtype</em>]]]], None, None]</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.optim.utils.allclose_mll">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.</span></span><span class="sig-name descname"><span class="pre">allclose_mll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#allclose_mll"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.allclose_mll" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convenience method for testing whether the log likelihoods produced by different
-MarginalLogLikelihood instances, when evaluated on their respective models’ training
-sets, are allclose.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>a</strong> (<em>MarginalLogLikelihood</em>) – A MarginalLogLikelihood instance.</p></li>
-<li><p><strong>b</strong> (<em>MarginalLogLikelihood</em>) – A second MarginalLogLikelihood instance.</p></li>
-<li><p><strong>transform_a</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Optional callable used to post-transform log likelihoods under <cite>a</cite>.</p></li>
-<li><p><strong>transform_b</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Optional callable used to post-transform log likelihoods under <cite>b</cite>.</p></li>
-<li><p><strong>rtol</strong> (<em>float</em>) – Relative tolerance.</p></li>
-<li><p><strong>atol</strong> (<em>float</em>) – Absolute tolerance.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Boolean result of the allclose test.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-</section>
 </section>
 </section>
 </div>
@@ -1438,7 +1778,7 @@ sets, are allclose.</p>
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/latest/" class="nav-home"><img src="/v/latest/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/latest/docs/introduction">Introduction</a><a href="/v/latest/docs/getting_started">Getting Started</a><a href="/v/latest/tutorials/">Tutorials</a><a href="/v/latest/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/latest/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/latest/" class="nav-home"><img src="/v/latest/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/latest/docs/introduction">Introduction</a><a href="/v/latest/docs/getting_started">Getting Started</a><a href="/v/latest/tutorials/">Tutorials</a><a href="/v/latest/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/latest/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {
