@@ -8,7 +8,6 @@ r"""Algorithms for partitioning the dominated space into hyperrectangles."""
 
 from __future__ import annotations
 
-import torch
 from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     FastPartitioning,
 )
@@ -39,7 +38,7 @@ class DominatedPartitioning(FastPartitioning):
             pareto_Y_sorted=self.pareto_Y.flip(-2),
             ref_point=self.ref_point,
         )
-        self.register_buffer("hypercell_bounds", cell_bounds)
+        self.hypercell_bounds = cell_bounds
 
     def _get_partitioning(self) -> None:
         r"""Get the bounds of each hypercell in the decomposition."""
@@ -49,22 +48,13 @@ class DominatedPartitioning(FastPartitioning):
         cell_bounds = -minimization_cell_bounds.flip(0)
         self.register_buffer("hypercell_bounds", cell_bounds)
 
-    def compute_hypervolume(self) -> Tensor:
+    def _compute_hypervolume_if_y_has_data(self) -> Tensor:
         r"""Compute hypervolume that is dominated by the Pareto Frontier.
 
         Returns:
             A `(batch_shape)`-dim tensor containing the hypervolume dominated by
                 each Pareto frontier.
         """
-        if not hasattr(self, "_neg_pareto_Y"):
-            return torch.tensor(0.0).to(self._neg_ref_point)
-
-        if self._neg_pareto_Y.shape[-2] == 0:
-            return torch.zeros(
-                self._neg_pareto_Y.shape[:-2],
-                dtype=self._neg_pareto_Y.dtype,
-                device=self._neg_pareto_Y.device,
-            )
         return (
             (self.hypercell_bounds[1] - self.hypercell_bounds[0])
             .prod(dim=-1)
@@ -77,4 +67,4 @@ class DominatedPartitioning(FastPartitioning):
         cell_bounds = self.ref_point.expand(
             2, *self._neg_pareto_Y.shape[:-2], 1, self.num_outcomes
         ).clone()
-        self.register_buffer("hypercell_bounds", cell_bounds)
+        self.hypercell_bounds = cell_bounds

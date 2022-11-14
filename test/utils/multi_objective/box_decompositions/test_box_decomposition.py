@@ -32,7 +32,7 @@ class DummyBoxDecomposition(BoxDecomposition):
     def _partition_space(self):
         pass
 
-    def compute_hypervolume(self):
+    def _compute_hypervolume_if_y_has_data(self):
         pass
 
     def get_hypercell_bounds(self):
@@ -66,7 +66,7 @@ class TestBoxDecomposition(BotorchTestCase):
             device=self.device,
         )
 
-    def test_box_decomposition(self):
+    def test_box_decomposition(self) -> None:
         with self.assertRaises(TypeError):
             BoxDecomposition()
         for dtype, m, sort in product(
@@ -271,7 +271,7 @@ class TestBoxDecomposition(BotorchTestCase):
                     DummyFastPartitioning(ref_point=ref_point, Y=Y.unsqueeze(0))
 
 
-class TestBoxDecomposition_Hypervolume(BotorchTestCase):
+class TestBoxDecomposition_no_set_up(BotorchTestCase):
     def helper_hypervolume(self, Box_Decomp_cls: type) -> None:
         """
         This test should be run for each non-abstract subclass of `BoxDecomposition`.
@@ -292,7 +292,6 @@ class TestBoxDecomposition_Hypervolume(BotorchTestCase):
 
         box_decomp = Box_Decomp_cls(ref_point=ref_point, Y=Y)
         hv = box_decomp.compute_hypervolume()
-
         self.assertEqual(hv.shape, ())
         self.assertTrue(torch.allclose(hv, torch.tensor(1.0)))
 
@@ -316,3 +315,11 @@ class TestBoxDecomposition_Hypervolume(BotorchTestCase):
             FastNondominatedPartitioning,
         ]:
             self.helper_hypervolume(cl)
+
+    def test_uninitialized_y(self) -> None:
+        ref_point = torch.zeros(2)
+        box_decomp = NondominatedPartitioning(ref_point=ref_point)
+        with self.assertRaises(BotorchError):
+            box_decomp.Y
+        with self.assertRaises(BotorchError):
+            box_decomp._compute_pareto_Y()

@@ -98,11 +98,8 @@ class NondominatedPartitioning(BoxDecomposition):
         # hypercells contains the indices of the (augmented) Pareto front
         # that specify that bounds of the each hypercell.
         # It is a `2 x num_cells x m`-dim tensor
-        self.register_buffer(
-            "hypercells",
-            torch.empty(
-                2, 0, self.num_outcomes, dtype=torch.long, device=self._neg_Y.device
-            ),
+        self.hypercells = torch.empty(
+            2, 0, self.num_outcomes, dtype=torch.long, device=self._neg_Y.device
         )
         outcome_idxr = torch.arange(
             self.num_outcomes, dtype=torch.long, device=self._neg_Y.device
@@ -216,7 +213,7 @@ class NondominatedPartitioning(BoxDecomposition):
             dim=-1,
         )
         # 2 x batch_shape x n_cells x 2
-        self.register_buffer("hypercells", torch.stack([lower, upper], dim=0))
+        self.hypercells = torch.stack([lower, upper], dim=0)
 
     def _get_augmented_pareto_front_indices(self) -> Tensor:
         r"""Get indices of augmented Pareto front."""
@@ -337,25 +334,7 @@ class NondominatedPartitioning(BoxDecomposition):
         view_shape = (2, *self.batch_shape, num_cells, self.num_outcomes)
         return cell_bounds_values.view(view_shape)
 
-    def compute_hypervolume(self) -> Tensor:
-        r"""Compute the hypervolume for the given reference point.
-
-        This method computes the hypervolume of the non-dominated space
-        and computes the difference between the hypervolume between the
-        ideal point and hypervolume of the non-dominated space.
-
-        Returns:
-            `(batch_shape)`-dim tensor containing the dominated hypervolume.
-        """
-        if not hasattr(self, "_neg_pareto_Y"):
-            return torch.tensor(0.0).to(self._neg_ref_point)
-
-        if self._neg_pareto_Y.shape[-2] == 0:
-            return torch.zeros(
-                self._neg_pareto_Y.shape[:-2],
-                dtype=self._neg_pareto_Y.dtype,
-                device=self._neg_pareto_Y.device,
-            )
+    def _compute_hypervolume_if_y_has_data(self) -> Tensor:
         ref_point = _expand_ref_point(
             ref_point=self.ref_point, batch_shape=self.batch_shape
         )
@@ -413,7 +392,7 @@ class FastNondominatedPartitioning(FastPartitioning):
             device=self._neg_pareto_Y.device,
         )
         cell_bounds[0] = self.ref_point
-        self.register_buffer("hypercell_bounds", cell_bounds)
+        self.hypercell_bounds = cell_bounds
 
     def _get_partitioning(self) -> None:
         r"""Compute non-dominated partitioning.
@@ -432,7 +411,7 @@ class FastNondominatedPartitioning(FastPartitioning):
             device=self._neg_ref_point.device,
         )
         # initialize local upper bounds for the second minimization problem
-        self.register_buffer("_U2", new_ref_point)
+        self._U2 = new_ref_point
         # initialize defining points for the second minimization problem
         # use ref point for maximization as the ideal point for minimization.
         self._Z2 = self.ref_point.expand(
@@ -450,7 +429,7 @@ class FastNondominatedPartitioning(FastPartitioning):
         cell_bounds = get_partition_bounds(
             Z=self._Z2, U=self._U2, ref_point=new_ref_point.view(-1)
         )
-        self.register_buffer("hypercell_bounds", cell_bounds)
+        self.hypercell_bounds = cell_bounds
 
     def _partition_space_2d(self) -> None:
         r"""Partition the non-dominated space into disjoint hypercells.
@@ -461,23 +440,9 @@ class FastNondominatedPartitioning(FastPartitioning):
             pareto_Y_sorted=self.pareto_Y.flip(-2),
             ref_point=self.ref_point,
         )
-        self.register_buffer("hypercell_bounds", cell_bounds)
+        self.hypercell_bounds = cell_bounds
 
-    def compute_hypervolume(self) -> Tensor:
-        r"""Compute hypervolume that is dominated by the Pareto Froniter.
-
-        Returns:
-            A `(batch_shape)`-dim tensor containing the hypervolume dominated by
-                each Pareto frontier.
-        """
-        if not hasattr(self, "_neg_pareto_Y"):
-            return torch.tensor(0.0).to(self._neg_ref_point)
-        if self._neg_pareto_Y.shape[-2] == 0:
-            return torch.zeros(
-                self._neg_pareto_Y.shape[:-2],
-                dtype=self._neg_pareto_Y.dtype,
-                device=self._neg_pareto_Y.device,
-            )
+    def _compute_hypervolume_if_y_has_data(self) -> Tensor:
         ideal_point = self.pareto_Y.max(dim=-2, keepdim=True).values
         total_volume = (
             (ideal_point.squeeze(-2) - self.ref_point).clamp_min(0.0).prod(dim=-1)
