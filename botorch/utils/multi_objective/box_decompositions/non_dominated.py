@@ -347,6 +347,9 @@ class NondominatedPartitioning(BoxDecomposition):
         Returns:
             `(batch_shape)`-dim tensor containing the dominated hypervolume.
         """
+        if not hasattr(self, "_neg_pareto_Y"):
+            return torch.tensor(0.0).to(self._neg_ref_point)
+
         if self._neg_pareto_Y.shape[-2] == 0:
             return torch.zeros(
                 self._neg_pareto_Y.shape[:-2],
@@ -460,13 +463,15 @@ class FastNondominatedPartitioning(FastPartitioning):
         )
         self.register_buffer("hypercell_bounds", cell_bounds)
 
-    def compute_hypervolume(self):
+    def compute_hypervolume(self) -> Tensor:
         r"""Compute hypervolume that is dominated by the Pareto Froniter.
 
         Returns:
             A `(batch_shape)`-dim tensor containing the hypervolume dominated by
                 each Pareto frontier.
         """
+        if not hasattr(self, "_neg_pareto_Y"):
+            return torch.tensor(0.0).to(self._neg_ref_point)
         if self._neg_pareto_Y.shape[-2] == 0:
             return torch.zeros(
                 self._neg_pareto_Y.shape[:-2],

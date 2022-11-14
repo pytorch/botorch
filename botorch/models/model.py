@@ -6,8 +6,8 @@
 
 r"""Abstract base module for all BoTorch models.
 
-Contains `Model`, the abstract base class for all BoTorch models, and
-`ModelList`, a container for a list of Models.
+This module contains `Model`, the abstract base class for all BoTorch models,
+and `ModelList`, a container for a list of Models.
 """
 
 from __future__ import annotations
@@ -46,8 +46,18 @@ TFantasizeMixin = TypeVar("TFantasizeMixin", bound="FantasizeMixin")
 class Model(Module, ABC):
     r"""Abstract base class for BoTorch models.
 
-    Model cannot be used directly; it only defines an API for other BoTorch
-    models.
+    The `Model` base class cannot be used directly; it only defines an API for other
+    BoTorch models.
+
+    `Model` subclasses `torch.nn.Module`. While a `Module` is most typically
+    encountered as a representation of a neural network layer, it can be used more
+    generally: see
+    `documentation <https://pytorch.org/tutorials/beginner/examples_nn/polynomial_module.html>`_
+    on custom NN Modules.
+
+    `Module` provides several pieces of useful functionality: A `Model`'s attributes of
+    `Tensor` or `Module` type are automatically registered so they can be moved and/or
+    cast with the `to` method, automatically differentiated, and used with CUDA.
 
     Args:
         _has_transformed_inputs: A boolean denoting whether `train_inputs` are currently
@@ -56,7 +66,7 @@ class Model(Module, ABC):
             `_revert_to_original_inputs`. Note that this is necessary since
             transform / untransform cycle introduces numerical errors which lead
             to upstream errors during training.
-    """
+    """  # noqa: E501
 
     _has_transformed_inputs: bool = False
     _original_train_inputs: Optional[Tensor] = None
@@ -215,7 +225,8 @@ class Model(Module, ABC):
         return super().eval()
 
     def train(self, mode: bool = True) -> Model:
-        r"""Puts the model in `train` mode and reverts to the original inputs.
+        r"""Put the model in `train` mode. Reverts to the original inputs if in `train`
+        mode (`mode=True`) or sets transformed inputs if in `eval` mode (`mode=False`).
 
         Args:
             mode: A boolean denoting whether to put in `train` or `eval` mode.

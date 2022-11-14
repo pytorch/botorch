@@ -16,6 +16,11 @@ from multipledispatch.dispatcher import (
 )
 
 
+def type_bypassing_encoder(arg: Any) -> Type:
+    # Allow type variables to be passed as pre-encoded arguments
+    return arg if isinstance(arg, type) else type(arg)
+
+
 class Dispatcher(MDDispatcher):
     r"""Clearing house for multiple dispatch functionality. This class extends
     `<multipledispatch.Dispatcher>` by: (i) generalizing the argument encoding

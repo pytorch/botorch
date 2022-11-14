@@ -15,6 +15,13 @@ from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     BoxDecomposition,
     FastPartitioning,
 )
+from botorch.utils.multi_objective.box_decompositions.dominated import (
+    DominatedPartitioning,
+)
+from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    FastNondominatedPartitioning,
+    NondominatedPartitioning,
+)
 from botorch.utils.multi_objective.box_decompositions.utils import (
     update_local_upper_bounds_incremental,
 )
@@ -262,3 +269,50 @@ class TestBoxDecomposition(BotorchTestCase):
             if m == 2:
                 with self.assertRaises(NotImplementedError):
                     DummyFastPartitioning(ref_point=ref_point, Y=Y.unsqueeze(0))
+
+
+class TestBoxDecomposition_Hypervolume(BotorchTestCase):
+    def helper_hypervolume(self, Box_Decomp_cls: type) -> None:
+        """
+        This test should be run for each non-abstract subclass of `BoxDecomposition`.
+        """
+        # batching
+        n_outcomes, batch_dim, n = 2, 3, 4
+
+        ref_point = torch.zeros(n_outcomes)
+        Y = torch.ones(batch_dim, n, n_outcomes)
+
+        box_decomp = Box_Decomp_cls(ref_point=ref_point, Y=Y)
+        hv = box_decomp.compute_hypervolume()
+        self.assertEqual(hv.shape, (batch_dim,))
+        self.assertTrue(torch.allclose(hv, torch.ones(batch_dim)))
+
+        # no batching
+        Y = torch.ones(n, n_outcomes)
+
+        box_decomp = Box_Decomp_cls(ref_point=ref_point, Y=Y)
+        hv = box_decomp.compute_hypervolume()
+
+        self.assertEqual(hv.shape, ())
+        self.assertTrue(torch.allclose(hv, torch.tensor(1.0)))
+
+        # cases where there is nothing in Y, either because n=0 or Y is None
+        n = 0
+        Y_and_expected_shape = [
+            (torch.ones(batch_dim, n, n_outcomes), (batch_dim,)),
+            (torch.ones(n, n_outcomes), ()),
+            (None, ()),
+        ]
+        for Y, expected_shape in Y_and_expected_shape:
+            box_decomp = Box_Decomp_cls(ref_point=ref_point, Y=Y)
+            hv = box_decomp.compute_hypervolume()
+            self.assertEqual(hv.shape, expected_shape)
+            self.assertTrue(torch.allclose(hv, torch.tensor(0.0)))
+
+    def test_hypervolume(self) -> None:
+        for cl in [
+            NondominatedPartitioning,
+            DominatedPartitioning,
+            FastNondominatedPartitioning,
+        ]:
+            self.helper_hypervolume(cl)

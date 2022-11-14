@@ -10,95 +10,78 @@ from __future__ import annotations
 
 import logging
 from contextlib import nullcontext
-from re import compile, Pattern
-from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Type, Union
-from warnings import catch_warnings, simplefilter, warn, WarningMessage
+from functools import partial
+from itertools import filterfalse
+from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Type, Union
+from warnings import catch_warnings, simplefilter, warn, warn_explicit, WarningMessage
 
 from botorch.exceptions.errors import ModelFittingError, UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
+from botorch.models.approximate_gp import ApproximateGPyTorchModel
 from botorch.models.converter import batched_to_model_list, model_list_to_batched
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
-
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.model_list_gp_regression import ModelListGP
-from botorch.optim.fit import fit_gpytorch_scipy
+from botorch.optim.closures import get_loss_closure_with_grads
+from botorch.optim.core import _LBFGSB_MAXITER_MAXFUN_REGEX
+from botorch.optim.fit import fit_gpytorch_mll_scipy, fit_gpytorch_mll_torch
 from botorch.optim.utils import (
+    _warning_handler_template,
     allclose_mll,
-    del_attribute_ctx,
-    parameter_rollback_ctx,
-    requires_grad_ctx,
+    get_parameters,
     sample_all_priors,
-    state_rollback_ctx,
-    Tkwargs,
 )
 from botorch.settings import debug
-from botorch.utils.dispatcher import Dispatcher, MDNotImplementedError
+from botorch.utils.context_managers import (
+    del_attribute_ctx,
+    module_rollback_ctx,
+    parameter_rollback_ctx,
+    requires_grad_ctx,
+    TensorCheckpoint,
+)
+from botorch.utils.dispatcher import (
+    Dispatcher,
+    MDNotImplementedError,
+    type_bypassing_encoder,
+)
 from gpytorch.likelihoods import Likelihood
+from gpytorch.mlls._approximate_mll import _ApproximateMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from linear_operator.utils.errors import NotPSDError
 from pyro.infer.mcmc import MCMC, NUTS
 from torch import device, mean, Tensor
-
-OptimizerType = Callable[[MarginalLogLikelihood], Tuple[MarginalLogLikelihood, Any]]
-DEFAULT_LOGGING_PATTERNS: Dict[int, Pattern] = {
-    logging.DEBUG: compile(  # catch warning corresponding to `maxiter` and `maxfun`
-        "TOTAL NO. of (ITERATIONS REACHED LIMIT|f AND g EVALUATIONS EXCEEDS LIMIT)"
-    )
-}
+from torch.nn import Parameter
+from torch.utils.data import DataLoader
 
 
-def DEFAULT_WARNING_FILTER(
-    w: WarningMessage,
-    logging_patterns: Dict[int, Pattern] = DEFAULT_LOGGING_PATTERNS,
-) -> bool:
-    r"""Default warning resolution policy: retry upon encountering an
-    OptimizationWarning that does not match any logging pattern.
-
-    Args:
-        w: Candidate for filtering.
-        logging_patterns: Dictionary mapping logging levels to regular expressions.
-            Warning messages are compared against these expressions and matches are
-            awarded first-come-first-serve when iterating through the dictionary.
-
-    Returns:
-        Boolean indicating whether the warning is unresolved.
-    """
-    for level, pattern in logging_patterns.items():
-        if pattern.search(str(w.message)):
-            logging.log(level, w.message)
-            return False
-
-    # Rethrow OptimizationWarnings but mark them as resolved
-    if not issubclass(w.category, OptimizationWarning):
-        warn(w.message, w.category)
-        return False
-
-    return True
-
-
-# Dispatcher for `fit_gpytorch_mll`
-def _type_bypassing_encoder(arg: Any) -> Type:
-    # Allow type variables to be passed as pre-encoded arguments
-    return arg if isinstance(arg, type) else type(arg)
-
-
-dispatcher = Dispatcher("fit_gpytorch_mll", encoder=_type_bypassing_encoder)
+DEFAULT_WARNING_HANDLER = partial(
+    _warning_handler_template,
+    debug=lambda w: _LBFGSB_MAXITER_MAXFUN_REGEX.search(str(w.message)),
+    rethrow=lambda w: not issubclass(w.category, OptimizationWarning),
+)
+FitGPyTorchMLL = Dispatcher("fit_gpytorch_mll", encoder=type_bypassing_encoder)
 
 
 def fit_gpytorch_mll(
     mll: MarginalLogLikelihood,
+    closure: Optional[Callable[[], Tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
     optimizer: Optional[Callable] = None,
-    optimizer_kwargs: Optional[dict] = None,
+    closure_kwargs: Optional[Dict[str, Any]] = None,
+    optimizer_kwargs: Optional[Dict[str, Any]] = None,
     **kwargs: Any,
 ) -> MarginalLogLikelihood:
     r"""Clearing house for fitting models passed as GPyTorch MarginalLogLikelihoods.
 
     Args:
         mll: A GPyTorch MarginalLogLikelihood instance.
+        closure: Forward-backward closure for obtaining objective values and gradients.
+            Responsible for setting parameters' `grad` attributes. If no closure is
+            provided, one will be obtained by calling `get_loss_closure_with_grads`.
         optimizer: User specified optimization algorithm. When `optimizer is None`,
             this keyword argument is omitted when calling the dispatcher.
+        closure_kwargs: Keyword arguments passed when calling `closure`.
         optimizer_kwargs: A dictionary of keyword arguments passed when
             calling `optimizer`.
         **kwargs: Keyword arguments passed down through the dispatcher to
@@ -111,10 +94,12 @@ def fit_gpytorch_mll(
     if optimizer is not None:  # defer to per-method defaults
         kwargs["optimizer"] = optimizer
 
-    return dispatcher(
+    return FitGPyTorchMLL(
         mll,
         type(mll.likelihood),
         type(mll.model),
+        closure=closure,
+        closure_kwargs=closure_kwargs,
         optimizer_kwargs=optimizer_kwargs,
         **kwargs,
     )
@@ -122,7 +107,7 @@ def fit_gpytorch_mll(
 
 def fit_gpytorch_model(
     mll: MarginalLogLikelihood,
-    optimizer: Optional[OptimizerType] = None,
+    optimizer: Optional[Callable] = None,
     optimizer_kwargs: Optional[dict] = None,
     exclude: Optional[Iterable[str]] = None,
     max_retries: Optional[int] = None,
@@ -136,6 +121,7 @@ def fit_gpytorch_model(
         optimizer: User specified optimization algorithm. When `optimizer is None`,
             this keyword argument is omitted when calling the dispatcher from inside
             `fit_gpytorch_mll`.
+        optimizer_kwargs: Keyword arguments passed to `optimizer`.
         exclude: Legacy argument for specifying parameters `x` that should be held fixed
             during optimization. Internally, used to temporarily set `x.requires_grad`
             to False.
@@ -151,7 +137,7 @@ def fit_gpytorch_model(
         kwargs["max_attempts"] = max_retries
 
     optimizer_kwargs = {} if optimizer_kwargs is None else optimizer_kwargs
-    for key in ("bounds", "options", "track_iterations", "approx_mll"):
+    for key in ("bounds", "options"):
         if key not in kwargs:
             continue
 
@@ -179,16 +165,18 @@ def fit_gpytorch_model(
     return mll
 
 
-@dispatcher.register(MarginalLogLikelihood, object, object)
+@FitGPyTorchMLL.register(MarginalLogLikelihood, object, object)
 def _fit_fallback(
     mll: MarginalLogLikelihood,
     _: Type[object],
     __: Type[object],
     *,
-    optimizer: Optional[Callable] = fit_gpytorch_scipy,
-    optimizer_kwargs: Optional[dict] = None,
+    closure: Optional[Callable[[], Tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
+    optimizer: Optional[Callable] = fit_gpytorch_mll_scipy,
+    closure_kwargs: Optional[Dict[str, Any]] = None,
+    optimizer_kwargs: Optional[Dict[str, Any]] = None,
     max_attempts: int = 5,
-    warning_filter: Callable[[WarningMessage], bool] = DEFAULT_WARNING_FILTER,
+    warning_handler: Callable[[WarningMessage], bool] = DEFAULT_WARNING_HANDLER,
     caught_exception_types: Tuple[Type[BaseException], ...] = (NotPSDError,),
     **ignore: Any,
 ) -> MarginalLogLikelihood:
@@ -200,8 +188,12 @@ def _fit_fallback(
     by resampling tunable parameters.
 
     Args:
+        closure: Forward-backward closure for obtaining objective values and gradients.
+            Responsible for setting parameters' `grad` attributes. If no closure is
+            provided, one will be obtained by calling `get_loss_closure_with_grads`.
         optimizer: The underlying optimization algorithm to run.
-        optimizer_kwargs: Keyword arguments passed when calling `optimizer`.
+        closure_kwargs: Keyword arguments passed to `closure`.
+        optimizer_kwargs: Keyword arguments passed to `optimizer`.
         max_attempts: The maximum number of fit attempts allowed. The attempt budget
             is NOT shared between calls to this method.
         warning_filter: A function used to filter warnings produced when calling
@@ -215,34 +207,46 @@ def _fit_fallback(
         The `mll` instance. If fitting succeeded, then `mll` will be in evaluation mode,
         i.e. `mll.training == False`. Otherwise, `mll` will be in training mode.
     """
-    ckpt: Dict[str, Tuple[Tensor, Tkwargs]] = None  # lazy CPU-based checkpoint
-    ckpt_nograd: Dict[str, Tuple[Tensor, Tkwargs]] = None  # subset for fixed parameters
+    # Setup
     optimizer_kwargs = {} if optimizer_kwargs is None else optimizer_kwargs
+    params_nograd: Dict[str, Parameter] = None  # pyre-ignore [9]
+    ckpt_nograd: Dict[str, TensorCheckpoint] = None  # pyre-ignore [9]
+    ckpt: Dict[str, TensorCheckpoint] = None  # pyre-ignore [9]
 
+    # Build closure
     mll.train()
-    for attempt in range(1, 1 + max_attempts):
-        # Wrap with rollback contextmanager so each loop iteration reloads the original
-        # state_dict upon exiting (unless `ckpt` is cleared).
-        with state_rollback_ctx(mll, checkpoint=ckpt, device=device("cpu")) as ckpt:
-            if ckpt_nograd is None:
-                ckpt_nograd = {  # reuse cached values from primary checkpoint
-                    k: ckpt[k] for k, v in mll.named_parameters() if not v.requires_grad
-                }
+    if closure is None:
+        closure = get_loss_closure_with_grads(
+            mll, parameters=get_parameters(mll, requires_grad=True)
+        )
+    if closure_kwargs is not None:
+        closure = partial(closure, **closure_kwargs)
 
-            if attempt > 1:  # maybe resample parameters that require gradients
-                with parameter_rollback_ctx(mll, checkpoint=ckpt_nograd):
+    # Attempt to fit the model
+    for attempt in range(1, 1 + max_attempts):
+        # Wrap with rollback contextmanager so that each loop iteration reloads the
+        # original state_dict upon exiting (unless we clear `ckpt`).
+        with module_rollback_ctx(mll, checkpoint=ckpt, device=device("cpu")) as ckpt:
+            if attempt > 1:  # resample free parameters
+                if params_nograd is None:
+                    params_nograd = get_parameters(mll, requires_grad=False)
+
+                if ckpt_nograd is None:  # reuse primary checkpoint
+                    ckpt_nograd = {name: ckpt[name] for name in params_nograd}
+
+                with parameter_rollback_ctx(params_nograd, checkpoint=ckpt_nograd):
                     sample_all_priors(mll.model)
 
             try:
                 # Fit the model
                 with catch_warnings(record=True) as warning_list, debug(True):
                     simplefilter("always", category=OptimizationWarning)
-                    mll, _ = optimizer(mll, **optimizer_kwargs)
+                    optimizer(mll, closure=closure, **optimizer_kwargs)
 
-                # Resolve warning messages and determine whether or not to retry
+                # Resolved warnings and determine whether or not to retry
                 done = True
-                for unresolved_warning in filter(warning_filter, warning_list):
-                    warn(unresolved_warning.message, unresolved_warning.category)
+                for w in filterfalse(warning_handler, warning_list):
+                    warn_explicit(str(w.message), w.category, w.filename, w.lineno)
                     done = False
 
                 if done:
@@ -264,10 +268,14 @@ def _fit_fallback(
                     f"{err}",
                 )
 
-    raise ModelFittingError("All attempts to fit the model have failed.")
+    msg = "All attempts to fit the model have failed."
+    if debug.off():
+        msg = msg + " For more information, try enabling botorch.settings.debug mode."
+
+    raise ModelFittingError(msg)
 
 
-@dispatcher.register(SumMarginalLogLikelihood, Likelihood, ModelListGP)
+@FitGPyTorchMLL.register(SumMarginalLogLikelihood, object, ModelListGP)
 def _fit_list(
     mll: SumMarginalLogLikelihood,
     _: Type[Likelihood],
@@ -291,18 +299,26 @@ def _fit_list(
     return mll.eval() if not any(sub_mll.training for sub_mll in mll.mlls) else mll
 
 
-@dispatcher.register(MarginalLogLikelihood, Likelihood, BatchedMultiOutputGPyTorchModel)
+@FitGPyTorchMLL.register(
+    (MarginalLogLikelihood, _ApproximateMarginalLogLikelihood),
+    object,
+    BatchedMultiOutputGPyTorchModel,
+)
 def _fit_multioutput_independent(
     mll: MarginalLogLikelihood,
     _: Type[Likelihood],
     __: Type[BatchedMultiOutputGPyTorchModel],
     *,
+    closure: Optional[Callable[[], Tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
     sequential: bool = True,
     **kwargs: Any,
 ) -> MarginalLogLikelihood:
     r"""Fitting routine for multioutput Gaussian processes.
 
     Args:
+        closure: Forward-backward closure for obtaining objective values and gradients.
+            Responsible for setting parameters' `grad` attributes. If no closure is
+            provided, one will be obtained by calling `get_loss_closure_with_grads`.
         sequential: Boolean specifying whether or not to an attempt should be made to
             fit the model as a collection of independent GPs. Only relevant for
             certain types of GPs with independent outputs, see `batched_to_model_list`.
@@ -314,6 +330,7 @@ def _fit_multioutput_independent(
     """
     if (  # incompatible models
         not sequential
+        or closure is not None
         or mll.model.num_outputs == 1
         or mll.likelihood is not getattr(mll.model, "likelihood", None)
     ):
@@ -340,7 +357,7 @@ def _fit_multioutput_independent(
             # Repackage submodels and copy over state_dict
             repacked_model = model_list_to_batched(unpacked_mll.model.train())
             repacked_mll = type(mll)(repacked_model.likelihood, repacked_model)
-            with state_rollback_ctx(mll, device=device("cpu")) as ckpt:
+            with module_rollback_ctx(mll, device=device("cpu")) as ckpt:
                 mll.load_state_dict(repacked_mll.state_dict())
                 if not allclose_mll(a=mll, b=repacked_mll):
                     raise RuntimeError(  # validate model repacking
@@ -357,6 +374,55 @@ def _fit_multioutput_independent(
                 BotorchWarning,
             )
             raise MDNotImplementedError
+
+
+@FitGPyTorchMLL.register(_ApproximateMarginalLogLikelihood, object, object)
+def _fit_fallback_approximate(
+    mll: _ApproximateMarginalLogLikelihood,
+    _: Type[Likelihood],
+    __: Type[ApproximateGPyTorchModel],
+    *,
+    closure: Optional[Callable[[], Tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
+    data_loader: Optional[DataLoader] = None,
+    optimizer: Optional[Callable] = None,
+    full_batch_limit: int = 1024,  # TODO: To be determined.
+    **kwargs: Any,
+) -> _ApproximateMarginalLogLikelihood:
+    r"""Fallback method for fitting approximate Gaussian processes.
+
+    Args:
+        closure: Forward-backward closure for obtaining objective values and gradients.
+            Responsible for setting parameters' `grad` attributes. If no closure is
+            provided, one will be obtained by calling `get_loss_closure_with_grads`.
+        optimizer: The underlying optimization algorithm to run. Default to
+            `fit_gpytorch_mll_scipy` when `closure=None` and the model's internal
+            training set has no more than `full_batch_cutoff` observations; otherwise,
+            defaults to `fit_gpytorch_mll_torch`.
+        data_loader: An optional DataLoader to pass to `get_loss_closure_with_grads`.
+            May only be provided when `closure=None`.
+        full_batch_limit: Threshold for determining the default choice of `optimizer`
+            when `closure=None`.
+        **kwargs: Keyword arguments passed to `_fit_fallback`.
+    """
+    if data_loader is not None:
+        if closure is not None:
+            raise UnsupportedError(
+                "Only one of `data_loader` or `closure` may be passed."
+            )
+        closure = get_loss_closure_with_grads(
+            mll=mll,
+            data_loader=data_loader,
+            parameters=get_parameters(mll, requires_grad=True),
+        )
+
+    if optimizer is None:
+        optimizer = (
+            fit_gpytorch_mll_scipy
+            if closure is None and len(mll.model.train_targets) <= full_batch_limit
+            else fit_gpytorch_mll_torch
+        )
+
+    return _fit_fallback(mll, _, __, closure=closure, optimizer=optimizer, **kwargs)
 
 
 def fit_fully_bayesian_model_nuts(

@@ -16,7 +16,7 @@ Before jumping the gun, we recommend you start with the high-level
 - Python >= 3.8
 - PyTorch >= 1.11
 - gpytorch == 1.9.0
-- linear_operator == 0.1.1
+- linear_operator == 0.2.0
 - scipy
 - multiple-dispatch
 - pyro-ppl >= 1.8.2

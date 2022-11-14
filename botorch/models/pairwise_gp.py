@@ -818,7 +818,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
             # self.utility might be None if exception was raised and _update
             # was failed to be called during hyperparameter optimization
-            # procedures (e.g., fit_gpytorch_scipy)
+            # procedures (e.g., fit_gpytorch_mll_scipy)
             if self.utility is None:
                 self._update(transformed_dp)
 
