@@ -83,7 +83,6 @@ class qLowerBoundJointEntropySearch(qLowerBoundMultiObjectiveJointEntropySearch)
             hypercell_bounds=hypercell_bounds,
             X_pending=X_pending,
             estimation_type=estimation_type,
-            condition_on_samples=True,
             num_samples=num_samples,
         )
 

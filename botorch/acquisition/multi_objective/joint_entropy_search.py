@@ -5,8 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Acquisition functions for joint entropy search for multi-objective Bayesian
-optimization (JES).
+Acquisition functions for joint entropy search for Bayesian optimization (JES).
 
 References:
 
@@ -40,7 +39,6 @@ from torch.distributions import Normal
 class LowerBoundMultiObjectiveEntropySearch(AcquisitionFunction):
     r"""Abstract base class for the lower bound multi-objective entropy search
     acquisition functions.
-
     """
 
     def __init__(
@@ -52,7 +50,6 @@ class LowerBoundMultiObjectiveEntropySearch(AcquisitionFunction):
         X_pending: Optional[Tensor] = None,
         estimation_type: str = "LB",
         num_samples: int = 64,
-        condition_on_samples: bool = False,
         **kwargs: Any,
     ) -> None:
         r"""Lower bound multi-objective entropy search acquisition function.
@@ -75,8 +72,6 @@ class LowerBoundMultiObjectiveEntropySearch(AcquisitionFunction):
                 computed: "0", "LB", "LB2", or "MC".
             num_samples: The number of Monte Carlo samples for the Monte Carlo
                 estimate.
-            condition_on_samples: If true, we condition on the Pareto optimal
-                points.
         """
         super().__init__(model=model)
         # Batch GP models (e.g. fantasized models) are not currently supported
@@ -113,24 +108,6 @@ class LowerBoundMultiObjectiveEntropySearch(AcquisitionFunction):
         else:
             self.hypercell_bounds = hypercell_bounds
             self.num_pareto_samples = hypercell_bounds.shape[0]
-
-        # Condition the model on the sampled pareto optimal points.
-        # TODO: Apparently, we need to make a call to the posterior otherwise
-        #  we run into a gpytorch runtime error:
-        #  "Fantasy observations can only be added after making predictions with a
-        #  model so that all test independent caches exist."
-
-        if condition_on_samples:
-            with fantasize_flag():
-                with settings.propagate_grads(False):
-                    _ = self.initial_model.posterior(
-                        self.pareto_sets, observation_noise=False
-                    )
-                # Condition with observation noise.
-                self.conditional_model = self.initial_model.condition_on_observations(
-                    X=self.initial_model.transform_inputs(self.pareto_sets),
-                    Y=self.pareto_fronts,
-                )
 
         self.estimation_type = estimation_type
         estimation_types = ["0", "LB", "LB2", "MC"]
@@ -329,8 +306,24 @@ class qLowerBoundMultiObjectiveJointEntropySearch(
             X_pending=X_pending,
             estimation_type=estimation_type,
             num_samples=num_samples,
-            condition_on_samples=True,
         )
+
+        # Condition the model on the sampled pareto optimal points.
+        # TODO: Apparently, we need to make a call to the posterior otherwise
+        #  we run into a gpytorch runtime error:
+        #  "Fantasy observations can only be added after making predictions with a
+        #  model so that all test independent caches exist."
+
+        with fantasize_flag():
+            with settings.propagate_grads(False):
+                _ = self.initial_model.posterior(
+                    self.pareto_sets, observation_noise=False
+                )
+            # Condition with observation noise.
+            self.conditional_model = self.initial_model.condition_on_observations(
+                X=self.initial_model.transform_inputs(self.pareto_sets),
+                Y=self.pareto_fronts,
+            )
 
     def _compute_posterior_statistics(
         self, X: Tensor

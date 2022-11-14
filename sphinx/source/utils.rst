@@ -57,10 +57,6 @@ Sampling from GP priors
 .. automodule:: botorch.utils.gp_sampling
 		:members:
 
-Sampling Pareto optimal points
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.utils.sample_pareto
-		:members:
 
 Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

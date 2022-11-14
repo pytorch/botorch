@@ -6,7 +6,7 @@
 
 r"""
 Acquisition functions for max-value entropy search for multi-objective
-Bayesian optimization.
+Bayesian optimization (MESMO).
 
 References
 
@@ -230,7 +230,6 @@ class qLowerBoundMultiObjectiveMaxValueEntropySearch(
             X_pending=X_pending,
             estimation_type=estimation_type,
             num_samples=num_samples,
-            condition_on_samples=False,
         )
 
     def _compute_posterior_statistics(
