@@ -545,7 +545,11 @@ class qNoisyExpectedHypervolumeImprovement(
             samples = self.base_sampler(posterior)
             # cache posterior
             if self._cache_root:
-                self._cache_root_decomposition(posterior=posterior)
+                # Note that this implicitly uses LinearOperator's caching to check if
+                # the proper root decomposition has already been cached to
+                # `posterior.mvn.lazy_covariance_matrix`, which it may have been in
+                # the call to `self.base_sampler`, and computes it if not found
+                self._baseline_L = self._compute_root_decomposition(posterior=posterior)
             obj = self.objective(samples, X=self.X_baseline)
             if self.constraints is not None:
                 feas = torch.stack(

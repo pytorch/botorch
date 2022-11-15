@@ -254,6 +254,9 @@ class qNoisyExpectedImprovement(
             X_pending=X_pending,
         )
         self._setup(model=model, sampler=self.sampler, cache_root=cache_root)
+        # We make a copy here because we will write an attribute `base_samples`
+        # to `self.base_sampler.base_samples`, and we don't want to mutate
+        # `self.sampler`.
         self.base_sampler = deepcopy(self.sampler)
         if prune_baseline:
             X_baseline = prune_inferior_points(
@@ -272,13 +275,22 @@ class qNoisyExpectedImprovement(
                 posterior = self.model.posterior(
                     X_baseline, posterior_transform=self.posterior_transform
                 )
+                # Note: The root decomposition is cached in two different places. It
+                # may be confusing to have two different caches, but this is not
+                # trivial to change since each is needed for a different reason:
+                # - LinearOperator caching to `posterior.mvn` allows for reuse within
+                #  this function, which may be helpful if the same root decomposition
+                #  is produced by the calls to `self.base_sampler` and
+                #  `self._cache_root_decomposition`.
+                # - self._baseline_L allows a root decomposition to be persisted outside
+                #   this method.
                 baseline_samples = self.base_sampler(posterior)
             baseline_obj = self.objective(baseline_samples, X=X_baseline)
             self.register_buffer("baseline_samples", baseline_samples)
             self.register_buffer(
                 "baseline_obj_max_values", baseline_obj.max(dim=-1).values
             )
-            self._cache_root_decomposition(posterior=posterior)
+            self._baseline_L = self._compute_root_decomposition(posterior=posterior)
 
     def _set_sampler(
         self,
