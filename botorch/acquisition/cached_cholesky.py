@@ -103,7 +103,7 @@ class CachedCholeskyMCAcquisitionFunction(ABC):
     ) -> Tensor:
         r"""Cache Cholesky of the posterior covariance over f(X_baseline).
 
-        Because `LazyTensor.root_decomposition` is decorated with LinearOperator's
+        Because `LinearOperator.root_decomposition` is decorated with LinearOperator's
         @cached decorator, this function is doing a lot implicitly:
 
         1) Check if a root decomposition has already been cached to `lazy_covar`.
