@@ -105,6 +105,10 @@
     {
       "id": "constraint_active_search",
       "title": "Constraint Active Search for Multiobjective Experimental Design"
+    },
+    {
+      "id": "information_theoretic_acquisition_functions",
+      "title": "Information-theoretic acquisition functions"
     }
   ],
   "Advanced Usage": [

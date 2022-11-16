@@ -990,7 +990,7 @@ def _damped_update(
     fs = old_factor.shape
 
     df = damping_factor
-    for i in range(len(fs[len(bs) :])):
+    for _ in range(len(fs[len(bs) :])):
         df = df.unsqueeze(-1)
 
     return df * new_factor + (1 - df) * old_factor

@@ -13,7 +13,7 @@ from __future__ import annotations
 import math
 import warnings
 from math import ceil
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import torch
 from botorch import settings
@@ -337,7 +337,7 @@ def sample_optimal_points(
     ] = random_search_optimizer,
     num_rff_features: int = 512,
     maximize: bool = True,
-    optimizer_kwargs: dict = None,
+    optimizer_kwargs: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Tensor, Tensor]:
     r"""Compute a collection of optimal inputs and outputs from samples of a Gaussian
     Process (GP).
@@ -348,6 +348,9 @@ def sample_optimal_points(
 
     TODO: We can generalize the GP sampling step to accommodate for other sampling
         strategies rather than restricting to RFFs e.g. decoupled sampling.
+
+    TODO: Currently this defaults to random search optimization, might want to
+        explore some other alternatives.
 
     Args:
         model: The model. This does not support models which include fantasy
@@ -377,7 +380,7 @@ def sample_optimal_points(
                 "For single-objective optimization `num_points` should be 1."
             )
     if optimizer_kwargs is None:
-        optimizer_kwargs = dict()
+        optimizer_kwargs = {}
     pareto_sets = torch.zeros((num_samples, num_points, d), **tkwargs)
     pareto_fronts = torch.zeros((num_samples, num_points, M), **tkwargs)
     for i in range(num_samples):

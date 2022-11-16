@@ -260,7 +260,6 @@ class qLowerBoundMultiObjectiveMaxValueEntropySearch(
         tkwargs = {"dtype": X.dtype, "device": X.device}
         CLAMP_LB = torch.finfo(tkwargs["dtype"]).eps
 
-        posterior_statistics = dict()
         # Compute the initial entropy term depending on `X`.
         # TODO: Below we compute posterior_plus_noise twice:
         #  (1) Firstly, we compute p(Y| X, D_n) when computing the initial entropy
@@ -281,7 +280,7 @@ class qLowerBoundMultiObjectiveMaxValueEntropySearch(
         initial_entropy = add_term + 0.5 * torch.logdet(
             posterior_plus_noise.mvn.covariance_matrix
         )
-        posterior_statistics["initial_entropy"] = initial_entropy
+        posterior_statistics = {"initial_entropy": initial_entropy}
 
         # Compute the posterior entropy term.
         posterior_plus_noise = self.model.posterior(
