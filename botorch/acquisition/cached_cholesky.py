@@ -97,11 +97,23 @@ class CachedCholeskyMCAcquisitionFunction(ABC):
             cache_root = False
         self._cache_root = cache_root
 
-    def _cache_root_decomposition(
+    def _compute_root_decomposition(
         self,
         posterior: Posterior,
-    ) -> None:
+    ) -> Tensor:
         r"""Cache Cholesky of the posterior covariance over f(X_baseline).
+
+        Because `LinearOperator.root_decomposition` is decorated with LinearOperator's
+        @cached decorator, this function is doing a lot implicitly:
+
+        1) Check if a root decomposition has already been cached to `lazy_covar`.
+          Note that it will not have been if `posterior.mvn` is a
+          `MultitaskMultivariateNormal`, since we construct `lazy_covar` in that
+          case.
+        2) If the root decomposition has not been found in the cache, compute it.
+        3) Write it to the cache of `lazy_covar`. Note that this will become inacessible
+          if `posterior.mvn` is a `MultitaskMultivariateNormal`, since in that case
+          `lazy_covar`'s scope is only this function.
 
         Args:
             posterior: The posterior over f(X_baseline).
@@ -112,8 +124,7 @@ class CachedCholeskyMCAcquisitionFunction(ABC):
             lazy_covar = posterior.mvn.lazy_covariance_matrix
         with gpt_settings.fast_computations.covar_root_decomposition(False):
             lazy_covar_root = lazy_covar.root_decomposition()
-            baseline_L = lazy_covar_root.root.to_dense()
-        self.register_buffer("_baseline_L", baseline_L)
+        return lazy_covar_root.root.to_dense()
 
     def _get_f_X_samples(self, posterior: GPyTorchPosterior, q_in: int) -> Tensor:
         r"""Get posterior samples at the `q_in` new points from the joint posterior.

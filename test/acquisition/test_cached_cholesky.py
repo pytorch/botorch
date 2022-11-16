@@ -110,7 +110,9 @@ class TestCachedCholeskyMCAcquisitionFunction(BotorchTestCase):
                 with mock.patch(
                     CHOLESKY_PATH, return_value=baseline_L
                 ) as mock_cholesky:
-                    acqf._cache_root_decomposition(posterior=posterior)
+                    baseline_L_acqf = acqf._compute_root_decomposition(
+                        posterior=posterior
+                    )
                     mock_extract_batch_covar.assert_called_once_with(posterior.mvn)
                     mock_cholesky.assert_called_once()
             # test mvn
@@ -121,10 +123,12 @@ class TestCachedCholeskyMCAcquisitionFunction(BotorchTestCase):
                 with mock.patch(
                     CHOLESKY_PATH, return_value=baseline_L
                 ) as mock_cholesky:
-                    acqf._cache_root_decomposition(posterior=posterior)
+                    baseline_L_acqf = acqf._compute_root_decomposition(
+                        posterior=posterior
+                    )
                     mock_extract_batch_covar.assert_not_called()
                     mock_cholesky.assert_called_once()
-            self.assertTrue(torch.equal(acqf._baseline_L, baseline_L))
+            self.assertTrue(torch.equal(baseline_L_acqf, baseline_L))
 
     def test_get_f_X_samples(self):
         tkwargs = {"device": self.device}

@@ -577,7 +577,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
         pt = ScalarizedPosteriorTransform(weights=torch.tensor([-1]))
         with mock.patch.object(
             qNoisyExpectedImprovement,
-            "_cache_root_decomposition",
+            "_compute_root_decomposition",
         ) as mock_cache_root:
             acqf = qNoisyExpectedImprovement(
                 model=model,
