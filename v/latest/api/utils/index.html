@@ -2636,23 +2636,6 @@ that are sorted by the 0th dimension in increasing order.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning.compute_hypervolume">
-<span class="sig-name descname"><span class="pre">compute_hypervolume</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/dominated.html#DominatedPartitioning.compute_hypervolume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning.compute_hypervolume" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute hypervolume that is dominated by the Pareto Frontier.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><dl class="simple">
-<dt>A <cite>(batch_shape)</cite>-dim tensor containing the hypervolume dominated by</dt><dd><p>each Pareto frontier.</p>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
-</dd>
-</dl>
-</dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning.training" title="Permalink to this definition">¶</a></dt>
@@ -2939,22 +2922,6 @@ decomposition.</p></li>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.compute_hypervolume">
-<span class="sig-name descname"><span class="pre">compute_hypervolume</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/non_dominated.html#NondominatedPartitioning.compute_hypervolume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.compute_hypervolume" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute the hypervolume for the given reference point.</p>
-<p>This method computes the hypervolume of the non-dominated space
-and computes the difference between the hypervolume between the
-ideal point and hypervolume of the non-dominated space.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>(batch_shape)</cite>-dim tensor containing the dominated hypervolume.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
-</dd>
-</dl>
-</dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.training" title="Permalink to this definition">¶</a></dt>
@@ -2998,23 +2965,6 @@ the space dominated by that Pareto frontier.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bd</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y1</span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning.compute_hypervolume">
-<span class="sig-name descname"><span class="pre">compute_hypervolume</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/non_dominated.html#FastNondominatedPartitioning.compute_hypervolume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning.compute_hypervolume" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute hypervolume that is dominated by the Pareto Froniter.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><dl class="simple">
-<dt>A <cite>(batch_shape)</cite>-dim tensor containing the hypervolume dominated by</dt><dd><p>each Pareto frontier.</p>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Tensor</em></p>
-</dd>
-</dl>
-</dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning.training" title="Permalink to this definition">¶</a></dt>
