@@ -83,9 +83,11 @@ from botorch.acquisition.utils import (
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.deterministic import FixedSingleSampleModel
+from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.optim.optimize import optimize_acqf
-from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
+from botorch.sampling.base import MCSampler
+from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.containers import BotorchContainer
 from botorch.utils.datasets import BotorchDataset, SupervisedDataset
@@ -643,10 +645,10 @@ def construct_inputs_qUCB(
 def _get_sampler(mc_samples: int, qmc: bool) -> MCSampler:
     """Set up MC sampler for q(N)EHVI."""
     # initialize the sampler
-    seed = int(torch.randint(1, 10000, (1,)).item())
+    shape = torch.Size([mc_samples])
     if qmc:
-        return SobolQMCNormalSampler(num_samples=mc_samples, seed=seed)
-    return IIDNormalSampler(num_samples=mc_samples, seed=seed)
+        return SobolQMCNormalSampler(sample_shape=shape)
+    return IIDNormalSampler(sample_shape=shape)
 
 
 @acqf_input_constructor(ExpectedHypervolumeImprovement)
@@ -756,7 +758,7 @@ def construct_inputs_qEHVI(
     )
 
     sampler = kwargs.get("sampler")
-    if sampler is None:
+    if sampler is None and isinstance(model, GPyTorchModel):
         sampler = _get_sampler(
             mc_samples=kwargs.get("mc_samples", 128), qmc=kwargs.get("qmc", True)
         )
@@ -806,7 +808,7 @@ def construct_inputs_qNEHVI(
         cons_tfs = get_outcome_constraint_transforms(outcome_constraints)
 
     sampler = kwargs.get("sampler")
-    if sampler is None:
+    if sampler is None and isinstance(model, GPyTorchModel):
         sampler = _get_sampler(
             mc_samples=kwargs.get("mc_samples", 128), qmc=kwargs.get("qmc", True)
         )
@@ -1175,7 +1177,7 @@ def optimize_objective(
             model=model,
             objective=objective,
             posterior_transform=posterior_transform,
-            sampler=sampler_cls(num_samples=mc_samples, seed=seed_inner),
+            sampler=sampler_cls(sample_shape=torch.Size([mc_samples]), seed=seed_inner),
         )
     else:
         acq_function = PosteriorMean(

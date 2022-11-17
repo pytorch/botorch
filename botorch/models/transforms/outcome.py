@@ -341,10 +341,10 @@ class Standardize(OutcomeTransform):
         is_mtgp_posterior = False
         if type(posterior) is GPyTorchPosterior:
             is_mtgp_posterior = posterior._is_mt
-        if not self._m == posterior.event_shape[-1] and not is_mtgp_posterior:
+        if not self._m == posterior._extended_shape()[-1] and not is_mtgp_posterior:
             raise RuntimeError(
                 "Incompatible output dimensions encountered for transform "
-                f"{self._m} and posterior {posterior.event_shape[-1]}."
+                f"{self._m} and posterior {posterior._extended_shape()[-1]}."
             )
 
         if type(posterior) is not GPyTorchPosterior:
@@ -357,7 +357,7 @@ class Standardize(OutcomeTransform):
                 variance_transform=lambda m, v: self._stdvs_sq * v,
             )
         # GPyTorchPosterior (TODO: Should we Lazy-evaluate the mean here as well?)
-        mvn = posterior.mvn
+        mvn = posterior.distribution
         offset = self.means
         scale_fac = self.stdvs
         if not posterior._is_mt:

@@ -9,6 +9,7 @@ from __future__ import annotations
 import torch
 from botorch.exceptions.errors import BotorchError
 from botorch.posteriors.base_samples import _reshape_base_samples_non_interleaved
+from botorch.posteriors.fully_bayesian import FullyBayesianPosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
@@ -58,15 +59,20 @@ def _reshape_base_samples(
     Returns:
         Reshaped and expanded base samples.
     """
-    mvn = posterior.mvn
+    mvn = posterior.distribution
     loc = mvn.loc
-    peshape = posterior.event_shape
+    peshape = posterior._extended_shape()
+    is_fully_b = int(isinstance(posterior, FullyBayesianPosterior))
     base_samples = base_samples.view(
-        sample_shape + torch.Size([1 for _ in range(loc.ndim - 1)]) + peshape[-2:]
-    ).expand(sample_shape + loc.shape[:-1] + peshape[-2:])
+        sample_shape
+        + torch.Size([1 for _ in range(loc.ndim - 1 - is_fully_b)])
+        + peshape[-2 - is_fully_b :]
+    ).expand(sample_shape + loc.shape[: -1 - is_fully_b] + peshape[-2 - is_fully_b :])
     if posterior._is_mt:
         base_samples = _reshape_base_samples_non_interleaved(
-            mvn=posterior.mvn, base_samples=base_samples, sample_shape=sample_shape
+            mvn=posterior.distribution,
+            base_samples=base_samples,
+            sample_shape=sample_shape,
         )
     base_samples = base_samples.reshape(
         -1, *loc.shape[:-1], mvn.lazy_covariance_matrix.shape[-1]
@@ -106,10 +112,11 @@ def sample_cached_cholesky(
             samples at the new points.
     """
     # compute bottom left covariance block
+    mvn = posterior.distribution
     lazy_covar = (
-        extract_batch_covar(mt_mvn=posterior.mvn)
-        if isinstance(posterior.mvn, MultitaskMultivariateNormal)
-        else posterior.mvn.lazy_covariance_matrix
+        extract_batch_covar(mt_mvn=mvn)
+        if isinstance(mvn, MultitaskMultivariateNormal)
+        else mvn.lazy_covariance_matrix
     )
     # Get the `q` new rows of the batched covariance matrix
     bottom_rows = lazy_covar[..., -q:, :].to_dense()
@@ -139,13 +146,13 @@ def sample_cached_cholesky(
     # Create a `(batch_shape) x q x (n+q)`-dim tensor containing the
     # `q` new bottom rows of the Cholesky decomposition
     new_Lq = torch.cat([bl_chol, br_chol], dim=-1)
-    mean = posterior.mvn.mean
+    mean = posterior.distribution.mean
     base_samples = _reshape_base_samples(
         base_samples=base_samples,
         sample_shape=sample_shape,
         posterior=posterior,
     )
-    if not isinstance(posterior.mvn, MultitaskMultivariateNormal):
+    if not isinstance(posterior.distribution, MultitaskMultivariateNormal):
         # add output dim
         mean = mean.unsqueeze(-1)
         # add batch dim corresponding to output dim
@@ -154,7 +161,7 @@ def sample_cached_cholesky(
     res = (
         new_Lq.matmul(base_samples)
         .add(new_mean.transpose(-1, -2).unsqueeze(-1))
-        .permute(-1, *range(posterior.mvn.loc.dim() - 1), -2, -3)
+        .permute(-1, *range(posterior.distribution.loc.dim() - 1), -2, -3)
         .contiguous()
     )
     contains_nans = torch.isnan(res).any()

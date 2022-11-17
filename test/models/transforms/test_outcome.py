@@ -167,7 +167,7 @@ class TestOutcomeTransforms(BotorchTestCase):
                     covariance_matrix=lcv,
                     interleaved=False,
                 )
-                posterior = GPyTorchPosterior(mvn=mvn)
+                posterior = GPyTorchPosterior(distribution=mvn)
                 p_utf = tf.untransform_posterior(posterior)
                 self.assertEqual(p_utf.device.type, self.device.type)
                 self.assertTrue(p_utf.dtype == dtype)
@@ -176,7 +176,7 @@ class TestOutcomeTransforms(BotorchTestCase):
                 self.assertTrue(torch.allclose(p_utf.mean, mean_expected))
                 self.assertTrue(torch.allclose(p_utf.variance, variance_expected))
                 self.assertIsInstance(
-                    p_utf.mvn.lazy_covariance_matrix, DiagLinearOperator
+                    p_utf.distribution.lazy_covariance_matrix, DiagLinearOperator
                 )
                 samples2 = p_utf.rsample(sample_shape=torch.Size([4, 2]))
                 self.assertEqual(

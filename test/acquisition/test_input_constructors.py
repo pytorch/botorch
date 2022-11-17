@@ -68,8 +68,9 @@ from botorch.acquisition.utils import (
     project_to_target_fidelity,
 )
 from botorch.exceptions.errors import UnsupportedError
+from botorch.models import SingleTaskGP
 from botorch.models.deterministic import FixedSingleSampleModel
-from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
@@ -596,9 +597,8 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         objective_thresholds = torch.rand(2)
 
         # Test defaults
-        mean = torch.rand(1, 2)
-        variance = torch.ones(1, 2)
-        mm = MockModel(MockPosterior(mean=mean, variance=variance))
+        mm = SingleTaskGP(torch.rand(1, 2), torch.rand(1, 2))
+        mean = mm.posterior(self.blockX_blockY[0].X()).mean
         kwargs = c(
             model=mm,
             training_data=self.blockX_blockY,
@@ -618,6 +618,18 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertIsNone(kwargs["constraints"])
         self.assertEqual(kwargs["eta"], 1e-3)
 
+        # Test IID sampler
+        kwargs = c(
+            model=mm,
+            training_data=self.blockX_blockY,
+            objective_thresholds=objective_thresholds,
+            qmc=False,
+            mc_samples=64,
+        )
+        sampler = kwargs["sampler"]
+        self.assertIsInstance(sampler, IIDNormalSampler)
+        self.assertEqual(sampler.sample_shape, torch.Size([64]))
+
         # Test outcome constraints and custom inputs
         mean = torch.tensor([[1.0, 0.25], [0.5, 1.0]])
         variance = torch.ones(1, 1)
@@ -635,8 +647,6 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             X_pending=X_pending,
             alpha=0.05,
             eta=1e-2,
-            qmc=False,
-            mc_samples=64,
         )
         self.assertIsInstance(kwargs["objective"], WeightedMCMultiOutputObjective)
         ref_point_expected = objective_thresholds * weights
@@ -647,9 +657,6 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertTrue(torch.equal(partitioning._neg_ref_point, -ref_point_expected))
         Y_expected = mean[:1] * weights
         self.assertTrue(torch.equal(partitioning._neg_Y, -Y_expected))
-        sampler = kwargs["sampler"]
-        self.assertIsInstance(sampler, IIDNormalSampler)
-        self.assertEqual(sampler.sample_shape, torch.Size([64]))
         self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
         cons_tfs = kwargs["constraints"]
         self.assertEqual(len(cons_tfs), 1)
@@ -669,12 +676,10 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
                 X_pending=X_pending,
                 alpha=0.05,
                 eta=1e-2,
-                qmc=False,
-                mc_samples=64,
             )
 
         # Test custom sampler
-        custom_sampler = SobolQMCNormalSampler(num_samples=16, seed=1234)
+        custom_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([16]), seed=1234)
         kwargs = c(
             model=mm,
             training_data=self.blockX_blockY,
@@ -689,12 +694,10 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
     def test_construct_inputs_qNEHVI(self):
         c = get_acqf_input_constructor(qNoisyExpectedHypervolumeImprovement)
         objective_thresholds = torch.rand(2)
-        mock_model = mock.Mock()
-        mock_model.num_outputs = 2
 
         # Test defaults
         kwargs = c(
-            model=mock_model,
+            model=SingleTaskGP(torch.rand(1, 2), torch.rand(1, 2)),
             training_data=self.blockX_blockY,
             objective_thresholds=objective_thresholds,
         )
@@ -714,6 +717,8 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertTrue(kwargs["incremental_nehvi"])
 
         # Test check for block designs
+        mock_model = mock.Mock()
+        mock_model.num_outputs = 2
         with self.assertRaisesRegex(ValueError, "Field `X` must be shared"):
             c(
                 model=mock_model,
@@ -725,7 +730,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         weights = torch.rand(2)
         objective = WeightedMCMultiOutputObjective(weights=weights)
         X_baseline = torch.rand(2, 2)
-        sampler = IIDNormalSampler(num_samples=4)
+        sampler = IIDNormalSampler(sample_shape=torch.Size([4]))
         outcome_constraints = (torch.tensor([[0.0, 1.0]]), torch.tensor([[0.5]]))
         X_pending = torch.rand(1, 2)
         kwargs = c(

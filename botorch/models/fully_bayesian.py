@@ -522,5 +522,5 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
             posterior_transform=posterior_transform,
             **kwargs,
         )
-        posterior = FullyBayesianPosterior(mvn=posterior.mvn)
+        posterior = FullyBayesianPosterior(distribution=posterior.distribution)
         return posterior

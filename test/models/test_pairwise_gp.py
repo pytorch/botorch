@@ -272,8 +272,10 @@ class TestPairwiseGP(BotorchTestCase):
                     )
                     self.assertTrue(
                         torch.allclose(
-                            posterior_same_inputs.mvn.covariance_matrix[:, 0, :, :],
-                            non_batch_posterior.mvn.covariance_matrix,
+                            posterior_same_inputs.distribution.covariance_matrix[
+                                :, 0, :, :
+                            ],
+                            non_batch_posterior.distribution.covariance_matrix,
                             atol=1e-3,
                         )
                     )
@@ -298,7 +300,7 @@ class TestPairwiseGP(BotorchTestCase):
             X_f = torch.rand(
                 torch.Size(batch_shape + torch.Size([4, X_dim])), **tkwargs
             )
-            sampler = PairwiseSobolQMCNormalSampler(num_samples=3)
+            sampler = PairwiseSobolQMCNormalSampler(sample_shape=torch.Size([3]))
             fm = model.fantasize(X=X_f, sampler=sampler)
             self.assertIsInstance(fm, model.__class__)
             fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)

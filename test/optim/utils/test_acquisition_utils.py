@@ -27,6 +27,7 @@ from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import ModelListGP, SingleTaskGP
 from botorch.models.transforms.input import Warp
 from botorch.optim.utils import columnwise_clamp, fix_features, get_X_baseline
+from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
 )
@@ -202,6 +203,7 @@ class TestGetXBaseline(BotorchTestCase):
                 moo_model,
                 ref_point=ref_point,
                 X_baseline=X_train[:2],
+                sampler=IIDNormalSampler(sample_shape=torch.Size([2])),
                 cache_root=False,
             )
             X = get_X_baseline(

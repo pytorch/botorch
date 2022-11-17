@@ -18,7 +18,7 @@ from botorch.acquisition.penalized import (
     PenalizedMCObjective,
 )
 from botorch.exceptions import UnsupportedError
-from botorch.sampling.samplers import IIDNormalSampler
+from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from torch import Tensor
 
@@ -136,7 +136,7 @@ class TestPenalizedAcquisitionFunction(BotorchTestCase):
                 acqf.set_X_pending(X_pending)
 
             # testing X_pending for non-analytic raw_acqfn (EI)
-            sampler = IIDNormalSampler(num_samples=2)
+            sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
             raw_acqf_2 = qExpectedImprovement(
                 model=mock_model, best_f=0, sampler=sampler
             )

@@ -24,13 +24,13 @@ References
 from __future__ import annotations
 
 import warnings
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from copy import deepcopy
 from itertools import combinations
 from typing import Any, Callable, List, Optional, Union
 
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCAcquisitionFunction
 from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
@@ -43,9 +43,7 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.model import Model
 from botorch.models.transforms.input import InputPerturbation
-from botorch.posteriors import DeterministicPosterior
-from botorch.posteriors.posterior import Posterior
-from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.sampling.base import MCSampler
 from botorch.utils.multi_objective.box_decompositions.box_decomposition_list import (
     BoxDecompositionList,
 )
@@ -70,8 +68,16 @@ from botorch.utils.transforms import (
 from torch import Tensor
 
 
-class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction):
-    r"""Abstract base class for Multi-Objective batch acquisition functions."""
+class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, ABC):
+    r"""Abstract base class for Multi-Objective batch acquisition functions.
+
+    NOTE: This does not inherit from `MCAcquisitionFunction` to avoid circular imports.
+
+    Args:
+        _default_sample_shape: The `sample_shape` for the default sampler.
+    """
+
+    _default_sample_shape = torch.Size([128])
 
     def __init__(
         self,
@@ -85,8 +91,11 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction):
 
         Args:
             model: A fitted model.
-            sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)`.
+            sampler: The sampler used to draw base samples. If not given,
+                a sampler is generated using `get_sampler`.
+                NOTE: For posteriors that do not support base samples,
+                a sampler compatible with intended use case must be provided.
+                See `ForkedRNGSampler` and `StochasticSampler` as examples.
             objective: The MCMultiOutputObjective under which the samples are
                 evaluated. Defaults to `IdentityMultiOutputObjective()`.
             constraints: A list of callables, each mapping a Tensor of dimension
@@ -98,9 +107,7 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction):
                 but have not yet been evaluated.
         """
         super().__init__(model=model)
-        if sampler is None:
-            sampler = SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)
-        self.add_module("sampler", sampler)
+        MCSamplerMixin.__init__(self, sampler=sampler)
         if objective is None:
             objective = IdentityMCMultiOutputObjective()
         elif not isinstance(objective, MCMultiOutputObjective):
@@ -168,8 +175,8 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
                 dominated front and a partitioning of the non-dominated space in hyper-
                 rectangles. If constraints are present, this partitioning must only
                 include feasible points.
-            sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)`.
+            sampler: The sampler used to draw base samples. If not given,
+                a sampler is generated using `get_sampler`.
             objective: The MCMultiOutputObjective under which the samples are evaluated.
                 Defaults to `IdentityMultiOutputObjective()`.
             constraints: A list of callables, each mapping a Tensor of dimension
@@ -334,7 +341,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         posterior = self.model.posterior(X)
-        samples = self.sampler(posterior)
+        samples = self.get_posterior_samples(posterior)
         return self._compute_qehvi(samples=samples, X=X)
 
 
@@ -378,8 +385,8 @@ class qNoisyExpectedHypervolumeImprovement(
             X_baseline: A `r x d`-dim Tensor of `r` design points that have already
                 been observed. These points are considered as potential approximate
                 pareto-optimal design points.
-            sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)`.
+            sampler: The sampler used to draw base samples. If not given,
+                a sampler is generated using `get_sampler`.
                 Note: a pareto front is created for each mc sample, which can be
                 computationally intensive for `m` > 2.
             objective: The MCMultiOutputObjective under which the samples are
@@ -425,9 +432,7 @@ class qNoisyExpectedHypervolumeImprovement(
             objective=objective,
             constraints=constraints,
         )
-        self._setup(
-            model=model, sampler=self.sampler, cache_root=cache_root, check_sampler=True
-        )
+        self._setup(model=model, cache_root=cache_root)
 
         if X_baseline.ndim > 2:
             raise UnsupportedError(
@@ -444,8 +449,6 @@ class qNoisyExpectedHypervolumeImprovement(
                 marginalize_dim=kwargs.get("marginalize_dim"),
             )
         self.register_buffer("ref_point", ref_point)
-        self.base_sampler = deepcopy(self.sampler)
-
         self.alpha = alpha
         self.eta = eta
         self.q_in = -1
@@ -478,6 +481,9 @@ class qNoisyExpectedHypervolumeImprovement(
             torch.tensor(incremental_nehvi, dtype=torch.bool),
         )
 
+        # Base sampler is initialized in _set_cell_bounds.
+        self.base_sampler = None
+
         if X_pending is not None:
             # This will call self._set_cell_bounds if the number of pending
             # points is greater than self._max_iep.
@@ -488,6 +494,8 @@ class qNoisyExpectedHypervolumeImprovement(
         # f(X_baseline) here.
         if X_pending is None or X_pending.shape[-2] <= self._max_iep:
             self._set_cell_bounds(num_new_points=X_baseline.shape[0])
+        # Set q_in=-1 to so that self.sampler is updated at the next forward call.
+        self.q_in = -1
 
     @property
     def X_baseline(self) -> Tensor:
@@ -535,14 +543,14 @@ class qNoisyExpectedHypervolumeImprovement(
                 posterior = self.model.posterior(self.X_baseline)
             # Reset sampler, accounting for possible one-to-many transform.
             self.q_in = -1
-            n_w = posterior.event_shape[-2] // self.X_baseline.shape[-2]
+            if self.base_sampler is None:
+                # Initialize the base sampler if needed.
+                samples = self.get_posterior_samples(posterior)
+                self.base_sampler = deepcopy(self.sampler)
+            else:
+                samples = self.base_sampler(posterior)
+            n_w = posterior._extended_shape()[-2] // self.X_baseline.shape[-2]
             self._set_sampler(q_in=num_new_points * n_w, posterior=posterior)
-            # set base_sampler
-            self.base_sampler.register_buffer(
-                "base_samples", self.sampler.base_samples.detach().clone()
-            )
-
-            samples = self.base_sampler(posterior)
             # cache posterior
             if self._cache_root:
                 # Note that this implicitly uses LinearOperator's caching to check if
@@ -556,8 +564,13 @@ class qNoisyExpectedHypervolumeImprovement(
                     [c(samples) <= 0 for c in self.constraints], dim=0
                 ).all(dim=0)
         else:
+            sample_shape = (
+                self.sampler.sample_shape
+                if self.sampler is not None
+                else self._default_sample_shape
+            )
             obj = torch.empty(
-                *self.sampler._sample_shape,
+                *sample_shape,
                 0,
                 self.ref_point.shape[-1],
                 dtype=self.ref_point.dtype,
@@ -666,74 +679,6 @@ class qNoisyExpectedHypervolumeImprovement(
             .view(self._batch_sample_shape)
         )
 
-    def _set_sampler(
-        self,
-        q_in: int,
-        posterior: Posterior,
-    ) -> None:
-        r"""Update the sampler to use the original base samples for X_baseline.
-
-        Args:
-            q_in: The effective input batch size. This is typically equal to the
-                q-batch size of `X`. However, if using a one-to-many input transform,
-                e.g., `InputPerturbation` with `n_w` perturbations, the posterior will
-                have `n_w` points on the q-batch for each point on the q-batch of `X`.
-                In which case, `q_in = q * n_w` is used.
-            posterior: The posterior.
-
-        TODO: refactor some/all of this into the MCSampler.
-        """
-        if self.q_in != q_in:
-            # create new base_samples
-            base_sample_shape = self.sampler._get_base_sample_shape(posterior=posterior)
-            self.sampler._construct_base_samples(
-                posterior=posterior, shape=base_sample_shape
-            )
-            if (
-                self.X_baseline.shape[0] > 0
-                and self.base_sampler.base_samples is not None
-                and not isinstance(posterior, DeterministicPosterior)
-            ):
-                current_base_samples = self.base_sampler.base_samples.detach().clone()
-                # This is the # of non-`sample_shape` dimensions.
-                base_ndims = current_base_samples.dim() - 1
-                # Unsqueeze as many dimensions as needed to match base_sample_shape.
-                view_shape = (
-                    self.sampler.sample_shape
-                    + torch.Size(
-                        [1] * (len(base_sample_shape) - current_base_samples.dim())
-                    )
-                    + current_base_samples.shape[-base_ndims:]
-                )
-                expanded_shape = (
-                    base_sample_shape[:-base_ndims]
-                    + current_base_samples.shape[-base_ndims:]
-                )
-                # Use stored base samples:
-                # Use all base_samples from the current sampler
-                # this includes the base_samples from the base_sampler
-                # and any base_samples for the new points in the sampler.
-                # For example, when using sequential greedy candidate generation
-                # then generate the new candidate point using last (-1) base_sample
-                # in sampler. This copies that base sample.
-                expanded_samples = current_base_samples.view(view_shape).expand(
-                    expanded_shape
-                )
-                if self._uses_matheron:
-                    n_train_samples = current_base_samples.shape[-1] // 2
-                    # The train base samples.
-                    self.sampler.base_samples[..., :n_train_samples] = expanded_samples[
-                        ..., :n_train_samples
-                    ]
-                    # The train noise base samples.
-                    self.sampler.base_samples[
-                        ..., -n_train_samples:
-                    ] = expanded_samples[..., -n_train_samples:]
-                else:
-                    end_idx = current_base_samples.shape[-2]
-                    self.sampler.base_samples[..., :end_idx, :] = expanded_samples
-                self.q_in = q_in
-
     @concatenate_pending_points
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
@@ -748,7 +693,10 @@ class qNoisyExpectedHypervolumeImprovement(
         # Account for possible one-to-many transform and the MCMC batch dimension in
         # `SaasFullyBayesianSingleTaskGP`
         event_shape_lag = 1 if is_fully_bayesian(self.model) else 2
-        n_w = posterior.event_shape[X_full.dim() - event_shape_lag] // X_full.shape[-2]
+        n_w = (
+            posterior._extended_shape()[X_full.dim() - event_shape_lag]
+            // X_full.shape[-2]
+        )
         q_in = X.shape[-2] * n_w
         self._set_sampler(q_in=q_in, posterior=posterior)
         samples = self._get_f_X_samples(posterior=posterior, q_in=q_in)

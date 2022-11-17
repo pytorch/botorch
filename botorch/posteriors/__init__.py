@@ -9,7 +9,9 @@ from botorch.posteriors.fully_bayesian import FullyBayesianPosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.higher_order import HigherOrderGPPosterior
 from botorch.posteriors.multitask import MultitaskGPPosterior
-from botorch.posteriors.posterior import Posterior, PosteriorList
+from botorch.posteriors.posterior import Posterior
+from botorch.posteriors.posterior_list import PosteriorList
+from botorch.posteriors.torch import TorchPosterior
 from botorch.posteriors.transformed import TransformedPosterior
 
 __all__ = [
@@ -20,5 +22,6 @@ __all__ = [
     "MultitaskGPPosterior",
     "Posterior",
     "PosteriorList",
+    "TorchPosterior",
     "TransformedPosterior",
 ]
