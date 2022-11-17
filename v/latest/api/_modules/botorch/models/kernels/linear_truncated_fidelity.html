@@ -32,7 +32,6 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -221,7 +220,7 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">active_dimsM</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="s2">"Input to LinearTruncatedFidelityKernel must have at least one "</span>
-                <span class="s2">" non-fidelity dimension"</span>
+                <span class="s2">"non-fidelity dimension."</span>
             <span class="p">)</span>
         <span class="n">x1_</span> <span class="o">=</span> <span class="n">x1</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">active_dimsM</span><span class="p">)</span>
         <span class="n">x2_</span> <span class="o">=</span> <span class="n">x2</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">active_dimsM</span><span class="p">)</span>
@@ -262,17 +261,7 @@
         <span class="k">if</span> <span class="n">diag</span><span class="p">:</span>
             <span class="n">bias_factor</span> <span class="o">=</span> <span class="n">bias_factor</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">covar_biased</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">covar_unbiased</span> <span class="o">+</span> <span class="n">bias_factor</span> <span class="o">*</span> <span class="n">covar_biased</span>
-
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearTruncatedFidelityKernel</span><span class="p">:</span>
-        <span class="n">new_kernel</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">new_kernel</span><span class="o">.</span><span class="n">covar_module_unbiased</span> <span class="o">=</span> <span class="n">new_kernel</span><span class="o">.</span><span class="n">covar_module_unbiased</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
-        <span class="n">new_kernel</span><span class="o">.</span><span class="n">covar_module_biased</span> <span class="o">=</span> <span class="n">new_kernel</span><span class="o">.</span><span class="n">covar_module_biased</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
-        <span class="n">new_kernel</span><span class="o">.</span><span class="n">raw_power</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">new_kernel</span><span class="o">.</span><span class="n">raw_power</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
-        <span class="n">new_kernel</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">new_kernel</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">[</span>
-            <span class="mi">1</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="p">:</span>
-        <span class="p">]</span>
-        <span class="k">return</span> <span class="n">new_kernel</span></div>
+        <span class="k">return</span> <span class="n">covar_unbiased</span> <span class="o">+</span> <span class="n">bias_factor</span> <span class="o">*</span> <span class="n">covar_biased</span></div>
 </pre></div>
 </div>
 </div>

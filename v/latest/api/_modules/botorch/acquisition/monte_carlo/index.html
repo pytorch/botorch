@@ -280,6 +280,9 @@
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">,</span> <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">)</span>
+        <span class="c1"># We make a copy here because we will write an attribute `base_samples`</span>
+        <span class="c1"># to `self.base_sampler.base_samples`, and we don't want to mutate</span>
+        <span class="c1"># `self.sampler`.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">prune_baseline</span><span class="p">:</span>
             <span class="n">X_baseline</span> <span class="o">=</span> <span class="n">prune_inferior_points</span><span class="p">(</span>
@@ -298,13 +301,22 @@
                 <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
                     <span class="n">X_baseline</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
                 <span class="p">)</span>
+                <span class="c1"># Note: The root decomposition is cached in two different places. It</span>
+                <span class="c1"># may be confusing to have two different caches, but this is not</span>
+                <span class="c1"># trivial to change since each is needed for a different reason:</span>
+                <span class="c1"># - LinearOperator caching to `posterior.mvn` allows for reuse within</span>
+                <span class="c1">#  this function, which may be helpful if the same root decomposition</span>
+                <span class="c1">#  is produced by the calls to `self.base_sampler` and</span>
+                <span class="c1">#  `self._cache_root_decomposition`.</span>
+                <span class="c1"># - self._baseline_L allows a root decomposition to be persisted outside</span>
+                <span class="c1">#   this method.</span>
                 <span class="n">baseline_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
             <span class="n">baseline_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">baseline_samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"baseline_samples"</span><span class="p">,</span> <span class="n">baseline_samples</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
                 <span class="s2">"baseline_obj_max_values"</span><span class="p">,</span> <span class="n">baseline_obj</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
             <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cache_root_decomposition</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_root_decomposition</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_set_sampler</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>

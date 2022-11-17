@@ -571,7 +571,11 @@
             <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
             <span class="c1"># cache posterior</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_root</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_cache_root_decomposition</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
+                <span class="c1"># Note that this implicitly uses LinearOperator's caching to check if</span>
+                <span class="c1"># the proper root decomposition has already been cached to</span>
+                <span class="c1"># `posterior.mvn.lazy_covariance_matrix`, which it may have been in</span>
+                <span class="c1"># the call to `self.base_sampler`, and computes it if not found</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_root_decomposition</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
             <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">feas</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
