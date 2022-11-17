@@ -39,7 +39,7 @@ from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import Log, OutcomeTransform
 from botorch.models.utils import fantasize as fantasize_flag, validate_input_scaling
-from botorch.sampling.samplers import MCSampler
+from botorch.sampling.base import MCSampler
 from gpytorch.constraints.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.matern_kernel import MaternKernel

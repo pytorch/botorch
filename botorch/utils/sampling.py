@@ -16,7 +16,6 @@ References
 
 from __future__ import annotations
 
-import warnings
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from typing import Generator, Iterable, List, Optional, Tuple
@@ -25,8 +24,6 @@ import numpy as np
 import scipy
 import torch
 from botorch.exceptions.errors import BotorchError
-from botorch.exceptions.warnings import SamplingWarning
-from botorch.posteriors.posterior import Posterior
 from botorch.sampling.qmc import NormalQMCEngine
 from scipy.spatial import Delaunay, HalfspaceIntersection
 from torch import LongTensor, Tensor
@@ -55,103 +52,6 @@ def manual_seed(seed: Optional[int] = None) -> Generator[None, None, None]:
     finally:
         if seed is not None:
             torch.random.set_rng_state(old_state)
-
-
-def construct_base_samples(
-    batch_shape: torch.Size,
-    output_shape: torch.Size,
-    sample_shape: torch.Size,
-    qmc: bool = True,
-    seed: Optional[int] = None,
-    device: Optional[torch.device] = None,
-    dtype: Optional[torch.dtype] = None,
-) -> Tensor:
-    r"""Construct base samples from a multi-variate standard normal N(0, I_qo).
-
-    Args:
-        batch_shape: The batch shape of the base samples to generate. Typically,
-            this is used with each dimension of size 1, so as to eliminate
-            sampling variance across batches.
-        output_shape: The output shape (`q x m`) of the base samples to generate.
-        sample_shape: The sample shape of the samples to draw.
-        qmc: If True, use quasi-MC sampling (instead of iid draws).
-        seed: If provided, use as a seed for the RNG.
-
-    Returns:
-        A `sample_shape x batch_shape x mutput_shape` dimensional tensor of base
-        samples, drawn from a N(0, I_qm) distribution (using QMC if `qmc=True`).
-        Here `output_shape = q x m`.
-
-    Example:
-        >>> batch_shape = torch.Size([2])
-        >>> output_shape = torch.Size([3])
-        >>> sample_shape = torch.Size([10])
-        >>> samples = construct_base_samples(batch_shape, output_shape, sample_shape)
-    """
-    base_sample_shape = batch_shape + output_shape
-    output_dim = output_shape.numel()
-    if qmc and output_dim <= SobolEngine.MAXDIM:
-        n = (sample_shape + batch_shape).numel()
-        base_samples = draw_sobol_normal_samples(
-            d=output_dim, n=n, device=device, dtype=dtype, seed=seed
-        )
-        base_samples = base_samples.view(sample_shape + base_sample_shape)
-    else:
-        if qmc and output_dim > SobolEngine.MAXDIM:
-            warnings.warn(
-                f"Number of output elements (q*d={output_dim}) greater than "
-                f"maximum supported by qmc ({SobolEngine.MAXDIM}). "
-                "Using iid sampling instead.",
-                SamplingWarning,
-            )
-        with manual_seed(seed=seed):
-            base_samples = torch.randn(
-                sample_shape + base_sample_shape, device=device, dtype=dtype
-            )
-    return base_samples
-
-
-def construct_base_samples_from_posterior(
-    posterior: Posterior,
-    sample_shape: torch.Size,
-    qmc: bool = True,
-    collapse_batch_dims: bool = True,
-    seed: Optional[int] = None,
-) -> Tensor:
-    r"""Construct a tensor of normally distributed base samples.
-
-    Args:
-        posterior: A Posterior object.
-        sample_shape: The sample shape of the samples to draw.
-        qmc: If True, use quasi-MC sampling (instead of iid draws).
-        seed: If provided, use as a seed for the RNG.
-
-    Returns:
-        A `num_samples x 1 x q x m` dimensional Tensor of base samples, drawn
-        from a N(0, I_qm) distribution (using QMC if `qmc=True`). Here `q` and
-        `m` are the same as in the posterior's `event_shape` `b x q x m`.
-        Importantly, this only obtain a single t-batch of samples, so as to not
-        introduce any sampling variance across t-batches.
-
-    Example:
-        >>> sample_shape = torch.Size([10])
-        >>> samples = construct_base_samples_from_posterior(posterior, sample_shape)
-    """
-    output_shape = posterior.event_shape[-2:]  # shape of joint output: q x m
-    if collapse_batch_dims:
-        batch_shape = torch.Size([1] * len(posterior.event_shape[:-2]))
-    else:
-        batch_shape = posterior.event_shape[:-2]
-    base_samples = construct_base_samples(
-        batch_shape=batch_shape,
-        output_shape=output_shape,
-        sample_shape=sample_shape,
-        qmc=qmc,
-        seed=seed,
-        device=posterior.device,
-        dtype=posterior.dtype,
-    )
-    return base_samples
 
 
 def draw_sobol_samples(

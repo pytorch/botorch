@@ -17,7 +17,7 @@ from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.models.transforms import Standardize
 from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
-from botorch.sampling.samplers import IIDNormalSampler
+from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -123,7 +123,7 @@ class TestModelListGP(BotorchTestCase):
             test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
             posterior = model.posterior(test_x)
             self.assertIsInstance(posterior, GPyTorchPosterior)
-            self.assertIsInstance(posterior.mvn, MultitaskMultivariateNormal)
+            self.assertIsInstance(posterior.distribution, MultitaskMultivariateNormal)
             if use_octf:
                 # ensure un-transformation is applied
                 submodel = model.models[0]
@@ -138,14 +138,14 @@ class TestModelListGP(BotorchTestCase):
             # test observation_noise
             posterior = model.posterior(test_x, observation_noise=True)
             self.assertIsInstance(posterior, GPyTorchPosterior)
-            self.assertIsInstance(posterior.mvn, MultitaskMultivariateNormal)
+            self.assertIsInstance(posterior.distribution, MultitaskMultivariateNormal)
 
             # test output_indices
             posterior = model.posterior(
                 test_x, output_indices=[0], observation_noise=True
             )
             self.assertIsInstance(posterior, GPyTorchPosterior)
-            self.assertIsInstance(posterior.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior.distribution, MultivariateNormal)
 
             # test condition_on_observations
             f_x = [torch.rand(2, 1, **tkwargs) for _ in range(2)]
@@ -214,7 +214,7 @@ class TestModelListGP(BotorchTestCase):
             test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
             posterior = model.posterior(test_x)
             self.assertIsInstance(posterior, GPyTorchPosterior)
-            self.assertIsInstance(posterior.mvn, MultitaskMultivariateNormal)
+            self.assertIsInstance(posterior.distribution, MultitaskMultivariateNormal)
             if use_octf:
                 # ensure un-transformation is applied
                 submodel = model.models[0]
@@ -231,7 +231,7 @@ class TestModelListGP(BotorchTestCase):
                 test_x, output_indices=[0], observation_noise=True
             )
             self.assertIsInstance(posterior, GPyTorchPosterior)
-            self.assertIsInstance(posterior.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior.distribution, MultivariateNormal)
 
             # test condition_on_observations
             f_x = [torch.rand(2, 1, **tkwargs) for _ in range(2)]
@@ -277,7 +277,7 @@ class TestModelListGP(BotorchTestCase):
         test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
         posterior = model.posterior(test_x)
         self.assertIsInstance(posterior, GPyTorchPosterior)
-        self.assertIsInstance(posterior.mvn, MultivariateNormal)
+        self.assertIsInstance(posterior.distribution, MultivariateNormal)
 
     def test_transform_revert_train_inputs(self):
         tkwargs = {"device": self.device, "dtype": torch.float}

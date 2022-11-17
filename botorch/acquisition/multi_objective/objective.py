@@ -47,7 +47,7 @@ class MCMultiOutputObjective(MCAcquisitionObjective):
             `m'` the output dimension. This assumes maximization in each output
             dimension).
 
-        This method is usually not called directly, but via the objectives
+        This method is usually not called directly, but via the objectives.
 
         Example:
             >>> # `__call__` method:

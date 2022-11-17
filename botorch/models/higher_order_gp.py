@@ -520,7 +520,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             # return a specialized Posterior to allow for sampling
             # cloning the full covar allows backpropagation through it
             posterior = HigherOrderGPPosterior(
-                mvn=mvn,
+                distribution=mvn,
                 train_targets=self.train_targets.unsqueeze(-1),
                 train_train_covar=train_train_covar,
                 test_train_covar=test_train_covar,

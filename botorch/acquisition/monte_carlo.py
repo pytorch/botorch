@@ -26,7 +26,7 @@ from copy import deepcopy
 from typing import Any, Optional, Union
 
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCAcquisitionFunction
 from botorch.acquisition.objective import (
     IdentityMCObjective,
@@ -37,7 +37,7 @@ from botorch.acquisition.utils import prune_inferior_points
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.posteriors.posterior import Posterior
-from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.sampling.base import MCSampler
 from botorch.utils.transforms import (
     concatenate_pending_points,
     match_batch_shape,
@@ -46,7 +46,7 @@ from botorch.utils.transforms import (
 from torch import Tensor
 
 
-class MCAcquisitionFunction(AcquisitionFunction, ABC):
+class MCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, ABC):
     r"""
     Abstract base class for Monte-Carlo based batch acquisition functions.
 
@@ -64,8 +64,11 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
         r"""
         Args:
             model: A fitted model.
-            sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`.
+            sampler: The sampler used to draw base samples. If not given,
+                a sampler is generated using `get_sampler`.
+                NOTE: For posteriors that do not support base samples,
+                a sampler compatible with intended use case must be provided.
+                See `ForkedRNGSampler` and `StochasticSampler` as examples.
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
             posterior_transform: A PosteriorTransform (optional).
@@ -74,9 +77,7 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
                 but have not yet been evaluated.
         """
         super().__init__(model=model)
-        if sampler is None:
-            sampler = SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)
-        self.sampler: MCSampler = sampler
+        MCSamplerMixin.__init__(self, sampler=sampler)
         if objective is None and model.num_outputs != 1:
             if posterior_transform is None:
                 raise UnsupportedError(
@@ -141,8 +142,8 @@ class qExpectedImprovement(MCAcquisitionFunction):
             best_f: The best objective value observed so far (assumed noiseless). Can be
                 a `batch_shape`-shaped tensor, which in case of a batched model
                 specifies potentially different values for each element of the batch.
-            sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`
+            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`
+                more details.
             objective: The MCAcquisitionObjective under which the samples are evaluated.
                 Defaults to `IdentityMCObjective()`.
             posterior_transform: A PosteriorTransform (optional).
@@ -177,7 +178,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
         posterior = self.model.posterior(
             X=X, posterior_transform=self.posterior_transform
         )
-        samples = self.sampler(posterior)
+        samples = self.get_posterior_samples(posterior)
         obj = self.objective(samples, X=X)
         obj = (obj - self.best_f.unsqueeze(-1).to(obj)).clamp_min(0)
         q_ei = obj.max(dim=-1)[0].mean(dim=0)
@@ -223,8 +224,8 @@ class qNoisyExpectedImprovement(
             X_baseline: A `batch_shape x r x d`-dim Tensor of `r` design points
                 that have already been observed. These points are considered as
                 the potential best design point.
-            sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`.
+            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`
+                more details.
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
             posterior_transform: A PosteriorTransform (optional).
@@ -253,11 +254,7 @@ class qNoisyExpectedImprovement(
             posterior_transform=posterior_transform,
             X_pending=X_pending,
         )
-        self._setup(model=model, sampler=self.sampler, cache_root=cache_root)
-        # We make a copy here because we will write an attribute `base_samples`
-        # to `self.base_sampler.base_samples`, and we don't want to mutate
-        # `self.sampler`.
-        self.base_sampler = deepcopy(self.sampler)
+        self._setup(model=model, cache_root=cache_root)
         if prune_baseline:
             X_baseline = prune_inferior_points(
                 model=model,
@@ -269,7 +266,7 @@ class qNoisyExpectedImprovement(
         self.register_buffer("X_baseline", X_baseline)
 
         if self._cache_root:
-            self.q = -1
+            self.q_in = -1
             # set baseline samples
             with torch.no_grad():
                 posterior = self.model.posterior(
@@ -284,58 +281,17 @@ class qNoisyExpectedImprovement(
                 #  `self._cache_root_decomposition`.
                 # - self._baseline_L allows a root decomposition to be persisted outside
                 #   this method.
-                baseline_samples = self.base_sampler(posterior)
+                baseline_samples = self.get_posterior_samples(posterior)
+            # We make a copy here because we will write an attribute `base_samples`
+            # to `self.base_sampler.base_samples`, and we don't want to mutate
+            # `self.sampler`.
+            self.base_sampler = deepcopy(self.sampler)
             baseline_obj = self.objective(baseline_samples, X=X_baseline)
             self.register_buffer("baseline_samples", baseline_samples)
             self.register_buffer(
                 "baseline_obj_max_values", baseline_obj.max(dim=-1).values
             )
             self._baseline_L = self._compute_root_decomposition(posterior=posterior)
-
-    def _set_sampler(
-        self,
-        q: int,
-        posterior: Posterior,
-    ) -> None:
-        r"""Update the sampler to use the original base samples for X_baseline.
-
-        Args:
-            q: the batch size
-            posterior: the posterior
-
-        TODO: refactor some/all of this into the MCSampler.
-        """
-        if self.q != q:
-            # create new base_samples
-            base_sample_shape = self.sampler._get_base_sample_shape(posterior=posterior)
-            self.sampler._construct_base_samples(
-                posterior=posterior, shape=base_sample_shape
-            )
-            if (
-                self.X_baseline.shape[0] > 0
-                and self.base_sampler.base_samples is not None
-            ):
-                current_base_samples = self.base_sampler.base_samples.detach().clone()
-                view_shape = (
-                    base_sample_shape[:1]
-                    + torch.Size([1] * (len(base_sample_shape) - 3))
-                    + current_base_samples.shape[-2:]
-                )
-                expanded_shape = (
-                    base_sample_shape[:-2] + current_base_samples.shape[-2:]
-                )
-                # Use stored base samples:
-                # Use all base_samples from the current sampler
-                # this includes the base_samples from the base_sampler
-                # and any base_samples for the new points in the sampler.
-                # For example, when using sequential greedy candidate generation
-                # then generate the new candidate point using last (-1) base_sample
-                # in sampler. This copies that base sample.
-                end_idx = current_base_samples.shape[-2]
-                self.sampler.base_samples[..., :end_idx, :] = current_base_samples.view(
-                    view_shape
-                ).expand(expanded_shape)
-            self.q = q
 
     def _forward_cached(self, posterior: Posterior, X_full: Tensor, q: int) -> Tensor:
         r"""Compute difference objective using cached root decomposition.
@@ -349,10 +305,11 @@ class qNoisyExpectedImprovement(
             A `sample_shape x batch_shape`-dim tensor containing the
                 difference in objective under each MC sample.
         """
-        self._set_sampler(q=q, posterior=posterior)
         # handle one-to-many input transforms
-        n_w = posterior.event_shape[-2] // X_full.shape[-2]
-        new_samples = self._get_f_X_samples(posterior=posterior, q_in=n_w * q)
+        n_w = posterior._extended_shape()[-2] // X_full.shape[-2]
+        q_in = q * n_w
+        self._set_sampler(q_in=q_in, posterior=posterior)
+        new_samples = self._get_f_X_samples(posterior=posterior, q_in=q_in)
         new_obj = self.objective(new_samples, X=X_full[..., -q:, :])
         new_obj_max_values = new_obj.max(dim=-1).values
         n_sample_dims = len(self.base_sampler.sample_shape)
@@ -389,7 +346,7 @@ class qNoisyExpectedImprovement(
         if self._cache_root:
             diffs = self._forward_cached(posterior=posterior, X_full=X_full, q=q)
         else:
-            samples = self.sampler(posterior)
+            samples = self.get_posterior_samples(posterior)
             obj = self.objective(samples, X=X_full)
             diffs = obj[..., -q:].max(dim=-1).values - obj[..., :-q].max(dim=-1).values
 
@@ -432,8 +389,8 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
             best_f: The best objective value observed so far (assumed noiseless). Can
                 be a `batch_shape`-shaped tensor, which in case of a batched model
                 specifies potentially different values for each element of the batch.
-            sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`
+            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`
+                more details.
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
             posterior_transform: A PosteriorTransform (optional).
@@ -473,7 +430,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
         posterior = self.model.posterior(
             X=X, posterior_transform=self.posterior_transform
         )
-        samples = self.sampler(posterior)
+        samples = self.get_posterior_samples(posterior)
         obj = self.objective(samples, X=X)  # `sample_shape x batch_shape x q`-dim
         max_obj = obj.max(dim=-1)[0]  # `sample_shape x batch_shape`-dim
         impr = max_obj - self.best_f.to(max_obj)
@@ -512,7 +469,7 @@ class qSimpleRegret(MCAcquisitionFunction):
         posterior = self.model.posterior(
             X=X, posterior_transform=self.posterior_transform
         )
-        samples = self.sampler(posterior)
+        samples = self.get_posterior_samples(posterior)
         obj = self.objective(samples, X=X)
         val = obj.max(dim=-1)[0].mean(dim=0)
         return val
@@ -548,8 +505,8 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
         Args:
             model: A fitted model.
             beta: Controls tradeoff between mean and standard deviation in UCB.
-            sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`
+            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`
+                more details.
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
             posterior_transform: A PosteriorTransform (optional).
@@ -584,7 +541,7 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
         posterior = self.model.posterior(
             X=X, posterior_transform=self.posterior_transform
         )
-        samples = self.sampler(posterior)
+        samples = self.get_posterior_samples(posterior)
         obj = self.objective(samples, X=X)
         mean = obj.mean(dim=0)
         ucb_samples = mean + self.beta_prime * (obj - mean).abs()

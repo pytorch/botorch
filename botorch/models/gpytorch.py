@@ -173,7 +173,7 @@ class GPyTorchModel(Model, ABC):
                     mvn = self.likelihood(mvn, X, noise=observation_noise)
                 else:
                     mvn = self.likelihood(mvn, X)
-        posterior = GPyTorchPosterior(mvn=mvn)
+        posterior = GPyTorchPosterior(distribution=mvn)
         if hasattr(self, "outcome_transform"):
             posterior = self.outcome_transform.untransform_posterior(posterior)
         if posterior_transform is not None:
@@ -386,7 +386,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                 ]
                 mvn = MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
 
-        posterior = GPyTorchPosterior(mvn=mvn)
+        posterior = GPyTorchPosterior(distribution=mvn)
         if hasattr(self, "outcome_transform"):
             posterior = self.outcome_transform.untransform_posterior(posterior)
         if posterior_transform is not None:
@@ -614,7 +614,7 @@ class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
         for i, mvn in mvn_gen:
             try:
                 oct = self.models[i].outcome_transform
-                tf_mvn = oct.untransform_posterior(GPyTorchPosterior(mvn)).mvn
+                tf_mvn = oct.untransform_posterior(GPyTorchPosterior(mvn)).distribution
             except AttributeError:
                 tf_mvn = mvn
             mvns.append(tf_mvn)
@@ -626,9 +626,9 @@ class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
         )
         if any(is_fully_bayesian(m) for m in self.models):
             # mixing fully Bayesian and other GP models is currently not supported
-            posterior = FullyBayesianPosterior(mvn=mvn)
+            posterior = FullyBayesianPosterior(distribution=mvn)
         else:
-            posterior = GPyTorchPosterior(mvn=mvn)
+            posterior = GPyTorchPosterior(distribution=mvn)
         if posterior_transform is not None:
             return posterior_transform(posterior)
         return posterior
@@ -698,7 +698,7 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
                 )
         # If single-output, return the posterior of a single-output model
         if num_outputs == 1:
-            posterior = GPyTorchPosterior(mvn=mvn)
+            posterior = GPyTorchPosterior(distribution=mvn)
         else:
             # Otherwise, make a MultitaskMultivariateNormal out of this
             mtmvn = MultitaskMultivariateNormal(
@@ -708,7 +708,7 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
                 covariance_matrix=mvn.lazy_covariance_matrix,
                 interleaved=False,
             )
-            posterior = GPyTorchPosterior(mvn=mtmvn)
+            posterior = GPyTorchPosterior(distribution=mtmvn)
         if hasattr(self, "outcome_transform"):
             posterior = self.outcome_transform.untransform_posterior(posterior)
         if posterior_transform is not None:

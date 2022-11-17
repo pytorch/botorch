@@ -347,7 +347,7 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
             posterior_transform=posterior_transform,
             **kwargs,
         )
-        posterior = FullyBayesianPosterior(mvn=posterior.mvn)
+        posterior = FullyBayesianPosterior(distribution=posterior.distribution)
         return posterior
 
     # pyre-fixme[14]: Inconsistent override

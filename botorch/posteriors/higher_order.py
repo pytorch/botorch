@@ -4,9 +4,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Optional
+from typing import Optional, Tuple
 
 import torch
+from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.distributions import MultivariateNormal
 from linear_operator.operators import LinearOperator
@@ -31,7 +32,7 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
 
     def __init__(
         self,
-        mvn: MultivariateNormal,
+        distribution: MultivariateNormal,
         joint_covariance_matrix: LinearOperator,
         train_train_covar: LinearOperator,
         test_train_covar: LinearOperator,
@@ -42,16 +43,17 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
         r"""A Posterior for HigherOrderGP models.
 
         Args:
-            mvn: Posterior multivariate normal distribution
+            distribution: Posterior multivariate normal distribution.
             joint_covariance_matrix: Joint test train covariance matrix over the entire
-                tensor
-            train_train_covar: covariance matrix of train points in the data space
-            test_train_covar: covariance matrix of test x train points in the data space
-            train_targets: training responses vectorized
-            output_shape: shape output training responses
-            num_outputs: batch shaping of model
+                tensor.
+            train_train_covar: Covariance matrix of train points in the data space.
+            test_train_covar: Covariance matrix of test x train points
+                in the data space.
+            train_targets: Training responses vectorized.
+            output_shape: Shape output training responses.
+            num_outputs: Batch shaping of model.
         """
-        super().__init__(mvn)
+        super().__init__(distribution=distribution)
         self.joint_covariance_matrix = joint_covariance_matrix
         self.train_train_covar = train_train_covar
         self.test_train_covar = test_train_covar
@@ -62,8 +64,11 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
 
     @property
     def base_sample_shape(self):
-        # overwrites the standard base_sample_shape call to inform samplers that
-        # n + 2 n_train samples need to be drawn rather than n samples
+        r"""The shape of a base sample used for constructing posterior samples.
+
+        Overwrites the standard `base_sample_shape` call to inform samplers that
+        `n + 2 n_train` samples need to be drawn rather than n samples.
+        """
         joint_covar = self.joint_covariance_matrix
         batch_shape = joint_covar.shape[:-2]
         sampling_shape = torch.Size(
@@ -72,8 +77,23 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
         return batch_shape + sampling_shape
 
     @property
-    def event_shape(self):
-        return self.output_shape
+    def batch_range(self) -> Tuple[int, int]:
+        r"""The t-batch range.
+
+        This is used in samplers to identify the t-batch component of the
+        `base_sample_shape`. The base samples are expanded over the t-batches to
+        provide consistency in the acquisition values, i.e., to ensure that a
+        candidate produces same value regardless of its position on the t-batch.
+        """
+        return (0, -1)
+
+    def _extended_shape(
+        self, sample_shape: torch.Size = torch.Size()  # noqa: B008
+    ) -> torch.Size:
+        r"""Returns the shape of the samples produced by the posterior with
+        the given `sample_shape`.
+        """
+        return sample_shape + self.output_shape
 
     def _prepare_base_samples(
         self, sample_shape: torch.Size, base_samples: Tensor = None
@@ -108,8 +128,11 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
                     )
                     base_samples = torch.cat((base_samples, new_base_samples), dim=-1)
                 else:
-                    # nuke the base samples if we cannot use them.
-                    base_samples = None
+                    raise BotorchTensorDimensionError(
+                        "The base samples are not compatible with base sample shape. "
+                        f"Received base samples of shape {base_samples.shape}, "
+                        f"expected {base_sample_shapes}."
+                    )
 
         if base_samples is None:
             # TODO: Allow qMC sampling
@@ -136,12 +159,12 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
         perm_list = [*range(1, base_samples.ndim), 0]
         return base_samples.permute(*perm_list), noise_base_samples.permute(*perm_list)
 
-    def rsample(
+    def rsample_from_base_samples(
         self,
-        sample_shape: Optional[torch.Size] = None,
-        base_samples: Optional[Tensor] = None,
+        sample_shape: torch.Size,
+        base_samples: Optional[Tensor],
     ) -> Tensor:
-        r"""Sample from the posterior (with gradients).
+        r"""Sample from the posterior (with gradients) using base samples.
 
         As the posterior covariance is difficult to draw from in this model,
         we implement Matheron's rule as described in [Doucet2010sampl]-. This may not
@@ -159,11 +182,9 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
                 This is used for deterministic optimization.
 
         Returns:
-            A `sample_shape x event_shape`-dim Tensor of samples from the posterior.
+            Samples from the posterior, a tensor of shape
+            `self._extended_shape(sample_shape=sample_shape)`.
         """
-        if sample_shape is None:
-            sample_shape = torch.Size([1])
-
         base_samples, noise_base_samples = self._prepare_base_samples(
             sample_shape, base_samples
         )
@@ -220,3 +241,24 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
 
         # reshape samples to be the actual size of the train targets
         return test_cond_samples.reshape(*sample_shape, *self.output_shape)
+
+    def rsample(
+        self,
+        sample_shape: Optional[torch.Size] = None,
+    ) -> Tensor:
+        r"""Sample from the posterior (with gradients).
+
+        Args:
+            sample_shape: A `torch.Size` object specifying the sample shape. To
+                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
+                of `n` samples each, set to `torch.Size([b, n])`.
+
+        Returns:
+            Samples from the posterior, a tensor of shape
+            `self._extended_shape(sample_shape=sample_shape)`.
+        """
+        if sample_shape is None:
+            sample_shape = torch.Size([1])
+        return self.rsample_from_base_samples(
+            sample_shape=sample_shape, base_samples=None
+        )

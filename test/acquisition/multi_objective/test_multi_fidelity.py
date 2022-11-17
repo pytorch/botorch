@@ -13,7 +13,7 @@ from botorch.acquisition.multi_objective.multi_fidelity import MOMF
 from botorch.acquisition.multi_objective.objective import IdentityMCMultiOutputObjective
 from botorch.exceptions.errors import BotorchError
 from botorch.exceptions.warnings import BotorchWarning
-from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
     NondominatedPartitioning,
@@ -45,7 +45,7 @@ class TestMOMF(BotorchTestCase):
 
             X = torch.zeros(1, 1, **tkwargs)
             # basic test
-            sampler = IIDNormalSampler(num_samples=1)
+            sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
             acqf = MOMF(
                 model=mm,
                 ref_point=ref_point,
@@ -108,8 +108,8 @@ class TestMOMF(BotorchTestCase):
             X = torch.zeros(1, 1, **tkwargs)
             samples = torch.zeros(1, 1, 2, **tkwargs)
             mm = MockModel(MockPosterior(samples=samples))
-            # basic test, no resample
-            sampler = IIDNormalSampler(num_samples=2, seed=12345)
+            # basic test
+            sampler = IIDNormalSampler(sample_shape=torch.Size([2]), seed=12345)
             acqf = MOMF(
                 model=mm,
                 ref_point=ref_point,
@@ -123,8 +123,8 @@ class TestMOMF(BotorchTestCase):
             res = acqf(X)
             self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
 
-            # basic test, qmc, no resample
-            sampler = SobolQMCNormalSampler(num_samples=2)
+            # basic test, qmc
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([2]))
             acqf = MOMF(
                 model=mm,
                 ref_point=ref_point,
@@ -137,21 +137,6 @@ class TestMOMF(BotorchTestCase):
             bs = acqf.sampler.base_samples.clone()
             acqf(X)
             self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
-
-            # basic test, qmc, resample
-            sampler = SobolQMCNormalSampler(num_samples=2, resample=True)
-            acqf = MOMF(
-                model=mm,
-                ref_point=ref_point,
-                partitioning=partitioning,
-                sampler=sampler,
-            )
-            res = acqf(X)
-            self.assertEqual(res.item(), 0.0)
-            self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 2]))
-            bs = acqf.sampler.base_samples.clone()
-            acqf(X)
-            self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
 
             # basic test for X_pending and warning
             acqf.set_X_pending()
@@ -189,7 +174,7 @@ class TestMOMF(BotorchTestCase):
             # basic test
             samples = torch.tensor([[[6.5, 4.5]]], **tkwargs)
             mm = MockModel(MockPosterior(samples=samples))
-            sampler = IIDNormalSampler(num_samples=1)
+            sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
             acqf = MOMF(
                 model=mm,
                 ref_point=ref_point,
@@ -200,7 +185,7 @@ class TestMOMF(BotorchTestCase):
             self.assertEqual(res.item(), 1.5)
             # test q = 1, does not contribute
             samples = torch.tensor([0.0, 1.0], **tkwargs).view(1, 1, 2)
-            sampler = IIDNormalSampler(1)
+            sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
             mm = MockModel(MockPosterior(samples=samples))
             acqf.model = mm
             res = acqf(X)

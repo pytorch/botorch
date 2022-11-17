@@ -33,8 +33,7 @@ import torch
 from botorch import settings
 from botorch.models.utils.assorted import fantasize as fantasize_flag
 from botorch.posteriors import Posterior, PosteriorList
-from botorch.posteriors.fully_bayesian import FullyBayesianPosteriorList
-from botorch.sampling.samplers import MCSampler
+from botorch.sampling.base import MCSampler
 from botorch.utils.datasets import BotorchDataset
 from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
@@ -421,10 +420,7 @@ class ModelList(Model):
             )
             for i, idcs in group_indices.items()
         ]
-        if any(is_fully_bayesian(m) for m in self.models):
-            posterior = FullyBayesianPosteriorList(*posteriors)
-        else:
-            posterior = PosteriorList(*posteriors)
+        posterior = PosteriorList(*posteriors)
         if posterior_transform is not None:
             posterior = posterior_transform(posterior)
         return posterior

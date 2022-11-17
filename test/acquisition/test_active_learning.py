@@ -19,7 +19,7 @@ from botorch.acquisition.objective import (
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.pairwise_gp import PairwiseGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal
 
@@ -32,11 +32,10 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
         sampler = qNIPV.sampler
         self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([1]))
-        self.assertFalse(sampler.resample)
         self.assertTrue(torch.equal(mc_points, qNIPV.mc_points))
         self.assertIsNone(qNIPV.X_pending)
         self.assertIsNone(qNIPV.posterior_transform)
-        sampler = IIDNormalSampler(num_samples=2, resample=True)
+        sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
         qNIPV = qNegIntegratedPosteriorVariance(
             model=mm, mc_points=mc_points, sampler=sampler
         )

@@ -8,7 +8,7 @@ import torch
 from botorch.exceptions.errors import BotorchError
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
-from botorch.sampling.samplers import IIDNormalSampler
+from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.low_rank import extract_batch_covar, sample_cached_cholesky
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions.multitask_multivariate_normal import (
@@ -102,14 +102,26 @@ class TestSampleCachedCholesky(BotorchTestCase):
                                     base_posterior = model.posterior(
                                         train_X_ex[..., :-q, :]
                                     )
-                                    mvn = base_posterior.mvn
+                                    mvn = base_posterior.distribution
                                     lazy_covar = mvn.lazy_covariance_matrix
                                     if m == 2:
                                         lazy_covar = lazy_covar.base_linear_op
                                     baseline_L = lazy_covar.root_decomposition()
                                     baseline_L = baseline_L.root.to_dense()
+
+                                # Sample with base sampler to construct
+                                # the base samples.
+                                baseline_samples = base_sampler(base_posterior)
+
                                 test_X = test_X.clone().requires_grad_(True)
                                 new_posterior = model.posterior(test_X)
+
+                                # Mimicking _set_sampler to update base
+                                # samples of the sampler.
+                                sampler._update_base_samples(
+                                    posterior=new_posterior, base_sampler=base_sampler
+                                )
+
                                 samples = sampler(new_posterior)
                                 samples[..., -q:, :].sum().backward()
                                 test_X2 = test_X.detach().clone().requires_grad_(True)
@@ -148,11 +160,6 @@ class TestSampleCachedCholesky(BotorchTestCase):
                                 # did not change posterior samples for previous points.
                                 # This tests that we properly account for not
                                 # interleaving.
-                                base_sampler.base_samples = (
-                                    sampler.base_samples[..., :-q, :].detach().clone()
-                                )
-
-                                baseline_samples = base_sampler(base_posterior)
                                 new_batch_shape = samples.shape[
                                     1 : -baseline_samples.ndim + 1
                                 ]
@@ -175,8 +182,8 @@ class TestSampleCachedCholesky(BotorchTestCase):
                             # test nans
                             with torch.no_grad():
                                 test_posterior = model.posterior(test_X2)
-                            test_posterior.mvn.loc = torch.full_like(
-                                test_posterior.mvn.loc, float("nan")
+                            test_posterior.distribution.loc = torch.full_like(
+                                test_posterior.distribution.loc, float("nan")
                             )
                             with self.assertRaises(NanError):
                                 sample_cached_cholesky(
@@ -187,8 +194,8 @@ class TestSampleCachedCholesky(BotorchTestCase):
                                     sample_shape=sampler.sample_shape,
                                 )
                             # test infs
-                            test_posterior.mvn.loc = torch.full_like(
-                                test_posterior.mvn.loc, float("inf")
+                            test_posterior.distribution.loc = torch.full_like(
+                                test_posterior.distribution.loc, float("inf")
                             )
                             with self.assertRaises(NanError):
                                 sample_cached_cholesky(
