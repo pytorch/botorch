@@ -31,7 +31,8 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.model import Model
 from botorch.optim.initializers import initialize_q_batch
-from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.sampling.base import MCSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.transforms import (
     match_batch_shape,
     t_batch_mode_transform,
@@ -135,14 +136,10 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
                 "`samplers` as arguments."
             )
         if samplers is None:
-            # The batch_range is not set here and left to sampler default of (0, -2),
-            # meaning that collapse_batch_dims will be applied on fantasy batch
-            # dimensions. If collapse_fantasy_base_samples is False, the batch_range
-            # is updated during the forward call.
+            # If collapse_fantasy_base_samples is False, the `batch_range_override`
+            # is set on the samplers during the forward call.
             samplers: List[MCSampler] = [
-                SobolQMCNormalSampler(
-                    num_samples=nf, resample=False, collapse_batch_dims=True
-                )
+                SobolQMCNormalSampler(sample_shape=torch.Size([nf]))
                 for nf in num_fantasies
             ]
         else:
@@ -218,11 +215,11 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
         r"""Set batch_range on samplers.
 
         Args:
-            batch_shape:
+            batch_shape: The batch shape of the input tensor `X`.
         """
         tbatch_dim_start = -2 - len(batch_shape)
         for s in self.samplers:
-            s.batch_range = (tbatch_dim_start, -2)
+            s.batch_range_override = (tbatch_dim_start, -2)
 
     def get_augmented_q_batch_size(self, q: int) -> int:
         r"""Get augmented q batch size for one-shot optimzation.
@@ -568,9 +565,7 @@ def _construct_inner_samplers(
             inner_samplers.append(None)
         else:
             inner_sampler = SobolQMCNormalSampler(
-                num_samples=32 if mcs is None else mcs,
-                resample=False,
-                collapse_batch_dims=True,
+                sample_shape=torch.Size([32 if mcs is None else mcs])
             )
             inner_samplers.append(inner_sampler)
     return inner_samplers

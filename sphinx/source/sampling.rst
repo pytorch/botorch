@@ -7,9 +7,24 @@ botorch.sampling
 .. automodule:: botorch.sampling
 
 
-Monte-Carlo Samplers
+Monte-Carlo Sampler API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.sampling.samplers
+.. automodule:: botorch.sampling.base
+    :members:
+
+Get Sampler Helper
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.get_sampler
+    :members:
+
+List Sampler
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.list_sampler
+    :members:
+
+Gaussian Monte-Carlo Samplers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.normal
     :members:
 
 Pairwise Monte-Carlo Samplers
@@ -20,4 +35,14 @@ Pairwise Monte-Carlo Samplers
 QMC Base Functionality
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.sampling.qmc
+    :members:
+
+Stochastic Samplers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.stochastic_samplers
+    :members:
+
+Deprecated
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.samplers
     :members:

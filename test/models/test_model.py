@@ -12,7 +12,7 @@ from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.model import Model, ModelList
 from botorch.models.utils import parse_training_data
 from botorch.posteriors.deterministic import DeterministicPosterior
-from botorch.posteriors.posterior import PosteriorList
+from botorch.posteriors.posterior_list import PosteriorList
 from botorch.utils.testing import BotorchTestCase
 
 

@@ -22,7 +22,6 @@ from botorch.exceptions import UnsupportedError
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
-from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
 from torch import Tensor
 from torch.distributions import Normal
@@ -561,9 +560,11 @@ class NoisyExpectedImprovement(ExpectedImprovement):
                 "Only FixedNoiseGPs are currently supported for fantasy NEI"
             )
         # sample fantasies
+        from botorch.sampling.normal import SobolQMCNormalSampler
+
         with torch.no_grad():
             posterior = model.posterior(X=X_observed)
-            sampler = SobolQMCNormalSampler(num_fantasies)
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_fantasies]))
             Y_fantasized = sampler(posterior).squeeze(-1)
         batch_X_observed = X_observed.expand(num_fantasies, *X_observed.shape)
         # The fantasy model will operate in batch mode

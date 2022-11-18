@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 
 import torch
 from botorch.posteriors.posterior import Posterior
@@ -14,7 +14,7 @@ from torch import Tensor
 
 
 class TransformedPosterior(Posterior):
-    r"""An generic transformation of a posterior (implicitly represented)"""
+    r"""A generic transformation of a posterior (implicitly represented)."""
 
     def __init__(
         self,
@@ -23,7 +23,7 @@ class TransformedPosterior(Posterior):
         mean_transform: Optional[Callable[[Tensor, Tensor], Tensor]] = None,
         variance_transform: Optional[Callable[[Tensor, Tensor], Tensor]] = None,
     ) -> None:
-        r"""An implicitly represented transformed posterior
+        r"""An implicitly represented transformed posterior.
 
         Args:
             posterior: The posterior object to be transformed.
@@ -49,6 +49,17 @@ class TransformedPosterior(Posterior):
         return self._posterior.base_sample_shape
 
     @property
+    def batch_range(self) -> Tuple[int, int]:
+        r"""The t-batch range.
+
+        This is used in samplers to identify the t-batch component of the
+        `base_sample_shape`. The base samples are expanded over the t-batches to
+        provide consistency in the acquisition values, i.e., to ensure that a
+        candidate produces same value regardless of its position on the t-batch.
+        """
+        return self._posterior.batch_range
+
+    @property
     def device(self) -> torch.device:
         r"""The torch device of the posterior."""
         return self._posterior.device
@@ -58,10 +69,16 @@ class TransformedPosterior(Posterior):
         r"""The torch dtype of the posterior."""
         return self._posterior.dtype
 
-    @property
-    def event_shape(self) -> torch.Size:
-        r"""The event shape (i.e. the shape of a single sample)."""
-        return self._posterior.event_shape
+    def _extended_shape(
+        self, sample_shape: torch.Size = torch.Size()  # noqa: B008
+    ) -> torch.Size:
+        r"""Returns the shape of the samples produced by the posterior with
+        the given `sample_shape`.
+
+        NOTE: This assumes that the `sample_transform` does not change the
+        shape of the samples.
+        """
+        return self._posterior._extended_shape(sample_shape=sample_shape)
 
     @property
     def mean(self) -> Tensor:
@@ -81,10 +98,35 @@ class TransformedPosterior(Posterior):
             raise NotImplementedError("No variance transform provided.")
         return self._variance_transform(self._posterior.mean, self._posterior.variance)
 
+    def rsample_from_base_samples(
+        self,
+        sample_shape: torch.Size,
+        base_samples: Tensor,
+    ) -> Tensor:
+        r"""Sample from the posterior (with gradients) using base samples.
+
+        This is intended to be used with a sampler that produces the corresponding base
+        samples, and enables acquisition optimization via Sample Average Approximation.
+
+        Args:
+            sample_shape: A `torch.Size` object specifying the sample shape. To
+                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
+                of `n` samples each, set to `torch.Size([b, n])`.
+            base_samples: The base samples, obtained from the appropriate sampler.
+                This is a tensor of shape `sample_shape x base_sample_shape`.
+
+        Returns:
+            Samples from the posterior, a tensor of shape
+            `self._extended_shape(sample_shape=sample_shape)`.
+        """
+        samples = self._posterior.rsample_from_base_samples(
+            sample_shape=sample_shape, base_samples=base_samples
+        )
+        return self._sample_transform(samples)
+
     def rsample(
         self,
         sample_shape: Optional[torch.Size] = None,
-        base_samples: Optional[Tensor] = None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients).
 
@@ -92,14 +134,10 @@ class TransformedPosterior(Posterior):
             sample_shape: A `torch.Size` object specifying the sample shape. To
                 draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
                 of `n` samples each, set to `torch.Size([b, n])`.
-            base_samples: An (optional) Tensor of `N(0, I)` base samples of
-                appropriate dimension, typically obtained from a `Sampler`.
-                This is used for deterministic optimization.
 
         Returns:
-            A `sample_shape x event`-dim Tensor of samples from the posterior.
+            Samples from the posterior, a tensor of shape
+            `self._extended_shape(sample_shape=sample_shape)`.
         """
-        samples = self._posterior.rsample(
-            sample_shape=sample_shape, base_samples=base_samples
-        )
+        samples = self._posterior.rsample(sample_shape=sample_shape)
         return self._sample_transform(samples)

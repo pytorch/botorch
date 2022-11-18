@@ -200,7 +200,7 @@ class TestHigherOrderGP(BotorchTestCase):
         for dtype in [torch.float, torch.double]:
             torch.random.manual_seed(0)
             test_x = torch.rand(2, 5, 1, device=self.device, dtype=dtype)
-            sampler = IIDNormalSampler(num_samples=32)
+            sampler = IIDNormalSampler(sample_shape=torch.Size([32]))
 
             self.model.to(dtype)
             if dtype == torch.double:

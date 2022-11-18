@@ -35,7 +35,7 @@ from botorch.optim.initializers import (
     sample_points_around_best,
     sample_truncated_normal_perturbations,
 )
-from botorch.sampling import IIDNormalSampler
+from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.sampling import draw_sobol_samples
 from botorch.utils.testing import (
     BotorchTestCase,
@@ -436,7 +436,9 @@ class TestGenValueFunctionInitialConditions(BotorchTestCase):
         train_Y = torch.rand(n_train, 1, device=self.device, dtype=dtype)
         model = SingleTaskGP(train_X, train_Y)
         fant_X = torch.rand(num_solutions, 1, dim, device=self.device, dtype=dtype)
-        fantasy_model = model.fantasize(fant_X, IIDNormalSampler(num_fantasies))
+        fantasy_model = model.fantasize(
+            fant_X, IIDNormalSampler(sample_shape=torch.Size([num_fantasies]))
+        )
         bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
         value_function = PosteriorMean(fantasy_model)
         # test option error
@@ -475,7 +477,9 @@ class TestGenValueFunctionInitialConditions(BotorchTestCase):
         train_Y = torch.rand(n_train, 1, device=self.device, dtype=dtype)
         model = SingleTaskGP(train_X, train_Y)
         fant_X = torch.rand(1, 1, dim, device=self.device, dtype=dtype)
-        fantasy_model = model.fantasize(fant_X, IIDNormalSampler(num_fantasies))
+        fantasy_model = model.fantasize(
+            fant_X, IIDNormalSampler(sample_shape=torch.Size([num_fantasies]))
+        )
         bounds = torch.tensor([[0], [1]], device=self.device, dtype=dtype)
         value_function = PosteriorMean(fantasy_model)
         ics = gen_value_function_initial_conditions(
@@ -727,6 +731,7 @@ class TestSampleAroundBest(BotorchTestCase):
                     X_baseline=X_train,
                     constraints=constraints,
                     cache_root=False,
+                    sampler=IIDNormalSampler(sample_shape=torch.Size([2])),
                 )
                 X_rnd = sample_points_around_best(
                     acq_function=acqf,

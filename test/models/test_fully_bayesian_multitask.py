@@ -37,7 +37,8 @@ from botorch.models.fully_bayesian_multitask import (
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors import FullyBayesianPosterior
-from botorch.sampling.samplers import IIDNormalSampler
+from botorch.sampling.get_sampler import get_sampler
+from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
@@ -159,7 +160,7 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                 task_feature=4,
             )
         train_X, train_Y, train_Yvar, model = self._get_data_and_model(**tkwargs)
-        sampler = IIDNormalSampler(num_samples=2)
+        sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
         with self.assertRaisesRegex(
             NotImplementedError, "Fantasize is not implemented!"
         ):
@@ -252,56 +253,43 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
 
                 # Mixture mean/variance/median/quantiles
                 mixture_mean = posterior.mixture_mean
-                mixture_median = posterior.mixture_median
                 mixture_variance = posterior.mixture_variance
-                mixture_quantile1 = posterior.mixture_quantile(q=0.01)
-                mixture_quantile2 = posterior.mixture_quantile(q=0.99)
+                quantile1 = posterior.quantile(value=torch.tensor(0.01))
+                quantile2 = posterior.quantile(value=torch.tensor(0.99))
 
                 # Marginalized mean/variance
                 self.assertEqual(
                     mixture_mean.shape, torch.Size(batch_shape + [self.num_tasks])
                 )
                 self.assertEqual(
-                    mixture_median.shape, torch.Size(batch_shape + [self.num_tasks])
-                )
-                self.assertTrue(
-                    torch.allclose(mixture_median, posterior.mixture_quantile(q=0.5))
-                )
-                self.assertEqual(
                     mixture_variance.shape, torch.Size(batch_shape + [self.num_tasks])
                 )
                 self.assertTrue(mixture_variance.min() > 0.0)
                 self.assertEqual(
-                    mixture_quantile1.shape, torch.Size(batch_shape + [self.num_tasks])
+                    quantile1.shape, torch.Size(batch_shape + [self.num_tasks])
                 )
                 self.assertEqual(
-                    mixture_quantile2.shape, torch.Size(batch_shape + [self.num_tasks])
+                    quantile2.shape, torch.Size(batch_shape + [self.num_tasks])
                 )
-                self.assertTrue((mixture_quantile2 > mixture_quantile1).all())
+                self.assertTrue((quantile2 > quantile1).all())
 
                 dist = torch.distributions.Normal(
                     loc=posterior.mean, scale=posterior.variance.sqrt()
                 )
                 torch.allclose(
-                    dist.cdf(mixture_median.unsqueeze(MCMC_DIM)).mean(dim=MCMC_DIM),
-                    0.5 * torch.ones(batch_shape + [1], **tkwargs),
-                )
-                torch.allclose(
-                    dist.cdf(mixture_quantile1.unsqueeze(MCMC_DIM)).mean(dim=MCMC_DIM),
+                    dist.cdf(quantile1.unsqueeze(MCMC_DIM)).mean(dim=MCMC_DIM),
                     0.05 * torch.ones(batch_shape + [1], **tkwargs),
                 )
                 torch.allclose(
-                    dist.cdf(mixture_quantile2.unsqueeze(MCMC_DIM)).mean(dim=MCMC_DIM),
+                    dist.cdf(quantile2.unsqueeze(MCMC_DIM)).mean(dim=MCMC_DIM),
                     0.95 * torch.ones(batch_shape + [1], **tkwargs),
                 )
                 # Invalid quantile should raise
-                with self.assertRaisesRegex(ValueError, "q is expected to be a float."):
-                    posterior.mixture_quantile(q="cat")
                 for q in [-1.0, 0.0, 1.0, 1.3333]:
                     with self.assertRaisesRegex(
-                        ValueError, "q is expected to be in the range"
+                        ValueError, "value is expected to be in the range"
                     ):
-                        posterior.mixture_quantile(q=q)
+                        posterior.quantile(value=torch.tensor(q))
 
                 # Test model lists with fully Bayesian models and mixed modeling
                 deterministic = GenericDeterministicModel(f=lambda x: x[..., :1])
@@ -407,7 +395,18 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         )
 
         deterministic = GenericDeterministicModel(f=lambda x: x[..., :1])
-        sampler = IIDNormalSampler(num_samples=2)
+        list_gp = ModelListGP(model, model)
+        mixed_list = ModelList(deterministic, ModelListGP(model))
+        simple_sampler = get_sampler(
+            posterior=ModelListGP(model).posterior(train_X),
+            sample_shape=torch.Size([2]),
+        )
+        list_gp_sampler = get_sampler(
+            posterior=list_gp.posterior(train_X), sample_shape=torch.Size([2])
+        )
+        mixed_list_sampler = get_sampler(
+            posterior=mixed_list.posterior(train_X), sample_shape=torch.Size([2])
+        )
         # wrap mtgp with ModelList
         acquisition_functions = [
             ExpectedImprovement(model=ModelListGP(model), best_f=train_Y.max()),
@@ -415,41 +414,43 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
             PosteriorMean(model=ModelListGP(model)),
             UpperConfidenceBound(model=ModelListGP(model), beta=4),
             qExpectedImprovement(
-                model=ModelListGP(model), best_f=train_Y.max(), sampler=sampler
+                model=ModelListGP(model), best_f=train_Y.max(), sampler=simple_sampler
             ),
             qNoisyExpectedImprovement(
-                model=ModelListGP(model), X_baseline=train_X, sampler=sampler
+                model=ModelListGP(model), X_baseline=train_X, sampler=simple_sampler
             ),
             qProbabilityOfImprovement(
-                model=ModelListGP(model), best_f=train_Y.max(), sampler=sampler
+                model=ModelListGP(model), best_f=train_Y.max(), sampler=simple_sampler
             ),
-            qSimpleRegret(model=ModelListGP(model), sampler=sampler),
-            qUpperConfidenceBound(model=ModelListGP(model), beta=4, sampler=sampler),
+            qSimpleRegret(model=ModelListGP(model), sampler=simple_sampler),
+            qUpperConfidenceBound(
+                model=ModelListGP(model), beta=4, sampler=simple_sampler
+            ),
             qNoisyExpectedHypervolumeImprovement(
-                model=ModelListGP(model, model),
+                model=list_gp,
                 X_baseline=train_X,
                 ref_point=torch.zeros(2, **tkwargs),
-                sampler=sampler,
+                sampler=list_gp_sampler,
             ),
             qExpectedHypervolumeImprovement(
-                model=ModelListGP(model, model),
+                model=list_gp,
                 ref_point=torch.zeros(2, **tkwargs),
-                sampler=sampler,
+                sampler=list_gp_sampler,
                 partitioning=NondominatedPartitioning(
                     ref_point=torch.zeros(2, **tkwargs), Y=train_Y.repeat([1, 2])
                 ),
             ),
             # qEHVI/qNEHVI with mixed models
             qNoisyExpectedHypervolumeImprovement(
-                model=ModelList(deterministic, ModelListGP(model)),
+                model=mixed_list,
                 X_baseline=train_X,
                 ref_point=torch.zeros(2, **tkwargs),
-                sampler=sampler,
+                sampler=mixed_list_sampler,
             ),
             qExpectedHypervolumeImprovement(
-                model=ModelList(deterministic, ModelListGP(model)),
+                model=mixed_list,
                 ref_point=torch.zeros(2, **tkwargs),
-                sampler=sampler,
+                sampler=mixed_list_sampler,
                 partitioning=NondominatedPartitioning(
                     ref_point=torch.zeros(2, **tkwargs), Y=train_Y.repeat([1, 2])
                 ),

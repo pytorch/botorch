@@ -6,6 +6,7 @@
 
 import numpy as np
 import torch
+from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.higher_order_gp import HigherOrderGP
 from botorch.posteriors.higher_order import HigherOrderGPPosterior
 from botorch.sampling import IIDNormalSampler
@@ -45,13 +46,13 @@ class TestHigherOrderGPPosterior(BotorchTestCase):
             self.assertIsInstance(posterior, HigherOrderGPPosterior)
 
             batch_shape = test_x.shape[:-2]
-            expected_event_shape = batch_shape + sample_shaping
+            expected_extended_shape = batch_shape + sample_shaping
 
-            self.assertEqual(posterior.event_shape, expected_event_shape)
+            self.assertEqual(posterior._extended_shape(), expected_extended_shape)
 
             # test providing no base samples
             samples_0 = posterior.rsample()
-            self.assertEqual(samples_0.shape, torch.Size((1, *expected_event_shape)))
+            self.assertEqual(samples_0.shape, torch.Size((1, *expected_extended_shape)))
 
             # test that providing all base samples produces non-torch.random results
             if len(batch_shape) > 0:
@@ -60,39 +61,41 @@ class TestHigherOrderGPPosterior(BotorchTestCase):
                 base_sample_shape = (8, (5 + 10 + 10) * 3 * 5)
             base_samples = torch.randn(*base_sample_shape, device=self.device)
 
-            samples_1 = posterior.rsample(
+            samples_1 = posterior.rsample_from_base_samples(
                 base_samples=base_samples, sample_shape=torch.Size((8,))
             )
-            samples_2 = posterior.rsample(
+            samples_2 = posterior.rsample_from_base_samples(
                 base_samples=base_samples, sample_shape=torch.Size((8,))
             )
             self.assertTrue(torch.allclose(samples_1, samples_2))
 
             # test that botorch.sampler picks up the correct shapes
-            sampler = IIDNormalSampler(num_samples=5)
+            sampler = IIDNormalSampler(sample_shape=torch.Size([5]))
             samples_det_shape = sampler(posterior).shape
-            self.assertEqual(samples_det_shape, torch.Size([5, *expected_event_shape]))
+            self.assertEqual(
+                samples_det_shape, torch.Size([5, *expected_extended_shape])
+            )
 
             # test that providing only some base samples is okay
             base_samples = torch.randn(
-                8, np.prod(expected_event_shape), device=self.device
+                8, np.prod(expected_extended_shape), device=self.device
             )
-            samples_3 = posterior.rsample(
+            samples_3 = posterior.rsample_from_base_samples(
                 base_samples=base_samples, sample_shape=torch.Size((8,))
             )
-            self.assertEqual(samples_3.shape, torch.Size([8, *expected_event_shape]))
+            self.assertEqual(samples_3.shape, torch.Size([8, *expected_extended_shape]))
 
-            # test that providing the wrong number base samples is okay
+            # test that providing the wrong number base samples errors out
             base_samples = torch.randn(8, 50 * 2 * 3 * 5, device=self.device)
-            samples_4 = posterior.rsample(
-                base_samples=base_samples, sample_shape=torch.Size((8,))
-            )
-            self.assertEqual(samples_4.shape, torch.Size([8, *expected_event_shape]))
+            with self.assertRaises(BotorchTensorDimensionError):
+                posterior.rsample_from_base_samples(
+                    base_samples=base_samples, sample_shape=torch.Size((8,))
+                )
 
             # test that providing the wrong shapes of base samples fails
             base_samples = torch.randn(8, 5 * 2 * 3 * 5, device=self.device)
             with self.assertRaises(RuntimeError):
-                samples_4 = posterior.rsample(
+                posterior.rsample_from_base_samples(
                     base_samples=base_samples, sample_shape=torch.Size((4,))
                 )
 

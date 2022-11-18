@@ -751,7 +751,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
             specialized_mvn = self.likelihood(specialized_mvn)
 
         posterior = MultitaskGPPosterior(
-            mvn=specialized_mvn,
+            distribution=specialized_mvn,
             joint_covariance_matrix=joint_covar,
             test_train_covar=test_obs_kernel,
             train_diff=train_diff,

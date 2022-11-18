@@ -27,7 +27,7 @@ from botorch.models.transforms import Standardize
 from botorch.models.transforms.input import ChainedInputTransform, InputTransform
 from botorch.models.utils import fantasize
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase
 from gpytorch import ExactMarginalLogLikelihood
 from gpytorch.distributions import MultivariateNormal
@@ -204,7 +204,7 @@ class TestGPyTorchModel(BotorchTestCase):
             with self.assertRaises(NotImplementedError):
                 model.subset_output([0])
             # test fantasize
-            sampler = SobolQMCNormalSampler(num_samples=2)
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([2]))
             cm = model.fantasize(torch.rand(2, 1, **tkwargs), sampler=sampler)
             self.assertIsInstance(cm, SimpleGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
@@ -358,7 +358,7 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
             self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
             # test fantasize
-            sampler = SobolQMCNormalSampler(num_samples=2)
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([2]))
             cm = model.fantasize(torch.rand(2, 1, **tkwargs), sampler=sampler)
             self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 2, 7]))

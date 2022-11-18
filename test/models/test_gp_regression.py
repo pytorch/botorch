@@ -283,8 +283,10 @@ class TestSingleTaskGP(BotorchTestCase):
                     )
                     self.assertTrue(
                         torch.allclose(
-                            posterior_same_inputs.mvn.covariance_matrix[:, 0, :, :],
-                            non_batch_posterior.mvn.covariance_matrix,
+                            posterior_same_inputs.distribution.covariance_matrix[
+                                :, 0, :, :
+                            ],
+                            non_batch_posterior.distribution.covariance_matrix,
                             atol=1e-3,
                         )
                     )
@@ -303,7 +305,7 @@ class TestSingleTaskGP(BotorchTestCase):
             )
             # fantasize
             X_f = torch.rand(torch.Size(batch_shape + torch.Size([4, 1])), **tkwargs)
-            sampler = SobolQMCNormalSampler(num_samples=3)
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([3]))
             fm = model.fantasize(X=X_f, sampler=sampler)
             self.assertIsInstance(fm, model.__class__)
             fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)
@@ -319,7 +321,9 @@ class TestSingleTaskGP(BotorchTestCase):
             **tkwargs,
         )
         X_f = torch.rand(4, 1, **tkwargs)
-        fm = model.fantasize(X_f, sampler=SobolQMCNormalSampler(num_samples=3))
+        fm = model.fantasize(
+            X_f, sampler=SobolQMCNormalSampler(sample_shape=torch.Size([3]))
+        )
         self.assertTrue(
             torch.allclose(fm.train_inputs[0][:, -4:], intf(X_f).expand(3, -1, -1))
         )
@@ -502,7 +506,9 @@ def _get_pvar_expected(posterior, model, X, m):
     if isinstance(model.likelihood, FixedNoiseGaussianLikelihood):
         lh_kwargs["noise"] = model.likelihood.noise.mean().expand(X.shape[:-1])
     if m == 1:
-        return model.likelihood(posterior.mvn, X, **lh_kwargs).variance.unsqueeze(-1)
+        return model.likelihood(
+            posterior.distribution, X, **lh_kwargs
+        ).variance.unsqueeze(-1)
     X_, odi = add_output_dim(X=X, original_batch_shape=model._input_batch_shape)
     pvar_exp = model.likelihood(model(X_), X_, **lh_kwargs).variance
     return torch.stack([pvar_exp.select(dim=odi, index=i) for i in range(m)], dim=-1)

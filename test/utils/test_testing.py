@@ -14,9 +14,9 @@ class TestMock(BotorchTestCase):
         mp = MockPosterior()
         self.assertEqual(mp.device.type, "cpu")
         self.assertEqual(mp.dtype, torch.float32)
-        self.assertEqual(mp.event_shape, torch.Size())
+        self.assertEqual(mp._extended_shape(), torch.Size())
         self.assertEqual(
-            MockPosterior(variance=torch.rand(2)).event_shape, torch.Size([2])
+            MockPosterior(variance=torch.rand(2))._extended_shape(), torch.Size([2])
         )
         # test passing in tensors
         mean = torch.rand(2)
@@ -27,12 +27,12 @@ class TestMock(BotorchTestCase):
         self.assertEqual(mp.dtype, torch.float32)
         self.assertTrue(torch.equal(mp.mean, mean))
         self.assertTrue(torch.equal(mp.variance, variance))
-        self.assertTrue(torch.all(mp.sample() == samples.unsqueeze(0)))
+        self.assertTrue(torch.all(mp.rsample() == samples.unsqueeze(0)))
         self.assertTrue(
-            torch.all(mp.sample(torch.Size([2])) == samples.repeat(2, 1, 1))
+            torch.all(mp.rsample(torch.Size([2])) == samples.repeat(2, 1, 1))
         )
         with self.assertRaises(RuntimeError):
-            mp.sample(sample_shape=torch.Size([2]), base_samples=torch.rand(3))
+            mp.rsample(sample_shape=torch.Size([2]), base_samples=torch.rand(3))
 
     def test_MockModel(self):
         mp = MockPosterior()
