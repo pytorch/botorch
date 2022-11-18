@@ -41,8 +41,3 @@ Stochastic Samplers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.sampling.stochastic_samplers
     :members:
-
-Deprecated
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.sampling.samplers
-    :members:
