@@ -14,6 +14,7 @@ import pyro
 import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.fully_bayesian import (
+    _psd_safe_pyro_mvn_sample,
     matern52_kernel,
     MIN_INFERRED_NOISE_LEVEL,
     PyroModel,
@@ -103,12 +104,10 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         )
         k = k.mul(task_covar)
         k = outputscale * k + noise * torch.eye(self.train_X.shape[0], **tkwargs)
-        pyro.sample(
-            "Y",
-            pyro.distributions.MultivariateNormal(
-                loc=mean.view(-1).expand(self.train_X.shape[0]),
-                covariance_matrix=k,
-            ),
+        _psd_safe_pyro_mvn_sample(
+            name="Y",
+            loc=mean.view(-1).expand(self.train_X.shape[0]),
+            covariance_matrix=k,
             obs=self.train_Y.squeeze(-1),
         )
 

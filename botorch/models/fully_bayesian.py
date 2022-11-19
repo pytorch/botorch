@@ -32,6 +32,7 @@ References:
 
 
 import math
+import warnings
 from abc import abstractmethod
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
@@ -55,6 +56,7 @@ from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.means.mean import Mean
 from gpytorch.models.exact_gp import ExactGP
+from linear_operator import settings
 from torch import Tensor
 
 MIN_INFERRED_NOISE_LEVEL = 1e-6
@@ -79,6 +81,51 @@ def compute_dists(X: Tensor, lengthscale: Tensor) -> Tensor:
 def reshape_and_detach(target: Tensor, new_value: Tensor) -> None:
     """Detach and reshape `new_value` to match `target`."""
     return new_value.detach().clone().view(target.shape).to(target)
+
+
+def _psd_safe_pyro_mvn_sample(
+    name: str, loc: Tensor, covariance_matrix: Tensor, obs: Tensor
+) -> None:
+    r"""Wraps the `pyro.sample` call in a loop to add an increasing series of jitter
+    to the covariance matrix each time we get a LinAlgError.
+
+    This is modelled after linear_operator's `psd_safe_cholesky`.
+    """
+    jitter = settings.cholesky_jitter.value(loc.dtype)
+    max_tries = settings.cholesky_max_tries.value()
+    for i in range(max_tries + 1):
+        jitter_matrix = (
+            torch.eye(
+                covariance_matrix.shape[-1],
+                device=covariance_matrix.device,
+                dtype=covariance_matrix.dtype,
+            )
+            * jitter
+        )
+        jittered_covar = (
+            covariance_matrix if i == 0 else covariance_matrix + jitter_matrix
+        )
+        try:
+            pyro.sample(
+                name,
+                pyro.distributions.MultivariateNormal(
+                    loc=loc,
+                    covariance_matrix=jittered_covar,
+                ),
+                obs=obs,
+            )
+            return
+        except (torch.linalg.LinAlgError, ValueError) as e:
+            if isinstance(e, ValueError) and "satisfy the constraint" not in str(e):
+                # Not-PSD can be also caught in Distribution.__init__ during parameter
+                # validation, which raises a ValueError. Only catch those errors.
+                raise e
+            jitter = jitter * (10**i)
+            warnings.warn(
+                "Received a linear algebra error while sampling with Pyro. Adding a "
+                f"jitter of {jitter} to the covariance matrix and retrying.",
+                RuntimeWarning,
+            )
 
 
 class PyroModel:
@@ -164,12 +211,10 @@ class SaasPyroModel(PyroModel):
         lengthscale = self.sample_lengthscale(dim=self.ard_num_dims, **tkwargs)
         k = matern52_kernel(X=self.train_X, lengthscale=lengthscale)
         k = outputscale * k + noise * torch.eye(self.train_X.shape[0], **tkwargs)
-        pyro.sample(
-            "Y",
-            pyro.distributions.MultivariateNormal(
-                loc=mean.view(-1).expand(self.train_X.shape[0]),
-                covariance_matrix=k,
-            ),
+        _psd_safe_pyro_mvn_sample(
+            name="Y",
+            loc=mean.view(-1).expand(self.train_X.shape[0]),
+            covariance_matrix=k,
             obs=self.train_Y.squeeze(-1),
         )
 
