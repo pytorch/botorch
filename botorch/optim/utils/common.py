@@ -33,7 +33,7 @@ def _filter_kwargs(function: Callable, **kwargs: Any) -> Any:
 
 
 def _handle_numerical_errors(
-    error: RuntimeError, x: np.ndarray
+    error: RuntimeError, x: np.ndarray, dtype: Optional[np.dtype] = None
 ) -> Tuple[np.ndarray, np.ndarray]:
     if isinstance(error, NotPSDError):
         raise error
@@ -43,7 +43,8 @@ def _handle_numerical_errors(
         or "singular" in error_message  # old pytorch message
         or "input is not positive-definite" in error_message  # since pytorch #63864
     ):
-        return np.full((), "nan", dtype=x.dtype), np.full_like(x, "nan")
+        _dtype = x.dtype if dtype is None else dtype
+        return np.full((), "nan", dtype=_dtype), np.full_like(x, "nan", dtype=_dtype)
     raise error  # pragma: nocover
 
 
