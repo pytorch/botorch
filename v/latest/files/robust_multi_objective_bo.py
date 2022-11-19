@@ -41,7 +41,7 @@ import torch
 import numpy as np
 import os
 
-tkwargs = {"dtype": torch.double, "device": torch.device("cuda" if torch.cuda.is_available() else "cpu")}
+tkwargs = {"dtype": torch.double, "device": torch.device("cuda:2" if torch.cuda.is_available() else "cpu")}
 seed = 0
 torch.manual_seed(seed)
 np.random.seed(seed)
@@ -324,7 +324,7 @@ import gc
 import gpytorch.settings as gpt_settings
 from time import time
 from botorch.fit import fit_gpytorch_mll
-from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.optim.optimize import optimize_acqf
 
 start = time()
@@ -344,7 +344,7 @@ for i in range(iterations):
 
     with gpt_settings.cholesky_max_tries(6):
         # Construct the acqf.
-        sampler = SobolQMCNormalSampler(num_samples=mc_samples)
+        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([mc_samples]))
         acq_func = get_MARS_NEI(
             model=model,
             n_w=n_w,
@@ -407,7 +407,7 @@ plt.xlabel("BO Iterations")
 
 # Next, we plot the mvar frontier to see the possible probabilistic lower bounds. For each point $\mathbf z$ in the MVaR set, there is a previously evaluated design that will be at least as good as $\mathbf z$ with probability $\alpha$.
 
-# In[13]:
+# In[15]:
 
 
 from botorch.utils.multi_objective.pareto import is_non_dominated
@@ -419,10 +419,10 @@ true_Y_under_noise = eval_problem(perturbed_X)
 # calculate the MVaR frontier for each point X
 mvar_points = mvar_hv.mvar(true_Y_under_noise)
 # calculate the pareto frontier over the union of individual MVaR frontiers for each design
-mvar_frontier = mvar_points[is_non_dominated(mvar_points)]
+mvar_frontier = mvar_points[is_non_dominated(mvar_points)].cpu()
 
 
-# In[14]:
+# In[16]:
 
 
 plt.plot(mvar_frontier[:,0], mvar_frontier[:,1], '.', alpha=0.4, label="MVaR Frontier")
@@ -433,10 +433,10 @@ plt.legend()
 
 # Finally, we can plot the MVaR frontier for each evaluated design. Clearly some designs are far more robust than others under input noise.
 
-# In[15]:
+# In[18]:
 
 
-for i, y in enumerate(true_Y_under_noise.view(X.shape[0], hv_n_w, -1)):
+for i, y in enumerate(true_Y_under_noise.view(X.shape[0], hv_n_w, -1).cpu()):
     plt.plot(y[:,0],y[:,1],'.', color=f"C{i}", label=f"x_{i}", alpha=0.3)
 plt.xlabel("Objective 1")
 plt.ylabel("Objective 2")

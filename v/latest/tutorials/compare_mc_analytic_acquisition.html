@@ -88,7 +88,7 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [1]:</div>
+<div class="prompt input_prompt">In [16]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
@@ -113,7 +113,7 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [2]:</div>
+<div class="prompt input_prompt">In [17]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">train_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
@@ -135,7 +135,7 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [3]:</div>
+<div class="prompt input_prompt">In [18]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">ExpectedImprovement</span>
@@ -156,7 +156,7 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [4]:</div>
+<div class="prompt input_prompt">In [19]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
@@ -176,7 +176,7 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [5]:</div>
+<div class="prompt input_prompt">In [20]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">new_point_analytic</span>
@@ -187,9 +187,9 @@
 <div class="output_wrapper">
 <div class="output">
 <div class="output_area">
-<div class="prompt output_prompt">Out[5]:</div>
+<div class="prompt output_prompt">Out[20]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>tensor([[0.7490, 0.0804, 0.5910, 0.5143, 0.1870, 0.8092]])</pre>
+<pre>tensor([[0.4730, 0.0836, 0.8247, 0.5628, 0.2964, 0.6131]])</pre>
 </div>
 </div>
 </div>
@@ -204,14 +204,14 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [6]:</div>
+<div class="prompt input_prompt">In [21]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">qExpectedImprovement</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
 
 
-<span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">resample</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>        
+<span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">512</span><span class="p">]),</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>        
 <span class="n">MC_EI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span>
     <span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="n">best_value</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span>
 <span class="p">)</span>
@@ -231,7 +231,7 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [7]:</div>
+<div class="prompt input_prompt">In [22]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">new_point_mc</span>
@@ -242,9 +242,9 @@
 <div class="output_wrapper">
 <div class="output">
 <div class="output_area">
-<div class="prompt output_prompt">Out[7]:</div>
+<div class="prompt output_prompt">Out[22]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>tensor([[0.7490, 0.0803, 0.5912, 0.5144, 0.1870, 0.8093]])</pre>
+<pre>tensor([[0.4730, 0.0835, 0.8248, 0.5627, 0.2963, 0.6130]])</pre>
 </div>
 </div>
 </div>
@@ -259,7 +259,7 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [8]:</div>
+<div class="prompt input_prompt">In [23]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">new_point_mc</span> <span class="o">-</span> <span class="n">new_point_analytic</span><span class="p">)</span>
@@ -270,7 +270,7 @@
 <div class="output_wrapper">
 <div class="output">
 <div class="output_area">
-<div class="prompt output_prompt">Out[8]:</div>
+<div class="prompt output_prompt">Out[23]:</div>
 <div class="output_text output_subarea output_execute_result">
 <pre>tensor(0.0002)</pre>
 </div>
@@ -281,20 +281,21 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Using-a-torch-optimizer-on-a-stochastic-acquisition-function">Using a torch optimizer on a stochastic acquisition function<a class="anchor-link" href="#Using-a-torch-optimizer-on-a-stochastic-acquisition-function">¶</a></h3><p>We could also optimize using a <code>torch</code> optimizer. This is particularly useful for the case of a stochastic acquisition function, which we can obtain by setting <code>resample=True</code>. First, we illustrate the usage of <code>torch.optim.Adam</code>. In the code snippet below, <code>gen_batch_initial_candidates</code> uses a heuristic to select a set of restart locations, <code>gen_candidates_torch</code> is a wrapper to the <code>torch</code> optimizer for maximizing the acquisition value, and <code>get_best_candidates</code> finds the best result amongst the random restarts.</p>
+<h3 id="Using-a-torch-optimizer-on-a-stochastic-acquisition-function">Using a torch optimizer on a stochastic acquisition function<a class="anchor-link" href="#Using-a-torch-optimizer-on-a-stochastic-acquisition-function">¶</a></h3><p>We could also optimize using a <code>torch</code> optimizer. This is particularly useful for the case of a stochastic acquisition function, which we can obtain by using a <code>StochasticSampler</code>. First, we illustrate the usage of <code>torch.optim.Adam</code>. In the code snippet below, <code>gen_batch_initial_candidates</code> uses a heuristic to select a set of restart locations, <code>gen_candidates_torch</code> is a wrapper to the <code>torch</code> optimizer for maximizing the acquisition value, and <code>get_best_candidates</code> finds the best result amongst the random restarts.</p>
 <p>Under the hood, <code>gen_candidates_torch</code> uses a convergence criterion based on exponential moving averages of the loss.</p>
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [9]:</div>
+<div class="prompt input_prompt">In [24]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.generation</span> <span class="kn">import</span> <span class="n">get_best_candidates</span><span class="p">,</span> <span class="n">gen_candidates_torch</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.sampling.stochastic_samplers</span> <span class="kn">import</span> <span class="n">StochasticSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.generation</span> <span class="kn">import</span> <span class="n">get_best_candidates</span><span class="p">,</span> <span class="n">gen_candidates_torch</span>
 <span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="kn">import</span> <span class="n">gen_batch_initial_conditions</span>
 
-<span class="n">resampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">resample</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>        
+<span class="n">resampler</span> <span class="o">=</span> <span class="n">StochasticSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">512</span><span class="p">]))</span>
 <span class="n">MC_EI_resample</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span>
     <span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="n">best_value</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">resampler</span>
 <span class="p">)</span>
@@ -325,7 +326,7 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [10]:</div>
+<div class="prompt input_prompt">In [25]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">new_point_torch_Adam</span>
@@ -336,9 +337,9 @@
 <div class="output_wrapper">
 <div class="output">
 <div class="output_area">
-<div class="prompt output_prompt">Out[10]:</div>
+<div class="prompt output_prompt">Out[25]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>tensor([[0.7493, 0.0783, 0.5926, 0.5091, 0.1921, 0.8094]])</pre>
+<pre>tensor([[0.4527, 0.1183, 0.8902, 0.5630, 0.3151, 0.5804]])</pre>
 </div>
 </div>
 </div>
@@ -346,7 +347,7 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [11]:</div>
+<div class="prompt input_prompt">In [26]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">new_point_torch_Adam</span> <span class="o">-</span> <span class="n">new_point_analytic</span><span class="p">)</span>
@@ -357,9 +358,9 @@
 <div class="output_wrapper">
 <div class="output">
 <div class="output_area">
-<div class="prompt output_prompt">Out[11]:</div>
+<div class="prompt output_prompt">Out[26]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>tensor(0.0078)</pre>
+<pre>tensor(0.0855)</pre>
 </div>
 </div>
 </div>
@@ -374,7 +375,7 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [12]:</div>
+<div class="prompt input_prompt">In [27]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">batch_candidates</span><span class="p">,</span> <span class="n">batch_acq_values</span> <span class="o">=</span> <span class="n">gen_candidates_torch</span><span class="p">(</span>
@@ -395,7 +396,7 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [13]:</div>
+<div class="prompt input_prompt">In [28]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">new_point_torch_SGD</span>
@@ -406,9 +407,9 @@
 <div class="output_wrapper">
 <div class="output">
 <div class="output_area">
-<div class="prompt output_prompt">Out[13]:</div>
+<div class="prompt output_prompt">Out[28]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>tensor([[0.7583, 0.1894, 0.5593, 0.8277, 0.1477, 0.8988]])</pre>
+<pre>tensor([[0.3566, 0.0410, 0.7926, 0.3118, 0.3758, 0.6110]])</pre>
 </div>
 </div>
 </div>
@@ -416,7 +417,7 @@
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [14]:</div>
+<div class="prompt input_prompt">In [29]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">new_point_torch_SGD</span> <span class="o">-</span> <span class="n">new_point_analytic</span><span class="p">)</span>
@@ -427,9 +428,9 @@
 <div class="output_wrapper">
 <div class="output">
 <div class="output_area">
-<div class="prompt output_prompt">Out[14]:</div>
+<div class="prompt output_prompt">Out[29]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>tensor(0.3475)</pre>
+<pre>tensor(0.2928)</pre>
 </div>
 </div>
 </div>

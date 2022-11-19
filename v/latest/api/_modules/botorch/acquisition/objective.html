@@ -236,7 +236,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            An `m`-outcome joint posterior over `q` expectations.</span>
 <span class="sd">        """</span>
-        <span class="n">org_mvn</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span>
+        <span class="n">org_mvn</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span>
         <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">org_mvn</span><span class="p">,</span> <span class="s2">"_interleaved"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
                 <span class="s2">"`ExpectationPosteriorTransform` does not support "</span>
@@ -278,7 +278,7 @@
             <span class="n">new_mvn</span> <span class="o">=</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">(</span>
                 <span class="n">new_loc</span><span class="p">,</span> <span class="n">to_linear_operator</span><span class="p">(</span><span class="n">new_cov</span><span class="p">),</span> <span class="n">interleaved</span><span class="o">=</span><span class="kc">False</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">new_mvn</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">new_mvn</span><span class="p">)</span></div></div>
 
 
 <span class="k">class</span> <span class="nc">MCAcquisitionObjective</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
@@ -554,7 +554,7 @@
 <span class="sd">            sampler: Sampler for the preference model to account for uncertainty in</span>
 <span class="sd">                preferece when calculating the objective; it's not the one used</span>
 <span class="sd">                in MC acquisition functions. If None,</span>
-<span class="sd">                it uses `IIDNormalSampler(num_samples=1)`.</span>
+<span class="sd">                it uses `IIDNormalSampler(sample_shape=torch.Size([1]))`.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pref_model</span> <span class="o">=</span> <span class="n">pref_model</span>
@@ -563,7 +563,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">]))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">sampler</span>
 

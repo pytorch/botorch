@@ -15,20 +15,19 @@
 # In[1]:
 
 
-import torch
 import os
 import time
 
-from botorch.test_functions import Hartmann
-from botorch.models import SingleTaskGP, KroneckerMultiTaskGP
-from gpytorch.mlls import ExactMarginalLogLikelihood
-from botorch.sampling import IIDNormalSampler
+import torch
+from botorch.acquisition.monte_carlo import qExpectedImprovement
+from botorch.acquisition.objective import GenericMCObjective
+from botorch.models import KroneckerMultiTaskGP, SingleTaskGP
 from botorch.optim import optimize_acqf
 from botorch.optim.fit import fit_gpytorch_torch
-from botorch.acquisition.objective import GenericMCObjective
-from botorch.acquisition.monte_carlo import qExpectedImprovement
-from botorch.models.transforms.outcome import Standardize
-from botorch.models.transforms.input import Normalize
+from botorch.sampling.normal import IIDNormalSampler
+
+from botorch.test_functions import Hartmann
+from gpytorch.mlls import ExactMarginalLogLikelihood
 
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
@@ -40,8 +39,6 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 torch.random.manual_seed(2010)
 
-if torch.cuda.is_available():
-    torch.cuda.set_device("cuda:0")
 tkwargs = {
     "dtype": torch.double,
     "device": torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
@@ -133,7 +130,7 @@ def optimize_acqf_and_get_candidate(acq_func, bounds, batch_size):
 
 
 def construct_acqf(model, objective, num_samples, best_f):
-    sampler = IIDNormalSampler(num_samples=num_samples)
+    sampler = IIDNormalSampler(sample_shape=torch.Size([num_samples]))
     qEI = qExpectedImprovement(
         model=model, 
         best_f=best_f,
@@ -294,7 +291,7 @@ plt.xlabel("Number of Function Queries")
 plt.ylabel("Best Objective Achieved")
 
 
-# In[ ]:
+# In[13]:
 
 
 

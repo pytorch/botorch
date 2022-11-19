@@ -13,28 +13,25 @@
 # 
 # Recently, [Maddox et al, '21](https://arxiv.org/abs/2106.12997) proposed a method for computing posterior samples from the HOGP by exploiting structure in the posterior distribution, thereby enabling its usage in BO settings. While they show that this approach allows to use composite BO on problems with tens or thousands of outputs, for scalability we consider a much smaller example here (that does not require GPU acceleration).
 
-# In[4]:
+# In[1]:
 
 
 import torch
 import os
 import logging
-import numpy as np
 import math
 import matplotlib.pyplot as plt
 import time
 
 import gpytorch.settings as gpt_settings
 
-from botorch.acquisition import qSimpleRegret, qExpectedImprovement
+from botorch.acquisition import qExpectedImprovement
 from botorch.acquisition.objective import GenericMCObjective
 from botorch.models import HigherOrderGP, SingleTaskGP
 from botorch.models.higher_order_gp import FlattenedStandardize
 from botorch.models.transforms import Normalize, Standardize
-from botorch import fit_gpytorch_mll
 from botorch.optim import optimize_acqf
-from botorch.sampling import IIDNormalSampler
-from botorch.utils.sampling import draw_sobol_samples
+from botorch.sampling.normal import IIDNormalSampler
 
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
@@ -43,7 +40,7 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
-# In[5]:
+# In[2]:
 
 
 from botorch.optim.fit import fit_gpytorch_torch
@@ -51,17 +48,17 @@ from botorch.optim.fit import fit_gpytorch_torch
 
 # #### Set Device and dtype
 
-# In[6]:
+# In[3]:
 
 
 torch.manual_seed(0)
-device = torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0")
+device = torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:4")
 dtype = torch.float
 
 print("Using ", device)
 
 
-# In[7]:
+# In[4]:
 
 
 models_used = (
@@ -77,7 +74,7 @@ models_used = (
 # $$ f(s,t | M, D, L, \tau) := \frac{M}{\sqrt{4 \pi D t}}  \exp\{-\frac{s^2}{4Dt}\} + \frac{1_{t > \tau} M}{\sqrt{4 \pi D(t - \tau)}} \exp\{- \frac{(s - L)^2}{4 D (t - \tau)}\}, $$
 # with the cheap to evaluate, differentiable function given by $g(y):= \sum_{(s,t) \in S \times T} \left(c(s, t|x_{\text{true}}) - y\right)^2.$ As the objective function itself is going to be implemented in Pytorch, we will be able to differentiate through it, enabling the usage of gradient-based optimization to optimize the objectives with respect to the inputs.
 
-# In[8]:
+# In[5]:
 
 
 def env_cfun(s, t, M, D, L, tau):
@@ -95,7 +92,7 @@ def env_cfun(s, t, M, D, L, tau):
 
 # These are helper functions for us to maximize the acquisition function and to get random points.
 
-# In[9]:
+# In[6]:
 
 
 def gen_rand_points(bounds, num_samples):
@@ -113,7 +110,7 @@ def optimize_ei(qEI, bounds, **options):
 
 # Below is a wrapped function to help us define bounds on the parameter space, we can also vary the size of the grid if we'd like to.
 
-# In[10]:
+# In[7]:
 
 
 def prepare_data(s_size=3, t_size=4, device=device, dtype=dtype):
@@ -172,7 +169,7 @@ def prepare_data(s_size=3, t_size=4, device=device, dtype=dtype):
 # 
 # We will be comparing to both random selection and batch expected improvment on the aggregated metric.
 
-# In[11]:
+# In[8]:
 
 
 n_init = 30
@@ -189,7 +186,7 @@ else:
 
 # As a word of caution, we've found that when fitting the HOGP model, using first-order optimizers (e.g. Adam) as is used in `fit_gpytorch_torch` tends to outperform second-order optimizers such as L-BFGS-B due to the large number of free parameters in the HOGP. L-BFGS-B tends to overfit in practice here.
 
-# In[12]:
+# In[9]:
 
 
 all_objective_vals = []
@@ -225,7 +222,7 @@ with gpt_settings.cholesky_jitter(1e-4):
             "num_restarts": 10,
             "raw_samples": 512,
         }
-        sampler = IIDNormalSampler(num_samples=128)
+        sampler = IIDNormalSampler(sample_shape=torch.Size([128]))
 
         train_Y_ei = objective(train_Y["ei"]).unsqueeze(-1)
         model_ei = SingleTaskGP(
@@ -274,7 +271,7 @@ with gpt_settings.cholesky_jitter(1e-4):
     objective_dict = {k: objective(train_Y[k]) for k in train_Y}
 
 
-# In[18]:
+# In[10]:
 
 
 methods_dict = {k: objective_dict[k].cpu().cummax(0)[0] for k in models_used}
@@ -283,7 +280,7 @@ mean_results = {k: -methods_dict[k][n_init:] for k in models_used}
 
 # Finally, we plot the results, showing that the HOGP performs well on this task, and converges to a closer parameter value than a batch GP on the composite metric itself.
 
-# In[22]:
+# In[11]:
 
 
 plt.figure(figsize = (8,6))

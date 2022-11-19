@@ -36,7 +36,7 @@ import torch
 
 tkwargs = {
     "dtype": torch.double,
-    "device": torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+    "device": torch.device("cuda:3" if torch.cuda.is_available() else "cpu"),
 }
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
@@ -254,7 +254,7 @@ import warnings
 
 from botorch import fit_gpytorch_mll
 from botorch.exceptions import BadInitialCandidatesWarning
-from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.multi_objective.hypervolume import Hypervolume
 from botorch.utils.multi_objective.pareto import is_non_dominated
 
@@ -302,8 +302,8 @@ for iteration in range(1, N_BATCH + 1):
     fit_gpytorch_mll(mll_qnehvi)
 
     # define the qParEGO and qNEHVI acquisition modules using a QMC sampler
-    qparego_sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)
-    qnehvi_sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)
+    qparego_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
+    qnehvi_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
 
     # optimize acquisition functions and get new observations
     new_x_qparego, new_obj_qparego, new_con_qparego = optimize_qparego_and_get_observation(

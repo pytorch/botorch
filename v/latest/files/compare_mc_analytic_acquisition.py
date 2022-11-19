@@ -7,7 +7,7 @@
 
 # ### Comparison of analytic and MC-based EI
 
-# In[1]:
+# In[16]:
 
 
 import torch
@@ -22,7 +22,7 @@ neg_hartmann6 = Hartmann(dim=6, negate=True)
 
 # First, we generate some random data and fit a SingleTaskGP for a 6-dimensional synthetic test function 'Hartmann6'.
 
-# In[2]:
+# In[17]:
 
 
 train_x = torch.rand(10, 6)
@@ -35,7 +35,7 @@ fit_gpytorch_mll(mll);
 # Initialize an analytic EI acquisition function on the fitted model.
 # 
 
-# In[3]:
+# In[18]:
 
 
 from botorch.acquisition import ExpectedImprovement
@@ -46,7 +46,7 @@ EI = ExpectedImprovement(model=model, best_f=best_value)
 
 # Next, we optimize the analytic EI acquisition function using 50 random restarts chosen from 100 initial raw samples.
 
-# In[4]:
+# In[19]:
 
 
 from botorch.optim import optimize_acqf
@@ -61,7 +61,7 @@ new_point_analytic, _ = optimize_acqf(
 )
 
 
-# In[5]:
+# In[20]:
 
 
 new_point_analytic
@@ -69,14 +69,14 @@ new_point_analytic
 
 # Now, let's swap out the analytic acquisition function and replace it with an MC version. Note that we are in the `q = 1` case; for `q > 1`, an analytic version does not exist.
 
-# In[6]:
+# In[21]:
 
 
 from botorch.acquisition import qExpectedImprovement
 from botorch.sampling import SobolQMCNormalSampler
 
 
-sampler = SobolQMCNormalSampler(num_samples=500, seed=0, resample=False)        
+sampler = SobolQMCNormalSampler(sample_shape=torch.Size([512]), seed=0)        
 MC_EI = qExpectedImprovement(
     model, best_f=best_value, sampler=sampler
 )
@@ -91,7 +91,7 @@ new_point_mc, _ = optimize_acqf(
 )
 
 
-# In[7]:
+# In[22]:
 
 
 new_point_mc
@@ -99,7 +99,7 @@ new_point_mc
 
 # Check that the two generated points are close.
 
-# In[8]:
+# In[23]:
 
 
 torch.norm(new_point_mc - new_point_analytic)
@@ -107,17 +107,18 @@ torch.norm(new_point_mc - new_point_analytic)
 
 # ### Using a torch optimizer on a stochastic acquisition function
 # 
-# We could also optimize using a `torch` optimizer. This is particularly useful for the case of a stochastic acquisition function, which we can obtain by setting `resample=True`. First, we illustrate the usage of `torch.optim.Adam`. In the code snippet below, `gen_batch_initial_candidates` uses a heuristic to select a set of restart locations, `gen_candidates_torch` is a wrapper to the `torch` optimizer for maximizing the acquisition value, and `get_best_candidates` finds the best result amongst the random restarts.
+# We could also optimize using a `torch` optimizer. This is particularly useful for the case of a stochastic acquisition function, which we can obtain by using a `StochasticSampler`. First, we illustrate the usage of `torch.optim.Adam`. In the code snippet below, `gen_batch_initial_candidates` uses a heuristic to select a set of restart locations, `gen_candidates_torch` is a wrapper to the `torch` optimizer for maximizing the acquisition value, and `get_best_candidates` finds the best result amongst the random restarts.
 # 
 # Under the hood, `gen_candidates_torch` uses a convergence criterion based on exponential moving averages of the loss. 
 
-# In[9]:
+# In[24]:
 
 
+from botorch.sampling.stochastic_samplers import StochasticSampler
 from botorch.generation import get_best_candidates, gen_candidates_torch
 from botorch.optim import gen_batch_initial_conditions
 
-resampler = SobolQMCNormalSampler(num_samples=500, seed=0, resample=True)        
+resampler = StochasticSampler(sample_shape=torch.Size([512]))
 MC_EI_resample = qExpectedImprovement(
     model, best_f=best_value, sampler=resampler
 )
@@ -143,13 +144,13 @@ new_point_torch_Adam = get_best_candidates(
 ).detach()
 
 
-# In[10]:
+# In[25]:
 
 
 new_point_torch_Adam
 
 
-# In[11]:
+# In[26]:
 
 
 torch.norm(new_point_torch_Adam - new_point_analytic)
@@ -157,7 +158,7 @@ torch.norm(new_point_torch_Adam - new_point_analytic)
 
 # By changing the `optimizer` parameter to `gen_candidates_torch`, we can also try `torch.optim.SGD`. Note that without the adaptive step size selection of Adam, basic SGD does worse job at optimizing without further manual tuning of the optimization parameters.
 
-# In[12]:
+# In[27]:
 
 
 batch_candidates, batch_acq_values = gen_candidates_torch(
@@ -173,13 +174,13 @@ new_point_torch_SGD = get_best_candidates(
 ).detach()
 
 
-# In[13]:
+# In[28]:
 
 
 new_point_torch_SGD
 
 
-# In[14]:
+# In[29]:
 
 
 torch.norm(new_point_torch_SGD - new_point_analytic)

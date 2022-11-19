@@ -59,8 +59,7 @@
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils.assorted</span> <span class="kn">import</span> <span class="n">fantasize</span> <span class="k">as</span> <span class="n">fantasize_flag</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">PosteriorList</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.fully_bayesian</span> <span class="kn">import</span> <span class="n">FullyBayesianPosteriorList</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">BotorchDataset</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -447,10 +446,7 @@
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">idcs</span> <span class="ow">in</span> <span class="n">group_indices</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">]</span>
-        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">is_fully_bayesian</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">):</span>
-            <span class="n">posterior</span> <span class="o">=</span> <span class="n">FullyBayesianPosteriorList</span><span class="p">(</span><span class="o">*</span><span class="n">posteriors</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">posterior</span> <span class="o">=</span> <span class="n">PosteriorList</span><span class="p">(</span><span class="o">*</span><span class="n">posteriors</span><span class="p">)</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="n">PosteriorList</span><span class="p">(</span><span class="o">*</span><span class="n">posteriors</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">posterior_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">posterior</span> <span class="o">=</span> <span class="n">posterior_transform</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">posterior</span></div>

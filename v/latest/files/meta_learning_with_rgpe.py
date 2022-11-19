@@ -16,7 +16,7 @@ import math
 
 
 torch.manual_seed(29)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
 dtype = torch.double
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
@@ -291,7 +291,7 @@ def get_target_model_loocv_sample_preds(train_x, train_y, train_yvar, target_mod
         # Since we have a batch mode gp and model.posterior always returns an output dimension,
         # the output from `posterior.sample()` here `num_samples x n x n x 1`, so let's squeeze
         # the last dimension.
-        sampler = SobolQMCNormalSampler(num_samples=num_samples)
+        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_samples]))
         return sampler(posterior).squeeze(-1)
 
 
@@ -320,7 +320,7 @@ def compute_rank_weights(train_x,train_y, base_models, target_model, num_samples
         model = base_models[task]
         # compute posterior over training points for target task
         posterior = model.posterior(train_x)
-        sampler = SobolQMCNormalSampler(num_samples=num_samples)
+        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_samples]))
         base_f_samps = sampler(posterior).squeeze(-1).squeeze(-1)
         # compute and save ranking loss
         ranking_losses.append(compute_ranking_loss(base_f_samps, train_y))
@@ -403,7 +403,7 @@ class RGPE(GP, GPyTorchModel):
 
 
 from botorch.acquisition.monte_carlo import qNoisyExpectedImprovement
-from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.optim.optimize import optimize_acqf
 
 # suppress GPyTorch warnings about adding jitter
@@ -462,7 +462,7 @@ for trial in range(N_TRIALS):
        
         # create model and acquisition function
         rgpe_model = RGPE(model_list, rank_weights)
-        sampler_qnei = SobolQMCNormalSampler(num_samples=MC_SAMPLES)
+        sampler_qnei = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
         qNEI = qNoisyExpectedImprovement(
             model=rgpe_model, 
             X_baseline=train_x,
@@ -504,7 +504,7 @@ for trial in range(N_TRIALS):
             vanilla_nei_train_y, 
             vanilla_nei_train_yvar,
         )
-        vanilla_nei_sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)
+        vanilla_nei_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
         vanilla_qNEI = qNoisyExpectedImprovement(
             model=vanilla_nei_model, 
             X_baseline=vanilla_nei_train_x,

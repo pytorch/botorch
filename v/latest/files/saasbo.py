@@ -22,7 +22,7 @@
 # 
 # [1]: [D. Eriksson, M. Jankowiak. High-Dimensional Bayesian Optimization with Sparse Axis-Aligned Subspaces. Proceedings of the Thirty-Seventh Conference on Uncertainty in Artificial Intelligence, 2021.](https://proceedings.mlr.press/v161/eriksson21a.html)
 
-# In[1]:
+# In[27]:
 
 
 import os
@@ -43,10 +43,10 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
-# In[2]:
+# In[28]:
 
 
-tkwargs = {"device": torch.device("cuda" if torch.cuda.is_available() else "cpu"), "dtype": torch.double}
+tkwargs = {"device": torch.device("cuda:1" if torch.cuda.is_available() else "cpu"), "dtype": torch.double}
 
 
 # The time to fit the SAAS model can be decreased by lowering
@@ -54,7 +54,7 @@ tkwargs = {"device": torch.device("cuda" if torch.cuda.is_available() else "cpu"
 # possible and to not use fewer than 256 warmup steps and 128 samples. By default, we only
 # keep each 16th sample which with 256 samples results in 32 hyperparameter samples.
 
-# In[3]:
+# In[29]:
 
 
 WARMUP_STEPS = 512 if not SMOKE_TEST else 32
@@ -66,7 +66,7 @@ THINNING = 16
 # We generate a simple function that only depends on the first parameter and show that the SAAS
 # model sets all other lengthscales to large values.
 
-# In[4]:
+# In[30]:
 
 
 train_X = torch.rand(10, 4, **tkwargs)
@@ -84,7 +84,7 @@ test_Y = torch.sin(test_X[:, :1])
 # gp = SaasFullyBayesianSingleTaskGP(train_X=train_X, train_Y=train_Y, train_Yvar=torch.full_like(train_Y, 1e-6))
 # ```
 
-# In[5]:
+# In[31]:
 
 
 gp = SaasFullyBayesianSingleTaskGP(train_X=train_X, train_Y=train_Y)
@@ -98,7 +98,7 @@ with torch.no_grad():
 # Computing the median lengthscales over the MCMC dimensions makes it clear that the first feature has the smallest lengthscale
 # 
 
-# In[6]:
+# In[32]:
 
 
 print(gp.median_lengthscale.detach())
@@ -111,7 +111,7 @@ print(gp.median_lengthscale.detach())
 # and posterior will have an extra batch dimension at -3 that corresponds to the number of MCMC
 # samples (which is 16 in this tutorial).
 
-# In[7]:
+# In[33]:
 
 
 print(posterior.mean.shape)
@@ -122,16 +122,14 @@ print(posterior.variance.shape)
 # ```
 # mixture_mean = posterior.mixture_mean
 # mixture_variance = posterior.mixture_variance
-# mixture_median = posterior.mixture_median
 # mixture_quantile = posterior.quantile(q=0.95)
 # ```
 
-# In[8]:
+# In[34]:
 
 
 print(f"Ground truth:     {test_Y.squeeze(-1)}")
 print(f"Mixture mean:     {posterior.mixture_mean.squeeze(-1)}")
-print(f"Mixture median:   {posterior.mixture_median.squeeze(-1)}")
 
 
 # ## Optimize Branin embedded in a 50D space
@@ -141,7 +139,7 @@ print(f"Mixture median:   {posterior.mixture_median.squeeze(-1)}")
 # We work with the domain $[0, 1]^d$ and unnormalize the inputs to the true domain of Branin 
 # before evaluating the function.
 
-# In[9]:
+# In[35]:
 
 
 branin = Branin().to(**tkwargs)
@@ -153,7 +151,7 @@ def branin_emb(x):
     return branin(lb + (ub - lb) * x[..., :2])
 
 
-# In[10]:
+# In[36]:
 
 
 DIM = 50 if not SMOKE_TEST else 10
@@ -171,7 +169,7 @@ print(f"Using a total of {N_INIT + BATCH_SIZE * N_ITERATIONS} function evaluatio
 # the sign of the function values before fitting the SAAS model as the BoTorch acquisition
 # functions assume maximization.
 
-# In[11]:
+# In[37]:
 
 
 X = SobolEngine(dimension=DIM, scramble=True, seed=0).draw(N_INIT).to(**tkwargs)
@@ -210,7 +208,7 @@ for i in range(N_ITERATIONS):
 # We can see that we were able to get close to the global optimium of $\approx 0.398$ after 50 function evaluations.
 # 
 
-# In[12]:
+# In[38]:
 
 
 Y_np = Y.cpu().numpy()
@@ -232,7 +230,7 @@ plt.show()
 # points in order to see how well the SAAS model predicts out-of-sample.
 # The plot shows the mean and a 95% confidence interval for each test point.
 
-# In[13]:
+# In[39]:
 
 
 train_X = SobolEngine(dimension=DIM, scramble=True, seed=0).draw(50).to(**tkwargs)
@@ -248,17 +246,17 @@ fit_fully_bayesian_model_nuts(
 )
 
 
-# In[14]:
+# In[42]:
 
 
 with torch.no_grad():
     posterior = gp.posterior(test_X)
-median = posterior.mixture_median
-q1 = posterior.mixture_quantile(q=0.025)
-q2 = posterior.mixture_quantile(q=0.975)
+median = posterior.quantile(value=torch.tensor([0.5], **tkwargs))
+q1 = posterior.quantile(value=torch.tensor([0.025], **tkwargs))
+q2 = posterior.quantile(value=torch.tensor([0.975], **tkwargs))
 
 
-# In[15]:
+# In[43]:
 
 
 fig, ax = plt.subplots(1, 1, figsize=(8, 6))
@@ -294,16 +292,10 @@ ax.grid(True)
 # We can confirm that this is the case below as the lengthscales of parameters 0 and 1 are 
 # small with all other lengthscales being large.
 
-# In[16]:
+# In[44]:
 
 
 median_lengthscales = gp.median_lengthscale
 for i in median_lengthscales.argsort()[:10]:
     print(f"Parameter {i:2}) Median lengthscale = {median_lengthscales[i].item():.2e}")
-
-
-# In[16]:
-
-
-
 

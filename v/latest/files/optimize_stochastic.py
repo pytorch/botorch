@@ -40,15 +40,15 @@ fit_gpytorch_mll(mll);
 
 # ### Define acquisition function
 # 
-# We'll use `qExpectedImprovement` with a custom sampler that uses a small number of MC samples and re-samples upon each evaluation of the function. This results in a stochastic acquisition function that one should not attempt to optimize with the quasi-second order methods that are used by default in BoTorch's `optimize_acqf` function.
+# We'll use `qExpectedImprovement` with a `StochasticSampler` that uses a small number of MC samples. This results in a stochastic acquisition function that one should not attempt to optimize with the quasi-second order methods that are used by default in BoTorch's `optimize_acqf` function.
 
 # In[3]:
 
 
 from botorch.acquisition import qExpectedImprovement
-from botorch.sampling import IIDNormalSampler
+from botorch.sampling.stochastic_samplers import StochasticSampler
 
-sampler = IIDNormalSampler(num_samples=100, resample=True)
+sampler = StochasticSampler(sample_shape=torch.Size([128]))
 qEI = qExpectedImprovement(model, best_f=train_Y.max(), sampler=sampler)
 
 
@@ -133,7 +133,7 @@ for i in range(75):
     # use your favorite convergence criterion here...
 
 
-# In[ ]:
+# In[7]:
 
 
 

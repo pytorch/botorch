@@ -87,14 +87,17 @@ decomposition of the posterior covaiance over f(X_baseline).</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.MCAcquisitionFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">MCAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#MCAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSamplerMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Abstract base class for Monte-Carlo based batch acquisition functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite>.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
+a sampler is generated using <cite>get_sampler</cite>.
+NOTE: For posteriors that do not support base samples,
+a sampler compatible with intended use case must be provided.
+See <cite>ForkedRNGSampler</cite> and <cite>StochasticSampler</cite> as examples.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
@@ -183,15 +186,31 @@ been submitted for evaluation but have not yet been evaluated.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">MultiObjectiveMCAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#MultiObjectiveMCAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSamplerMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Abstract base class for Multi-Objective batch acquisition functions.</p>
+<p>NOTE: This does not inherit from <cite>MCAcquisitionFunction</cite> to avoid circular imports.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_default_sample_shape</strong> – The <cite>sample_shape</cite> for the default sampler.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – </p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – </p></li>
+<li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – </p></li>
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
 <p>Constructor for the MCAcquisitionFunction base class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)</cite>.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
+a sampler is generated using <cite>get_sampler</cite>.
+NOTE: For posteriors that do not support base samples,
+a sampler compatible with intended use case must be provided.
+See <cite>ForkedRNGSampler</cite> and <cite>StochasticSampler</cite> as examples.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – The MCMultiOutputObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMultiOutputObjective()</cite>.</p></li>
 <li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
@@ -679,8 +698,8 @@ The reparameterization trick for acquisition functions. ArXiv 2017.</p>
 <li><p><strong>best_f</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – The best objective value observed so far (assumed noiseless). Can be
 a <cite>batch_shape</cite>-shaped tensor, which in case of a batched model
 specifies potentially different values for each element of the batch.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite></p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. See <cite>MCAcquisitionFunction</cite>
+more details.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are evaluated.
 Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
@@ -714,10 +733,6 @@ model and input <cite>X</cite>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qExpectedImprovement.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qExpectedImprovement.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qExpectedImprovement.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qExpectedImprovement.sampler" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qExpectedImprovement.objective">
@@ -754,8 +769,8 @@ over previously observed points is computed for each sample and averaged.</p>
 <li><p><strong>X_baseline</strong> (<em>Tensor</em>) – A <cite>batch_shape x r x d</cite>-dim Tensor of <cite>r</cite> design points
 that have already been observed. These points are considered as
 the potential best design point.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite>.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. See <cite>MCAcquisitionFunction</cite>
+more details.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
@@ -803,10 +818,6 @@ of model and input <cite>X</cite>.</p>
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.sampler" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.objective">
 <span class="sig-name descname"><span class="pre">objective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCAcquisitionObjective</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.objective" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -842,8 +853,8 @@ replaced with a sigmoid function with temperature parameter <cite>tau</cite>.</p
 <li><p><strong>best_f</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – The best objective value observed so far (assumed noiseless). Can
 be a <cite>batch_shape</cite>-shaped tensor, which in case of a batched model
 specifies potentially different values for each element of the batch.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite></p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. See <cite>MCAcquisitionFunction</cite>
+more details.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
@@ -882,10 +893,6 @@ of model and input <cite>X</cite>.</p>
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qProbabilityOfImprovement.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qProbabilityOfImprovement.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qProbabilityOfImprovement.sampler" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qProbabilityOfImprovement.objective">
 <span class="sig-name descname"><span class="pre">objective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCAcquisitionObjective</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qProbabilityOfImprovement.objective" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -912,8 +919,11 @@ of model and input <cite>X</cite>.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite>.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
+a sampler is generated using <cite>get_sampler</cite>.
+NOTE: For posteriors that do not support base samples,
+a sampler compatible with intended use case must be provided.
+See <cite>ForkedRNGSampler</cite> and <cite>StochasticSampler</cite> as examples.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
@@ -947,10 +957,6 @@ and input <cite>X</cite>.</p>
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qSimpleRegret.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qSimpleRegret.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qSimpleRegret.sampler" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qSimpleRegret.objective">
 <span class="sig-name descname"><span class="pre">objective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCAcquisitionObjective</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qSimpleRegret.objective" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -981,8 +987,8 @@ and <cite>f(X)</cite> has distribution <cite>N(mu, Sigma)</cite>.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
 <li><p><strong>beta</strong> (<em>float</em>) – Controls tradeoff between mean and standard deviation in UCB.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite></p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. See <cite>MCAcquisitionFunction</cite>
+more details.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
@@ -1015,10 +1021,6 @@ model and input <cite>X</cite>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qUpperConfidenceBound.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qUpperConfidenceBound.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qUpperConfidenceBound.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qUpperConfidenceBound.sampler" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qUpperConfidenceBound.objective">
@@ -1198,6 +1200,11 @@ a detailed discussion.</p>
 <p>Noisy observations are support by computing information gain with
 observation noise as in Appendix C in <a class="reference internal" href="#takeno2020mfmves" id="id11"><span>[Takeno2020mfmves]</span></a>.</p>
 <p>Note: this only supports maximization.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy._default_sample_shape">
+<span class="sig-name descname"><span class="pre">_default_sample_shape</span></span><a class="headerlink" href="#botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy._default_sample_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <cite>sample_shape</cite> for the default sampler.</p>
+</dd></dl>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">MESMO</span> <span class="o">=</span> <span class="n">qMultiObjectiveMaxValueEntropy</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">sample_pfs</span><span class="p">)</span>
@@ -1310,8 +1317,8 @@ applying`objective` to the samples).</p></li>
 dominated front and a partitioning of the non-dominated space in hyper-
 rectangles. If constraints are present, this partitioning must only
 include feasible points.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)</cite>.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
+a sampler is generated using <cite>get_sampler</cite>.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – The MCMultiOutputObjective under which the samples are evaluated.
 Defaults to <cite>IdentityMultiOutputObjective()</cite>.</p></li>
 <li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
@@ -1378,8 +1385,8 @@ applying <cite>objective</cite> to the samples).</p></li>
 <li><p><strong>X_baseline</strong> (<em>Tensor</em>) – A <cite>r x d</cite>-dim Tensor of <cite>r</cite> design points that have already
 been observed. These points are considered as potential approximate
 pareto-optimal design points.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)</cite>.
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
+a sampler is generated using <cite>get_sampler</cite>.
 Note: a pareto front is created for each mc sample, which can be
 computationally intensive for <cite>m</cite> &gt; 2.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – The MCMultiOutputObjective under which the samples are
@@ -1438,6 +1445,14 @@ been submitted for evaluation but have not yet been evaluated.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#qNoisyExpectedHypervolumeImprovement.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.forward" title="Permalink to this definition">¶</a></dt>
@@ -1455,14 +1470,6 @@ evaluations.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.model">
-<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.model" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.acquisition.multi_objective.multi_fidelity">
@@ -1511,8 +1518,8 @@ applying`objective` to the samples).</p></li>
 dominated front and a partitioning of the non-dominated space in hyper-
 rectangles. If constraints are present, this partitioning must only
 include feasible points.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)</cite>.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
+a sampler is generated using <cite>get_sampler</cite>.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – The MCMultiOutputObjective under which the samples are evaluated.
 Defaults to <cite>IdentityMultiOutputObjective()</cite>.</p></li>
 <li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
@@ -1629,10 +1636,6 @@ given the data set <cite>D u X</cite>.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.knowledge_gradient.qKnowledgeGradient.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.sampler" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.knowledge_gradient.qKnowledgeGradient.objective">
 <span class="sig-name descname"><span class="pre">objective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCAcquisitionObjective</span></em><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.objective" title="Permalink to this definition">¶</a></dt>
@@ -1849,10 +1852,6 @@ maximized at fixed <cite>X_actual[b]</cite>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient.sampler" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient.objective">
@@ -2100,10 +2099,6 @@ is the number of candidates jointly considered in look-ahead step
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.sampler" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.model">
 <span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.model" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -2221,7 +2216,7 @@ Not required if the model is an instance of a GPyTorch ExactGP model.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.max_value_entropy_search.qMaxValueEntropy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.max_value_entropy_search.</span></span><span class="sig-name descname"><span class="pre">qMaxValueEntropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidate_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_fantasies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_mv_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_y_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_gumbel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/max_value_entropy_search.html#qMaxValueEntropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.max_value_entropy_search.DiscreteMaxValueBase" title="botorch.acquisition.max_value_entropy_search.DiscreteMaxValueBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteMaxValueBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.max_value_entropy_search.DiscreteMaxValueBase" title="botorch.acquisition.max_value_entropy_search.DiscreteMaxValueBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteMaxValueBase</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSamplerMixin</span></code></p>
 <p>The acquisition function for Max-value Entropy Search.</p>
 <p>This acquisition function computes the mutual information of max values and
 a candidate point X. See <a class="reference internal" href="#wang2017mves" id="id19"><span>[Wang2017mves]</span></a> for a detailed discussion.</p>
@@ -2613,10 +2608,6 @@ of link function at X that active learning hopes to maximize</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.active_learning.PairwiseMCPosteriorVariance.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.active_learning.PairwiseMCPosteriorVariance.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.active_learning.PairwiseMCPosteriorVariance.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.active_learning.PairwiseMCPosteriorVariance.sampler" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.active_learning.PairwiseMCPosteriorVariance.objective">
@@ -3071,7 +3062,7 @@ utility values of the input.</p></li>
 <li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – Sampler for the preference model to account for uncertainty in
 preferece when calculating the objective; it’s not the one used
 in MC acquisition functions. If None,
-it uses <cite>IIDNormalSampler(num_samples=1)</cite>.</p></li>
+it uses <cite>IIDNormalSampler(sample_shape=torch.Size([1]))</cite>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3132,7 +3123,7 @@ dimension).</p>
 <dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
-<p>This method is usually not called directly, but via the objectives</p>
+<p>This method is usually not called directly, but via the objectives.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># `__call__` method:</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
@@ -3201,7 +3192,7 @@ dimension).</p>
 <dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
-<p>This method is usually not called directly, but via the objectives</p>
+<p>This method is usually not called directly, but via the objectives.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># `__call__` method:</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
@@ -3254,7 +3245,7 @@ dimension).</p>
 <dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
-<p>This method is usually not called directly, but via the objectives</p>
+<p>This method is usually not called directly, but via the objectives.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># `__call__` method:</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
@@ -3306,7 +3297,7 @@ dimension).</p>
 <dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
-<p>This method is usually not called directly, but via the objectives</p>
+<p>This method is usually not called directly, but via the objectives.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># `__call__` method:</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
@@ -3360,7 +3351,7 @@ dimension).</p>
 <dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
-<p>This method is usually not called directly, but via the objectives</p>
+<p>This method is usually not called directly, but via the objectives.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># `__call__` method:</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
@@ -5252,7 +5243,7 @@ weighting.</p>
 <p>Utilities for acquisition functions.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.utils.get_acquisition_function">
-<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.utils.</span></span><span class="sig-name descname"><span class="pre">get_acquisition_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acquisition_function_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_observed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mc_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qmc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#get_acquisition_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.utils.get_acquisition_function" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.utils.</span></span><span class="sig-name descname"><span class="pre">get_acquisition_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acquisition_function_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_observed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mc_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#get_acquisition_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.utils.get_acquisition_function" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function for initializing botorch acquisition functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5272,7 +5263,6 @@ feasibility. Used when constraint_transforms are not passed
 as part of the objective.</p></li>
 <li><p><strong>mc_samples</strong> (<em>int</em>) – The number of samples to use for (q)MC evaluation of the
 acquisition function.</p></li>
-<li><p><strong>qmc</strong> (<em>bool</em>) – If True, use quasi-Monte-Carlo sampling (instead of iid).</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – If provided, perform deterministic optimization (i.e. the
 function to optimize is fixed and not stochastic).</p></li>
 </ul>

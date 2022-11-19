@@ -55,7 +55,7 @@
 <span class="kn">from</span> <span class="nn">botorch.models.cost</span> <span class="kn">import</span> <span class="n">AffineFidelityCostModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">GenericDeterministicModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">NondominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
@@ -106,8 +106,8 @@
 <span class="sd">                dominated front and a partitioning of the non-dominated space in hyper-</span>
 <span class="sd">                rectangles. If constraints are present, this partitioning must only</span>
 <span class="sd">                include feasible points.</span>
-<span class="sd">            sampler: The sampler used to draw base samples. Defaults to</span>
-<span class="sd">                `SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)`.</span>
+<span class="sd">            sampler: The sampler used to draw base samples. If not given,</span>
+<span class="sd">                a sampler is generated using `get_sampler`.</span>
 <span class="sd">            objective: The MCMultiOutputObjective under which the samples are evaluated.</span>
 <span class="sd">                Defaults to `IdentityMultiOutputObjective()`.</span>
 <span class="sd">            constraints: A list of callables, each mapping a Tensor of dimension</span>
@@ -161,7 +161,7 @@
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
         <span class="n">hv_gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_qehvi</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="n">cost_weighted_qehvi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cost_aware_utility</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">deltas</span><span class="o">=</span><span class="n">hv_gain</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cost_weighted_qehvi</span></div></div>

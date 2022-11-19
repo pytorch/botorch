@@ -35,6 +35,7 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.base_samples</span> <span class="kn">import</span> <span class="n">_reshape_base_samples_non_interleaved</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.fully_bayesian</span> <span class="kn">import</span> <span class="n">FullyBayesianPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multitask_multivariate_normal</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span>
@@ -84,15 +85,20 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        Reshaped and expanded base samples.</span>
 <span class="sd">    """</span>
-    <span class="n">mvn</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span>
+    <span class="n">mvn</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span>
     <span class="n">loc</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">loc</span>
-    <span class="n">peshape</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span>
+    <span class="n">peshape</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">()</span>
+    <span class="n">is_fully_b</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">FullyBayesianPosterior</span><span class="p">))</span>
     <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
-        <span class="n">sample_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">loc</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)])</span> <span class="o">+</span> <span class="n">peshape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">loc</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">peshape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:])</span>
+        <span class="n">sample_shape</span>
+        <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">loc</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">is_fully_b</span><span class="p">)])</span>
+        <span class="o">+</span> <span class="n">peshape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span> <span class="o">-</span> <span class="n">is_fully_b</span> <span class="p">:]</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">loc</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span> <span class="o">-</span><span class="mi">1</span> <span class="o">-</span> <span class="n">is_fully_b</span><span class="p">]</span> <span class="o">+</span> <span class="n">peshape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span> <span class="o">-</span> <span class="n">is_fully_b</span> <span class="p">:])</span>
     <span class="k">if</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
         <span class="n">base_samples</span> <span class="o">=</span> <span class="n">_reshape_base_samples_non_interleaved</span><span class="p">(</span>
-            <span class="n">mvn</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span>
+            <span class="n">mvn</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span>
+            <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span><span class="p">,</span>
+            <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
         <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">loc</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -132,10 +138,11 @@
 <span class="sd">            samples at the new points.</span>
 <span class="sd">    """</span>
     <span class="c1"># compute bottom left covariance block</span>
+    <span class="n">mvn</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span>
     <span class="n">lazy_covar</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">extract_batch_covar</span><span class="p">(</span><span class="n">mt_mvn</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="p">,</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">)</span>
-        <span class="k">else</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span>
+        <span class="n">extract_batch_covar</span><span class="p">(</span><span class="n">mt_mvn</span><span class="o">=</span><span class="n">mvn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span>
     <span class="p">)</span>
     <span class="c1"># Get the `q` new rows of the batched covariance matrix</span>
     <span class="n">bottom_rows</span> <span class="o">=</span> <span class="n">lazy_covar</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">q</span><span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
@@ -165,13 +172,13 @@
     <span class="c1"># Create a `(batch_shape) x q x (n+q)`-dim tensor containing the</span>
     <span class="c1"># `q` new bottom rows of the Cholesky decomposition</span>
     <span class="n">new_Lq</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">bl_chol</span><span class="p">,</span> <span class="n">br_chol</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">mean</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">mean</span>
     <span class="n">base_samples</span> <span class="o">=</span> <span class="n">_reshape_base_samples</span><span class="p">(</span>
         <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span>
         <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="p">,</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">):</span>
         <span class="c1"># add output dim</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="c1"># add batch dim corresponding to output dim</span>
@@ -180,7 +187,7 @@
     <span class="n">res</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">new_Lq</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">base_samples</span><span class="p">)</span>
         <span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">new_mean</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-        <span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">loc</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">loc</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">)</span>
         <span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
     <span class="p">)</span>
     <span class="n">contains_nans</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>

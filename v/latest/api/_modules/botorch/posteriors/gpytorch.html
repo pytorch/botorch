@@ -31,18 +31,20 @@
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
 <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">Posterior Module to be used with GPyTorch models.</span>
+<span class="sd">Posterior module to be used with GPyTorch models.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span> <span class="nn">warnings</span>
+
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">ExitStack</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.base_samples</span> <span class="kn">import</span> <span class="n">_reshape_base_samples_non_interleaved</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.torch</span> <span class="kn">import</span> <span class="n">TorchPosterior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">linear_operator</span> <span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">linop_settings</span>
 <span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="p">(</span>
@@ -51,46 +53,115 @@
     <span class="n">SumLinearOperator</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Normal</span>
 
 
-<div class="viewcode-block" id="GPyTorchPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior">[docs]</a><span class="k">class</span> <span class="nc">GPyTorchPosterior</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
+<div class="viewcode-block" id="GPyTorchPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior">[docs]</a><span class="k">class</span> <span class="nc">GPyTorchPosterior</span><span class="p">(</span><span class="n">TorchPosterior</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""A posterior based on GPyTorch's multi-variate Normal distributions."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mvn</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">distribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MultivariateNormal</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mvn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MultivariateNormal</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""A posterior based on GPyTorch's multi-variate Normal distributions.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            mvn: A GPyTorch MultivariateNormal (single-output case) or</span>
+<span class="sd">            distribution: A GPyTorch MultivariateNormal (single-output case) or</span>
 <span class="sd">                MultitaskMultivariateNormal (multi-output case).</span>
+<span class="sd">            mvn: Deprecated.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mvn</span> <span class="o">=</span> <span class="n">mvn</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mvn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">"Got both a `distribution` and an `mvn` argument. "</span>
+                    <span class="s2">"Use the `distribution` only."</span>
+                <span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"The `mvn` argument of `GPyTorchPosterior`s has been renamed to "</span>
+                <span class="s2">"`distribution` and will be removed in a future version."</span><span class="p">,</span>
+                <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">distribution</span> <span class="o">=</span> <span class="n">mvn</span>
+        <span class="k">if</span> <span class="n">distribution</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"GPyTorchPosterior must have a distribution specified."</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">distribution</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mvn</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Expose the distribution as a backwards-compatible attribute."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">base_sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""The shape of a base sample used for constructing posterior samples."""</span>
-        <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">base_sample_shape</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">base_sample_shape</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">batch_range</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""The t-batch range.</span>
+
+<span class="sd">        This is used in samplers to identify the t-batch component of the</span>
+<span class="sd">        `base_sample_shape`. The base samples are expanded over the t-batches to</span>
+<span class="sd">        provide consistency in the acquisition values, i.e., to ensure that a</span>
+<span class="sd">        candidate produces same value regardless of its position on the t-batch.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_extended_shape</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>  <span class="c1"># noqa: B008</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Returns the shape of the samples produced by the posterior with</span>
+<span class="sd">        the given `sample_shape`.</span>
+<span class="sd">        """</span>
+        <span class="n">base_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">event_shape</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
-            <span class="n">shape</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">shape</span>
+            <span class="n">base_shape</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">sample_shape</span> <span class="o">+</span> <span class="n">base_shape</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The torch device of the posterior."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">loc</span><span class="o">.</span><span class="n">device</span>
+<div class="viewcode-block" id="GPyTorchPosterior.rsample_from_base_samples"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.rsample_from_base_samples">[docs]</a>    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+        <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients) using base samples.</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The torch dtype of the posterior."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">loc</span><span class="o">.</span><span class="n">dtype</span>
+<span class="sd">        This is intended to be used with a sampler that produces the corresponding base</span>
+<span class="sd">        samples, and enables acquisition optimization via Sample Average Approximation.</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">event_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The event shape (i.e. the shape of a single sample) of the posterior."""</span>
-        <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">event_shape</span>
+<span class="sd">        Args:</span>
+<span class="sd">            sample_shape: A `torch.Size` object specifying the sample shape. To</span>
+<span class="sd">                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches</span>
+<span class="sd">                of `n` samples each, set to `torch.Size([b, n])`.</span>
+<span class="sd">            base_samples: A Tensor of `N(0, I)` base samples of shape</span>
+<span class="sd">                `sample_shape x base_sample_shape`, typically obtained from</span>
+<span class="sd">                a `Sampler`. This is used for deterministic optimization.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Samples from the posterior, a tensor of shape</span>
+<span class="sd">            `self._extended_shape(sample_shape=sample_shape)`.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">)]</span> <span class="o">!=</span> <span class="n">sample_shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"`sample_shape` disagrees with shape of `base_samples`."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
+            <span class="n">base_samples</span> <span class="o">=</span> <span class="n">_reshape_base_samples_non_interleaved</span><span class="p">(</span>
+                <span class="n">mvn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span>
+                <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span><span class="p">,</span>
+                <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">with</span> <span class="n">ExitStack</span><span class="p">()</span> <span class="k">as</span> <span class="n">es</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">linop_settings</span><span class="o">.</span><span class="n">_fast_covar_root_decomposition</span><span class="o">.</span><span class="n">is_default</span><span class="p">():</span>
+                <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">linop_settings</span><span class="o">.</span><span class="n">_fast_covar_root_decomposition</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span>
+            <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span>
+                <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
-            <span class="n">shape</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">shape</span>
+            <span class="n">samples</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">samples</span></div>
 
 <div class="viewcode-block" id="GPyTorchPosterior.rsample"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.rsample">[docs]</a>    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -108,26 +179,33 @@
 <span class="sd">                This is used for deterministic optimization.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `sample_shape x event_shape`-dim Tensor of samples from the posterior.</span>
+<span class="sd">            Samples from the posterior, a tensor of shape</span>
+<span class="sd">            `self._extended_shape(sample_shape=sample_shape)`.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">sample_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">base_samples</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"Use of `base_samples` with `rsample` is deprecated. Use "</span>
+                <span class="s2">"`rsample_from_base_samples` instead."</span><span class="p">,</span>
+                <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="k">if</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">)]</span> <span class="o">!=</span> <span class="n">sample_shape</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"sample_shape disagrees with shape of base_samples."</span><span class="p">)</span>
-            <span class="c1"># get base_samples to the correct shape</span>
-            <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_shape</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
-                <span class="n">base_samples</span> <span class="o">=</span> <span class="n">_reshape_base_samples_non_interleaved</span><span class="p">(</span>
-                    <span class="n">mvn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mvn</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">"`sample_shape` disagrees with shape of `base_samples`."</span>
                 <span class="p">)</span>
-            <span class="c1"># remove output dimension in single output case</span>
-            <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># get base_samples to the correct shape</span>
+            <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
+                <span class="c1"># Remove output dimension in single output case.</span>
                 <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rsample_from_base_samples</span><span class="p">(</span>
+                <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span>
+            <span class="p">)</span>
         <span class="k">with</span> <span class="n">ExitStack</span><span class="p">()</span> <span class="k">as</span> <span class="n">es</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">linop_settings</span><span class="o">.</span><span class="n">_fast_covar_root_decomposition</span><span class="o">.</span><span class="n">is_default</span><span class="p">():</span>
                 <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">linop_settings</span><span class="o">.</span><span class="n">_fast_covar_root_decomposition</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span>
-            <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span>
+            <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span>
                 <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span>
             <span class="p">)</span>
         <span class="c1"># make sure there always is an output dimension</span>
@@ -135,10 +213,25 @@
             <span class="n">samples</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">samples</span></div>
 
+<div class="viewcode-block" id="GPyTorchPosterior.sample"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Sample from the posterior without gradients.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sample_shape: A `torch.Size` object specifying the sample shape. To</span>
+<span class="sd">                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches</span>
+<span class="sd">                of `n` samples each, set to `torch.Size([b, n])`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Samples from the posterior, a tensor of shape</span>
+<span class="sd">            `self._extended_shape(sample_shape=sample_shape)`.</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">)</span></div>
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""The posterior mean."""</span>
-        <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">mean</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
             <span class="n">mean</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">mean</span>
@@ -146,10 +239,24 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">variance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""The posterior variance."""</span>
-        <span class="n">variance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">variance</span>
+        <span class="n">variance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">variance</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
             <span class="n">variance</span> <span class="o">=</span> <span class="n">variance</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">variance</span></div>
+        <span class="k">return</span> <span class="n">variance</span>
+
+<div class="viewcode-block" id="GPyTorchPosterior.quantile"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.quantile">[docs]</a>    <span class="k">def</span> <span class="nf">quantile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Compute the quantiles of the marginal distributions."""</span>
+        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">marginal</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">sqrt</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">marginal</span><span class="o">.</span><span class="n">icdf</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GPyTorchPosterior.density"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.density">[docs]</a>    <span class="k">def</span> <span class="nf">density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""The probability density of the marginal distributions."""</span>
+        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">marginal</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">sqrt</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">marginal</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span></div></div>
 
 
 <div class="viewcode-block" id="scalarize_posterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.scalarize_posterior">[docs]</a><span class="k">def</span> <span class="nf">scalarize_posterior</span><span class="p">(</span>
@@ -183,7 +290,7 @@
     <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">m</span> <span class="o">!=</span> <span class="n">weights</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Output shape not equal to that of weights"</span><span class="p">)</span>
-    <span class="n">mvn</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span>
+    <span class="n">mvn</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span>
     <span class="n">cov</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span> <span class="k">if</span> <span class="n">mvn</span><span class="o">.</span><span class="n">islazy</span> <span class="k">else</span> <span class="n">mvn</span><span class="o">.</span><span class="n">covariance_matrix</span>
 
     <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># just scaling, no scalarization necessary</span>

@@ -20,7 +20,7 @@
 # ### Set dtype and device
 # Note: $q$EHVI and $q$NEHVI aggressively exploit parallel hardware and are both much faster when run on a GPU. See [1, 2] for details.
 
-# In[1]:
+# In[8]:
 
 
 import os
@@ -37,7 +37,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 # ### Problem setup
 # 
 
-# In[2]:
+# In[9]:
 
 
 from botorch.test_functions.multi_objective import BraninCurrin
@@ -52,7 +52,7 @@ problem = BraninCurrin(negate=True).to(**tkwargs)
 # 
 # The models are initialized with $2(d+1)=6$ points drawn randomly from $[0,1]^2$.
 
-# In[3]:
+# In[10]:
 
 
 from botorch.models.gp_regression import FixedNoiseGP
@@ -102,7 +102,7 @@ def initialize_model(train_x, train_obj):
 # 
 # *Note:* `FastNondominatedPartitioning` *will be very slow when 1) there are a lot of points on the pareto frontier and 2) there are >5 objectives.*
 
-# In[4]:
+# In[11]:
 
 
 from botorch.optim.optimize import optimize_acqf, optimize_acqf_list
@@ -164,7 +164,7 @@ def optimize_qehvi_and_get_observation(model, train_x, train_obj, sampler):
 # **Pruning baseline designs**
 # To speed up integration over the function values at the previously evaluated designs, we prune the set of previously evaluated designs (by setting `prune_baseline=True`) to only include those which have positive probability of being on the current in-sample Pareto frontier.
 
-# In[5]:
+# In[12]:
 
 
 def optimize_qnehvi_and_get_observation(model, train_x, train_obj, sampler):
@@ -201,7 +201,7 @@ def optimize_qnehvi_and_get_observation(model, train_x, train_obj, sampler):
 # 
 # To do this, we create a list of `qNoisyExpectedImprovement` acquisition functions, each with different random scalarization weights. The `optimize_acqf_list` method sequentially generates one candidate per acquisition function and conditions the next candidate (and acquisition function) on the previously selected pending candidates.
 
-# In[6]:
+# In[13]:
 
 
 from botorch.acquisition.monte_carlo import qNoisyExpectedImprovement
@@ -251,36 +251,52 @@ def optimize_qnparego_and_get_observation(model, train_x, train_obj, sampler):
 # 
 # *Note*: Running this may take a little while.
 
-# In[7]:
+# In[14]:
 
-
-from botorch import fit_gpytorch_mll
-from botorch.sampling.samplers import SobolQMCNormalSampler
-from botorch.exceptions import BadInitialCandidatesWarning
-from botorch.utils.multi_objective.pareto import is_non_dominated
-from botorch.utils.multi_objective.box_decompositions.dominated import DominatedPartitioning
 
 import time
 import warnings
 
+from botorch import fit_gpytorch_mll
+from botorch.exceptions import BadInitialCandidatesWarning
+from botorch.sampling.normal import SobolQMCNormalSampler
+from botorch.utils.multi_objective.box_decompositions.dominated import (
+    DominatedPartitioning,
+)
+from botorch.utils.multi_objective.pareto import is_non_dominated
 
-warnings.filterwarnings('ignore', category=BadInitialCandidatesWarning)
-warnings.filterwarnings('ignore', category=RuntimeWarning)
+
+warnings.filterwarnings("ignore", category=BadInitialCandidatesWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 N_BATCH = 20 if not SMOKE_TEST else 10
-MC_SAMPLES = 128  if not SMOKE_TEST else 16
+MC_SAMPLES = 128 if not SMOKE_TEST else 16
 
 verbose = True
 
 hvs_qparego, hvs_qehvi, hvs_qnehvi, hvs_random = [], [], [], []
 
 # call helper functions to generate initial training data and initialize model
-train_x_qparego, train_obj_qparego, train_obj_true_qparego = generate_initial_data(n=2*(problem.dim+1))
+train_x_qparego, train_obj_qparego, train_obj_true_qparego = generate_initial_data(
+    n=2 * (problem.dim + 1)
+)
 mll_qparego, model_qparego = initialize_model(train_x_qparego, train_obj_qparego)
 
-train_x_qehvi, train_obj_qehvi, train_obj_true_qehvi = train_x_qparego, train_obj_qparego, train_obj_true_qparego
-train_x_qnehvi, train_obj_qnehvi, train_obj_true_qnehvi = train_x_qparego, train_obj_qparego, train_obj_true_qparego
-train_x_random, train_obj_random, train_obj_true_random = train_x_qparego, train_obj_qparego, train_obj_true_qparego
+train_x_qehvi, train_obj_qehvi, train_obj_true_qehvi = (
+    train_x_qparego,
+    train_obj_qparego,
+    train_obj_true_qparego,
+)
+train_x_qnehvi, train_obj_qnehvi, train_obj_true_qnehvi = (
+    train_x_qparego,
+    train_obj_qparego,
+    train_obj_true_qparego,
+)
+train_x_random, train_obj_random, train_obj_true_random = (
+    train_x_qparego,
+    train_obj_qparego,
+    train_obj_true_qparego,
+)
 mll_qehvi, model_qehvi = initialize_model(train_x_qehvi, train_obj_qehvi)
 mll_qnehvi, model_qnehvi = initialize_model(train_x_qnehvi, train_obj_qnehvi)
 
@@ -294,32 +310,42 @@ hvs_qnehvi.append(volume)
 hvs_random.append(volume)
 
 # run N_BATCH rounds of BayesOpt after the initial random batch
-for iteration in range(1, N_BATCH + 1):    
-    
+for iteration in range(1, N_BATCH + 1):
+
     t0 = time.monotonic()
-    
+
     # fit the models
     fit_gpytorch_mll(mll_qparego)
     fit_gpytorch_mll(mll_qehvi)
     fit_gpytorch_mll(mll_qnehvi)
-    
+
     # define the qEI and qNEI acquisition modules using a QMC sampler
-    qparego_sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)
-    qehvi_sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)
-    qnehvi_sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)
-    
+    qparego_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
+    qehvi_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
+    qnehvi_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
+
     # optimize acquisition functions and get new observations
-    new_x_qparego, new_obj_qparego, new_obj_true_qparego = optimize_qnparego_and_get_observation(
+    (
+        new_x_qparego,
+        new_obj_qparego,
+        new_obj_true_qparego,
+    ) = optimize_qnparego_and_get_observation(
         model_qparego, train_x_qparego, train_obj_qparego, qparego_sampler
     )
     new_x_qehvi, new_obj_qehvi, new_obj_true_qehvi = optimize_qehvi_and_get_observation(
         model_qehvi, train_x_qehvi, train_obj_qehvi, qehvi_sampler
     )
-    new_x_qnehvi, new_obj_qnehvi, new_obj_true_qnehvi = optimize_qnehvi_and_get_observation(
+    (
+        new_x_qnehvi,
+        new_obj_qnehvi,
+        new_obj_true_qnehvi,
+    ) = optimize_qnehvi_and_get_observation(
         model_qnehvi, train_x_qnehvi, train_obj_qnehvi, qnehvi_sampler
     )
-    new_x_random, new_obj_random, new_obj_true_random = generate_initial_data(n=BATCH_SIZE)
-            
+    new_x_random, new_obj_random, new_obj_true_random = generate_initial_data(
+        n=BATCH_SIZE
+    )
+
     # update training points
     train_x_qparego = torch.cat([train_x_qparego, new_x_qparego])
     train_obj_qparego = torch.cat([train_obj_qparego, new_obj_qparego])
@@ -328,7 +354,7 @@ for iteration in range(1, N_BATCH + 1):
     train_x_qehvi = torch.cat([train_x_qehvi, new_x_qehvi])
     train_obj_qehvi = torch.cat([train_obj_qehvi, new_obj_qehvi])
     train_obj_true_qehvi = torch.cat([train_obj_true_qehvi, new_obj_true_qehvi])
-    
+
     train_x_qnehvi = torch.cat([train_x_qnehvi, new_x_qnehvi])
     train_obj_qnehvi = torch.cat([train_obj_qnehvi, new_obj_qnehvi])
     train_obj_true_qnehvi = torch.cat([train_obj_true_qnehvi, new_obj_true_qnehvi])
@@ -336,12 +362,16 @@ for iteration in range(1, N_BATCH + 1):
     train_x_random = torch.cat([train_x_random, new_x_random])
     train_obj_random = torch.cat([train_obj_random, new_obj_random])
     train_obj_true_random = torch.cat([train_obj_true_random, new_obj_true_random])
-    
 
     # update progress
     for hvs_list, train_obj in zip(
-        (hvs_random, hvs_qparego, hvs_qehvi, hvs_qnehvi), 
-        (train_obj_true_random, train_obj_true_qparego, train_obj_true_qehvi, train_obj_true_qnehvi),
+        (hvs_random, hvs_qparego, hvs_qehvi, hvs_qnehvi),
+        (
+            train_obj_true_random,
+            train_obj_true_qparego,
+            train_obj_true_qehvi,
+            train_obj_true_qnehvi,
+        ),
     ):
         # compute hypervolume
         bd = DominatedPartitioning(ref_point=problem.ref_point, Y=train_obj)
@@ -354,14 +384,15 @@ for iteration in range(1, N_BATCH + 1):
     mll_qparego, model_qparego = initialize_model(train_x_qparego, train_obj_qparego)
     mll_qehvi, model_qehvi = initialize_model(train_x_qehvi, train_obj_qehvi)
     mll_qnehvi, model_qnehvi = initialize_model(train_x_qnehvi, train_obj_qnehvi)
-    
+
     t1 = time.monotonic()
-    
+
     if verbose:
         print(
             f"\nBatch {iteration:>2}: Hypervolume (random, qNParEGO, qEHVI, qNEHVI) = "
             f"({hvs_random[-1]:>4.2f}, {hvs_qparego[-1]:>4.2f}, {hvs_qehvi[-1]:>4.2f}, {hvs_qnehvi[-1]:>4.2f}), "
-            f"time = {t1-t0:>4.2f}.", end=""
+            f"time = {t1-t0:>4.2f}.",
+            end="",
         )
     else:
         print(".", end="")
@@ -372,7 +403,7 @@ for iteration in range(1, N_BATCH + 1):
 # 
 # The plot shows that $q$NEHVI outperforms $q$EHVI, $q$ParEGO, and Sobol.
 
-# In[8]:
+# In[15]:
 
 
 import numpy as np
@@ -408,7 +439,7 @@ ax.legend(loc="lower left")
 # 
 # To examine optimization process from another perspective, we plot the true function values at the designs selected under each algorithm where the color corresponds to the BO iteration at which the point was collected. The plot on the right for $q$NEHVI shows that the $q$NEHVI quickly identifies the pareto front and most of its evaluations are very close to the pareto front. $q$NParEGO also identifies has many observations close to the pareto front, but relies on optimizing random scalarizations, which is a less principled way of optimizing the pareto front compared to $q$NEHVI, which explicitly attempts focuses on improving the pareto front. $q$EHVI uses the posterior mean as a plug-in estimator for the true function values at the in-sample points, whereas $q$NEHVI than integrating over the uncertainty at the in-sample designs Sobol generates random points and has few points close to the Pareto front.
 
-# In[9]:
+# In[16]:
 
 
 from matplotlib.cm import ScalarMappable

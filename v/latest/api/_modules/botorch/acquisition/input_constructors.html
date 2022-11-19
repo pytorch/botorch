@@ -109,9 +109,11 @@
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.cost</span> <span class="kn">import</span> <span class="n">AffineFidelityCostModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">FixedSingleSampleModel</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.constraints</span> <span class="kn">import</span> <span class="n">get_outcome_constraint_transforms</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">BotorchContainer</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">BotorchDataset</span><span class="p">,</span> <span class="n">SupervisedDataset</span>
@@ -669,10 +671,10 @@
 <span class="k">def</span> <span class="nf">_get_sampler</span><span class="p">(</span><span class="n">mc_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">qmc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
     <span class="sd">"""Set up MC sampler for q(N)EHVI."""</span>
     <span class="c1"># initialize the sampler</span>
-    <span class="n">seed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10000</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,))</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+    <span class="n">shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">mc_samples</span><span class="p">])</span>
     <span class="k">if</span> <span class="n">qmc</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">mc_samples</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">mc_samples</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">shape</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="construct_inputs_EHVI"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_EHVI">[docs]</a><span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">ExpectedHypervolumeImprovement</span><span class="p">)</span>
@@ -782,7 +784,7 @@
     <span class="p">)</span>
 
     <span class="n">sampler</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sampler"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">GPyTorchModel</span><span class="p">):</span>
         <span class="n">sampler</span> <span class="o">=</span> <span class="n">_get_sampler</span><span class="p">(</span>
             <span class="n">mc_samples</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mc_samples"</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">qmc</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"qmc"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
         <span class="p">)</span>
@@ -832,7 +834,7 @@
         <span class="n">cons_tfs</span> <span class="o">=</span> <span class="n">get_outcome_constraint_transforms</span><span class="p">(</span><span class="n">outcome_constraints</span><span class="p">)</span>
 
     <span class="n">sampler</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sampler"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">GPyTorchModel</span><span class="p">):</span>
         <span class="n">sampler</span> <span class="o">=</span> <span class="n">_get_sampler</span><span class="p">(</span>
             <span class="n">mc_samples</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mc_samples"</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">qmc</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"qmc"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
         <span class="p">)</span>
@@ -1201,7 +1203,7 @@
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
-            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler_cls</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">mc_samples</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed_inner</span><span class="p">),</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler_cls</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">mc_samples</span><span class="p">]),</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed_inner</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">acq_function</span> <span class="o">=</span> <span class="n">PosteriorMean</span><span class="p">(</span>

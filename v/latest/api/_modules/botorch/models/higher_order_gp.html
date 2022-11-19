@@ -546,7 +546,7 @@
             <span class="c1"># return a specialized Posterior to allow for sampling</span>
             <span class="c1"># cloning the full covar allows backpropagation through it</span>
             <span class="n">posterior</span> <span class="o">=</span> <span class="n">HigherOrderGPPosterior</span><span class="p">(</span>
-                <span class="n">mvn</span><span class="o">=</span><span class="n">mvn</span><span class="p">,</span>
+                <span class="n">distribution</span><span class="o">=</span><span class="n">mvn</span><span class="p">,</span>
                 <span class="n">train_targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_targets</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
                 <span class="n">train_train_covar</span><span class="o">=</span><span class="n">train_train_covar</span><span class="p">,</span>
                 <span class="n">test_train_covar</span><span class="o">=</span><span class="n">test_train_covar</span><span class="p">,</span>

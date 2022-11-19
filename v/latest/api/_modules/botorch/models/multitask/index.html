@@ -777,7 +777,7 @@
             <span class="n">specialized_mvn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">specialized_mvn</span><span class="p">)</span>
 
         <span class="n">posterior</span> <span class="o">=</span> <span class="n">MultitaskGPPosterior</span><span class="p">(</span>
-            <span class="n">mvn</span><span class="o">=</span><span class="n">specialized_mvn</span><span class="p">,</span>
+            <span class="n">distribution</span><span class="o">=</span><span class="n">specialized_mvn</span><span class="p">,</span>
             <span class="n">joint_covariance_matrix</span><span class="o">=</span><span class="n">joint_covar</span><span class="p">,</span>
             <span class="n">test_train_covar</span><span class="o">=</span><span class="n">test_obs_kernel</span><span class="p">,</span>
             <span class="n">train_diff</span><span class="o">=</span><span class="n">train_diff</span><span class="p">,</span>

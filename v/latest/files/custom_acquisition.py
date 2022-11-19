@@ -29,7 +29,8 @@ from typing import Optional
 
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.models.model import Model
-from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.sampling.base import MCSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import t_batch_mode_transform
 from torch import Tensor
 
@@ -46,7 +47,7 @@ class qScalarizedUpperConfidenceBound(MCAcquisitionFunction):
         # MCAcquisitionFunction performs some validity checks that we don't want here
         super(MCAcquisitionFunction, self).__init__(model=model)
         if sampler is None:
-            sampler = SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([512]))
         self.sampler = sampler
         self.register_buffer("beta", torch.as_tensor(beta))
         self.register_buffer("weights", torch.as_tensor(weights))
@@ -64,12 +65,14 @@ class qScalarizedUpperConfidenceBound(MCAcquisitionFunction):
                 given design points `X`.
         """
         posterior = self.model.posterior(X)
-        samples = self.sampler(posterior)  # n x b x q x o
+        samples = self.get_posterior_samples(posterior)  # n x b x q x o
         scalarized_samples = samples.matmul(self.weights)  # n x b x q
         mean = posterior.mean  # b x q x o
         scalarized_mean = mean.matmul(self.weights)  # b x q
         ucb_samples = (
-            scalarized_mean + math.sqrt(self.beta * math.pi / 2) * (scalarized_samples - scalarized_mean).abs()
+            scalarized_mean
+            + math.sqrt(self.beta * math.pi / 2)
+            * (scalarized_samples - scalarized_mean).abs()
         )
         return ucb_samples.max(dim=-1)[0].mean(dim=0)
 

@@ -247,7 +247,7 @@ def optimize_MOMF_and_get_obs(
 
 # MOMF Opt run
 from botorch import fit_gpytorch_mll
-from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 
 verbose = True
 train_x = torch.zeros(n_INIT + n_BATCH * BATCH_SIZE, dim_x,**tkwargs)  # Intializing train_x to zero
@@ -257,7 +257,7 @@ mll, model = initialize_model(train_x[:n_INIT, :], train_obj[:n_INIT, :])  # Ini
 for iteration in range(0, n_BATCH):
     # run N_BATCH rounds of BayesOpt after the initial random batch
     fit_gpytorch_mll(mll)  # Fit the model
-    momf_sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)  # Generate Sampler
+    momf_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))  # Generate Sampler
     # Updating indices used to store new observations
     lower_index = n_INIT + iteration * BATCH_SIZE
     upper_index = n_INIT + iteration * BATCH_SIZE + BATCH_SIZE
@@ -468,7 +468,7 @@ for trial in range(0, n_TRIALS):
         fit_gpytorch_mll(mll)
 
         fit_gpytorch_mll(mll_MO)  # fit the models
-        sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)
+        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
         # Updating indices used to store new observations
         lower_index = n_INIT + _iter * BATCH_SIZE
         upper_index = n_INIT + _iter * BATCH_SIZE + BATCH_SIZE

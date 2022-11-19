@@ -26,7 +26,7 @@
 import os
 import torch
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
 dtype = torch.double
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
@@ -179,7 +179,7 @@ def update_random_observations(best_random):
 
 from botorch import fit_gpytorch_mll
 from botorch.acquisition.monte_carlo import qExpectedImprovement, qNoisyExpectedImprovement
-from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.exceptions import BadInitialCandidatesWarning
 
 import time
@@ -227,7 +227,7 @@ for trial in range(1, N_TRIALS + 1):
         fit_gpytorch_mll(mll_nei)
         
         # define the qEI and qNEI acquisition modules using a QMC sampler
-        qmc_sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)
+        qmc_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
         
         # for best_f, we use the best observed noisy values as an approximation
         qEI = qExpectedImprovement(
