@@ -6,6 +6,7 @@
 
 
 import itertools
+import warnings
 from unittest import mock
 
 import torch
@@ -32,6 +33,7 @@ from botorch.acquisition.utils import prune_inferior_points
 from botorch.models import ModelList, ModelListGP
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.fully_bayesian import (
+    _psd_safe_pyro_mvn_sample,
     MCMC_DIM,
     MIN_INFERRED_NOISE_LEVEL,
     PyroModel,
@@ -659,4 +661,54 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                     torch.allclose(
                         dist.cdf(x), q * torch.ones(1, 5, **tkwargs), atol=1e-4
                     )
+                )
+
+    def test_psd_safe_pyro_mvn_sample(self):
+        def mock_init(
+            batch_shape=torch.Size(),  # noqa
+            event_shape=torch.Size(),  # noqa
+            validate_args=None,
+        ):
+            self._batch_shape = batch_shape
+            self._event_shape = event_shape
+            self._validate_args = False
+
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"dtype": dtype, "device": self.device}
+            loc = torch.rand(5, **tkwargs)
+            obs = torch.rand(5, **tkwargs)
+            psd_covar = torch.eye(5, **tkwargs)
+            not_psd_covar = torch.ones(5, 5, **tkwargs)
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                _psd_safe_pyro_mvn_sample(
+                    name="Y", loc=loc, covariance_matrix=psd_covar, obs=obs
+                )
+            self.assertFalse(any("linear algebra error" in str(w.message) for w in ws))
+            # With a PSD covar, it should only get called once.
+            # Raised as a ValueError:
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                _psd_safe_pyro_mvn_sample(
+                    name="Y", loc=loc, covariance_matrix=not_psd_covar, obs=obs
+                )
+            self.assertTrue(any("linear algebra error" in str(w.message) for w in ws))
+            # Raised as a LinAlgError:
+            with mock.patch(
+                "torch.distributions.multivariate_normal.Distribution.__init__",
+                wraps=mock_init,
+            ), warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                _psd_safe_pyro_mvn_sample(
+                    name="Y", loc=loc, covariance_matrix=not_psd_covar, obs=obs
+                )
+            # With a not-PSD covar, it should get called multiple times.
+            self.assertTrue(any("linear algebra error" in str(w.message) for w in ws))
+            # We don't catch random Value errors.
+            with mock.patch(
+                "torch.distributions.multivariate_normal.Distribution.__init__",
+                side_effect=ValueError("dummy error"),
+            ), self.assertRaisesRegex(ValueError, "dummy"):
+                _psd_safe_pyro_mvn_sample(
+                    name="Y", loc=loc, covariance_matrix=not_psd_covar, obs=obs
                 )
