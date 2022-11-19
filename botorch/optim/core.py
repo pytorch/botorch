@@ -18,7 +18,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from botorch.optim.closures import NdarrayOptimizationClosure
 from botorch.optim.utils import get_bounds_as_ndarray
-from numpy import asarray, ndarray
+from numpy import asarray, float64 as np_float64, ndarray
 from scipy.optimize import minimize
 from torch import Tensor
 from torch.optim.adam import Adam
@@ -105,7 +105,7 @@ def scipy_minimize(
 
     raw = minimize(
         wrapped_closure,
-        wrapped_closure.state if x0 is None else x0,
+        wrapped_closure.state if x0 is None else x0.astype(np_float64, copy=False),
         jac=True,
         bounds=bounds_np,
         method=method,

@@ -17,23 +17,27 @@ from linear_operator.utils.errors import NanError, NotPSDError
 
 class TestUtilsCommon(BotorchTestCase):
     def test_handle_numerical_errors(self):
-        x = np.zeros(1)
+        x = np.zeros(1, dtype=np.float64)
 
         with self.assertRaisesRegex(NotPSDError, "foo"):
-            _handle_numerical_errors(error=NotPSDError("foo"), x=x)
+            _handle_numerical_errors(NotPSDError("foo"), x=x)
 
         for error in (
             NanError(),
             RuntimeError("singular"),
             RuntimeError("input is not positive-definite"),
         ):
-            fake_loss, fake_grad = _handle_numerical_errors(error=error, x=x)
+            fake_loss, fake_grad = _handle_numerical_errors(error, x=x)
             self.assertTrue(np.isnan(fake_loss))
             self.assertEqual(fake_grad.shape, x.shape)
             self.assertTrue(np.isnan(fake_grad).all())
 
+        fake_loss, fake_grad = _handle_numerical_errors(error, x=x, dtype=np.float32)
+        self.assertEqual(np.float32, fake_loss.dtype)
+        self.assertEqual(np.float32, fake_grad.dtype)
+
         with self.assertRaisesRegex(RuntimeError, "foo"):
-            _handle_numerical_errors(error=RuntimeError("foo"), x=x)
+            _handle_numerical_errors(RuntimeError("foo"), x=x)
 
     def test_warning_handler_template(self):
         with catch_warnings(record=True) as ws:

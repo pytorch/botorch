@@ -110,11 +110,14 @@ class NdarrayOptimizationClosure:
         """
         if get_state is None:
             # Note: Numpy supports copying data between ndarrays with different dtypes.
-            # Hence, our default behavior need not coerce the ndarray represenations of
-            # tensors in `parameters` to float64 when copying over data.
+            # Hence, our default behavior need not coerce the ndarray representations
+            # of tensors in `parameters` to float64 when copying over data.
             _as_array = as_ndarray if as_array is None else as_array
             get_state = partial(
-                get_tensors_as_ndarray_1d, parameters, as_array=_as_array
+                get_tensors_as_ndarray_1d,
+                tensors=parameters,
+                dtype=np_float64,
+                as_array=_as_array,
             )
 
         if as_array is None:  # per the note, do this after resolving `get_state`
@@ -154,7 +157,7 @@ class NdarrayOptimizationClosure:
                     grads[index : index + size] = self.as_array(grad.view(-1))
                 index += size
         except RuntimeError as e:
-            value, grads = _handle_numerical_errors(error=e, x=self.state)
+            value, grads = _handle_numerical_errors(e, x=self.state, dtype=np_float64)
 
         return value, grads
 
@@ -174,9 +177,9 @@ class NdarrayOptimizationClosure:
 
         size = sum(param.numel() for param in self.parameters.values())
         array = (
-            np_zeros(size)
+            np_zeros(size, dtype=np_float64)
             if fill_value is None or fill_value == 0.0
-            else np_full(size, fill_value)
+            else np_full(size, fill_value, dtype=np_float64)
         )
         if self.persistent:
             self._gradient_ndarray = array

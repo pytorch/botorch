@@ -66,7 +66,7 @@ def as_ndarray(
 
         # Convert to ndarray and maybe cast to `dtype`
         out = out.numpy()
-        return out if (dtype is None or dtype == out.dtype) else out.astype(dtype)
+        return out.astype(dtype, copy=False)
 
 
 def get_tensors_as_ndarray_1d(
