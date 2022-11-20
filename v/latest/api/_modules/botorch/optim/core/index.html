@@ -44,7 +44,7 @@
 
 <span class="kn">from</span> <span class="nn">botorch.optim.closures</span> <span class="kn">import</span> <span class="n">NdarrayOptimizationClosure</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="n">get_bounds_as_ndarray</span>
-<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">asarray</span><span class="p">,</span> <span class="n">ndarray</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">asarray</span><span class="p">,</span> <span class="n">float64</span> <span class="k">as</span> <span class="n">np_float64</span><span class="p">,</span> <span class="n">ndarray</span>
 <span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.optim.adam</span> <span class="kn">import</span> <span class="n">Adam</span>
@@ -131,7 +131,7 @@
 
     <span class="n">raw</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span>
         <span class="n">wrapped_closure</span><span class="p">,</span>
-        <span class="n">wrapped_closure</span><span class="o">.</span><span class="n">state</span> <span class="k">if</span> <span class="n">x0</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x0</span><span class="p">,</span>
+        <span class="n">wrapped_closure</span><span class="o">.</span><span class="n">state</span> <span class="k">if</span> <span class="n">x0</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x0</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np_float64</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
         <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">bounds</span><span class="o">=</span><span class="n">bounds_np</span><span class="p">,</span>
         <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>

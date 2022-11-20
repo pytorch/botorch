@@ -136,11 +136,14 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">get_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># Note: Numpy supports copying data between ndarrays with different dtypes.</span>
-            <span class="c1"># Hence, our default behavior need not coerce the ndarray represenations of</span>
-            <span class="c1"># tensors in `parameters` to float64 when copying over data.</span>
+            <span class="c1"># Hence, our default behavior need not coerce the ndarray representations</span>
+            <span class="c1"># of tensors in `parameters` to float64 when copying over data.</span>
             <span class="n">_as_array</span> <span class="o">=</span> <span class="n">as_ndarray</span> <span class="k">if</span> <span class="n">as_array</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">as_array</span>
             <span class="n">get_state</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
-                <span class="n">get_tensors_as_ndarray_1d</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">as_array</span><span class="o">=</span><span class="n">_as_array</span>
+                <span class="n">get_tensors_as_ndarray_1d</span><span class="p">,</span>
+                <span class="n">tensors</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">np_float64</span><span class="p">,</span>
+                <span class="n">as_array</span><span class="o">=</span><span class="n">_as_array</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">as_array</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># per the note, do this after resolving `get_state`</span>
@@ -180,7 +183,7 @@
                     <span class="n">grads</span><span class="p">[</span><span class="n">index</span> <span class="p">:</span> <span class="n">index</span> <span class="o">+</span> <span class="n">size</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_array</span><span class="p">(</span><span class="n">grad</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
                 <span class="n">index</span> <span class="o">+=</span> <span class="n">size</span>
         <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">value</span><span class="p">,</span> <span class="n">grads</span> <span class="o">=</span> <span class="n">_handle_numerical_errors</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="n">e</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+            <span class="n">value</span><span class="p">,</span> <span class="n">grads</span> <span class="o">=</span> <span class="n">_handle_numerical_errors</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np_float64</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">value</span><span class="p">,</span> <span class="n">grads</span>
 
@@ -200,9 +203,9 @@
 
         <span class="n">size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
         <span class="n">array</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">np_zeros</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+            <span class="n">np_zeros</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np_float64</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">fill_value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">fill_value</span> <span class="o">==</span> <span class="mf">0.0</span>
-            <span class="k">else</span> <span class="n">np_full</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">fill_value</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">np_full</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">fill_value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np_float64</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">persistent</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_ndarray</span> <span class="o">=</span> <span class="n">array</span>
