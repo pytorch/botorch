@@ -142,6 +142,34 @@ class TestFitGPyTorchMLLScipy(BotorchTestCase):
                 )
             mock_closure.assert_called_once_with(ab="cd")
 
+    def test_fit_with_nans(self) -> None:
+        """Test the branch of NdarrayOptimizationClosure that handles errors."""
+
+        from botorch.optim.closures import NdarrayOptimizationClosure
+
+        def closure():
+            raise RuntimeError("singular")
+
+        for dtype in [torch.float32, torch.float64]:
+
+            parameters = {"x": torch.tensor([0.0], dtype=dtype)}
+
+            wrapper = NdarrayOptimizationClosure(closure=closure, parameters=parameters)
+
+            def _assert_np_array_is_float64_type(array) -> bool:
+                # e.g. "float32" in "torch.float32"
+                self.assertEqual(str(array.dtype), "float64")
+
+            _assert_np_array_is_float64_type(wrapper()[0])
+            _assert_np_array_is_float64_type(wrapper()[1])
+            _assert_np_array_is_float64_type(wrapper.state)
+            _assert_np_array_is_float64_type(wrapper._get_gradient_ndarray())
+
+            # Any mll will do
+            mll = next(iter(self.mlls.values()))
+            # will error if dtypes are wrong
+            fit.fit_gpytorch_mll_scipy(mll, closure=wrapper, parameters=parameters)
+
 
 class TestFitGPyTorchMLLTorch(BotorchTestCase):
     def setUp(self):
