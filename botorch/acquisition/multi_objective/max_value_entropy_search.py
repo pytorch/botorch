@@ -338,7 +338,7 @@ class qLowerBoundMultiObjectiveMaxValueEntropySearch(
         """
 
         # `num_mc_samples x batch_shape x q x 1 x M`
-        samples = self.sampler(posterior)
+        samples = self.get_posterior_samples(posterior)
 
         # `num_mc_samples x batch_shape x q`
         if self.model.num_outputs == 1:

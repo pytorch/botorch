@@ -17,7 +17,7 @@ from botorch.exceptions import UnsupportedError
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.outcome import Standardize
-from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase
 
 

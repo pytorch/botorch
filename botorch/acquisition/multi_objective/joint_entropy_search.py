@@ -23,20 +23,20 @@ from typing import Any, Optional, Tuple, Union
 
 import torch
 from botorch import settings
-from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
 from botorch.exceptions.errors import UnsupportedError
 
 from botorch.models.model import Model
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.utils import fantasize as fantasize_flag
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 from torch import Tensor
 from torch.distributions import Normal
 
 
-class LowerBoundMultiObjectiveEntropySearch(AcquisitionFunction):
+class LowerBoundMultiObjectiveEntropySearch(AcquisitionFunction, MCSamplerMixin):
     r"""Abstract base class for the lower bound multi-objective entropy search
     acquisition functions.
     """
@@ -74,6 +74,8 @@ class LowerBoundMultiObjectiveEntropySearch(AcquisitionFunction):
                 estimate.
         """
         super().__init__(model=model)
+        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_samples]))
+        MCSamplerMixin.__init__(self, sampler=sampler)
         # Batch GP models (e.g. fantasized models) are not currently supported
         if isinstance(model, ModelListGP):
             train_X = model.models[0].train_inputs[0]
@@ -119,9 +121,6 @@ class LowerBoundMultiObjectiveEntropySearch(AcquisitionFunction):
                 + "."
             )
 
-        self.sampler = SobolQMCNormalSampler(
-            num_samples=num_samples, collapse_batch_dims=True
-        )
         self.set_X_pending(X_pending)
 
     @abstractmethod
@@ -420,7 +419,7 @@ class qLowerBoundMultiObjectiveJointEntropySearch(
                 samples.
         """
         # `num_mc_samples x batch_shape x q x num_pareto_samples x 1 x M`
-        samples = self.sampler(posterior)
+        samples = self.get_posterior_samples(posterior)
 
         # `num_mc_samples x batch_shape x q x num_pareto_samples`
         if self.model.num_outputs == 1:
