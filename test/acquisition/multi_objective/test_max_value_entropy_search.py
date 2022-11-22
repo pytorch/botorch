@@ -17,7 +17,7 @@ from botorch.acquisition.multi_objective.utils import compute_sample_box_decompo
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.outcome import Standardize
-from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase
 
 
@@ -81,6 +81,9 @@ class TestMultiObjectiveMaxValueEntropy(BotorchTestCase):
             model = SingleTaskGP(train_X, train_Y)
             mesmo = qMultiObjectiveMaxValueEntropy(model, dummy_sample_pareto_frontiers)
             self.assertEqual(mesmo.num_fantasies, 16)
+            # Initialize the sampler.
+            dummy_post = model.posterior(train_X[:1])
+            mesmo.get_posterior_samples(dummy_post)
             self.assertIsInstance(mesmo.sampler, SobolQMCNormalSampler)
             self.assertEqual(mesmo.sampler.sample_shape, torch.Size([128]))
             self.assertIsInstance(mesmo.fantasies_sampler, SobolQMCNormalSampler)
@@ -101,6 +104,9 @@ class TestMultiObjectiveMaxValueEntropy(BotorchTestCase):
             mock_sample_pfs.return_value = dummy_sample_pareto_frontiers(model=model)
             mesmo = qMultiObjectiveMaxValueEntropy(model, mock_sample_pfs)
             self.assertEqual(mesmo.num_fantasies, 16)
+            # Initialize the sampler.
+            dummy_post = model.posterior(train_X[:1])
+            mesmo.get_posterior_samples(dummy_post)
             self.assertIsInstance(mesmo.sampler, SobolQMCNormalSampler)
             self.assertEqual(mesmo.sampler.sample_shape, torch.Size([128]))
             self.assertIsInstance(mesmo.fantasies_sampler, SobolQMCNormalSampler)

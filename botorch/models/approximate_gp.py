@@ -132,7 +132,7 @@ class ApproximateGPyTorchModel(GPyTorchModel):
         if observation_noise:
             dist = self.likelihood(dist, *args, **kwargs)
 
-        posterior = GPyTorchPosterior(mvn=dist)
+        posterior = GPyTorchPosterior(distribution=dist)
         if hasattr(self, "outcome_transform"):
             posterior = self.outcome_transform.untransform_posterior(posterior)
         return posterior

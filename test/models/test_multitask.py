@@ -225,7 +225,7 @@ class TestMultiTaskGP(BotorchTestCase):
             test_x = torch.rand(2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
 
@@ -245,7 +245,7 @@ class TestMultiTaskGP(BotorchTestCase):
             # test posterior w/ single output index
             posterior_f = model.posterior(test_x, output_indices=[0])
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 1]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 1]))
 
@@ -257,7 +257,7 @@ class TestMultiTaskGP(BotorchTestCase):
             test_x = torch.rand(3, 2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
 
             # test that unsupported batch shape MTGPs throw correct error
             with self.assertRaises(ValueError):
@@ -312,13 +312,13 @@ class TestMultiTaskGP(BotorchTestCase):
             test_x = torch.rand(2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
 
             # test posterior (batch eval)
             test_x = torch.rand(3, 2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
 
             # test posterior transform
             post_tf = ScalarizedPosteriorTransform(weights=torch.ones(1, **tkwargs))
@@ -400,7 +400,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             test_x = torch.rand(2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
 
@@ -423,7 +423,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             # test posterior w/ single output index
             posterior_f = model.posterior(test_x, output_indices=[0])
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 1]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 1]))
 
@@ -435,7 +435,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             test_x = torch.rand(3, 2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
 
             # test that unsupported batch shape MTGPs throw correct error
             with self.assertRaises(ValueError):
@@ -483,13 +483,13 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             test_x = torch.rand(2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
 
             # test posterior (batch eval)
             test_x = torch.rand(3, 2, 1, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
 
     def test_FixedNoiseMultiTaskGP_fixed_prior(self):
         for dtype in (torch.float, torch.double):
@@ -657,11 +657,13 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             posterior_f = model.posterior(test_x)
             if not use_octf:
                 self.assertIsInstance(posterior_f, GPyTorchPosterior)
-                self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+                self.assertIsInstance(
+                    posterior_f.distribution, MultitaskMultivariateNormal
+                )
             else:
                 self.assertIsInstance(posterior_f, TransformedPosterior)
                 self.assertIsInstance(
-                    posterior_f._posterior.mvn, MultitaskMultivariateNormal
+                    posterior_f._posterior.distribution, MultitaskMultivariateNormal
                 )
 
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
@@ -682,7 +684,7 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
                 self.assertTrue(
                     torch.allclose(
                         posterior_noisy.variance,
-                        model.likelihood(posterior_f.mvn).variance,
+                        model.likelihood(posterior_f.distribution).variance,
                     )
                 )
 
@@ -691,11 +693,13 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             posterior_f = model.posterior(test_x)
             if not use_octf:
                 self.assertIsInstance(posterior_f, GPyTorchPosterior)
-                self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+                self.assertIsInstance(
+                    posterior_f.distribution, MultitaskMultivariateNormal
+                )
             else:
                 self.assertIsInstance(posterior_f, TransformedPosterior)
                 self.assertIsInstance(
-                    posterior_f._posterior.mvn, MultitaskMultivariateNormal
+                    posterior_f._posterior.distribution, MultitaskMultivariateNormal
                 )
             self.assertEqual(posterior_f.mean.shape, torch.Size([3, 2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([3, 2, 2]))
@@ -772,7 +776,9 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
                 with max_cholesky_size(max_cholesky), max_root_decomposition_size(3):
                     posterior_f = model.posterior(test_x)
                     self.assertIsInstance(posterior_f, GPyTorchPosterior)
-                    self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+                    self.assertIsInstance(
+                        posterior_f.distribution, MultitaskMultivariateNormal
+                    )
                     self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
                     self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
 
@@ -780,7 +786,8 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             posterior_noisy = model.posterior(test_x, observation_noise=True)
             self.assertTrue(
                 torch.allclose(
-                    posterior_noisy.variance, model.likelihood(posterior_f.mvn).variance
+                    posterior_noisy.variance,
+                    model.likelihood(posterior_f.distribution).variance,
                 )
             )
 
@@ -788,6 +795,6 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             test_x = torch.rand(3, 2, 2, **tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([3, 2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([3, 2, 2]))

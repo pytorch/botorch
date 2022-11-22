@@ -16,18 +16,17 @@ from math import ceil
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import torch
-from botorch import settings
 from botorch.acquisition import monte_carlo  # noqa F401
 from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
 )
 from botorch.exceptions.errors import UnsupportedError
-from botorch.exceptions.warnings import BotorchWarning, SamplingWarning
+from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.fully_bayesian import MCMC_DIM
 from botorch.models.model import Model
-from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.sampling.get_sampler import get_sampler
 from botorch.utils.gp_sampling import get_gp_samples
 from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     BoxDecomposition,
@@ -42,7 +41,6 @@ from botorch.utils.multi_objective.pareto import is_non_dominated
 from botorch.utils.sampling import draw_sobol_samples
 from botorch.utils.transforms import is_fully_bayesian, normalize_indices
 from torch import Tensor
-from torch.quasirandom import SobolEngine
 
 
 def get_default_partitioning_alpha(num_objectives: int) -> float:
@@ -126,16 +124,7 @@ def prune_inferior_points_multi_objective(
         raise ValueError(f"max_frac must take values in (0, 1], is {max_frac}")
     with torch.no_grad():
         posterior = model.posterior(X=X)
-    if posterior.event_shape.numel() > SobolEngine.MAXDIM:
-        if settings.debug.on():
-            warnings.warn(
-                f"Sample dimension q*m={posterior.event_shape.numel()} exceeding Sobol "
-                f"max dimension ({SobolEngine.MAXDIM}). Using iid samples instead.",
-                SamplingWarning,
-            )
-        sampler = IIDNormalSampler(num_samples=num_samples)
-    else:
-        sampler = SobolQMCNormalSampler(num_samples=num_samples)
+    sampler = get_sampler(posterior, sample_shape=torch.Size([num_samples]))
     samples = sampler(posterior)
     if objective is None:
         objective = IdentityMCMultiOutputObjective()

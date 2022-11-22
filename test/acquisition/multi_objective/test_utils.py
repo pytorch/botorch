@@ -5,12 +5,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import warnings
-from contextlib import ExitStack
 from itertools import product
 from unittest import mock
 
 import torch
-from botorch import settings
 from botorch.acquisition.multi_objective.objective import (
     MCMultiOutputObjective,
     UnstandardizeMCMultiOutputObjective,
@@ -23,7 +21,6 @@ from botorch.acquisition.multi_objective.utils import (
     sample_optimal_points,
 )
 from botorch.exceptions.errors import UnsupportedError
-from botorch.exceptions.warnings import SamplingWarning
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.outcome import Standardize
@@ -151,26 +148,6 @@ class TestMultiObjectiveUtils(BotorchTestCase):
                     model=mm, X=X, ref_point=ref_point
                 )
             self.assertTrue(torch.equal(X_pruned, X[:2]))
-            # test high-dim sampling
-            with ExitStack() as es:
-                mock_event_shape = es.enter_context(
-                    mock.patch(
-                        "botorch.utils.testing.MockPosterior.event_shape",
-                        new_callable=mock.PropertyMock,
-                    )
-                )
-                mock_event_shape.return_value = torch.Size(
-                    [1, 1, torch.quasirandom.SobolEngine.MAXDIM + 1]
-                )
-                es.enter_context(
-                    mock.patch.object(MockPosterior, "rsample", return_value=samples)
-                )
-                mm = MockModel(MockPosterior(samples=samples))
-                with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-                    prune_inferior_points_multi_objective(
-                        model=mm, X=X, ref_point=ref_point
-                    )
-                    self.assertTrue(issubclass(ws[-1].category, SamplingWarning))
 
             # test marginalize_dim and constraints
             samples = torch.tensor([[1.0, 2.0], [2.0, 1.0], [3.0, 4.0]], **tkwargs)

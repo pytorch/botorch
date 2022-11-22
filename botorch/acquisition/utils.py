@@ -11,11 +11,9 @@ Utilities for acquisition functions.
 from __future__ import annotations
 
 import math
-import warnings
 from typing import Callable, Dict, List, Optional
 
 import torch
-from botorch import settings
 from botorch.acquisition import analytic, monte_carlo, multi_objective  # noqa F401
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.multi_objective import monte_carlo as moo_monte_carlo
@@ -25,17 +23,16 @@ from botorch.acquisition.objective import (
     PosteriorTransform,
 )
 from botorch.exceptions.errors import UnsupportedError
-from botorch.exceptions.warnings import SamplingWarning
 from botorch.models.fully_bayesian import MCMC_DIM
 from botorch.models.model import Model
-from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
+from botorch.sampling.base import MCSampler
+from botorch.sampling.get_sampler import get_sampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
     NondominatedPartitioning,
 )
 from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
-from torch.quasirandom import SobolEngine
 
 
 def get_acquisition_function(
@@ -47,7 +44,6 @@ def get_acquisition_function(
     X_pending: Optional[Tensor] = None,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     mc_samples: int = 500,
-    qmc: bool = True,
     seed: Optional[int] = None,
     **kwargs,
 ) -> monte_carlo.MCAcquisitionFunction:
@@ -69,7 +65,6 @@ def get_acquisition_function(
             as part of the objective.
         mc_samples: The number of samples to use for (q)MC evaluation of the
             acquisition function.
-        qmc: If True, use quasi-Monte-Carlo sampling (instead of iid).
         seed: If provided, perform deterministic optimization (i.e. the
             function to optimize is fixed and not stochastic).
 
@@ -82,10 +77,11 @@ def get_acquisition_function(
         >>> acqf = get_acquisition_function("qEI", model, obj, train_X)
     """
     # initialize the sampler
-    if qmc:
-        sampler = SobolQMCNormalSampler(num_samples=mc_samples, seed=seed)
-    else:
-        sampler = IIDNormalSampler(num_samples=mc_samples, seed=seed)
+    sampler = get_sampler(
+        posterior=model.posterior(X_observed[:1]),
+        sample_shape=torch.Size([mc_samples]),
+        seed=seed,
+    )
     if posterior_transform is not None and acquisition_function_name in [
         "qEHVI",
         "qNEHVI",
@@ -337,17 +333,9 @@ def prune_inferior_points(
     with torch.no_grad():
         posterior = model.posterior(X=X, posterior_transform=posterior_transform)
     if sampler is None:
-        if posterior.base_sample_shape.numel() > SobolEngine.MAXDIM:
-            if settings.debug.on():
-                warnings.warn(
-                    f"Sample dimension q*m={posterior.base_sample_shape.numel()} "
-                    f"exceeding Sobol max dimension ({SobolEngine.MAXDIM}). "
-                    "Using iid samples instead.",
-                    SamplingWarning,
-                )
-            sampler = IIDNormalSampler(num_samples=num_samples)
-        else:
-            sampler = SobolQMCNormalSampler(num_samples=num_samples)
+        sampler = get_sampler(
+            posterior=posterior, sample_shape=torch.Size([num_samples])
+        )
     samples = sampler(posterior)
     if objective is None:
         objective = IdentityMCObjective()

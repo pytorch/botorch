@@ -38,7 +38,8 @@ from botorch.models.converter import (
 from botorch.models.model import Model
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.sampling.base import MCSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 from torch import Tensor
 
@@ -59,11 +60,16 @@ class qMultiObjectiveMaxValueEntropy(
 
     Note: this only supports maximization.
 
+    Attributes:
+        _default_sample_shape: The `sample_shape` for the default sampler.
+
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
         >>> MESMO = qMultiObjectiveMaxValueEntropy(model, sample_pfs)
         >>> mesmo = MESMO(test_X)
     """
+
+    _default_sample_shape = torch.Size([128])
 
     def __init__(
         self,

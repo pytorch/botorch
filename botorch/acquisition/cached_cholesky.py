@@ -12,18 +12,15 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC
-from typing import Optional
 
 import torch
-from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
-from botorch.models import HigherOrderGP
-from botorch.models.deterministic import DeterministicModel
+from botorch.models.gpytorch import GPyTorchModel
+from botorch.models.higher_order_gp import HigherOrderGP
 from botorch.models.model import Model, ModelList
 from botorch.models.multitask import KroneckerMultiTaskGP, MultiTaskGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
-from botorch.sampling.samplers import MCSampler
 from botorch.utils.low_rank import extract_batch_covar, sample_cached_cholesky
 from gpytorch import settings as gpt_settings
 from gpytorch.distributions.multitask_multivariate_normal import (
@@ -43,77 +40,62 @@ class CachedCholeskyMCAcquisitionFunction(ABC):
     :meta private:
     """
 
-    def _check_sampler(self) -> None:
-        r"""Check compatibility of sampler and model with a cached Cholesky."""
-        if not self.sampler.collapse_batch_dims:
-            raise UnsupportedError(
-                "Expected sampler to use `collapse_batch_dims=True`."
-            )
-        elif self.sampler.base_samples is not None:
-            warnings.warn(
-                message=(
-                    "sampler.base_samples is not None. The base_samples must be "
-                    "initialized to None. Resetting sampler.base_samples to None."
-                ),
-                category=BotorchWarning,
-            )
-            self.sampler.base_samples = None
-        elif self._uses_matheron and self.sampler.batch_range != (0, -1):
-            raise RuntimeError(
-                "sampler.batch_range is not (0, -1). This check requires that the "
-                "sampler.batch_range is (0, -1) with GPs that use Matheron's rule "
-                "for sampling, in order to properly collapse batch dimensions. "
-            )
-
     def _setup(
         self,
         model: Model,
-        sampler: Optional[MCSampler] = None,
         cache_root: bool = False,
-        check_sampler: bool = False,
     ) -> None:
         r"""Set class attributes and perform compatibility checks.
 
         Args:
             model: A model.
-            sampler: A sampler.
             cache_root: A boolean indicating whether to cache the Cholesky.
                 This might be overridden in the model is not compatible.
-            check_sampler: A boolean indicating whether to check the sampler.
-                The sampler is always checked if cache_root is True.
         """
         models = model.models if isinstance(model, ModelList) else [model]
-        self._is_mt = any(
+        if any(
             isinstance(m, (MultiTaskGP, KroneckerMultiTaskGP, HigherOrderGP))
+            or not isinstance(m, GPyTorchModel)
             for m in models
-        )
-        self._is_deterministic = any(isinstance(m, DeterministicModel) for m in models)
-        self._uses_matheron = any(
-            isinstance(m, (KroneckerMultiTaskGP, HigherOrderGP)) for m in models
-        )
-        if check_sampler or cache_root:
-            self._check_sampler()
-        if self._is_deterministic or self._is_mt:
-            cache_root = False
+        ):
+            if cache_root:
+                warnings.warn(
+                    "`cache_root` is only supported for GPyTorchModels (with the "
+                    f"exception of MultiTask models). Got model={model}. Setting "
+                    "`cache_root = False",
+                    RuntimeWarning,
+                )
+                cache_root = False
         self._cache_root = cache_root
 
-    def _cache_root_decomposition(
+    def _compute_root_decomposition(
         self,
         posterior: Posterior,
-    ) -> None:
+    ) -> Tensor:
         r"""Cache Cholesky of the posterior covariance over f(X_baseline).
+
+        Because `LinearOperator.root_decomposition` is decorated with LinearOperator's
+        @cached decorator, this function is doing a lot implicitly:
+
+        1) Check if a root decomposition has already been cached to `lazy_covar`.
+          Note that it will not have been if `posterior.mvn` is a
+          `MultitaskMultivariateNormal`, since we construct `lazy_covar` in that
+          case.
+        2) If the root decomposition has not been found in the cache, compute it.
+        3) Write it to the cache of `lazy_covar`. Note that this will become inacessible
+          if `posterior.mvn` is a `MultitaskMultivariateNormal`, since in that case
+          `lazy_covar`'s scope is only this function.
 
         Args:
             posterior: The posterior over f(X_baseline).
         """
-        if isinstance(posterior.mvn, MultitaskMultivariateNormal):
-            lazy_covar = extract_batch_covar(posterior.mvn)
+        if isinstance(posterior.distribution, MultitaskMultivariateNormal):
+            lazy_covar = extract_batch_covar(posterior.distribution)
         else:
-            lazy_covar = posterior.mvn.lazy_covariance_matrix
+            lazy_covar = posterior.distribution.lazy_covariance_matrix
         with gpt_settings.fast_computations.covar_root_decomposition(False):
             lazy_covar_root = lazy_covar.root_decomposition()
-            baseline_L = lazy_covar_root.root.to_dense()
-        self.register_buffer("_baseline_L", baseline_L)
+        return lazy_covar_root.root.to_dense()
 
     def _get_f_X_samples(self, posterior: GPyTorchPosterior, q_in: int) -> Tensor:
         r"""Get posterior samples at the `q_in` new points from the joint posterior.
@@ -131,7 +113,7 @@ class CachedCholeskyMCAcquisitionFunction(ABC):
         # cached covariance (and box decompositions) and the new block.
         # But recomputing box decompositions every time the jitter changes would
         # be quite slow.
-        if not self._is_mt and self._cache_root and hasattr(self, "_baseline_L"):
+        if self._cache_root and hasattr(self, "_baseline_L"):
             try:
                 return sample_cached_cholesky(
                     posterior=posterior,
@@ -149,7 +131,7 @@ class CachedCholeskyMCAcquisitionFunction(ABC):
                 )
 
         # TODO: improve efficiency for multi-task models
-        samples = self.sampler(posterior)
+        samples = self.get_posterior_samples(posterior)
         if isinstance(self.model, HigherOrderGP):
             # Select the correct q-batch dimension for HOGP.
             q_dim = -self.model._num_dimensions
@@ -159,3 +141,24 @@ class CachedCholeskyMCAcquisitionFunction(ABC):
             return samples.index_select(q_dim, q_idcs)
         else:
             return samples[..., -q_in:, :]
+
+    def _set_sampler(
+        self,
+        q_in: int,
+        posterior: Posterior,
+    ) -> None:
+        r"""Update the sampler to use the original base samples for X_baseline.
+
+        Args:
+            q_in: The effective input batch size. This is typically equal to the
+                q-batch size of `X`. However, if using a one-to-many input transform,
+                e.g., `InputPerturbation` with `n_w` perturbations, the posterior will
+                have `n_w` points on the q-batch for each point on the q-batch of `X`.
+                In which case, `q_in = q * n_w` is used.
+            posterior: The posterior.
+        """
+        if self.q_in != q_in and self.base_sampler is not None:
+            self.sampler._update_base_samples(
+                posterior=posterior, base_sampler=self.base_sampler
+            )
+            self.q_in = q_in

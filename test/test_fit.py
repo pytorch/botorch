@@ -642,26 +642,34 @@ class TestFitMultioutputIndependent(BotorchTestCase):
 
 
 class TestFitOther(BotorchTestCase):
-    def test_fit_with_converter(self):
+    def helper_fit_with_converter(self, dtype) -> None:
         # Check that sequential optimization using converter does not
         # break input transforms.
-        for dtype in (torch.float, torch.double):
-            tkwargs = {"device": self.device, "dtype": dtype}
-            X = torch.rand(5, 2, **tkwargs) * 10
-            Y = X**2
-            intf = Normalize(2)
-            model = SingleTaskGP(X, Y, input_transform=intf)
-            mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            with patch(
-                f"{fit_gpytorch_mll.__module__}.batched_to_model_list",
-                wraps=batched_to_model_list,
-            ) as wrapped_converter, warnings.catch_warnings(record=True) as ws:
-                warnings.simplefilter("always", BotorchWarning)
-                fit_gpytorch_mll(mll)
-            # Check that MLL repacking succeeded.
-            self.assertFalse(
-                any("Training loss of repacked model" in str(w.message) for w in ws)
-            )
-            wrapped_converter.assert_called_once()
-            self.assertFalse(torch.allclose(intf.mins, torch.zeros(1, 2, **tkwargs)))
-            self.assertFalse(torch.allclose(intf.ranges, torch.ones(1, 2, **tkwargs)))
+        tkwargs = {"device": self.device, "dtype": dtype}
+        # Set the seed to a number that doesn't generate numerical
+        # issues (no NaNs)
+        torch.manual_seed(0)
+        X = torch.rand(5, 2, **tkwargs) * 10
+        Y = X**2
+        intf = Normalize(2)
+        model = SingleTaskGP(X, Y, input_transform=intf)
+        mll = ExactMarginalLogLikelihood(model.likelihood, model)
+        with patch(
+            f"{fit_gpytorch_mll.__module__}.batched_to_model_list",
+            wraps=batched_to_model_list,
+        ) as wrapped_converter, warnings.catch_warnings(record=True) as ws:
+            warnings.simplefilter("always", BotorchWarning)
+            fit_gpytorch_mll(mll)
+        # Check that MLL repacking succeeded.
+        self.assertFalse(
+            any("Training loss of repacked model" in str(w.message) for w in ws)
+        )
+        wrapped_converter.assert_called_once()
+        self.assertFalse(torch.allclose(intf.mins, torch.zeros(1, 2, **tkwargs)))
+        self.assertFalse(torch.allclose(intf.ranges, torch.ones(1, 2, **tkwargs)))
+
+    def test_fit_with_converter_float32(self) -> None:
+        self.helper_fit_with_converter(torch.float)
+
+    def test_fit_with_converter_float64(self) -> None:
+        self.helper_fit_with_converter(torch.double)

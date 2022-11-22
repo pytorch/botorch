@@ -210,7 +210,7 @@ class ExpectationPosteriorTransform(PosteriorTransform):
         Returns:
             An `m`-outcome joint posterior over `q` expectations.
         """
-        org_mvn = posterior.mvn
+        org_mvn = posterior.distribution
         if getattr(org_mvn, "_interleaved", False):
             raise UnsupportedError(
                 "`ExpectationPosteriorTransform` does not support "
@@ -252,7 +252,7 @@ class ExpectationPosteriorTransform(PosteriorTransform):
             new_mvn = MultitaskMultivariateNormal(
                 new_loc, to_linear_operator(new_cov), interleaved=False
             )
-        return GPyTorchPosterior(mvn=new_mvn)
+        return GPyTorchPosterior(distribution=new_mvn)
 
 
 class MCAcquisitionObjective(Module, ABC):
@@ -528,7 +528,7 @@ class LearnedObjective(MCAcquisitionObjective):
             sampler: Sampler for the preference model to account for uncertainty in
                 preferece when calculating the objective; it's not the one used
                 in MC acquisition functions. If None,
-                it uses `IIDNormalSampler(num_samples=1)`.
+                it uses `IIDNormalSampler(sample_shape=torch.Size([1]))`.
         """
         super().__init__()
         self.pref_model = pref_model
@@ -537,7 +537,7 @@ class LearnedObjective(MCAcquisitionObjective):
             self.sampler = None
         else:
             if sampler is None:
-                self.sampler = IIDNormalSampler(num_samples=1)
+                self.sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
             else:
                 self.sampler = sampler
 

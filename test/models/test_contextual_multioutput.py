@@ -61,12 +61,12 @@ class ContextualMultiOutputTest(BotorchTestCase):
             # test posterior
             posterior_f = model.posterior(test_x[:, :d])
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultitaskMultivariateNormal)
 
             # test posterior w/ single output index
             posterior_f = model.posterior(test_x[:, :d], output_indices=[0])
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            self.assertIsInstance(posterior_f.distribution, MultivariateNormal)
 
             # test input embs_dim_list (one categorical feature)
             # test input pre-trained emb context_emb_feature

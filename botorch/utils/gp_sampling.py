@@ -42,6 +42,7 @@ class GPDraw(Module):
         """
         super().__init__()
         self._model = deepcopy(model)
+        self._num_outputs = self._model.num_outputs
         seed = torch.tensor(
             seed if seed is not None else torch.randint(0, 1000000, (1,)).item()
         )
@@ -82,6 +83,9 @@ class GPDraw(Module):
             X_eval = torch.cat([self.Xs, X], dim=-2)
         posterior = self._model.posterior(X=X_eval)
         base_sample_shape = posterior.base_sample_shape
+        if self._num_outputs == 1:
+            # Needed to comply with base sample shape assumptions made here.
+            base_sample_shape = base_sample_shape + (1,)
         # re-use old samples
         bs_shape = base_sample_shape[:-2] + X.shape[-2:-1] + base_sample_shape[-1:]
         with manual_seed(seed=int(self._seed)):
@@ -92,10 +96,15 @@ class GPDraw(Module):
         else:
             base_samples = torch.cat([self._base_samples, new_base_samples], dim=-2)
         # TODO: Deduplicate repeated evaluations / deal with numerical degeneracies
-        # that could lead to non-determinsitic evaluations. We could use SVD- or
+        # that could lead to non-deterministic evaluations. We could use SVD- or
         # eigendecomposition-based sampling, but we probably don't want to use this
         # by default for performance reasonse.
-        Ys = posterior.rsample(torch.Size(), base_samples=base_samples)
+        Ys = posterior.rsample_from_base_samples(
+            torch.Size(),
+            base_samples=base_samples.squeeze(-1)
+            if self._num_outputs == 1
+            else base_samples,
+        )
         self.register_buffer("_Xs", X_eval)
         self.register_buffer("_Ys", Ys)
         self.register_buffer("_seed", seed)

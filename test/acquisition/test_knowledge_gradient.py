@@ -28,7 +28,7 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP
 from botorch.optim.optimize import optimize_acqf
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal
 
@@ -50,7 +50,7 @@ class TestQKnowledgeGradient(BotorchTestCase):
             with self.assertRaises(ValueError):
                 qKnowledgeGradient(model=mm, num_fantasies=None)
             # test error when sampler and num_fantasies arg are inconsistent
-            sampler = IIDNormalSampler(num_samples=16)
+            sampler = IIDNormalSampler(sample_shape=torch.Size([16]))
             with self.assertRaises(ValueError):
                 qKnowledgeGradient(model=mm, num_fantasies=32, sampler=sampler)
             # test default construction
@@ -65,7 +65,7 @@ class TestQKnowledgeGradient(BotorchTestCase):
             self.assertEqual(qKG.get_augmented_q_batch_size(q=3), 32 + 3)
             # test custom construction
             obj = GenericMCObjective(lambda Y, X: Y.mean(dim=-1))
-            sampler = IIDNormalSampler(num_samples=16)
+            sampler = IIDNormalSampler(sample_shape=torch.Size([16]))
             X_pending = torch.zeros(2, 2, device=self.device, dtype=dtype)
             qKG = qKnowledgeGradient(
                 model=mm,
@@ -87,7 +87,7 @@ class TestQKnowledgeGradient(BotorchTestCase):
             qKG = qKnowledgeGradient(model=mm, num_fantasies=None, sampler=sampler)
             self.assertEqual(qKG.sampler.sample_shape, torch.Size([16]))
             # test custom construction with inner sampler and current value
-            inner_sampler = SobolQMCNormalSampler(num_samples=256)
+            inner_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([256]))
             current_value = torch.zeros(1, device=self.device, dtype=dtype)
             qKG = qKnowledgeGradient(
                 model=mm,
@@ -618,7 +618,7 @@ class TestKGUtils(BotorchTestCase):
             self.assertIsNone(vf.posterior_transform)
             # test SimpleRegret
             obj = GenericMCObjective(lambda Y, X: Y.sum(dim=-1))
-            sampler = IIDNormalSampler(num_samples=2)
+            sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
             vf = _get_value_function(model=mm, objective=obj, sampler=sampler)
             self.assertIsInstance(vf, qSimpleRegret)
             self.assertEqual(vf.objective, obj)
