@@ -5,9 +5,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import warnings
 from copy import deepcopy
 
 import torch
+from botorch import settings
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.input import (
     AffineInputTransform,
@@ -29,6 +31,7 @@ from gpytorch.priors import LogNormalPrior
 from torch import Tensor
 from torch.distributions import Kumaraswamy
 from torch.nn import Module
+from torch.nn.functional import one_hot
 
 
 def get_test_warp(indices, **kwargs):
@@ -534,19 +537,45 @@ class TestInputTransforms(BotorchTestCase):
     def test_round_transform(self):
         for dtype in (torch.float, torch.double):
             # basic init
-            int_idcs = [0, 2]
-            round_tf = Round(indices=[0, 2])
-            self.assertEqual(round_tf.indices.tolist(), int_idcs)
+            int_idcs = [0, 4]
+            categorical_feats = {2: 2, 5: 3}
+            # test deprecation warning
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                Round(indices=int_idcs)
+                self.assertTrue(
+                    any(issubclass(w.category, DeprecationWarning) for w in ws)
+                )
+            round_tf = Round(
+                integer_indices=int_idcs, categorical_features=categorical_feats
+            )
+            self.assertEqual(round_tf.integer_indices.tolist(), int_idcs)
+            self.assertEqual(round_tf.categorical_features, categorical_feats)
             self.assertTrue(round_tf.training)
-            self.assertTrue(round_tf.approximate)
+            self.assertFalse(round_tf.approximate)
             self.assertEqual(round_tf.tau, 1e-3)
 
             # basic usage
-            for batch_shape, approx in itertools.product(
-                (torch.Size(), torch.Size([3])), (False, True)
+            for batch_shape, approx, categorical_features in itertools.product(
+                (torch.Size(), torch.Size([3])),
+                (False, True),
+                (None, categorical_feats),
             ):
-                X = 5 * torch.rand(*batch_shape, 4, 3, device=self.device, dtype=dtype)
-                round_tf = Round(indices=[0, 2], approximate=approx)
+                X = torch.rand(*batch_shape, 4, 8, device=self.device, dtype=dtype)
+                X[..., int_idcs] *= 5
+                if categorical_features is not None and approx:
+                    with self.assertRaises(NotImplementedError):
+                        Round(
+                            integer_indices=int_idcs,
+                            categorical_features=categorical_features,
+                            approximate=approx,
+                        )
+                    continue
+                round_tf = Round(
+                    integer_indices=int_idcs,
+                    categorical_features=categorical_features,
+                    approximate=approx,
+                    tau=1e-1,
+                )
                 X_rounded = round_tf(X)
                 exact_rounded_X_ints = X[..., int_idcs].round()
                 # check non-integers parameters are unchanged
@@ -560,17 +589,39 @@ class TestInputTransforms(BotorchTestCase):
                             <= (X[..., int_idcs] - exact_rounded_X_ints).abs()
                         ).all()
                     )
+                    self.assertFalse(
+                        torch.equal(X_rounded[..., int_idcs], exact_rounded_X_ints)
+                    )
                 else:
-                    # check that exact rounding behaves as expected
+                    # check that exact rounding behaves as expected for integers
                     self.assertTrue(
                         torch.equal(X_rounded[..., int_idcs], exact_rounded_X_ints)
                     )
+                    if categorical_features is not None:
+                        # test that discretization works as expected for categoricals
+                        for start, card in categorical_features.items():
+                            end = start + card
+                            expected_categorical = one_hot(
+                                X[..., start:end].argmax(dim=-1), num_classes=card
+                            ).to(X)
+                            self.assertTrue(
+                                torch.equal(
+                                    X_rounded[..., start:end], expected_categorical
+                                )
+                            )
+                    # test that gradient information is passed via STE
+                    X2 = X.clone().requires_grad_(True)
+                    round_tf(X2).sum().backward()
+                    self.assertTrue(torch.equal(X2.grad, torch.ones_like(X2)))
                 with self.assertRaises(NotImplementedError):
                     round_tf.untransform(X_rounded)
 
                 # test no transform on eval
                 round_tf = Round(
-                    indices=int_idcs, approximate=approx, transform_on_eval=False
+                    integer_indices=int_idcs,
+                    categorical_features=categorical_features,
+                    approximate=approx,
+                    transform_on_eval=False,
                 )
                 X_rounded = round_tf(X)
                 self.assertFalse(torch.equal(X, X_rounded))
@@ -580,7 +631,10 @@ class TestInputTransforms(BotorchTestCase):
 
                 # test no transform on train
                 round_tf = Round(
-                    indices=int_idcs, approximate=approx, transform_on_train=False
+                    integer_indices=int_idcs,
+                    categorical_features=categorical_features,
+                    approximate=approx,
+                    transform_on_train=False,
                 )
                 X_rounded = round_tf(X)
                 self.assertTrue(torch.equal(X, X_rounded))
@@ -590,20 +644,40 @@ class TestInputTransforms(BotorchTestCase):
 
                 # test equals
                 round_tf2 = Round(
-                    indices=int_idcs, approximate=approx, transform_on_train=False
+                    integer_indices=int_idcs,
+                    categorical_features=categorical_features,
+                    approximate=approx,
+                    transform_on_train=False,
                 )
                 self.assertTrue(round_tf.equals(round_tf2))
                 # test different transform_on_train
-                round_tf2 = Round(indices=int_idcs, approximate=approx)
+                round_tf2 = Round(
+                    integer_indices=int_idcs,
+                    categorical_features=categorical_features,
+                    approximate=approx,
+                )
                 self.assertFalse(round_tf.equals(round_tf2))
                 # test different approx
+                round_tf = Round(
+                    integer_indices=int_idcs,
+                )
                 round_tf2 = Round(
-                    indices=int_idcs, approximate=not approx, transform_on_train=False
+                    integer_indices=int_idcs,
+                    approximate=not approx,
+                    transform_on_train=False,
                 )
                 self.assertFalse(round_tf.equals(round_tf2))
                 # test different indices
+                round_tf = Round(
+                    integer_indices=int_idcs,
+                    categorical_features=categorical_features,
+                    transform_on_train=False,
+                )
                 round_tf2 = Round(
-                    indices=[0, 1], approximate=approx, transform_on_train=False
+                    integer_indices=[0, 1],
+                    categorical_features=categorical_features,
+                    approximate=approx,
+                    transform_on_train=False,
                 )
                 self.assertFalse(round_tf.equals(round_tf2))
 
@@ -611,6 +685,7 @@ class TestInputTransforms(BotorchTestCase):
                 round_tf.transform_on_train = False
                 self.assertTrue(torch.equal(round_tf.preprocess_transform(X), X))
                 round_tf.transform_on_train = True
+                X_rounded = round_tf(X)
                 self.assertTrue(
                     torch.equal(round_tf.preprocess_transform(X), X_rounded)
                 )

@@ -12,19 +12,19 @@ input parameters including: learned input warping functions,
 rounding functions, and log transformations. The input transformation
 is typically part of a Model and applied within the model.forward()
 method.
-
 """
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from typing import Any, Callable, Dict, List, Optional, Union
+from warnings import warn
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.utils import subset_transform
 from botorch.models.utils import fantasize
-from botorch.utils.rounding import approximate_round
+from botorch.utils.rounding import approximate_round, OneHotArgmaxSTE, RoundSTE
 from gpytorch import Module as GPyTorchModule
 from gpytorch.constraints import GreaterThan
 from gpytorch.priors import Prior
@@ -649,10 +649,10 @@ class InputStandardize(AffineInputTransform):
 
 
 class Round(InputTransform, Module):
-    r"""A rounding transformation for integer inputs.
+    r"""A discretization transformation for discrete inputs.
 
-    This will typically be used in conjunction with normalization as
-    follows:
+    For integers, this will typically be used in conjunction
+    with normalization as follows:
 
     In eval() mode (i.e. after training), the inputs pass
     would typically be normalized to the unit cube (e.g. during candidate
@@ -667,11 +667,18 @@ class Round(InputTransform, Module):
     should be set to False, so that the raw inputs are rounded and then
     normalized to the unit cube.
 
-    This transformation uses differentiable approximate rounding by default.
-    The rounding function is approximated with a piece-wise function where
-    each piece is a hyperbolic tangent function.
+    By default, the straight through estimators are used for the gradients as
+    proposed in [Daulton2022bopr]_. This transformation supports differentiable
+    approximate rounding (currently only for integers). The rounding function
+    is approximated with a piece-wise function where each piece is a hyperbolic
+    tangent function.
+
+    For categorical parameters, the input must be one-hot encoded.
 
     Example:
+        >>> bounds = torch.tensor([[0, 5], [0, 1], [0, 1]]).t()
+        >>> integer_indices = [0]
+        >>> categorical_features = {1: 2}
         >>> unnormalize_tf = Normalize(
         >>>     d=d,
         >>>     bounds=bounds,
@@ -679,7 +686,7 @@ class Round(InputTransform, Module):
         >>>     transform_on_train=True,
         >>>     reverse=True,
         >>> )
-        >>> round_tf = Round(integer_indices)
+        >>> round_tf = Round(integer_indices, categorical_features)
         >>> normalize_tf = Normalize(d=d, bounds=bounds)
         >>> tf = ChainedInputTransform(
         >>>     tf1=unnormalize_tf, tf2=round_tf, tf3=normalize_tf
@@ -688,17 +695,22 @@ class Round(InputTransform, Module):
 
     def __init__(
         self,
-        indices: List[int],
+        integer_indices: Optional[List[int]] = None,
+        categorical_features: Optional[Dict[int, int]] = None,
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
-        approximate: bool = True,
+        approximate: bool = False,
         tau: float = 1e-3,
+        **kwargs,
     ) -> None:
         r"""Initialize transform.
 
         Args:
-            indices: The indices of the integer inputs.
+            integer_indices: The indices of the integer inputs.
+            categorical_features: A dictionary mapping the starting index of each
+                categorical feature to its cardinality. This assumes that categoricals
+                are one-hot encoded.
             transform_on_train: A boolean indicating whether to apply the
                 transforms in train() mode. Default: True.
             transform_on_eval: A boolean indicating whether to apply the
@@ -706,28 +718,53 @@ class Round(InputTransform, Module):
             transform_on_fantasize: A boolean indicating whether to apply the
                 transform when called from within a `fantasize` call. Default: True.
             approximate: A boolean indicating whether approximate or exact
-                rounding should be used. Default: approximate.
+                rounding should be used. Default: False.
             tau: The temperature parameter for approximate rounding.
         """
+        indices = kwargs.get("indices")
+        if indices is not None:
+            warn(
+                "`indices` is marked for deprecation in favor of `integer_indices`.",
+                DeprecationWarning,
+            )
+            integer_indices = indices
+        if approximate and categorical_features is not None:
+            raise NotImplementedError
         super().__init__()
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
         self.transform_on_fantasize = transform_on_fantasize
-        self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
+        integer_indices = integer_indices or []
+        self.register_buffer(
+            "integer_indices", torch.tensor(integer_indices, dtype=torch.long)
+        )
+        self.categorical_features = categorical_features or {}
         self.approximate = approximate
         self.tau = tau
 
-    @subset_transform
     def transform(self, X: Tensor) -> Tensor:
-        r"""Round the inputs.
+        r"""Discretize the inputs.
 
         Args:
             X: A `batch_shape x n x d`-dim tensor of inputs.
 
         Returns:
-            A `batch_shape x n x d`-dim tensor of rounded inputs.
+            A `batch_shape x n x d`-dim tensor of discretized inputs.
         """
-        return approximate_round(X, tau=self.tau) if self.approximate else X.round()
+        X_rounded = X.clone()
+        # round integers
+        X_int = X_rounded[..., self.integer_indices]
+        if self.approximate:
+            X_int = approximate_round(X_int, tau=self.tau)
+        else:
+            X_int = RoundSTE.apply(X_int)
+        X_rounded[..., self.integer_indices] = X_int
+        # discrete categoricals to the category with the largest value
+        # in the continuous relaxation of the one-hot encoding
+        for start, card in self.categorical_features.items():
+            end = start + card
+            X_rounded[..., start:end] = OneHotArgmaxSTE.apply(X[..., start:end])
+        return X_rounded
 
     def equals(self, other: InputTransform) -> bool:
         r"""Check if another input transform is equivalent.
@@ -740,6 +777,8 @@ class Round(InputTransform, Module):
         """
         return (
             super().equals(other=other)
+            and (self.integer_indices == other.integer_indices).all()
+            and self.categorical_features == other.categorical_features
             and self.approximate == other.approximate
             and self.tau == other.tau
         )
