@@ -11,7 +11,8 @@ References
 
 .. [Daulton2022]
     S. Daulton, S. Cakmak, M. Balandat, M. A. Osborne, E. Zhou, and E. Bakshy.
-    Robust Multi-Objective Bayesian Optimization Under Input Noise. 2022.
+    Robust Multi-Objective Bayesian Optimization Under Input Noise.
+    Proceedings of the 39th International Conference on Machine Learning, 2022.
 
 .. [Deb2005dtlz]
     K. Deb, L. Thiele, M. Laumanns, E. Zitzler, A. Abraham, L. Jain, and
