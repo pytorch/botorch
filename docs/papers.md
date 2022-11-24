@@ -32,7 +32,7 @@ Benjamin Letham, Eytan Bakshy, Michael Shvartsman. AISTATS 2022.
 
 - [GIBBON: General-purpose Information-Based Bayesian OptimisatioN](https://jmlr.org/papers/volume22/21-0120/21-0120.pdf). Henry B. Moss, David S. Leslie, Javier Gonzalez, Paul Rayson. JMLR 2021.
 - [Conditioning Sparse Variational Gaussian Processes
-for Online Decision-making](https://proceedings.neurips.cc/paper/2021/file/325eaeac5bef34937cfdc1bd73034d17-Paper.pdf). Maddox, Wesley J., Samuel Stanton, and Andrew G. Wilson. NeurIPS 2021
+for Online Decision-making](https://proceedings.neurips.cc/paper/2021/file/325eaeac5bef34937cfdc1bd73034d17-Paper.pdf). Wesley J. Maddox, Samuel Stanton, and Andrew G. Wilson. NeurIPS 2021
 
 - [Multi-Step Budgeted Bayesian Optimization with Unknown Evaluation Costs](https://arxiv.org/pdf/2111.06537.pdf).
 Raul Astudillo, Daniel Jiang, Maximilian Balandat, Eytan Bakshy, Peter Frazier. NeurIPS 2021.
