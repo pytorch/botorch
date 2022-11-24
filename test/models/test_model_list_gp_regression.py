@@ -72,12 +72,15 @@ def _get_model(fixed_noise=False, use_octf=False, use_intf=False, **tkwargs):
 
 
 class TestModelListGP(BotorchTestCase):
-    def test_ModelListGP(self):
-        for dtype, use_octf in itertools.product(
-            (torch.float, torch.double), (False, True)
-        ):
+    def _base_test_ModelListGP(
+        self, fixed_noise: bool, dtype, use_octf: bool
+    ) -> ModelListGP:
+        # this is to make review easier -- will be removed in the next
+        # commit in the stack and never landed
+        unneccessary_condition_for_indentation_remove_me = True
+        if unneccessary_condition_for_indentation_remove_me:
             tkwargs = {"device": self.device, "dtype": dtype}
-            model = _get_model(use_octf=use_octf, **tkwargs)
+            model = _get_model(fixed_noise=fixed_noise, use_octf=use_octf, **tkwargs)
             self.assertIsInstance(model, ModelListGP)
             self.assertIsInstance(model.likelihood, LikelihoodList)
             for m in model.models:
@@ -135,11 +138,6 @@ class TestModelListGP(BotorchTestCase):
                 expected_var = tmp_tf.untransform_posterior(p0_tf).variance
                 self.assertTrue(torch.allclose(p0.variance, expected_var))
 
-            # test observation_noise
-            posterior = model.posterior(test_x, observation_noise=True)
-            self.assertIsInstance(posterior, GPyTorchPosterior)
-            self.assertIsInstance(posterior.distribution, MultitaskMultivariateNormal)
-
             # test output_indices
             posterior = model.posterior(
                 test_x, output_indices=[0], observation_noise=True
@@ -150,28 +148,35 @@ class TestModelListGP(BotorchTestCase):
             # test condition_on_observations
             f_x = [torch.rand(2, 1, **tkwargs) for _ in range(2)]
             f_y = torch.rand(2, 2, **tkwargs)
-            cm = model.condition_on_observations(f_x, f_y)
+            if fixed_noise:
+                noise = 0.1 + 0.1 * torch.rand_like(f_y)
+                cond_kwargs = {"noise": noise}
+            else:
+                cond_kwargs = {}
+            cm = model.condition_on_observations(f_x, f_y, **cond_kwargs)
             self.assertIsInstance(cm, ModelListGP)
 
             # test condition_on_observations batched
             f_x = [torch.rand(3, 2, 1, **tkwargs) for _ in range(2)]
             f_y = torch.rand(3, 2, 2, **tkwargs)
-            cm = model.condition_on_observations(f_x, f_y)
+            cm = model.condition_on_observations(f_x, f_y, **cond_kwargs)
             self.assertIsInstance(cm, ModelListGP)
 
             # test condition_on_observations batched (fast fantasies)
             f_x = [torch.rand(2, 1, **tkwargs) for _ in range(2)]
             f_y = torch.rand(3, 2, 2, **tkwargs)
-            cm = model.condition_on_observations(f_x, f_y)
+            cm = model.condition_on_observations(f_x, f_y, **cond_kwargs)
             self.assertIsInstance(cm, ModelListGP)
 
             # test condition_on_observations (incorrect input shape error)
             with self.assertRaises(BotorchTensorDimensionError):
-                model.condition_on_observations(f_x, torch.rand(3, 2, 3, **tkwargs))
+                model.condition_on_observations(
+                    f_x, torch.rand(3, 2, 3, **tkwargs), **cond_kwargs
+                )
 
             # test X having wrong size
             with self.assertRaises(AssertionError):
-                cm = model.condition_on_observations(f_x[:1], f_y)
+                model.condition_on_observations(f_x[:1], f_y)
 
             # test posterior transform
             X = torch.rand(3, 1, **tkwargs)
@@ -185,82 +190,37 @@ class TestModelListGP(BotorchTestCase):
                 )
             )
 
-    def test_ModelListGP_fixed_noise(self):
+        return model
+
+    def test_ModelListGP(self) -> None:
         for dtype, use_octf in itertools.product(
             (torch.float, torch.double), (False, True)
         ):
+
+            model = self._base_test_ModelListGP(
+                fixed_noise=False, dtype=dtype, use_octf=use_octf
+            )
             tkwargs = {"device": self.device, "dtype": dtype}
-            model = _get_model(fixed_noise=True, use_octf=use_octf, **tkwargs)
-            self.assertIsInstance(model, ModelListGP)
-            self.assertIsInstance(model.likelihood, LikelihoodList)
-            for m in model.models:
-                self.assertIsInstance(m.mean_module, ConstantMean)
-                self.assertIsInstance(m.covar_module, ScaleKernel)
-                matern_kernel = m.covar_module.base_kernel
-                self.assertIsInstance(matern_kernel, MaternKernel)
-                self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
 
-            # test model fitting
-            mll = SumMarginalLogLikelihood(model.likelihood, model)
-            for mll_ in mll.mlls:
-                self.assertIsInstance(mll_, ExactMarginalLogLikelihood)
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=OptimizationWarning)
-                mll = fit_gpytorch_mll(
-                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
-                )
-
-            # test posterior
+            # test observation_noise
             test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
-            posterior = model.posterior(test_x)
+            posterior = model.posterior(test_x, observation_noise=True)
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertIsInstance(posterior.distribution, MultitaskMultivariateNormal)
-            if use_octf:
-                # ensure un-transformation is applied
-                submodel = model.models[0]
-                p0 = submodel.posterior(test_x)
-                tmp_tf = submodel.outcome_transform
-                del submodel.outcome_transform
-                p0_tf = submodel.posterior(test_x)
-                submodel.outcome_transform = tmp_tf
-                expected_var = tmp_tf.untransform_posterior(p0_tf).variance
-                self.assertTrue(torch.allclose(p0.variance, expected_var))
 
-            # test output_indices
-            posterior = model.posterior(
-                test_x, output_indices=[0], observation_noise=True
+    def test_ModelListGP_fixed_noise(self) -> None:
+
+        for dtype, use_octf in itertools.product(
+            (torch.float, torch.double), (False, True)
+        ):
+            model = self._base_test_ModelListGP(
+                fixed_noise=True, dtype=dtype, use_octf=use_octf
             )
-            self.assertIsInstance(posterior, GPyTorchPosterior)
-            self.assertIsInstance(posterior.distribution, MultivariateNormal)
-
-            # test condition_on_observations
+            tkwargs = {"device": self.device, "dtype": dtype}
             f_x = [torch.rand(2, 1, **tkwargs) for _ in range(2)]
             f_y = torch.rand(2, 2, **tkwargs)
-            noise = 0.1 + 0.1 * torch.rand_like(f_y)
-            cm = model.condition_on_observations(f_x, f_y, noise=noise)
-            self.assertIsInstance(cm, ModelListGP)
 
-            # test condition_on_observations batched
-            f_x = [torch.rand(3, 2, 1, **tkwargs) for _ in range(2)]
-            f_y = torch.rand(3, 2, 2, **tkwargs)
-            noise = 0.1 + 0.1 * torch.rand_like(f_y)
-            cm = model.condition_on_observations(f_x, f_y, noise=noise)
-            self.assertIsInstance(cm, ModelListGP)
-
-            # test condition_on_observations batched (fast fantasies)
-            f_x = [torch.rand(2, 1, **tkwargs) for _ in range(2)]
-            f_y = torch.rand(3, 2, 2, **tkwargs)
-            noise = 0.1 + 0.1 * torch.rand(2, 2, **tkwargs)
-            cm = model.condition_on_observations(f_x, f_y, noise=noise)
-            self.assertIsInstance(cm, ModelListGP)
-
-            # test condition_on_observations (incorrect input shape error)
-            with self.assertRaises(BotorchTensorDimensionError):
-                model.condition_on_observations(
-                    f_x, torch.rand(3, 2, 3, **tkwargs), noise=noise
-                )
             # test condition_on_observations (incorrect noise shape error)
-            f_y = torch.rand(2, 2, **tkwargs)
             with self.assertRaises(BotorchTensorDimensionError):
                 model.condition_on_observations(
                     f_x, f_y, noise=torch.rand(2, 3, **tkwargs)
