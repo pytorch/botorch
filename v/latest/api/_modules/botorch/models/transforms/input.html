@@ -38,19 +38,19 @@
 <span class="sd">rounding functions, and log transformations. The input transformation</span>
 <span class="sd">is typically part of a Model and applied within the model.forward()</span>
 <span class="sd">method.</span>
-
 <span class="sd">"""</span>
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.utils</span> <span class="kn">import</span> <span class="n">subset_transform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">fantasize</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.rounding</span> <span class="kn">import</span> <span class="n">approximate_round</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.rounding</span> <span class="kn">import</span> <span class="n">approximate_round</span><span class="p">,</span> <span class="n">OneHotArgmaxSTE</span><span class="p">,</span> <span class="n">RoundSTE</span>
 <span class="kn">from</span> <span class="nn">gpytorch</span> <span class="kn">import</span> <span class="n">Module</span> <span class="k">as</span> <span class="n">GPyTorchModule</span>
 <span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors</span> <span class="kn">import</span> <span class="n">Prior</span>
@@ -675,10 +675,10 @@
 
 
 <div class="viewcode-block" id="Round"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Round">[docs]</a><span class="k">class</span> <span class="nc">Round</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A rounding transformation for integer inputs.</span>
+    <span class="sa">r</span><span class="sd">"""A discretization transformation for discrete inputs.</span>
 
-<span class="sd">    This will typically be used in conjunction with normalization as</span>
-<span class="sd">    follows:</span>
+<span class="sd">    For integers, this will typically be used in conjunction</span>
+<span class="sd">    with normalization as follows:</span>
 
 <span class="sd">    In eval() mode (i.e. after training), the inputs pass</span>
 <span class="sd">    would typically be normalized to the unit cube (e.g. during candidate</span>
@@ -693,11 +693,18 @@
 <span class="sd">    should be set to False, so that the raw inputs are rounded and then</span>
 <span class="sd">    normalized to the unit cube.</span>
 
-<span class="sd">    This transformation uses differentiable approximate rounding by default.</span>
-<span class="sd">    The rounding function is approximated with a piece-wise function where</span>
-<span class="sd">    each piece is a hyperbolic tangent function.</span>
+<span class="sd">    By default, the straight through estimators are used for the gradients as</span>
+<span class="sd">    proposed in [Daulton2022bopr]_. This transformation supports differentiable</span>
+<span class="sd">    approximate rounding (currently only for integers). The rounding function</span>
+<span class="sd">    is approximated with a piece-wise function where each piece is a hyperbolic</span>
+<span class="sd">    tangent function.</span>
+
+<span class="sd">    For categorical parameters, the input must be one-hot encoded.</span>
 
 <span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; bounds = torch.tensor([[0, 5], [0, 1], [0, 1]]).t()</span>
+<span class="sd">        &gt;&gt;&gt; integer_indices = [0]</span>
+<span class="sd">        &gt;&gt;&gt; categorical_features = {1: 2}</span>
 <span class="sd">        &gt;&gt;&gt; unnormalize_tf = Normalize(</span>
 <span class="sd">        &gt;&gt;&gt;     d=d,</span>
 <span class="sd">        &gt;&gt;&gt;     bounds=bounds,</span>
@@ -705,7 +712,7 @@
 <span class="sd">        &gt;&gt;&gt;     transform_on_train=True,</span>
 <span class="sd">        &gt;&gt;&gt;     reverse=True,</span>
 <span class="sd">        &gt;&gt;&gt; )</span>
-<span class="sd">        &gt;&gt;&gt; round_tf = Round(integer_indices)</span>
+<span class="sd">        &gt;&gt;&gt; round_tf = Round(integer_indices, categorical_features)</span>
 <span class="sd">        &gt;&gt;&gt; normalize_tf = Normalize(d=d, bounds=bounds)</span>
 <span class="sd">        &gt;&gt;&gt; tf = ChainedInputTransform(</span>
 <span class="sd">        &gt;&gt;&gt;     tf1=unnormalize_tf, tf2=round_tf, tf3=normalize_tf</span>
@@ -714,17 +721,22 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">integer_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">categorical_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">transform_on_train</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">transform_on_fantasize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">approximate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">approximate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">tau</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Initialize transform.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            indices: The indices of the integer inputs.</span>
+<span class="sd">            integer_indices: The indices of the integer inputs.</span>
+<span class="sd">            categorical_features: A dictionary mapping the starting index of each</span>
+<span class="sd">                categorical feature to its cardinality. This assumes that categoricals</span>
+<span class="sd">                are one-hot encoded.</span>
 <span class="sd">            transform_on_train: A boolean indicating whether to apply the</span>
 <span class="sd">                transforms in train() mode. Default: True.</span>
 <span class="sd">            transform_on_eval: A boolean indicating whether to apply the</span>
@@ -732,28 +744,53 @@
 <span class="sd">            transform_on_fantasize: A boolean indicating whether to apply the</span>
 <span class="sd">                transform when called from within a `fantasize` call. Default: True.</span>
 <span class="sd">            approximate: A boolean indicating whether approximate or exact</span>
-<span class="sd">                rounding should be used. Default: approximate.</span>
+<span class="sd">                rounding should be used. Default: False.</span>
 <span class="sd">            tau: The temperature parameter for approximate rounding.</span>
 <span class="sd">        """</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"indices"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"`indices` is marked for deprecation in favor of `integer_indices`."</span><span class="p">,</span>
+                <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">integer_indices</span> <span class="o">=</span> <span class="n">indices</span>
+        <span class="k">if</span> <span class="n">approximate</span> <span class="ow">and</span> <span class="n">categorical_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">=</span> <span class="n">transform_on_train</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">=</span> <span class="n">transform_on_eval</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_fantasize</span> <span class="o">=</span> <span class="n">transform_on_fantasize</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"indices"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
+        <span class="n">integer_indices</span> <span class="o">=</span> <span class="n">integer_indices</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+            <span class="s2">"integer_indices"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">integer_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span> <span class="o">=</span> <span class="n">categorical_features</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">approximate</span> <span class="o">=</span> <span class="n">approximate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tau</span> <span class="o">=</span> <span class="n">tau</span>
 
-<div class="viewcode-block" id="Round.transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Round.transform">[docs]</a>    <span class="nd">@subset_transform</span>
-    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Round the inputs.</span>
+<div class="viewcode-block" id="Round.transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Round.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Discretize the inputs.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `batch_shape x n x d`-dim tensor of rounded inputs.</span>
+<span class="sd">            A `batch_shape x n x d`-dim tensor of discretized inputs.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">approximate_round</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tau</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">approximate</span> <span class="k">else</span> <span class="n">X</span><span class="o">.</span><span class="n">round</span><span class="p">()</span></div>
+        <span class="n">X_rounded</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="c1"># round integers</span>
+        <span class="n">X_int</span> <span class="o">=</span> <span class="n">X_rounded</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">integer_indices</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">approximate</span><span class="p">:</span>
+            <span class="n">X_int</span> <span class="o">=</span> <span class="n">approximate_round</span><span class="p">(</span><span class="n">X_int</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tau</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">X_int</span> <span class="o">=</span> <span class="n">RoundSTE</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">X_int</span><span class="p">)</span>
+        <span class="n">X_rounded</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">integer_indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">X_int</span>
+        <span class="c1"># discrete categoricals to the category with the largest value</span>
+        <span class="c1"># in the continuous relaxation of the one-hot encoding</span>
+        <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">card</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">card</span>
+            <span class="n">X_rounded</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span> <span class="o">=</span> <span class="n">OneHotArgmaxSTE</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">X_rounded</span></div>
 
 <div class="viewcode-block" id="Round.equals"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Round.equals">[docs]</a>    <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
@@ -766,6 +803,8 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="n">other</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">integer_indices</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">integer_indices</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">categorical_features</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">approximate</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">approximate</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">tau</span>
         <span class="p">)</span></div></div>

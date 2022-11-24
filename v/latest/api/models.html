@@ -4285,11 +4285,11 @@ division by zero errors.</p></li>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.Round">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">Round</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approximate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Round"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.Round" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">Round</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integer_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approximate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Round"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.Round" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
-<p>A rounding transformation for integer inputs.</p>
-<p>This will typically be used in conjunction with normalization as
-follows:</p>
+<p>A discretization transformation for discrete inputs.</p>
+<p>For integers, this will typically be used in conjunction
+with normalization as follows:</p>
 <p>In eval() mode (i.e. after training), the inputs pass
 would typically be normalized to the unit cube (e.g. during candidate
 optimization). 1. These are unnormalized back to the raw input space.
@@ -4301,18 +4301,24 @@ transform_on_train should be set to True, so that the normalized inputs
 are unnormalized before rounding. In the case of (b) transform_on_train
 should be set to False, so that the raw inputs are rounded and then
 normalized to the unit cube.</p>
-<p>This transformation uses differentiable approximate rounding by default.
-The rounding function is approximated with a piece-wise function where
-each piece is a hyperbolic tangent function.</p>
+<p>By default, the straight through estimators are used for the gradients as
+proposed in <a class="reference internal" href="utils.html#daulton2022bopr" id="id18"><span>[Daulton2022bopr]</span></a>. This transformation supports differentiable
+approximate rounding (currently only for integers). The rounding function
+is approximated with a piece-wise function where each piece is a hyperbolic
+tangent function.</p>
+<p>For categorical parameters, the input must be one-hot encoded.</p>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">unnormalize_tf</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span><span class="o">.</span><span class="n">t</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">integer_indices</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">categorical_features</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">unnormalize_tf</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">transform_on_eval</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">transform_on_train</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">round_tf</span> <span class="o">=</span> <span class="n">Round</span><span class="p">(</span><span class="n">integer_indices</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">round_tf</span> <span class="o">=</span> <span class="n">Round</span><span class="p">(</span><span class="n">integer_indices</span><span class="p">,</span> <span class="n">categorical_features</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">normalize_tf</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">tf</span> <span class="o">=</span> <span class="n">ChainedInputTransform</span><span class="p">(</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">tf1</span><span class="o">=</span><span class="n">unnormalize_tf</span><span class="p">,</span> <span class="n">tf2</span><span class="o">=</span><span class="n">round_tf</span><span class="p">,</span> <span class="n">tf3</span><span class="o">=</span><span class="n">normalize_tf</span>
@@ -4323,7 +4329,10 @@ each piece is a hyperbolic tangent function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>indices</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The indices of the integer inputs.</p></li>
+<li><p><strong>integer_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – The indices of the integer inputs.</p></li>
+<li><p><strong>categorical_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – A dictionary mapping the starting index of each
+categorical feature to its cardinality. This assumes that categoricals
+are one-hot encoded.</p></li>
 <li><p><strong>transform_on_train</strong> (<em>bool</em>) – A boolean indicating whether to apply the
 transforms in train() mode. Default: True.</p></li>
 <li><p><strong>transform_on_eval</strong> (<em>bool</em>) – A boolean indicating whether to apply the
@@ -4331,7 +4340,7 @@ transform in eval() mode. Default: True.</p></li>
 <li><p><strong>transform_on_fantasize</strong> (<em>bool</em>) – A boolean indicating whether to apply the
 transform when called from within a <cite>fantasize</cite> call. Default: True.</p></li>
 <li><p><strong>approximate</strong> (<em>bool</em>) – A boolean indicating whether approximate or exact
-rounding should be used. Default: approximate.</p></li>
+rounding should be used. Default: False.</p></li>
 <li><p><strong>tau</strong> (<em>float</em>) – The temperature parameter for approximate rounding.</p></li>
 </ul>
 </dd>
@@ -4351,13 +4360,13 @@ rounding should be used. Default: approximate.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.Round.transform">
 <span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Round.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.Round.transform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Round the inputs.</p>
+<dd><p>Discretize the inputs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A <cite>batch_shape x n x d</cite>-dim tensor of rounded inputs.</p>
+<dd class="field-even"><p>A <cite>batch_shape x n x d</cite>-dim tensor of discretized inputs.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tensor</em></p>
@@ -4455,8 +4464,8 @@ of the Kumaraswamy distribution.</p></li>
 provided beforehand or generated on the fly via a callable.</p>
 <p>As an example, the predefined set of features can be used with
 <cite>RiskMeasureMCObjective</cite> to optimize risk measures as described in
-<a class="reference internal" href="acquisition.html#cakmak2020risk" id="id18"><span>[Cakmak2020risk]</span></a>. A tutorial notebook implementing the rhoKG acqusition
-function introduced in <a class="reference internal" href="acquisition.html#cakmak2020risk" id="id19"><span>[Cakmak2020risk]</span></a> can be found at
+<a class="reference internal" href="acquisition.html#cakmak2020risk" id="id19"><span>[Cakmak2020risk]</span></a>. A tutorial notebook implementing the rhoKG acqusition
+function introduced in <a class="reference internal" href="acquisition.html#cakmak2020risk" id="id20"><span>[Cakmak2020risk]</span></a> can be found at
 <a class="reference external" href="https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables">https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables</a>.</p>
 <p>The steps for using this to obtain samples of a risk measure are as follows:</p>
 <ul class="simple">

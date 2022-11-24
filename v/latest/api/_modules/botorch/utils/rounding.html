@@ -30,10 +30,24 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Discretization (rounding) functions for acquisition optimization.</span>
+
+<span class="sd">References</span>
+
+<span class="sd">.. [Daulton2022bopr]</span>
+<span class="sd">    S. Daulton, X. Wan, D. Eriksson, M. Balandat, M. A. Osborne, E. Bakshy.</span>
+<span class="sd">    Bayesian Optimization over Discrete and Mixed Spaces via Probabilistic</span>
+<span class="sd">    Reparameterization. Advances in Neural Information Processing Systems</span>
+<span class="sd">    35, 2022.</span>
+<span class="sd">"""</span>
+
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.autograd</span> <span class="kn">import</span> <span class="n">Function</span>
+<span class="kn">from</span> <span class="nn">torch.nn.functional</span> <span class="kn">import</span> <span class="n">one_hot</span>
 
 
 <div class="viewcode-block" id="approximate_round"><a class="viewcode-back" href="../../../utils.html#botorch.utils.rounding.approximate_round">[docs]</a><span class="k">def</span> <span class="nf">approximate_round</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -53,6 +67,71 @@
     <span class="n">scaled_remainder</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">offset</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span> <span class="n">tau</span>
     <span class="n">rounding_component</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">scaled_remainder</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
     <span class="k">return</span> <span class="n">offset</span> <span class="o">+</span> <span class="n">rounding_component</span></div>
+
+
+<div class="viewcode-block" id="IdentitySTEFunction"><a class="viewcode-back" href="../../../utils.html#botorch.utils.rounding.IdentitySTEFunction">[docs]</a><span class="k">class</span> <span class="nc">IdentitySTEFunction</span><span class="p">(</span><span class="n">Function</span><span class="p">):</span>
+    <span class="sd">"""Base class for functions using straight through gradient estimators.</span>
+
+<span class="sd">    This class approximates the gradient with the identity function.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="IdentitySTEFunction.backward"><a class="viewcode-back" href="../../../utils.html#botorch.utils.rounding.IdentitySTEFunction.backward">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">backward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Use a straight-through estimator the gradient.</span>
+
+<span class="sd">        This uses the identity function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            grad_output: A tensor of gradients.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The provided tensor.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">grad_output</span></div></div>
+
+
+<div class="viewcode-block" id="RoundSTE"><a class="viewcode-back" href="../../../utils.html#botorch.utils.rounding.RoundSTE">[docs]</a><span class="k">class</span> <span class="nc">RoundSTE</span><span class="p">(</span><span class="n">IdentitySTEFunction</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Round the input tensor and use a straight-through gradient estimator.</span>
+
+<span class="sd">    [Daulton2022bopr]_ proposes using this in acquisition optimization.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="RoundSTE.forward"><a class="viewcode-back" href="../../../utils.html#botorch.utils.rounding.RoundSTE.forward">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Round the input tensor element-wise.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: The tensor to be rounded.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A tensor where each element is rounded to the nearest integer.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">round</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="OneHotArgmaxSTE"><a class="viewcode-back" href="../../../utils.html#botorch.utils.rounding.OneHotArgmaxSTE">[docs]</a><span class="k">class</span> <span class="nc">OneHotArgmaxSTE</span><span class="p">(</span><span class="n">IdentitySTEFunction</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Discretize a continuous relaxation of a one-hot encoded categorical.</span>
+
+<span class="sd">    This returns a one-hot encoded categorical and use a straight-through</span>
+<span class="sd">    gradient estimator via an identity function.</span>
+
+<span class="sd">    [Daulton2022bopr]_ proposes using this in acquisition optimization.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="OneHotArgmaxSTE.forward"><a class="viewcode-back" href="../../../utils.html#botorch.utils.rounding.OneHotArgmaxSTE.forward">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Discretize the input tensor.</span>
+
+<span class="sd">        This applies a argmax along the last dimensions of the input tensor</span>
+<span class="sd">        and one-hot encodes the result.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: The tensor to be rounded.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A tensor where each element is rounded to the nearest integer.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">one_hot</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="n">num_classes</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>
