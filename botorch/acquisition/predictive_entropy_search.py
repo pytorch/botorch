@@ -31,6 +31,16 @@ class qPredictiveEntropySearch(qMultiObjectivePredictiveEntropySearch):
     This acquisition function approximates the mutual information between the
     observation at a candidate point `X` and the optimal set of inputs using
     expectation propagation (EP).
+
+    NOTES:
+    (i) The expectation propagation procedure can potentially fail due to the unstable
+    EP updates. This is however unlikely to happen in the single-objective setting
+    because we have much fewer EP factors. The jitter added in the training phase
+    (`ep_jitter`) and testing phase (`test_jitter`) can be increased to prevent
+    these failures from happening. More details in the description of
+    `qMultiObjectivePredictiveEntropySearch`.
+
+    (ii) The estimated acquisition value could be negative.
     """
 
     def __init__(
@@ -46,14 +56,6 @@ class qPredictiveEntropySearch(qMultiObjectivePredictiveEntropySearch):
         **kwargs: Any,
     ) -> None:
         r"""Predictive entropy search acquisition function.
-
-        NOTE:
-        The expectation propagation procedure can potentially fail due to the unstable
-        EP updates. This is however unlikely to happen in the single-objective setting
-        because we have much fewer EP factors. The jitter added in the training phase
-        (`ep_jitter`) and testing phase (`test_jitter`) can be increased to prevent
-        these failures from happening. More details in the description of
-        `qMultiObjectivePredictiveEntropySearch`.
 
         Args:
             model: A fitted single-outcome model.

@@ -93,6 +93,8 @@ class qMultiObjectivePredictiveEntropySearch(AcquisitionFunction):
         iterations are required. Running too many EP iterations could lead to
         invertibility problems such as in problem (b). Setting a larger threshold
         or reducing the number of EP iterations could alleviate this.
+
+    (iii) The estimated acquisition value could be negative.
     """
 
     def __init__(

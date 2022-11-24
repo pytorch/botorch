@@ -264,6 +264,14 @@ class qLowerBoundMultiObjectiveJointEntropySearch(
     at a candidate point `X` and the Pareto optimal input-output pairs.
 
     See [Tu2022]_ for a discussion on the estimation procedure.
+
+    NOTES:
+    (i) The estimated acquisition value could be negative.
+
+    (ii) The lower bound batch acquisition function might not be monotone in the
+    sense that adding more elements to the batch does not necessarily increase the
+    acquisition value. Specifically, the acquisition value can become smaller when
+    more inputs are added.
     """
 
     def __init__(
