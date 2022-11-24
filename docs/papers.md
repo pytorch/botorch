@@ -19,7 +19,7 @@ The main reference for BoTorch is
 Here is an incomplete selection of peer-reviewed Bayesian optimization papers that build off of BoTorch:
 
 - [Bayesian Optimization over Discrete and Mixed Spaces via Probabilistic Reparameterization](https://arxiv.org/pdf/2210.10199.pdf). Samuel Daulton, Xingchen Wan, David Eriksson, Maximilian Balandat, Michael A Osborne, Eytan Bakshy. NeurIPS 2022.
-- [Robust Multi-Objective Bayesian Optimization Under Input Noise](https://arxiv.org/pdf/2202.07549.pdf)/ Samuel Daulton, Sait Cakmak, Maximilian Balandat, Michael A Osborne, Enlu Zhou, Eytan Bakshy. ICML 2022.
+- [Robust Multi-Objective Bayesian Optimization Under Input Noise](https://arxiv.org/pdf/2202.07549.pdf). Samuel Daulton, Sait Cakmak, Maximilian Balandat, Michael A. Osborne, Enlu Zhou, Eytan Bakshy. ICML 2022.
 
 - [Multi-Objective Bayesian Optimization over High-Dimensional Search Spaces](https://arxiv.org/pdf/2109.10964.pdf)/
 Samuel Daulton, David Eriksson, Maximilian Balandat, Eytan Bakshy. UAI 2022.
