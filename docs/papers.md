@@ -50,8 +50,7 @@ Samuel Daulton, Max Balandat, Eytan Bakshy. NeurIPS 2021.
 - [Re-Examining Linear Embeddings for High-Dimensional Bayesian Optimization](https://proceedings.neurips.cc/paper/2020/hash/10fb6cfa4c990d2bad5ddef4f70e8ba2-Abstract.html). Ben Letham, Roberto Calandra, Akshara Rai, Eytan Bakshy. NeurIPS 2020.
 - [PareCO: Pareto-aware Channel Optimization for Slimmable Neural Networks
 ](https://arxiv.org/abs/2007.11752). Ting-Wu Chin, Ari S. Morcos, Diana Marculescu. ICML 2020 Workshop on Real World Experiment Design and Active Learning.
-- [High-Dimensional Bayesian Optimization with Sparse Axis-Aligned Subspaces
-](https://proceedings.mlr.press/v161/eriksson21a.html). David Eriksson, Martin Jankowiak. UAI 2021.
+- [High-Dimensional Bayesian Optimization with Sparse Axis-Aligned Subspaces](https://proceedings.mlr.press/v161/eriksson21a.html). David Eriksson, Martin Jankowiak. UAI 2021.
 - [Bayesian Optimization over Permutation Spaces](https://arxiv.org/abs/2112.01049). Aryan Deshwal, Syrine Belakaria, Janardhan Rao Doppa, Dae Hyun Kim. AAAI 2021.
 - [Bayesian Optimization of Function Networks](https://papers.nips.cc/paper/2021/hash/792c7b5aae4a79e78aaeda80516ae2ac-Abstract.html). Raul Astudillo, Peter Frazier. NeurIPS 2021.
 - [Bayesian Optimization with High-Dimensional Outputs](https://papers.nips.cc/paper/2021/hash/a0d3973ad100ad83a64c304bb58677dd-Abstract.html). Wesley J. Maddox, Maximilian Balandat, Andrew G. Wilson, Eytan Bakshy. NeurIPS 2021.
