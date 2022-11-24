@@ -114,7 +114,6 @@ def gen_batch_initial_conditions(
     batch_limit: Optional[int] = options.get(
         "init_batch_limit", options.get("batch_limit")
     )
-    batch_initial_arms: Tensor
     factor, max_factor = 1, 5
     init_kwargs = {}
     device = bounds.device
