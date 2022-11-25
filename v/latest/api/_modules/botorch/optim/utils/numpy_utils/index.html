@@ -43,23 +43,19 @@
 <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">ndarray</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
-<span class="c1"># Dictionaries mapping numpy to torch dtypes and vice-versa</span>
-<span class="n">numpy_to_torch_dtype_dict</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">int8</span><span class="p">,</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">int16</span><span class="p">,</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">float16</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">complex64</span><span class="p">,</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">complex128</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">complex128</span><span class="p">,</span>
-<span class="p">}</span>
 
 <span class="n">torch_to_numpy_dtype_dict</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">value</span><span class="p">:</span> <span class="n">key</span> <span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="n">numpy_to_torch_dtype_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">int8</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">,</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">int16</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">,</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">int32</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">int64</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">complex64</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">,</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">complex128</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">complex128</span><span class="p">,</span>
 <span class="p">}</span>
 
 

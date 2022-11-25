@@ -78,6 +78,8 @@
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">gp_models</span><span class="p">)</span>
 
+    <span class="c1"># pyre-fixme[14]: Inconsistent override. Here `X` is a List[Tensor], but in the</span>
+    <span class="c1"># parent method it's a Tensor.</span>
 <div class="viewcode-block" id="ModelListGP.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.model_list_gp_regression.ModelListGP.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelListGP</span><span class="p">:</span>
