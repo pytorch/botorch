@@ -16,6 +16,7 @@ from botorch.optim.closures.core import (
     set_tensors_from_ndarray_1d,
 )
 from botorch.optim.utils import get_bounds_as_ndarray
+from botorch.optim.utils.numpy_utils import torch_to_numpy_dtype_dict
 from botorch.utils.testing import BotorchTestCase
 from torch.nn import Parameter
 
@@ -53,6 +54,13 @@ class TestNumpyUtils(BotorchTestCase):
         mock_tensor.cpu.assert_called_once()
         mock_tensor.clone.assert_not_called()
         mock_tensor.numpy.assert_called_once()
+
+    def test_as_ndarray_dtypes(self) -> None:
+        for torch_dtype, np_dtype in torch_to_numpy_dtype_dict.items():
+            tens = torch.tensor(0, dtype=torch_dtype, device="cpu")
+            self.assertEqual(torch_dtype, tens.dtype)
+            self.assertEqual(tens.numpy().dtype, np_dtype)
+            self.assertEqual(as_ndarray(tens, np_dtype).dtype, np_dtype)
 
     def test_get_tensors_as_ndarray_1d(self):
         with self.assertRaisesRegex(RuntimeError, "Argument `tensors` .* is empty"):
