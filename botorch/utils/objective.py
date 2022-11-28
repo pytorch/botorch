@@ -10,7 +10,7 @@ Helpers for handling objectives.
 
 from __future__ import annotations
 
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Union
 
 import torch
 from torch import Tensor
@@ -64,7 +64,7 @@ def apply_constraints_nonnegative_soft(
     obj: Tensor,
     constraints: List[Callable[[Tensor], Tensor]],
     samples: Tensor,
-    eta: float,
+    eta: Union[Tensor, float],
 ) -> Tensor:
     r"""Applies constraints to a non-negative objective.
 
@@ -83,9 +83,11 @@ def apply_constraints_nonnegative_soft(
     Returns:
         A `n_samples x b x q (x m')`-dim tensor of feasibility-weighted objectives.
     """
+    if type(eta) != Tensor:
+        eta = torch.as_tensor([eta for _ in range(len(constraints))])
     obj = obj.clamp_min(0)  # Enforce non-negativity with constraints
-    for constraint in constraints:
-        constraint_eval = soft_eval_constraint(constraint(samples), eta=eta)
+    for constraint, e in zip(constraints, eta):
+        constraint_eval = soft_eval_constraint(constraint(samples), eta=e)
         if obj.dim() == samples.dim():
             # Need to unsqueeze to accommodate the outcome dimension.
             constraint_eval = constraint_eval.unsqueeze(-1)
@@ -118,7 +120,7 @@ def apply_constraints(
     constraints: List[Callable[[Tensor], Tensor]],
     samples: Tensor,
     infeasible_cost: float,
-    eta: float = 1e-3,
+    eta: Union[List[float], float] = 1e-3,
 ) -> Tensor:
     r"""Apply constraints using an infeasible_cost `M` for negative objectives.
 

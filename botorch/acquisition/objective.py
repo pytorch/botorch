@@ -453,7 +453,7 @@ class ConstrainedMCObjective(GenericMCObjective):
         objective: Callable[[Tensor, Optional[Tensor]], Tensor],
         constraints: List[Callable[[Tensor], Tensor]],
         infeasible_cost: Union[Tensor, float] = 0.0,
-        eta: float = 1e-3,
+        eta: Union[Tensor, float] = 1e-3,
     ) -> None:
         r"""
         Args:
@@ -472,6 +472,8 @@ class ConstrainedMCObjective(GenericMCObjective):
         """
         super().__init__(objective=objective)
         self.constraints = constraints
+        if type(eta) != Tensor:
+            eta = [eta for _ in range(len(constraints))]
         self.register_buffer("eta", torch.as_tensor(eta))
         self.register_buffer("infeasible_cost", torch.as_tensor(infeasible_cost))
 
