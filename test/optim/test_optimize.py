@@ -1049,6 +1049,20 @@ class TestOptimizeAcqfList(BotorchTestCase):
                 raw_samples=10,
             )
 
+    def test_optimize_acqf_list_fixed_features(self):
+        with self.assertRaises(ValueError):
+            optimize_acqf_list(
+                acq_function_list=[
+                    MockAcquisitionFunction(),
+                    MockAcquisitionFunction(),
+                ],
+                bounds=torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
+                num_restarts=2,
+                raw_samples=10,
+                fixed_features_list=[{0: 0.5}],
+                fixed_features={0: 0.5},
+            )
+
 
 class TestOptimizeAcqfMixed(BotorchTestCase):
     @mock.patch("botorch.optim.optimize.optimize_acqf")  # noqa: C901

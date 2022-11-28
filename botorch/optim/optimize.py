@@ -498,8 +498,7 @@ def optimize_acqf_list(
             should be fixed to a particular value during generation.
         fixed_features_list: A list of maps `{feature_index: value}`. The i-th
             item represents the fixed_feature for the i-th optimization. If
-            `fixed_features_list` is provided, `optimize_acqf_mixed` is invoked
-            and the `fixed_features` argument is ignored.
+            `fixed_features_list` is provided, `optimize_acqf_mixed` is invoked.
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
@@ -512,6 +511,10 @@ def optimize_acqf_list(
             index `i` is the acquisition value conditional on having observed
             all candidates except candidate `i`.
     """
+    if fixed_features and fixed_features_list:
+        raise ValueError(
+            "Èither `fixed_feature` or `fixed_features_list` can be provided, not both."
+        )
     if not acq_function_list:
         raise ValueError("acq_function_list must be non-empty.")
     candidate_list, acq_value_list = [], []
