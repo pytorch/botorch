@@ -908,7 +908,8 @@ class TestOptimizeAcqfCyclic(BotorchTestCase):
 
 class TestOptimizeAcqfList(BotorchTestCase):
     @mock.patch("botorch.optim.optimize.optimize_acqf")  # noqa: C901
-    def test_optimize_acqf_list(self, mock_optimize_acqf):
+    @mock.patch("botorch.optim.optimize.optimize_acqf_mixed")
+    def test_optimize_acqf_list(self, mock_optimize_acqf, mock_optimize_acqf_mixed):
         num_restarts = 2
         raw_samples = 10
         options = {}
@@ -921,97 +922,123 @@ class TestOptimizeAcqfList(BotorchTestCase):
         mock_acq_function_1 = MockAcquisitionFunction()
         mock_acq_function_2 = MockAcquisitionFunction()
         mock_acq_function_list = [mock_acq_function_1, mock_acq_function_2]
-        for num_acqf, dtype in itertools.product([1, 2], (torch.float, torch.double)):
-            for m in mock_acq_function_list:
-                # clear previous X_pending
-                m.set_X_pending(None)
-            tkwargs["dtype"] = dtype
-            inequality_constraints[0] = [
-                t.to(**tkwargs) for t in inequality_constraints[0]
-            ]
-            mock_optimize_acqf.reset_mock()
-            bounds = bounds.to(**tkwargs)
-            candidate_rvs = []
-            acq_val_rvs = []
-            gcs_return_vals = [
-                (torch.rand(1, 3, **tkwargs), torch.rand(1, **tkwargs))
-                for _ in range(num_acqf)
-            ]
-            for rv in gcs_return_vals:
-                candidate_rvs.append(rv[0])
-                acq_val_rvs.append(rv[1])
-            side_effect = list(zip(candidate_rvs, acq_val_rvs))
-            mock_optimize_acqf.side_effect = side_effect
-            orig_candidates = candidate_rvs[0].clone()
-            # Wrap the set_X_pending method for checking that call arguments
-            with mock.patch.object(
-                MockAcquisitionFunction,
-                "set_X_pending",
-                wraps=mock_acq_function_1.set_X_pending,
-            ) as mock_set_X_pending_1, mock.patch.object(
-                MockAcquisitionFunction,
-                "set_X_pending",
-                wraps=mock_acq_function_2.set_X_pending,
-            ) as mock_set_X_pending_2:
-                candidates, acq_values = optimize_acqf_list(
-                    acq_function_list=mock_acq_function_list[:num_acqf],
-                    bounds=bounds,
-                    num_restarts=num_restarts,
-                    raw_samples=raw_samples,
-                    options=options,
-                    inequality_constraints=inequality_constraints,
-                    post_processing_func=rounding_func,
-                )
-                # check that X_pending is set correctly in sequential optimization
-                if num_acqf > 1:
-                    x_pending_call_args_list = mock_set_X_pending_2.call_args_list
-                    idxr = torch.ones(num_acqf, dtype=torch.bool, device=self.device)
-                    for i in range(len(x_pending_call_args_list) - 1):
-                        idxr[i] = 0
-                        self.assertTrue(
-                            torch.equal(
-                                x_pending_call_args_list[i][0][0], orig_candidates[idxr]
+        fixed_features_list = [None, [{0: 0.5}]]
+        for ffl in fixed_features_list:
+            for num_acqf, dtype in itertools.product(
+                [1, 2], (torch.float, torch.double)
+            ):
+                for m in mock_acq_function_list:
+                    # clear previous X_pending
+                    m.set_X_pending(None)
+                tkwargs["dtype"] = dtype
+                inequality_constraints[0] = [
+                    t.to(**tkwargs) for t in inequality_constraints[0]
+                ]
+                mock_optimize_acqf.reset_mock()
+                mock_optimize_acqf_mixed.reset_mock()
+                bounds = bounds.to(**tkwargs)
+                candidate_rvs = []
+                acq_val_rvs = []
+                gcs_return_vals = [
+                    (torch.rand(1, 3, **tkwargs), torch.rand(1, **tkwargs))
+                    for _ in range(num_acqf)
+                ]
+                for rv in gcs_return_vals:
+                    candidate_rvs.append(rv[0])
+                    acq_val_rvs.append(rv[1])
+                side_effect = list(zip(candidate_rvs, acq_val_rvs))
+                mock_optimize_acqf.side_effect = side_effect
+                mock_optimize_acqf_mixed.side_effect = side_effect
+                orig_candidates = candidate_rvs[0].clone()
+                # Wrap the set_X_pending method for checking that call arguments
+                with mock.patch.object(
+                    MockAcquisitionFunction,
+                    "set_X_pending",
+                    wraps=mock_acq_function_1.set_X_pending,
+                ) as mock_set_X_pending_1, mock.patch.object(
+                    MockAcquisitionFunction,
+                    "set_X_pending",
+                    wraps=mock_acq_function_2.set_X_pending,
+                ) as mock_set_X_pending_2:
+                    candidates, _ = optimize_acqf_list(
+                        acq_function_list=mock_acq_function_list[:num_acqf],
+                        bounds=bounds,
+                        num_restarts=num_restarts,
+                        raw_samples=raw_samples,
+                        options=options,
+                        inequality_constraints=inequality_constraints,
+                        post_processing_func=rounding_func,
+                        fixed_features_list=ffl,
+                    )
+                    # check that X_pending is set correctly in sequential optimization
+                    if num_acqf > 1:
+                        x_pending_call_args_list = mock_set_X_pending_2.call_args_list
+                        idxr = torch.ones(
+                            num_acqf, dtype=torch.bool, device=self.device
+                        )
+                        for i in range(len(x_pending_call_args_list) - 1):
+                            idxr[i] = 0
+                            self.assertTrue(
+                                torch.equal(
+                                    x_pending_call_args_list[i][0][0],
+                                    orig_candidates[idxr],
+                                )
                             )
-                        )
-                        idxr[i] = 1
-                        orig_candidates[i] = candidate_rvs[i + 1]
-                else:
-                    mock_set_X_pending_1.assert_not_called()
-            # check final candidates
-            expected_candidates = (
-                torch.cat(candidate_rvs[-num_acqf:], dim=0)
-                if num_acqf > 1
-                else candidate_rvs[0]
-            )
-            self.assertTrue(torch.equal(candidates, expected_candidates))
-            # check call arguments for optimize_acqf
-            call_args_list = mock_optimize_acqf.call_args_list
-            expected_call_args = {
-                "acq_function": None,
-                "bounds": bounds,
-                "q": 1,
-                "num_restarts": num_restarts,
-                "raw_samples": raw_samples,
-                "options": options,
-                "inequality_constraints": inequality_constraints,
-                "equality_constraints": None,
-                "fixed_features": None,
-                "post_processing_func": rounding_func,
-                "batch_initial_conditions": None,
-                "return_best_only": True,
-                "sequential": False,
-            }
-            for i in range(len(call_args_list)):
-                expected_call_args["acq_function"] = mock_acq_function_list[i]
-                for k, v in call_args_list[i][1].items():
-                    if torch.is_tensor(v):
-                        self.assertTrue(torch.equal(expected_call_args[k], v))
-                    elif k == "acq_function":
-                        self.assertIsInstance(
-                            mock_acq_function_list[i], MockAcquisitionFunction
-                        )
+                            idxr[i] = 1
+                            orig_candidates[i] = candidate_rvs[i + 1]
                     else:
-                        self.assertEqual(expected_call_args[k], v)
+                        mock_set_X_pending_1.assert_not_called()
+                # check final candidates
+                expected_candidates = (
+                    torch.cat(candidate_rvs[-num_acqf:], dim=0)
+                    if num_acqf > 1
+                    else candidate_rvs[0]
+                )
+                self.assertTrue(torch.equal(candidates, expected_candidates))
+                # check call arguments for optimize_acqf
+                if ffl is None:
+                    call_args_list = mock_optimize_acqf.call_args_list
+                    expected_call_args = {
+                        "acq_function": None,
+                        "bounds": bounds,
+                        "q": 1,
+                        "num_restarts": num_restarts,
+                        "raw_samples": raw_samples,
+                        "options": options,
+                        "inequality_constraints": inequality_constraints,
+                        "equality_constraints": None,
+                        "fixed_features": None,
+                        "post_processing_func": rounding_func,
+                        "batch_initial_conditions": None,
+                        "return_best_only": True,
+                        "sequential": False,
+                    }
+                else:
+                    call_args_list = mock_optimize_acqf_mixed.call_args_list
+                    expected_call_args = {
+                        "acq_function": None,
+                        "bounds": bounds,
+                        "q": 1,
+                        "num_restarts": num_restarts,
+                        "raw_samples": raw_samples,
+                        "options": options,
+                        "inequality_constraints": inequality_constraints,
+                        "equality_constraints": None,
+                        "post_processing_func": rounding_func,
+                        "batch_initial_conditions": None,
+                        "fixed_features_list": ffl,
+                    }
+                for i in range(len(call_args_list)):
+                    expected_call_args["acq_function"] = mock_acq_function_list[i]
+                    for k, v in call_args_list[i][1].items():
+                        if torch.is_tensor(v):
+                            self.assertTrue(torch.equal(expected_call_args[k], v))
+                        elif k == "acq_function":
+                            self.assertIsInstance(
+                                mock_acq_function_list[i], MockAcquisitionFunction
+                            )
+                        else:
+                            self.assertEqual(expected_call_args[k], v)
 
     def test_optimize_acqf_list_empty_list(self):
         with self.assertRaises(ValueError):
