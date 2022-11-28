@@ -84,7 +84,7 @@ def apply_constraints_nonnegative_soft(
         A `n_samples x b x q (x m')`-dim tensor of feasibility-weighted objectives.
     """
     if type(eta) != Tensor:
-        eta = torch.as_tensor([eta for _ in range(len(constraints))])
+        eta = torch.full(len(constraints), eta)
     obj = obj.clamp_min(0)  # Enforce non-negativity with constraints
     for constraint, e in zip(constraints, eta):
         constraint_eval = soft_eval_constraint(constraint(samples), eta=e)
