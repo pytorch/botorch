@@ -29,7 +29,7 @@ from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.model import Model
-from botorch.sampling.samplers import MCSampler
+from botorch.sampling.base import MCSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
@@ -80,8 +80,8 @@ class MOMF(qExpectedHypervolumeImprovement):
                 dominated front and a partitioning of the non-dominated space in hyper-
                 rectangles. If constraints are present, this partitioning must only
                 include feasible points.
-            sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)`.
+            sampler: The sampler used to draw base samples. If not given,
+                a sampler is generated using `get_sampler`.
             objective: The MCMultiOutputObjective under which the samples are evaluated.
                 Defaults to `IdentityMultiOutputObjective()`.
             constraints: A list of callables, each mapping a Tensor of dimension
@@ -135,7 +135,7 @@ class MOMF(qExpectedHypervolumeImprovement):
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         posterior = self.model.posterior(X)
-        samples = self.sampler(posterior)
+        samples = self.get_posterior_samples(posterior)
         hv_gain = self._compute_qehvi(samples=samples, X=X)
         cost_weighted_qehvi = self.cost_aware_utility(X=X, deltas=hv_gain)
         return cost_weighted_qehvi

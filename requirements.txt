@@ -1,0 +1,6 @@
+multipledispatch
+scipy
+torch>=1.11
+pyro-ppl>=1.8.2
+gpytorch==1.9.0
+linear_operator==0.2.0

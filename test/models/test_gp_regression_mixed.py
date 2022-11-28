@@ -9,8 +9,8 @@ import random
 import warnings
 
 import torch
-from botorch import fit_gpytorch_model
 from botorch.exceptions.warnings import OptimizationWarning
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.transforms import Normalize
@@ -100,7 +100,9 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             mll = ExactMarginalLogLikelihood(model.likelihood, model).to(**tkwargs)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
-                fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+                fit_gpytorch_mll(
+                    mll, optimizer_kwargs={"options": {"maxiter": 1}}, max_attempts=1
+                )
 
             # test init
             self.assertIsInstance(model.mean_module, ConstantMean)
@@ -235,8 +237,10 @@ class TestMixedSingleTaskGP(BotorchTestCase):
                     )
                     self.assertTrue(
                         torch.allclose(
-                            posterior_same_inputs.mvn.covariance_matrix[:, 0, :, :],
-                            non_batch_posterior.mvn.covariance_matrix,
+                            posterior_same_inputs.distribution.covariance_matrix[
+                                :, 0, :, :
+                            ],
+                            non_batch_posterior.distribution.covariance_matrix,
                             atol=1e-3,
                         )
                     )
@@ -258,7 +262,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
 
             # fantasize
             X_f = torch.rand(torch.Size(batch_shape + torch.Size([4, d])), **tkwargs)
-            sampler = SobolQMCNormalSampler(num_samples=3)
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([3]))
             fm = model.fantasize(X=X_f, sampler=sampler)
             self.assertIsInstance(fm, model.__class__)
             fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)

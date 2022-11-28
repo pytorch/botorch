@@ -16,7 +16,6 @@ References
 
 from __future__ import annotations
 
-import warnings
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from typing import Generator, Iterable, List, Optional, Tuple
@@ -25,8 +24,6 @@ import numpy as np
 import scipy
 import torch
 from botorch.exceptions.errors import BotorchError
-from botorch.exceptions.warnings import SamplingWarning
-from botorch.posteriors.posterior import Posterior
 from botorch.sampling.qmc import NormalQMCEngine
 from scipy.spatial import Delaunay, HalfspaceIntersection
 from torch import LongTensor, Tensor
@@ -55,103 +52,6 @@ def manual_seed(seed: Optional[int] = None) -> Generator[None, None, None]:
     finally:
         if seed is not None:
             torch.random.set_rng_state(old_state)
-
-
-def construct_base_samples(
-    batch_shape: torch.Size,
-    output_shape: torch.Size,
-    sample_shape: torch.Size,
-    qmc: bool = True,
-    seed: Optional[int] = None,
-    device: Optional[torch.device] = None,
-    dtype: Optional[torch.dtype] = None,
-) -> Tensor:
-    r"""Construct base samples from a multi-variate standard normal N(0, I_qo).
-
-    Args:
-        batch_shape: The batch shape of the base samples to generate. Typically,
-            this is used with each dimension of size 1, so as to eliminate
-            sampling variance across batches.
-        output_shape: The output shape (`q x m`) of the base samples to generate.
-        sample_shape: The sample shape of the samples to draw.
-        qmc: If True, use quasi-MC sampling (instead of iid draws).
-        seed: If provided, use as a seed for the RNG.
-
-    Returns:
-        A `sample_shape x batch_shape x mutput_shape` dimensional tensor of base
-        samples, drawn from a N(0, I_qm) distribution (using QMC if `qmc=True`).
-        Here `output_shape = q x m`.
-
-    Example:
-        >>> batch_shape = torch.Size([2])
-        >>> output_shape = torch.Size([3])
-        >>> sample_shape = torch.Size([10])
-        >>> samples = construct_base_samples(batch_shape, output_shape, sample_shape)
-    """
-    base_sample_shape = batch_shape + output_shape
-    output_dim = output_shape.numel()
-    if qmc and output_dim <= SobolEngine.MAXDIM:
-        n = (sample_shape + batch_shape).numel()
-        base_samples = draw_sobol_normal_samples(
-            d=output_dim, n=n, device=device, dtype=dtype, seed=seed
-        )
-        base_samples = base_samples.view(sample_shape + base_sample_shape)
-    else:
-        if qmc and output_dim > SobolEngine.MAXDIM:
-            warnings.warn(
-                f"Number of output elements (q*d={output_dim}) greater than "
-                f"maximum supported by qmc ({SobolEngine.MAXDIM}). "
-                "Using iid sampling instead.",
-                SamplingWarning,
-            )
-        with manual_seed(seed=seed):
-            base_samples = torch.randn(
-                sample_shape + base_sample_shape, device=device, dtype=dtype
-            )
-    return base_samples
-
-
-def construct_base_samples_from_posterior(
-    posterior: Posterior,
-    sample_shape: torch.Size,
-    qmc: bool = True,
-    collapse_batch_dims: bool = True,
-    seed: Optional[int] = None,
-) -> Tensor:
-    r"""Construct a tensor of normally distributed base samples.
-
-    Args:
-        posterior: A Posterior object.
-        sample_shape: The sample shape of the samples to draw.
-        qmc: If True, use quasi-MC sampling (instead of iid draws).
-        seed: If provided, use as a seed for the RNG.
-
-    Returns:
-        A `num_samples x 1 x q x m` dimensional Tensor of base samples, drawn
-        from a N(0, I_qm) distribution (using QMC if `qmc=True`). Here `q` and
-        `m` are the same as in the posterior's `event_shape` `b x q x m`.
-        Importantly, this only obtain a single t-batch of samples, so as to not
-        introduce any sampling variance across t-batches.
-
-    Example:
-        >>> sample_shape = torch.Size([10])
-        >>> samples = construct_base_samples_from_posterior(posterior, sample_shape)
-    """
-    output_shape = posterior.event_shape[-2:]  # shape of joint output: q x m
-    if collapse_batch_dims:
-        batch_shape = torch.Size([1] * len(posterior.event_shape[:-2]))
-    else:
-        batch_shape = posterior.event_shape[:-2]
-    base_samples = construct_base_samples(
-        batch_shape=batch_shape,
-        output_shape=output_shape,
-        sample_shape=sample_shape,
-        qmc=qmc,
-        seed=seed,
-        device=posterior.device,
-        dtype=posterior.dtype,
-    )
-    return base_samples
 
 
 def draw_sobol_samples(
@@ -830,6 +730,30 @@ class DelaunayPolytopeSampler(PolytopeSampler):
         return samples
 
 
+def normalize_linear_constraints(
+    bounds: Tensor, constraints: List[Tuple[Tensor, Tensor, float]]
+) -> List[Tuple[Tensor, Tensor, float]]:
+    r"""Normalize linear constraints to the unit cube.
+
+    Args:
+        bounds (Tensor): A `2 x d`-dim tensor containing the box bounds.
+        constraints (List[Tuple[Tensor, Tensor, float]]): A list of
+            tuples (indices, coefficients, rhs), with each tuple encoding
+            an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs` or
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
+    """
+
+    new_constraints = []
+    for index, coefficient, rhs in constraints:
+        lower, upper = bounds[:, index]
+        s = upper - lower
+        new_constraints.append(
+            (index, s * coefficient, (rhs - torch.dot(coefficient, lower)).item())
+        )
+    return new_constraints
+
+
 def get_polytope_samples(
     n: int,
     bounds: Tensor,
@@ -864,10 +788,28 @@ def get_polytope_samples(
     """
     # create tensors representing linear inequality constraints
     # of the form Ax >= b.
+    # TODO: remove this error handling functionality in a few releases.
+    # Context: BoTorch inadvertently supported indices with unusual dtypes.
+    # This is now not supported.
+    index_dtype_error = (
+        "Normalizing {var_name} failed. Check that the first "
+        "element of {var_name} is the correct dtype following "
+        "the previous IndexError."
+    )
     if inequality_constraints:
+        # normalize_linear_constraints is called to solve this issue:
+        # https://github.com/pytorch/botorch/issues/1225
+        try:
+            # non-standard dtypes used to be supported for indices in constraints;
+            # this is no longer true
+            constraints = normalize_linear_constraints(bounds, inequality_constraints)
+        except IndexError as e:
+            msg = index_dtype_error.format(var_name="`inequality_constraints`")
+            raise ValueError(msg) from e
+
         A, b = sparse_to_dense_constraints(
             d=bounds.shape[-1],
-            constraints=inequality_constraints,
+            constraints=constraints,
         )
         # Note the inequality constraints are of the form Ax >= b,
         # but PolytopeSampler expects inequality constraints of the
@@ -876,19 +818,31 @@ def get_polytope_samples(
     else:
         dense_inequality_constraints = None
     if equality_constraints:
+        try:
+            # non-standard dtypes used to be supported for indices in constraints;
+            # this is no longer true
+            constraints = normalize_linear_constraints(bounds, equality_constraints)
+        except IndexError as e:
+            msg = index_dtype_error.format(var_name="`equality_constraints`")
+            raise ValueError(msg) from e
+
+        # normalize_linear_constraints is called to solve this issue:
+        # https://github.com/pytorch/botorch/issues/1225
         dense_equality_constraints = sparse_to_dense_constraints(
-            d=bounds.shape[-1],
-            constraints=equality_constraints,
+            d=bounds.shape[-1], constraints=constraints
         )
     else:
         dense_equality_constraints = None
+    normalized_bounds = torch.zeros_like(bounds)
+    normalized_bounds[1, :] = 1.0
     polytope_sampler = HitAndRunPolytopeSampler(
+        bounds=normalized_bounds,
         inequality_constraints=dense_inequality_constraints,
-        bounds=bounds,
         equality_constraints=dense_equality_constraints,
         n_burnin=n_burnin,
     )
-    return polytope_sampler.draw(n=n * thinning, seed=seed)[::thinning]
+    samples = polytope_sampler.draw(n=n * thinning, seed=seed)[::thinning]
+    return bounds[0] + samples * (bounds[1] - bounds[0])
 
 
 def sparse_to_dense_constraints(

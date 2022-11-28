@@ -6,9 +6,21 @@
 
 r"""Gaussian Process Regression models with fully Bayesian inference.
 
-We use a lightweight PyTorch implementation of a Matern-5/2 kernel as there are some
-performance issues with running NUTS on top of standard GPyTorch models. The resulting
-hyperparameter samples are loaded into a batched GPyTorch model after fitting.
+Fully Bayesian models use Bayesian inference over model hyperparameters, such
+as lengthscales and noise variance, learning a posterior distribution for the
+hyperparameters using the No-U-Turn-Sampler (NUTS). This is followed by
+sampling a small set of hyperparameters (often ~16) from the posterior
+that we will use for model predictions and for computing acquisition function
+values. By contrast, our “standard” models (e.g.
+`SingleTaskGP`) learn only a single best value for each hyperparameter using
+MAP. The fully Bayesian method generally results in a better and more
+well-calibrated model, but is more computationally intensive. For a full
+description, see [Eriksson2021saasbo].
+
+We use a lightweight PyTorch implementation of a Matern-5/2 kernel as there are
+some performance issues with running NUTS on top of standard GPyTorch models.
+The resulting hyperparameter samples are loaded into a batched GPyTorch model
+after fitting.
 
 References:
 
@@ -20,18 +32,18 @@ References:
 
 
 import math
+import warnings
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import pyro
 import torch
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
+from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling
 from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
-from botorch.sampling.samplers import MCSampler
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -43,6 +55,8 @@ from gpytorch.likelihoods.gaussian_likelihood import (
 from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.means.mean import Mean
+from gpytorch.models.exact_gp import ExactGP
+from linear_operator import settings
 from torch import Tensor
 
 MIN_INFERRED_NOISE_LEVEL = 1e-6
@@ -69,11 +83,66 @@ def reshape_and_detach(target: Tensor, new_value: Tensor) -> None:
     return new_value.detach().clone().view(target.shape).to(target)
 
 
+def _psd_safe_pyro_mvn_sample(
+    name: str, loc: Tensor, covariance_matrix: Tensor, obs: Tensor
+) -> None:
+    r"""Wraps the `pyro.sample` call in a loop to add an increasing series of jitter
+    to the covariance matrix each time we get a LinAlgError.
+
+    This is modelled after linear_operator's `psd_safe_cholesky`.
+    """
+    jitter = settings.cholesky_jitter.value(loc.dtype)
+    max_tries = settings.cholesky_max_tries.value()
+    for i in range(max_tries + 1):
+        jitter_matrix = (
+            torch.eye(
+                covariance_matrix.shape[-1],
+                device=covariance_matrix.device,
+                dtype=covariance_matrix.dtype,
+            )
+            * jitter
+        )
+        jittered_covar = (
+            covariance_matrix if i == 0 else covariance_matrix + jitter_matrix
+        )
+        try:
+            pyro.sample(
+                name,
+                pyro.distributions.MultivariateNormal(
+                    loc=loc,
+                    covariance_matrix=jittered_covar,
+                ),
+                obs=obs,
+            )
+            return
+        except (torch.linalg.LinAlgError, ValueError) as e:
+            if isinstance(e, ValueError) and "satisfy the constraint" not in str(e):
+                # Not-PSD can be also caught in Distribution.__init__ during parameter
+                # validation, which raises a ValueError. Only catch those errors.
+                raise e
+            jitter = jitter * (10**i)
+            warnings.warn(
+                "Received a linear algebra error while sampling with Pyro. Adding a "
+                f"jitter of {jitter} to the covariance matrix and retrying.",
+                RuntimeWarning,
+            )
+
+
 class PyroModel:
     r"""
-    Base class for a Pyro model.
+    Base class for a Pyro model; used to assist in learning hyperparameters.
 
-    :meta ignore:
+    This class and its subclasses are not a standard BoTorch models; instead
+    the subclasses are used as inputs to a `SaasFullyBayesianSingleTaskGP`,
+    which should then have its hyperparameters fit with
+    `fit_fully_bayesian_model_nuts`. (By default, its subclass `SaasPyroModel`
+    is used).  A `PyroModel`’s `sample` method should specify lightweight
+    PyTorch functionality, which will be used for fast model fitting with NUTS.
+    The utility of `PyroModel` is in enabling fast fitting with NUTS, since we
+    would otherwise need to use GPyTorch, which is computationally infeasible
+    in combination with Pyro.
+
+    :meta private:
     """
 
     def set_inputs(
@@ -112,10 +181,22 @@ class PyroModel:
 class SaasPyroModel(PyroModel):
     r"""Implementation of the sparse axis-aligned subspace priors (SAAS) model.
 
-    The SAAS model uses sparsity-inducing priors to identift the most important
+    The SAAS model uses sparsity-inducing priors to identify the most important
     parameters. This model is suitable for high-dimensional BO with potentially
     hundreds of tunable parameters. See [Eriksson2021saasbo]_ for more details.
+
+    `SaasPyroModel` is not a standard BoTorch model; instead, it is used as
+    an input to `SaasFullyBayesianSingleTaskGP`. It is used as a default keyword
+    argument, and end users are not likely to need to instantiate or modify a
+    `SaasPyroModel` unless they want to customize its attributes (such as
+    `covar_module`).
     """
+
+    def set_inputs(
+        self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
+    ):
+        super().set_inputs(train_X, train_Y, train_Yvar)
+        self.ard_num_dims = self.train_X.shape[-1]
 
     def sample(self) -> None:
         r"""Sample from the SAAS model.
@@ -127,15 +208,13 @@ class SaasPyroModel(PyroModel):
         outputscale = self.sample_outputscale(concentration=2.0, rate=0.15, **tkwargs)
         mean = self.sample_mean(**tkwargs)
         noise = self.sample_noise(**tkwargs)
-        lengthscale = self.sample_lengthscale(dim=self.train_X.shape[-1], **tkwargs)
+        lengthscale = self.sample_lengthscale(dim=self.ard_num_dims, **tkwargs)
         k = matern52_kernel(X=self.train_X, lengthscale=lengthscale)
         k = outputscale * k + noise * torch.eye(self.train_X.shape[0], **tkwargs)
-        pyro.sample(
-            "Y",
-            pyro.distributions.MultivariateNormal(
-                loc=mean.view(-1).expand(self.train_X.shape[0]),
-                covariance_matrix=k,
-            ),
+        _psd_safe_pyro_mvn_sample(
+            name="Y",
+            loc=mean.view(-1).expand(self.train_X.shape[0]),
+            covariance_matrix=k,
             obs=self.train_Y.squeeze(-1),
         )
 
@@ -224,7 +303,7 @@ class SaasPyroModel(PyroModel):
         mean_module = ConstantMean(batch_shape=batch_shape).to(**tkwargs)
         covar_module = ScaleKernel(
             base_kernel=MaternKernel(
-                ard_num_dims=self.train_X.shape[-1],
+                ard_num_dims=self.ard_num_dims,
                 batch_shape=batch_shape,
             ),
             batch_shape=batch_shape,
@@ -261,7 +340,7 @@ class SaasPyroModel(PyroModel):
         return mean_module, covar_module, likelihood
 
 
-class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
+class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
     r"""A fully Bayesian single-task GP model with the SAAS prior.
 
     This model assumes that the inputs have been normalized to [0, 1]^d and that
@@ -274,9 +353,9 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
     isn't compatible with `fit_gpytorch_model`.
 
     Example:
-    >>> saas_gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)
-    >>> fit_fully_bayesian_model_nuts(saas_gp)
-    >>> posterior = saas_gp.posterior(test_X)
+        >>> saas_gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)
+        >>> fit_fully_bayesian_model_nuts(saas_gp)
+        >>> posterior = saas_gp.posterior(test_X)
     """
 
     def __init__(
@@ -325,11 +404,15 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
         validate_input_scaling(
             train_X=transformed_X, train_Y=train_Y, train_Yvar=train_Yvar
         )
-        self._set_dimensions(train_X=train_X, train_Y=train_Y)
+        self._num_outputs = train_Y.shape[-1]
+        self._input_batch_shape = train_X.shape[:-2]
         if train_Yvar is not None:  # Clamp after transforming
             train_Yvar = train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
 
-        super().__init__(train_X, train_Y)
+        X_tf, Y_tf, _ = self._transform_tensor_args(X=train_X, Y=train_Y)
+        super().__init__(
+            train_inputs=X_tf, train_targets=Y_tf, likelihood=GaussianLikelihood()
+        )
         self.mean_module = None
         self.covar_module = None
         self.likelihood = None
@@ -365,14 +448,20 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
         self._check_if_fitted()
         return len(self.covar_module.outputscale)
 
-    def fantasize(
-        self,
-        X: Tensor,
-        sampler: MCSampler,
-        observation_noise: Union[bool, Tensor] = True,
-        **kwargs: Any,
-    ) -> FixedNoiseGP:
-        raise NotImplementedError("Fantasize is not implemented!")
+    @property
+    def batch_shape(self) -> torch.Size:
+        r"""Batch shape of the model, equal to the number of MCMC samples.
+        Note that `SaasFullyBayesianSingleTaskGP` does not support batching
+        over input data at this point."""
+        return torch.Size([self.num_mcmc_samples])
+
+    @property
+    def _aug_batch_shape(self) -> torch.Size:
+        r"""The batch shape of the model, augmented to include the output dim."""
+        aug_batch_shape = self.batch_shape
+        if self.num_outputs > 1:
+            aug_batch_shape += torch.Size([self.num_outputs])
+        return aug_batch_shape
 
     def train(self, mode: bool = True) -> None:
         r"""Puts the model in `train` mode."""
@@ -394,10 +483,55 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
             self.likelihood,
         ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
 
-    def forward(self, X: Tensor) -> MultivariateNormal:
-        self._check_if_fitted()
-        return super().forward(X.unsqueeze(MCMC_DIM))
+    def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True):
+        r"""Custom logic for loading the state dict.
 
+        The standard approach of calling `load_state_dict` currently doesn't play well
+        with the `SaasFullyBayesianSingleTaskGP` since the `mean_module`, `covar_module`
+        and `likelihood` aren't initialized until the model has been fitted. The reason
+        for this is that we don't know the number of MCMC samples until NUTS is called.
+        Given the state dict, we can initialize a new model with some dummy samples and
+        then load the state dict into this model. This currently only works for a
+        `SaasPyroModel` and supporting more Pyro models likely requires moving the model
+        construction logic into the Pyro model itself.
+        """
+
+        if not isinstance(self.pyro_model, SaasPyroModel):
+            raise NotImplementedError("load_state_dict only works for SaasPyroModel")
+        raw_mean = state_dict["mean_module.raw_constant"]
+        num_mcmc_samples = len(raw_mean)
+        dim = self.pyro_model.train_X.shape[-1]
+        tkwargs = {"device": raw_mean.device, "dtype": raw_mean.dtype}
+        # Load some dummy samples
+        mcmc_samples = {
+            "mean": torch.ones(num_mcmc_samples, **tkwargs),
+            "lengthscale": torch.ones(num_mcmc_samples, dim, **tkwargs),
+            "outputscale": torch.ones(num_mcmc_samples, **tkwargs),
+        }
+        if self.pyro_model.train_Yvar is None:
+            mcmc_samples["noise"] = torch.ones(num_mcmc_samples, **tkwargs)
+        (
+            self.mean_module,
+            self.covar_module,
+            self.likelihood,
+        ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
+        # Load the actual samples from the state dict
+        super().load_state_dict(state_dict=state_dict, strict=strict)
+
+    def forward(self, X: Tensor) -> MultivariateNormal:
+        """
+        Unlike in other classes' `forward` methods, there is no `if self.training`
+        block, because it ought to be unreachable: If `self.train()` has been called,
+        then `self.covar_module` will be None, `check_if_fitted()` will fail, and the
+        rest of this method will not run.
+        """
+        self._check_if_fitted()
+        x = X.unsqueeze(MCMC_DIM)
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return MultivariateNormal(mean_x, covar_x)
+
+    # pyre-ignore[14]: Inconsistent override
     def posterior(
         self,
         X: Tensor,
@@ -433,5 +567,5 @@ class SaasFullyBayesianSingleTaskGP(SingleTaskGP):
             posterior_transform=posterior_transform,
             **kwargs,
         )
-        posterior = FullyBayesianPosterior(mvn=posterior.mvn)
+        posterior = FullyBayesianPosterior(distribution=posterior.distribution)
         return posterior

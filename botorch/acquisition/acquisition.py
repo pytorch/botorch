@@ -12,9 +12,12 @@ import warnings
 from abc import ABC, abstractmethod
 from typing import Callable, Optional
 
+import torch
 from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.models.model import Model
 from botorch.posteriors.posterior import Posterior
+from botorch.sampling.base import MCSampler
+from botorch.sampling.get_sampler import get_sampler
 from torch import Tensor
 from torch.nn import Module
 
@@ -36,7 +39,7 @@ class AcquisitionFunction(Module, ABC):
             model: A fitted model.
         """
         super().__init__()
-        self.add_module("model", model)
+        self.model: Model = model
 
     @classmethod
     def _deprecate_acqf_objective(
@@ -132,3 +135,36 @@ class OneShotAcquisitionFunction(AcquisitionFunction, ABC):
             A `b x q x d`-dim Tensor with `b` t-batches of `q` design points each.
         """
         pass  # pragma: no cover
+
+
+class MCSamplerMixin(ABC):
+    r"""A mix-in for adding sampler functionality into an acquisition function class.
+
+    Attributes:
+        _default_sample_shape: The `sample_shape` for the default sampler.
+
+    :meta private:
+    """
+
+    _default_sample_shape = torch.Size([512])
+
+    def __init__(self, sampler: Optional[MCSampler] = None) -> None:
+        r"""Register the sampler on the acquisition function.
+
+        Args:
+            sampler: The sampler used to draw base samples for MC-based acquisition
+                functions. If `None`, a sampler is generated using `get_sampler`.
+        """
+        self.sampler = sampler
+
+    def get_posterior_samples(self, posterior: Posterior) -> Tensor:
+        r"""Sample from the posterior using the sampler.
+
+        Args:
+            posterior: The posterior to sample from.
+        """
+        if self.sampler is None:
+            self.sampler = get_sampler(
+                posterior=posterior, sample_shape=self._default_sample_shape
+            )
+        return self.sampler(posterior=posterior)

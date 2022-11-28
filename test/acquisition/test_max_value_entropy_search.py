@@ -23,7 +23,7 @@ from botorch.acquisition.objective import (
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.posteriors import GPyTorchPosterior
-from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from torch import Tensor
@@ -67,7 +67,7 @@ class MESMockModel(MockModel):
         return posterior
 
     def forward(self, X: Tensor) -> MultivariateNormal:
-        return self.posterior(X).mvn
+        return self.posterior(X).distribution
 
     @property
     def batch_shape(self) -> torch.Size:

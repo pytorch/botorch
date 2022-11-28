@@ -13,29 +13,23 @@ from unittest import mock
 
 import numpy as np
 import torch
-from botorch import settings
 from botorch.exceptions.errors import BotorchError
-from botorch.exceptions.warnings import SamplingWarning
-from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.utils.sampling import (
     _convert_bounds_to_inequality_constraints,
     batched_multinomial,
-    construct_base_samples,
-    construct_base_samples_from_posterior,
     DelaunayPolytopeSampler,
     draw_sobol_samples,
     find_interior_point,
     get_polytope_samples,
     HitAndRunPolytopeSampler,
     manual_seed,
+    normalize_linear_constraints,
     PolytopeSampler,
     sample_hypersphere,
     sample_simplex,
     sparse_to_dense_constraints,
 )
 from botorch.utils.testing import BotorchTestCase
-from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from torch.quasirandom import SobolEngine
 
 
 class TestManualSeed(BotorchTestCase):
@@ -46,129 +40,6 @@ class TestManualSeed(BotorchTestCase):
         with manual_seed(1234):
             self.assertFalse(torch.all(torch.random.get_rng_state() == initial_state))
         self.assertTrue(torch.all(torch.random.get_rng_state() == initial_state))
-
-
-class TestConstructBaseSamples(BotorchTestCase):
-    def test_construct_base_samples(self):
-        test_shapes = [
-            {"batch": [2], "output": [4, 3], "sample": [5]},
-            {"batch": [1], "output": [5, 3], "sample": [5, 6]},
-            {"batch": [2, 3], "output": [2, 3], "sample": [5]},
-        ]
-        for tshape, qmc, seed, dtype in itertools.product(
-            test_shapes, (False, True), (None, 1234), (torch.float, torch.double)
-        ):
-            batch_shape = torch.Size(tshape["batch"])
-            output_shape = torch.Size(tshape["output"])
-            sample_shape = torch.Size(tshape["sample"])
-            expected_shape = sample_shape + batch_shape + output_shape
-            samples = construct_base_samples(
-                batch_shape=batch_shape,
-                output_shape=output_shape,
-                sample_shape=sample_shape,
-                qmc=qmc,
-                seed=seed,
-                device=self.device,
-                dtype=dtype,
-            )
-            self.assertEqual(samples.shape, expected_shape)
-            self.assertEqual(samples.device.type, self.device.type)
-            self.assertEqual(samples.dtype, dtype)
-        # check that warning is issued if dimensionality is too large
-        with warnings.catch_warnings(record=True) as w, settings.debug(True):
-            construct_base_samples(
-                batch_shape=torch.Size(),
-                output_shape=torch.Size([2000, 11]),  # 200 * 11 = 22000 > 21201
-                sample_shape=torch.Size([1]),
-                qmc=True,
-            )
-            self.assertEqual(len(w), 1)
-            self.assertTrue(issubclass(w[-1].category, SamplingWarning))
-            exp_str = f"maximum supported by qmc ({SobolEngine.MAXDIM})"
-            self.assertTrue(exp_str in str(w[-1].message))
-
-    def test_construct_base_samples_from_posterior(self):  # noqa: C901
-        for dtype in (torch.float, torch.double):
-            # single-output
-            mean = torch.zeros(2, device=self.device, dtype=dtype)
-            cov = torch.eye(2, device=self.device, dtype=dtype)
-            mvn = MultivariateNormal(mean=mean, covariance_matrix=cov)
-            posterior = GPyTorchPosterior(mvn=mvn)
-            for sample_shape, qmc, seed in itertools.product(
-                (torch.Size([5]), torch.Size([5, 3])), (False, True), (None, 1234)
-            ):
-                expected_shape = sample_shape + torch.Size([2, 1])
-                samples = construct_base_samples_from_posterior(
-                    posterior=posterior, sample_shape=sample_shape, qmc=qmc, seed=seed
-                )
-                self.assertEqual(samples.shape, expected_shape)
-                self.assertEqual(samples.device.type, self.device.type)
-                self.assertEqual(samples.dtype, dtype)
-            # single-output, batch mode
-            mean = torch.zeros(2, 2, device=self.device, dtype=dtype)
-            cov = torch.eye(2, device=self.device, dtype=dtype).expand(2, 2, 2)
-            mvn = MultivariateNormal(mean=mean, covariance_matrix=cov)
-            posterior = GPyTorchPosterior(mvn=mvn)
-            for sample_shape, qmc, seed, collapse_batch_dims in itertools.product(
-                (torch.Size([5]), torch.Size([5, 3])),
-                (False, True),
-                (None, 1234),
-                (False, True),
-            ):
-                if collapse_batch_dims:
-                    expected_shape = sample_shape + torch.Size([1, 2, 1])
-                else:
-                    expected_shape = sample_shape + torch.Size([2, 2, 1])
-                samples = construct_base_samples_from_posterior(
-                    posterior=posterior,
-                    sample_shape=sample_shape,
-                    qmc=qmc,
-                    collapse_batch_dims=collapse_batch_dims,
-                    seed=seed,
-                )
-                self.assertEqual(samples.shape, expected_shape)
-                self.assertEqual(samples.device.type, self.device.type)
-                self.assertEqual(samples.dtype, dtype)
-            # multi-output
-            mean = torch.zeros(2, 2, device=self.device, dtype=dtype)
-            cov = torch.eye(4, device=self.device, dtype=dtype)
-            mtmvn = MultitaskMultivariateNormal(mean=mean, covariance_matrix=cov)
-            posterior = GPyTorchPosterior(mvn=mtmvn)
-            for sample_shape, qmc, seed in itertools.product(
-                (torch.Size([5]), torch.Size([5, 3])), (False, True), (None, 1234)
-            ):
-                expected_shape = sample_shape + torch.Size([2, 2])
-                samples = construct_base_samples_from_posterior(
-                    posterior=posterior, sample_shape=sample_shape, qmc=qmc, seed=seed
-                )
-                self.assertEqual(samples.shape, expected_shape)
-                self.assertEqual(samples.device.type, self.device.type)
-                self.assertEqual(samples.dtype, dtype)
-            # multi-output, batch mode
-            mean = torch.zeros(2, 2, 2, device=self.device, dtype=dtype)
-            cov = torch.eye(4, device=self.device, dtype=dtype).expand(2, 4, 4)
-            mtmvn = MultitaskMultivariateNormal(mean=mean, covariance_matrix=cov)
-            posterior = GPyTorchPosterior(mvn=mtmvn)
-            for sample_shape, qmc, seed, collapse_batch_dims in itertools.product(
-                (torch.Size([5]), torch.Size([5, 3])),
-                (False, True),
-                (None, 1234),
-                (False, True),
-            ):
-                if collapse_batch_dims:
-                    expected_shape = sample_shape + torch.Size([1, 2, 2])
-                else:
-                    expected_shape = sample_shape + torch.Size([2, 2, 2])
-                samples = construct_base_samples_from_posterior(
-                    posterior=posterior,
-                    sample_shape=sample_shape,
-                    qmc=qmc,
-                    collapse_batch_dims=collapse_batch_dims,
-                    seed=seed,
-                )
-                self.assertEqual(samples.shape, expected_shape)
-                self.assertEqual(samples.device.type, self.device.type)
-                self.assertEqual(samples.dtype, dtype)
 
 
 class TestSampleUtils(BotorchTestCase):
@@ -289,6 +160,44 @@ class TestSampleUtils(BotorchTestCase):
             expected_b = torch.tensor([[3.0]], **tkwargs)
             self.assertTrue(torch.equal(b, expected_b))
 
+    def test_normalize_linear_constraints(self):
+        tkwargs = {"device": self.device}
+        for dtype in (torch.float, torch.double):
+            tkwargs["dtype"] = dtype
+            constraints = [
+                (
+                    torch.tensor([1, 2, 0], dtype=torch.int64, device=self.device),
+                    torch.tensor([1.0, 1.0, 1.0], **tkwargs),
+                    1.0,
+                )
+            ]
+            bounds = torch.tensor(
+                [[0.1, 0.3, 0.1, 30.0], [0.6, 0.7, 0.7, 700.0]], **tkwargs
+            )
+            new_constraints = normalize_linear_constraints(bounds, constraints)
+            expected_coefficients = torch.tensor([0.4000, 0.6000, 0.5000], **tkwargs)
+            self.assertTrue(
+                torch.allclose(new_constraints[0][1], expected_coefficients)
+            )
+            expected_rhs = 0.5
+            self.assertAlmostEqual(new_constraints[0][-1], expected_rhs)
+
+    def test_normalize_linear_constraints_wrong_dtype(self):
+        for dtype in (torch.float, torch.double):
+            with self.subTest(dtype=dtype):
+                tkwargs = {"device": self.device, "dtype": dtype}
+                constraints = [
+                    (
+                        torch.ones(3, dtype=torch.float, device=self.device),
+                        torch.ones(3, **tkwargs),
+                        1.0,
+                    )
+                ]
+                bounds = torch.zeros(2, 4, **tkwargs)
+                msg = "tensors used as indices must be long, byte or bool tensors"
+                with self.assertRaises(IndexError, msg=msg):
+                    normalize_linear_constraints(bounds, constraints)
+
     def test_find_interior_point(self):
         # basic problem: 1 <= x_1 <= 2, 2 <= x_2 <= 3
         A = np.concatenate([np.eye(2), -np.eye(2)], axis=0)
@@ -310,6 +219,64 @@ class TestSampleUtils(BotorchTestCase):
         x = find_interior_point(A=A, b=b)
         self.assertAlmostEqual(x.item(), 5.0, places=4)
 
+    def test_get_polytope_samples_wrong_inequality_constraints_dtype(self):
+        for dtype in (torch.float, torch.double):
+            with self.subTest(dtype=dtype):
+                tkwargs = {"device": self.device, "dtype": dtype}
+                bounds = torch.zeros(2, 4, **tkwargs)
+                inequality_constraints = [
+                    (
+                        torch.tensor([3], dtype=torch.float, device=self.device),
+                        torch.tensor([-4], **tkwargs),
+                        -3,
+                    )
+                ]
+
+                msg = (
+                    "Normalizing `inequality_constraints` failed. Check that the first "
+                    "element of `inequality_constraints` is the correct dtype following"
+                    " the previous IndexError."
+                )
+                msg_orig = "tensors used as indices must be long, byte or bool tensors"
+
+                with self.assertRaisesRegex(ValueError, msg), self.assertRaisesRegex(
+                    IndexError, msg_orig
+                ):
+                    get_polytope_samples(
+                        n=5,
+                        bounds=bounds,
+                        inequality_constraints=inequality_constraints,
+                    )
+
+    def test_get_polytope_samples_wrong_equality_constraints_dtype(self):
+        for dtype in (torch.float, torch.double):
+            with self.subTest(dtype=dtype):
+                tkwargs = {"device": self.device, "dtype": dtype}
+                bounds = torch.zeros(2, 4, **tkwargs)
+
+                equality_constraints = [
+                    (
+                        torch.tensor([0], dtype=torch.float, device=self.device),
+                        torch.tensor([1], **tkwargs),
+                        0.5,
+                    )
+                ]
+                msg = (
+                    "Normalizing `equality_constraints` failed. Check that the first "
+                    "element of `equality_constraints` is the correct dtype following "
+                    "the previous IndexError."
+                )
+                msg_orig = "tensors used as indices must be long, byte or bool tensors"
+
+                with self.assertRaisesRegex(ValueError, msg), self.assertRaisesRegex(
+                    IndexError, msg_orig
+                ):
+                    get_polytope_samples(
+                        n=5,
+                        bounds=bounds,
+                        equality_constraints=equality_constraints,
+                    )
+
     def test_get_polytope_samples(self):
         tkwargs = {"device": self.device}
         for dtype in (torch.float, torch.double):
@@ -318,14 +285,14 @@ class TestSampleUtils(BotorchTestCase):
             bounds[1] = 1
             inequality_constraints = [
                 (
-                    torch.tensor([3], **tkwargs),
+                    torch.tensor([3], dtype=torch.int64, device=self.device),
                     torch.tensor([-4], **tkwargs),
                     -3,
                 )
             ]
             equality_constraints = [
                 (
-                    torch.tensor([0], **tkwargs),
+                    torch.tensor([0], dtype=torch.int64, device=self.device),
                     torch.tensor([1], **tkwargs),
                     0.5,
                 )

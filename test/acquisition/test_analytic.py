@@ -344,6 +344,17 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
             module = ConstrainedExpectedImprovement(
                 model=mm, best_f=0.0, objective_index=0, constraints={1: [None, 0]}
             )
+            # test initialization
+            for k in [
+                "con_lower_inds",
+                "con_upper_inds",
+                "con_both_inds",
+                "con_both",
+                "con_lower",
+                "con_upper",
+            ]:
+                self.assertIn(k, module._buffers)
+
             X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
             ei = module(X)
             ei_expected_unconstrained = torch.tensor(

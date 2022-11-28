@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: [3.7, 3.9]
+        python-version: ["3.8", "3.10"]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -25,15 +25,18 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+        pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
     - name: Unit tests and coverage
       run: |
         pytest -ra --cov=. --cov-report term-missing
     - name: Upload coverage
-      if: ${{ runner.os == 'Linux' && matrix.python-version == 3.7 }}
+      if: ${{ runner.os == 'Linux' && matrix.python-version == 3.8 }}
       run: |
         bash <(curl -s https://codecov.io/bash)
 
@@ -44,7 +47,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.7", "3.9"]
+        python-version: ["3.8", "3.10"]
     steps:
     - uses: actions/checkout@v2
     - uses: conda-incubator/setup-miniconda@v2
@@ -54,9 +57,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       shell: bash -l {0}
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         conda install -y -c pytorch-nightly pytorch cpuonly
         conda install -y pip scipy sphinx pytest flake8
+        pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
     - name: Unit tests

@@ -6,8 +6,8 @@
 
 r"""Abstract base module for all BoTorch models.
 
-Contains `Model`, the abstract base class for all BoTorch models, and
-`ModelList`, a container for a list of Models.
+This module contains `Model`, the abstract base class for all BoTorch models,
+and `ModelList`, a container for a list of Models.
 """
 
 from __future__ import annotations
@@ -16,26 +16,47 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from copy import deepcopy
-from typing import Any, Callable, Dict, Hashable, List, Optional, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Hashable,
+    List,
+    Mapping,
+    Optional,
+    TypeVar,
+    Union,
+)
 
 import numpy as np
 import torch
 from botorch import settings
 from botorch.models.utils.assorted import fantasize as fantasize_flag
 from botorch.posteriors import Posterior, PosteriorList
-from botorch.posteriors.fully_bayesian import FullyBayesianPosteriorList
-from botorch.sampling.samplers import MCSampler
+from botorch.sampling.base import MCSampler
 from botorch.utils.datasets import BotorchDataset
 from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
 from torch.nn import Module, ModuleList
 
+TFantasizeMixin = TypeVar("TFantasizeMixin", bound="FantasizeMixin")
+
 
 class Model(Module, ABC):
     r"""Abstract base class for BoTorch models.
 
-    Model cannot be used directly; it only defines an API for other BoTorch
-    models.
+    The `Model` base class cannot be used directly; it only defines an API for other
+    BoTorch models.
+
+    `Model` subclasses `torch.nn.Module`. While a `Module` is most typically
+    encountered as a representation of a neural network layer, it can be used more
+    generally: see
+    `documentation <https://pytorch.org/tutorials/beginner/examples_nn/polynomial_module.html>`_
+    on custom NN Modules.
+
+    `Module` provides several pieces of useful functionality: A `Model`'s attributes of
+    `Tensor` or `Module` type are automatically registered so they can be moved and/or
+    cast with the `to` method, automatically differentiated, and used with CUDA.
 
     Args:
         _has_transformed_inputs: A boolean denoting whether `train_inputs` are currently
@@ -44,7 +65,7 @@ class Model(Module, ABC):
             `_revert_to_original_inputs`. Note that this is necessary since
             transform / untransform cycle introduces numerical errors which lead
             to upstream errors during training.
-    """
+    """  # noqa: E501
 
     _has_transformed_inputs: bool = False
     _original_train_inputs: Optional[Tensor] = None
@@ -138,42 +159,6 @@ class Model(Module, ABC):
             f"`condition_on_observations` not implemented for {self.__class__.__name__}"
         )
 
-    def fantasize(
-        self,
-        X: Tensor,
-        sampler: MCSampler,
-        observation_noise: bool = True,
-        **kwargs: Any,
-    ) -> Model:
-        r"""Construct a fantasy model.
-
-        Constructs a fantasy model in the following fashion:
-        (1) compute the model posterior at `X` (including observation noise if
-        `observation_noise=True`).
-        (2) sample from this posterior (using `sampler`) to generate "fake"
-        observations.
-        (3) condition the model on the new fake observations.
-
-        Args:
-            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of
-                the feature space, `n'` is the number of points per batch, and
-                `batch_shape` is the batch shape (must be compatible with the
-                batch shape of the model).
-            sampler: The sampler used for sampling from the posterior at `X`.
-            observation_noise: If True, include observation noise.
-
-        Returns:
-            The constructed fantasy model.
-        """
-        propagate_grads = kwargs.pop("propagate_grads", False)
-        with fantasize_flag():
-            with settings.propagate_grads(propagate_grads):
-                post_X = self.posterior(X, observation_noise=observation_noise)
-            Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
-            return self.condition_on_observations(
-                X=self.transform_inputs(X), Y=Y_fantasized, **kwargs
-            )
-
     @classmethod
     def construct_inputs(
         cls,
@@ -239,7 +224,8 @@ class Model(Module, ABC):
         return super().eval()
 
     def train(self, mode: bool = True) -> Model:
-        r"""Puts the model in `train` mode and reverts to the original inputs.
+        r"""Put the model in `train` mode. Reverts to the original inputs if in `train`
+        mode (`mode=True`) or sets transformed inputs if in `eval` mode (`mode=False`).
 
         Args:
             mode: A boolean denoting whether to put in `train` or `eval` mode.
@@ -250,6 +236,100 @@ class Model(Module, ABC):
         else:
             self._set_transformed_inputs()
         return super().train(mode=mode)
+
+
+class FantasizeMixin(ABC):
+    """
+    Mixin to add a `fantasize` method to a `Model`.
+
+    Example:
+        class BaseModel:
+            def __init__(self, ...):
+            def condition_on_observations(self, ...):
+            def posterior(self, ...):
+            def transform_inputs(self, ...):
+
+        class ModelThatCanFantasize(BaseModel, FantasizeMixin):
+            def __init__(self, args):
+                super().__init__(args)
+
+        model = ModelThatCanFantasize(...)
+        model.fantasize(X)
+    """
+
+    @abstractmethod
+    def condition_on_observations(
+        self: TFantasizeMixin, X: Tensor, Y: Tensor, **kwargs: Any
+    ) -> TFantasizeMixin:
+        """
+        Classes that inherit from `FantasizeMixin` must implement
+        a `condition_on_observations` method.
+        """
+
+    @abstractmethod
+    def posterior(
+        self,
+        X: Tensor,
+        *args,
+        observation_noise: bool = False,
+        **kwargs: Any,
+    ) -> Posterior:
+        """
+        Classes that inherit from `FantasizeMixin` must implement
+        a `posterior` method.
+        """
+
+    @abstractmethod
+    def transform_inputs(
+        self,
+        X: Tensor,
+        input_transform: Optional[Module] = None,
+    ) -> Tensor:
+        """
+        Classes that inherit from `FantasizeMixin` must implement
+        a `transform_inputs` method.
+        """
+
+    # When Python 3.11 arrives we can start annotating return types like
+    # this as
+    # 'Self', but at this point the verbose 'T...' syntax is needed.
+    def fantasize(
+        self: TFantasizeMixin,
+        # TODO: see if any of these can be imported only if TYPE_CHECKING
+        X: Tensor,
+        sampler: MCSampler,
+        observation_noise: bool = True,
+        **kwargs: Any,
+    ) -> TFantasizeMixin:
+        r"""Construct a fantasy model.
+
+        Constructs a fantasy model in the following fashion:
+        (1) compute the model posterior at `X` (including observation noise if
+        `observation_noise=True`).
+        (2) sample from this posterior (using `sampler`) to generate "fake"
+        observations.
+        (3) condition the model on the new fake observations.
+
+        Args:
+            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of
+                the feature space, `n'` is the number of points per batch, and
+                `batch_shape` is the batch shape (must be compatible with the
+                batch shape of the model).
+            sampler: The sampler used for sampling from the posterior at `X`.
+            observation_noise: If True, include observation noise.
+            kwargs: Will be passed to `model.condition_on_observations`
+
+        Returns:
+            The constructed fantasy model.
+        """
+        propagate_grads = kwargs.pop("propagate_grads", False)
+        with fantasize_flag():
+            with settings.propagate_grads(propagate_grads):
+                post_X = self.posterior(X, observation_noise=observation_noise)
+            Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
+            return self.condition_on_observations(
+                X=self.transform_inputs(X), Y=Y_fantasized, **kwargs
+            )
 
 
 class ModelList(Model):
@@ -340,10 +420,7 @@ class ModelList(Model):
             )
             for i, idcs in group_indices.items()
         ]
-        if any(is_fully_bayesian(m) for m in self.models):
-            posterior = FullyBayesianPosteriorList(*posteriors)
-        else:
-            posterior = PosteriorList(*posteriors)
+        posterior = PosteriorList(*posteriors)
         if posterior_transform is not None:
             posterior = posterior_transform(posterior)
         return posterior
@@ -420,3 +497,17 @@ class ModelList(Model):
             except AttributeError:
                 transformed_X_list.append(X)
         return transformed_X_list
+
+    def load_state_dict(
+        self, state_dict: Mapping[str, Any], strict: bool = True
+    ) -> None:
+        """Initialize the fully Bayesian models before loading the state dict."""
+        for i, m in enumerate(self.models):
+            if is_fully_bayesian(m):
+                filtered_dict = {
+                    k.replace(f"models.{i}.", ""): v
+                    for k, v in state_dict.items()
+                    if k.startswith(f"models.{i}.")
+                }
+                m.load_state_dict(filtered_dict)
+        super().load_state_dict(state_dict=state_dict, strict=strict)

@@ -4,9 +4,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import warnings
 from typing import Optional
 
 import torch
+from botorch import settings
 from botorch.acquisition.multi_objective.multi_output_risk_measures import (
     IndependentCVaR,
     IndependentVaR,
@@ -16,8 +18,12 @@ from botorch.acquisition.multi_objective.multi_output_risk_measures import (
     MultiOutputWorstCase,
     MVaR,
 )
-from botorch.acquisition.multi_objective.objective import IdentityMCMultiOutputObjective
+from botorch.acquisition.multi_objective.objective import (
+    IdentityMCMultiOutputObjective,
+    WeightedMCMultiOutputObjective,
+)
 from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.transforms.input import InputPerturbation
 from botorch.utils.multi_objective.pareto import is_non_dominated
@@ -37,6 +43,17 @@ class TestMultiOutputRiskMeasureMCObjective(BotorchTestCase):
         with self.assertRaises(TypeError):
             MultiOutputRiskMeasureMCObjective(n_w=3)
 
+        # DeprecationWarning.
+        with self.assertWarnsRegex(DeprecationWarning, "`weights` argument"):
+            obj = NotSoAbstractMORiskMeasure(n_w=2, weights=[0.5, 0.3])
+        # Preprocessing function is constructed from the weight.
+        self.assertIsInstance(
+            obj.preprocessing_function, WeightedMCMultiOutputObjective
+        )
+        self.assertTrue(
+            torch.equal(obj.preprocessing_function.weights, torch.tensor([0.5, 0.3]))
+        )
+
         for dtype in (torch.float, torch.double):
             samples = torch.tensor(
                 [
@@ -52,7 +69,7 @@ class TestMultiOutputRiskMeasureMCObjective(BotorchTestCase):
                 device=self.device,
                 dtype=dtype,
             )
-            obj = NotSoAbstractMORiskMeasure(n_w=3, weights=None)
+            obj = NotSoAbstractMORiskMeasure(n_w=3)
             # test _prepare_samples
             expected_samples = samples.view(1, 2, 3, 2)
             prepared_samples = obj._prepare_samples(samples)
@@ -62,17 +79,15 @@ class TestMultiOutputRiskMeasureMCObjective(BotorchTestCase):
             expected_samples = samples.view(5, 3, 2, 3, 3)
             prepared_samples = obj._prepare_samples(samples)
             self.assertTrue(torch.equal(prepared_samples, expected_samples))
-            # negating with weights
+            # negating with preprocessing function
             obj = NotSoAbstractMORiskMeasure(
                 n_w=3,
-                weights=torch.tensor(
-                    [-1.0, -1.0, -1.0], device=self.device, dtype=dtype
+                preprocessing_function=WeightedMCMultiOutputObjective(
+                    weights=torch.tensor(
+                        [-1.0, -1.0, -1.0], device=self.device, dtype=dtype
+                    )
                 ),
             )
-            prepared_samples = obj._prepare_samples(samples)
-            self.assertTrue(torch.equal(prepared_samples, -expected_samples))
-            # List of weights
-            obj = NotSoAbstractMORiskMeasure(n_w=3, weights=[-1.0, -1.0, -1.0])
             prepared_samples = obj._prepare_samples(samples)
             self.assertTrue(torch.equal(prepared_samples, -expected_samples))
 
@@ -106,7 +121,9 @@ class TestMultiOutputExpectation(BotorchTestCase):
                 )
             )
             # w/ first output negated
-            obj.weights = torch.tensor([-1.0, 1.0], device=self.device, dtype=dtype)
+            obj.preprocessing_function = WeightedMCMultiOutputObjective(
+                torch.tensor([-1.0, 1.0], device=self.device, dtype=dtype)
+            )
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.allclose(
@@ -150,7 +167,9 @@ class TestIndependentCVaR(BotorchTestCase):
                 )
             )
             # w/ first output negated
-            obj.weights = torch.tensor([-1.0, 1.0], device=self.device, dtype=dtype)
+            obj.preprocessing_function = WeightedMCMultiOutputObjective(
+                torch.tensor([-1.0, 1.0], device=self.device, dtype=dtype)
+            )
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.allclose(
@@ -190,7 +209,9 @@ class TestIndependentVaR(BotorchTestCase):
                 )
             )
             # w/ weights
-            obj.weights = torch.tensor([0.5, -1.0], device=self.device, dtype=dtype)
+            obj.preprocessing_function = WeightedMCMultiOutputObjective(
+                torch.tensor([0.5, -1.0], device=self.device, dtype=dtype)
+            )
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.equal(
@@ -230,7 +251,9 @@ class TestMultiOutputWorstCase(BotorchTestCase):
                 )
             )
             # w/ weights
-            obj.weights = torch.tensor([-1.0, 2.0], device=self.device, dtype=dtype)
+            obj.preprocessing_function = WeightedMCMultiOutputObjective(
+                torch.tensor([-1.0, 2.0], device=self.device, dtype=dtype)
+            )
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.equal(
@@ -475,10 +498,16 @@ class TestMARS(BotorchTestCase):
         )
         model = GenericDeterministicModel(f=lambda X: X, num_outputs=2)
         model.input_transform = perturbation
-        mars.set_baseline_Y(
-            model=model, X_baseline=torch.tensor([[0.0, 0.0], [1.0, 1.0]])
-        )
+        X_baseline = torch.tensor([[0.0, 0.0], [1.0, 1.0]])
+        mars.set_baseline_Y(model=model, X_baseline=X_baseline)
         self.assertTrue(torch.equal(mars.baseline_Y, torch.tensor([[1.5, 1.5]])))
+        # With Y_samples.
+        mars._baseline_Y = None
+        Y_samples = model.posterior(X_baseline).mean
+        with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+            mars.set_baseline_Y(model=model, X_baseline=X_baseline, Y_samples=Y_samples)
+        self.assertTrue(torch.equal(mars.baseline_Y, torch.tensor([[1.5, 1.5]])))
+        self.assertTrue(any(w.category == BotorchWarning for w in ws))
         # With pre-processing function.
         mars = MARS(
             alpha=0.5,
@@ -486,9 +515,7 @@ class TestMARS(BotorchTestCase):
             chebyshev_weights=[0.5, 0.5],
             preprocessing_function=lambda Y: -Y,
         )
-        mars.set_baseline_Y(
-            model=model, X_baseline=torch.tensor([[0.0, 0.0], [1.0, 1.0]])
-        )
+        mars.set_baseline_Y(model=model, X_baseline=X_baseline)
         self.assertTrue(torch.equal(mars.baseline_Y, torch.tensor([[-0.5, -0.5]])))
 
     def test_get_Y_normalization_bounds(self):
@@ -614,4 +641,4 @@ class TestMARS(BotorchTestCase):
             mars_vals = mars(samples)
             self.assertEqual(mars_vals.shape, torch.Size([5, 3]))
             self.assertEqual(mars_vals.dtype, dtype)
-            self.assertEqual(mars_vals.device, self.device)
+            self.assertEqual(mars_vals.device.type, self.device.type)

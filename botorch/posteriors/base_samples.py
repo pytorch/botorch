@@ -21,7 +21,7 @@ def _reshape_base_samples_non_interleaved(
     This method is important for making sure that the `n`th base sample
     only effects the posterior sample for the `p`th point if `p >= n`.
     Without this reshaping, for M>=2, the posterior samples for all `n`
-    points.
+    points would be affected.
 
     Args:
         mvn: A MultitaskMultivariateNormal distribution.
@@ -34,7 +34,6 @@ def _reshape_base_samples_non_interleaved(
             base_samples suitable for a non-interleaved-multi-task
             or single-task covariance matrix.
     """
-    mvn
     if not mvn._interleaved:
         new_shape = sample_shape + mvn._output_shape[:-2] + mvn._output_shape[:-3:-1]
         base_samples = (

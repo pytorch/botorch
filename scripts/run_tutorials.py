@@ -21,6 +21,7 @@ from nbconvert import PythonExporter
 
 IGNORE = {  # ignored in smoke tests and full runs
     "vae_mnist.ipynb",  # requires setting paths to local data
+    "bope.ipynb",  # flaky, keeps failing the workflows
 }
 IGNORE_SMOKE_TEST_ONLY = {  # only used in smoke tests
     "thompson_sampling.ipynb",  # very slow without KeOps + GPU
@@ -59,7 +60,7 @@ def run_script(script: str, env: Optional[Dict[str, str]] = None) -> None:
 
 def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
     script = parse_ipynb(tutorial)
-    tic = time.time()
+    tic = time.monotonic()
     print(f"Running tutorial {tutorial.name}.")
     env = {"SMOKE_TEST": "True"} if smoke_test else None
     try:
@@ -79,7 +80,7 @@ def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
                 run_out.stderr,
             ]
         )
-    runtime = time.time() - tic
+    runtime = time.monotonic() - tic
     print(f"Running tutorial {tutorial.name} took {runtime:.2f} seconds.")
 
 

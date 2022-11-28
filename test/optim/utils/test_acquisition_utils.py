@@ -6,11 +6,8 @@
 
 from __future__ import annotations
 
-import math
 import warnings
-from copy import deepcopy
 
-import numpy as np
 import torch
 from botorch import settings
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
@@ -29,34 +26,12 @@ from botorch.exceptions import BotorchError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import ModelListGP, SingleTaskGP
 from botorch.models.transforms.input import Warp
-from botorch.optim.utils import (
-    _expand_bounds,
-    _get_extra_mll_args,
-    _handle_numerical_errors,
-    columnwise_clamp,
-    fix_features,
-    get_X_baseline,
-    sample_all_priors,
-)
+from botorch.optim.utils import columnwise_clamp, fix_features, get_X_baseline
+from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
-from gpytorch.kernels.matern_kernel import MaternKernel
-from gpytorch.kernels.scale_kernel import ScaleKernel
-from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
-from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
-from gpytorch.priors.prior import Prior
-from gpytorch.priors.torch_priors import GammaPrior
-from gpytorch.utils.errors import NanError, NotPSDError
-
-
-class DummyPrior(Prior):
-    arg_constraints = {}
-
-    def rsample(self, sample_shape=torch.Size()):  # noqa: B008
-        raise NotImplementedError
 
 
 class TestColumnWiseClamp(BotorchTestCase):
@@ -170,148 +145,6 @@ class TestFixFeatures(BotorchTestCase):
         )
 
 
-class TestGetExtraMllArgs(BotorchTestCase):
-    def test_get_extra_mll_args(self):
-        train_X = torch.rand(3, 5)
-        train_Y = torch.rand(3, 1)
-        model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
-
-        # test ExactMarginalLogLikelihood
-        exact_mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        exact_extra_args = _get_extra_mll_args(mll=exact_mll)
-        self.assertEqual(len(exact_extra_args), 1)
-        self.assertTrue(torch.equal(exact_extra_args[0], train_X))
-
-        # test SumMarginalLogLikelihood
-        model2 = ModelListGP(model)
-        sum_mll = SumMarginalLogLikelihood(model2.likelihood, model2)
-        sum_mll_extra_args = _get_extra_mll_args(mll=sum_mll)
-        self.assertEqual(len(sum_mll_extra_args), 1)
-        self.assertEqual(len(sum_mll_extra_args[0]), 1)
-        self.assertTrue(torch.equal(sum_mll_extra_args[0][0], train_X))
-
-        # test unsupported MarginalLogLikelihood type
-        unsupported_mll = MarginalLogLikelihood(model.likelihood, model)
-        unsupported_mll_extra_args = _get_extra_mll_args(mll=unsupported_mll)
-        self.assertEqual(unsupported_mll_extra_args, [])
-
-
-class TestExpandBounds(BotorchTestCase):
-    def test_expand_bounds(self):
-        X = torch.zeros(2, 3)
-        expected_bounds = torch.zeros(2, 3)
-        # bounds is float
-        bounds = 0.0
-        expanded_bounds = _expand_bounds(bounds=bounds, X=X)
-        self.assertTrue(torch.equal(expected_bounds, expanded_bounds))
-        # bounds is 0-d
-        bounds = torch.tensor(0.0)
-        expanded_bounds = _expand_bounds(bounds=bounds, X=X)
-        self.assertTrue(torch.equal(expected_bounds, expanded_bounds))
-        # bounds is 1-d
-        bounds = torch.zeros(3)
-        expanded_bounds = _expand_bounds(bounds=bounds, X=X)
-        self.assertTrue(torch.equal(expected_bounds, expanded_bounds))
-        # bounds is 2-d
-        bounds = torch.zeros(1, 3)
-        expanded_bounds = _expand_bounds(bounds=bounds, X=X)
-        self.assertTrue(torch.equal(expected_bounds, expanded_bounds))
-        # bounds is > 2-d
-        bounds = torch.zeros(1, 1, 3)
-        with self.assertRaises(RuntimeError):
-            # X does not have a t-batch
-            expanded_bounds = _expand_bounds(bounds=bounds, X=X)
-        X = torch.zeros(4, 2, 3)
-        expanded_bounds = _expand_bounds(bounds=bounds, X=X)
-        self.assertTrue(torch.equal(expanded_bounds, torch.zeros_like(X)))
-        with self.assertRaises(RuntimeError):
-            # bounds is not broadcastable to X
-            expanded_bounds = _expand_bounds(bounds=torch.zeros(2, 1, 3), X=X)
-        # bounds is None
-        expanded_bounds = _expand_bounds(bounds=None, X=X)
-        self.assertIsNone(expanded_bounds)
-
-
-class TestSampleAllPriors(BotorchTestCase):
-    def test_sample_all_priors(self):
-        for dtype in (torch.float, torch.double):
-            train_X = torch.rand(3, 5, device=self.device, dtype=dtype)
-            train_Y = torch.rand(3, 1, device=self.device, dtype=dtype)
-            model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
-            mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            mll.to(device=self.device, dtype=dtype)
-            original_state_dict = dict(deepcopy(mll.model.state_dict()))
-            sample_all_priors(model)
-
-            # make sure one of the hyperparameters changed
-            self.assertTrue(
-                dict(model.state_dict())["likelihood.noise_covar.raw_noise"]
-                != original_state_dict["likelihood.noise_covar.raw_noise"]
-            )
-            # check that lengthscales are all different
-            ls = model.covar_module.base_kernel.raw_lengthscale.view(-1).tolist()
-            self.assertTrue(all(ls[0] != ls[i]) for i in range(1, len(ls)))
-
-            # change one of the priors to a dummy prior that does not support sampling
-            model.covar_module = ScaleKernel(
-                MaternKernel(
-                    nu=2.5,
-                    ard_num_dims=model.train_inputs[0].shape[-1],
-                    batch_shape=model._aug_batch_shape,
-                    lengthscale_prior=DummyPrior(),
-                ),
-                batch_shape=model._aug_batch_shape,
-                outputscale_prior=GammaPrior(2.0, 0.15),
-            )
-            original_state_dict = dict(deepcopy(mll.model.state_dict()))
-            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-                sample_all_priors(model)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue("rsample" in str(ws[0].message))
-
-            # the lengthscale should not have changed because sampling is
-            # not implemented for DummyPrior
-            self.assertTrue(
-                torch.equal(
-                    dict(model.state_dict())[
-                        "covar_module.base_kernel.raw_lengthscale"
-                    ],
-                    original_state_dict["covar_module.base_kernel.raw_lengthscale"],
-                )
-            )
-
-            # set setting_closure to None and make sure RuntimeError is raised
-            prior_tuple = model.likelihood.noise_covar._priors["noise_prior"]
-            model.likelihood.noise_covar._priors["noise_prior"] = (
-                prior_tuple[0],
-                prior_tuple[1],
-                None,
-            )
-            with self.assertRaises(RuntimeError):
-                sample_all_priors(model)
-
-
-class TestHelpers(BotorchTestCase):
-    def test_handle_numerical_errors(self):
-        x = np.zeros(1)
-
-        with self.assertRaisesRegex(NotPSDError, "foo"):
-            _handle_numerical_errors(error=NotPSDError("foo"), x=x)
-
-        for error in (
-            NanError(),
-            RuntimeError("singular"),
-            RuntimeError("input is not positive-definite"),
-        ):
-            fake_loss, fake_grad = _handle_numerical_errors(error=error, x=x)
-            self.assertTrue(math.isnan(fake_loss))
-            self.assertEqual(fake_grad.shape, x.shape)
-            self.assertTrue(np.isnan(fake_grad).all())
-
-        with self.assertRaisesRegex(RuntimeError, "foo"):
-            _handle_numerical_errors(error=RuntimeError("foo"), x=x)
-
-
 class TestGetXBaseline(BotorchTestCase):
     def test_get_X_baseline(self):
         tkwargs = {"device": self.device}
@@ -352,7 +185,7 @@ class TestGetXBaseline(BotorchTestCase):
             )
             self.assertTrue(torch.equal(X, X_train))
 
-            # test acquisitipon function without X_baseline or model
+            # test acquisition function without X_baseline or model
             acqf = FixedFeatureAcquisitionFunction(acqf, d=2, columns=[0], values=[0])
             with warnings.catch_warnings(record=True) as w, settings.debug(True):
                 X_rnd = get_X_baseline(
@@ -370,6 +203,7 @@ class TestGetXBaseline(BotorchTestCase):
                 moo_model,
                 ref_point=ref_point,
                 X_baseline=X_train[:2],
+                sampler=IIDNormalSampler(sample_shape=torch.Size([2])),
                 cache_root=False,
             )
             X = get_X_baseline(

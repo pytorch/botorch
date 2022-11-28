@@ -28,6 +28,7 @@ import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
 from botorch.models.gpytorch import GPyTorchModel, MultiTaskGPyTorchModel
+from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.posteriors.multitask import MultitaskGPPosterior
@@ -41,15 +42,6 @@ from gpytorch.kernels.index_kernel import IndexKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.multitask_kernel import MultitaskKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
-from gpytorch.lazy import (
-    BatchRepeatLazyTensor,
-    CatLazyTensor,
-    DiagLazyTensor,
-    KroneckerProductDiagLazyTensor,
-    KroneckerProductLazyTensor,
-    lazify,
-    RootLazyTensor,
-)
 from gpytorch.likelihoods.gaussian_likelihood import (
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
@@ -68,10 +60,19 @@ from gpytorch.priors.torch_priors import GammaPrior
 from gpytorch.settings import detach_test_caches
 from gpytorch.utils.errors import CachingError
 from gpytorch.utils.memoize import cached, pop_from_cache
+from linear_operator.operators import (
+    BatchRepeatLinearOperator,
+    CatLinearOperator,
+    DiagLinearOperator,
+    KroneckerProductDiagLinearOperator,
+    KroneckerProductLinearOperator,
+    RootLinearOperator,
+    to_linear_operator,
+)
 from torch import Tensor
 
 
-class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
+class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
     r"""Multi-Task GP model using an ICM kernel, inferring observation noise.
 
     Multi-task exact GP that uses a simple ICM kernel. Can be single-output or
@@ -377,7 +378,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         self.to(train_X)
 
 
-class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
+class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
     """Multi-task GP with Kronecker structure, using an ICM kernel.
 
     This model assumes the "block design" case, i.e., it requires that all tasks
@@ -579,15 +580,17 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
         )
         task_root = task_rootlt.root
         if task_covar.batch_shape != X.shape[:-2]:
-            task_covar = BatchRepeatLazyTensor(task_covar, batch_repeat=X.shape[:-2])
-            task_root = BatchRepeatLazyTensor(
-                lazify(task_root), batch_repeat=X.shape[:-2]
+            task_covar = BatchRepeatLinearOperator(
+                task_covar, batch_repeat=X.shape[:-2]
+            )
+            task_root = BatchRepeatLinearOperator(
+                to_linear_operator(task_root), batch_repeat=X.shape[:-2]
             )
 
-        task_covar_rootlt = RootLazyTensor(task_root)
+        task_covar_rootlt = RootLinearOperator(task_root)
 
         # construct RR' \approx Kxx
-        data_data_covar = self.train_full_covar.lazy_tensors[0]
+        data_data_covar = self.train_full_covar.linear_ops[0]
         # populate the diagonalziation caches for the root and inverse root
         # decomposition
         data_data_evals, data_data_evecs = data_data_covar.diagonalization()
@@ -607,9 +610,9 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
                 dtype=data_data_evals.dtype,
                 device=data_data_evals.device,
             )
-            data_data_evecs = CatLazyTensor(
+            data_data_evecs = CatLinearOperator(
                 data_data_evecs,
-                lazify(zero_evecs),
+                to_linear_operator(zero_evecs),
                 dim=-1,
                 output_device=data_data_evals.device,
             )
@@ -622,24 +625,26 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
 
         # now update root so that \tilde{R}\tilde{R}' \approx K_{(x,xt), (x,xt)}
         # cloning preserves the gradient history
-        updated_lazy_tensor = data_data_covar.cat_rows(
+        updated_linear_op = data_data_covar.cat_rows(
             cross_mat=test_data_covar.clone(),
             new_mat=test_test_covar,
             method="diagonalization",
         )
-        updated_root = updated_lazy_tensor.root_decomposition().root
+        updated_root = updated_linear_op.root_decomposition().root
         # occasionally, there's device errors so enforce this comes out right
         updated_root = updated_root.to(data_data_covar.device)
 
         # build a root decomposition of the joint train/test covariance matrix
         # construct (\tilde{R} \otimes M)(\tilde{R} \otimes M)' \approx
         # (K_{(x,xt), (x,xt)} \otimes Ktt)
-        joint_covar = RootLazyTensor(
-            KroneckerProductLazyTensor(updated_root, task_covar_rootlt.root.detach())
+        joint_covar = RootLinearOperator(
+            KroneckerProductLinearOperator(
+                updated_root, task_covar_rootlt.root.detach()
+            )
         )
 
         # construct K_{xt, x} \otimes Ktt
-        test_obs_kernel = KroneckerProductLazyTensor(test_data_covar, task_covar)
+        test_obs_kernel = KroneckerProductLinearOperator(test_data_covar, task_covar)
 
         # collect y - \mu(x) and \mu(X)
         train_diff = self.train_targets - self.mean_module(train_x)
@@ -648,7 +653,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
         test_mean = self.mean_module(X)
 
         train_noise = self.likelihood._shaped_noise_covar(train_x.shape)
-        diagonal_noise = isinstance(train_noise, DiagLazyTensor)
+        diagonal_noise = isinstance(train_noise, DiagLinearOperator)
         if detach_test_caches.on():
             train_noise = train_noise.detach()
         test_noise = (
@@ -662,20 +667,22 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
             + test_mean
         )
         # next the predictive variance, assume diagonal noise
-        test_var_term = KroneckerProductLazyTensor(test_test_covar, task_covar).diag()
+        test_var_term = KroneckerProductLinearOperator(
+            test_test_covar, task_covar
+        ).diag()
 
         if diagonal_noise:
             task_evals, task_evecs = self._task_covar_matrix.diagonalization()
             # TODO: make this be the default KPMatmulLT diagonal method in gpytorch
             full_data_inv_evals = (
-                KroneckerProductDiagLazyTensor(
-                    DiagLazyTensor(data_data_evals), DiagLazyTensor(task_evals)
+                KroneckerProductDiagLinearOperator(
+                    DiagLinearOperator(data_data_evals), DiagLinearOperator(task_evals)
                 )
                 + train_noise
             ).inverse()
-            test_train_hadamard = KroneckerProductLazyTensor(
-                test_data_covar.matmul(data_data_evecs).evaluate() ** 2,
-                task_covar.matmul(task_evecs).evaluate() ** 2,
+            test_train_hadamard = KroneckerProductLinearOperator(
+                test_data_covar.matmul(data_data_evecs).to_dense() ** 2,
+                task_covar.matmul(task_evecs).to_dense() ** 2,
             )
             data_var_term = test_train_hadamard.matmul(full_data_inv_evals).sum(dim=-1)
         else:
@@ -684,7 +691,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
             # should be a kronecker lt, R = \Sigma_X^{-1/2} \kron \Sigma_T^{-1/2}
             # TODO: enforce the diagonalization to return a KPLT for all shapes in
             # gpytorch or dense linear algebra for small shapes
-            data_noise, task_noise = train_noise.lazy_tensors
+            data_noise, task_noise = train_noise.linear_ops
             data_noise_root = data_noise.root_inv_decomposition(
                 method="diagonalization"
             )
@@ -716,33 +723,35 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
 
             # we add one to the eigenvalues as above (not just for stability)
             full_data_inv_evals = (
-                KroneckerProductDiagLazyTensor(
-                    DiagLazyTensor(w_data_evals), DiagLazyTensor(w_task_evals)
+                KroneckerProductDiagLinearOperator(
+                    DiagLinearOperator(w_data_evals), DiagLinearOperator(w_task_evals)
                 )
                 .add_jitter(1.0)
                 .inverse()
             )
 
             test_data_comp = (
-                test_data_covar.matmul(data_noise_root).matmul(w_data_evecs).evaluate()
+                test_data_covar.matmul(data_noise_root).matmul(w_data_evecs).to_dense()
                 ** 2
             )
             task_comp = (
-                task_covar.matmul(task_noise_root).matmul(w_task_evecs).evaluate() ** 2
+                task_covar.matmul(task_noise_root).matmul(w_task_evecs).to_dense() ** 2
             )
 
-            test_train_hadamard = KroneckerProductLazyTensor(test_data_comp, task_comp)
+            test_train_hadamard = KroneckerProductLinearOperator(
+                test_data_comp, task_comp
+            )
             data_var_term = test_train_hadamard.matmul(full_data_inv_evals).sum(dim=-1)
 
         pred_variance = test_var_term - data_var_term
         specialized_mvn = MultitaskMultivariateNormal(
-            pred_mean, DiagLazyTensor(pred_variance)
+            pred_mean, DiagLinearOperator(pred_variance)
         )
         if observation_noise:
             specialized_mvn = self.likelihood(specialized_mvn)
 
         posterior = MultitaskGPPosterior(
-            mvn=specialized_mvn,
+            distribution=specialized_mvn,
             joint_covariance_matrix=joint_covar,
             test_train_covar=test_obs_kernel,
             train_diff=train_diff,

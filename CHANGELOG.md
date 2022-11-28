@@ -2,6 +2,140 @@
 
 The release log for BoTorch.
 
+## [0.7.3] - Nov 10, 2022
+
+### Highlights
+* #1454 fixes a critical bug that affected multi-output `BatchedMultiOutputGPyTorchModel`s that were using a `Normalize` or `InputStandardize` input transform and trained using `fit_gpytorch_model/mll` with `sequential=True` (which was the default until 0.7.3). The input transform buffers would be reset after model training, leading to the model being trained on normalized input data but evaluated on raw inputs. This bug had been affecting model fits since the 0.6.5 release.
+* #1479 changes the inheritance structure of `Model`s in a backwards-incompatible way. If your code relies on `isinstance` checks with BoTorch `Model`s, especially `SingleTaskGP`, you should revisit these checks to make sure they still work as expected.
+
+#### Compatibility
+* Require linear_operator == 0.2.0 (#1491).
+
+#### New Features
+* Introduce `bvn`, `MVNXPB`, `TruncatedMultivariateNormal`, and `UnifiedSkewNormal` classes / methods (#1394, #1408).
+* Introduce `AffineInputTransform` (#1461).
+* Introduce a `subset_transform` decorator to consolidate subsetting of inputs in input transforms (#1468).
+
+#### Other Changes
+* Add a warning when using float dtype (#1193).
+* Let Pyre know that `AcquisitionFunction.model` is a `Model` (#1216).
+* Remove custom `BlockDiagLazyTensor` logic when using `Standardize` (#1414).
+* Expose `_aug_batch_shape` in `SaasFullyBayesianSingleTaskGP` (#1448).
+* Adjust `PairwiseGP` `ScaleKernel` prior (#1460).
+* Pull out `fantasize` method into a `FantasizeMixin` class, so it isn't so widely inherited (#1462, #1479).
+* Don't use Pyro JIT by default , since it was causing a memory leak (#1474).
+* Use `get_default_partitioning_alpha` for NEHVI input constructor (#1481).
+
+#### Bug Fixes
+* Fix `batch_shape` property of `ModelListGPyTorchModel` (#1441).
+* Tutorial fixes (#1446, #1475).
+* Bug-fix for Proximal acquisition function wrapper for negative base acquisition functions (#1447).
+* Handle `RuntimeError` due to constraint violation while sampling from priors (#1451).
+* Fix bug in model list with output indices (#1453).
+* Fix input transform bug when sequentially training a `BatchedMultiOutputGPyTorchModel` (#1454).
+* Fix a bug in `_fit_multioutput_independent` that failed mll comparison (#1455).
+* Fix box decomposition behavior with empty or None `Y` (#1489).
+
+
+## [0.7.2] - Sep 27, 2022
+
+#### New Features
+* A full refactor of model fitting methods (#1134).
+  * This introduces a new `fit_gpytorch_mll` method that multiple-dispatches
+    on the model type. Users may register custom fitting routines for different
+    combinations of MLLs, Likelihoods, and Models.
+  * Unlike previous fitting helpers, `fit_gpytorch_mll` does **not** pass
+   `kwargs` to `optimizer` and instead introduces an optional `optimizer_kwargs`
+    argument.
+  * When a model fitting attempt fails, `botorch.fit` methods restore modules to their
+    original states.
+  * `fit_gpytorch_mll` throws a `ModelFittingError` when all model fitting attempts fail.
+  * Upon returning from `fit_gpytorch_mll`, `mll.training` will be `True` if fitting failed
+    and `False` otherwise.
+* Allow custom bounds to be passed in to `SyntheticTestFunction` (#1415).
+
+#### Deprecations
+* Deprecate weights argument of risk measures in favor of a `preprocessing_function` (#1400),
+* Deprecate `fit_gyptorch_model`; to be superseded by `fit_gpytorch_mll`.
+
+#### Other Changes
+* Support risk measures in MOO input constructors (#1401).
+
+#### Bug Fixes
+* Fix fully Bayesian state dict loading when there are more than 10 models (#1405).
+* Fix `batch_shape` property of `SaasFullyBayesianSingleTaskGP` (#1413).
+* Fix `model_list_to_batched` ignoring the `covar_module` of the input models (#1419).
+
+
+## [0.7.1] - Sep 13, 2022
+
+#### Compatibility
+* Pin GPyTorch >= 1.9.0 (#1397).
+* Pin linear_operator == 0.1.1 (#1397).
+
+#### New Features
+* Implement `SaasFullyBayesianMultiTaskGP` and related utilities (#1181, #1203).
+
+#### Other Changes
+* Support loading a state dict for `SaasFullyBayesianSingleTaskGP` (#1120).
+* Update `load_state_dict` for `ModelList` to support fully Bayesian models (#1395).
+* Add `is_one_to_many` attribute to input transforms (#1396).
+
+#### Bug Fixes
+* Fix `PairwiseGP` on GPU (#1388).
+
+
+## [0.7.0] - Sep 7, 2022
+
+#### Compatibility
+* Require python >= 3.8 (via #1347).
+* Support for python 3.10 (via #1379).
+* Require PyTorch >= 1.11 (via (#1363).
+* Require GPyTorch >= 1.9.0 (#1347).
+  * GPyTorch 1.9.0 is a major refactor that factors out the lazy tensor
+  functionality into a new `LinearOperator` library, which required
+  a number of adjustments to BoTorch (#1363, #1377).
+* Require pyro >= 1.8.2 (#1379).
+
+#### New Features
+* Add ability to generate the features appended in the `AppendFeatures` input
+transform via a generic callable (#1354).
+* Add new synthetic test functions for sensitivity analysis (#1355, #1361).
+
+#### Other Changes
+* Use `time.monotonic()` instead of `time.time()` to measure duration (#1353).
+* Allow passing `Y_samples` directly in `MARS.set_baseline_Y` (#1364).
+
+#### Bug Fixes
+* Patch `state_dict` loading for `PairwiseGP` (#1359).
+* Fix `batch_shape` handling in `Normalize` and `InputStandardize` transforms (#1360).
+
+
+## [0.6.6] - Aug 12, 2022
+
+#### Compatibility
+* Require GPyTorch >= 1.8.1 (#1347).
+
+#### New Features
+* Support batched models in `RandomFourierFeatures` (#1336).
+* Add a `skip_expand` option to `AppendFeatures` (#1344).
+
+#### Other Changes
+* Allow `qProbabilityOfImprovement` to use batch-shaped `best_f` (#1324).
+* Make `optimize_acqf` re-attempt failed optimization runs and handle optimization
+errors in `optimize_acqf` and `gen_candidates_scipy` better (#1325).
+* Reduce memory overhead in `MARS.set_baseline_Y` (#1346).
+
+#### Bug Fixes
+* Fix bug where `outcome_transform` was ignored for `ModelListGP.fantasize` (#1338).
+* Fix bug causing `get_polytope_samples` to sample incorrectly when variables
+live in multiple dimensions (#1341).
+
+#### Documentation
+* Add more descriptive docstrings for models (#1327, #1328, #1329, #1330) and for other
+classes (#1313).
+* Expanded on the model documentation at [botorch.org/docs/models](https://botorch.org/docs/models) (#1337).
+
 ## [0.6.5] - Jul 15, 2022
 
 #### Compatibility

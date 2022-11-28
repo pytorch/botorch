@@ -6,43 +6,44 @@
 from typing import Optional, Tuple, Union
 
 import torch
+from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.lazy import lazify, LazyTensor
+from linear_operator.operators import LinearOperator, to_linear_operator
 from torch import Tensor
 
 
 class MultitaskGPPosterior(GPyTorchPosterior):
     def __init__(
         self,
-        mvn: MultivariateNormal,
-        joint_covariance_matrix: LazyTensor,
-        test_train_covar: LazyTensor,
+        distribution: MultivariateNormal,
+        joint_covariance_matrix: LinearOperator,
+        test_train_covar: LinearOperator,
         train_diff: Tensor,
         test_mean: Tensor,
-        train_train_covar: LazyTensor,
-        train_noise: Union[LazyTensor, Tensor],
-        test_noise: Optional[Union[LazyTensor, Tensor]] = None,
+        train_train_covar: LinearOperator,
+        train_noise: Union[LinearOperator, Tensor],
+        test_noise: Optional[Union[LinearOperator, Tensor]] = None,
     ):
         r"""
         Posterior class for a Kronecker Multi-task GP model using with ICM kernel.
         Extends the standard GPyTorch posterior class by overwriting the rsample
         method. In general, this posterior should ONLY be used for MTGP models
         that have structured covariances. It should also only be used internally when
-        called from the KroneckerMultiTaskGP.posterior(...) method.
+        called from the `KroneckerMultiTaskGP.posterior(...)` method.
 
         Args:
-            mvn: Posterior multivariate normal distribution
+            distribution: Posterior multivariate normal distribution.
             joint_covariance_matrix: Joint test train covariance matrix over the entire
-                tensor
-            train_train_covar: covariance matrix of train points in the data space
-            test_obs_covar: covariance matrix of test x train points in the data space
-            train_diff: difference between train mean and train responses
-            train_noise: training noise covariance
+                tensor.
+            train_train_covar: Covariance matrix of train points in the data space.
+            test_obs_covar: Covariance matrix of test x train points in the data space.
+            train_diff: Difference between train mean and train responses.
+            train_noise: Training noise covariance.
             test_noise: Only used if posterior should contain observation noise.
-                testing noise covariance
+                Testing noise covariance.
         """
-        super().__init__(mvn=mvn)
+        super().__init__(distribution=distribution)
         self._is_mt = True
 
         self.joint_covariance_matrix = joint_covariance_matrix
@@ -55,12 +56,16 @@ class MultitaskGPPosterior(GPyTorchPosterior):
         self.observation_noise = self.test_noise is not None
 
         self.num_train = self.train_diff.shape[-2]
-        self.num_tasks = self.test_train_covar.lazy_tensors[-1].shape[-1]
+        # The following assumes test_train_covar is a SumLinearOperator. TODO: Improve
+        self.num_tasks = self.test_train_covar.linear_ops[-1].shape[-1]
 
     @property
     def base_sample_shape(self) -> torch.Size:
-        # overwrites the standard base sample shape call to inform samplers that
-        # n + 2 n_train samples need to be drawn rather than n samples
+        r"""The shape of a base sample used for constructing posterior samples.
+
+        Overwrites the standard `base_sample_shape` call to inform samplers that
+        `n + 2 n_train` samples need to be drawn rather than n samples.
+        """
         batch_shape = self.joint_covariance_matrix.shape[:-2]
         sampling_shape = (
             self.joint_covariance_matrix.shape[-2] + self.train_noise.shape[-2]
@@ -70,14 +75,15 @@ class MultitaskGPPosterior(GPyTorchPosterior):
         return batch_shape + torch.Size((sampling_shape,))
 
     @property
-    def device(self) -> torch.device:
-        r"""The torch device of the posterior."""
-        return self.test_mean.device
+    def batch_range(self) -> Tuple[int, int]:
+        r"""The t-batch range.
 
-    @property
-    def dtype(self) -> torch.dtype:
-        r"""The torch dtype of the posterior."""
-        return self.test_mean.dtype
+        This is used in samplers to identify the t-batch component of the
+        `base_sample_shape`. The base samples are expanded over the t-batches to
+        provide consistency in the acquisition values, i.e., to ensure that a
+        candidate produces same value regardless of its position on the t-batch.
+        """
+        return (0, -1)
 
     def _prepare_base_samples(
         self, sample_shape: torch.Size, base_samples: Tensor = None
@@ -126,8 +132,11 @@ class MultitaskGPPosterior(GPyTorchPosterior):
                     base_samples = torch.cat((base_samples, new_base_samples), dim=-1)
                     base_samples = base_samples.unsqueeze(-1)
                 else:
-                    # nuke the base samples if we cannot use them.
-                    base_samples = None
+                    raise BotorchTensorDimensionError(
+                        "The base samples are not compatible with base sample shape. "
+                        f"Received base samples of shape {base_samples.shape}, "
+                        f"expected {base_sample_shapes}."
+                    )
 
         if base_samples is None:
             # TODO: Allow qMC sampling
@@ -170,14 +179,28 @@ class MultitaskGPPosterior(GPyTorchPosterior):
 
         return base_samples, noise_base_samples, test_noise_base_samples
 
-    def rsample(
+    def rsample_from_base_samples(
         self,
-        sample_shape: Optional[torch.Size] = None,
-        base_samples: Optional[Tensor] = None,
+        sample_shape: torch.Size,
+        base_samples: Optional[Tensor],
         train_diff: Optional[Tensor] = None,
     ) -> Tensor:
-        if sample_shape is None:
-            sample_shape = torch.Size([1])
+        r"""Sample from the posterior (with gradients) using base samples.
+
+        Args:
+            sample_shape: A `torch.Size` object specifying the sample shape. To
+                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
+                of `n` samples each, set to `torch.Size([b, n])`.
+            base_samples: An (optional) Tensor of `N(0, I)` base samples of
+                appropriate dimension, typically obtained from a `Sampler`.
+                This is used for deterministic optimization.
+            train_diff: Difference between train mean and train responses to assume
+                during sampling.
+
+        Returns:
+            Samples from the posterior, a tensor of shape
+            `self._extended_shape(sample_shape=sample_shape)`.
+        """
         if train_diff is None:
             train_diff = self.train_diff
 
@@ -226,12 +249,33 @@ class MultitaskGPPosterior(GPyTorchPosterior):
 
         return final_samples
 
+    def rsample(
+        self,
+        sample_shape: Optional[torch.Size] = None,
+    ) -> Tensor:
+        r"""Sample from the posterior (with gradients).
+
+        Args:
+            sample_shape: A `torch.Size` object specifying the sample shape. To
+                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
+                of `n` samples each, set to `torch.Size([b, n])`.
+
+        Returns:
+            Samples from the posterior, a tensor of shape
+            `self._extended_shape(sample_shape=sample_shape)`.
+        """
+        if sample_shape is None:
+            sample_shape = torch.Size([1])
+        return self.rsample_from_base_samples(
+            sample_shape=sample_shape, base_samples=None
+        )
+
     def _draw_from_base_covar(
-        self, covar: Union[Tensor, LazyTensor], base_samples: Tensor
+        self, covar: Union[Tensor, LinearOperator], base_samples: Tensor
     ) -> Tensor:
         # Now reparameterize those base samples
-        if not isinstance(covar, LazyTensor):
-            covar = lazify(covar)
+        if not isinstance(covar, LinearOperator):
+            covar = to_linear_operator(covar)
         covar_root = covar.root_decomposition().root
         # If necessary, adjust base_samples for rank of root decomposition
         if covar_root.shape[-1] < base_samples.shape[-2]:

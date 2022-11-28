@@ -27,33 +27,38 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import torch
 from botorch.acquisition.objective import PosteriorTransform
+from botorch.exceptions import UnsupportedError
 from botorch.models.likelihoods.pairwise import (
     PairwiseLikelihood,
     PairwiseProbitLikelihood,
 )
-from botorch.models.model import Model
+from botorch.models.model import FantasizeMixin, Model
 from botorch.models.transforms.input import InputTransform
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
 from gpytorch import settings
-from gpytorch.constraints import Positive
+from gpytorch.constraints import GreaterThan, Interval
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
-from gpytorch.lazy.lazy_tensor import LazyTensor
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.mlls import MarginalLogLikelihood
 from gpytorch.models.gp import GP
-from gpytorch.module import Module
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
-from gpytorch.utils.cholesky import psd_safe_cholesky
+from linear_operator.operators import LinearOperator, RootLinearOperator
+from linear_operator.utils.cholesky import psd_safe_cholesky
 from scipy import optimize
 from torch import float32, float64, Tensor
 from torch.nn.modules.module import _IncompatibleKeys
 
 
-class PairwiseGP(Model, GP):
+# Why we subclass GP even though it provides no functionality:
+# if this subclassing is removed, we get the following GPyTorch error:
+# "RuntimeError: All MarginalLogLikelihood objects must be given a GP object as
+# a model. If you are using a more complicated model involving a GP, pass the
+# underlying GP object as the model, not a full PyTorch module."
+class PairwiseGP(Model, GP, FantasizeMixin):
     r"""Probit GP for preference learning with Laplace approximation
 
     A probit-likelihood GP that learns via pairwise comparison data, using a
@@ -70,7 +75,7 @@ class PairwiseGP(Model, GP):
     (implicitly setting it to 1) and use ScaleKernel to scale the function.
 
     In the example below, the user/decision maker has stated that they prefer
-    the first item over the second item and the third item over the first item,
+    the first item over the second item and the third item over the second item,
     generating comparisons [0, 1] and [2, 1].
 
     Example:
@@ -99,7 +104,7 @@ class PairwiseGP(Model, GP):
         datapoints: Tensor,
         comparisons: Tensor,
         likelihood: Optional[PairwiseLikelihood] = None,
-        covar_module: Optional[Module] = None,
+        covar_module: Optional[ScaleKernel] = None,
         input_transform: Optional[InputTransform] = None,
         **kwargs,
     ) -> None:
@@ -133,6 +138,7 @@ class PairwiseGP(Model, GP):
 
         self.train_inputs = []
         self.train_targets = None
+        self.utility = None
 
         self.pred_cov_fac_need_update = True
         self.dim = None
@@ -144,7 +150,7 @@ class PairwiseGP(Model, GP):
         self.set_train_data(datapoints, comparisons, update_model=False)
 
         # Set optional parameters
-        # jitter to add for numerical stability
+        # Explicitly set jitter for numerical stability in psd_safe_cholesky
         self._jitter = kwargs.get("jitter", 1e-6)
         # Stopping creteria in scipy.optimize.fsolve used to find f_map in _update()
         # If None, set to 1e-6 by default in _update
@@ -168,6 +174,7 @@ class PairwiseGP(Model, GP):
         # estimates away from scale value that would make Phi(f(x)) saturate
         # at 0 or 1
         if covar_module is None:
+            os_lb, os_ub = 1e-2, 1e2
             ls_prior = GammaPrior(1.2, 0.5)
             ls_prior_mode = (ls_prior.concentration - 1) / ls_prior.rate
             covar_module = ScaleKernel(
@@ -175,13 +182,20 @@ class PairwiseGP(Model, GP):
                     batch_shape=self.batch_shape,
                     ard_num_dims=self.dim,
                     lengthscale_prior=ls_prior,
-                    lengthscale_constraint=Positive(
-                        transform=None, initial_value=ls_prior_mode
+                    lengthscale_constraint=GreaterThan(
+                        lower_bound=1e-4, transform=None, initial_value=ls_prior_mode
                     ),
                 ),
-                outputscale_prior=SmoothedBoxPrior(a=1, b=4),
+                outputscale_prior=SmoothedBoxPrior(a=os_lb, b=os_ub),
+                # make sure we won't get extreme values for the output scale
+                outputscale_constraint=Interval(
+                    lower_bound=os_lb * 0.5,
+                    upper_bound=os_ub * 2.0,
+                    initial_value=1.0,
+                ),
             )
-
+        if not isinstance(covar_module, ScaleKernel):
+            raise UnsupportedError("PairwiseGP must be used with a ScaleKernel.")
         self.covar_module = covar_module
 
         self._x0 = None  # will store temporary results for warm-starting
@@ -223,6 +237,16 @@ class PairwiseGP(Model, GP):
             self.__deepcopy__ = dcp
             return new_model
 
+    def _scaled_psd_safe_cholesky(
+        self, M: Tensor, jitter: Optional[float] = None
+    ) -> Tensor:
+        r"""scale M by 1/outputscale before cholesky for better numerical stability"""
+        scale = self.covar_module.outputscale.unsqueeze(-1).unsqueeze(-1)
+        M = M / scale
+        chol = psd_safe_cholesky(M, jitter=jitter)
+        chol = chol * scale.sqrt()
+        return chol
+
     def _has_no_data(self):
         r"""Return true if the model does not have both datapoints and comparisons"""
         return (
@@ -231,28 +255,10 @@ class PairwiseGP(Model, GP):
             or self.comparisons is None
         )
 
-    def _calc_covar(self, X1: Tensor, X2: Tensor) -> Union[Tensor, LazyTensor]:
+    def _calc_covar(self, X1: Tensor, X2: Tensor) -> Union[Tensor, LinearOperator]:
         r"""Calculate the covariance matrix given two sets of datapoints"""
         covar = self.covar_module(X1, X2)
-        return covar.evaluate()
-
-    def _batch_chol_inv(self, mat_chol: Tensor) -> Tensor:
-        r"""Wrapper to perform (batched) cholesky inverse"""
-        # TODO: get rid of this once cholesky_inverse supports batch mode
-        batch_eye = torch.eye(
-            mat_chol.shape[-1],
-            dtype=self.datapoints.dtype,
-            device=self.datapoints.device,
-        )
-
-        if len(mat_chol.shape) == 2:
-            mat_inv = torch.cholesky_inverse(mat_chol)
-        elif len(mat_chol.shape) > 2 and (mat_chol.shape[-1] == mat_chol.shape[-2]):
-            batch_eye = batch_eye.repeat(*(mat_chol.shape[:-2]), 1, 1)
-            chol_inv = torch.linalg.solve_triangular(mat_chol, batch_eye, upper=False)
-            mat_inv = chol_inv.transpose(-1, -2) @ chol_inv
-
-        return mat_inv
+        return covar.to_dense()
 
     def _update_covar(self, datapoints: Tensor) -> None:
         r"""Update values derived from the data and hyperparameters
@@ -263,10 +269,12 @@ class PairwiseGP(Model, GP):
             datapoints: (Transformed) datapoints for finding f_max
         """
         self.covar = self._calc_covar(datapoints, datapoints)
-        self.covar_chol = psd_safe_cholesky(self.covar)
-        self.covar_inv = self._batch_chol_inv(self.covar_chol)
+        self.covar_chol = self._scaled_psd_safe_cholesky(
+            self.covar, jitter=self._jitter
+        )
+        self.covar_inv = torch.cholesky_inverse(self.covar_chol)
 
-    def _prior_mean(self, X: Tensor) -> Union[Tensor, LazyTensor]:
+    def _prior_mean(self, X: Tensor) -> Union[Tensor, LinearOperator]:
         r"""Return point prediction using prior only
 
         Args:
@@ -290,31 +298,6 @@ class PairwiseGP(Model, GP):
         pred_mean = self._prior_mean(X)
         pred_covar = self._calc_covar(X, X)
         return pred_mean, pred_covar
-
-    def _add_jitter(self, X: Tensor) -> Tensor:
-        jitter_prev = 0
-        Eye = torch.eye(X.size(-1), device=X.device, dtype=X.dtype).expand(X.shape)
-        for i in range(3):
-            jitter_new = self._jitter * (10**i)
-            X = X + (jitter_new - jitter_prev) * Eye
-            jitter_prev = jitter_new
-            # This may be VERY slow given upstream pytorch issue:
-            # https://github.com/pytorch/pytorch/issues/34272
-            try:
-                _ = torch.linalg.cholesky(X)
-                warnings.warn(
-                    "X is not a p.d. matrix; "
-                    f"Added jitter of {jitter_new:.2e} to the diagonal",
-                    RuntimeWarning,
-                )
-                return X
-            except RuntimeError:
-                continue
-        warnings.warn(
-            f"Failed to render X p.d. after adding {jitter_new:.2e} jitter",
-            RuntimeWarning,
-        )
-        return X
 
     def _grad_posterior_f(
         self,
@@ -440,7 +423,17 @@ class PairwiseGP(Model, GP):
             # warm start
             init_x0_size = self.batch_shape + torch.Size([self.n])
             if self._x0 is None or torch.Size(self._x0.shape) != init_x0_size:
-                x0 = np.random.rand(*init_x0_size)
+                sqrt_scale = (
+                    self.covar_module.outputscale.sqrt()
+                    .unsqueeze(-1)
+                    .detach()
+                    .cpu()
+                    .numpy()
+                )
+                # initialize x0 using std normal but clip by 3 std to keep it bounded
+                x0 = np.random.standard_normal(init_x0_size).clip(min=-3, max=3)
+                # scale x0 to be on roughly the right scale
+                x0 = x0 * sqrt_scale
             else:
                 x0 = self._x0
 
@@ -507,10 +500,12 @@ class PairwiseGP(Model, GP):
         hlcov_eye_size = torch.Size((*self.likelihood_hess.shape[:-2], self.n, self.n))
         self.hlcov_eye = torch.empty(hlcov_eye_size)
 
-        # Take a newton step on the posterior MAP point to fill
-        # in gradients for pytorch
+        # Take two newton step on the posterior MAP point to fill
+        # in gradients for pytorch. Using 2 instead of 1 since empirically sometimes
+        # the first step results in gradients in the order of 1e-7 while the 2nd step
+        # allows it go down further to the order of 1e-12 and stay there.
         self.utility = self._util_newton_updates(
-            datapoints, f.clone().requires_grad_(True), max_iter=1
+            datapoints, f.clone().requires_grad_(True), max_iter=2
         )
 
     def _transform_batch_shape(self, X: Tensor, X_new: Tensor) -> Tuple[Tensor, Tensor]:
@@ -576,7 +571,11 @@ class PairwiseGP(Model, GP):
             self.likelihood_hess = hl
             cov_hl = covar @ hl
             if eye is None:
-                eye = torch.diag_embed(torch.ones(cov_hl.shape[:-1]))
+                eye = torch.diag_embed(
+                    torch.ones(
+                        cov_hl.shape[:-1], device=cov_hl.device, dtype=cov_hl.dtype
+                    )
+                )
             cov_hl = cov_hl + eye  # add 1 to cov_hl
             g = self._grad_posterior_f(x, dp, D, DT, ch, ci)
             cov_g = covar @ g.unsqueeze(-1)
@@ -688,7 +687,6 @@ class PairwiseGP(Model, GP):
         self.dim = self.datapoints.shape[-1]  # feature dimensions
         self.n = self.datapoints.shape[-2]  # num datapoints
         self.m = self.comparisons.shape[-2]  # num pairwise comparisons
-        self.utility = None
         # D is batch_size x m x n or num_comparison x num_datapoints.
         # D_k_i is the s_k(x_i) value as in equation (6) in [Chu2005preference]_
         # D will usually be very sparse as well
@@ -712,34 +710,48 @@ class PairwiseGP(Model, GP):
         self.to(self.datapoints)
 
     def load_state_dict(
-        self, state_dict: Dict[str, Tensor], strict: Optional[bool] = False
+        self, state_dict: Dict[str, Tensor], strict: bool = False
     ) -> _IncompatibleKeys:
         r"""Removes data related buffers from the `state_dict` and calls
         `super().load_state_dict` with `strict=False`.
 
         Args:
             state_dict: The state dict.
-            strict: A boolean denoting whether to error out if all keys are not
-                present in the `state_dict`. Since we remove data related buffers
-                from the `state_dict`, this will lead to an error whenever
-                `strict=True`. Instead, we overwrite it with `strict=False`, and
-                raise a warning explaining this if `strict=True` is passed.
+            strict: Boolean specifying whether or not given and instance-bound
+                state_dicts should have identical keys. Only implemented for
+                `strict=False` since buffers will filters out when calling
+                `_load_from_state_dict`.
 
         Returns:
             A named tuple `_IncompatibleKeys`, containing the `missing_keys`
-            and `unexpected_keys`. Note that the buffers we remove from the
-            `state_dict` may be listed under `missing_keys`.
+            and `unexpected_keys`.
         """
         if strict:
-            warnings.warn(
-                f"Received `strict=True` in {self.__class__.__name__}.load_state_dict "
-                "call. This will be overwritten with `strict=False` after removing "
-                "a set of data related buffers from the `state_dict`.",
-                RuntimeWarning,
-            )
-        for key in self._buffer_names:
-            state_dict.pop(key, None)
+            raise UnsupportedError("Passing strict=True is not supported.")
+
         return super().load_state_dict(state_dict=state_dict, strict=False)
+
+    def _load_from_state_dict(
+        self,
+        state_dict: Dict[str, Tensor],
+        prefix: str,
+        local_metadata: Dict[str, Any],
+        strict: bool,
+        missing_keys: List[str],
+        unexpected_keys: List[str],
+        error_msgs: List[str],
+    ) -> None:
+        super()._load_from_state_dict(
+            state_dict={
+                k: v for k, v in state_dict.items() if k not in self._buffer_names
+            },
+            prefix=prefix,
+            local_metadata=local_metadata,
+            strict=False,
+            missing_keys=missing_keys,
+            unexpected_keys=unexpected_keys,
+            error_msgs=error_msgs,
+        )
 
     def forward(self, datapoints: Tensor) -> MultivariateNormal:
         r"""Calculate a posterior or prior prediction.
@@ -759,7 +771,6 @@ class PairwiseGP(Model, GP):
                 2. Prior predictions (prior mode)
                 3. Predictive posterior (eval mode)
         """
-
         # Training mode: optimizing
         if self.training:
             if self._has_no_data():
@@ -807,7 +818,7 @@ class PairwiseGP(Model, GP):
 
             # self.utility might be None if exception was raised and _update
             # was failed to be called during hyperparameter optimization
-            # procedures (e.g., fit_gpytorch_scipy)
+            # procedures (e.g., fit_gpytorch_mll_scipy)
             if self.utility is None:
                 self._update(transformed_dp)
 
@@ -838,27 +849,14 @@ class PairwiseGP(Model, GP):
 
             output_mean, output_covar = pred_mean, pred_covar
 
-        try:
-            if self.datapoints is None:
-                diag_jitter = torch.eye(output_covar.size(-1))
-            else:
-                diag_jitter = torch.eye(
-                    output_covar.size(-1),
-                    dtype=self.datapoints.dtype,
-                    device=self.datapoints.device,
-                )
-            diag_jitter = diag_jitter.expand(output_covar.shape)
-            diag_jitter = diag_jitter * self._jitter
-            # Preemptively adding jitter to diagonal to prevent the use of _add_jitter
-            # given that torch.cholesky may be very slow on non-pd matrix input
-            # See https://github.com/pytorch/pytorch/issues/34272
-            # TODO: remove this once torch.cholesky issue is resolved
-            output_covar = output_covar + diag_jitter
-            post = MultivariateNormal(output_mean, output_covar)
-        except RuntimeError:
-            output_covar = self._add_jitter(output_covar)
-            post = MultivariateNormal(output_mean, output_covar)
-
+        post = MultivariateNormal(
+            mean=output_mean,
+            # output_covar is sometimes non-PSD
+            # perform a cholesky decomposition to check and amend
+            covariance_matrix=RootLinearOperator(
+                self._scaled_psd_safe_cholesky(output_covar, jitter=self._jitter)
+            ),
+        )
         return post
 
     # ============== botorch.models.model.Model interfaces ==============
@@ -993,7 +991,9 @@ class PairwiseLaplaceMarginalLogLikelihood(MarginalLogLikelihood):
         log_posterior = -log_posterior.clamp(min=0)
 
         mll = model.covar @ model.likelihood_hess
-        mll = mll + torch.diag_embed(torch.ones(mll.shape[:-1]))
+        mll = mll + torch.diag_embed(
+            torch.ones(mll.shape[:-1], device=mll.device, dtype=mll.dtype)
+        )
         mll = -0.5 * torch.logdet(mll)
 
         mll = mll + log_posterior

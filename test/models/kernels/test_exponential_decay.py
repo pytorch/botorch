@@ -30,7 +30,7 @@ class TestExponentialDecayKernel(BotorchTestCase, BaseKernelTestCase):
 
         diff = torch.tensor([[4.0, 6.0], [5.0, 7.0]])
         actual = offset + diff.pow(-power)
-        res = kernel(a, b).evaluate()
+        res = kernel(a, b).to_dense()
 
         self.assertLess(torch.norm(res - actual), 1e-5)
 
@@ -47,7 +47,7 @@ class TestExponentialDecayKernel(BotorchTestCase, BaseKernelTestCase):
 
         diff = torch.tensor([[4.0, 6.0], [5.0, 7.0]])
         actual = offset + torch.tensor([1.0]).div(diff.pow(power))
-        res = kernel(a, b).evaluate()
+        res = kernel(a, b).to_dense()
 
         self.assertLess(torch.norm(res - actual), 1e-5)
 
@@ -70,7 +70,7 @@ class TestExponentialDecayKernel(BotorchTestCase, BaseKernelTestCase):
         diff = torch.tensor([[11.0, 12.0], [12.0, 13.0]])
         actual[1, :, :] = offset + torch.tensor([1.0]).div(diff.pow(power))
 
-        res = kernel(a, b).evaluate()
+        res = kernel(a, b).to_dense()
         self.assertLess(torch.norm(res - actual), 1e-5)
 
     def test_computes_exponential_decay_function_batch(self):
@@ -92,7 +92,7 @@ class TestExponentialDecayKernel(BotorchTestCase, BaseKernelTestCase):
         diff = torch.tensor([[11.0, 12.0], [12.0, 13.0]])
         actual[1, :, :] = offset + diff.pow(-power)
 
-        res = kernel(a, b).evaluate()
+        res = kernel(a, b).to_dense()
         self.assertLess(torch.norm(res - actual), 1e-5)
 
     def test_initialize_lengthscale(self):

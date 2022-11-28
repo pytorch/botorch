@@ -75,6 +75,7 @@ from botorch.acquisition.objective import (
     ScalarizedPosteriorTransform,
 )
 from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
+from botorch.acquisition.risk_measures import RiskMeasureMCObjective
 from botorch.acquisition.utils import (
     expand_trace_observations,
     project_to_target_fidelity,
@@ -82,9 +83,11 @@ from botorch.acquisition.utils import (
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.deterministic import FixedSingleSampleModel
+from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.optim.optimize import optimize_acqf
-from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
+from botorch.sampling.base import MCSampler
+from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.containers import BotorchContainer
 from botorch.utils.datasets import BotorchDataset, SupervisedDataset
@@ -642,10 +645,10 @@ def construct_inputs_qUCB(
 def _get_sampler(mc_samples: int, qmc: bool) -> MCSampler:
     """Set up MC sampler for q(N)EHVI."""
     # initialize the sampler
-    seed = int(torch.randint(1, 10000, (1,)).item())
+    shape = torch.Size([mc_samples])
     if qmc:
-        return SobolQMCNormalSampler(num_samples=mc_samples, seed=seed)
-    return IIDNormalSampler(num_samples=mc_samples, seed=seed)
+        return SobolQMCNormalSampler(sample_shape=shape)
+    return IIDNormalSampler(sample_shape=shape)
 
 
 @acqf_input_constructor(ExpectedHypervolumeImprovement)
@@ -677,7 +680,11 @@ def construct_inputs_EHVI(
     # objective threhsold to have the proper optimization direction.
     if objective is None:
         objective = IdentityAnalyticMultiOutputObjective()
-    ref_point = objective(objective_thresholds)
+    if isinstance(objective, RiskMeasureMCObjective):
+        pre_obj = objective.preprocessing_function
+    else:
+        pre_obj = objective
+    ref_point = pre_obj(objective_thresholds)
 
     # Compute posterior mean (for ref point computation ref pareto frontier)
     # if one is not provided among arguments.
@@ -688,13 +695,13 @@ def construct_inputs_EHVI(
     if alpha > 0:
         partitioning = NondominatedPartitioning(
             ref_point=ref_point,
-            Y=objective(Y_pmean),
+            Y=pre_obj(Y_pmean),
             alpha=alpha,
         )
     else:
         partitioning = FastNondominatedPartitioning(
             ref_point=ref_point,
-            Y=objective(Y_pmean),
+            Y=pre_obj(Y_pmean),
         )
 
     return {
@@ -751,7 +758,7 @@ def construct_inputs_qEHVI(
     )
 
     sampler = kwargs.get("sampler")
-    if sampler is None:
+    if sampler is None and isinstance(model, GPyTorchModel):
         sampler = _get_sampler(
             mc_samples=kwargs.get("mc_samples", 128), qmc=kwargs.get("qmc", True)
         )
@@ -793,17 +800,27 @@ def construct_inputs_qNEHVI(
     if outcome_constraints is None:
         cons_tfs = None
     else:
+        if isinstance(objective, RiskMeasureMCObjective):
+            raise UnsupportedError(
+                "Outcome constraints are not supported with risk measures. "
+                "Use a feasibility-weighted risk measure instead."
+            )
         cons_tfs = get_outcome_constraint_transforms(outcome_constraints)
 
     sampler = kwargs.get("sampler")
-    if sampler is None:
+    if sampler is None and isinstance(model, GPyTorchModel):
         sampler = _get_sampler(
             mc_samples=kwargs.get("mc_samples", 128), qmc=kwargs.get("qmc", True)
         )
 
+    if isinstance(objective, RiskMeasureMCObjective):
+        ref_point = objective.preprocessing_function(objective_thresholds)
+    else:
+        ref_point = objective(objective_thresholds)
+
     return {
         "model": model,
-        "ref_point": objective(objective_thresholds),
+        "ref_point": ref_point,
         "X_baseline": X_baseline,
         "sampler": sampler,
         "objective": objective,
@@ -811,7 +828,7 @@ def construct_inputs_qNEHVI(
         "X_pending": kwargs.get("X_pending"),
         "eta": kwargs.get("eta", 1e-3),
         "prune_baseline": kwargs.get("prune_baseline", True),
-        "alpha": kwargs.get("alpha", 0.0),
+        "alpha": kwargs.get("alpha", get_default_partitioning_alpha(model.num_outputs)),
         "cache_pending": kwargs.get("cache_pending", True),
         "max_iep": kwargs.get("max_iep", 0),
         "incremental_nehvi": kwargs.get("incremental_nehvi", True),
@@ -1160,7 +1177,7 @@ def optimize_objective(
             model=model,
             objective=objective,
             posterior_transform=posterior_transform,
-            sampler=sampler_cls(num_samples=mc_samples, seed=seed_inner),
+            sampler=sampler_cls(sample_shape=torch.Size([mc_samples]), seed=seed_inner),
         )
     else:
         acq_function = PosteriorMean(

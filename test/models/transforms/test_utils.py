@@ -16,7 +16,6 @@ from botorch.models.transforms.utils import (
     norm_to_lognorm_variance,
 )
 from botorch.utils.testing import BotorchTestCase
-from gpytorch.utils.broadcasting import _mul_broadcast_shape
 
 
 class TestTransformUtils(BotorchTestCase):
@@ -94,8 +93,8 @@ class TestTransformUtils(BotorchTestCase):
             self.assertTrue(torch.allclose(var_ln, var_ln_expected))
 
     def test_round_trip(self):
-        for dtype in (torch.float, torch.double):
-            for batch_shape in ([], [2]):
+        for dtype, batch_shape in product((torch.float, torch.double), ([], [2])):
+            with self.subTest(dtype=dtype, batch_shape=batch_shape):
                 mu = 5 + torch.rand(*batch_shape, 4, device=self.device, dtype=dtype)
                 a = 0.2 * torch.randn(
                     *batch_shape, 4, 4, device=self.device, dtype=dtype
@@ -114,12 +113,18 @@ class TestTransformUtils(BotorchTestCase):
             (torch.Size([4, 1]), torch.Size([2, 3, 1])),
             (torch.Size([5]), torch.Size([])),
         ):
-            if len(batch_shape) == 0:
-                input_batch_shape = input_batch_shape[:-1]
-            X = torch.rand(input_batch_shape + torch.Size([2, 1]))
-            expand_shape = (
-                _mul_broadcast_shape(input_batch_shape, batch_shape) + X.shape[-2:]
-            )
-            X_tf = expand_and_copy_tensor(X, batch_shape=batch_shape)
-            self.assertEqual(X_tf.shape, expand_shape)
-            self.assertFalse(X_tf is X.expand(expand_shape))
+            with self.subTest(
+                input_batch_shape=input_batch_shape, batch_shape=batch_shape
+            ):
+                if len(batch_shape) == 0:
+                    input_batch_shape = input_batch_shape[:-1]
+                X = torch.rand(input_batch_shape + torch.Size([2, 1]))
+                expand_shape = (
+                    torch.broadcast_shapes(input_batch_shape, batch_shape)
+                    + X.shape[-2:]
+                )
+                X_tf = expand_and_copy_tensor(X, batch_shape=batch_shape)
+                self.assertEqual(X_tf.shape, expand_shape)
+                self.assertFalse(X_tf is X.expand(expand_shape))
+        with self.assertRaisesRegex(RuntimeError, "are not broadcastable"):
+            expand_and_copy_tensor(X=torch.rand(2, 2, 3), batch_shape=torch.Size([3]))

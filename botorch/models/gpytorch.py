@@ -21,7 +21,7 @@ from typing import Any, Iterator, List, Optional, Tuple, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.errors import BotorchTensorDimensionError, InputDataError
 from botorch.exceptions.warnings import BotorchTensorDimensionWarning
 from botorch.models.model import Model, ModelList
 from botorch.models.utils import (
@@ -36,7 +36,6 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.utils.transforms import is_fully_bayesian
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
-from gpytorch.utils.broadcasting import _mul_broadcast_shape
 from torch import Tensor
 
 
@@ -54,6 +53,7 @@ class GPyTorchModel(Model, ABC):
         X: Tensor, Y: Tensor, Yvar: Optional[Tensor] = None, strict: bool = True
     ) -> None:
         r"""Checks that `Y` and `Yvar` have an explicit output dimension if strict.
+        Checks that the dtypes of the inputs match, and warns if using float.
 
         This also checks that `Yvar` has the same trailing dimensions as `Y`. Note
         we only infer that an explicit output dimension exists when `X` and `Y` have
@@ -100,6 +100,22 @@ class GPyTorchModel(Model, ABC):
                 "An explicit output dimension is required for observation noise."
                 f" Expected Yvar with shape: {Y.shape[-Yvar.dim() :]} (got"
                 f" {Yvar.shape})."
+            )
+        # Check the dtypes.
+        if X.dtype != Y.dtype or (Yvar is not None and Y.dtype != Yvar.dtype):
+            raise InputDataError(
+                "Expected all inputs to share the same dtype. Got "
+                f"{X.dtype} for X, {Y.dtype} for Y, and "
+                f"{Yvar.dtype if Yvar is not None else None} for Yvar."
+            )
+        if X.dtype != torch.float64:
+            # NOTE: Not using a BotorchWarning since those get ignored.
+            warnings.warn(
+                f"The model inputs are of type {X.dtype}. It is strongly recommended "
+                "to use double precision in BoTorch, as this improves both "
+                "precision and stability and can help avoid numerical errors. "
+                "See https://github.com/pytorch/botorch/discussions/1444",
+                UserWarning,
             )
 
     @property
@@ -157,7 +173,7 @@ class GPyTorchModel(Model, ABC):
                     mvn = self.likelihood(mvn, X, noise=observation_noise)
                 else:
                     mvn = self.likelihood(mvn, X)
-        posterior = GPyTorchPosterior(mvn=mvn)
+        posterior = GPyTorchPosterior(distribution=mvn)
         if hasattr(self, "outcome_transform"):
             posterior = self.outcome_transform.untransform_posterior(posterior)
         if posterior_transform is not None:
@@ -370,7 +386,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                 ]
                 mvn = MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
 
-        posterior = GPyTorchPosterior(mvn=mvn)
+        posterior = GPyTorchPosterior(distribution=mvn)
         if hasattr(self, "outcome_transform"):
             posterior = self.outcome_transform.untransform_posterior(posterior)
         if posterior_transform is not None:
@@ -509,14 +525,14 @@ class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
         to the `posterior` method returns a Posterior object over an output of
         shape `broadcast(test_batch_shape, model.batch_shape) x q x m`.
         """
-        batch_shapes = {ti[0].shape[:-2] for ti in self.train_inputs}
+        batch_shapes = {m.batch_shape for m in self.models}
         if len(batch_shapes) > 1:
             msg = (
                 f"Component models of {self.__class__.__name__} have different "
                 "batch shapes"
             )
             try:
-                broadcast_shape = _mul_broadcast_shape(*batch_shapes)
+                broadcast_shape = torch.broadcast_shapes(*batch_shapes)
                 warnings.warn(msg + ". Broadcasting batch shapes.")
                 return broadcast_shape
             except RuntimeError:
@@ -563,7 +579,7 @@ class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
         with gpt_posterior_settings():
             # only compute what's necessary
             if output_indices is not None:
-                mvns = [self.forward_i(i, transformed_X[i]) for i in output_indices]
+                mvns = [self.models[i](transformed_X[i]) for i in output_indices]
                 if observation_noise is not False:
                     if torch.is_tensor(observation_noise):
                         lh_kwargs = [
@@ -598,7 +614,7 @@ class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
         for i, mvn in mvn_gen:
             try:
                 oct = self.models[i].outcome_transform
-                tf_mvn = oct.untransform_posterior(GPyTorchPosterior(mvn)).mvn
+                tf_mvn = oct.untransform_posterior(GPyTorchPosterior(mvn)).distribution
             except AttributeError:
                 tf_mvn = mvn
             mvns.append(tf_mvn)
@@ -610,9 +626,9 @@ class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
         )
         if any(is_fully_bayesian(m) for m in self.models):
             # mixing fully Bayesian and other GP models is currently not supported
-            posterior = FullyBayesianPosterior(mvn=mvn)
+            posterior = FullyBayesianPosterior(distribution=mvn)
         else:
-            posterior = GPyTorchPosterior(mvn=mvn)
+            posterior = GPyTorchPosterior(distribution=mvn)
         if posterior_transform is not None:
             return posterior_transform(posterior)
         return posterior
@@ -682,15 +698,17 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
                 )
         # If single-output, return the posterior of a single-output model
         if num_outputs == 1:
-            posterior = GPyTorchPosterior(mvn=mvn)
+            posterior = GPyTorchPosterior(distribution=mvn)
         else:
             # Otherwise, make a MultitaskMultivariateNormal out of this
             mtmvn = MultitaskMultivariateNormal(
-                mean=mvn.mean.view(*X.shape[:-2], num_outputs, -1).transpose(-1, -2),
+                mean=mvn.mean.view(*mvn.mean.shape[:-1], num_outputs, -1).transpose(
+                    -1, -2
+                ),
                 covariance_matrix=mvn.lazy_covariance_matrix,
                 interleaved=False,
             )
-            posterior = GPyTorchPosterior(mvn=mtmvn)
+            posterior = GPyTorchPosterior(distribution=mtmvn)
         if hasattr(self, "outcome_transform"):
             posterior = self.outcome_transform.untransform_posterior(posterior)
         if posterior_transform is not None:

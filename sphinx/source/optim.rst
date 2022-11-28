@@ -10,6 +10,11 @@ botorch.optim
 Optimization
 -------------------------------------------
 
+Core
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.core
+    :members:
+
 Acquisition Function Optimization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.optim.optimize
@@ -31,11 +36,44 @@ Stopping Criteria
 .. automodule:: botorch.optim.stopping
     :members:
 
+Closures
+-------------------------------------------
+
+Core
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.closures.core
+    :members:
+
+Model Fitting Closures
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.closures.model_closures
+    :members:
+
 
 Utilities
 -------------------------------------------
 
+General Optimization Utilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.utils.common
+    :members:
+
+Acquisition Optimization Utilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.utils.acquisition_utils
+    :members:
+
+Model Fitting Utilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.utils.model_utils
+    :members:
+
 Numpy - Torch Conversion Tools
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.utils.numpy_utils
+    :members:
+
+Numpy - Torch Conversion Tools (OLD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.optim.numpy_converter
     :members:
@@ -43,9 +81,4 @@ Numpy - Torch Conversion Tools
 Parameter Constraint Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.optim.parameter_constraints
-    :members:
-
-General Optimization Utilities
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.optim.utils
     :members:

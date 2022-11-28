@@ -228,9 +228,15 @@ class TestConstrainedMaxPosteriorSampling(BotorchTestCase):
                 mp = MockPosterior(None)
                 with mock.patch.object(MockModel, "posterior", return_value=mp):
                     mm = MockModel(None)
-                    c_model1 = SingleTaskGP(X, torch.randn(X.shape[0:-1]).unsqueeze(-1))
-                    c_model2 = SingleTaskGP(X, torch.randn(X.shape[0:-1]).unsqueeze(-1))
-                    c_model3 = SingleTaskGP(X, torch.randn(X.shape[0:-1]).unsqueeze(-1))
+                    c_model1 = SingleTaskGP(
+                        X, torch.randn(X.shape[0:-1], **tkwargs).unsqueeze(-1)
+                    )
+                    c_model2 = SingleTaskGP(
+                        X, torch.randn(X.shape[0:-1], **tkwargs).unsqueeze(-1)
+                    )
+                    c_model3 = SingleTaskGP(
+                        X, torch.randn(X.shape[0:-1], **tkwargs).unsqueeze(-1)
+                    )
                     cmms1 = MockModel(MockPosterior(mean=None))
                     cmms2 = ModelListGP(c_model1, c_model2)
                     cmms3 = ModelListGP(c_model1, c_model2, c_model3)

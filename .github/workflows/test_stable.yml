@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: [3.7, 3.9]
+        python-version: ["3.8", "3.10"]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -34,7 +34,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.7", "3.9"]
+        python-version: ["3.8", "3.10"]
     steps:
     - uses: actions/checkout@v2
     - uses: conda-incubator/setup-miniconda@v2
@@ -48,7 +48,7 @@ jobs:
         conda install -y -c pytorch pytorch cpuonly
         conda install -y pip scipy pytest
         conda install -y -c gpytorch gpytorch
-        conda install -y -c conda-forge pyro-ppl>=1.8.0
+        conda install -y -c conda-forge pyro-ppl>=1.8.2
         pip install .[test]
     - name: Unit tests
       shell: bash -l {0}
@@ -56,13 +56,13 @@ jobs:
         pytest -ra
 
   tests-and-coverage-min-req-pip:
-    name: Tests and coverage min req. torch & gpytorch versions (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    name: Tests and coverage min req. torch, gpytorch & linear_operator versions (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest"]
-        python-version: [3.7, 3.9]
+        python-version: ["3.8", "3.10"]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -73,9 +73,10 @@ jobs:
       run: |
         python setup.py egg_info
         req_txt="botorch.egg-info/requires.txt"
-        min_torch_version=$(grep '\btorch>=' ${req_txt} | sed 's/[^0-9.]//g')
-        min_gpytorch_version=$(grep '\bgpytorch>=' ${req_txt} | sed 's/[^0-9.]//g')
-        pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}"
+        min_torch_version=$(grep '\btorch[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
+        min_gpytorch_version=$(grep '\bgpytorch[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
+        min_linear_operator_version=$(grep '\blinear_operator[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
+        pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}" "linear_operator==${min_linear_operator_version}"
         pip install .[test]
     - name: Unit tests and coverage
       run: |

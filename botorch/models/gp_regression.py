@@ -30,15 +30,16 @@ model like `MultiTaskGP`.
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, Union
+from typing import Any, List, NoReturn, Optional, Union
 
 import torch
 from botorch import settings
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
+from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import Log, OutcomeTransform
 from botorch.models.utils import fantasize as fantasize_flag, validate_input_scaling
-from botorch.sampling.samplers import MCSampler
+from botorch.sampling.base import MCSampler
 from gpytorch.constraints.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.matern_kernel import MaternKernel
@@ -63,7 +64,7 @@ from torch import Tensor
 MIN_INFERRED_NOISE_LEVEL = 1e-4
 
 
-class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
+class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     r"""A single-task exact GP model.
 
     A single-task exact GP using relatively strong priors on the Kernel
@@ -139,7 +140,9 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             )
         else:
             self._is_custom_likelihood = True
-        ExactGP.__init__(self, train_X, train_Y, likelihood)
+        ExactGP.__init__(
+            self, train_inputs=train_X, train_targets=train_Y, likelihood=likelihood
+        )
         if mean_module is None:
             mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
         self.mean_module = mean_module
@@ -156,7 +159,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             )
             self._subset_batch_dict = {
                 "likelihood.noise_covar.raw_noise": -2,
-                "mean_module.constant": -2,
+                "mean_module.raw_constant": -1,
                 "covar_module.raw_outputscale": -1,
                 "covar_module.base_kernel.raw_lengthscale": -3,
             }
@@ -271,7 +274,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 outputscale_prior=GammaPrior(2.0, 0.15),
             )
             self._subset_batch_dict = {
-                "mean_module.constant": -2,
+                "mean_module.raw_constant": -1,
                 "covar_module.raw_outputscale": -1,
                 "covar_module.base_kernel.raw_lengthscale": -3,
             }
@@ -333,6 +336,8 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             )
 
     def forward(self, x: Tensor) -> MultivariateNormal:
+        # TODO: reduce redundancy with the 'forward' method of
+        # SingleTaskGP, which is identical
         if self.training:
             x = self.transform_inputs(x)
         mean_x = self.mean_module(x)
@@ -355,7 +360,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         return new_model
 
 
-class HeteroskedasticSingleTaskGP(SingleTaskGP):
+class HeteroskedasticSingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     r"""A single-task exact GP model using a heteroskedastic noise model.
 
     This model differs from `SingleTaskGP` in that noise levels are provided
@@ -418,7 +423,12 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             input_transform=input_transform,
         )
         likelihood = _GaussianLikelihoodBase(HeteroskedasticNoise(noise_model))
-        super().__init__(
+        # This is hacky -- this class used to inherit from SingleTaskGP, but it
+        # shouldn't so this is a quick fix to enable getting rid of that
+        # inheritance
+        SingleTaskGP.__init__(
+            # pyre-fixme[6]: Incompatible parameter type
+            self,
             train_X=train_X,
             train_Y=train_Y,
             likelihood=likelihood,
@@ -432,10 +442,17 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             self.outcome_transform = outcome_transform
         self.to(train_X)
 
-    def condition_on_observations(
-        self, X: Tensor, Y: Tensor, **kwargs: Any
-    ) -> HeteroskedasticSingleTaskGP:
+    # pyre-fixme[15]: Inconsistent override
+    def condition_on_observations(self, *_, **__) -> NoReturn:
         raise NotImplementedError
 
-    def subset_output(self, idcs: List[int]) -> HeteroskedasticSingleTaskGP:
+    # pyre-fixme[15]: Inconsistent override
+    def subset_output(self, idcs) -> NoReturn:
         raise NotImplementedError
+
+    def forward(self, x: Tensor) -> MultivariateNormal:
+        if self.training:
+            x = self.transform_inputs(x)
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return MultivariateNormal(mean_x, covar_x)

@@ -15,6 +15,8 @@ from botorch.models.deterministic import (
     PosteriorMeanModel,
 )
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
+from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
+
 from botorch.models.gp_regression import (
     FixedNoiseGP,
     HeteroskedasticSingleTaskGP,
@@ -39,6 +41,7 @@ __all__ = [
     "FixedNoiseGP",
     "FixedNoiseMultiTaskGP",
     "SaasFullyBayesianSingleTaskGP",
+    "SaasFullyBayesianMultiTaskGP",
     "GenericDeterministicModel",
     "HeteroskedasticSingleTaskGP",
     "HigherOrderGP",

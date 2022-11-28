@@ -37,6 +37,9 @@ class StoppingCriterion(ABC):
         """
         pass  # pragma: no cover
 
+    def __call__(self, fvals: Tensor) -> bool:
+        return self.evaluate(fvals)
+
 
 class ExpMAStoppingCriterion(StoppingCriterion):
     r"""Exponential moving average stopping criterion.

@@ -23,7 +23,11 @@ from botorch.models.transforms.utils import (
 from botorch.posteriors import GPyTorchPosterior, TransformedPosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy import BlockDiagLazyTensor, DiagLazyTensor, NonLazyTensor
+from linear_operator.operators import (
+    BlockDiagLinearOperator,
+    DenseLinearOperator,
+    DiagLinearOperator,
+)
 
 
 def _get_test_posterior(shape, device, dtype, interleaved=True, lazy=False):
@@ -34,7 +38,7 @@ def _get_test_posterior(shape, device, dtype, interleaved=True, lazy=False):
     a = torch.rand(*shape[:-2], n_covar, n_covar, device=device, dtype=dtype)
     covar = a @ a.transpose(-1, -2) + torch.diag_embed(diag)
     if lazy:
-        covar = NonLazyTensor(covar)
+        covar = DenseLinearOperator(covar)
     if shape[-1] == 1:
         mvn = MultivariateNormal(mean.squeeze(-1), covar)
     else:
@@ -106,10 +110,12 @@ class TestOutcomeTransforms(BotorchTestCase):
 
             # with observation noise
             tf = Standardize(m=m, batch_shape=batch_shape)
-            Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
-            Yvar = 1e-8 + torch.rand(
-                *batch_shape, 3, m, device=self.device, dtype=dtype
-            )
+            with torch.random.fork_rng():
+                torch.manual_seed(0)
+                Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
+                Yvar = 1e-8 + torch.rand(
+                    *batch_shape, 3, m, device=self.device, dtype=dtype
+                )
             Y_tf, Yvar_tf = tf(Y, Yvar)
             self.assertTrue(tf.training)
             self.assertTrue(torch.all(Y_tf.mean(dim=-2).abs() < 1e-4))
@@ -148,12 +154,12 @@ class TestOutcomeTransforms(BotorchTestCase):
                 self.assertEqual(samples2.shape, torch.Size([4, 2]) + shape)
                 # TODO: Test expected covar (both interleaved and non-interleaved)
 
-            # Untransform BlockDiagLazyTensor.
+            # Untransform BlockDiagLinearOperator.
             if m > 1:
-                base_lcv = DiagLazyTensor(
+                base_lcv = DiagLinearOperator(
                     torch.rand(*batch_shape, m, 3, device=self.device, dtype=dtype)
                 )
-                lcv = BlockDiagLazyTensor(base_lcv)
+                lcv = BlockDiagLinearOperator(base_lcv)
                 mvn = MultitaskMultivariateNormal(
                     mean=torch.rand(
                         *batch_shape, 3, m, device=self.device, dtype=dtype
@@ -161,7 +167,7 @@ class TestOutcomeTransforms(BotorchTestCase):
                     covariance_matrix=lcv,
                     interleaved=False,
                 )
-                posterior = GPyTorchPosterior(mvn=mvn)
+                posterior = GPyTorchPosterior(distribution=mvn)
                 p_utf = tf.untransform_posterior(posterior)
                 self.assertEqual(p_utf.device.type, self.device.type)
                 self.assertTrue(p_utf.dtype == dtype)
@@ -170,7 +176,7 @@ class TestOutcomeTransforms(BotorchTestCase):
                 self.assertTrue(torch.allclose(p_utf.mean, mean_expected))
                 self.assertTrue(torch.allclose(p_utf.variance, variance_expected))
                 self.assertIsInstance(
-                    p_utf.mvn.lazy_covariance_matrix, BlockDiagLazyTensor
+                    p_utf.distribution.lazy_covariance_matrix, DiagLinearOperator
                 )
                 samples2 = p_utf.rsample(sample_shape=torch.Size([4, 2]))
                 self.assertEqual(
@@ -221,7 +227,9 @@ class TestOutcomeTransforms(BotorchTestCase):
             self.assertEqual(tf._min_stdv, 1e-8)
 
             # no observation noise
-            Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
+            with torch.random.fork_rng():
+                torch.manual_seed(0)
+                Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
             Y_tf, Yvar_tf = tf(Y, None)
             self.assertTrue(tf.training)
             Y_tf_mean = Y_tf.mean(dim=-2)
@@ -244,10 +252,12 @@ class TestOutcomeTransforms(BotorchTestCase):
 
             # with observation noise
             tf = Standardize(m=m, outputs=outputs, batch_shape=batch_shape)
-            Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
-            Yvar = 1e-8 + torch.rand(
-                *batch_shape, 3, m, device=self.device, dtype=dtype
-            )
+            with torch.random.fork_rng():
+                torch.manual_seed(0)
+                Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
+                Yvar = 1e-8 + torch.rand(
+                    *batch_shape, 3, m, device=self.device, dtype=dtype
+                )
             Y_tf, Yvar_tf = tf(Y, Yvar)
             self.assertTrue(tf.training)
             Y_tf_mean = Y_tf.mean(dim=-2)

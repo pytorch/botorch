@@ -79,7 +79,9 @@ class TestCostAwareUtilities(BotorchTestCase):
                 )
                 mm = MockModel(MockPosterior(samples=samples))
                 icwu = InverseCostWeightedUtility(mm, use_mean=False)
-                ratios = icwu(X, deltas, sampler=IIDNormalSampler(4))
+                ratios = icwu(
+                    X, deltas, sampler=IIDNormalSampler(sample_shape=torch.Size([4]))
+                )
                 self.assertTrue(
                     torch.equal(ratios, deltas / samples.squeeze(-1).sum(dim=-1))
                 )

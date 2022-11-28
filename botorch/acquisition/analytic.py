@@ -22,7 +22,6 @@ from botorch.exceptions import UnsupportedError
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
-from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
 from torch import Tensor
 from torch.distributions import Normal
@@ -373,7 +372,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         r"""Analytic Constrained Expected Improvement.
 
         Args:
-            model: A fitted single-outcome model.
+            model: A fitted multi-output model.
             best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
                 the best feasible function value observed so far (assumed noiseless).
             objective_index: The index of the objective.
@@ -462,13 +461,22 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
                 con_upper_inds.append(k)
                 con_upper.append(constraints[k][1])
         # tensor-based indexing is much faster than list-based advanced indexing
-        self.register_buffer("con_lower_inds", torch.tensor(con_lower_inds))
-        self.register_buffer("con_upper_inds", torch.tensor(con_upper_inds))
-        self.register_buffer("con_both_inds", torch.tensor(con_both_inds))
-        # tensor indexing
-        self.register_buffer("con_both", torch.tensor(con_both, dtype=torch.float))
-        self.register_buffer("con_lower", torch.tensor(con_lower, dtype=torch.float))
-        self.register_buffer("con_upper", torch.tensor(con_upper, dtype=torch.float))
+        for k in [
+            "con_lower_inds",
+            "con_upper_inds",
+            "con_both_inds",
+            "con_both",
+            "con_lower",
+            "con_upper",
+        ]:
+            self.register_buffer(k, tensor=None)
+
+        self.con_lower_inds = torch.tensor(con_lower_inds)
+        self.con_upper_inds = torch.tensor(con_upper_inds)
+        self.con_both_inds = torch.tensor(con_both_inds)
+        self.con_both = torch.tensor(con_both)
+        self.con_lower = torch.tensor(con_lower)
+        self.con_upper = torch.tensor(con_upper)
 
     def _compute_prob_feas(self, X: Tensor, means: Tensor, sigmas: Tensor) -> Tensor:
         r"""Compute feasibility probability for each batch of X.
@@ -552,9 +560,11 @@ class NoisyExpectedImprovement(ExpectedImprovement):
                 "Only FixedNoiseGPs are currently supported for fantasy NEI"
             )
         # sample fantasies
+        from botorch.sampling.normal import SobolQMCNormalSampler
+
         with torch.no_grad():
             posterior = model.posterior(X=X_observed)
-            sampler = SobolQMCNormalSampler(num_fantasies)
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_fantasies]))
             Y_fantasized = sampler(posterior).squeeze(-1)
         batch_X_observed = X_observed.expand(num_fantasies, *X_observed.shape)
         # The fantasy model will operate in batch mode

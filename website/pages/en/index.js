@@ -114,7 +114,7 @@ class Index extends React.Component {
     const modelFitCodeExample = `${pre}python
 import torch
 from botorch.models import SingleTaskGP
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll
 from botorch.utils import standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
@@ -125,7 +125,7 @@ train_Y = standardize(Y)
 
 gp = SingleTaskGP(train_X, train_Y)
 mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-fit_gpytorch_model(mll)
+fit_gpytorch_mll(mll)
     `;
     // Example for defining an acquisition function
     const constrAcqFuncExample = `${pre}python

@@ -61,9 +61,7 @@ class TestMultiStepLookahead(BotorchTestCase):
 
             # construct using samplers
             samplers = [
-                SobolQMCNormalSampler(
-                    num_samples=nf, resample=False, collapse_batch_dims=True
-                )
+                SobolQMCNormalSampler(sample_shape=torch.Size([nf]))
                 for nf in num_fantasies
             ]
             qMS = qMultiStepLookahead(
@@ -228,7 +226,9 @@ class TestMultiStepLookahead(BotorchTestCase):
             )
             result = qMS(eval_X)
             self.assertEqual(result.shape, torch.Size(t_batch_size))
-            self.assertEqual(qMS.samplers[0].batch_range, (-3, -2))
+            self.assertEqual(
+                qMS.samplers[0]._get_batch_range(model.posterior(eval_X)), (-3, -2)
+            )
 
             # get induced fantasy model, without collapse_fantasy_base_samples
             fant_model = qMS.get_induced_fantasy_model(eval_X)
@@ -261,9 +261,7 @@ class TestMultiStepLookahead(BotorchTestCase):
 
             # add dummy base_weights to samplers
             samplers = [
-                SobolQMCNormalSampler(
-                    num_samples=nf, resample=False, collapse_batch_dims=True
-                )
+                SobolQMCNormalSampler(sample_shape=torch.Size([nf]))
                 for nf in num_fantasies
             ]
             for s in samplers:

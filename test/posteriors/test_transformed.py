@@ -9,7 +9,7 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.transformed import TransformedPosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy.non_lazy_tensor import lazify
+from linear_operator.operators import to_linear_operator
 
 
 class TestTransformedPosterior(BotorchTestCase):
@@ -21,11 +21,13 @@ class TestTransformedPosterior(BotorchTestCase):
                 variance = 1 + torch.rand(shape, dtype=dtype, device=self.device)
                 if m == 1:
                     covar = torch.diag_embed(variance.squeeze(-1))
-                    mvn = MultivariateNormal(mean.squeeze(-1), lazify(covar))
+                    mvn = MultivariateNormal(
+                        mean.squeeze(-1), to_linear_operator(covar)
+                    )
                 else:
                     covar = torch.diag_embed(variance.view(*variance.shape[:-2], -1))
-                    mvn = MultitaskMultivariateNormal(mean, lazify(covar))
-                p_base = GPyTorchPosterior(mvn=mvn)
+                    mvn = MultitaskMultivariateNormal(mean, to_linear_operator(covar))
+                p_base = GPyTorchPosterior(distribution=mvn)
                 p_tf = TransformedPosterior(  # dummy transforms
                     posterior=p_base,
                     sample_transform=lambda s: s + 2,
@@ -35,8 +37,11 @@ class TestTransformedPosterior(BotorchTestCase):
                 # mean, variance
                 self.assertEqual(p_tf.device.type, self.device.type)
                 self.assertTrue(p_tf.dtype == dtype)
-                self.assertEqual(p_tf.event_shape, shape)
-                self.assertEqual(p_tf.base_sample_shape, shape)
+                self.assertEqual(p_tf._extended_shape(), shape)
+
+                self.assertEqual(
+                    p_tf.base_sample_shape, shape if m == 2 else shape[:-1]
+                )
                 self.assertTrue(torch.equal(p_tf.mean, 2 * mean + variance))
                 self.assertTrue(torch.equal(p_tf.variance, mean + 2 * variance))
                 # rsample
@@ -48,16 +53,22 @@ class TestTransformedPosterior(BotorchTestCase):
                 self.assertEqual(samples2.shape, torch.Size([4, 2]) + shape)
                 # rsample w/ base samples
                 base_samples = torch.randn(4, *shape, device=self.device, dtype=dtype)
+                if m == 1:
+                    # Correct to match the base sample shape.
+                    base_samples = base_samples.squeeze(-1)
+                # batch_range & basa_sample_shape.
+                self.assertEqual(p_tf.batch_range, p_base.batch_range)
+                self.assertEqual(p_tf.base_sample_shape, p_base.base_sample_shape)
                 # incompatible shapes
                 with self.assertRaises(RuntimeError):
-                    p_tf.rsample(
+                    p_tf.rsample_from_base_samples(
                         sample_shape=torch.Size([3]), base_samples=base_samples
                     )
                 # make sure sample transform is applied correctly
-                samples_base = p_base.rsample(
+                samples_base = p_base.rsample_from_base_samples(
                     sample_shape=torch.Size([4]), base_samples=base_samples
                 )
-                samples_tf = p_tf.rsample(
+                samples_tf = p_tf.rsample_from_base_samples(
                     sample_shape=torch.Size([4]), base_samples=base_samples
                 )
                 self.assertTrue(torch.equal(samples_tf, samples_base + 2))

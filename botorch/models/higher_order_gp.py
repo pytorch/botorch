@@ -21,6 +21,7 @@ from typing import Any, List, Optional, Tuple, Union
 import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
+from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 from botorch.models.utils import gpt_posterior_settings
@@ -32,17 +33,17 @@ from botorch.posteriors import (
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import Kernel, MaternKernel
-from gpytorch.lazy import (
-    BatchRepeatLazyTensor,
-    DiagLazyTensor,
-    KroneckerProductLazyTensor,
-    LazyTensor,
-    ZeroLazyTensor,
-)
 from gpytorch.likelihoods import GaussianLikelihood, Likelihood
 from gpytorch.models import ExactGP
 from gpytorch.priors.torch_priors import GammaPrior, MultivariateNormalPrior
 from gpytorch.settings import fast_pred_var, skip_posterior_variances
+from linear_operator.operators import (
+    BatchRepeatLinearOperator,
+    DiagLinearOperator,
+    KroneckerProductLinearOperator,
+    LinearOperator,
+    ZeroLinearOperator,
+)
 from torch import Tensor
 from torch.nn import ModuleList, Parameter, ParameterList
 
@@ -122,7 +123,7 @@ class FlattenedStandardize(Standardize):
         self, posterior: HigherOrderGPPosterior
     ) -> TransformedPosterior:
         # TODO: return a HigherOrderGPPosterior once rescaling constant
-        # muls * LazyTensors won't force a dense decomposition rather than a
+        # muls * LinearOperators won't force a dense decomposition rather than a
         # Kronecker structured one.
         return TransformedPosterior(
             posterior=posterior,
@@ -138,7 +139,7 @@ class FlattenedStandardize(Standardize):
         )
 
 
-class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
+class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     r"""
     A model for high-dimensional output regression.
 
@@ -355,10 +356,10 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         if covariance_list[0].batch_shape != covariance_list[1].batch_shape:
             for i in range(1, len(covariance_list)):
                 cm = covariance_list[i]
-                covariance_list[i] = BatchRepeatLazyTensor(
+                covariance_list[i] = BatchRepeatLinearOperator(
                     cm, covariance_list[0].batch_shape
                 )
-        kronecker_covariance = KroneckerProductLazyTensor(*covariance_list)
+        kronecker_covariance = KroneckerProductLinearOperator(*covariance_list)
 
         # TODO: expand options for the mean module via batch shaping?
         mean = torch.zeros(
@@ -473,7 +474,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             train_train_covar = self.prediction_strategy.lik_train_train_covar.detach()
             base_train_train_covar = train_train_covar.lazy_tensor
 
-            data_train_covar = base_train_train_covar.lazy_tensors[0]
+            data_train_covar = base_train_train_covar.linear_ops[0]
             data_covar = self.covar_modules[0]
             data_train_test_covar = data_covar(X, train_inputs)
             data_test_test_covar = data_covar(X)
@@ -486,15 +487,15 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             # TODO: Can we enable backprop through the latent covariances?
             batch_shape = data_train_test_covar.batch_shape
             latent_covar_list = []
-            for latent_covar in base_train_train_covar.lazy_tensors[1:]:
+            for latent_covar in base_train_train_covar.linear_ops[1:]:
                 if latent_covar.batch_shape != batch_shape:
-                    latent_covar = BatchRepeatLazyTensor(latent_covar, batch_shape)
+                    latent_covar = BatchRepeatLinearOperator(latent_covar, batch_shape)
                 latent_covar_list.append(latent_covar.detach())
 
-            joint_covar = KroneckerProductLazyTensor(
+            joint_covar = KroneckerProductLinearOperator(
                 data_joint_covar, *latent_covar_list
             )
-            test_train_covar = KroneckerProductLazyTensor(
+            test_train_covar = KroneckerProductLinearOperator(
                 data_train_test_covar, *latent_covar_list
             )
 
@@ -508,9 +509,9 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             new_mean = mvn.mean.reshape(*X.shape[:-1], *self.target_shape)
             if not no_pred_variance:
                 new_variance = pred_variance.reshape(*X.shape[:-1], *self.target_shape)
-                new_variance = DiagLazyTensor(new_variance)
+                new_variance = DiagLinearOperator(new_variance)
             else:
-                new_variance = ZeroLazyTensor(
+                new_variance = ZeroLinearOperator(
                     *X.shape[:-1], *self.target_shape, self.target_shape[-1]
                 )
 
@@ -519,7 +520,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             # return a specialized Posterior to allow for sampling
             # cloning the full covar allows backpropagation through it
             posterior = HigherOrderGPPosterior(
-                mvn=mvn,
+                distribution=mvn,
                 train_targets=self.train_targets.unsqueeze(-1),
                 train_train_covar=train_train_covar,
                 test_train_covar=test_train_covar,
@@ -531,42 +532,41 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 posterior = self.outcome_transform.untransform_posterior(posterior)
             return posterior
 
-    def make_posterior_variances(self, joint_covariance_matrix: LazyTensor) -> Tensor:
+    def make_posterior_variances(
+        self, joint_covariance_matrix: LinearOperator
+    ) -> Tensor:
         r"""
         Computes the posterior variances given the data points X. As currently
         implemented, it computes another forwards call with the stacked data to get out
         the joint covariance across all data points.
         """
         # TODO: use the exposed joint covariances from the prediction strategy
-        data_joint_covariance = joint_covariance_matrix.lazy_tensors[
-            0
-        ].evaluate_kernel()
+        data_joint_covariance = joint_covariance_matrix.linear_ops[0].evaluate_kernel()
         num_train = self.train_inputs[0].shape[-2]
         test_train_covar = data_joint_covariance[..., num_train:, :num_train]
         train_train_covar = data_joint_covariance[..., :num_train, :num_train]
         test_test_covar = data_joint_covariance[..., num_train:, num_train:]
 
-        full_train_train_covar = KroneckerProductLazyTensor(
-            train_train_covar, *joint_covariance_matrix.lazy_tensors[1:]
+        jcm_linops = joint_covariance_matrix.linear_ops[1:]
+        full_train_train_covar = KroneckerProductLinearOperator(
+            train_train_covar, *jcm_linops
         )
-        full_test_test_covar = KroneckerProductLazyTensor(
-            test_test_covar, *joint_covariance_matrix.lazy_tensors[1:]
+        full_test_test_covar = KroneckerProductLinearOperator(
+            test_test_covar, *jcm_linops
         )
-        full_test_train_covar_list = [test_train_covar] + [
-            *joint_covariance_matrix.lazy_tensors[1:]
-        ]
+        full_test_train_covar_tuple = (test_train_covar,) + jcm_linops
 
         train_evals, train_evecs = full_train_train_covar.symeig(eigenvectors=True)
         # (\kron \Lambda_i + \sigma^2 I)^{-1}
-        train_inv_evals = DiagLazyTensor(1.0 / (train_evals + self.likelihood.noise))
+        train_inv_evals = DiagLinearOperator(
+            1.0 / (train_evals + self.likelihood.noise)
+        )
 
         # compute K_i S_i \hadamard K_i S_i
-        test_train_hadamard = KroneckerProductLazyTensor(
+        test_train_hadamard = KroneckerProductLinearOperator(
             *[
-                lt1.matmul(lt2).evaluate() ** 2
-                for lt1, lt2 in zip(
-                    full_test_train_covar_list, train_evecs.lazy_tensors
-                )
+                lt1.matmul(lt2).to_dense() ** 2
+                for lt1, lt2 in zip(full_test_train_covar_tuple, train_evecs.linear_ops)
             ]
         )
 

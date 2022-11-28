@@ -38,6 +38,7 @@ from botorch.acquisition.multi_objective.objective import (
 )
 from botorch.acquisition.risk_measures import CVaR, RiskMeasureMCObjective, VaR
 from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.model import Model
 from botorch.utils.multi_objective.pareto import is_non_dominated
 from botorch.utils.transforms import normalize
@@ -61,19 +62,26 @@ class MultiOutputRiskMeasureMCObjective(
     def __init__(
         self,
         n_w: int,
+        preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
         weights: Optional[Union[List[float], Tensor]] = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
         Args:
             n_w: The size of the `w_set` to calculate the risk measure over.
+            preprocessing_function: A preprocessing function to apply to the
+                samples before computing the risk measure. This can be used to
+                remove non-objective outcomes or to align all outcomes for
+                maximization. For constrained optimization, this should also
+                apply feasibility-weighting to samples. Given a `batch x m`-dim
+                tensor of samples, this should return a `batch x m'`-dim tensor.
             weights: An optional `m`-dim tensor or list of weights for scaling
                 multi-output samples before calculating the risk measure.
-                This can also be used to make sure that all outputs are
-                correctly aligned for maximization by negating those that are
-                originally defined for minimization.
+                Deprecated, use `preprocessing_function` instead.
         """
-        super().__init__(n_w=n_w, weights=weights)
+        super().__init__(
+            n_w=n_w, preprocessing_function=preprocessing_function, weights=weights
+        )
 
     def _prepare_samples(self, samples: Tensor) -> Tensor:
         r"""Prepare samples for risk measure calculations by scaling and
@@ -85,11 +93,10 @@ class MultiOutputRiskMeasureMCObjective(
                 `n_w` block of samples correspond to the same input.
 
         Returns:
-            A `sample_shape x batch_shape x q x n_w x m`-dim tensor of prepared samples.
+            A `sample_shape x batch_shape x q x n_w x m'`-dim tensor of
+            prepared samples.
         """
-        if self.weights is not None:
-            self.weights = self.weights.to(samples)
-            samples = samples * self.weights
+        samples = self.preprocessing_function(samples)
         return samples.view(*samples.shape[:-2], -1, self.n_w, samples.shape[-1])
 
     @abstractmethod
@@ -103,7 +110,7 @@ class MultiOutputRiskMeasureMCObjective(
             X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.
 
         Returns:
-            A `sample_shape x batch_shape x q x m`-dim tensor of risk measure samples.
+            A `sample_shape x batch_shape x q x m'`-dim tensor of risk measure samples.
         """
         pass  # pragma: no cover
 
@@ -128,7 +135,7 @@ class MultiOutputExpectation(MultiOutputRiskMeasureMCObjective):
             X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.
 
         Returns:
-            A `sample_shape x batch_shape x q x m`-dim tensor of expectation samples.
+            A `sample_shape x batch_shape x q x m'`-dim tensor of expectation samples.
         """
         prepared_samples = self._prepare_samples(samples)
         return prepared_samples.mean(dim=-2)
@@ -162,7 +169,7 @@ class IndependentCVaR(CVaR, MultiOutputRiskMeasureMCObjective):
                 `n_w` block of samples correspond to the same input.
 
         Returns:
-            A `sample_shape x batch_shape x q x n_w x m`-dim tensor of sorted samples.
+            A `sample_shape x batch_shape x q x n_w x m'`-dim tensor of sorted samples.
         """
         prepared_samples = self._prepare_samples(samples)
         return prepared_samples.sort(dim=-2, descending=True).values
@@ -177,7 +184,7 @@ class IndependentCVaR(CVaR, MultiOutputRiskMeasureMCObjective):
             X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.
 
         Returns:
-            A `sample_shape x batch_shape x q x m`-dim tensor of CVaR samples.
+            A `sample_shape x batch_shape x q x m'`-dim tensor of CVaR samples.
         """
         sorted_samples = self._get_sorted_prepared_samples(samples)
         return sorted_samples[..., self.alpha_idx :, :].mean(dim=-2)
@@ -205,7 +212,7 @@ class IndependentVaR(IndependentCVaR):
             X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.
 
         Returns:
-            A `sample_shape x batch_shape x q x m`-dim tensor of VaR samples.
+            A `sample_shape x batch_shape x q x m'`-dim tensor of VaR samples.
         """
         sorted_samples = self._get_sorted_prepared_samples(samples)
         return sorted_samples[..., self.alpha_idx, :]
@@ -224,7 +231,7 @@ class MultiOutputWorstCase(MultiOutputRiskMeasureMCObjective):
             X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.
 
         Returns:
-            A `sample_shape x batch_shape x q x m`-dim tensor of worst-case samples.
+            A `sample_shape x batch_shape x q x m'`-dim tensor of worst-case samples.
         """
         prepared_samples = self._prepare_samples(samples)
         return prepared_samples.min(dim=-2).values
@@ -248,6 +255,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         n_w: int,
         alpha: float,
         expectation: bool = False,
+        preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
         weights: Optional[Union[List[float], Tensor]] = None,
         pad_to_n_w: bool = False,
         filter_dominated: bool = True,
@@ -261,11 +269,15 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             expectation: If True, returns the expectation of the MVaR set as is
                 done in [Cousin2013MVaR]_. Otherwise, it returns the union of all
                 values in the MVaR set. Default: False.
+            preprocessing_function: A preprocessing function to apply to the
+                samples before computing the risk measure. This can be used to
+                remove non-objective outcomes or to align all outcomes for
+                maximization. For constrained optimization, this should also
+                apply feasibility-weighting to samples. Given a `batch x m`-dim
+                tensor of samples, this should return a `batch x m'`-dim tensor.
             weights: An optional `m`-dim tensor or list of weights for scaling
                 multi-output samples before calculating the risk measure.
-                This can also be used to make sure that all outputs are
-                correctly aligned for maximization by negating those that are
-                originally defined for minimization.
+                Deprecated, use `preprocessing_function` instead.
             pad_to_n_w: If True, instead of padding up to `k'`, which is the size of
                 the largest MVaR set across all batches, we pad the MVaR set up to
                 `n_w`. This produces a return tensor of known size, however, it may
@@ -279,7 +291,9 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
                 calculating the hypervolume. Disabling this is not recommended
                 if `expectation=True`.
         """
-        super().__init__(n_w=n_w, weights=weights)
+        super().__init__(
+            n_w=n_w, preprocessing_function=preprocessing_function, weights=weights
+        )
         if not 0 < alpha <= 1:
             raise ValueError("`alpha` must be in (0.0, 1.0]")
         self.alpha = alpha
@@ -463,11 +477,11 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             X: A `batch_shape x q x d`-dim tensor of inputs. Ignored.
 
         Returns:
-            A `sample_shape x batch_shape x q x m`-dim tensor of MVaR values,
+            A `sample_shape x batch_shape x q x m'`-dim tensor of MVaR values,
             if `self.expectation=True`.
-            Otherwise, this returns a `sample_shape x batch_shape x (q * k') x m`-dim
+            Otherwise, this returns a `sample_shape x batch_shape x (q * k') x m'`-dim
             tensor, where `k'` is the maximum `k` across all batches that is returned
-            by `get_mvar_set_...`. Each `(q * k') x m` corresponds to the `k` MVaR
+            by `get_mvar_set_...`. Each `(q * k') x m'` corresponds to the `k` MVaR
             values for each `q` batch of `n_w` inputs, padded up to `k'` by repeating
             the last element. If `self.pad_to_n_w`, we set `k' = self.n_w`, producing
             a deterministic return shape.
@@ -505,7 +519,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             if self.expectation:
                 padded_mvar_list.append(mvar_.mean(dim=0))
             else:
-                # Repeat the last entry to make `mvar_set` `n_w x m`.
+                # Repeat the last entry to make `mvar_set` `pad_size x m`.
                 repeats_needed = pad_size - mvar_.shape[0]
                 padded_mvar_list.append(
                     torch.cat([mvar_, mvar_[-1].expand(repeats_needed, m)], dim=0)
@@ -556,29 +570,49 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
                 maximization. For constrained optimization, this should also
                 apply feasibility-weighting to samples.
         """
-        super().__init__(alpha=alpha, n_w=n_w)
-        self.chebyshev_weights = chebyshev_weights
+        if preprocessing_function is None:
+            preprocessing_function = IdentityMCMultiOutputObjective()
+        super().__init__(
+            alpha=alpha,
+            n_w=n_w,
+            preprocessing_function=preprocessing_function,
+        )
+        self.chebyshev_weights = torch.as_tensor(chebyshev_weights)
         self.baseline_Y = baseline_Y
         self.register_buffer(
             "ref_point", torch.as_tensor(ref_point) if ref_point is not None else None
         )
-        if preprocessing_function is None:
-            preprocessing_function = IdentityMCMultiOutputObjective()
-        self.preprocessing_function = preprocessing_function
         self.mvar = MVaR(n_w=self.n_w, alpha=self.alpha)
         self._chebyshev_objective = None
 
-    def set_baseline_Y(self, model: Model, X_baseline: Tensor) -> None:
+    def set_baseline_Y(
+        self,
+        model: Optional[Model],
+        X_baseline: Optional[Tensor],
+        Y_samples: Optional[Tensor] = None,
+    ) -> None:
         r"""Set the `baseline_Y` based on the MVaR predictions of the `model`
         for `X_baseline`.
 
         Args:
             model: The model being used for MARS optimization. Must have a compatible
-                `InputPerturbation` transform attached.
+                `InputPerturbation` transform attached. Ignored if `Y_samples` is given.
             X_baseline: An `n x d`-dim tensor of previously evaluated points.
+                Ignored if `Y_samples` is given.
+            Y_samples: An optional `(n * n_w) x d`-dim tensor of predictions. If given,
+                instead of sampling from the model, these are used.
         """
-        with torch.no_grad():
-            Y = model.posterior(X_baseline).mean
+        if Y_samples is None:
+            with torch.no_grad():
+                Y = model.posterior(X_baseline.unsqueeze(-2)).mean.squeeze(-2)
+        else:
+            if model is not None or X_baseline is not None:
+                warnings.warn(
+                    "`model` and `X_baseline` are ignored when `Y_samples` is "
+                    "provided to `MARS.set_baseline_Y`.",
+                    BotorchWarning,
+                )
+            Y = Y_samples
         Y = self.preprocessing_function(Y)
         Y = self.mvar(Y).view(-1, Y.shape[-1])
         Y = Y[is_non_dominated(Y)]
@@ -661,7 +695,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
             Y = normalize(Y, bounds=Y_bounds)
             if ref_point is not None:
                 Y = Y - ref_point
-            product = torch.einsum("...m,m->...m", Y, self.chebyshev_weights)
+            product = torch.einsum("...m,m->...m", Y, self.chebyshev_weights.to(Y))
             return product.min(dim=-1).values
 
         self._chebyshev_objective = chebyshev_obj
@@ -678,9 +712,8 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
         Returns:
             A `sample_shape x batch_shape x q x n_w`-dim tensor of prepared samples.
         """
-        return VaR._prepare_samples(
-            self, self.chebyshev_objective(samples).unsqueeze(-1)
-        )
+        samples = self.chebyshev_objective(samples)
+        return samples.view(*samples.shape[:-1], -1, self.n_w)
 
     @staticmethod
     def _get_Y_normalization_bounds(

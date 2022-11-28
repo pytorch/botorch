@@ -9,18 +9,19 @@ from __future__ import annotations
 import torch
 from botorch.exceptions.errors import BotorchError
 from botorch.posteriors.base_samples import _reshape_base_samples_non_interleaved
+from botorch.posteriors.fully_bayesian import FullyBayesianPosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
 )
-from gpytorch.lazy import BlockDiagLazyTensor
-from gpytorch.lazy.lazy_tensor import LazyTensor
-from gpytorch.utils.cholesky import psd_safe_cholesky
-from gpytorch.utils.errors import NanError, NotPSDError
+from linear_operator.operators import BlockDiagLinearOperator, LinearOperator
+
+from linear_operator.utils.cholesky import psd_safe_cholesky
+from linear_operator.utils.errors import NanError
 from torch import Tensor
 
 
-def extract_batch_covar(mt_mvn: MultitaskMultivariateNormal) -> LazyTensor:
+def extract_batch_covar(mt_mvn: MultitaskMultivariateNormal) -> LinearOperator:
     r"""Extract a batched independent covariance matrix from an MTMVN.
 
     Args:
@@ -33,9 +34,11 @@ def extract_batch_covar(mt_mvn: MultitaskMultivariateNormal) -> LazyTensor:
 
     """
     lazy_covar = mt_mvn.lazy_covariance_matrix
-    if not isinstance(lazy_covar, BlockDiagLazyTensor):
-        raise BotorchError(f"Expected BlockDiagLazyTensor, but got {type(lazy_covar)}.")
-    return lazy_covar.base_lazy_tensor
+    if not isinstance(lazy_covar, BlockDiagLinearOperator):
+        raise BotorchError(
+            f"Expected BlockDiagLinearOperator, but got {type(lazy_covar)}."
+        )
+    return lazy_covar.base_linear_op
 
 
 def _reshape_base_samples(
@@ -56,15 +59,20 @@ def _reshape_base_samples(
     Returns:
         Reshaped and expanded base samples.
     """
-    mvn = posterior.mvn
+    mvn = posterior.distribution
     loc = mvn.loc
-    peshape = posterior.event_shape
+    peshape = posterior._extended_shape()
+    is_fully_b = int(isinstance(posterior, FullyBayesianPosterior))
     base_samples = base_samples.view(
-        sample_shape + torch.Size([1 for _ in range(loc.ndim - 1)]) + peshape[-2:]
-    ).expand(sample_shape + loc.shape[:-1] + peshape[-2:])
+        sample_shape
+        + torch.Size([1 for _ in range(loc.ndim - 1 - is_fully_b)])
+        + peshape[-2 - is_fully_b :]
+    ).expand(sample_shape + loc.shape[: -1 - is_fully_b] + peshape[-2 - is_fully_b :])
     if posterior._is_mt:
         base_samples = _reshape_base_samples_non_interleaved(
-            mvn=posterior.mvn, base_samples=base_samples, sample_shape=sample_shape
+            mvn=posterior.distribution,
+            base_samples=base_samples,
+            sample_shape=sample_shape,
         )
     base_samples = base_samples.reshape(
         -1, *loc.shape[:-1], mvn.lazy_covariance_matrix.shape[-1]
@@ -104,12 +112,14 @@ def sample_cached_cholesky(
             samples at the new points.
     """
     # compute bottom left covariance block
-    if isinstance(posterior.mvn, MultitaskMultivariateNormal):
-        lazy_covar = extract_batch_covar(mt_mvn=posterior.mvn)
-    else:
-        lazy_covar = posterior.mvn.lazy_covariance_matrix
+    mvn = posterior.distribution
+    lazy_covar = (
+        extract_batch_covar(mt_mvn=mvn)
+        if isinstance(mvn, MultitaskMultivariateNormal)
+        else mvn.lazy_covariance_matrix
+    )
     # Get the `q` new rows of the batched covariance matrix
-    bottom_rows = lazy_covar[..., -q:, :].evaluate()
+    bottom_rows = lazy_covar[..., -q:, :].to_dense()
     # The covariance in block form is:
     # [K(X_baseline, X_baseline), K(X_baseline, X)]
     # [K(X, X_baseline), K(X, X)]
@@ -122,16 +132,10 @@ def sample_cached_cholesky(
     # and bl_chol := x^T
     # bl_chol is the new `(batch_shape) x q x n`-dim bottom left block
     # of the cholesky decomposition
-    # TODO: remove the exception handling, when the pytorch
-    # version requirement is bumped to >= 1.10
-    try:
-        bl_chol = torch.triangular_solve(
-            bl.transpose(-2, -1), baseline_L, upper=False
-        ).solution.transpose(-2, -1)
-    except RuntimeError as e:
-        if "singular" in str(e):
-            raise NotPSDError(f"triangular_solve failed with RuntimeError: {e}")
-        raise e
+    bl_chol = torch.linalg.solve_triangular(
+        baseline_L, bl.transpose(-2, -1), upper=False
+    ).transpose(-2, -1)
+
     # Compute the new bottom right block of the Cholesky
     # decomposition via:
     # Cholesky(K(X, X) - bl_chol @ bl_chol^T)
@@ -142,13 +146,13 @@ def sample_cached_cholesky(
     # Create a `(batch_shape) x q x (n+q)`-dim tensor containing the
     # `q` new bottom rows of the Cholesky decomposition
     new_Lq = torch.cat([bl_chol, br_chol], dim=-1)
-    mean = posterior.mvn.mean
+    mean = posterior.distribution.mean
     base_samples = _reshape_base_samples(
         base_samples=base_samples,
         sample_shape=sample_shape,
         posterior=posterior,
     )
-    if not isinstance(posterior.mvn, MultitaskMultivariateNormal):
+    if not isinstance(posterior.distribution, MultitaskMultivariateNormal):
         # add output dim
         mean = mean.unsqueeze(-1)
         # add batch dim corresponding to output dim
@@ -157,7 +161,7 @@ def sample_cached_cholesky(
     res = (
         new_Lq.matmul(base_samples)
         .add(new_mean.transpose(-1, -2).unsqueeze(-1))
-        .permute(-1, *range(posterior.mvn.loc.dim() - 1), -2, -3)
+        .permute(-1, *range(posterior.distribution.loc.dim() - 1), -2, -3)
         .contiguous()
     )
     contains_nans = torch.isnan(res).any()

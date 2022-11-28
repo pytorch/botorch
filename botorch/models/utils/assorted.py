@@ -18,7 +18,6 @@ from botorch.exceptions import InputDataError, InputDataWarning
 from botorch.settings import _Flag
 from gpytorch import settings as gpt_settings
 from gpytorch.module import Module
-from gpytorch.utils.broadcasting import _mul_broadcast_shape
 from torch import Tensor
 
 
@@ -107,11 +106,13 @@ def add_output_dim(X: Tensor, original_batch_shape: torch.Size) -> Tuple[Tensor,
     if len(X_batch_shape) > 0 and len(original_batch_shape) > 0:
         # check that X_batch_shape supports broadcasting or augments
         # original_batch_shape with extra batch dims
-        error_msg = (
-            "The trailing batch dimensions of X must match the trailing "
-            "batch dimensions of the training inputs."
-        )
-        _mul_broadcast_shape(X_batch_shape, original_batch_shape, error_msg=error_msg)
+        try:
+            torch.broadcast_shapes(X_batch_shape, original_batch_shape)
+        except RuntimeError:
+            raise RuntimeError(
+                "The trailing batch dimensions of X must match the trailing "
+                "batch dimensions of the training inputs."
+            )
     # insert `m` dimension
     X = X.unsqueeze(-3)
     output_dim_idx = max(len(original_batch_shape), len(X_batch_shape))

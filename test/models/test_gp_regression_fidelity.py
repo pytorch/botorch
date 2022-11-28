@@ -9,9 +9,9 @@ import warnings
 from typing import Tuple
 
 import torch
-from botorch import fit_gpytorch_model
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.gp_regression_fidelity import (
     FixedNoiseMultiFidelityGP,
@@ -123,7 +123,11 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 mll.to(**tkwargs)
                 with warnings.catch_warnings():
                     warnings.filterwarnings("ignore", category=OptimizationWarning)
-                    fit_gpytorch_model(mll, sequential=False, options={"maxiter": 1})
+                    fit_gpytorch_mll(
+                        mll,
+                        optimizer_kwargs={"options": {"maxiter": 1}},
+                        sequential=False,
+                    )
 
                 # test init
                 self.assertIsInstance(model.mean_module, ConstantMean)
@@ -292,8 +296,10 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                         )
                         self.assertTrue(
                             torch.allclose(
-                                posterior_same_inputs.mvn.covariance_matrix[:, 0, :, :],
-                                non_batch_posterior.mvn.covariance_matrix,
+                                posterior_same_inputs.distribution.covariance_matrix[
+                                    :, 0, :, :
+                                ],
+                                non_batch_posterior.distribution.covariance_matrix,
                                 atol=1e-3,
                             )
                         )
@@ -321,7 +327,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 X_f = torch.rand(
                     torch.Size(batch_shape + torch.Size([4, num_dim])), **tkwargs
                 )
-                sampler = SobolQMCNormalSampler(num_samples=3)
+                sampler = SobolQMCNormalSampler(sample_shape=torch.Size([3]))
                 fm = model.fantasize(X=X_f, sampler=sampler)
                 self.assertIsInstance(fm, model.__class__)
                 fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)

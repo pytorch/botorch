@@ -9,19 +9,22 @@ from __future__ import annotations
 import math
 import warnings
 from collections import OrderedDict
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 from unittest import TestCase
 
 import torch
 from botorch import settings
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.models.model import Model
+from botorch.models.model import FantasizeMixin, Model
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
+from botorch.sampling.base import MCSampler
+from botorch.sampling.get_sampler import GetSampler
+from botorch.sampling.stochastic_samplers import StochasticSampler
 from botorch.test_functions.base import BaseTestProblem
 from botorch.utils.transforms import unnormalize
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy import AddedDiagLazyTensor, DiagLazyTensor
+from linear_operator.operators import AddedDiagLinearOperator, DiagLinearOperator
 from torch import Tensor
 
 
@@ -97,17 +100,25 @@ class SyntheticTestFunctionBaseTestCase(BaseTestProblemBaseTestCase):
 class MockPosterior(Posterior):
     r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
-    def __init__(self, mean=None, variance=None, samples=None):
+    def __init__(
+        self, mean=None, variance=None, samples=None, base_shape=None, batch_range=None
+    ) -> None:
         r"""
         Args:
             mean: The mean of the posterior.
             variance: The variance of the posterior.
             samples: Samples to return from `rsample`, unless `base_samples` is
                 provided.
+            base_shape: If given, this is returned as `base_sample_shape`, and also
+                used as the base of the `_extended_shape`.
+            batch_range: If given, this is returned as `batch_range`.
+                Defaults to (0, -2).
         """
         self._mean = mean
         self._variance = variance
         self._samples = samples
+        self._base_shape = base_shape
+        self._batch_range = batch_range or (0, -2)
 
     @property
     def device(self) -> torch.device:
@@ -124,7 +135,21 @@ class MockPosterior(Posterior):
         return torch.float32
 
     @property
-    def event_shape(self) -> torch.Size:
+    def batch_shape(self) -> torch.Size:
+        for t in (self._mean, self._variance, self._samples):
+            if torch.is_tensor(t):
+                return t.shape[:-2]
+        raise NotImplementedError  # pragma: no cover
+
+    def _extended_shape(
+        self, sample_shape: torch.Size = torch.Size()  # noqa: B008
+    ) -> torch.Size:
+        return sample_shape + self.base_sample_shape
+
+    @property
+    def base_sample_shape(self) -> torch.Size:
+        if self._base_shape is not None:
+            return self._base_shape
         if self._samples is not None:
             return self._samples.shape
         if self._mean is not None:
@@ -132,6 +157,10 @@ class MockPosterior(Posterior):
         if self._variance is not None:
             return self._variance.shape
         return torch.Size()
+
+    @property
+    def batch_range(self) -> Tuple[int, int]:
+        return self._batch_range
 
     @property
     def mean(self):
@@ -156,8 +185,23 @@ class MockPosterior(Posterior):
                 raise RuntimeError("sample_shape disagrees with base_samples.")
         return self._samples.expand(sample_shape + self._samples.shape)
 
+    def rsample_from_base_samples(
+        self,
+        sample_shape: torch.Size,
+        base_samples: Tensor,
+    ) -> Tensor:
+        return self.rsample(sample_shape, base_samples)
 
-class MockModel(Model):
+
+@GetSampler.register(MockPosterior)
+def _get_sampler_mock(
+    posterior: MockPosterior, sample_shape: torch.Size, **kwargs: Any
+) -> MCSampler:
+    r"""Get the dummy `StochasticSampler` for `MockPosterior`."""
+    return StochasticSampler(sample_shape=sample_shape, **kwargs)
+
+
+class MockModel(Model, FantasizeMixin):
     r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
     def __init__(self, posterior: MockPosterior) -> None:  # noqa: D107
@@ -178,13 +222,13 @@ class MockModel(Model):
 
     @property
     def num_outputs(self) -> int:
-        event_shape = self._posterior.event_shape
-        return event_shape[-1] if len(event_shape) > 0 else 0
+        extended_shape = self._posterior._extended_shape()
+        return extended_shape[-1] if len(extended_shape) > 0 else 0
 
     @property
     def batch_shape(self) -> torch.Size:
-        event_shape = self._posterior.event_shape
-        return event_shape[:-2]
+        extended_shape = self._posterior._extended_shape()
+        return extended_shape[:-2]
 
     def state_dict(self) -> None:
         pass
@@ -273,7 +317,7 @@ def _get_test_posterior(
         covar = a @ a.transpose(-1, -2)
         flat_diag = torch.rand(*batch_shape, q * m, **tkwargs)
         if lazy:
-            covar = AddedDiagLazyTensor(covar, DiagLazyTensor(flat_diag))
+            covar = AddedDiagLinearOperator(covar, DiagLinearOperator(flat_diag))
         else:
             covar = covar + torch.diag_embed(flat_diag)
         mtmvn = MultitaskMultivariateNormal(mean, covar, interleaved=interleaved)

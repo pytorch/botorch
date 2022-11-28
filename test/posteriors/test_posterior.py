@@ -6,14 +6,13 @@
 
 
 from itertools import product
-from unittest.mock import Mock
 
 import torch
 from botorch.posteriors import GPyTorchPosterior, Posterior, PosteriorList
 from botorch.posteriors.deterministic import DeterministicPosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.lazy.non_lazy_tensor import lazify
+from linear_operator.operators import to_linear_operator
 
 
 class NotSoAbstractPosterior(Posterior):
@@ -25,10 +24,6 @@ class NotSoAbstractPosterior(Posterior):
     def dtype(self):
         pass
 
-    @property
-    def event_shape(self):
-        pass
-
     def rsample(self, *args):
         pass
 
@@ -38,12 +33,18 @@ class TestPosterior(BotorchTestCase):
         with self.assertRaises(TypeError):
             Posterior()
 
-    def test_mean_var_notimplemented_error(self):
+    def test_notimplemented_errors(self):
         posterior = NotSoAbstractPosterior()
-        with self.assertRaisesRegex(NotImplementedError, "NotSoAbstractPosterior"):
+        with self.assertRaisesRegex(AttributeError, "NotSoAbstractPosterior"):
             posterior.mean
-        with self.assertRaisesRegex(NotImplementedError, "NotSoAbstractPosterior"):
+        with self.assertRaisesRegex(AttributeError, "NotSoAbstractPosterior"):
             posterior.variance
+        with self.assertRaisesRegex(
+            NotImplementedError, "not implement `_extended_shape`"
+        ):
+            posterior._extended_shape()
+        with self.assertRaisesRegex(NotImplementedError, "not implement `batch_range`"):
+            posterior.batch_range
 
 
 class TestPosteriorList(BotorchTestCase):
@@ -51,8 +52,8 @@ class TestPosteriorList(BotorchTestCase):
         mean = torch.rand(*shape, dtype=dtype, device=self.device)
         variance = 1 + torch.rand(*shape, dtype=dtype, device=self.device)
         covar = torch.diag_embed(variance)
-        mvn = MultivariateNormal(mean, lazify(covar))
-        return GPyTorchPosterior(mvn=mvn)
+        mvn = MultivariateNormal(mean, to_linear_operator(covar))
+        return GPyTorchPosterior(distribution=mvn)
 
     def _make_deterministic_posterior(self, shape, dtype):
         mean = torch.rand(*shape, 1, dtype=dtype, device=self.device)
@@ -71,11 +72,13 @@ class TestPosteriorList(BotorchTestCase):
             p_1 = make_posterior(shape, dtype)
             p_2 = make_posterior(shape, dtype)
             p = PosteriorList(p_1, p_2)
-            expected_shape = (
-                torch.Size([]) if use_deterministic else shape + torch.Size([2])
-            )
-            self.assertEqual(p.base_sample_shape, expected_shape)
-            self.assertEqual(p.event_shape, shape + torch.Size([2]))
+            with self.assertWarnsRegex(
+                DeprecationWarning, "The `event_shape` attribute"
+            ):
+                self.assertEqual(p.event_shape, p._extended_shape())
+            with self.assertRaisesRegex(NotImplementedError, "base_sample_shape"):
+                p.base_sample_shape
+            self.assertEqual(p._extended_shape(), shape + torch.Size([2]))
             self.assertEqual(p.device.type, self.device.type)
             self.assertEqual(p.dtype, dtype)
             self.assertTrue(
@@ -84,24 +87,10 @@ class TestPosteriorList(BotorchTestCase):
             self.assertTrue(
                 torch.equal(p.variance, torch.cat([p_1.variance, p_2.variance], dim=-1))
             )
-            # test sampling w/o base samples
+            # Test sampling.
             sample_shape = torch.Size([4])
-            samples = p.sample(sample_shape=sample_shape)
+            samples = p.rsample(sample_shape=sample_shape)
             self.assertEqual(samples.shape, torch.Size([4, 3, 2]))
-            # test sampling w/ base samples
-            base_samples = torch.randn(
-                sample_shape + p.base_sample_shape, device=self.device, dtype=dtype
-            )
-            samples = p.sample(sample_shape=sample_shape, base_samples=base_samples)
-            if use_deterministic:
-                bs_1 = base_samples
-                bs_2 = base_samples
-            else:
-                bs_1, bs_2 = torch.split(base_samples, 1, dim=-1)
-            samples_1 = p_1.sample(sample_shape=sample_shape, base_samples=bs_1)
-            samples_2 = p_2.sample(sample_shape=sample_shape, base_samples=bs_2)
-            samples_expected = torch.cat([samples_1, samples_2], dim=-1)
-            self.assertTrue(torch.equal(samples, samples_expected))
 
     def test_posterior_list_errors(self):
         shape_1 = torch.Size([3, 2])
@@ -110,18 +99,14 @@ class TestPosteriorList(BotorchTestCase):
         p_2 = self._make_gpytorch_posterior(shape_2, torch.double)
         p = PosteriorList(p_1, p_2)
 
-        bs_err_msg = (
-            "`PosteriorList` only supported if the constituent posteriors "
-            "all have the same `batch_shape`."
-        )
-        with self.assertRaisesRegex(NotImplementedError, bs_err_msg):
-            p.base_sample_shape
-        with self.assertRaisesRegex(NotImplementedError, bs_err_msg):
-            p.event_shape
+        with self.assertRaisesRegex(NotImplementedError, "same `batch_shape`"):
+            p._extended_shape()
         dtype_err_msg = "Multi-dtype posteriors are currently not supported."
         with self.assertRaisesRegex(NotImplementedError, dtype_err_msg):
             p.dtype
         device_err_msg = "Multi-device posteriors are currently not supported."
-        p_2.mvn.loc = Mock()
+        p_2._device = None
         with self.assertRaisesRegex(NotImplementedError, device_err_msg):
             p.device
+        with self.assertRaisesRegex(AttributeError, "`PosteriorList` does not define"):
+            p.rate

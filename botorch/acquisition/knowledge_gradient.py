@@ -33,6 +33,7 @@ import torch
 from botorch import settings
 from botorch.acquisition.acquisition import (
     AcquisitionFunction,
+    MCSamplerMixin,
     OneShotAcquisitionFunction,
 )
 from botorch.acquisition.analytic import PosteriorMean
@@ -41,7 +42,8 @@ from botorch.acquisition.monte_carlo import MCAcquisitionFunction, qSimpleRegret
 from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
-from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.sampling.base import MCSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.transforms import (
     concatenate_pending_points,
     match_batch_shape,
@@ -108,9 +110,7 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
                     "Must specify `num_fantasies` if no `sampler` is provided."
                 )
             # base samples should be fixed for joint optimization over X, X_fantasies
-            sampler = SobolQMCNormalSampler(
-                num_samples=num_fantasies, resample=False, collapse_batch_dims=True
-            )
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([num_fantasies]))
         elif num_fantasies is not None:
             if sampler.sample_shape != torch.Size([num_fantasies]):
                 raise ValueError(
@@ -119,11 +119,10 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         else:
             num_fantasies = sampler.sample_shape[0]
         super(MCAcquisitionFunction, self).__init__(model=model)
+        MCSamplerMixin.__init__(self, sampler=sampler)
         # if not explicitly specified, we use the posterior mean for linear objs
         if isinstance(objective, MCAcquisitionObjective) and inner_sampler is None:
-            inner_sampler = SobolQMCNormalSampler(
-                num_samples=128, resample=False, collapse_batch_dims=True
-            )
+            inner_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([128]))
         elif objective is not None and not isinstance(
             objective, MCAcquisitionObjective
         ):
@@ -150,12 +149,12 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
                     "If using a multi-output model without an objective, "
                     "posterior_transform must scalarize the output."
                 )
-        self.sampler = sampler
         self.objective = objective
         self.posterior_transform = posterior_transform
         self.set_X_pending(X_pending)
+        self.X_pending: Tensor = self.X_pending
         self.inner_sampler = inner_sampler
-        self.num_fantasies = num_fantasies
+        self.num_fantasies: int = num_fantasies
         self.current_value = current_value
 
     @t_batch_mode_transform()
@@ -338,7 +337,7 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         project: Callable[[Tensor], Tensor] = lambda X: X,
         expand: Callable[[Tensor], Tensor] = lambda X: X,
         valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
-        valfunc_argfac: Optional[Callable[[Model, Dict[str, Any]]]] = None,
+        valfunc_argfac: Optional[Callable[[Model], Dict[str, Any]]] = None,
         **kwargs: Any,
     ) -> None:
         r"""Multi-Fidelity q-Knowledge Gradient (one-shot optimization).
@@ -529,7 +528,7 @@ def _get_value_function(
     sampler: Optional[MCSampler] = None,
     project: Optional[Callable[[Tensor], Tensor]] = None,
     valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
-    valfunc_argfac: Optional[Callable[[Model, Dict[str, Any]]]] = None,
+    valfunc_argfac: Optional[Callable[[Model], Dict[str, Any]]] = None,
 ) -> AcquisitionFunction:
     r"""Construct value function (i.e. inner acquisition function)."""
     if valfunc_cls is not None:

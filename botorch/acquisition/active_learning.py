@@ -25,12 +25,14 @@ from __future__ import annotations
 
 from typing import Optional
 
+import torch
 from botorch import settings
 from botorch.acquisition.analytic import AnalyticAcquisitionFunction
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
 from botorch.models.model import Model
-from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.sampling.base import MCSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 from torch import Tensor
 
@@ -81,9 +83,7 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
             # variance does not depend on the samples y (only on x), which is true for
             # standard GP models, but not in general (e.g. for other likelihoods or
             # heteroskedastic GPs using a separate noise model fit on data).
-            sampler = SobolQMCNormalSampler(
-                num_samples=1, resample=False, collapse_batch_dims=True
-            )
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([1]))
         self.sampler = sampler
         self.X_pending = X_pending
         self.register_buffer("mc_points", mc_points)
@@ -100,8 +100,8 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
         bdims = tuple(1 for _ in X.shape[:-2])
         if self.model.num_outputs > 1:
             # We use q=1 here b/c ScalarizedObjective currently does not fully exploit
-            # lazy tensor operations and thus may be slow / overly memory-hungry.
-            # TODO (T52818288): Properly use lazy tensors in scalarize_posterior
+            # LinearOperator operations and thus may be slow / overly memory-hungry.
+            # TODO (T52818288): Properly use LinearOperators in scalarize_posterior
             mc_points = self.mc_points.view(-1, *bdims, 1, X.size(-1))
         else:
             # While we only need marginal variances, we can evaluate for q>1
@@ -150,8 +150,6 @@ class PairwiseMCPosteriorVariance(MCAcquisitionFunction):
                 two samples. Can be implemented via GenericMCObjective.
             sampler: The sampler used for drawing MC samples.
         """
-        if sampler is None:
-            sampler = SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)
         super().__init__(
             model=model, sampler=sampler, objective=objective, X_pending=None
         )
@@ -175,7 +173,7 @@ class PairwiseMCPosteriorVariance(MCAcquisitionFunction):
         # The output is of shape batch_shape x 2 x d
         # For PairwiseGP, d = 1
         post = self.model.posterior(X)
-        samples = self.sampler(post)  # num_samples x batch_shape x 2 x d
+        samples = self.get_posterior_samples(post)  # num_samples x batch_shape x 2 x d
 
         # The output is of shape num_samples x batch_shape x q/2 x d
         # assuming the comparison is made between the 2 * i and 2 * i + 1 elements

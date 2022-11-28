@@ -15,11 +15,12 @@ from typing import Any, List
 
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.gpytorch import GPyTorchModel, ModelListGPyTorchModel
+from botorch.models.model import FantasizeMixin
 from gpytorch.models import IndependentModelList
 from torch import Tensor
 
 
-class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
+class ModelListGP(IndependentModelList, ModelListGPyTorchModel, FantasizeMixin):
     r"""A multi-output GP model with independent GPs for the outputs.
 
     This model supports different-shaped training inputs for each of its
@@ -51,6 +52,8 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
         """
         super().__init__(*gp_models)
 
+    # pyre-fixme[14]: Inconsistent override. Here `X` is a List[Tensor], but in the
+    # parent method it's a Tensor.
     def condition_on_observations(
         self, X: List[Tensor], Y: Tensor, **kwargs: Any
     ) -> ModelListGP:
@@ -68,9 +71,11 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
                 standard broadcasting semantics. If `Y` has fewer batch dimensions
                 than `X`, its is assumed that the missing batch dimensions are
                 the same for all `Y`.
+            kwargs: Keyword arguments passed to
+                `IndependentModelList.get_fantasy_model`.
 
         Returns:
-            A `ModelListGPyTorchModel` representing the original model
+            A `ModelListGP` representing the original model
             conditioned on the new observations `(X, Y)` (and possibly noise
             observations passed in via kwargs). Here the `i`-th model has
             `n_i + n'` training examples, where the `n'` training examples have
@@ -83,6 +88,11 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
                 f"{self.num_outputs} outputs."
             )
         targets = [Y[..., i] for i in range(Y.shape[-1])]
+        for i, model in enumerate(self.models):
+            if hasattr(model, "outcome_transform"):
+                noise = kwargs.get("noise")
+                targets[i], noise = model.outcome_transform(targets[i], noise)
+
         # This should never trigger, posterior call would fail.
         assert len(targets) == len(X)
         if "noise" in kwargs:

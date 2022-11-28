@@ -24,11 +24,12 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.models.deterministic import PosteriorMeanModel
 from botorch.models.pairwise_gp import PairwiseGP
 from botorch.posteriors import GPyTorchPosterior
-from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils import apply_constraints
 from botorch.utils.testing import _get_test_posterior, BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy import lazify
+from linear_operator.operators.dense_linear_operator import to_linear_operator
+
 from torch import Tensor
 
 
@@ -67,7 +68,10 @@ class TestScalarizedPosteriorTransform(BotorchTestCase):
             posterior = _get_test_posterior(
                 batch_shape, m=m, device=self.device, dtype=dtype
             )
-            mean, covar = posterior.mvn.mean, posterior.mvn.covariance_matrix
+            mean, covar = (
+                posterior.distribution.mean,
+                posterior.distribution.covariance_matrix,
+            )
             new_posterior = obj(posterior)
             exp_size = torch.Size(batch_shape + [1, 1])
             self.assertEqual(new_posterior.mean.shape, exp_size)
@@ -135,13 +139,13 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
             ],
             **tkwargs,
         )
-        org_mvn = MultivariateNormal(org_loc, lazify(org_covar))
-        org_post = GPyTorchPosterior(mvn=org_mvn)
+        org_mvn = MultivariateNormal(org_loc, to_linear_operator(org_covar))
+        org_post = GPyTorchPosterior(distribution=org_mvn)
         tf = ExpectationPosteriorTransform(n_w=3)
         tf_post = tf(org_post)
         self.assertIsInstance(tf_post, GPyTorchPosterior)
         self.assertEqual(tf_post.sample().shape, torch.Size([1, 2, 1]))
-        tf_mvn = tf_post.mvn
+        tf_mvn = tf_post.distribution
         self.assertIsInstance(tf_mvn, MultivariateNormal)
         expected_loc = torch.tensor([2.0, 5.0], **tkwargs)
         # This is the average of each 3 x 3 block.
@@ -184,25 +188,25 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
             # We constructed it according to the output of mvn.loc,
             # reshaping here to have the required `b x n x t` shape.
             org_loc.view(3, 2, 4).transpose(-2, -1),
-            lazify(org_covar),
+            to_linear_operator(org_covar),
             interleaved=True,  # To test the error.
         )
-        org_post = GPyTorchPosterior(mvn=org_mvn)
+        org_post = GPyTorchPosterior(distribution=org_mvn)
         # Error if interleaved.
         with self.assertRaisesRegex(UnsupportedError, "interleaved"):
             tf(org_post)
         # Construct the non-interleaved posterior.
         org_mvn = MultitaskMultivariateNormal(
             org_loc.view(3, 2, 4).transpose(-2, -1),
-            lazify(org_covar),
+            to_linear_operator(org_covar),
             interleaved=False,
         )
-        org_post = GPyTorchPosterior(mvn=org_mvn)
+        org_post = GPyTorchPosterior(distribution=org_mvn)
         self.assertTrue(torch.equal(org_mvn.loc, org_loc))
         tf_post = tf(org_post)
         self.assertIsInstance(tf_post, GPyTorchPosterior)
         self.assertEqual(tf_post.sample().shape, torch.Size([1, 3, 2, 2]))
-        tf_mvn = tf_post.mvn
+        tf_mvn = tf_post.distribution
         self.assertIsInstance(tf_mvn, MultitaskMultivariateNormal)
         expected_loc = torch.tensor([[1.6667, 3.6667, 5.25, 7.25]], **tkwargs).repeat(
             3, 1
@@ -414,7 +418,8 @@ class TestLearnedObjective(BotorchTestCase):
         n = 8
         test_X = torch.rand(torch.Size((og_sample_shape, batch_size, n, X_dim)))
 
-        # test default setting where sampler = IIDNormalSampler(num_samples=1)
+        # test default setting where sampler =
+        # IIDNormalSampler(sample_shape=torch.Size([1]))
         pref_obj = LearnedObjective(pref_model=pref_model)
         self.assertEqual(
             pref_obj(test_X).shape, torch.Size([og_sample_shape, batch_size, n])
@@ -424,7 +429,7 @@ class TestLearnedObjective(BotorchTestCase):
         num_samples = 16
         pref_obj = LearnedObjective(
             pref_model=pref_model,
-            sampler=SobolQMCNormalSampler(num_samples=num_samples),
+            sampler=SobolQMCNormalSampler(sample_shape=torch.Size([num_samples])),
         )
         self.assertEqual(
             pref_obj(test_X).shape,
@@ -442,5 +447,5 @@ class TestLearnedObjective(BotorchTestCase):
         with self.assertRaises(AssertionError):
             LearnedObjective(
                 pref_model=mean_pref_model,
-                sampler=SobolQMCNormalSampler(num_samples=num_samples),
+                sampler=SobolQMCNormalSampler(sample_shape=torch.Size([num_samples])),
             )
