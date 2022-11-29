@@ -78,13 +78,21 @@ def apply_constraints_nonnegative_soft(
             This callable must support broadcasting. Only relevant for multi-
             output models (`m` > 1).
         samples: A `n_samples x b x q x m` Tensor of samples drawn from the posterior.
-        eta: The temperature parameter for the sigmoid function.
+        eta: The temperature parameter for the sigmoid function. Can be either a float
+            or a 1-dim tensor. In case of a float the same eta is used for every
+            constraint in constraints. In case of a tensor the length of the tensor
+            must match the number of provided constraints. The i-th constraint is
+            then estimated with the i-th eta value.
 
     Returns:
         A `n_samples x b x q (x m')`-dim tensor of feasibility-weighted objectives.
     """
     if type(eta) != Tensor:
-        eta = torch.full(len(constraints), eta)
+        eta = torch.full((len(constraints),), eta)
+    if len(eta) != len(constraints):
+        raise ValueError(
+            "Number of provided constraints and numer of provided etas does not match."
+        )
     obj = obj.clamp_min(0)  # Enforce non-negativity with constraints
     for constraint, e in zip(constraints, eta):
         constraint_eval = soft_eval_constraint(constraint(samples), eta=e)
@@ -120,7 +128,7 @@ def apply_constraints(
     constraints: List[Callable[[Tensor], Tensor]],
     samples: Tensor,
     infeasible_cost: float,
-    eta: Union[List[float], float] = 1e-3,
+    eta: Union[Tensor, float] = 1e-3,
 ) -> Tensor:
     r"""Apply constraints using an infeasible_cost `M` for negative objectives.
 
@@ -138,7 +146,11 @@ def apply_constraints(
             output models (`m` > 1).
         samples: A `n_samples x b x q x m` Tensor of samples drawn from the posterior.
         infeasible_cost: The infeasible value.
-        eta: The temperature parameter of the sigmoid function.
+        eta: The temperature parameter of the sigmoid function. Can be either a float
+            or a 1-dim tensor. In case of a float the same eta is used for every
+            constraint in constraints. In case of a tensor the length of the tensor
+            must match the number of provided constraints. The i-th constraint is
+            then estimated with the i-th eta value.
 
     Returns:
         A `n_samples x b x q (x m')`-dim tensor of feasibility-weighted objectives.
