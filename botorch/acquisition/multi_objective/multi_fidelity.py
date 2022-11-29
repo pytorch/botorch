@@ -46,9 +46,9 @@ class MOMF(qExpectedHypervolumeImprovement):
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCMultiOutputObjective] = None,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        eta: Optional[Union[Tensor, float]] = 10e-3,
         X_pending: Optional[Tensor] = None,
         cost_call: Callable[Tensor, Tensor] = None,
-        eta: float = 1e-3,
         **kwargs: Any,
     ) -> None:
         r"""MOMF acquisition function supporting m>=2 outcomes.
@@ -98,7 +98,11 @@ class MOMF(qExpectedHypervolumeImprovement):
                 `batch_shape x q x m`. Defaults to an AffineCostModel with
                 `C(s) = 1 + s`.
             eta: The temperature parameter for the sigmoid function used for the
-                differentiable approximation of the constraints.
+                differentiable approximation of the constraints. In case of a float the
+                same eta is used for every constraint in constraints. In case of a
+                tensor the length of the tensor must match the number of provided
+                constraints. The i-th constraint is then estimated with the i-th
+                eta value.
         """
 
         if len(ref_point) != partitioning.num_outcomes:
@@ -119,6 +123,7 @@ class MOMF(qExpectedHypervolumeImprovement):
             sampler=sampler,
             objective=objective,
             constraints=constraints,
+            eta=eta,
             X_pending=X_pending,
         )
 

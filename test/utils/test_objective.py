@@ -117,6 +117,24 @@ class TestApplyConstraints(BotorchTestCase):
                     * torch.sigmoid(torch.as_tensor(-0.1) / 10e-2),
                 )
             )
+            # nonnegative objective, two constraint explicit different eta
+            # use ones_f
+            obj = samples.clone()
+            obj = apply_constraints(
+                obj=obj,
+                constraints=[ones_f, ones_f],
+                samples=samples,
+                infeasible_cost=0.0,
+                eta=torch.tensor([1, 10]).to(**tkwargs),
+            )
+            self.assertTrue(
+                torch.allclose(
+                    obj,
+                    samples
+                    * torch.sigmoid(torch.as_tensor(-1.0) / 1.0)
+                    * torch.sigmoid(torch.as_tensor(-1.0) / 10.0),
+                )
+            )
             # negative objective, one constraint, infeasible_cost
             obj = samples.clone().clamp_min(-1.0)
             obj = apply_constraints(

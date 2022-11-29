@@ -527,6 +527,65 @@ class TestQExpectedHypervolumeImprovement(BotorchTestCase):
                 )
                 res = acqf(X)
                 self.assertAlmostEqual(res.item(), 0.5 * 1.5, places=4)
+            # test zero slack multiple constraints
+            for eta in (1e-1, 1e-2):
+                acqf = qExpectedHypervolumeImprovement(
+                    model=mm,
+                    ref_point=ref_point,
+                    partitioning=partitioning,
+                    sampler=sampler,
+                    constraints=[
+                        lambda Z: torch.zeros_like(Z[..., -1]),
+                        lambda Z: torch.zeros_like(Z[..., -1]),
+                    ],
+                    eta=eta,
+                )
+                res = acqf(X)
+                self.assertAlmostEqual(res.item(), 0.5 * 0.5 * 1.5, places=4)
+            # test multiple constraints one eta
+            acqf = qExpectedHypervolumeImprovement(
+                model=mm,
+                ref_point=ref_point,
+                partitioning=partitioning,
+                sampler=sampler,
+                constraints=[
+                    lambda Z: torch.ones_like(Z[..., -1]),
+                    lambda Z: torch.ones_like(Z[..., -1]),
+                ],
+                eta=1.0,
+            )
+            res = acqf(X)
+            self.assertAlmostEqual(
+                res.item(),
+                (
+                    torch.sigmoid(torch.as_tensor(-1.0))
+                    * torch.sigmoid(torch.as_tensor(-1.0))
+                    * 1.5
+                ).item(),
+                places=4,
+            )
+            # test multiple constraints different eta
+            acqf = qExpectedHypervolumeImprovement(
+                model=mm,
+                ref_point=ref_point,
+                partitioning=partitioning,
+                sampler=sampler,
+                constraints=[
+                    lambda Z: torch.ones_like(Z[..., -1]),
+                    lambda Z: torch.ones_like(Z[..., -1]),
+                ],
+                eta=torch.tensor([1, 10]),
+            )
+            res = acqf(X)
+            self.assertAlmostEqual(
+                res.item(),
+                (
+                    torch.sigmoid(torch.as_tensor(-1.0))
+                    * torch.sigmoid(torch.as_tensor(-1.0 / 10.0))
+                    * 1.5
+                ).item(),
+                places=4,
+            )
             # test feasible
             acqf = qExpectedHypervolumeImprovement(
                 model=mm,
@@ -1074,7 +1133,50 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             )
             mm = MockModel(MockPosterior(samples=baseline_samples))
             X = torch.zeros(1, 1, **tkwargs)
-            # test zero slack
+            # test zero slack multiple constraints
+            for eta in (1e-1, 1e-2):
+                # set the MockPosterior to use samples over baseline points
+                mm._posterior._samples = baseline_samples
+                sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
+                acqf = qNoisyExpectedHypervolumeImprovement(
+                    model=mm,
+                    ref_point=ref_point,
+                    X_baseline=X_baseline,
+                    sampler=sampler,
+                    constraints=[
+                        lambda Z: torch.zeros_like(Z[..., -1]),
+                        lambda Z: torch.zeros_like(Z[..., -1]),
+                    ],
+                    eta=eta,
+                    cache_root=False,
+                )
+                # set the MockPosterior to use samples over baseline points and new
+                # candidates
+                mm._posterior._samples = samples
+                res = acqf(X)
+                self.assertAlmostEqual(res.item(), 0.5 * 0.5 * 1.5, places=4)
+            # test zero slack multiple constraints, multiple etas
+            # set the MockPosterior to use samples over baseline points
+            mm._posterior._samples = baseline_samples
+            sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
+            acqf = qNoisyExpectedHypervolumeImprovement(
+                model=mm,
+                ref_point=ref_point,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                constraints=[
+                    lambda Z: torch.zeros_like(Z[..., -1]),
+                    lambda Z: torch.zeros_like(Z[..., -1]),
+                ],
+                eta=torch.tensor([1.0, 10.0]),
+                cache_root=False,
+            )
+            # set the MockPosterior to use samples over baseline points and new
+            # candidates
+            mm._posterior._samples = samples
+            res = acqf(X)
+            self.assertAlmostEqual(res.item(), 0.5 * 0.5 * 1.5, places=4)
+            # test zero slack single constraint
             for eta in (1e-1, 1e-2):
                 # set the MockPosterior to use samples over baseline points
                 mm._posterior._samples = baseline_samples
@@ -1169,6 +1271,38 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             mm._posterior._samples = samples
             res = acqf(X)
             self.assertAlmostEqual(res.item(), 1.5, places=4)
+            # test multiple constraints one eta with
+            # this crashes for large etas, and I do not why
+            # set the MockPosterior to use samples over baseline points
+            mm._posterior._samples = baseline_samples
+            sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
+            acqf = qNoisyExpectedHypervolumeImprovement(
+                model=mm,
+                ref_point=ref_point,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                constraints=[
+                    # lambda Z: torch.zeros_like(Z[..., -1]),
+                    lambda Z: torch.ones_like(Z[..., -1]),
+                ],
+                eta=1,
+                cache_root=False,
+            )
+            samples = torch.cat(
+                [
+                    baseline_samples.unsqueeze(0),
+                    torch.tensor([[[6.5, 4.5]]], **tkwargs),
+                ],
+                dim=1,
+            )
+            mm._posterior._samples = samples
+            res = acqf(X)
+
+            self.assertAlmostEqual(
+                res.item(),
+                (torch.sigmoid(torch.as_tensor(-1.0 / 1)) * 1.5).item(),
+                places=4,
+            )
             # test infeasible
             # set the MockPosterior to use samples over baseline points
             mm._posterior._samples = baseline_samples

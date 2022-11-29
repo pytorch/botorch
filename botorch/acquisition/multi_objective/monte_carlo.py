@@ -85,6 +85,7 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, A
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCMultiOutputObjective] = None,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+        eta: Optional[Union[Tensor, float]] = 1e-3,
         X_pending: Optional[Tensor] = None,
     ) -> None:
         r"""Constructor for the MCAcquisitionFunction base class.
@@ -128,6 +129,10 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, A
             )
         self.add_module("objective", objective)
         self.constraints = constraints
+        if constraints:
+            if type(eta) != Tensor:
+                eta = torch.full((len(constraints),), eta)
+            self.register_buffer("eta", eta)
         self.X_pending = None
         if X_pending is not None:
             self.set_X_pending(X_pending)
@@ -153,7 +158,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
         objective: Optional[MCMultiOutputObjective] = None,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
-        eta: float = 1e-3,
+        eta: Optional[Union[Tensor, float]] = 1e-3,
     ) -> None:
         r"""q-Expected Hypervolume Improvement supporting m>=2 outcomes.
 
@@ -189,7 +194,11 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
                 been evaluated. Concatenated into `X` upon forward call. Copied and set
                 to have no gradient.
             eta: The temperature parameter for the sigmoid function used for the
-                differentiable approximation of the constraints.
+                differentiable approximation of the constraints. In case of a float the
+                same eta is used for every constraint in constraints. In case of a
+                tensor the length of the tensor must match the number of provided
+                constraints. The i-th constraint is then estimated with the i-th
+                eta value.
         """
         if len(ref_point) != partitioning.num_outcomes:
             raise ValueError(
@@ -207,9 +216,9 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
             sampler=sampler,
             objective=objective,
             constraints=constraints,
+            eta=eta,
             X_pending=X_pending,
         )
-        self.eta = eta
         self.register_buffer("ref_point", ref_point)
         cell_bounds = partitioning.get_hypercell_bounds()
         self.register_buffer("cell_lower_bounds", cell_bounds[0])
@@ -357,7 +366,7 @@ class qNoisyExpectedHypervolumeImprovement(
         objective: Optional[MCMultiOutputObjective] = None,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         X_pending: Optional[Tensor] = None,
-        eta: float = 1e-3,
+        eta: Optional[Union[Tensor, float]] = 1e-3,
         prune_baseline: bool = False,
         alpha: float = 0.0,
         cache_pending: bool = True,
@@ -400,7 +409,11 @@ class qNoisyExpectedHypervolumeImprovement(
                 have points that have been submitted for function evaluation, but
                 have not yet been evaluated.
             eta: The temperature parameter for the sigmoid function used for the
-                differentiable approximation of the constraints.
+                differentiable approximation of the constraints. In case of a float the
+                same eta is used for every constraint in constraints. In case of a
+                tensor the length of the tensor must match the number of provided
+                constraints. The i-th constraint is then estimated with the i-th
+                eta value.
             prune_baseline: If True, remove points in `X_baseline` that are
                 highly unlikely to be the pareto optimal and better than the
                 reference point. This can significantly improve computation time and
@@ -431,6 +444,7 @@ class qNoisyExpectedHypervolumeImprovement(
             sampler=sampler,
             objective=objective,
             constraints=constraints,
+            eta=eta,
         )
         self._setup(model=model, cache_root=cache_root)
 
@@ -450,7 +464,6 @@ class qNoisyExpectedHypervolumeImprovement(
             )
         self.register_buffer("ref_point", ref_point)
         self.alpha = alpha
-        self.eta = eta
         self.q_in = -1
         self.q_out = -1
         self.q_subset_indices = BufferDict()
