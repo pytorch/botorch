@@ -111,7 +111,7 @@ def soft_eval_constraint(lhs: Tensor, eta: float = 1e-3) -> Tensor:
     Args:
         lhs: The left hand side of the constraint `lhs <= 0`.
         eta: The temperature parameter of the softmax function. As eta
-            grows larger, this approximates the Heaviside step function.
+            decreases, this approximates the Heaviside step function.
 
     Returns:
         Element-wise 'soft' feasibility indicator of the same shape as `lhs`.
