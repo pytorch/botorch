@@ -11,7 +11,7 @@ from unittest import mock
 import torch
 from botorch.models.converter import batched_to_model_list
 from botorch.models.deterministic import DeterministicModel
-from botorch.models.gp_regression import SingleTaskGP
+from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.models.model import ModelList
 from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import Normalize
@@ -644,3 +644,20 @@ class TestRandomFourierFeatures(BotorchTestCase):
                     expected = torch.Size([13, 5, 3, m])
                 Y_batched = gp_samples.posterior(test_X).mean
                 self.assertEqual(Y_batched.shape, expected)
+
+    def test_with_fixed_noise(self):
+        for n_samples in (1, 20):
+            gp_samples = get_gp_samples(
+                model=FixedNoiseGP(
+                    torch.rand(5, 3, dtype=torch.double),
+                    torch.randn(5, 1, dtype=torch.double),
+                    torch.rand(5, 1, dtype=torch.double) * 0.1,
+                ),
+                num_outputs=1,
+                n_samples=n_samples,
+            )
+            samples = gp_samples(torch.rand(2, 3))
+            expected_shape = (
+                torch.Size([2, 1]) if n_samples == 1 else torch.Size([n_samples, 2, 1])
+            )
+            self.assertEqual(samples.shape, expected_shape)
