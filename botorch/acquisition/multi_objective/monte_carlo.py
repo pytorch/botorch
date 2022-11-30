@@ -103,6 +103,12 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, A
                 `sample_shape x batch-shape x q x m` to a Tensor of dimension
                 `sample_shape x batch-shape x q`, where negative values imply
                 feasibility.
+            eta: The temperature parameter for the sigmoid function used for the
+                differentiable approximation of the constraints. In case of a float the
+                same eta is used for every constraint in constraints. In case of a
+                tensor the length of the tensor must match the number of provided
+                constraints. The i-th constraint is then estimated with the i-th
+                eta value.
             X_pending:  A `m x d`-dim Tensor of `m` design points that have
                 points that have been submitted for function evaluation
                 but have not yet been evaluated.
