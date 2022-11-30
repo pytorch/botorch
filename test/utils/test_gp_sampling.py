@@ -11,6 +11,7 @@ from unittest import mock
 import torch
 from botorch.models.converter import batched_to_model_list
 from botorch.models.deterministic import DeterministicModel
+from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.models.model import ModelList
 from botorch.models.multitask import MultiTaskGP
@@ -26,6 +27,7 @@ from botorch.utils.gp_sampling import (
     RandomFourierFeatures,
 )
 from botorch.utils.testing import BotorchTestCase
+from botorch.utils.transforms import is_fully_bayesian
 from gpytorch.kernels import MaternKernel, PeriodicKernel, RBFKernel, ScaleKernel
 from torch.distributions import MultivariateNormal
 
@@ -661,3 +663,31 @@ class TestRandomFourierFeatures(BotorchTestCase):
                 torch.Size([2, 1]) if n_samples == 1 else torch.Size([n_samples, 2, 1])
             )
             self.assertEqual(samples.shape, expected_shape)
+
+    def test_with_saas_models(self):
+        # Construct a SAAS model.
+        tkwargs = {"dtype": torch.double, "device": self.device}
+        num_samples = 4
+        model = SaasFullyBayesianSingleTaskGP(
+            train_X=torch.rand(10, 4, **tkwargs), train_Y=torch.randn(10, 1, **tkwargs)
+        )
+        mcmc_samples = {
+            "lengthscale": torch.rand(num_samples, 1, 4, **tkwargs),
+            "outputscale": torch.rand(num_samples, **tkwargs),
+            "mean": torch.randn(num_samples, **tkwargs),
+            "noise": torch.rand(num_samples, 1, **tkwargs),
+        }
+        model.load_mcmc_samples(mcmc_samples)
+        # Test proper setup & sampling support.
+        gp_samples = get_gp_samples(
+            model=model,
+            num_outputs=1,
+            n_samples=1,
+        )
+        self.assertTrue(is_fully_bayesian(gp_samples))
+        # Non-batch evaluation.
+        samples = gp_samples(torch.rand(2, 4, **tkwargs))
+        self.assertEqual(samples.shape, torch.Size([4, 2, 1]))
+        # Batch evaluation.
+        samples = gp_samples(torch.rand(5, 2, 4, **tkwargs))
+        self.assertEqual(samples.shape, torch.Size([5, 4, 2, 1]))
