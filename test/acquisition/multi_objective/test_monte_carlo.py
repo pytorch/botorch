@@ -1117,8 +1117,8 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             )
             mm = MockModel(MockPosterior(samples=baseline_samples))
             X = torch.zeros(1, 1, **tkwargs)
-            # test zero slack multiple constraints
-            for eta in (1e-1, 1e-2):
+            # test zero slack multiple constraints, multiple etas
+            for eta in [1e-1, 1e-2, torch.tensor([1.0, 10.0])]:
                 # set the MockPosterior to use samples over baseline points
                 mm._posterior._samples = baseline_samples
                 sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
@@ -1139,27 +1139,6 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 mm._posterior._samples = samples
                 res = acqf(X)
                 self.assertAlmostEqual(res.item(), 0.5 * 0.5 * 1.5, places=4)
-            # test zero slack multiple constraints, multiple etas
-            # set the MockPosterior to use samples over baseline points
-            mm._posterior._samples = baseline_samples
-            sampler = IIDNormalSampler(sample_shape=torch.Size([1]))
-            acqf = qNoisyExpectedHypervolumeImprovement(
-                model=mm,
-                ref_point=ref_point,
-                X_baseline=X_baseline,
-                sampler=sampler,
-                constraints=[
-                    lambda Z: torch.zeros_like(Z[..., -1]),
-                    lambda Z: torch.zeros_like(Z[..., -1]),
-                ],
-                eta=torch.tensor([1.0, 10.0]),
-                cache_root=False,
-            )
-            # set the MockPosterior to use samples over baseline points and new
-            # candidates
-            mm._posterior._samples = samples
-            res = acqf(X)
-            self.assertAlmostEqual(res.item(), 0.5 * 0.5 * 1.5, places=4)
             # test zero slack single constraint
             for eta in (1e-1, 1e-2):
                 # set the MockPosterior to use samples over baseline points
