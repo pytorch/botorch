@@ -91,7 +91,7 @@ def apply_constraints_nonnegative_soft(
         eta = torch.full((len(constraints),), eta)
     if len(eta) != len(constraints):
         raise ValueError(
-            "Number of provided constraints and numer of provided etas does not match."
+            "Number of provided constraints and number of provided etas do not match."
         )
     obj = obj.clamp_min(0)  # Enforce non-negativity with constraints
     for constraint, e in zip(constraints, eta):
