@@ -517,75 +517,59 @@ class TestQExpectedHypervolumeImprovement(BotorchTestCase):
             X = torch.zeros(1, 1, **tkwargs)
             # test zero slack
             for eta in (1e-1, 1e-2):
-                acqf = qExpectedHypervolumeImprovement(
-                    model=mm,
-                    ref_point=ref_point,
-                    partitioning=partitioning,
-                    sampler=sampler,
-                    constraints=[lambda Z: torch.zeros_like(Z[..., -1])],
-                    eta=eta,
-                )
-                res = acqf(X)
-                self.assertAlmostEqual(res.item(), 0.5 * 1.5, places=4)
-            # test zero slack multiple constraints
-            for eta in (1e-1, 1e-2):
-                acqf = qExpectedHypervolumeImprovement(
-                    model=mm,
-                    ref_point=ref_point,
-                    partitioning=partitioning,
-                    sampler=sampler,
-                    constraints=[
-                        lambda Z: torch.zeros_like(Z[..., -1]),
-                        lambda Z: torch.zeros_like(Z[..., -1]),
-                    ],
-                    eta=eta,
-                )
-                res = acqf(X)
-                self.assertAlmostEqual(res.item(), 0.5 * 0.5 * 1.5, places=4)
-            # test multiple constraints one eta
-            acqf = qExpectedHypervolumeImprovement(
-                model=mm,
-                ref_point=ref_point,
-                partitioning=partitioning,
-                sampler=sampler,
-                constraints=[
-                    lambda Z: torch.ones_like(Z[..., -1]),
-                    lambda Z: torch.ones_like(Z[..., -1]),
-                ],
-                eta=1.0,
-            )
-            res = acqf(X)
-            self.assertAlmostEqual(
-                res.item(),
+                expected_values = [0.5 * 1.5, 0.5 * 0.5 * 1.5]
+                for i, constraints in enumerate(
+                    [
+                        [lambda Z: torch.zeros_like(Z[..., -1])],
+                        [
+                            lambda Z: torch.zeros_like(Z[..., -1]),
+                            lambda Z: torch.zeros_like(Z[..., -1]),
+                        ],
+                    ]
+                ):
+                    acqf = qExpectedHypervolumeImprovement(
+                        model=mm,
+                        ref_point=ref_point,
+                        partitioning=partitioning,
+                        sampler=sampler,
+                        constraints=constraints,
+                        eta=eta,
+                    )
+                    res = acqf(X)
+                    self.assertAlmostEqual(res.item(), expected_values[i], places=4)
+            # test multiple constraints one and multiple etas
+            constraints = [
+                lambda Z: torch.ones_like(Z[..., -1]),
+                lambda Z: torch.ones_like(Z[..., -1]),
+            ]
+            etas = [1, torch.tensor([1, 10])]
+            expected_values = [
                 (
                     torch.sigmoid(torch.as_tensor(-1.0))
                     * torch.sigmoid(torch.as_tensor(-1.0))
                     * 1.5
                 ).item(),
-                places=4,
-            )
-            # test multiple constraints different eta
-            acqf = qExpectedHypervolumeImprovement(
-                model=mm,
-                ref_point=ref_point,
-                partitioning=partitioning,
-                sampler=sampler,
-                constraints=[
-                    lambda Z: torch.ones_like(Z[..., -1]),
-                    lambda Z: torch.ones_like(Z[..., -1]),
-                ],
-                eta=torch.tensor([1, 10]),
-            )
-            res = acqf(X)
-            self.assertAlmostEqual(
-                res.item(),
                 (
                     torch.sigmoid(torch.as_tensor(-1.0))
                     * torch.sigmoid(torch.as_tensor(-1.0 / 10.0))
                     * 1.5
                 ).item(),
-                places=4,
-            )
+            ]
+            for eta, expected_value in zip(etas, expected_values):
+                acqf = qExpectedHypervolumeImprovement(
+                    model=mm,
+                    ref_point=ref_point,
+                    partitioning=partitioning,
+                    sampler=sampler,
+                    constraints=constraints,
+                    eta=eta,
+                )
+                res = acqf(X)
+                self.assertAlmostEqual(
+                    res.item(),
+                    expected_value,
+                    places=4,
+                )
             # test feasible
             acqf = qExpectedHypervolumeImprovement(
                 model=mm,
