@@ -43,6 +43,7 @@
 <span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">MultiTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">manual_seed</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">RBFKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
 <span class="kn">from</span> <span class="nn">linear_operator.utils.cholesky</span> <span class="kn">import</span> <span class="n">psd_safe_cholesky</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -254,7 +255,20 @@
 <span class="sd">            a `batch_shape`, the output `batch_shape` will be</span>
 <span class="sd">            `(sample_shape) x (kernel_batch_shape)`.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_forward_X_shape_compatibility</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_forward_X_shape_compatibility</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># A workaround to support batched SAAS models.</span>
+            <span class="c1"># TODO: Support batch evaluation of multi-sample RFFs as well.</span>
+            <span class="c1"># Multi-sample RFFs have input batch as the 0-th dimension,</span>
+            <span class="c1"># which is different than other posteriors which would have</span>
+            <span class="c1"># the sample shape as the 0-th dimension.</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_batch_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_check_forward_X_shape_compatibility</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">e</span>
+
         <span class="c1"># X is of shape (additional_batch_shape) x (sample_shape)</span>
         <span class="c1"># x (kernel_batch_shape) x n x d.</span>
         <span class="c1"># Weights is of shape (sample_shape) x (kernel_batch_shape) x d x num_rff.</span>
@@ -488,7 +502,7 @@
         <span class="n">phi_X</span> <span class="o">=</span> <span class="n">basis</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
         <span class="c1"># Sample weights from bayesian linear model.</span>
         <span class="c1"># weights.sample().shape == (n_samples, batch_shape_input, num_rff_features)</span>
-        <span class="n">sigma_sq</span> <span class="o">=</span> <span class="n">_model</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span>
+        <span class="n">sigma_sq</span> <span class="o">=</span> <span class="n">_model</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">basis</span><span class="o">.</span><span class="n">kernel_batch_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">sigma_sq</span> <span class="o">=</span> <span class="n">sigma_sq</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">mvn</span> <span class="o">=</span> <span class="n">get_weights_posterior</span><span class="p">(</span>
@@ -515,6 +529,7 @@
                 <span class="n">models</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">_octf</span>
             <span class="k">if</span> <span class="n">_intf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">base_gp_samples</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">_intf</span>
+        <span class="n">base_gp_samples</span><span class="o">.</span><span class="n">is_fully_bayesian</span> <span class="o">=</span> <span class="n">is_fully_bayesian</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">base_gp_samples</span>
     <span class="k">elif</span> <span class="n">n_samples</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">base_gp_samples</span> <span class="o">=</span> <span class="n">get_deterministic_model_multi_samples</span><span class="p">(</span>
@@ -533,6 +548,7 @@
     <span class="k">if</span> <span class="n">octf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">base_gp_samples</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">octf</span>
         <span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">octf</span>
+    <span class="n">base_gp_samples</span><span class="o">.</span><span class="n">is_fully_bayesian</span> <span class="o">=</span> <span class="n">is_fully_bayesian</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">base_gp_samples</span></div>
 </pre></div>
 </div>
