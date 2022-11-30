@@ -1237,18 +1237,34 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             # test multiple constraints one eta with
             # this crashes for large etas, and I do not why
             # set the MockPosterior to use samples over baseline points
-            acqf.constraints = [
-                # lambda Z: torch.zeros_like(Z[..., -1]),
-                lambda Z: torch.ones_like(Z[..., -1]),
+            etas = [torch.tensor([1.0]), torch.tensor([1.0, 10.0])]
+            constraints = [
+                [lambda Z: torch.ones_like(Z[..., -1])],
+                [
+                    lambda Z: torch.ones_like(Z[..., -1]),
+                    lambda Z: torch.ones_like(Z[..., -1]),
+                ],
             ]
-            acqf.eta = torch.tensor([1.0])
-            res = acqf(X)
-
-            self.assertAlmostEqual(
-                res.item(),
+            expected_values = [
                 (torch.sigmoid(torch.as_tensor(-1.0 / 1)) * 1.5).item(),
-                places=4,
-            )
+                (
+                    torch.sigmoid(torch.as_tensor(-1.0 / 1))
+                    * torch.sigmoid(torch.as_tensor(-1.0 / 10))
+                    * 1.5
+                ).item(),
+            ]
+            for eta, constraint, expected_value in zip(
+                etas, constraints, expected_values
+            ):
+                acqf.constraints = constraint
+                acqf.eta = eta
+                res = acqf(X)
+
+                self.assertAlmostEqual(
+                    res.item(),
+                    expected_value,
+                    places=4,
+                )
             # test infeasible
             # set the MockPosterior to use samples over baseline points
             mm._posterior._samples = baseline_samples
