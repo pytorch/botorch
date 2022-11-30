@@ -462,7 +462,7 @@ def get_gp_samples(
         phi_X = basis(train_X)
         # Sample weights from bayesian linear model.
         # weights.sample().shape == (n_samples, batch_shape_input, num_rff_features)
-        sigma_sq = _model.likelihood.noise
+        sigma_sq = _model.likelihood.noise.mean(dim=-1, keepdim=True)
         if len(basis.kernel_batch_shape) > 0:
             sigma_sq = sigma_sq.unsqueeze(-2)
         mvn = get_weights_posterior(
