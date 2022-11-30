@@ -192,11 +192,17 @@ def is_fully_bayesian(model: Model) -> bool:
         SaasFullyBayesianMultiTaskGP,
     ]
 
-    if any(isinstance(model, m_cls) for m_cls in full_bayesian_model_cls):
+    if any(
+        isinstance(model, m_cls) or getattr(model, "is_fully_bayesian", False)
+        for m_cls in full_bayesian_model_cls
+    ):
         return True
     elif isinstance(model, ModelList):
         for m in model.models:
-            if any(isinstance(m, m_cls) for m_cls in full_bayesian_model_cls):
+            if any(
+                isinstance(m, m_cls) or getattr(model, "is_fully_bayesian", False)
+                for m_cls in full_bayesian_model_cls
+            ):
                 return True
             elif isinstance(m, ModelListGP) and any(
                 isinstance(m_sub, m_cls)

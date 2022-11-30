@@ -17,6 +17,7 @@ from botorch.models.model import Model, ModelList
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.multitask import MultiTaskGP
 from botorch.utils.sampling import manual_seed
+from botorch.utils.transforms import is_fully_bayesian
 from gpytorch.kernels import Kernel, MaternKernel, RBFKernel, ScaleKernel
 from linear_operator.utils.cholesky import psd_safe_cholesky
 from torch import Tensor
@@ -228,7 +229,20 @@ class RandomFourierFeatures(Module):
             a `batch_shape`, the output `batch_shape` will be
             `(sample_shape) x (kernel_batch_shape)`.
         """
-        self._check_forward_X_shape_compatibility(X)
+        try:
+            self._check_forward_X_shape_compatibility(X)
+        except ValueError as e:
+            # A workaround to support batched SAAS models.
+            # TODO: Support batch evaluation of multi-sample RFFs as well.
+            # Multi-sample RFFs have input batch as the 0-th dimension,
+            # which is different than other posteriors which would have
+            # the sample shape as the 0-th dimension.
+            if len(self.kernel_batch_shape) == 1:
+                X = X.unsqueeze(-3)
+                self._check_forward_X_shape_compatibility(X)
+            else:
+                raise e
+
         # X is of shape (additional_batch_shape) x (sample_shape)
         # x (kernel_batch_shape) x n x d.
         # Weights is of shape (sample_shape) x (kernel_batch_shape) x d x num_rff.
@@ -489,6 +503,7 @@ def get_gp_samples(
                 models[m].outcome_transform = _octf
             if _intf is not None:
                 base_gp_samples.models[m].input_transform = _intf
+        base_gp_samples.is_fully_bayesian = is_fully_bayesian(model=model)
         return base_gp_samples
     elif n_samples > 1:
         base_gp_samples = get_deterministic_model_multi_samples(
@@ -507,4 +522,5 @@ def get_gp_samples(
     if octf is not None:
         base_gp_samples.outcome_transform = octf
         model.outcome_transform = octf
+    base_gp_samples.is_fully_bayesian = is_fully_bayesian(model=model)
     return base_gp_samples
