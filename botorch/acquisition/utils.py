@@ -43,7 +43,7 @@ def get_acquisition_function(
     posterior_transform: Optional[PosteriorTransform] = None,
     X_pending: Optional[Tensor] = None,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
-    mc_samples: int = 500,
+    mc_samples: int = 512,
     seed: Optional[int] = None,
     **kwargs,
 ) -> monte_carlo.MCAcquisitionFunction:
