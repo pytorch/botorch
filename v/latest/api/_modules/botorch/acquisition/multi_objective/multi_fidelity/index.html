@@ -72,9 +72,9 @@
         <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">cost_call</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""MOMF acquisition function supporting m&gt;=2 outcomes.</span>
@@ -124,7 +124,11 @@
 <span class="sd">                `batch_shape x q x m`. Defaults to an AffineCostModel with</span>
 <span class="sd">                `C(s) = 1 + s`.</span>
 <span class="sd">            eta: The temperature parameter for the sigmoid function used for the</span>
-<span class="sd">                differentiable approximation of the constraints.</span>
+<span class="sd">                differentiable approximation of the constraints. In case of a float the</span>
+<span class="sd">                same eta is used for every constraint in constraints. In case of a</span>
+<span class="sd">                tensor the length of the tensor must match the number of provided</span>
+<span class="sd">                constraints. The i-th constraint is then estimated with the i-th</span>
+<span class="sd">                eta value.</span>
 <span class="sd">        """</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_point</span><span class="p">)</span> <span class="o">!=</span> <span class="n">partitioning</span><span class="o">.</span><span class="n">num_outcomes</span><span class="p">:</span>
@@ -145,6 +149,7 @@
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
         <span class="p">)</span>
 

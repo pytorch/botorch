@@ -185,7 +185,7 @@ been submitted for evaluation but have not yet been evaluated.</p>
 <h3>Multi-Objective Monte-Carlo Acquisition Function API<a class="headerlink" href="#multi-objective-monte-carlo-acquisition-function-api" title="Permalink to this heading">¶</a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">MultiObjectiveMCAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#MultiObjectiveMCAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">MultiObjectiveMCAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#MultiObjectiveMCAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSamplerMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Abstract base class for Multi-Objective batch acquisition functions.</p>
 <p>NOTE: This does not inherit from <cite>MCAcquisitionFunction</cite> to avoid circular imports.</p>
@@ -197,6 +197,7 @@ been submitted for evaluation but have not yet been evaluated.</p>
 <li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – </p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – </p></li>
 <li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>eta</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – </p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – </p></li>
 </ul>
 </dd>
@@ -217,6 +218,12 @@ evaluated. Defaults to <cite>IdentityMultiOutputObjective()</cite>.</p></li>
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
 feasibility.</p></li>
+<li><p><strong>eta</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – The temperature parameter for the sigmoid function used for the
+differentiable approximation of the constraints. In case of a float the
+same eta is used for every constraint in constraints. In case of a
+tensor the length of the tensor must match the number of provided
+constraints. The i-th constraint is then estimated with the i-th
+eta value.</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have
 points that have been submitted for function evaluation
 but have not yet been evaluated.</p></li>
@@ -1330,8 +1337,12 @@ hypervolume.</p></li>
 points that have been submitted for function evaluation but have not yet
 been evaluated. Concatenated into <cite>X</cite> upon forward call. Copied and set
 to have no gradient.</p></li>
-<li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter for the sigmoid function used for the
-differentiable approximation of the constraints.</p></li>
+<li><p><strong>eta</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – The temperature parameter for the sigmoid function used for the
+differentiable approximation of the constraints. In case of a float the
+same eta is used for every constraint in constraints. In case of a
+tensor the length of the tensor must match the number of provided
+constraints. The i-th constraint is then estimated with the i-th
+eta value.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1399,8 +1410,12 @@ hypervolume.</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x m x d</cite>-dim Tensor of <cite>m</cite> design points that
 have points that have been submitted for function evaluation, but
 have not yet been evaluated.</p></li>
-<li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter for the sigmoid function used for the
-differentiable approximation of the constraints.</p></li>
+<li><p><strong>eta</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – The temperature parameter for the sigmoid function used for the
+differentiable approximation of the constraints. In case of a float the
+same eta is used for every constraint in constraints. In case of a
+tensor the length of the tensor must match the number of provided
+constraints. The i-th constraint is then estimated with the i-th
+eta value.</p></li>
 <li><p><strong>prune_baseline</strong> (<em>bool</em>) – If True, remove points in <cite>X_baseline</cite> that are
 highly unlikely to be the pareto optimal and better than the
 reference point. This can significantly improve computation time and
@@ -1486,7 +1501,7 @@ arXiv preprint arXiv:2112.13901, 2021.</p>
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_fidelity.MOMF">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_fidelity.</span></span><span class="sig-name descname"><span class="pre">MOMF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitioning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cost_call</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_fidelity.html#MOMF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_fidelity.MOMF" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_fidelity.</span></span><span class="sig-name descname"><span class="pre">MOMF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitioning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cost_call</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_fidelity.html#MOMF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_fidelity.MOMF" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement" title="botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">qExpectedHypervolumeImprovement</span></code></a></p>
 <p>MOMF acquisition function supporting m&gt;=2 outcomes.
 The model needs to have train_obj that has a fidelity
@@ -1535,8 +1550,12 @@ to have no gradient.</p></li>
 <cite>batch_shape x q x d</cite> to a cost Tensor of dimension
 <cite>batch_shape x q x m</cite>. Defaults to an AffineCostModel with
 <cite>C(s) = 1 + s</cite>.</p></li>
-<li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter for the sigmoid function used for the
-differentiable approximation of the constraints.</p></li>
+<li><p><strong>eta</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – The temperature parameter for the sigmoid function used for the
+differentiable approximation of the constraints. In case of a float the
+same eta is used for every constraint in constraints. In case of a
+tensor the length of the tensor must match the number of provided
+constraints. The i-th constraint is then estimated with the i-th
+eta value.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -3007,8 +3026,12 @@ an optional <cite>batch-shape x q x d</cite>-dim Tensor <cite>X</cite> to a
 feasibility.</p></li>
 <li><p><strong>infeasible_cost</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – The cost of a design if all associated samples are
 infeasible.</p></li>
-<li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter of the sigmoid function approximating
-the constraint.</p></li>
+<li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – The temperature parameter of the sigmoid function approximating
+the constraint. Can be either a float or a 1-dim tensor. In case
+of a float the same eta is used for every constraint in
+constraints. In case of a tensor the length of the tensor must
+match the number of provided constraints. The i-th constraint is
+then estimated with the i-th eta value.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4351,7 +4374,7 @@ acquisition function.</p></li>
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The model to be used in the acquisition function.</p></li>
 <li><p><strong>training_data</strong> (<em>Union</em><em>[</em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>, </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em><em>]</em>) – Dataset(s) used to train the model.
 Used to determine default value for <cite>best_f</cite>.</p></li>
-<li><p><strong>best_f</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Threshold above (or below) which improvement is defined.</p></li>
+<li><p><strong>best_f</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Threshold above (or below) which improvement is defined.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – The posterior transform to be used in the
 acquisition function.</p></li>
 <li><p><strong>maximize</strong> (<em>bool</em>) – If True, consider the problem a maximization problem.</p></li>
@@ -4485,7 +4508,7 @@ submitted for function evaluation but have not yet been evaluated.
 Concatenated into X upon forward call.</p></li>
 <li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If omitted, uses
 the acquisition functions’s default sampler.</p></li>
-<li><p><strong>best_f</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Threshold above (or below) which improvement is defined.</p></li>
+<li><p><strong>best_f</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Threshold above (or below) which improvement is defined.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -4554,7 +4577,7 @@ the acquisition functions’s default sampler.</p></li>
 of the step function. Smaller values yield more accurate
 approximations of the function, but result in gradients
 estimates with higher variance.</p></li>
-<li><p><strong>best_f</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The best objective value observed so far (assumed noiseless). Can
+<li><p><strong>best_f</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – The best objective value observed so far (assumed noiseless). Can
 be a <cite>batch_shape</cite>-shaped tensor, which in case of a batched model
 specifies potentially different values for each element of the batch.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>

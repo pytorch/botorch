@@ -111,6 +111,7 @@
         <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Constructor for the MCAcquisitionFunction base class.</span>
@@ -128,6 +129,12 @@
 <span class="sd">                `sample_shape x batch-shape x q x m` to a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q`, where negative values imply</span>
 <span class="sd">                feasibility.</span>
+<span class="sd">            eta: The temperature parameter for the sigmoid function used for the</span>
+<span class="sd">                differentiable approximation of the constraints. In case of a float the</span>
+<span class="sd">                same eta is used for every constraint in constraints. In case of a</span>
+<span class="sd">                tensor the length of the tensor must match the number of provided</span>
+<span class="sd">                constraints. The i-th constraint is then estimated with the i-th</span>
+<span class="sd">                eta value.</span>
 <span class="sd">            X_pending:  A `m x d`-dim Tensor of `m` design points that have</span>
 <span class="sd">                points that have been submitted for function evaluation</span>
 <span class="sd">                but have not yet been evaluated.</span>
@@ -154,6 +161,10 @@
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">add_module</span><span class="p">(</span><span class="s2">"objective"</span><span class="p">,</span> <span class="n">objective</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="n">constraints</span>
+        <span class="k">if</span> <span class="n">constraints</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span> <span class="o">!=</span> <span class="n">Tensor</span><span class="p">:</span>
+                <span class="n">eta</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">constraints</span><span class="p">),),</span> <span class="n">eta</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"eta"</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">X_pending</span><span class="p">)</span>
@@ -179,7 +190,7 @@
         <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""q-Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</span>
 
@@ -215,7 +226,11 @@
 <span class="sd">                been evaluated. Concatenated into `X` upon forward call. Copied and set</span>
 <span class="sd">                to have no gradient.</span>
 <span class="sd">            eta: The temperature parameter for the sigmoid function used for the</span>
-<span class="sd">                differentiable approximation of the constraints.</span>
+<span class="sd">                differentiable approximation of the constraints. In case of a float the</span>
+<span class="sd">                same eta is used for every constraint in constraints. In case of a</span>
+<span class="sd">                tensor the length of the tensor must match the number of provided</span>
+<span class="sd">                constraints. The i-th constraint is then estimated with the i-th</span>
+<span class="sd">                eta value.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_point</span><span class="p">)</span> <span class="o">!=</span> <span class="n">partitioning</span><span class="o">.</span><span class="n">num_outcomes</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -233,9 +248,9 @@
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">=</span> <span class="n">eta</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"ref_point"</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">)</span>
         <span class="n">cell_bounds</span> <span class="o">=</span> <span class="n">partitioning</span><span class="o">.</span><span class="n">get_hypercell_bounds</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"cell_lower_bounds"</span><span class="p">,</span> <span class="n">cell_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -383,7 +398,7 @@
         <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
         <span class="n">prune_baseline</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
         <span class="n">cache_pending</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -426,7 +441,11 @@
 <span class="sd">                have points that have been submitted for function evaluation, but</span>
 <span class="sd">                have not yet been evaluated.</span>
 <span class="sd">            eta: The temperature parameter for the sigmoid function used for the</span>
-<span class="sd">                differentiable approximation of the constraints.</span>
+<span class="sd">                differentiable approximation of the constraints. In case of a float the</span>
+<span class="sd">                same eta is used for every constraint in constraints. In case of a</span>
+<span class="sd">                tensor the length of the tensor must match the number of provided</span>
+<span class="sd">                constraints. The i-th constraint is then estimated with the i-th</span>
+<span class="sd">                eta value.</span>
 <span class="sd">            prune_baseline: If True, remove points in `X_baseline` that are</span>
 <span class="sd">                highly unlikely to be the pareto optimal and better than the</span>
 <span class="sd">                reference point. This can significantly improve computation time and</span>
@@ -457,6 +476,7 @@
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">)</span>
 
@@ -476,7 +496,6 @@
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"ref_point"</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">=</span> <span class="n">eta</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">q_in</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span> <span class="o">=</span> <span class="n">BufferDict</span><span class="p">()</span>
