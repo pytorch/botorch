@@ -19,6 +19,7 @@ import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.generation.utils import _remove_fixed_features_from_optimization
+from botorch.logging import _get_logger
 from botorch.optim.parameter_constraints import (
     _arrayify,
     make_scipy_bounds,
@@ -29,8 +30,11 @@ from botorch.optim.parameter_constraints import (
 from botorch.optim.stopping import ExpMAStoppingCriterion
 from botorch.optim.utils import _filter_kwargs, columnwise_clamp, fix_features
 from scipy.optimize import minimize
+from scipy.optimize.optimize import OptimizeResult
 from torch import Tensor
 from torch.optim import Optimizer
+
+logger = _get_logger()
 
 
 def gen_candidates_scipy(
@@ -95,6 +99,7 @@ def gen_candidates_scipy(
             )
     """
     options = options or {}
+    options = {**options, "maxiter": options.get("maxiter", 2000)}
 
     # if there are fixed features we may optimize over a domain of lower dimension
     reduced_domain = False
@@ -211,23 +216,8 @@ def gen_candidates_scipy(
         callback=options.get("callback", None),
         options={k: v for k, v in options.items() if k not in ["method", "callback"]},
     )
+    _process_scipy_result(res=res, options=options)
 
-    if "success" not in res.keys() or "status" not in res.keys():
-        with warnings.catch_warnings():
-            warnings.simplefilter("always", category=OptimizationWarning)
-            warnings.warn(
-                "Optimization failed within `scipy.optimize.minimize` with no "
-                "status returned to `res.`",
-                OptimizationWarning,
-            )
-    elif not res.success:
-        with warnings.catch_warnings():
-            warnings.simplefilter("always", category=OptimizationWarning)
-            warnings.warn(
-                f"Optimization failed within `scipy.optimize.minimize` with status "
-                f"{res.status}.",
-                OptimizationWarning,
-            )
     candidates = fix_features(
         X=torch.from_numpy(res.x).to(initial_conditions).reshape(shapeX),
         fixed_features=fixed_features,
@@ -399,3 +389,37 @@ def get_best_candidates(batch_candidates: Tensor, batch_values: Tensor) -> Tenso
     """
     best = torch.argmax(batch_values.view(-1), dim=0)
     return batch_candidates[best]
+
+
+def _process_scipy_result(res: OptimizeResult, options: Dict[str, Any]) -> None:
+    r"""Process scipy optimization result to produce relevant logs and warnings."""
+    if "success" not in res.keys() or "status" not in res.keys():
+        with warnings.catch_warnings():
+            warnings.simplefilter("always", category=OptimizationWarning)
+            warnings.warn(
+                "Optimization failed within `scipy.optimize.minimize` with no "
+                "status returned to `res.`",
+                OptimizationWarning,
+            )
+    elif not res.success:
+        if (
+            "ITERATIONS REACHED LIMIT" in res.message
+            or "Iteration limit reached" in res.message
+        ):
+            logger.info(
+                "`scipy.minimize` exited by reaching the iteration limit of "
+                f"`maxiter: {options.get('maxiter')}`."
+            )
+        elif "EVALUATIONS EXCEEDS LIMIT" in res.message:
+            logger.info(
+                "`scipy.minimize` exited by reaching the function evaluation limit of "
+                f"`maxfun: {options.get('maxfun')}`."
+            )
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("always", category=OptimizationWarning)
+                warnings.warn(
+                    f"Optimization failed within `scipy.optimize.minimize` with status "
+                    f"{res.status}.",
+                    OptimizationWarning,
+                )

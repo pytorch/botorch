@@ -19,6 +19,12 @@ def zeros_f(samples: Tensor) -> Tensor:
     return torch.zeros(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
 
 
+def nonzeros_f(samples: Tensor) -> Tensor:
+    t = torch.zeros(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
+    t[:] = 0.1
+    return t
+
+
 def minus_one_f(samples: Tensor) -> Tensor:
     return -(
         torch.ones(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
@@ -84,10 +90,65 @@ class TestApplyConstraints(BotorchTestCase):
                 infeasible_cost=0.0,
             )
             self.assertTrue(torch.equal(obj, samples * 0.5 * 0.5))
+            # nonnegative objective, two constraint explicit eta
+            obj = samples.clone()
+            obj = apply_constraints(
+                obj=obj,
+                constraints=[zeros_f, zeros_f],
+                samples=samples,
+                infeasible_cost=0.0,
+                eta=torch.tensor([10e-3, 10e-3]).to(**tkwargs),
+            )
+            self.assertTrue(torch.equal(obj, samples * 0.5 * 0.5))
+            # nonnegative objective, two constraint explicit different eta
+            obj = samples.clone()
+            obj = apply_constraints(
+                obj=obj,
+                constraints=[nonzeros_f, nonzeros_f],
+                samples=samples,
+                infeasible_cost=0.0,
+                eta=torch.tensor([10e-1, 10e-2]).to(**tkwargs),
+            )
+            self.assertTrue(
+                torch.allclose(
+                    obj,
+                    samples
+                    * torch.sigmoid(torch.as_tensor(-0.1) / 10e-1)
+                    * torch.sigmoid(torch.as_tensor(-0.1) / 10e-2),
+                )
+            )
+            # nonnegative objective, two constraint explicit different eta
+            # use ones_f
+            obj = samples.clone()
+            obj = apply_constraints(
+                obj=obj,
+                constraints=[ones_f, ones_f],
+                samples=samples,
+                infeasible_cost=0.0,
+                eta=torch.tensor([1, 10]).to(**tkwargs),
+            )
+            self.assertTrue(
+                torch.allclose(
+                    obj,
+                    samples
+                    * torch.sigmoid(torch.as_tensor(-1.0) / 1.0)
+                    * torch.sigmoid(torch.as_tensor(-1.0) / 10.0),
+                )
+            )
             # negative objective, one constraint, infeasible_cost
             obj = samples.clone().clamp_min(-1.0)
             obj = apply_constraints(
                 obj=obj, constraints=[zeros_f], samples=samples, infeasible_cost=2.0
+            )
+            self.assertTrue(torch.allclose(obj, samples.clamp_min(-1.0) * 0.5 - 1.0))
+            # negative objective, one constraint, infeasible_cost, explicit eta
+            obj = samples.clone().clamp_min(-1.0)
+            obj = apply_constraints(
+                obj=obj,
+                constraints=[zeros_f],
+                samples=samples,
+                infeasible_cost=2.0,
+                eta=torch.tensor([10e-3]).to(**tkwargs),
             )
             self.assertTrue(torch.allclose(obj, samples.clamp_min(-1.0) * 0.5 - 1.0))
             # nonnegative objective, one constraint, eta = 0
@@ -99,6 +160,29 @@ class TestApplyConstraints(BotorchTestCase):
                     samples=samples,
                     infeasible_cost=0.0,
                     eta=0.0,
+                )
+
+    def test_apply_constraints_wrong_eta_dim(self):
+        tkwargs = {"device": self.device}
+        for dtype in (torch.float, torch.double):
+            tkwargs["dtype"] = dtype
+            samples = torch.rand(3, 2, **tkwargs)
+            obj = samples.clone()
+            with self.assertRaises(ValueError):
+                obj = apply_constraints(
+                    obj=obj,
+                    constraints=[zeros_f, zeros_f],
+                    samples=samples,
+                    infeasible_cost=0.0,
+                    eta=torch.tensor([0.1]).to(**tkwargs),
+                )
+            with self.assertRaises(ValueError):
+                obj = apply_constraints(
+                    obj=obj,
+                    constraints=[zeros_f, zeros_f],
+                    samples=samples,
+                    infeasible_cost=0.0,
+                    eta=torch.tensor([0.1, 0.1, 0.3]).to(**tkwargs),
                 )
 
 

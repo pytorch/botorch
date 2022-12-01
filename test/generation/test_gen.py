@@ -69,7 +69,7 @@ class TestBaseCandidateGeneration(BotorchTestCase):
 class TestGenCandidates(TestBaseCandidateGeneration):
     def test_gen_candidates(self, gen_candidates=gen_candidates_scipy, options=None):
         options = options or {}
-        options = {**options, "maxiter": 5}
+        options = {**options, "maxiter": options.get("maxiter", 5)}
         for double in (True, False):
             self._setUp(double=double)
             acqfs = [
@@ -125,19 +125,14 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 ics = self.initial_conditions
                 if isinstance(acqf, qKnowledgeGradient):
                     ics = ics.repeat(5, 1)
-                # we are getting a warning that this fails with status 1:
-                # 'STOP: TOTAL NO. of ITERATIONS REACHED LIMIT'
-                # This is expected since we have set "maxiter" low, so suppress
-                # the warning
-                with warnings.catch_warnings(record=True):
-                    candidates, _ = gen_candidates(
-                        initial_conditions=ics,
-                        acquisition_function=acqf,
-                        lower_bounds=0,
-                        upper_bounds=1,
-                        fixed_features={1: None},
-                        options=options or {},
-                    )
+                candidates, _ = gen_candidates(
+                    initial_conditions=ics,
+                    acquisition_function=acqf,
+                    lower_bounds=0,
+                    upper_bounds=1,
+                    fixed_features={1: None},
+                    options=options or {},
+                )
                 if isinstance(acqf, qKnowledgeGradient):
                     candidates = acqf.extract_candidates(candidates)
                 candidates = candidates.squeeze(0)
@@ -166,19 +161,14 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 ics = self.initial_conditions
                 if isinstance(acqf, qKnowledgeGradient):
                     ics = ics.repeat(5, 1)
-                # we are getting a warning that this fails with status 1:
-                # 'STOP: TOTAL NO. of ITERATIONS REACHED LIMIT'
-                # This is expected since we have set "maxiter" low, so suppress
-                # the warning
-                with warnings.catch_warnings(record=True):
-                    candidates, _ = gen_candidates(
-                        initial_conditions=ics,
-                        acquisition_function=acqf,
-                        lower_bounds=0,
-                        upper_bounds=1,
-                        fixed_features={1: 0.25},
-                        options=options,
-                    )
+                candidates, _ = gen_candidates(
+                    initial_conditions=ics,
+                    acquisition_function=acqf,
+                    lower_bounds=0,
+                    upper_bounds=1,
+                    fixed_features={1: 0.25},
+                    options=options,
+                )
 
                 if isinstance(acqf, qKnowledgeGradient):
                     candidates = acqf.extract_candidates(candidates)
@@ -192,20 +182,16 @@ class TestGenCandidates(TestBaseCandidateGeneration):
         for double in (True, False):
             self._setUp(double=double, expand=True)
             qEI = qExpectedImprovement(self.model, best_f=self.f_best)
-            # we are getting a warning that this fails with status 9:
-            # "Iteration limit reached." This is expected since we have set
-            # "maxiter" low, so suppress the warning.
-            with warnings.catch_warnings(record=True):
-                candidates, _ = gen_candidates_scipy(
-                    initial_conditions=self.initial_conditions.reshape(1, 1, -1),
-                    acquisition_function=qEI,
-                    inequality_constraints=[
-                        (torch.tensor([0]), torch.tensor([1]), 0),
-                        (torch.tensor([1]), torch.tensor([-1]), -1),
-                    ],
-                    fixed_features={1: 0.25},
-                    options=options,
-                )
+            candidates, _ = gen_candidates_scipy(
+                initial_conditions=self.initial_conditions.reshape(1, 1, -1),
+                acquisition_function=qEI,
+                inequality_constraints=[
+                    (torch.tensor([0]), torch.tensor([1]), 0),
+                    (torch.tensor([1]), torch.tensor([-1]), -1),
+                ],
+                fixed_features={1: 0.25},
+                options=options,
+            )
             # candidates is of dimension 1 x 1 x 2
             # so we are squeezing all the singleton dimensions
             candidates = candidates.squeeze()
@@ -226,6 +212,27 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             )
         )
         self.assertTrue(expected_warning_raised)
+
+    def test_gen_candidates_scipy_maxiter_behavior(self):
+        # Check that no warnings are raised & log produced on hitting maxiter.
+        for method in ("SLSQP", "L-BFGS-B"):
+            with warnings.catch_warnings(record=True) as ws, self.assertLogs(
+                "botorch", level="INFO"
+            ) as logs:
+                self.test_gen_candidates(options={"maxiter": 1, "method": method})
+            self.assertFalse(
+                any(issubclass(w.category, OptimizationWarning) for w in ws)
+            )
+            self.assertTrue("iteration limit" in logs.output[-1])
+        # Check that we handle maxfun as well.
+        with warnings.catch_warnings(record=True) as ws, self.assertLogs(
+            "botorch", level="INFO"
+        ) as logs:
+            self.test_gen_candidates(
+                options={"maxiter": 100, "maxfun": 1, "method": "L-BFGS-B"}
+            )
+        self.assertFalse(any(issubclass(w.category, OptimizationWarning) for w in ws))
+        self.assertTrue("function evaluation limit" in logs.output[-1])
 
     def test_gen_candidates_scipy_warns_opt_no_res(self):
         ckwargs = {"dtype": torch.float, "device": self.device}

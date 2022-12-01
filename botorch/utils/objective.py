@@ -10,7 +10,7 @@ Helpers for handling objectives.
 
 from __future__ import annotations
 
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Union
 
 import torch
 from torch import Tensor
@@ -64,7 +64,7 @@ def apply_constraints_nonnegative_soft(
     obj: Tensor,
     constraints: List[Callable[[Tensor], Tensor]],
     samples: Tensor,
-    eta: float,
+    eta: Union[Tensor, float],
 ) -> Tensor:
     r"""Applies constraints to a non-negative objective.
 
@@ -78,14 +78,24 @@ def apply_constraints_nonnegative_soft(
             This callable must support broadcasting. Only relevant for multi-
             output models (`m` > 1).
         samples: A `n_samples x b x q x m` Tensor of samples drawn from the posterior.
-        eta: The temperature parameter for the sigmoid function.
+        eta: The temperature parameter for the sigmoid function. Can be either a float
+            or a 1-dim tensor. In case of a float the same eta is used for every
+            constraint in constraints. In case of a tensor the length of the tensor
+            must match the number of provided constraints. The i-th constraint is
+            then estimated with the i-th eta value.
 
     Returns:
         A `n_samples x b x q (x m')`-dim tensor of feasibility-weighted objectives.
     """
+    if type(eta) != Tensor:
+        eta = torch.full((len(constraints),), eta)
+    if len(eta) != len(constraints):
+        raise ValueError(
+            "Number of provided constraints and number of provided etas do not match."
+        )
     obj = obj.clamp_min(0)  # Enforce non-negativity with constraints
-    for constraint in constraints:
-        constraint_eval = soft_eval_constraint(constraint(samples), eta=eta)
+    for constraint, e in zip(constraints, eta):
+        constraint_eval = soft_eval_constraint(constraint(samples), eta=e)
         if obj.dim() == samples.dim():
             # Need to unsqueeze to accommodate the outcome dimension.
             constraint_eval = constraint_eval.unsqueeze(-1)
@@ -101,7 +111,7 @@ def soft_eval_constraint(lhs: Tensor, eta: float = 1e-3) -> Tensor:
     Args:
         lhs: The left hand side of the constraint `lhs <= 0`.
         eta: The temperature parameter of the softmax function. As eta
-            grows larger, this approximates the Heaviside step function.
+            decreases, this approximates the Heaviside step function.
 
     Returns:
         Element-wise 'soft' feasibility indicator of the same shape as `lhs`.
@@ -118,7 +128,7 @@ def apply_constraints(
     constraints: List[Callable[[Tensor], Tensor]],
     samples: Tensor,
     infeasible_cost: float,
-    eta: float = 1e-3,
+    eta: Union[Tensor, float] = 1e-3,
 ) -> Tensor:
     r"""Apply constraints using an infeasible_cost `M` for negative objectives.
 
@@ -136,7 +146,11 @@ def apply_constraints(
             output models (`m` > 1).
         samples: A `n_samples x b x q x m` Tensor of samples drawn from the posterior.
         infeasible_cost: The infeasible value.
-        eta: The temperature parameter of the sigmoid function.
+        eta: The temperature parameter of the sigmoid function. Can be either a float
+            or a 1-dim tensor. In case of a float the same eta is used for every
+            constraint in constraints. In case of a tensor the length of the tensor
+            must match the number of provided constraints. The i-th constraint is
+            then estimated with the i-th eta value.
 
     Returns:
         A `n_samples x b x q (x m')`-dim tensor of feasibility-weighted objectives.

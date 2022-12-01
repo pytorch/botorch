@@ -453,7 +453,7 @@ class ConstrainedMCObjective(GenericMCObjective):
         objective: Callable[[Tensor, Optional[Tensor]], Tensor],
         constraints: List[Callable[[Tensor], Tensor]],
         infeasible_cost: Union[Tensor, float] = 0.0,
-        eta: float = 1e-3,
+        eta: Union[Tensor, float] = 1e-3,
     ) -> None:
         r"""
         Args:
@@ -468,11 +468,17 @@ class ConstrainedMCObjective(GenericMCObjective):
             infeasible_cost: The cost of a design if all associated samples are
                 infeasible.
             eta: The temperature parameter of the sigmoid function approximating
-                the constraint.
+                the constraint. Can be either a float or a 1-dim tensor. In case
+                of a float the same eta is used for every constraint in
+                constraints. In case of a tensor the length of the tensor must
+                match the number of provided constraints. The i-th constraint is
+                then estimated with the i-th eta value.
         """
         super().__init__(objective=objective)
         self.constraints = constraints
-        self.register_buffer("eta", torch.as_tensor(eta))
+        if type(eta) != Tensor:
+            eta = torch.full((len(constraints),), eta)
+        self.register_buffer("eta", eta)
         self.register_buffer("infeasible_cost", torch.as_tensor(infeasible_cost))
 
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
