@@ -470,6 +470,7 @@ def optimize_acqf_list(
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
+    fixed_features_list: Optional[List[Dict[int, float]]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a list of candidates from a list of acquisition functions.
@@ -495,6 +496,9 @@ def optimize_acqf_list(
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
         fixed_features: A map `{feature_index: value}` for features that
             should be fixed to a particular value during generation.
+        fixed_features_list: A list of maps `{feature_index: value}`. The i-th
+            item represents the fixed_feature for the i-th optimization. If
+            `fixed_features_list` is provided, `optimize_acqf_mixed` is invoked.
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
@@ -507,6 +511,10 @@ def optimize_acqf_list(
             index `i` is the acquisition value conditional on having observed
             all candidates except candidate `i`.
     """
+    if fixed_features and fixed_features_list:
+        raise ValueError(
+            "Èither `fixed_feature` or `fixed_features_list` can be provided, not both."
+        )
     if not acq_function_list:
         raise ValueError("acq_function_list must be non-empty.")
     candidate_list, acq_value_list = [], []
@@ -519,20 +527,34 @@ def optimize_acqf_list(
                 if base_X_pending is not None
                 else candidates
             )
-        candidate, acq_value = optimize_acqf(
-            acq_function=acq_function,
-            bounds=bounds,
-            q=1,
-            num_restarts=num_restarts,
-            raw_samples=raw_samples,
-            options=options or {},
-            inequality_constraints=inequality_constraints,
-            equality_constraints=equality_constraints,
-            fixed_features=fixed_features,
-            post_processing_func=post_processing_func,
-            return_best_only=True,
-            sequential=False,
-        )
+        if fixed_features_list:
+            candidate, acq_value = optimize_acqf_mixed(
+                acq_function=acq_function,
+                bounds=bounds,
+                q=1,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options or {},
+                inequality_constraints=inequality_constraints,
+                equality_constraints=equality_constraints,
+                fixed_features_list=fixed_features_list,
+                post_processing_func=post_processing_func,
+            )
+        else:
+            candidate, acq_value = optimize_acqf(
+                acq_function=acq_function,
+                bounds=bounds,
+                q=1,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options or {},
+                inequality_constraints=inequality_constraints,
+                equality_constraints=equality_constraints,
+                fixed_features=fixed_features,
+                post_processing_func=post_processing_func,
+                return_best_only=True,
+                sequential=False,
+            )
         candidate_list.append(candidate)
         acq_value_list.append(acq_value)
         candidates = torch.cat(candidate_list, dim=-2)
