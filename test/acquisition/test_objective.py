@@ -326,6 +326,21 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 samples=samples,
                 infeasible_cost=torch.tensor([0.0], device=self.device, dtype=dtype),
             )
+            # one feasible, one infeasible different etas
+            obj = ConstrainedMCObjective(
+                objective=generic_obj,
+                constraints=[feasible_con, infeasible_con],
+                eta=torch.tensor([1, 10]),
+            )
+            samples = torch.randn(2, 1, device=self.device, dtype=dtype)
+            constrained_obj = generic_obj(samples)
+            constrained_obj = apply_constraints(
+                obj=constrained_obj,
+                constraints=[feasible_con, infeasible_con],
+                samples=samples,
+                eta=torch.tensor([1, 10]),
+                infeasible_cost=torch.tensor([0.0], device=self.device, dtype=dtype),
+            )
             self.assertTrue(torch.equal(obj(samples), constrained_obj))
             # one feasible, one infeasible, infeasible_cost
             obj = ConstrainedMCObjective(
@@ -340,6 +355,23 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
                 infeasible_cost=5.0,
+            )
+            self.assertTrue(torch.equal(obj(samples), constrained_obj))
+            # one feasible, one infeasible, infeasible_cost, different eta
+            obj = ConstrainedMCObjective(
+                objective=generic_obj,
+                constraints=[feasible_con, infeasible_con],
+                infeasible_cost=5.0,
+                eta=torch.tensor([1, 10]),
+            )
+            samples = torch.randn(3, 2, device=self.device, dtype=dtype)
+            constrained_obj = generic_obj(samples)
+            constrained_obj = apply_constraints(
+                obj=constrained_obj,
+                constraints=[feasible_con, infeasible_con],
+                samples=samples,
+                infeasible_cost=5.0,
+                eta=torch.tensor([1, 10]),
             )
             self.assertTrue(torch.equal(obj(samples), constrained_obj))
             # one feasible, one infeasible, infeasible_cost, higher dimension
