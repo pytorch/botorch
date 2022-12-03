@@ -57,6 +57,7 @@ Sampling from GP priors
 .. automodule:: botorch.utils.gp_sampling
 		:members:
 
+
 Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.testing

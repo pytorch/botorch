@@ -98,7 +98,9 @@
 <span class="sd">        options: Options used to control the optimization including "method"</span>
 <span class="sd">            and "maxiter". Select method for `scipy.minimize` using the</span>
 <span class="sd">            "method" key. By default uses L-BFGS-B for box-constrained problems</span>
-<span class="sd">            and SLSQP if inequality or equality constraints are present.</span>
+<span class="sd">            and SLSQP if inequality or equality constraints are present. If</span>
+<span class="sd">            `with_grad=False`, then we use a two-point finite difference estimate</span>
+<span class="sd">            of the gradient.</span>
 <span class="sd">        fixed_features: This is a dictionary of feature indices to values, where</span>
 <span class="sd">            all generated candidates will have features fixed to these values.</span>
 <span class="sd">            If the dictionary value is None, then that feature will just be</span>
@@ -185,34 +187,48 @@
         <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">f_np_wrapper</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
-        <span class="sd">"""Given a torch callable, compute value + grad given a numpy array."""</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> elements of the </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> element array "</span>
-                <span class="sa">f</span><span class="s2">"`x` are NaN."</span>
+    <span class="n">with_grad</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"with_grad"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">with_grad</span><span class="p">:</span>
+
+        <span class="k">def</span> <span class="nf">f_np_wrapper</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
+            <span class="sd">"""Given a torch callable, compute value + grad given a numpy array."""</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> elements of the </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> element array "</span>
+                    <span class="sa">f</span><span class="s2">"`x` are NaN."</span>
+                <span class="p">)</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">initial_conditions</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">shapeX</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
             <span class="p">)</span>
-        <span class="n">X</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">initial_conditions</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">shapeX</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">X_fix</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">)</span>
-        <span class="n">loss</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">X_fix</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-        <span class="c1"># compute gradient w.r.t. the inputs (does not accumulate in leaves)</span>
-        <span class="n">gradf</span> <span class="o">=</span> <span class="n">_arrayify</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">X</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">gradf</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">gradf</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> elements of the </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> element "</span>
-                <span class="s2">"gradient array `gradf` are NaN. This often indicates numerical issues."</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="n">initial_conditions</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">+=</span> <span class="s2">" Consider using `dtype=torch.double`."</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-        <span class="n">fval</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">fval</span><span class="p">,</span> <span class="n">gradf</span>
+            <span class="n">X_fix</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">X_fix</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="c1"># compute gradient w.r.t. the inputs (does not accumulate in leaves)</span>
+            <span class="n">gradf</span> <span class="o">=</span> <span class="n">_arrayify</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">X</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">gradf</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">gradf</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> elements of the </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> element "</span>
+                    <span class="s2">"gradient array `gradf` are NaN. "</span>
+                    <span class="s2">"This often indicates numerical issues."</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">initial_conditions</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">+=</span> <span class="s2">" Consider using `dtype=torch.double`."</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">fval</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">fval</span><span class="p">,</span> <span class="n">gradf</span>
+
+    <span class="k">else</span><span class="p">:</span>
+
+        <span class="k">def</span> <span class="nf">f_np_wrapper</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">initial_conditions</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">shapeX</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
+            <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+                <span class="n">X_fix</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">)</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">X_fix</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="n">fval</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">fval</span>
 
     <span class="k">if</span> <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span>
         <span class="c1"># Make sure `batch_limit` is 1 for now.</span>
@@ -236,11 +252,15 @@
         <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">f</span><span class="p">,),</span>
         <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span>
         <span class="n">method</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"method"</span><span class="p">,</span> <span class="s2">"SLSQP"</span> <span class="k">if</span> <span class="n">constraints</span> <span class="k">else</span> <span class="s2">"L-BFGS-B"</span><span class="p">),</span>
-        <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">jac</span><span class="o">=</span><span class="n">with_grad</span><span class="p">,</span>
         <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
         <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
         <span class="n">callback</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"callback"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-        <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"method"</span><span class="p">,</span> <span class="s2">"callback"</span><span class="p">]},</span>
+        <span class="n">options</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"method"</span><span class="p">,</span> <span class="s2">"callback"</span><span class="p">,</span> <span class="s2">"with_grad"</span><span class="p">]</span>
+        <span class="p">},</span>
     <span class="p">)</span>
     <span class="n">_process_scipy_result</span><span class="p">(</span><span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">)</span>
 
