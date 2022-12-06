@@ -392,6 +392,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertTrue(acqf == mock_acqf.return_value)
         mock_acqf.assert_called_once_with(
             constraints=None,
+            eta=1e-3,
             model=self.model,
             objective=self.mo_objective,
             ref_point=self.ref_point,
@@ -452,6 +453,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,
             constraints=[lambda Y: Y[..., -1]],
+            eta=1e-2,
             seed=2,
             ref_point=self.ref_point,
             Y=self.Y,
@@ -459,6 +461,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         _, kwargs = mock_acqf.call_args
         partitioning = kwargs["partitioning"]
         self.assertEqual(partitioning.pareto_Y.shape[0], 0)
+        self.assertEqual(kwargs["eta"], 1e-2)
 
     @mock.patch(f"{moo_monte_carlo.__name__}.qNoisyExpectedHypervolumeImprovement")
     def test_GetQNEHVI(self, mock_acqf):
@@ -486,6 +489,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertTrue(acqf == mock_acqf.return_value)
         mock_acqf.assert_called_once_with(
             constraints=None,
+            eta=1e-3,
             model=self.model,
             X_baseline=self.X_observed,
             objective=self.objective,

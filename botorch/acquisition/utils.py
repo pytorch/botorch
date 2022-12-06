@@ -11,7 +11,7 @@ Utilities for acquisition functions.
 from __future__ import annotations
 
 import math
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Union
 
 import torch
 from botorch.acquisition import analytic, monte_carlo, multi_objective  # noqa F401
@@ -43,6 +43,7 @@ def get_acquisition_function(
     posterior_transform: Optional[PosteriorTransform] = None,
     X_pending: Optional[Tensor] = None,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    eta: Optional[Union[Tensor, float]] = 1e-3,
     mc_samples: int = 512,
     seed: Optional[int] = None,
     **kwargs,
@@ -61,8 +62,13 @@ def get_acquisition_function(
         constraints: A list of callables, each mapping a Tensor of dimension
             `sample_shape x batch-shape x q x m` to a Tensor of dimension
             `sample_shape x batch-shape x q`, where negative values imply
-            feasibility. Used when constraint_transforms are not passed
-            as part of the objective.
+            feasibility. Used only for qEHVI and qNEHVI.
+        eta: The temperature parameter for the sigmoid function used for the
+            differentiable approximation of the constraints. In case of a float the
+            same eta is used for every constraint in constraints. In case of a
+            tensor the length of the tensor must match the number of provided
+            constraints. The i-th constraint is then estimated with the i-th
+            eta value. Used only for qEHVI and qNEHVI.
         mc_samples: The number of samples to use for (q)MC evaluation of the
             acquisition function.
         seed: If provided, perform deterministic optimization (i.e. the
@@ -179,6 +185,7 @@ def get_acquisition_function(
             sampler=sampler,
             objective=objective,
             constraints=constraints,
+            eta=eta,
             X_pending=X_pending,
         )
     elif acquisition_function_name == "qNEHVI":
@@ -191,6 +198,7 @@ def get_acquisition_function(
             sampler=sampler,
             objective=objective,
             constraints=constraints,
+            eta=eta,
             prune_baseline=kwargs.get("prune_baseline", True),
             alpha=kwargs.get("alpha", 0.0),
             X_pending=X_pending,
