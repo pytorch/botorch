@@ -2,6 +2,47 @@
 
 The release log for BoTorch.
 
+## [0.8.0] - Dec 6, 2022
+
+### Highlights
+This release includes some backwards incompatible changes.
+* Refactor `Posterior` and `MCSampler` modules to better support non-Gaussian distributions in BoTorch (#1486).
+    * Introduced a `TorchPosterior` object that wraps a PyTorch `Distribution` object and makes it compatible with the rest of `Posterior` API.
+    * `PosteriorList` no longer accepts Gaussian base samples. It should be used with a `ListSampler` that includes the appropriate sampler for each posterior.
+    * The MC acquisition functions no longer construct a Sobol sampler by default. Instead, they rely on a `get_sampler` helper, which dispatches an appropriate sampler based on the posterior provided.
+    * The `resample` and `collapse_batch_dims` arguments to `MCSampler`s have been removed. The `ForkedRNGSampler` and `StochasticSampler` can be used to get the same functionality.
+    * Refer to the PR for additional changes. We will update the website documentation to reflect these changes in a future release.
+* #1191 refactors much of `botorch.optim` to operate based on closures that abstract
+away how losses (and gradients) are computed. By default, these closures are created
+using multiply-dispatched factory functions (such as `get_loss_closure`), which may be
+customized by registering methods with an associated dispatcher (e.g. `GetLossClosure`).
+Future releases will contain tutorials that explore these features in greater detail.
+
+#### New Features
+* Add mixed optimization for list optimization (#1342).
+* Add entropy search acquisition functions (#1458).
+* Add utilities for straight-through gradient estimators for discretization functions (#1515).
+* Add support for categoricals in Round input transform and use STEs (#1516).
+* Add closure-based optimizers (#1191).
+
+#### Other Changes
+* Do not count hitting maxiter as optimization failure & update default maxiter (#1478).
+* `BoxDecomposition` cleanup (#1490).
+* Deprecate `torch.triangular_solve` in favor of `torch.linalg.solve_triangular` (#1494).
+* Various docstring improvements (#1496, #1499, #1504).
+* Remove `__getitem__` method from `LinearTruncatedFidelityKernel` (#1501).
+* Handle Cholesky errors when fitting a fully Bayesian model (#1507).
+* Make eta configurable in `apply_constraints` (#1526).
+* Support SAAS ensemble models in RFFs (#1530).
+* Deprecate `botorch.optim.numpy_converter` (#1191).
+* Deprecate `fit_gpytorch_scipy` and `fit_gpytorch_torch` (#1191).
+
+#### Bug Fixes
+* Enforce use of float64 in `NdarrayOptimizationClosure` (#1508).
+* Replace deprecated np.bool with equivalent bool (#1524).
+* Fix RFF bug when using FixedNoiseGP models (#1528).
+
+
 ## [0.7.3] - Nov 10, 2022
 
 ### Highlights
