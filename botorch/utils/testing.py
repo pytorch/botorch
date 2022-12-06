@@ -45,6 +45,11 @@ class BotorchTestCase(TestCase):
         warnings.resetwarnings()
         settings.debug._set_state(False)
         warnings.simplefilter("always", append=True)
+        warnings.filterwarnings(
+            "ignore",
+            message="The model inputs are of type",
+            category=UserWarning,
+        )
 
 
 class BaseTestProblemBaseTestCase:
