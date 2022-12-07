@@ -106,3 +106,4 @@ jobs:
     uses: ./.github/workflows/reusable_website.yml
     with:
       publish_versioned_website: true
+      release_tag: ${{ github.event.release.tag_name }}
