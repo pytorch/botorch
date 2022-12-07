@@ -115,36 +115,10 @@ jobs:
 
   publish-latest-website:
     name: Publish latest website
-    runs-on: ubuntu-latest
     needs: [tests-and-coverage-nightly, package-test-deploy-pypi, package-conda]
-    strategy:
-      fail-fast: true
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: Fetch all history for all tags and branches
-      run: git fetch --prune --unshallow
-    - name: Install dependencies
-      env:
-        ALLOW_LATEST_GPYTORCH_LINOP: true
-        ALLOW_BOTORCH_LATEST: true  # allow Ax to install w/ new BoTorch release
-      run: |
-        pip install git+https://github.com/cornellius-gp/linear_operator.git
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install .[dev]
-        pip install git+https://github.com/facebook/Ax.git
-        pip install beautifulsoup4 ipython nbconvert jinja2
-    - name: Unit tests
-      run: |
-        pytest -ra
-    - name: Publish latest website
-      env:
-        DOCUSAURUS_PUBLISH_TOKEN: ${{ secrets.DOCUSAURUS_PUBLISH_TOKEN }}
-      run: |
-        ./scripts/publish_site.sh -d
+    uses: ./.github/workflows/reusable_website.yml
+    with:
+      publish_versioned_website: false
 
   run_tutorials:
     name: Run tutorials without smoke test on latest PyTorch / GPyTorch / Ax
