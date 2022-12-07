@@ -1,0 +1,60 @@
+name: Reusable Publish Website Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_versioned_website:
+        required: true
+        type: boolean
+      release_tag:
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      publish_versioned_website:
+        required: true
+        type: boolean
+      release_tag:
+        required: false
+        type: string
+
+jobs:
+  publish-website:
+    name: Publish website
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+    - name: Fetch all history for all tags and branches
+      run: git fetch --prune --unshallow
+    - if: ${{ !inputs.publish_versioned_website }}
+      name: Install latest GPyTorch and Linear Operator
+      run: |
+        pip install git+https://github.com/cornellius-gp/linear_operator.git
+        pip install git+https://github.com/cornellius-gp/gpytorch.git
+    - name: Install common dependencies
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
+        ALLOW_BOTORCH_LATEST: true  # Allow Ax to install w/ new BoTorch release.
+      run: |
+        pip install ."[dev, tutorials]"
+        # There may not be a compatible Ax pip version, so we use the development version.
+        pip install git+https://github.com/facebook/Ax.git
+        pip install beautifulsoup4 ipython nbconvert jinja2
+    - if: ${{ inputs.publish_versioned_website }}
+      name: Publish versioned website
+      env:
+        DOCUSAURUS_PUBLISH_TOKEN: ${{ secrets.DOCUSAURUS_PUBLISH_TOKEN }}
+      run: |
+        ./scripts/publish_site.sh -d -v ${{ inputs.release_tag }}
+    - if: ${{ !inputs.publish_versioned_website }}
+      name: Publish latest website
+      env:
+        DOCUSAURUS_PUBLISH_TOKEN: ${{ secrets.DOCUSAURUS_PUBLISH_TOKEN }}
+      run: |
+        ./scripts/publish_site.sh -d
