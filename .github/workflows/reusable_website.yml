@@ -1,6 +1,7 @@
 name: Reusable Publish Website Workflow
 
 on:
+  workflow_dispatch:
   workflow_call:
     inputs:
       publish_versioned_website:
