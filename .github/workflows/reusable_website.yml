@@ -2,12 +2,21 @@ name: Reusable Publish Website Workflow
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_versioned_website:
+        required: true
+        type: boolean
+      release_tag:
+        required: false
+        type: string
   workflow_call:
     inputs:
       publish_versioned_website:
         required: true
         type: boolean
-        default: false
+      release_tag:
+        required: false
+        type: string
 
 jobs:
   publish-website:
@@ -49,7 +58,7 @@ jobs:
       env:
         DOCUSAURUS_PUBLISH_TOKEN: ${{ secrets.DOCUSAURUS_PUBLISH_TOKEN }}
       run: |
-        ./scripts/publish_site.sh -d -v ${{ github.event.release.tag_name }}
+        ./scripts/publish_site.sh -d -v ${{ inputs.release_tag }}
     - if: ${{ !inputs.publish_versioned_website }}
       name: Publish latest website
       env:
