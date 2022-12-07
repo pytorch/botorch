@@ -102,27 +102,7 @@ jobs:
 
   publish-versioned-website:
     name: Publish versioned website
-    runs-on: ubuntu-latest
     needs: [package-deploy-pypi, package-deploy-conda]
-    strategy:
-      fail-fast: true
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: Install dependencies
-      # there may not be a compatible Ax pip version, so we use the development version
-      env:
-        ALLOW_BOTORCH_LATEST: true  # allow Ax to install w/ new BoTorch release
-      run: |
-        pip install .[dev]
-        pip install git+https://github.com/facebook/Ax.git
-        pip install .[tutorials]
-        pip install beautifulsoup4 ipython nbconvert jinja2
-    - name: Publish latest website
-      env:
-        DOCUSAURUS_PUBLISH_TOKEN: ${{ secrets.DOCUSAURUS_PUBLISH_TOKEN }}
-      run: |
-        ./scripts/publish_site.sh -d -v ${{ github.event.release.tag_name }}
+    uses: ./.github/workflows/reusable_website.yml
+    with:
+      publish_versioned_website: true
