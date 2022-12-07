@@ -73,6 +73,8 @@ class FixedFeatureAcquisitionFunction(AcquisitionFunction):
                     # likewise if any value uses cuda, use cuda for all values
                     dtype = value.dtype if value.dtype == torch.double else dtype
                     device = value.device if value.device.type == "cuda" else device
+                    if value.ndim == 0:  # since we can't broadcast with zero-d tensors
+                        value = value.unsqueeze(0)
                     new_values.append(value.detach().clone())
             # move all values to same device
             for i, val in enumerate(new_values):
