@@ -32,7 +32,7 @@ jobs:
         python-version: 3.8
     - name: Fetch all history for all tags and branches
       run: git fetch --prune --unshallow
-    - if: ${{ !inputs.publish_versioned_website }}    
+    - if: ${{ !inputs.publish_versioned_website }}
       name: Install latest GPyTorch and Linear Operator
       run: |
         pip install git+https://github.com/cornellius-gp/linear_operator.git
