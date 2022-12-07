@@ -52,7 +52,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.cached_cholesky</span> <span class="kn">import</span> <span class="n">CachedCholeskyMCAcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">IdentityMCObjective</span><span class="p">,</span>
@@ -63,7 +63,7 @@
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">concatenate_pending_points</span><span class="p">,</span>
     <span class="n">match_batch_shape</span><span class="p">,</span>
@@ -72,7 +72,7 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="MCAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">MCAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="MCAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">MCAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Abstract base class for Monte-Carlo based batch acquisition functions.</span>
 
@@ -90,8 +90,11 @@
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
-<span class="sd">            sampler: The sampler used to draw base samples. Defaults to</span>
-<span class="sd">                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`.</span>
+<span class="sd">            sampler: The sampler used to draw base samples. If not given,</span>
+<span class="sd">                a sampler is generated using `get_sampler`.</span>
+<span class="sd">                NOTE: For posteriors that do not support base samples,</span>
+<span class="sd">                a sampler compatible with intended use case must be provided.</span>
+<span class="sd">                See `ForkedRNGSampler` and `StochasticSampler` as examples.</span>
 <span class="sd">            objective: The MCAcquisitionObjective under which the samples are</span>
 <span class="sd">                evaluated. Defaults to `IdentityMCObjective()`.</span>
 <span class="sd">            posterior_transform: A PosteriorTransform (optional).</span>
@@ -100,9 +103,7 @@
 <span class="sd">                but have not yet been evaluated.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">collapse_batch_dims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">:</span> <span class="n">MCSampler</span> <span class="o">=</span> <span class="n">sampler</span>
+        <span class="n">MCSamplerMixin</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">posterior_transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
@@ -167,8 +168,8 @@
 <span class="sd">            best_f: The best objective value observed so far (assumed noiseless). Can be</span>
 <span class="sd">                a `batch_shape`-shaped tensor, which in case of a batched model</span>
 <span class="sd">                specifies potentially different values for each element of the batch.</span>
-<span class="sd">            sampler: The sampler used to draw base samples. Defaults to</span>
-<span class="sd">                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`</span>
+<span class="sd">            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`</span>
+<span class="sd">                more details.</span>
 <span class="sd">            objective: The MCAcquisitionObjective under which the samples are evaluated.</span>
 <span class="sd">                Defaults to `IdentityMCObjective()`.</span>
 <span class="sd">            posterior_transform: A PosteriorTransform (optional).</span>
@@ -203,7 +204,7 @@
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
             <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
         <span class="p">)</span>
-        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="p">(</span><span class="n">obj</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">q_ei</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -249,8 +250,8 @@
 <span class="sd">            X_baseline: A `batch_shape x r x d`-dim Tensor of `r` design points</span>
 <span class="sd">                that have already been observed. These points are considered as</span>
 <span class="sd">                the potential best design point.</span>
-<span class="sd">            sampler: The sampler used to draw base samples. Defaults to</span>
-<span class="sd">                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`.</span>
+<span class="sd">            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`</span>
+<span class="sd">                more details.</span>
 <span class="sd">            objective: The MCAcquisitionObjective under which the samples are</span>
 <span class="sd">                evaluated. Defaults to `IdentityMCObjective()`.</span>
 <span class="sd">            posterior_transform: A PosteriorTransform (optional).</span>
@@ -279,8 +280,7 @@
             <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">,</span> <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">prune_baseline</span><span class="p">:</span>
             <span class="n">X_baseline</span> <span class="o">=</span> <span class="n">prune_inferior_points</span><span class="p">(</span>
                 <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
@@ -292,64 +292,32 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"X_baseline"</span><span class="p">,</span> <span class="n">X_baseline</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_root</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">q_in</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
             <span class="c1"># set baseline samples</span>
             <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
                 <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
                     <span class="n">X_baseline</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
                 <span class="p">)</span>
-                <span class="n">baseline_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+                <span class="c1"># Note: The root decomposition is cached in two different places. It</span>
+                <span class="c1"># may be confusing to have two different caches, but this is not</span>
+                <span class="c1"># trivial to change since each is needed for a different reason:</span>
+                <span class="c1"># - LinearOperator caching to `posterior.mvn` allows for reuse within</span>
+                <span class="c1">#  this function, which may be helpful if the same root decomposition</span>
+                <span class="c1">#  is produced by the calls to `self.base_sampler` and</span>
+                <span class="c1">#  `self._cache_root_decomposition`.</span>
+                <span class="c1"># - self._baseline_L allows a root decomposition to be persisted outside</span>
+                <span class="c1">#   this method.</span>
+                <span class="n">baseline_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+            <span class="c1"># We make a copy here because we will write an attribute `base_samples`</span>
+            <span class="c1"># to `self.base_sampler.base_samples`, and we don't want to mutate</span>
+            <span class="c1"># `self.sampler`.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">)</span>
             <span class="n">baseline_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">baseline_samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"baseline_samples"</span><span class="p">,</span> <span class="n">baseline_samples</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
                 <span class="s2">"baseline_obj_max_values"</span><span class="p">,</span> <span class="n">baseline_obj</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
             <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cache_root_decomposition</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_set_sampler</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Update the sampler to use the original base samples for X_baseline.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            q: the batch size</span>
-<span class="sd">            posterior: the posterior</span>
-
-<span class="sd">        TODO: refactor some/all of this into the MCSampler.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">!=</span> <span class="n">q</span><span class="p">:</span>
-            <span class="c1"># create new base_samples</span>
-            <span class="n">base_sample_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">_get_base_sample_shape</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">_construct_base_samples</span><span class="p">(</span>
-                <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">base_sample_shape</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
-                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span><span class="o">.</span><span class="n">base_samples</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="p">):</span>
-                <span class="n">current_base_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span><span class="o">.</span><span class="n">base_samples</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-                <span class="n">view_shape</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">base_sample_shape</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>
-                    <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">base_sample_shape</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="p">))</span>
-                    <span class="o">+</span> <span class="n">current_base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
-                <span class="p">)</span>
-                <span class="n">expanded_shape</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">base_sample_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">current_base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
-                <span class="p">)</span>
-                <span class="c1"># Use stored base samples:</span>
-                <span class="c1"># Use all base_samples from the current sampler</span>
-                <span class="c1"># this includes the base_samples from the base_sampler</span>
-                <span class="c1"># and any base_samples for the new points in the sampler.</span>
-                <span class="c1"># For example, when using sequential greedy candidate generation</span>
-                <span class="c1"># then generate the new candidate point using last (-1) base_sample</span>
-                <span class="c1"># in sampler. This copies that base sample.</span>
-                <span class="n">end_idx</span> <span class="o">=</span> <span class="n">current_base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">base_samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">end_idx</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">current_base_samples</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
-                    <span class="n">view_shape</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">expanded_shape</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="n">q</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_root_decomposition</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_forward_cached</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">X_full</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Compute difference objective using cached root decomposition.</span>
@@ -363,10 +331,11 @@
 <span class="sd">            A `sample_shape x batch_shape`-dim tensor containing the</span>
 <span class="sd">                difference in objective under each MC sample.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_sampler</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
         <span class="c1"># handle one-to-many input transforms</span>
-        <span class="n">n_w</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">//</span> <span class="n">X_full</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-        <span class="n">new_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_f_X_samples</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span> <span class="n">q_in</span><span class="o">=</span><span class="n">n_w</span> <span class="o">*</span> <span class="n">q</span><span class="p">)</span>
+        <span class="n">n_w</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">()[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">//</span> <span class="n">X_full</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">q_in</span> <span class="o">=</span> <span class="n">q</span> <span class="o">*</span> <span class="n">n_w</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_sampler</span><span class="p">(</span><span class="n">q_in</span><span class="o">=</span><span class="n">q_in</span><span class="p">,</span> <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
+        <span class="n">new_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_f_X_samples</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span> <span class="n">q_in</span><span class="o">=</span><span class="n">q_in</span><span class="p">)</span>
         <span class="n">new_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">new_samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X_full</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">q</span><span class="p">:,</span> <span class="p">:])</span>
         <span class="n">new_obj_max_values</span> <span class="o">=</span> <span class="n">new_obj</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
         <span class="n">n_sample_dims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_sampler</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">)</span>
@@ -403,7 +372,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_root</span><span class="p">:</span>
             <span class="n">diffs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward_cached</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span> <span class="n">X_full</span><span class="o">=</span><span class="n">X_full</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+            <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
             <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X_full</span><span class="p">)</span>
             <span class="n">diffs</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">q</span><span class="p">:]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="n">obj</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="n">q</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
 
@@ -446,8 +415,8 @@
 <span class="sd">            best_f: The best objective value observed so far (assumed noiseless). Can</span>
 <span class="sd">                be a `batch_shape`-shaped tensor, which in case of a batched model</span>
 <span class="sd">                specifies potentially different values for each element of the batch.</span>
-<span class="sd">            sampler: The sampler used to draw base samples. Defaults to</span>
-<span class="sd">                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`</span>
+<span class="sd">            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`</span>
+<span class="sd">                more details.</span>
 <span class="sd">            objective: The MCAcquisitionObjective under which the samples are</span>
 <span class="sd">                evaluated. Defaults to `IdentityMCObjective()`.</span>
 <span class="sd">            posterior_transform: A PosteriorTransform (optional).</span>
@@ -487,7 +456,7 @@
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
             <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
         <span class="p">)</span>
-        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># `sample_shape x batch_shape x q`-dim</span>
         <span class="n">max_obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># `sample_shape x batch_shape`-dim</span>
         <span class="n">impr</span> <span class="o">=</span> <span class="n">max_obj</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">max_obj</span><span class="p">)</span>
@@ -526,7 +495,7 @@
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
             <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
         <span class="p">)</span>
-        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="n">val</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">val</span></div></div>
@@ -562,8 +531,8 @@
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
 <span class="sd">            beta: Controls tradeoff between mean and standard deviation in UCB.</span>
-<span class="sd">            sampler: The sampler used to draw base samples. Defaults to</span>
-<span class="sd">                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`</span>
+<span class="sd">            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`</span>
+<span class="sd">                more details.</span>
 <span class="sd">            objective: The MCAcquisitionObjective under which the samples are</span>
 <span class="sd">                evaluated. Defaults to `IdentityMCObjective()`.</span>
 <span class="sd">            posterior_transform: A PosteriorTransform (optional).</span>
@@ -598,7 +567,7 @@
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
             <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
         <span class="p">)</span>
-        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">ucb_samples</span> <span class="o">=</span> <span class="n">mean</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta_prime</span> <span class="o">*</span> <span class="p">(</span><span class="n">obj</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
@@ -649,7 +618,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

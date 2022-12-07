@@ -40,14 +40,20 @@
 <span class="sd">    S. Belakaria, A. Deshwal, J. R. Doppa. Max-value Entropy Search</span>
 <span class="sd">    for Multi-Objective Bayesian Optimization. Advances in Neural</span>
 <span class="sd">    Information Processing Systems, 32. 2019.</span>
+
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.max_value_entropy_search</span> <span class="kn">import</span> <span class="n">qMaxValueEntropy</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.joint_entropy_search</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LowerBoundMultiObjectiveEntropySearch</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.monte_carlo</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="p">,</span>
 <span class="p">)</span>
@@ -57,8 +63,10 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">concatenate_pending_points</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -78,11 +86,16 @@
 
 <span class="sd">    Note: this only supports maximization.</span>
 
+<span class="sd">    Attributes:</span>
+<span class="sd">        _default_sample_shape: The `sample_shape` for the default sampler.</span>
+
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
 <span class="sd">        &gt;&gt;&gt; MESMO = qMultiObjectiveMaxValueEntropy(model, sample_pfs)</span>
 <span class="sd">        &gt;&gt;&gt; mesmo = MESMO(test_X)</span>
 <span class="sd">    """</span>
+
+    <span class="n">_default_sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">128</span><span class="p">])</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -104,7 +117,7 @@
 <span class="sd">                number the more accurate the model (at the expense of model</span>
 <span class="sd">                complexity, wall time and memory). Ignored if `X_pending` is `None`.</span>
 <span class="sd">            X_pending: A `m x d`-dim Tensor of `m` design points that have been</span>
-<span class="sd">                submitted for function evaluation but have not yet been evaluated.</span>
+<span class="sd">                submitted for function evaluation, but have not yet been evaluated.</span>
 <span class="sd">        """</span>
         <span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">)</span>
 
@@ -201,6 +214,206 @@
         <span class="n">igs</span> <span class="o">=</span> <span class="n">qMaxValueEntropy</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">))</span>
         <span class="c1"># sum over objectives</span>
         <span class="k">return</span> <span class="n">igs</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="qLowerBoundMultiObjectiveMaxValueEntropySearch"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch">[docs]</a><span class="k">class</span> <span class="nc">qLowerBoundMultiObjectiveMaxValueEntropySearch</span><span class="p">(</span>
+    <span class="n">LowerBoundMultiObjectiveEntropySearch</span>
+<span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""The acquisition function for the multi-objective Max-value Entropy Search,</span>
+<span class="sd">    where the batches `q &gt; 1` are supported through the lower bound formulation.</span>
+
+<span class="sd">    This acquisition function computes the mutual information between the observation</span>
+<span class="sd">    at a candidate point `X` and the Pareto optimal outputs.</span>
+
+<span class="sd">    See [Tu2022]_ for a discussion on the estimation procedure.</span>
+
+<span class="sd">    NOTES:</span>
+<span class="sd">    (i) The estimated acquisition value could be negative.</span>
+
+<span class="sd">    (ii) The lower bound batch acquisition function might not be monotone in the</span>
+<span class="sd">    sense that adding more elements to the batch does not necessarily increase the</span>
+<span class="sd">    acquisition value. Specifically, the acquisition value can become smaller when</span>
+<span class="sd">    more inputs are added.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">hypercell_bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">estimation_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"LB"</span><span class="p">,</span>
+        <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Lower bound multi-objective max-value entropy search acquisition function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A fitted batch model with 'M' number of outputs.</span>
+<span class="sd">            hypercell_bounds:  A `num_pareto_samples x 2 x J x M`-dim Tensor</span>
+<span class="sd">                containing the hyper-rectangle bounds for integration, where `J` is</span>
+<span class="sd">                the number of hyper-rectangles. In the unconstrained case, this gives</span>
+<span class="sd">                the partition of the dominated space. In the constrained case, this</span>
+<span class="sd">                gives the partition of the feasible dominated space union the</span>
+<span class="sd">                infeasible space.</span>
+<span class="sd">            X_pending: A `m x d`-dim Tensor of `m` design points that have been</span>
+<span class="sd">                submitted for function evaluation, but have not yet been evaluated.</span>
+<span class="sd">            estimation_type: A string to determine which entropy estimate is</span>
+<span class="sd">                computed: "0", "LB", "LB2", or "MC".</span>
+<span class="sd">            num_samples: The number of Monte Carlo samples for the Monte Carlo</span>
+<span class="sd">                estimate.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">pareto_sets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">pareto_fronts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">hypercell_bounds</span><span class="o">=</span><span class="n">hypercell_bounds</span><span class="p">,</span>
+            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+            <span class="n">estimation_type</span><span class="o">=</span><span class="n">estimation_type</span><span class="p">,</span>
+            <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_posterior_statistics</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]:</span>
+        <span class="sa">r</span><span class="sd">"""Compute the posterior statistics.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim Tensor of inputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dictionary containing the posterior variables used to estimate the</span>
+<span class="sd">            entropy.</span>
+
+<span class="sd">            - "initial_entropy": A `batch_shape`-dim Tensor containing the entropy of</span>
+<span class="sd">                the Gaussian random variable `p(Y| X, D_n)`.</span>
+<span class="sd">            - "posterior_mean": A `batch_shape x num_pareto_samples x q x 1 x M`-dim</span>
+<span class="sd">                Tensor containing the posterior mean at the input `X`.</span>
+<span class="sd">            - "posterior_variance": A `batch_shape x num_pareto_samples x q x 1 x</span>
+<span class="sd">                M`-dim Tensor containing the posterior variance at the input `X`</span>
+<span class="sd">                excluding the observation noise.</span>
+<span class="sd">            - "observation_noise": A `batch_shape x num_pareto_samples x q x 1 x M`</span>
+<span class="sd">                -dim Tensor containing the observation noise at the input `X`.</span>
+<span class="sd">            - "posterior_with_noise": The posterior distribution at `X` which</span>
+<span class="sd">                includes the observation noise. This is used to compute the marginal</span>
+<span class="sd">                log-probabilities with respect to `p(y| x, D_n)` for `x` in `X`.</span>
+<span class="sd">        """</span>
+        <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+        <span class="n">CLAMP_LB</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">tkwargs</span><span class="p">[</span><span class="s2">"dtype"</span><span class="p">])</span><span class="o">.</span><span class="n">eps</span>
+
+        <span class="c1"># Compute the initial entropy term depending on `X`.</span>
+        <span class="c1"># TODO: Below we compute posterior_plus_noise twice:</span>
+        <span class="c1">#  (1) Firstly, we compute p(Y| X, D_n) when computing the initial entropy</span>
+        <span class="c1">#  (2) Secondly, we compute p(y| x, D_n) for x in X in order to compute</span>
+        <span class="c1">#  log(p(y|x, D_n)) for x in X in the Monte Carlo estimate..</span>
+        <span class="c1">#  This could be simplified if we could evaluate log(p(y|x, D_n)) using the</span>
+        <span class="c1">#  the posterior p(Y| X, D_n)</span>
+        <span class="n">posterior_plus_noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Additional constant term.</span>
+        <span class="n">add_term</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mf">0.5</span>
+            <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span>
+            <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)))</span>
+        <span class="p">)</span>
+        <span class="c1"># The variance initially has shape `batch_shape x (q*M) x (q*M)`</span>
+        <span class="c1"># prior_entropy has shape `batch_shape x num_fantasies`</span>
+        <span class="n">initial_entropy</span> <span class="o">=</span> <span class="n">add_term</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">logdet</span><span class="p">(</span>
+            <span class="n">posterior_plus_noise</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">covariance_matrix</span>
+        <span class="p">)</span>
+        <span class="n">posterior_statistics</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"initial_entropy"</span><span class="p">:</span> <span class="n">initial_entropy</span><span class="p">}</span>
+
+        <span class="c1"># Compute the posterior entropy term.</span>
+        <span class="n">posterior_plus_noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">),</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="c1"># `batch_shape x q x 1 x M`</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior_plus_noise</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">var_plus_noise</span> <span class="o">=</span> <span class="n">posterior_plus_noise</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">CLAMP_LB</span><span class="p">)</span>
+        <span class="c1"># Expand shapes to `batch_shape x num_pareto_samples x q x 1 x M`</span>
+        <span class="n">new_shape</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">num_pareto_samples</span><span class="p">])</span> <span class="o">+</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">:]</span>
+        <span class="p">)</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">new_shape</span><span class="p">)</span>
+        <span class="n">var_plus_noise</span> <span class="o">=</span> <span class="n">var_plus_noise</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">new_shape</span><span class="p">)</span>
+
+        <span class="c1"># TODO: This computes the observation noise via a second evaluation of the</span>
+        <span class="c1">#   posterior. This step could be done better.</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">),</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">CLAMP_LB</span><span class="p">)</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="n">var</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">new_shape</span><span class="p">)</span>
+        <span class="n">obs_noise</span> <span class="o">=</span> <span class="n">var_plus_noise</span> <span class="o">-</span> <span class="n">var</span>
+
+        <span class="n">posterior_statistics</span><span class="p">[</span><span class="s2">"posterior_mean"</span><span class="p">]</span> <span class="o">=</span> <span class="n">mean</span>
+        <span class="n">posterior_statistics</span><span class="p">[</span><span class="s2">"posterior_variance"</span><span class="p">]</span> <span class="o">=</span> <span class="n">var</span>
+        <span class="n">posterior_statistics</span><span class="p">[</span><span class="s2">"observation_noise"</span><span class="p">]</span> <span class="o">=</span> <span class="n">obs_noise</span>
+        <span class="n">posterior_statistics</span><span class="p">[</span><span class="s2">"posterior_with_noise"</span><span class="p">]</span> <span class="o">=</span> <span class="n">posterior_plus_noise</span>
+
+        <span class="k">return</span> <span class="n">posterior_statistics</span>
+
+    <span class="k">def</span> <span class="nf">_compute_monte_carlo_variables</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""Compute the samples and log-probability associated with a posterior</span>
+<span class="sd">        distribution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            posterior: The posterior distribution, which includes the observation</span>
+<span class="sd">                noise.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A two-element tuple containing</span>
+
+<span class="sd">            - samples: A `num_mc_samples x batch_shape x num_pareto_samples x q x 1</span>
+<span class="sd">                x M`-dim Tensor containing the Monte Carlo samples.</span>
+<span class="sd">            - samples_log_prob: A `num_mc_samples x batch_shape x num_pareto_samples</span>
+<span class="sd">                x q`-dim Tensor containing the log-probabilities of the Monte Carlo</span>
+<span class="sd">                samples.</span>
+<span class="sd">        """</span>
+
+        <span class="c1"># `num_mc_samples x batch_shape x q x 1 x M`</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+
+        <span class="c1"># `num_mc_samples x batch_shape x q`</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">samples_log_prob</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">samples_log_prob</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+
+        <span class="c1"># Expand shape to `num_mc_samples x batch_shape x num_pareto_samples x</span>
+        <span class="c1"># q x 1 x M`</span>
+        <span class="n">new_shape</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">num_pareto_samples</span><span class="p">])</span>
+            <span class="o">+</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">:]</span>
+        <span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">new_shape</span><span class="p">)</span>
+
+        <span class="c1"># Expand shape to `num_mc_samples x batch_shape x num_pareto_samples x q`</span>
+        <span class="n">new_shape</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">samples_log_prob</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">num_pareto_samples</span><span class="p">])</span>
+            <span class="o">+</span> <span class="n">samples_log_prob</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="p">)</span>
+        <span class="n">samples_log_prob</span> <span class="o">=</span> <span class="n">samples_log_prob</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">new_shape</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">samples</span><span class="p">,</span> <span class="n">samples_log_prob</span>
+
+<div class="viewcode-block" id="qLowerBoundMultiObjectiveMaxValueEntropySearch.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
+    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluates qLowerBoundMultiObjectiveMaxValueEntropySearch at the design</span>
+<span class="sd">        points `X`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim Tensor of `batch_shape` t-batches with `q`</span>
+<span class="sd">            `d`-dim design points each.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape`-dim Tensor of acquisition values at the given design</span>
+<span class="sd">            points `X`.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_lower_bound_information_gain</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>
@@ -247,7 +460,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

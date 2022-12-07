@@ -41,120 +41,25 @@
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">inf</span>
 <span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
-<span class="kn">from</span> <span class="nn">re</span> <span class="kn">import</span> <span class="n">Pattern</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Any</span><span class="p">,</span>
-    <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">Dict</span><span class="p">,</span>
-    <span class="n">Iterator</span><span class="p">,</span>
-    <span class="n">List</span><span class="p">,</span>
-    <span class="n">NamedTuple</span><span class="p">,</span>
-    <span class="n">Optional</span><span class="p">,</span>
-    <span class="n">Set</span><span class="p">,</span>
-    <span class="n">Tuple</span><span class="p">,</span>
-    <span class="n">Union</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">Parameter</span>
-
-<span class="n">ParameterBounds</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span>
-
-
-<div class="viewcode-block" id="TorchAttr"><a class="viewcode-back" href="../../../optim.html#botorch.optim.numpy_converter.TorchAttr">[docs]</a><span class="k">class</span> <span class="nc">TorchAttr</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-    <span class="n">shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span>
-    <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span>
-    <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span></div>
-
-
-<div class="viewcode-block" id="create_name_filter"><a class="viewcode-back" href="../../../optim.html#botorch.optim.numpy_converter.create_name_filter">[docs]</a><span class="k">def</span> <span class="nf">create_name_filter</span><span class="p">(</span>
-    <span class="n">patterns</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Pattern</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]]],</span> <span class="nb">bool</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Returns a binary function that filters strings (or iterables whose first</span>
-<span class="sd">    element is a string) according to a bank of excluded patterns. Typically, used</span>
-<span class="sd">    in conjunction with generators such as `module.named_parameters()`.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        patterns: A collection of regular expressions or strings that</span>
-<span class="sd">            define the set of names to be excluded.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        A binary function indicating whether or not an item should be filtered.</span>
-<span class="sd">    """</span>
-    <span class="n">names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="n">_patterns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">patterns</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">Pattern</span><span class="p">):</span>
-            <span class="n">_patterns</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span>
-
-    <span class="k">def</span> <span class="nf">name_filter</span><span class="p">(</span><span class="n">item</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">item</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
-
-        <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">_patterns</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-                <span class="k">return</span> <span class="kc">False</span>
-
-        <span class="k">return</span> <span class="kc">True</span>
-
-    <span class="k">return</span> <span class="n">name_filter</span></div>
-
-
-<div class="viewcode-block" id="get_parameters_and_bounds"><a class="viewcode-back" href="../../../optim.html#botorch.optim.numpy_converter.get_parameters_and_bounds">[docs]</a><span class="k">def</span> <span class="nf">get_parameters_and_bounds</span><span class="p">(</span>
-    <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
-    <span class="n">name_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">requires_grad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">default_bounds</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)),</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ParameterBounds</span><span class="p">]]:</span>
-    <span class="sa">r</span><span class="sd">"""Helper method for extracting parameters and feasible ranges thereof.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        module: The target module from which parameters are to be extracted.</span>
-<span class="sd">        name_filter: Optional Boolean function used to filter parameters by name.</span>
-<span class="sd">        requires_grad: Optional Boolean used to filter parameters based on whether</span>
-<span class="sd">            or not their require_grad attribute matches the user provided value.</span>
-<span class="sd">        default_bounds: Default lower and upper bounds for constrained parameters</span>
-<span class="sd">            with `None` typed bounds.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        0: Dictionary mapping names to Parameters.</span>
-<span class="sd">        1: Dictionary mapping names of constrained parameters to ParameterBounds.</span>
-<span class="sd">    """</span>
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">"named_parameters_and_constraints"</span><span class="p">):</span>
-        <span class="n">bounds</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_parameters_and_constraints</span><span class="p">():</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">requires_grad</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">==</span> <span class="n">requires_grad</span><span class="p">))</span> <span class="ow">and</span> <span class="p">(</span>
-                <span class="n">name_filter</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">name_filter</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-            <span class="p">):</span>
-                <span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span>
-                <span class="k">if</span> <span class="n">constraint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">continue</span>
-
-                <span class="n">bounds</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
-                    <span class="n">default</span> <span class="k">if</span> <span class="n">bound</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">constraint</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">bound</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="p">(</span><span class="n">bound</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="n">default_bounds</span><span class="p">)</span>
-                <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">bounds</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">name</span><span class="p">:</span> <span class="n">param</span>
-            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">name_filter</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">name_filter</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-        <span class="p">}</span>
-
-    <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">bounds</span></div>
+<span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_get_extra_mll_args</span><span class="p">,</span>
+    <span class="n">_handle_numerical_errors</span><span class="p">,</span>
+    <span class="n">get_name_filter</span><span class="p">,</span>
+    <span class="n">get_parameters_and_bounds</span><span class="p">,</span>
+    <span class="n">TorchAttr</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
 
 <div class="viewcode-block" id="module_to_array"><a class="viewcode-back" href="../../../optim.html#botorch.optim.numpy_converter.module_to_array">[docs]</a><span class="k">def</span> <span class="nf">module_to_array</span><span class="p">(</span>
     <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
-    <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParameterBounds</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TorchAttr</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
     <span class="sa">r</span><span class="sd">"""Extract named parameters from a module into a numpy array.</span>
@@ -164,7 +69,7 @@
 <span class="sd">    Args:</span>
 <span class="sd">        module: A module with parameters. May specify parameter constraints in</span>
 <span class="sd">            a `named_parameters_and_constraints` method.</span>
-<span class="sd">        bounds: A ParameterBounds dictionary mapping parameter names to tuples</span>
+<span class="sd">        bounds: A dictionary mapping parameter names t lower and upper bounds.</span>
 <span class="sd">            of lower and upper bounds. Bounds specified here take precedence</span>
 <span class="sd">            over bounds on the same parameters specified in the constraints</span>
 <span class="sd">            registered with the module.</span>
@@ -182,9 +87,15 @@
 <span class="sd">        &gt;&gt;&gt; mll = ExactMarginalLogLikelihood(model.likelihood, model)</span>
 <span class="sd">        &gt;&gt;&gt; parameter_array, property_dict, bounds_out = module_to_array(mll)</span>
 <span class="sd">    """</span>
+    <span class="n">warn</span><span class="p">(</span>
+        <span class="s2">"`module_to_array` is marked for deprecation, consider using "</span>
+        <span class="s2">"`get_parameters_and_bounds`, `get_parameters_as_ndarray_1d`, or "</span>
+        <span class="s2">"`get_bounds_as_ndarray` instead."</span><span class="p">,</span>
+        <span class="ne">DeprecationWarning</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">param_dict</span><span class="p">,</span> <span class="n">bounds_dict</span> <span class="o">=</span> <span class="n">get_parameters_and_bounds</span><span class="p">(</span>
         <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">,</span>
-        <span class="n">name_filter</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">exclude</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">create_name_filter</span><span class="p">(</span><span class="n">exclude</span><span class="p">),</span>
+        <span class="n">name_filter</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">exclude</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">get_name_filter</span><span class="p">(</span><span class="n">exclude</span><span class="p">),</span>
         <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -246,6 +157,11 @@
 <span class="sd">        &gt;&gt;&gt; parameter_array += 0.1  # perturb parameters (for example only)</span>
 <span class="sd">        &gt;&gt;&gt; mll = set_params_with_array(mll, parameter_array,  property_dict)</span>
 <span class="sd">    """</span>
+    <span class="n">warn</span><span class="p">(</span>
+        <span class="s2">"`_set_params_with_array` is marked for deprecation, consider using "</span>
+        <span class="s2">"`set_parameters_from_ndarray_1d` instead."</span><span class="p">,</span>
+        <span class="ne">DeprecationWarning</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">param_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">())</span>
     <span class="n">start_idx</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">p_name</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="n">property_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -266,6 +182,49 @@
         <span class="n">param_dict</span><span class="p">[</span><span class="n">p_name</span><span class="p">]</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">new_data</span><span class="p">)</span>
         <span class="n">param_dict</span><span class="p">[</span><span class="n">p_name</span><span class="p">]</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">module</span></div>
+
+
+<span class="k">def</span> <span class="nf">_scipy_objective_and_grad</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">mll</span><span class="p">:</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span> <span class="n">property_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TorchAttr</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Get objective and gradient in format that scipy expects.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x: The (flattened) input parameters.</span>
+<span class="sd">        mll: The MarginalLogLikelihood module to evaluate.</span>
+<span class="sd">        property_dict: The property dictionary required to "unflatten" the input</span>
+<span class="sd">            parameter vector, as generated by `module_to_array`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        2-element tuple containing</span>
+
+<span class="sd">        - The objective value.</span>
+<span class="sd">        - The gradient of the objective.</span>
+<span class="sd">    """</span>
+    <span class="n">warn</span><span class="p">(</span><span class="s2">"`_scipy_objective_and_grad` is marked for deprecation."</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
+    <span class="n">mll</span> <span class="o">=</span> <span class="n">set_params_with_array</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">property_dict</span><span class="p">)</span>
+    <span class="n">train_inputs</span><span class="p">,</span> <span class="n">train_targets</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">,</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_targets</span>
+    <span class="n">mll</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>  <span class="c1"># catch linear algebra errors in gpytorch</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">*</span><span class="n">train_inputs</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="p">,</span> <span class="n">train_targets</span><span class="p">]</span> <span class="o">+</span> <span class="n">_get_extra_mll_args</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">mll</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_handle_numerical_errors</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="n">e</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">param_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">())</span>
+    <span class="n">grad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">sum</span><span class="p">([</span><span class="n">tattr</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">tattr</span> <span class="ow">in</span> <span class="n">property_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()]))</span>
+    <span class="k">for</span> <span class="n">p_name</span> <span class="ow">in</span> <span class="n">property_dict</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">param_dict</span><span class="p">[</span><span class="n">p_name</span><span class="p">]</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">requires_grad</span> <span class="ow">and</span> <span class="n">t</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">grad</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">size</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">double</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="n">size</span>
+
+    <span class="n">mll</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">grad</span>
 </pre></div>
 </div>
 </div>
@@ -312,7 +271,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

@@ -32,6 +32,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">LinearOperator</span><span class="p">,</span> <span class="n">to_linear_operator</span>
@@ -41,7 +42,7 @@
 <div class="viewcode-block" id="MultitaskGPPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior">[docs]</a><span class="k">class</span> <span class="nc">MultitaskGPPosterior</span><span class="p">(</span><span class="n">GPyTorchPosterior</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">mvn</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">,</span>
+        <span class="n">distribution</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">,</span>
         <span class="n">joint_covariance_matrix</span><span class="p">:</span> <span class="n">LinearOperator</span><span class="p">,</span>
         <span class="n">test_train_covar</span><span class="p">:</span> <span class="n">LinearOperator</span><span class="p">,</span>
         <span class="n">train_diff</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -55,20 +56,20 @@
 <span class="sd">        Extends the standard GPyTorch posterior class by overwriting the rsample</span>
 <span class="sd">        method. In general, this posterior should ONLY be used for MTGP models</span>
 <span class="sd">        that have structured covariances. It should also only be used internally when</span>
-<span class="sd">        called from the KroneckerMultiTaskGP.posterior(...) method.</span>
+<span class="sd">        called from the `KroneckerMultiTaskGP.posterior(...)` method.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            mvn: Posterior multivariate normal distribution</span>
+<span class="sd">            distribution: Posterior multivariate normal distribution.</span>
 <span class="sd">            joint_covariance_matrix: Joint test train covariance matrix over the entire</span>
-<span class="sd">                tensor</span>
-<span class="sd">            train_train_covar: covariance matrix of train points in the data space</span>
-<span class="sd">            test_obs_covar: covariance matrix of test x train points in the data space</span>
-<span class="sd">            train_diff: difference between train mean and train responses</span>
-<span class="sd">            train_noise: training noise covariance</span>
+<span class="sd">                tensor.</span>
+<span class="sd">            train_train_covar: Covariance matrix of train points in the data space.</span>
+<span class="sd">            test_obs_covar: Covariance matrix of test x train points in the data space.</span>
+<span class="sd">            train_diff: Difference between train mean and train responses.</span>
+<span class="sd">            train_noise: Training noise covariance.</span>
 <span class="sd">            test_noise: Only used if posterior should contain observation noise.</span>
-<span class="sd">                testing noise covariance</span>
+<span class="sd">                Testing noise covariance.</span>
 <span class="sd">        """</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">mvn</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">distribution</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">joint_covariance_matrix</span> <span class="o">=</span> <span class="n">joint_covariance_matrix</span>
@@ -86,8 +87,11 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">base_sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
-        <span class="c1"># overwrites the standard base sample shape call to inform samplers that</span>
-        <span class="c1"># n + 2 n_train samples need to be drawn rather than n samples</span>
+        <span class="sa">r</span><span class="sd">"""The shape of a base sample used for constructing posterior samples.</span>
+
+<span class="sd">        Overwrites the standard `base_sample_shape` call to inform samplers that</span>
+<span class="sd">        `n + 2 n_train` samples need to be drawn rather than n samples.</span>
+<span class="sd">        """</span>
         <span class="n">batch_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint_covariance_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="n">sampling_shape</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">joint_covariance_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_noise</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
@@ -97,14 +101,15 @@
         <span class="k">return</span> <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">((</span><span class="n">sampling_shape</span><span class="p">,))</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The torch device of the posterior."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_mean</span><span class="o">.</span><span class="n">device</span>
+    <span class="k">def</span> <span class="nf">batch_range</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""The t-batch range.</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The torch dtype of the posterior."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_mean</span><span class="o">.</span><span class="n">dtype</span>
+<span class="sd">        This is used in samplers to identify the t-batch component of the</span>
+<span class="sd">        `base_sample_shape`. The base samples are expanded over the t-batches to</span>
+<span class="sd">        provide consistency in the acquisition values, i.e., to ensure that a</span>
+<span class="sd">        candidate produces same value regardless of its position on the t-batch.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_prepare_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="kc">None</span>
@@ -153,8 +158,11 @@
                     <span class="n">base_samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">base_samples</span><span class="p">,</span> <span class="n">new_base_samples</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
                     <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># nuke the base samples if we cannot use them.</span>
-                    <span class="n">base_samples</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
+                        <span class="s2">"The base samples are not compatible with base sample shape. "</span>
+                        <span class="sa">f</span><span class="s2">"Received base samples of shape </span><span class="si">{</span><span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, "</span>
+                        <span class="sa">f</span><span class="s2">"expected </span><span class="si">{</span><span class="n">base_sample_shapes</span><span class="si">}</span><span class="s2">."</span>
+                    <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">base_samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># TODO: Allow qMC sampling</span>
@@ -197,14 +205,28 @@
 
         <span class="k">return</span> <span class="n">base_samples</span><span class="p">,</span> <span class="n">noise_base_samples</span><span class="p">,</span> <span class="n">test_noise_base_samples</span>
 
-<div class="viewcode-block" id="MultitaskGPPosterior.rsample"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior.rsample">[docs]</a>    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
+<div class="viewcode-block" id="MultitaskGPPosterior.rsample_from_base_samples"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior.rsample_from_base_samples">[docs]</a>    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">base_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+        <span class="n">base_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
         <span class="n">train_diff</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">sample_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span>
+        <span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients) using base samples.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sample_shape: A `torch.Size` object specifying the sample shape. To</span>
+<span class="sd">                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches</span>
+<span class="sd">                of `n` samples each, set to `torch.Size([b, n])`.</span>
+<span class="sd">            base_samples: An (optional) Tensor of `N(0, I)` base samples of</span>
+<span class="sd">                appropriate dimension, typically obtained from a `Sampler`.</span>
+<span class="sd">                This is used for deterministic optimization.</span>
+<span class="sd">            train_diff: Difference between train mean and train responses to assume</span>
+<span class="sd">                during sampling.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Samples from the posterior, a tensor of shape</span>
+<span class="sd">            `self._extended_shape(sample_shape=sample_shape)`.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">train_diff</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">train_diff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_diff</span>
 
@@ -252,6 +274,27 @@
         <span class="n">final_samples</span> <span class="o">=</span> <span class="n">final_samples</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_mean</span>
 
         <span class="k">return</span> <span class="n">final_samples</span></div>
+
+<div class="viewcode-block" id="MultitaskGPPosterior.rsample"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior.rsample">[docs]</a>    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sample_shape: A `torch.Size` object specifying the sample shape. To</span>
+<span class="sd">                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches</span>
+<span class="sd">                of `n` samples each, set to `torch.Size([b, n])`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Samples from the posterior, a tensor of shape</span>
+<span class="sd">            `self._extended_shape(sample_shape=sample_shape)`.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">sample_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rsample_from_base_samples</span><span class="p">(</span>
+            <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_draw_from_base_covar</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">covar</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">],</span> <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span>
@@ -315,7 +358,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

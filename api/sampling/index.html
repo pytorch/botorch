@@ -25,13 +25,87 @@
 <div class="body" role="main">
 <section id="module-botorch.sampling">
 <span id="botorch-sampling"></span><h1>botorch.sampling<a class="headerlink" href="#module-botorch.sampling" title="Permalink to this heading">¶</a></h1>
-<section id="module-botorch.sampling.samplers">
-<span id="monte-carlo-samplers"></span><h2>Monte-Carlo Samplers<a class="headerlink" href="#module-botorch.sampling.samplers" title="Permalink to this heading">¶</a></h2>
-<p>Sampler modules to be used with MC-evaluated acquisition functions.</p>
+<section id="module-botorch.sampling.base">
+<span id="monte-carlo-sampler-api"></span><h2>Monte-Carlo Sampler API<a class="headerlink" href="#module-botorch.sampling.base" title="Permalink to this heading">¶</a></h2>
+<p>The base class for sampler modules to be used with MC-evaluated acquisition functions.</p>
+</section>
+<section id="module-botorch.sampling.get_sampler">
+<span id="get-sampler-helper"></span><h2>Get Sampler Helper<a class="headerlink" href="#module-botorch.sampling.get_sampler" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.sampling.get_sampler.get_sampler">
+<span class="sig-prename descclassname"><span class="pre">botorch.sampling.get_sampler.</span></span><span class="sig-name descname"><span class="pre">get_sampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/get_sampler.html#get_sampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.get_sampler.get_sampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the sampler for the given posterior.</p>
+<p>The sampler can be used as <cite>sampler(posterior)</cite> to produce samples
+suitable for use in acquisition function optimization via SAA.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.torch.TorchPosterior" title="botorch.posteriors.torch.TorchPosterior"><em>TorchPosterior</em></a>) – A <cite>Posterior</cite> to get the sampler for.</p></li>
+<li><p><strong>sample_shape</strong> (<em>Size</em>) – The sample shape of the samples produced by the
+given sampler. The full shape of the resulting samples is
+given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Optional kwargs, passed down to the samplers during construction.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The <cite>MCSampler</cite> object for the given posterior.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>MCSampler</em></p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+<section id="module-botorch.sampling.list_sampler">
+<span id="list-sampler"></span><h2>List Sampler<a class="headerlink" href="#module-botorch.sampling.list_sampler" title="Permalink to this heading">¶</a></h2>
+<p>A <cite>SamplerList</cite> for sampling from a <cite>PosteriorList</cite>.</p>
+</section>
+<section id="module-botorch.sampling.normal">
+<span id="gaussian-monte-carlo-samplers"></span><h2>Gaussian Monte-Carlo Samplers<a class="headerlink" href="#module-botorch.sampling.normal" title="Permalink to this heading">¶</a></h2>
+<p>Sampler modules producing N(0,1) samples, to be used with MC-evaluated
+acquisition functions and Gaussian posteriors.</p>
 <dl class="py class">
-<dt class="sig sig-object py" id="botorch.sampling.samplers.IIDNormalSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.samplers.</span></span><span class="sig-name descname"><span class="pre">IIDNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collapse_batch_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">-2)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/samplers.html#IIDNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.samplers.IIDNormalSampler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
+<dt class="sig sig-object py" id="botorch.sampling.normal.NormalMCSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">NormalMCSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#NormalMCSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.NormalMCSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Base class for samplers producing (possibly QMC) N(0,1) samples.</p>
+<p>Subclasses must implement the <cite>_construct_base_samples</cite> method.</p>
+<p>Abstract base class for samplers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
+of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.normal.NormalMCSampler.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#NormalMCSampler.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.NormalMCSampler.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws MC samples from the posterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<em>Posterior</em>) – The posterior to sample from.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The samples drawn from the posterior.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.normal.NormalMCSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.normal.NormalMCSampler.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.normal.IIDNormalSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">IIDNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#IIDNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.IIDNormalSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.normal.NormalMCSampler" title="botorch.sampling.normal.NormalMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMCSampler</span></code></a></p>
 <p>Sampler for MC base samples using iid N(0,1) samples.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sampler</span> <span class="o">=</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1234</span><span class="p">)</span>
@@ -39,83 +113,48 @@
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Sampler for MC base samples using iid <cite>N(0,1)</cite> samples.</p>
+<p>Abstract base class for samplers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_samples</strong> (<em>int</em>) – The number of samples to use.</p></li>
-<li><p><strong>resample</strong> (<em>bool</em>) – If <cite>True</cite>, re-draw samples in each <cite>forward</cite> evaluation -
-this results in stochastic acquisition functions (and thus should
-not be used with deterministic optimization algorithms).</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the RNG. If omitted, use a random seed.</p></li>
-<li><p><strong>collapse_batch_dims</strong> (<em>bool</em>) – If True, collapse the t-batch dimensions to
-size 1. This is useful for preventing sampling variance across
-t-batches.</p></li>
-<li><p><strong>batch_range</strong> (<em>Tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em>) – The range of t-batch dimensions in the <cite>base_sample_shape</cite>
-used by <cite>collapse_batch_dims</cite>. The t-batch dims are
-batch_range[0]:batch_range[1]. By default, this is (0, -2),
-for the case where the non-batch dimensions are -2 (q) and
--1 (d) and all dims in the front are t-batch dims.</p></li>
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
+of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.samplers.IIDNormalSampler.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.samplers.IIDNormalSampler.training" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.sampling.normal.IIDNormalSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.normal.IIDNormalSampler.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="botorch.sampling.samplers.SobolQMCNormalSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.samplers.</span></span><span class="sig-name descname"><span class="pre">SobolQMCNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collapse_batch_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">-2)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/samplers.html#SobolQMCNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.samplers.SobolQMCNormalSampler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
-<p>Sampler for quasi-MC base samples using Sobol sequences.</p>
+<dt class="sig sig-object py" id="botorch.sampling.normal.SobolQMCNormalSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">SobolQMCNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#SobolQMCNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.SobolQMCNormalSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.normal.NormalMCSampler" title="botorch.sampling.normal.NormalMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMCSampler</span></code></a></p>
+<p>Sampler for quasi-MC N(0,1) base samples using Sobol sequences.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1234</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Sampler for quasi-MC base samples using Sobol sequences.</p>
+<p>Abstract base class for samplers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_samples</strong> (<em>int</em>) – The number of samples to use. As a best practice,
-use powers of 2.</p></li>
-<li><p><strong>resample</strong> (<em>bool</em>) – If <cite>True</cite>, re-draw samples in each <cite>forward</cite> evaluation -
-this results in stochastic acquisition functions (and thus should
-not be used with deterministic optimization algorithms).</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the RNG. If omitted, use a random seed.</p></li>
-<li><p><strong>collapse_batch_dims</strong> (<em>bool</em>) – If True, collapse the t-batch dimensions to
-size 1. This is useful for preventing sampling variance across
-t-batches.</p></li>
-<li><p><strong>batch_range</strong> (<em>Tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em>) – The range of t-batch dimensions in the <cite>base_sample_shape</cite>
-used by <cite>collapse_batch_dims</cite>. The t-batch dims are
-batch_range[0]:batch_range[1]. By default, this is (0, -2),
-for the case where the non-batch dimensions are -2 (q) and
--1 (d) and all dims in the front are t-batch dims.</p></li>
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
+of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.sampling.samplers.SobolQMCNormalSampler.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.samplers.SobolQMCNormalSampler.training" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.sampling.normal.SobolQMCNormalSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.normal.SobolQMCNormalSampler.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-</dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.sampling.samplers.split_shapes">
-<span class="sig-prename descclassname"><span class="pre">botorch.sampling.samplers.</span></span><span class="sig-name descname"><span class="pre">split_shapes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_sample_shape</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/samplers.html#split_shapes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.samplers.split_shapes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Split a base sample shape into sample and base sample shapes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>base_sample_shape</strong> (<em>Size</em>) – The base sample shape.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A tuple containing the sample and base sample shape.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Size</em>, <em>Size</em>]</p>
-</dd>
-</dl>
 </dd></dl>
 </section>
 <section id="module-botorch.sampling.pairwise_samplers">
@@ -161,21 +200,16 @@ The returned samples are expected to have output dimension of 1.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pairwise_samplers.</span></span><span class="sig-name descname"><span class="pre">PairwiseIIDNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collapse_batch_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num_comparisons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseIIDNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler" title="botorch.sampling.pairwise_samplers.PairwiseMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">PairwiseMCSampler</span></code></a>, <a class="reference internal" href="#botorch.sampling.samplers.IIDNormalSampler" title="botorch.sampling.samplers.IIDNormalSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">IIDNormalSampler</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pairwise_samplers.</span></span><span class="sig-name descname"><span class="pre">PairwiseIIDNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num_comparisons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseIIDNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler" title="botorch.sampling.pairwise_samplers.PairwiseMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">PairwiseMCSampler</span></code></a>, <a class="reference internal" href="#botorch.sampling.normal.IIDNormalSampler" title="botorch.sampling.normal.IIDNormalSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">IIDNormalSampler</span></code></a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_samples</strong> (<em>int</em>) – The number of samples to use.</p></li>
-<li><p><strong>resample</strong> (<em>bool</em>) – If <cite>True</cite>, re-draw samples in each <cite>forward</cite> evaluation -
-this results in stochastic acquisition functions (and thus should
-not be used with deterministic optimization algorithms).</p></li>
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the RNG. If omitted, use a random seed.</p></li>
-<li><p><strong>collapse_batch_dims</strong> (<em>bool</em>) – If True, collapse the t-batch dimensions to
-size 1. This is useful for preventing sampling variance across
-t-batches.</p></li>
 <li><p><strong>max_num_comparisons</strong> (<em>int</em>) – Max number of comparisons drawn within samples.
 If None, use all possible pairwise comparisons.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Catch-all for deprecated arguments.</p></li>
 </ul>
 </dd>
 </dl>
@@ -186,21 +220,16 @@ If None, use all possible pairwise comparisons.</p></li>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pairwise_samplers.</span></span><span class="sig-name descname"><span class="pre">PairwiseSobolQMCNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collapse_batch_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num_comparisons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseSobolQMCNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler" title="botorch.sampling.pairwise_samplers.PairwiseMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">PairwiseMCSampler</span></code></a>, <a class="reference internal" href="#botorch.sampling.samplers.SobolQMCNormalSampler" title="botorch.sampling.samplers.SobolQMCNormalSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SobolQMCNormalSampler</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pairwise_samplers.</span></span><span class="sig-name descname"><span class="pre">PairwiseSobolQMCNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num_comparisons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseSobolQMCNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler" title="botorch.sampling.pairwise_samplers.PairwiseMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">PairwiseMCSampler</span></code></a>, <a class="reference internal" href="#botorch.sampling.normal.SobolQMCNormalSampler" title="botorch.sampling.normal.SobolQMCNormalSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SobolQMCNormalSampler</span></code></a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_samples</strong> (<em>int</em>) – The number of samples to use.</p></li>
-<li><p><strong>resample</strong> (<em>bool</em>) – If <cite>True</cite>, re-draw samples in each <cite>forward</cite> evaluation -
-this results in stochastic acquisition functions (and thus should
-not be used with deterministic optimization algorithms).</p></li>
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the RNG. If omitted, use a random seed.</p></li>
-<li><p><strong>collapse_batch_dims</strong> (<em>bool</em>) – If True, collapse the t-batch dimensions to
-size 1. This is useful for preventing sampling variance across
-t-batches.</p></li>
 <li><p><strong>max_num_comparisons</strong> (<em>int</em>) – Max number of comparisons drawn within samples.
 If None, use all possible pairwise comparisons.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Catch-all for deprecated arguments.</p></li>
 </ul>
 </dd>
 </dl>
@@ -317,6 +346,97 @@ tensor, and the function returns None.</p></li>
 </dd></dl>
 </dd></dl>
 </section>
+<section id="module-botorch.sampling.stochastic_samplers">
+<span id="stochastic-samplers"></span><h2>Stochastic Samplers<a class="headerlink" href="#module-botorch.sampling.stochastic_samplers" title="Permalink to this heading">¶</a></h2>
+<p>Samplers to enable use cases that are not base sample driven, such as
+stochastic optimization of acquisition functions.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.ForkedRNGSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.stochastic_samplers.</span></span><span class="sig-name descname"><span class="pre">ForkedRNGSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#ForkedRNGSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.ForkedRNGSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
+<p>A sampler using <cite>torch.fork_rng</cite> to enable replicable sampling
+from a posterior that does not support base samples.</p>
+<p>NOTE: This approach is not a one-to-one replacement for base sample
+driven sampling. The main missing piece in this approach is that its
+outputs are not replicable across the batch dimensions. As a result,
+when an acquisition function is batch evaluated with repeated candidates,
+each candidate will produce a different acquisition value, which is not
+compatible with Sample Average Approximation.</p>
+<p>Abstract base class for samplers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
+of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.ForkedRNGSampler.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#ForkedRNGSampler.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.ForkedRNGSampler.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws MC samples from the posterior in a <cite>fork_rng</cite> context.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<em>Posterior</em>) – The posterior to sample from.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The samples drawn from the posterior.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.ForkedRNGSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.stochastic_samplers.ForkedRNGSampler.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.StochasticSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.stochastic_samplers.</span></span><span class="sig-name descname"><span class="pre">StochasticSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#StochasticSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.StochasticSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
+<p>A sampler that simply calls <cite>posterior.rsample</cite> to generate the
+samples. This should only be used for stochastic optimization of the
+acquisition functions, e.g., via <cite>gen_candidates_torch</cite>. This should
+not be used with <cite>optimize_acqf</cite>, which uses deterministic optimizers
+under the hood.</p>
+<p>NOTE: This ignores the <cite>seed</cite> option.</p>
+<p>Abstract base class for samplers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
+of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.StochasticSampler.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#StochasticSampler.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.StochasticSampler.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws MC samples from the posterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<em>Posterior</em>) – The posterior to sample from.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The samples drawn from the posterior.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.StochasticSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.stochastic_samplers.StochasticSampler.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
 </section>
 </div>
 </div>
@@ -363,7 +483,7 @@ tensor, and the function returns None.</p></li>
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

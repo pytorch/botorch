@@ -30,15 +30,12 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">Tools for model fitting.</span>
-<span class="sd">"""</span>
+<span class="sa">r</span><span class="sd">"""Tools for model fitting."""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">filterfalse</span>
-<span class="kn">from</span> <span class="nn">re</span> <span class="kn">import</span> <span class="n">Pattern</span>
 <span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">monotonic</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">Any</span><span class="p">,</span>
@@ -46,56 +43,186 @@
     <span class="n">Dict</span><span class="p">,</span>
     <span class="n">Iterator</span><span class="p">,</span>
     <span class="n">List</span><span class="p">,</span>
-    <span class="n">NamedTuple</span><span class="p">,</span>
     <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">Pattern</span><span class="p">,</span>
+    <span class="n">Sequence</span><span class="p">,</span>
     <span class="n">Set</span><span class="p">,</span>
     <span class="n">Tuple</span><span class="p">,</span>
     <span class="n">Union</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">OptimizationWarning</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.closures</span> <span class="kn">import</span> <span class="n">get_loss_closure_with_grads</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.core</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">OptimizationResult</span><span class="p">,</span>
+    <span class="n">OptimizationStatus</span><span class="p">,</span>
+    <span class="n">scipy_minimize</span><span class="p">,</span>
+    <span class="n">torch_minimize</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.numpy_converter</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_scipy_objective_and_grad</span><span class="p">,</span>
     <span class="n">module_to_array</span><span class="p">,</span>
     <span class="n">set_params_with_array</span><span class="p">,</span>
-    <span class="n">TorchAttr</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.stopping</span> <span class="kn">import</span> <span class="n">ExpMAStoppingCriterion</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_filter_kwargs</span><span class="p">,</span>
     <span class="n">_get_extra_mll_args</span><span class="p">,</span>
-    <span class="n">_scipy_objective_and_grad</span><span class="p">,</span>
-    <span class="n">create_name_filter</span><span class="p">,</span>
+    <span class="n">DEFAULT</span><span class="p">,</span>
+    <span class="n">get_name_filter</span><span class="p">,</span>
+    <span class="n">get_parameters_and_bounds</span><span class="p">,</span>
+    <span class="n">TorchAttr</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">gpytorch</span> <span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">gpt_settings</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.utils.model_utils</span> <span class="kn">import</span> <span class="n">get_parameters</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.settings</span> <span class="kn">import</span> <span class="n">fast_computations</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">ndarray</span>
 <span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">Bounds</span><span class="p">,</span> <span class="n">minimize</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">torch.optim.adam</span> <span class="kn">import</span> <span class="n">Adam</span>
+<span class="kn">from</span> <span class="nn">torch.optim.lr_scheduler</span> <span class="kn">import</span> <span class="n">_LRScheduler</span>
 <span class="kn">from</span> <span class="nn">torch.optim.optimizer</span> <span class="kn">import</span> <span class="n">Optimizer</span>
 
-
-<span class="n">ParameterBounds</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span>
+<span class="n">TBoundsDict</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span>
 <span class="n">TScipyObjective</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span>
-    <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TorchAttr</span><span class="p">]],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="p">[</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TorchAttr</span><span class="p">]],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">]</span>
 <span class="p">]</span>
 <span class="n">TModToArray</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span>
-    <span class="p">[</span><span class="n">Module</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParameterBounds</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]],</span>
-    <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TorchAttr</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span>
+    <span class="p">[</span><span class="n">Module</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TBoundsDict</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]],</span>
+    <span class="n">Tuple</span><span class="p">[</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TorchAttr</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ndarray</span><span class="p">]],</span>
 <span class="p">]</span>
-<span class="n">TArrayToMod</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Module</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TorchAttr</span><span class="p">]],</span> <span class="n">Module</span><span class="p">]</span>
+<span class="n">TArrayToMod</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Module</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TorchAttr</span><span class="p">]],</span> <span class="n">Module</span><span class="p">]</span>
 
 
-<span class="k">class</span> <span class="nc">OptimizationIteration</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-    <span class="n">itr</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">fun</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">time</span><span class="p">:</span> <span class="nb">float</span>
+<div class="viewcode-block" id="fit_gpytorch_mll_scipy"><a class="viewcode-back" href="../../../optim.html#botorch.optim.fit.fit_gpytorch_mll_scipy">[docs]</a><span class="k">def</span> <span class="nf">fit_gpytorch_mll_scipy</span><span class="p">(</span>
+    <span class="n">mll</span><span class="p">:</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">closure</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">closure_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"L-BFGS-B"</span><span class="p">,</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">callback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">OptimizationResult</span><span class="p">],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationResult</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Generic scipy.optimized-based fitting routine for GPyTorch MLLs.</span>
+
+<span class="sd">    The model and likelihood in mll must already be in train mode.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mll: MarginalLogLikelihood to be maximized.</span>
+<span class="sd">        parameters: Optional dictionary of parameters to be optimized. Defaults</span>
+<span class="sd">            to all parameters of `mll` that require gradients.</span>
+<span class="sd">        bounds: A dictionary of user-specified bounds for `parameters`. Used to update</span>
+<span class="sd">            default parameter bounds obtained from `mll`.</span>
+<span class="sd">        closure: Callable that returns a tensor and an iterable of gradient tensors.</span>
+<span class="sd">            Responsible for setting the `grad` attributes of `parameters`. If no closure</span>
+<span class="sd">            is provided, one will be obtained by calling `get_loss_closure_with_grads`.</span>
+<span class="sd">        closure_kwargs: Keyword arguments passed to `closure`.</span>
+<span class="sd">        method: Solver type, passed along to scipy.minimize.</span>
+<span class="sd">        options: Dictionary of solver options, passed along to scipy.minimize.</span>
+<span class="sd">        callback: Optional callback taking `parameters` and an OptimizationResult as its</span>
+<span class="sd">            sole arguments.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The final OptimizationResult.</span>
+<span class="sd">    """</span>
+    <span class="c1"># Resolve `parameters` and update default bounds</span>
+    <span class="n">_parameters</span><span class="p">,</span> <span class="n">_bounds</span> <span class="o">=</span> <span class="n">get_parameters_and_bounds</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">_bounds</span> <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{</span><span class="o">**</span><span class="n">_bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">bounds</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">parameters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="n">p</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">_parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">closure</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">closure</span> <span class="o">=</span> <span class="n">get_loss_closure_with_grads</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">closure_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">closure</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">closure</span><span class="p">,</span> <span class="o">**</span><span class="n">closure_kwargs</span><span class="p">)</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">scipy_minimize</span><span class="p">(</span>
+        <span class="n">closure</span><span class="o">=</span><span class="n">closure</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+        <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+        <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">:</span>
+        <span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"`scipy_minimize` terminated with status </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">, displaying"</span>
+            <span class="sa">f</span><span class="s2">" original message from `scipy.optimize.minimize`: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">OptimizationWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="fit_gpytorch_mll_torch"><a class="viewcode-back" href="../../../optim.html#botorch.optim.fit.fit_gpytorch_mll_torch">[docs]</a><span class="k">def</span> <span class="nf">fit_gpytorch_mll_torch</span><span class="p">(</span>
+    <span class="n">mll</span><span class="p">:</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">closure</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">closure_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">step_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">stopping_criterion</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="n">DEFAULT</span><span class="p">,</span>  <span class="c1"># pyre-ignore [9]</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Optimizer</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Optimizer</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Adam</span><span class="p">,</span>
+    <span class="n">scheduler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">_LRScheduler</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_LRScheduler</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">callback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">OptimizationResult</span><span class="p">],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationResult</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Generic torch.optim-based fitting routine for GPyTorch MLLs.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mll: MarginalLogLikelihood to be maximized.</span>
+<span class="sd">        parameters: Optional dictionary of parameters to be optimized. Defaults</span>
+<span class="sd">            to all parameters of `mll` that require gradients.</span>
+<span class="sd">        bounds: A dictionary of user-specified bounds for `parameters`. Used to update</span>
+<span class="sd">            default parameter bounds obtained from `mll`.</span>
+<span class="sd">        closure: Callable that returns a tensor and an iterable of gradient tensors.</span>
+<span class="sd">            Responsible for setting the `grad` attributes of `parameters`. If no closure</span>
+<span class="sd">            is provided, one will be obtained by calling `get_loss_closure_with_grads`.</span>
+<span class="sd">        closure_kwargs: Keyword arguments passed to `closure`.</span>
+<span class="sd">        step_limit: Optional upper bound on the number of optimization steps.</span>
+<span class="sd">        stopping_criterion: A StoppingCriterion for the optimization loop.</span>
+<span class="sd">        optimizer: A `torch.optim.Optimizer` instance or a factory that takes</span>
+<span class="sd">            a list of parameters and returns an `Optimizer` instance.</span>
+<span class="sd">        scheduler: A `torch.optim.lr_scheduler._LRScheduler` instance or a factory</span>
+<span class="sd">            that takes an `Optimizer` instance and returns an `_LRSchedule`.</span>
+<span class="sd">        callback: Optional callback taking `parameters` and an OptimizationResult as its</span>
+<span class="sd">            sole arguments.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The final OptimizationResult.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">stopping_criterion</span> <span class="o">==</span> <span class="n">DEFAULT</span><span class="p">:</span>
+        <span class="n">stopping_criterion</span> <span class="o">=</span> <span class="n">ExpMAStoppingCriterion</span><span class="p">()</span>
+
+    <span class="c1"># Resolve `parameters` and update default bounds</span>
+    <span class="n">param_dict</span><span class="p">,</span> <span class="n">bounds_dict</span> <span class="o">=</span> <span class="n">get_parameters_and_bounds</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">parameters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="n">p</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">param_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">closure</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">closure</span> <span class="o">=</span> <span class="n">get_loss_closure_with_grads</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">closure_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">closure</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">closure</span><span class="p">,</span> <span class="o">**</span><span class="n">closure_kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">torch_minimize</span><span class="p">(</span>
+        <span class="n">closure</span><span class="o">=</span><span class="n">closure</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds_dict</span> <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{</span><span class="o">**</span><span class="n">bounds_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">bounds</span><span class="p">},</span>
+        <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+        <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span><span class="p">,</span>
+        <span class="n">step_limit</span><span class="o">=</span><span class="n">step_limit</span><span class="p">,</span>
+        <span class="n">stopping_criterion</span><span class="o">=</span><span class="n">stopping_criterion</span><span class="p">,</span>
+        <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="fit_gpytorch_scipy"><a class="viewcode-back" href="../../../optim.html#botorch.optim.fit.fit_gpytorch_scipy">[docs]</a><span class="k">def</span> <span class="nf">fit_gpytorch_scipy</span><span class="p">(</span>
     <span class="n">mll</span><span class="p">:</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span>
-    <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParameterBounds</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"L-BFGS-B"</span><span class="p">,</span>
     <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">track_iterations</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -103,20 +230,19 @@
     <span class="n">scipy_objective</span><span class="p">:</span> <span class="n">TScipyObjective</span> <span class="o">=</span> <span class="n">_scipy_objective_and_grad</span><span class="p">,</span>
     <span class="n">module_to_array_func</span><span class="p">:</span> <span class="n">TModToArray</span> <span class="o">=</span> <span class="n">module_to_array</span><span class="p">,</span>
     <span class="n">module_from_array_func</span><span class="p">:</span> <span class="n">TArrayToMod</span> <span class="o">=</span> <span class="n">set_params_with_array</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">MarginalLogLikelihood</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">OptimizationIteration</span><span class="p">]]]]:</span>
-    <span class="sa">r</span><span class="sd">"""Fit a gpytorch model by maximizing MLL with a scipy optimizer.</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">MarginalLogLikelihood</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">OptimizationResult</span><span class="p">]]]]:</span>
+    <span class="sa">r</span><span class="sd">"""Legacy method for scipy-based fitting of gpytorch models.</span>
 
-<span class="sd">    The model and likelihood in mll must already be in train mode.</span>
-<span class="sd">    This method requires that the model has `train_inputs` and `train_targets`.</span>
+<span class="sd">    The model and likelihood in mll must already be in train mode. This method requires</span>
+<span class="sd">    that the model has `train_inputs` and `train_targets`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        mll: MarginalLogLikelihood to be maximized.</span>
 <span class="sd">        bounds: A dictionary mapping parameter names to tuples of lower and upper</span>
 <span class="sd">            bounds.</span>
-<span class="sd">        method: Solver type, passed along to scipy.minimize.</span>
-<span class="sd">        options: Dictionary of solver options, passed along to scipy.minimize.</span>
-<span class="sd">        track_iterations: Track the function values and wall time for each</span>
-<span class="sd">            iteration.</span>
+<span class="sd">        method: Solver type, passed along to scipy.optimize.minimize.</span>
+<span class="sd">        options: Dictionary of solver options, passed along to scipy.optimize.minimize.</span>
 <span class="sd">        approx_mll: If True, use gpytorch's approximate MLL computation. This is</span>
 <span class="sd">            disabled by default since the stochasticity is an issue for</span>
 <span class="sd">            determistic optimizers). Enabling this is only recommended when</span>
@@ -128,97 +254,93 @@
 <span class="sd">        - Dictionary with the following key/values:</span>
 <span class="sd">        "fopt": Best mll value.</span>
 <span class="sd">        "wall_time": Wall time of fitting.</span>
-<span class="sd">        "iterations": List of OptimizationIteration objects with information on each</span>
+<span class="sd">        "iterations": List of OptimizationResult objects with information on each</span>
 <span class="sd">        iteration. If track_iterations is False, will be empty.</span>
 <span class="sd">        "OptimizeResult": The result returned by `scipy.optim.minimize`.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; gp = SingleTaskGP(train_X, train_Y)</span>
-<span class="sd">        &gt;&gt;&gt; mll = ExactMarginalLogLikelihood(gp.likelihood, gp)</span>
-<span class="sd">        &gt;&gt;&gt; mll.train()</span>
-<span class="sd">        &gt;&gt;&gt; fit_gpytorch_scipy(mll)</span>
-<span class="sd">        &gt;&gt;&gt; mll.eval()</span>
 <span class="sd">    """</span>
+    <span class="n">warn</span><span class="p">(</span>
+        <span class="s2">"`fit_gpytorch_scipy` is marked for deprecation, consider using "</span>
+        <span class="s2">"`scipy_minimize` or its model fitting helper `fit_gpytorch_mll_scipy`."</span><span class="p">,</span>
+        <span class="ne">DeprecationWarning</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">monotonic</span><span class="p">()</span>
+    <span class="n">iterations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">OptimizationResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
     <span class="n">options</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">options</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">options</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">exclude</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Pattern</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"exclude"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">exclude</span><span class="p">:</span>
         <span class="n">exclude</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span>  <span class="c1"># get the qualified names of excluded parameters</span>
-            <span class="o">*</span><span class="n">filterfalse</span><span class="p">(</span><span class="n">create_name_filter</span><span class="p">(</span><span class="n">exclude</span><span class="p">),</span> <span class="n">mll</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">())</span>
+            <span class="o">*</span><span class="n">filterfalse</span><span class="p">(</span><span class="n">get_name_filter</span><span class="p">(</span><span class="n">exclude</span><span class="p">),</span> <span class="n">mll</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">())</span>
         <span class="p">)</span>
 
     <span class="n">x0</span><span class="p">,</span> <span class="n">property_dict</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="n">module_to_array_func</span><span class="p">(</span>
-        <span class="n">module</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span>
-        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
-        <span class="n">exclude</span><span class="o">=</span><span class="n">exclude</span><span class="p">,</span>
+        <span class="n">module</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">exclude</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span>
     <span class="p">)</span>
-    <span class="n">x0</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">bounds</span> <span class="o">=</span> <span class="n">Bounds</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ub</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">keep_feasible</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="n">xs</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">ts</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">t1</span> <span class="o">=</span> <span class="n">monotonic</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">]:</span>
+        <span class="k">with</span> <span class="n">fast_computations</span><span class="p">(</span><span class="n">log_prob</span><span class="o">=</span><span class="n">approx_mll</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">scipy_objective</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span> <span class="n">property_dict</span><span class="o">=</span><span class="n">property_dict</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">store_iteration</span><span class="p">(</span><span class="n">xk</span><span class="p">):</span>
-        <span class="n">xs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xk</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
-        <span class="n">ts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">t1</span><span class="p">)</span>
-
-    <span class="n">cb</span> <span class="o">=</span> <span class="n">store_iteration</span> <span class="k">if</span> <span class="n">track_iterations</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="k">with</span> <span class="n">gpt_settings</span><span class="o">.</span><span class="n">fast_computations</span><span class="p">(</span><span class="n">log_prob</span><span class="o">=</span><span class="n">approx_mll</span><span class="p">):</span>
-        <span class="n">res</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span>
-            <span class="n">scipy_objective</span><span class="p">,</span>
-            <span class="n">x0</span><span class="p">,</span>
-            <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">property_dict</span><span class="p">),</span>
-            <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
-            <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
-            <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
-            <span class="n">callback</span><span class="o">=</span><span class="n">cb</span><span class="p">,</span>
+        <span class="n">iterations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">OptimizationResult</span><span class="p">(</span>
+                <span class="n">step</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">iterations</span><span class="p">),</span>
+                <span class="n">fval</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">wrapper</span><span class="p">(</span><span class="n">xk</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="n">status</span><span class="o">=</span><span class="n">OptimizationStatus</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">,</span>
+                <span class="n">runtime</span><span class="o">=</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="p">)</span>
-        <span class="n">iterations</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="n">track_iterations</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">xk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">xs</span><span class="p">):</span>
-                <span class="n">obj</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">scipy_objective</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">xk</span><span class="p">,</span> <span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span> <span class="n">property_dict</span><span class="o">=</span><span class="n">property_dict</span><span class="p">)</span>
-                <span class="n">iterations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">OptimizationIteration</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">ts</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
 
-    <span class="c1"># Construct info dict</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span>
+        <span class="n">wrapper</span><span class="p">,</span>
+        <span class="n">x0</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+        <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+        <span class="n">callback</span><span class="o">=</span><span class="n">store_iteration</span> <span class="k">if</span> <span class="n">track_iterations</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="n">info_dict</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">"fopt"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">fun</span><span class="p">),</span>
-        <span class="s2">"wall_time"</span><span class="p">:</span> <span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">t1</span><span class="p">,</span>
+        <span class="s2">"fopt"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">fun</span><span class="p">),</span>
+        <span class="s2">"wall_time"</span><span class="p">:</span> <span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span>
         <span class="s2">"iterations"</span><span class="p">:</span> <span class="n">iterations</span><span class="p">,</span>
-        <span class="s2">"OptimizeResult"</span><span class="p">:</span> <span class="n">res</span><span class="p">,</span>
+        <span class="s2">"OptimizeResult"</span><span class="p">:</span> <span class="n">result</span><span class="p">,</span>
     <span class="p">}</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># Some res.message are bytes</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">)</span>
+            <span class="c1"># Some result.message are bytes</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="c1"># Others are str</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">message</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">message</span>
+        <span class="n">warn</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Fitting failed with the optimizer reporting '</span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">'"</span><span class="p">,</span> <span class="n">OptimizationWarning</span>
         <span class="p">)</span>
+
     <span class="c1"># Set to optimum</span>
-    <span class="n">mll</span> <span class="o">=</span> <span class="n">module_from_array_func</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">property_dict</span><span class="p">)</span>
+    <span class="n">mll</span> <span class="o">=</span> <span class="n">module_from_array_func</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">property_dict</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">mll</span><span class="p">,</span> <span class="n">info_dict</span></div>
 
 
 <div class="viewcode-block" id="fit_gpytorch_torch"><a class="viewcode-back" href="../../../optim.html#botorch.optim.fit.fit_gpytorch_torch">[docs]</a><span class="k">def</span> <span class="nf">fit_gpytorch_torch</span><span class="p">(</span>
     <span class="n">mll</span><span class="p">:</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span>
-    <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParameterBounds</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">optimizer_cls</span><span class="p">:</span> <span class="n">Optimizer</span> <span class="o">=</span> <span class="n">Adam</span><span class="p">,</span>
     <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">track_iterations</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">approx_mll</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">MarginalLogLikelihood</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">OptimizationIteration</span><span class="p">]]]]:</span>
-    <span class="sa">r</span><span class="sd">"""Fit a gpytorch model by maximizing MLL with a torch optimizer.</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">MarginalLogLikelihood</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">OptimizationResult</span><span class="p">]]]]:</span>
+    <span class="sa">r</span><span class="sd">"""Legacy method for torch-based fitting of gpytorch models.</span>
 
 <span class="sd">    The model and likelihood in mll must already be in train mode.</span>
 <span class="sd">    Note: this method requires that the model has `train_inputs` and `train_targets`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        mll: MarginalLogLikelihood to be maximized.</span>
-<span class="sd">        bounds: A ParameterBounds dictionary mapping parameter names to tuples</span>
+<span class="sd">        bounds: An optional dictionary mapping parameter names to tuples</span>
 <span class="sd">            of lower and upper bounds. Bounds specified here take precedence</span>
 <span class="sd">            over bounds on the same parameters specified in the constraints</span>
 <span class="sd">            registered with the module.</span>
@@ -227,12 +349,6 @@
 <span class="sd">            the `optimizer_cls`. Additionally, options can include: "disp"</span>
 <span class="sd">            to specify whether to display model fitting diagnostics and "maxiter"</span>
 <span class="sd">            to specify the maximum number of iterations.</span>
-<span class="sd">        track_iterations: Track the function values and wall time for each</span>
-<span class="sd">            iteration.</span>
-<span class="sd">        approx_mll: If True, use gpytorch's approximate MLL computation (</span>
-<span class="sd">            according to the gpytorch defaults based on the training at size).</span>
-<span class="sd">            Unlike for the deterministic algorithms used in fit_gpytorch_scipy,</span>
-<span class="sd">            this is not an issue for stochastic optimizers.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        2-element tuple containing</span>
@@ -240,7 +356,7 @@
 <span class="sd">        - Dictionary with the following key/values:</span>
 <span class="sd">        "fopt": Best mll value.</span>
 <span class="sd">        "wall_time": Wall time of fitting.</span>
-<span class="sd">        "iterations": List of OptimizationIteration objects with information on each</span>
+<span class="sd">        "iterations": List of OptimizationResult objects with information on each</span>
 <span class="sd">        iteration. If track_iterations is False, will be empty.</span>
 
 <span class="sd">    Example:</span>
@@ -250,77 +366,54 @@
 <span class="sd">        &gt;&gt;&gt; fit_gpytorch_torch(mll)</span>
 <span class="sd">        &gt;&gt;&gt; mll.eval()</span>
 <span class="sd">    """</span>
-    <span class="n">optim_options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">"disp"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"lr"</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">}</span>
-    <span class="n">optim_options</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">options</span> <span class="ow">or</span> <span class="p">{})</span>
-    <span class="n">exclude</span> <span class="o">=</span> <span class="n">optim_options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"exclude"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">exclude</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">mll_params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">mll_params</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">(</span><span class="n">create_name_filter</span><span class="p">(</span><span class="n">exclude</span><span class="p">),</span> <span class="n">mll</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">())</span>
-        <span class="p">]</span>
+    <span class="n">warn</span><span class="p">(</span>
+        <span class="s2">"`fit_gpytorch_torch` is marked for deprecation, consider using "</span>
+        <span class="s2">"`torch_minimize` or its model fitting helper `fit_gpytorch_mll_torch`."</span><span class="p">,</span>
+        <span class="ne">DeprecationWarning</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">_options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">"disp"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"lr"</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">}</span>
+    <span class="n">_options</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">options</span> <span class="ow">or</span> <span class="p">{})</span>
+    <span class="n">exclude</span> <span class="o">=</span> <span class="n">_options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"exclude"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">parameters</span> <span class="o">=</span> <span class="n">get_parameters</span><span class="p">(</span>
+        <span class="n">mll</span><span class="p">,</span>
+        <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">name_filter</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">exclude</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">get_name_filter</span><span class="p">(</span><span class="n">exclude</span><span class="p">),</span>
+    <span class="p">)</span>
 
     <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer_cls</span><span class="p">(</span>
-        <span class="n">params</span><span class="o">=</span><span class="p">[{</span><span class="s2">"params"</span><span class="p">:</span> <span class="n">mll_params</span><span class="p">}],</span>
-        <span class="o">**</span><span class="n">_filter_kwargs</span><span class="p">(</span><span class="n">optimizer_cls</span><span class="p">,</span> <span class="o">**</span><span class="n">optim_options</span><span class="p">),</span>
+        <span class="n">params</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="o">**</span><span class="n">_filter_kwargs</span><span class="p">(</span><span class="n">optimizer_cls</span><span class="p">,</span> <span class="o">**</span><span class="n">_options</span><span class="p">)</span>
     <span class="p">)</span>
-
-    <span class="c1"># get bounds specified in model (if any)</span>
-    <span class="n">bounds_</span><span class="p">:</span> <span class="n">ParameterBounds</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="s2">"named_parameters_and_constraints"</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">mll</span><span class="o">.</span><span class="n">named_parameters_and_constraints</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">constraint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">constraint</span><span class="o">.</span><span class="n">enforced</span><span class="p">:</span>
-                <span class="n">bounds_</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">constraint</span><span class="o">.</span><span class="n">upper_bound</span>
-
-    <span class="c1"># update with user-supplied bounds (overwrites if already exists)</span>
-    <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">bounds_</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
-
-    <span class="n">iterations</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">t1</span> <span class="o">=</span> <span class="n">monotonic</span><span class="p">()</span>
-
-    <span class="n">param_trajectory</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">name</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">mll</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">()</span>
-    <span class="p">}</span>
-    <span class="n">loss_trajectory</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">stop</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">iterations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">OptimizationResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">stopping_criterion</span> <span class="o">=</span> <span class="n">ExpMAStoppingCriterion</span><span class="p">(</span>
-        <span class="o">**</span><span class="n">_filter_kwargs</span><span class="p">(</span><span class="n">ExpMAStoppingCriterion</span><span class="p">,</span> <span class="o">**</span><span class="n">optim_options</span><span class="p">)</span>
+        <span class="o">**</span><span class="n">_filter_kwargs</span><span class="p">(</span><span class="n">ExpMAStoppingCriterion</span><span class="p">,</span> <span class="o">**</span><span class="n">_options</span><span class="p">)</span>
     <span class="p">)</span>
-    <span class="n">train_inputs</span><span class="p">,</span> <span class="n">train_targets</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">,</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_targets</span>
-    <span class="k">while</span> <span class="ow">not</span> <span class="n">stop</span><span class="p">:</span>
-        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
-        <span class="k">with</span> <span class="n">gpt_settings</span><span class="o">.</span><span class="n">fast_computations</span><span class="p">(</span><span class="n">log_prob</span><span class="o">=</span><span class="n">approx_mll</span><span class="p">):</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">*</span><span class="n">train_inputs</span><span class="p">)</span>
-            <span class="c1"># we sum here to support batch mode</span>
-            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="p">,</span> <span class="n">train_targets</span><span class="p">]</span> <span class="o">+</span> <span class="n">_get_extra_mll_args</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
-            <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">mll</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-        <span class="n">loss_trajectory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">mll</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">():</span>
-            <span class="n">param_trajectory</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">())</span>
-        <span class="k">if</span> <span class="n">optim_options</span><span class="p">[</span><span class="s2">"disp"</span><span class="p">]</span> <span class="ow">and</span> <span class="p">(</span>
-            <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">i</span> <span class="o">==</span> <span class="p">(</span><span class="n">optim_options</span><span class="p">[</span><span class="s2">"maxiter"</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Iter </span><span class="si">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">optim_options</span><span class="p">[</span><span class="s1">'maxiter'</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">track_iterations</span><span class="p">:</span>
-            <span class="n">iterations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">OptimizationIteration</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">t1</span><span class="p">))</span>
 
-        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-        <span class="c1"># project onto bounds:</span>
-        <span class="k">if</span> <span class="n">bounds_</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">pname</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">mll</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">pname</span> <span class="ow">in</span> <span class="n">bounds_</span><span class="p">:</span>
-                    <span class="n">param</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="o">*</span><span class="n">bounds_</span><span class="p">[</span><span class="n">pname</span><span class="p">])</span>
-        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">stop</span> <span class="o">=</span> <span class="n">stopping_criterion</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">fvals</span><span class="o">=</span><span class="n">loss</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
-    <span class="n">info_dict</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">"fopt"</span><span class="p">:</span> <span class="n">loss_trajectory</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-        <span class="s2">"wall_time"</span><span class="p">:</span> <span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">t1</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">closure</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">fast_computations</span><span class="p">(</span><span class="n">log_prob</span><span class="o">=</span><span class="n">approx_mll</span><span class="p">):</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">*</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">mll</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_targets</span><span class="p">,</span> <span class="o">*</span><span class="n">_get_extra_mll_args</span><span class="p">(</span><span class="n">mll</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">grad</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">store_iteration</span><span class="p">(</span><span class="n">parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">result</span><span class="p">:</span> <span class="n">OptimizationResult</span><span class="p">):</span>
+        <span class="n">iterations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">fit_gpytorch_mll_torch</span><span class="p">(</span>
+        <span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span>
+        <span class="n">closure</span><span class="o">=</span><span class="n">closure</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+        <span class="n">stopping_criterion</span><span class="o">=</span><span class="n">stopping_criterion</span><span class="p">,</span>
+        <span class="n">callback</span><span class="o">=</span><span class="n">store_iteration</span> <span class="k">if</span> <span class="n">track_iterations</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">mll</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s2">"fopt"</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">fval</span><span class="p">,</span>
+        <span class="s2">"wall_time"</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">runtime</span><span class="p">,</span>
         <span class="s2">"iterations"</span><span class="p">:</span> <span class="n">iterations</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="n">mll</span><span class="p">,</span> <span class="n">info_dict</span></div>
+    <span class="p">}</span></div>
 </pre></div>
 </div>
 </div>
@@ -367,7 +460,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

@@ -1,0 +1,202 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Overview · BoTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="This overview describes the basic components of BoTorch and how they work"/><meta name="docsearch:version" content="0.8.0"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Overview · BoTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.8.0/"/><meta property="og:description" content="This overview describes the basic components of BoTorch and how they work"/><meta property="og:image" content="https://botorch.org/v/0.8.0/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.8.0/img/botorch.png"/><link rel="shortcut icon" href="/v/0.8.0/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.8.0/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.8.0/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.8.0/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.8.0/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.8.0/css/main.css"/><script src="/v/0.8.0/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.8.0/"><img class="logo" src="/v/0.8.0/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.8.0/versions"><h3>0.8.0</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/v/0.8.0/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.8.0/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.8.0/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.8.0/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Basic Concepts</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.0/docs/introduction">Introduction</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.0/docs/design_philosophy">Design Philosophy</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.0/docs/botorch_and_ax">Using BoTorch with Ax</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.0/docs/papers">Papers using BoTorch</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">General</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.0/docs/getting_started">Getting Started</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Basic Concepts</h3><ul class=""><li class="navListItem navListItemActive"><a class="navItem" href="/v/0.8.0/docs/overview">Overview</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.0/docs/models">Models</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.0/docs/posteriors">Posteriors</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.0/docs/acquisition">Acquisition Functions</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.0/docs/optimization">Optimization</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Advanced Topics</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.0/docs/constraints">Constraints</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.0/docs/objectives">Objectives</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.0/docs/batching">Batching</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.0/docs/samplers">Monte Carlo Samplers</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Multi-Objective Optimization</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.0/docs/multi_objective">Multi-Objective Bayesian Optimization</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><a class="edit-page-link button" href="https://github.com/pytorch/botorch/edit/main/docs/overview.md" target="_blank" rel="noreferrer noopener">Edit</a><h1 id="__docusaurus" class="postHeaderTitle">Overview</h1></header><article><div><span><p>This overview describes the basic components of BoTorch and how they work
+together. For a high-level view of what BoTorch tries to achieve in more
+abstract terms, please see the <a href="introduction">Introduction</a>.</p>
+<h2><a class="anchor" aria-hidden="true" id="black-box-optimization"></a><a href="#black-box-optimization" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Black-Box Optimization</h2>
+<p><img src="/v/0.8.0/docs/assets/overview_blackbox.svg" alt="Black Box Optimization"></p>
+<p>At a high level, the problem underlying Bayesian Optimization (BayesOpt) is to
+maximize some expensive-to-evaluate black box function $f$. In other words, we
+do not have access to the functional form of $f$ and our only recourse is to
+evaluate $f$ at a sequence of test points, with the hope of determining a
+near-optimal value after a small number of evaluations. In many settings,
+the function values are not observed exactly, and only noisy observations are
+available</p>
+<p>Bayesian Optimization is a general approach to adaptively select these test
+points (or batches of test points to be evaluated in parallel) that allows for
+a principled trade-off between evaluating $f$ in regions of good observed
+performance and regions of high uncertainty.</p>
+<h2><a class="anchor" aria-hidden="true" id="bayesian-optimization"></a><a href="#bayesian-optimization" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Bayesian Optimization</h2>
+<p><img src="/v/0.8.0/docs/assets/overview_bayesopt.svg" alt="Bayesian Optimization"></p>
+<h3><a class="anchor" aria-hidden="true" id="models"></a><a href="#models" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Models</h3>
+<p>In order to optimize $f$ within a small number of evaluations, we need a way of
+extrapolating our belief about what $f$ looks like at points we have not yet
+evaluated. In Bayesian Optimization, this is referred to as the
+<em>surrogate model</em>.
+Importantly, the surrogate model should be able to quantify the uncertainty
+of its predictions in form of a <strong>posterior</strong> distribution over function values
+$f(x)$ at points $x$.</p>
+<p>The surrogate model for $f$ is typically a Gaussian Process (GP), in which case
+the posterior distribution on any finite collection of points is a multivariate
+normal distribution. A GP is specified by a mean function $\mu(x)$ and a
+covariance kernel $k(x, x')$, from which a mean vector
+$(\mu(x_0), \ldots, \mu(x_k))$
+and covariance matrix $\Sigma$ with $\Sigma_{ij} = k(x_i, x_j)$ can be computed
+for any set of points $(x_1, \ldots x_k)$. Using a GP surrogate model for $f$
+means that we assume $(f(x_1), \ldots, f(x_k))$ is multivariate normal with a
+mean vector and covariance matrix determined by $\mu(x)$ and $k(x, x')$.</p>
+<p>BoTorch provides first-class support for <a href="https://gpytorch.ai/">GPyTorch</a>,
+a package for scalable GPs and Bayesian deep learning implemented in PyTorch.</p>
+<p>While GPs have been a very successful modeling approach, BoTorch's support for
+MC-sampling based acquisition functions makes it straightforward to also use
+other model types. In particular, BoTorch makes no particular assumptions
+on what kind of model is being used, so long as is able to produce samples from
+a posterior over outputs given an input $x$. See <a href="models">Models</a> for
+more details on models in BoTorch.</p>
+<h3><a class="anchor" aria-hidden="true" id="posteriors"></a><a href="#posteriors" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Posteriors</h3>
+<p>Posteriors represent the &quot;belief&quot; a model has about the function values at a
+point (or set of points), based on the data it has been trained with. That is,
+the posterior distribution over the outputs conditional on the data observed
+so far.</p>
+<p>When using a GP model, the posterior is given explicitly as a multivariate
+Gaussian (fully parameterized by its mean and covariance matrix).
+In other cases, the posterior may be implicit in the model and not easily
+described by a small set of parameters.</p>
+<p>BoTorch abstracts away from the particular form of the posterior by providing a
+simple <code>Posterior</code> API that only requires implementing an <code>rsample()</code> method for
+sampling from the posterior. For more details, please see
+<a href="posteriors">Posteriors</a>.</p>
+<h3><a class="anchor" aria-hidden="true" id="acquisition-functions"></a><a href="#acquisition-functions" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Acquisition Functions</h3>
+<p>Acquisition functions are heuristics employed to evaluate the usefulness of one
+of more design points for achieving the objective of maximizing the underlying
+black box function.</p>
+<p>Some of these acquisition functions have closed-form solutions under Gaussian
+posteriors, but many of them (especially when assessing the joint value of
+multiple points in parallel) do not. In the latter case, one can resort to using
+Monte-Carlo (MC) sampling in order to approximate the acquisition function.</p>
+<p>BoTorch supports both analytic as well as (quasi-) Monte-Carlo based acquisition
+functions. It provides an <code>AcquisitionFunction</code> API that abstracts away from the
+particular type, so that optimization can be performed on the same objects.
+Please see <a href="acquisition">Acquisition Functions</a> for additional information.</p>
+<h4><a class="anchor" aria-hidden="true" id="evaluating-monte-carlo-acquisition-functions"></a><a href="#evaluating-monte-carlo-acquisition-functions" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Evaluating Monte-Carlo Acquisition Functions</h4>
+<p><img src="/v/0.8.0/docs/assets/overview_mcacquisition.svg" alt="Monte-Carlo Acquisition Functions"></p>
+<p>The idea behind using Monte-Carlo sampling for evaluating acquisition functions
+is simple: instead of computing an (intractable) expectation over the
+posterior, we sample from the posterior and use the sample average as an
+approximation.</p>
+<h4><a class="anchor" aria-hidden="true" id="objectives"></a><a href="#objectives" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Objectives</h4>
+<p>To give additional flexibility in the case of MC-based acquisition functions,
+BoTorch provides the option of transforming the output(s) of the model through
+an <code>Objective</code> module, which returns a one-dimensional output that is passed to
+the acquisition function. The <code>MCAcquisitionFunction</code> class defaults its
+objective to <code>IdentityMCObjective</code>, which simply returns the last dimension of
+the model output. Thus, for the standard use case of a single-output GP that
+directly models the black box function $f$, no special objective is required.
+For more details on the advanced features enabled by the <code>Objective</code>, see
+<a href="objectives">Objectives</a>.</p>
+<h2><a class="anchor" aria-hidden="true" id="the-re-parameterization-trick"></a><a href="#the-re-parameterization-trick" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>The Re-Parameterization Trick</h2>
+<p>The re-parameterization trick (see e.g. <sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>, <sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>)
+can be used to write the posterior distribution as a deterministic
+transformation of an auxiliary random variable $\epsilon$. For example, a
+normally distributed random variable $X$ with mean $\mu$ and standard deviation
+$\sigma$ has the same distribution as $\mu + \sigma \epsilon$ where $\epsilon$
+is a standard normal. Therefore, an expectation with respect to $X$ can be
+approximated using samples from $\epsilon$. In the case where $\mu$ and $\sigma$
+are parameters of an optimization problem, MC approximations of the objective at
+different values of $\mu$ and $\sigma$ can be computed using a single set of
+&quot;base samples.&quot; Importantly, a re-parameterization of this kind allows for
+back-propagation of gradients through the samples, which enables auto-
+differentiation of MC-based acquisition functions with respect to the
+candidate points.</p>
+<p><img src="/v/0.8.0/docs/assets/mc_acq_illustration.svg" alt="Reparameterization Trick"></p>
+<p>In BoTorch, base samples are constructed using an <code>MCSampler</code> object, which
+provides an interface that allows for different sampling techniques.
+<code>IIDNormalSampler</code> utilizes independent standard normal draws, while
+<code>SobolQMCNormalSampler</code> uses quasi-random, low-discrepancy &quot;Sobol&quot; sequences as
+uniform samples which are then transformed to construct quasi-normal samples.
+Sobol sequences are more evenly distributed than i.i.d. uniform samples and tend
+to improve the convergence rate of MC estimates of integrals/expectations.
+We find that Sobol sequences substantially improve the performance of MC-based
+acquisition functions, and so <code>SobolQMCNormalSampler</code> is used by default.
+For more details, see <a href="/v/0.8.0/docs/samplers">Monte-Carlo Samplers</a>.</p>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1"  class="footnote-item"><p>D. P. Kingma, M. Welling. Auto-Encoding Variational Bayes.
+ICLR, 2013. <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2"  class="footnote-item"><p>D. J. Rezende, S. Mohamed, D. Wierstra. Stochastic
+Backpropagation and Approximate Inference in Deep Generative Models. ICML, 2014. <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/v/0.8.0/docs/getting_started"><span class="arrow-prev">← </span><span>Getting Started</span></a><a class="docs-next button" href="/v/0.8.0/docs/models"><span>Models</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#black-box-optimization">Black-Box Optimization</a></li><li><a href="#bayesian-optimization">Bayesian Optimization</a><ul class="toc-headings"><li><a href="#models">Models</a></li><li><a href="#posteriors">Posteriors</a></li><li><a href="#acquisition-functions">Acquisition Functions</a></li></ul></li><li><a href="#the-re-parameterization-trick">The Re-Parameterization Trick</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.8.0/" class="nav-home"><img src="/v/0.8.0/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.8.0/docs/introduction">Introduction</a><a href="/v/0.8.0/docs/getting_started">Getting Started</a><a href="/v/0.8.0/tutorials/">Tutorials</a><a href="/v/0.8.0/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.8.0/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.8.0/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

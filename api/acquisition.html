@@ -87,14 +87,17 @@ decomposition of the posterior covaiance over f(X_baseline).</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.MCAcquisitionFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">MCAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#MCAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSamplerMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Abstract base class for Monte-Carlo based batch acquisition functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite>.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
+a sampler is generated using <cite>get_sampler</cite>.
+NOTE: For posteriors that do not support base samples,
+a sampler compatible with intended use case must be provided.
+See <cite>ForkedRNGSampler</cite> and <cite>StochasticSampler</cite> as examples.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
@@ -182,22 +185,45 @@ been submitted for evaluation but have not yet been evaluated.</p>
 <h3>Multi-Objective Monte-Carlo Acquisition Function API<a class="headerlink" href="#multi-objective-monte-carlo-acquisition-function-api" title="Permalink to this heading">¶</a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">MultiObjectiveMCAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#MultiObjectiveMCAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">MultiObjectiveMCAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#MultiObjectiveMCAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSamplerMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Abstract base class for Multi-Objective batch acquisition functions.</p>
+<p>NOTE: This does not inherit from <cite>MCAcquisitionFunction</cite> to avoid circular imports.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_default_sample_shape</strong> – The <cite>sample_shape</cite> for the default sampler.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – </p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – </p></li>
+<li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – </p></li>
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>eta</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
 <p>Constructor for the MCAcquisitionFunction base class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)</cite>.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
+a sampler is generated using <cite>get_sampler</cite>.
+NOTE: For posteriors that do not support base samples,
+a sampler compatible with intended use case must be provided.
+See <cite>ForkedRNGSampler</cite> and <cite>StochasticSampler</cite> as examples.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – The MCMultiOutputObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMultiOutputObjective()</cite>.</p></li>
 <li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
 feasibility.</p></li>
+<li><p><strong>eta</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – The temperature parameter for the sigmoid function used for the
+differentiable approximation of the constraints. In case of a float the
+same eta is used for every constraint in constraints. In case of a
+tensor the length of the tensor must match the number of provided
+constraints. The i-th constraint is then estimated with the i-th
+eta value.</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have
 points that have been submitted for function evaluation
 but have not yet been evaluated.</p></li>
@@ -491,7 +517,7 @@ upper bounds for the i-th constraint, respectively.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted single-outcome model.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted multi-output model.</p></li>
 <li><p><strong>best_f</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – Either a scalar or a <cite>b</cite>-dim Tensor (batch mode) representing
 the best feasible function value observed so far (assumed noiseless).</p></li>
 <li><p><strong>objective_index</strong> (<em>int</em>) – The index of the objective.</p></li>
@@ -679,8 +705,8 @@ The reparameterization trick for acquisition functions. ArXiv 2017.</p>
 <li><p><strong>best_f</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – The best objective value observed so far (assumed noiseless). Can be
 a <cite>batch_shape</cite>-shaped tensor, which in case of a batched model
 specifies potentially different values for each element of the batch.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite></p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. See <cite>MCAcquisitionFunction</cite>
+more details.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are evaluated.
 Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
@@ -714,10 +740,6 @@ model and input <cite>X</cite>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qExpectedImprovement.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qExpectedImprovement.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qExpectedImprovement.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qExpectedImprovement.sampler" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qExpectedImprovement.objective">
@@ -754,8 +776,8 @@ over previously observed points is computed for each sample and averaged.</p>
 <li><p><strong>X_baseline</strong> (<em>Tensor</em>) – A <cite>batch_shape x r x d</cite>-dim Tensor of <cite>r</cite> design points
 that have already been observed. These points are considered as
 the potential best design point.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite>.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. See <cite>MCAcquisitionFunction</cite>
+more details.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
@@ -803,10 +825,6 @@ of model and input <cite>X</cite>.</p>
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.sampler" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.objective">
 <span class="sig-name descname"><span class="pre">objective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCAcquisitionObjective</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.objective" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -842,8 +860,8 @@ replaced with a sigmoid function with temperature parameter <cite>tau</cite>.</p
 <li><p><strong>best_f</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – The best objective value observed so far (assumed noiseless). Can
 be a <cite>batch_shape</cite>-shaped tensor, which in case of a batched model
 specifies potentially different values for each element of the batch.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite></p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. See <cite>MCAcquisitionFunction</cite>
+more details.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
@@ -882,10 +900,6 @@ of model and input <cite>X</cite>.</p>
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qProbabilityOfImprovement.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qProbabilityOfImprovement.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qProbabilityOfImprovement.sampler" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qProbabilityOfImprovement.objective">
 <span class="sig-name descname"><span class="pre">objective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCAcquisitionObjective</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qProbabilityOfImprovement.objective" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -912,8 +926,11 @@ of model and input <cite>X</cite>.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite>.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
+a sampler is generated using <cite>get_sampler</cite>.
+NOTE: For posteriors that do not support base samples,
+a sampler compatible with intended use case must be provided.
+See <cite>ForkedRNGSampler</cite> and <cite>StochasticSampler</cite> as examples.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
@@ -947,10 +964,6 @@ and input <cite>X</cite>.</p>
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qSimpleRegret.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qSimpleRegret.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qSimpleRegret.sampler" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qSimpleRegret.objective">
 <span class="sig-name descname"><span class="pre">objective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCAcquisitionObjective</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qSimpleRegret.objective" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -981,8 +994,8 @@ and <cite>f(X)</cite> has distribution <cite>N(mu, Sigma)</cite>.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
 <li><p><strong>beta</strong> (<em>float</em>) – Controls tradeoff between mean and standard deviation in UCB.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite></p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. See <cite>MCAcquisitionFunction</cite>
+more details.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><em>MCAcquisitionObjective</em><em>]</em>) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform (optional).</p></li>
@@ -1015,10 +1028,6 @@ model and input <cite>X</cite>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qUpperConfidenceBound.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qUpperConfidenceBound.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qUpperConfidenceBound.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.monte_carlo.qUpperConfidenceBound.sampler" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.monte_carlo.qUpperConfidenceBound.objective">
@@ -1173,14 +1182,154 @@ design point each, and returns a Tensor with shape <cite>batch_shape’</cite>, 
 <dd></dd></dl>
 </dd></dl>
 </section>
+<section id="module-botorch.acquisition.multi_objective.joint_entropy_search">
+<span id="multi-objective-joint-entropy-search-acquisition-functions"></span><h3>Multi-Objective Joint Entropy Search Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_objective.joint_entropy_search" title="Permalink to this heading">¶</a></h3>
+<p>Acquisition functions for joint entropy search for Bayesian optimization (JES).</p>
+<p>References:</p>
+<div class="citation-list" role="list">
+<div class="citation" id="tu2022" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Tu2022<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a href="#id10" role="doc-backlink">1</a>,<a href="#id13" role="doc-backlink">2</a>,<a href="#id26" role="doc-backlink">3</a>)</span>
+<p>B. Tu, A. Gandy, N. Kantas and B.Shafei. Joint Entropy Search for Multi-Objective
+Bayesian Optimization. Advances in Neural Information Processing Systems, 35.
+2022.</p>
+</div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.joint_entropy_search.</span></span><span class="sig-name descname"><span class="pre">LowerBoundMultiObjectiveEntropySearch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pareto_sets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pareto_fronts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hypercell_bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimation_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/joint_entropy_search.html#LowerBoundMultiObjectiveEntropySearch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSamplerMixin</span></code></p>
+<p>Abstract base class for the lower bound multi-objective entropy search
+acquisition functions.</p>
+<p>Lower bound multi-objective entropy search acquisition function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted batch model with ‘M’ number of outputs.</p></li>
+<li><p><strong>pareto_sets</strong> (<em>Tensor</em>) – A <cite>num_pareto_samples x num_pareto_points x d</cite>-dim Tensor
+containing the sampled Pareto optimal sets of inputs.</p></li>
+<li><p><strong>pareto_fronts</strong> (<em>Tensor</em>) – A <cite>num_pareto_samples x num_pareto_points x M</cite>-dim Tensor
+containing the sampled Pareto optimal sets of outputs.</p></li>
+<li><p><strong>hypercell_bounds</strong> (<em>Tensor</em>) – A <cite>num_pareto_samples x 2 x J x M</cite>-dim Tensor
+containing the hyper-rectangle bounds for integration, where <cite>J</cite> is
+the number of hyper-rectangles. In the unconstrained case, this gives
+the partition of the dominated space. In the constrained case, this
+gives the partition of the feasible dominated space union the
+infeasible space.</p></li>
+<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have been
+submitted for function evaluation, but have not yet been evaluated.</p></li>
+<li><p><strong>estimation_type</strong> (<em>str</em>) – A string to determine which entropy estimate is
+computed: “0”, “LB”, “LB2”, or “MC”.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – The number of Monte Carlo samples for the Monte Carlo
+estimate.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch.forward">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/joint_entropy_search.html#LowerBoundMultiObjectiveEntropySearch.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute lower bound multi-objective entropy search at the design points
+<cite>X</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor of <cite>batch_shape</cite> t-batches with <cite>q</cite></p></li>
+<li><p><strong>each.</strong> (<em>d-dim design points</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim Tensor of acquisition values at the given design
+points <cite>X</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.joint_entropy_search.</span></span><span class="sig-name descname"><span class="pre">qLowerBoundMultiObjectiveJointEntropySearch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pareto_sets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pareto_fronts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hypercell_bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimation_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/joint_entropy_search.html#qLowerBoundMultiObjectiveJointEntropySearch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch" title="botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowerBoundMultiObjectiveEntropySearch</span></code></a></p>
+<p>The acquisition function for the multi-objective joint entropy search, where
+the batches <cite>q &gt; 1</cite> are supported through the lower bound formulation.</p>
+<p>This acquisition function computes the mutual information between the observation
+at a candidate point <cite>X</cite> and the Pareto optimal input-output pairs.</p>
+<p>See <a class="reference internal" href="#tu2022" id="id10"><span>[Tu2022]</span></a> for a discussion on the estimation procedure.</p>
+<p>NOTES:
+(i) The estimated acquisition value could be negative.</p>
+<p>(ii) The lower bound batch acquisition function might not be monotone in the
+sense that adding more elements to the batch does not necessarily increase the
+acquisition value. Specifically, the acquisition value can become smaller when
+more inputs are added.</p>
+<p>Lower bound multi-objective joint entropy search acquisition function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted batch model with ‘M’ number of outputs.</p></li>
+<li><p><strong>pareto_sets</strong> (<em>Tensor</em>) – A <cite>num_pareto_samples x num_pareto_points x d</cite>-dim Tensor
+containing the sampled Pareto optimal sets of inputs.</p></li>
+<li><p><strong>pareto_fronts</strong> (<em>Tensor</em>) – A <cite>num_pareto_samples x num_pareto_points x M</cite>-dim Tensor
+containing the sampled Pareto optimal sets of outputs.</p></li>
+<li><p><strong>hypercell_bounds</strong> (<em>Tensor</em>) – A <cite>num_pareto_samples x 2 x J x M</cite>-dim Tensor
+containing the hyper-rectangle bounds for integration. In the
+unconstrained case, this gives the partition of the dominated space.
+In the constrained case, this gives the partition of the feasible
+dominated space union the infeasible space.</p></li>
+<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have been
+submitted for function evaluation, but have not yet been evaluated.</p></li>
+<li><p><strong>estimation_type</strong> (<em>str</em>) – A string to determine which entropy estimate is
+computed: “0”, “LB”, “LB2”, or “MC”.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – The number of Monte Carlo samples used for the Monte Carlo
+estimate.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/joint_entropy_search.html#qLowerBoundMultiObjectiveJointEntropySearch.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates qLowerBoundMultiObjectiveJointEntropySearch at the design
+points <cite>X</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor of <cite>batch_shape</cite> t-batches with <cite>q</cite></p></li>
+<li><p><strong>each.</strong> (<em>d-dim design points</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim Tensor of acquisition values at the given design
+points <cite>X</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch.model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
 <section id="module-botorch.acquisition.multi_objective.max_value_entropy_search">
-<span id="multi-objective-entropy-based-acquisition-functions"></span><h3>Multi-Objective Entropy-Based Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_objective.max_value_entropy_search" title="Permalink to this heading">¶</a></h3>
+<span id="multi-objective-max-value-entropy-search-acquisition-functions"></span><h3>Multi-Objective Max-value Entropy Search Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_objective.max_value_entropy_search" title="Permalink to this heading">¶</a></h3>
 <p>Acquisition functions for max-value entropy search for multi-objective
 Bayesian optimization (MESMO).</p>
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="belakaria2019" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id10" role="doc-backlink">Belakaria2019</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id11" role="doc-backlink">Belakaria2019</a><span class="fn-bracket">]</span></span>
 <p>S. Belakaria, A. Deshwal, J. R. Doppa. Max-value Entropy Search
 for Multi-Objective Bayesian Optimization. Advances in Neural
 Information Processing Systems, 32. 2019.</p>
@@ -1192,12 +1341,17 @@ Information Processing Systems, 32. 2019.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy" title="botorch.acquisition.max_value_entropy_search.qMaxValueEntropy"><code class="xref py py-class docutils literal notranslate"><span class="pre">qMaxValueEntropy</span></code></a>, <a class="reference internal" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction" title="botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveMCAcquisitionFunction</span></code></a></p>
 <p>The acquisition function for MESMO.</p>
 <p>This acquisition function computes the mutual information of
-Pareto frontier and a candidate point. See <a class="reference internal" href="#belakaria2019" id="id10"><span>[Belakaria2019]</span></a> for
+Pareto frontier and a candidate point. See <a class="reference internal" href="#belakaria2019" id="id11"><span>[Belakaria2019]</span></a> for
 a detailed discussion.</p>
 <p>q &gt; 1 is supported through cyclic optimization and fantasies.</p>
 <p>Noisy observations are support by computing information gain with
-observation noise as in Appendix C in <a class="reference internal" href="#takeno2020mfmves" id="id11"><span>[Takeno2020mfmves]</span></a>.</p>
+observation noise as in Appendix C in <a class="reference internal" href="#takeno2020mfmves" id="id12"><span>[Takeno2020mfmves]</span></a>.</p>
 <p>Note: this only supports maximization.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy._default_sample_shape">
+<span class="sig-name descname"><span class="pre">_default_sample_shape</span></span><a class="headerlink" href="#botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy._default_sample_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <cite>sample_shape</cite> for the default sampler.</p>
+</dd></dl>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">MESMO</span> <span class="o">=</span> <span class="n">qMultiObjectiveMaxValueEntropy</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">sample_pfs</span><span class="p">)</span>
@@ -1216,7 +1370,7 @@ observation noise as in Appendix C in <a class="reference internal" href="#taken
 number the more accurate the model (at the expense of model
 complexity, wall time and memory). Ignored if <cite>X_pending</cite> is <cite>None</cite>.</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have been
-submitted for function evaluation but have not yet been evaluated.</p></li>
+submitted for function evaluation, but have not yet been evaluated.</p></li>
 <li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – </p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
@@ -1265,6 +1419,72 @@ with <cite>1</cite> <cite>d</cite>-dim design points each.</p>
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.max_value_entropy_search.</span></span><span class="sig-name descname"><span class="pre">qLowerBoundMultiObjectiveMaxValueEntropySearch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hypercell_bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimation_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/max_value_entropy_search.html#qLowerBoundMultiObjectiveMaxValueEntropySearch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch" title="botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowerBoundMultiObjectiveEntropySearch</span></code></a></p>
+<p>The acquisition function for the multi-objective Max-value Entropy Search,
+where the batches <cite>q &gt; 1</cite> are supported through the lower bound formulation.</p>
+<p>This acquisition function computes the mutual information between the observation
+at a candidate point <cite>X</cite> and the Pareto optimal outputs.</p>
+<p>See <a class="reference internal" href="#tu2022" id="id13"><span>[Tu2022]</span></a> for a discussion on the estimation procedure.</p>
+<p>NOTES:
+(i) The estimated acquisition value could be negative.</p>
+<p>(ii) The lower bound batch acquisition function might not be monotone in the
+sense that adding more elements to the batch does not necessarily increase the
+acquisition value. Specifically, the acquisition value can become smaller when
+more inputs are added.</p>
+<p>Lower bound multi-objective max-value entropy search acquisition function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted batch model with ‘M’ number of outputs.</p></li>
+<li><p><strong>hypercell_bounds</strong> (<em>Tensor</em>) – A <cite>num_pareto_samples x 2 x J x M</cite>-dim Tensor
+containing the hyper-rectangle bounds for integration, where <cite>J</cite> is
+the number of hyper-rectangles. In the unconstrained case, this gives
+the partition of the dominated space. In the constrained case, this
+gives the partition of the feasible dominated space union the
+infeasible space.</p></li>
+<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have been
+submitted for function evaluation, but have not yet been evaluated.</p></li>
+<li><p><strong>estimation_type</strong> (<em>str</em>) – A string to determine which entropy estimate is
+computed: “0”, “LB”, “LB2”, or “MC”.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – The number of Monte Carlo samples for the Monte Carlo
+estimate.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/max_value_entropy_search.html#qLowerBoundMultiObjectiveMaxValueEntropySearch.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates qLowerBoundMultiObjectiveMaxValueEntropySearch at the design
+points <cite>X</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor of <cite>batch_shape</cite> t-batches with <cite>q</cite></p></li>
+<li><p><strong>each.</strong> (<em>d-dim design points</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim Tensor of acquisition values at the given design
+points <cite>X</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch.model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
 </section>
 <section id="module-botorch.acquisition.multi_objective.monte_carlo">
 <span id="multi-objective-monte-carlo-acquisition-functions"></span><h3>Multi-Objective Monte-Carlo Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_objective.monte_carlo" title="Permalink to this heading">¶</a></h3>
@@ -1273,13 +1493,13 @@ with <cite>1</cite> <cite>d</cite>-dim design points each.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="daulton2020qehvi" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Daulton2020qehvi<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id5" role="doc-backlink">1</a>,<a href="#id12" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id5" role="doc-backlink">1</a>,<a href="#id14" role="doc-backlink">2</a>)</span>
 <p>S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume
 Improvement for Parallel Multi-Objective Bayesian Optimization. Advances in Neural
 Information Processing Systems 33, 2020.</p>
 </div>
 <div class="citation" id="daulton2021nehvi" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id13" role="doc-backlink">Daulton2021nehvi</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id15" role="doc-backlink">Daulton2021nehvi</a><span class="fn-bracket">]</span></span>
 <p>S. Daulton, M. Balandat, and E. Bakshy. Parallel Bayesian Optimization of
 Multiple Noisy Objectives with Expected Hypervolume Improvement. Advances
 in Neural Information Processing Systems 34, 2021.</p>
@@ -1290,7 +1510,7 @@ in Neural Information Processing Systems 34, 2021.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qExpectedHypervolumeImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitioning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#qExpectedHypervolumeImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction" title="botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveMCAcquisitionFunction</span></code></a></p>
 <p>q-Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</p>
-<p>See <a class="reference internal" href="#daulton2020qehvi" id="id12"><span>[Daulton2020qehvi]</span></a> for details.</p>
+<p>See <a class="reference internal" href="#daulton2020qehvi" id="id14"><span>[Daulton2020qehvi]</span></a> for details.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
@@ -1310,8 +1530,8 @@ applying`objective` to the samples).</p></li>
 dominated front and a partitioning of the non-dominated space in hyper-
 rectangles. If constraints are present, this partitioning must only
 include feasible points.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)</cite>.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
+a sampler is generated using <cite>get_sampler</cite>.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – The MCMultiOutputObjective under which the samples are evaluated.
 Defaults to <cite>IdentityMultiOutputObjective()</cite>.</p></li>
 <li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
@@ -1323,8 +1543,12 @@ hypervolume.</p></li>
 points that have been submitted for function evaluation but have not yet
 been evaluated. Concatenated into <cite>X</cite> upon forward call. Copied and set
 to have no gradient.</p></li>
-<li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter for the sigmoid function used for the
-differentiable approximation of the constraints.</p></li>
+<li><p><strong>eta</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – The temperature parameter for the sigmoid function used for the
+differentiable approximation of the constraints. In case of a float the
+same eta is used for every constraint in constraints. In case of a
+tensor the length of the tensor must match the number of provided
+constraints. The i-th constraint is then estimated with the i-th
+eta value.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1359,7 +1583,7 @@ evaluations.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qNoisyExpectedHypervolumeImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_baseline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">incremental_nehvi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#qNoisyExpectedHypervolumeImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement" title="botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">qExpectedHypervolumeImprovement</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">CachedCholeskyMCAcquisitionFunction</span></code></p>
 <p>q-Noisy Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</p>
-<p>See <a class="reference internal" href="#daulton2021nehvi" id="id13"><span>[Daulton2021nehvi]</span></a> for details.</p>
+<p>See <a class="reference internal" href="#daulton2021nehvi" id="id15"><span>[Daulton2021nehvi]</span></a> for details.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
@@ -1378,8 +1602,8 @@ applying <cite>objective</cite> to the samples).</p></li>
 <li><p><strong>X_baseline</strong> (<em>Tensor</em>) – A <cite>r x d</cite>-dim Tensor of <cite>r</cite> design points that have already
 been observed. These points are considered as potential approximate
 pareto-optimal design points.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)</cite>.
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
+a sampler is generated using <cite>get_sampler</cite>.
 Note: a pareto front is created for each mc sample, which can be
 computationally intensive for <cite>m</cite> &gt; 2.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – The MCMultiOutputObjective under which the samples are
@@ -1392,8 +1616,12 @@ hypervolume.</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x m x d</cite>-dim Tensor of <cite>m</cite> design points that
 have points that have been submitted for function evaluation, but
 have not yet been evaluated.</p></li>
-<li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter for the sigmoid function used for the
-differentiable approximation of the constraints.</p></li>
+<li><p><strong>eta</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – The temperature parameter for the sigmoid function used for the
+differentiable approximation of the constraints. In case of a float the
+same eta is used for every constraint in constraints. In case of a
+tensor the length of the tensor must match the number of provided
+constraints. The i-th constraint is then estimated with the i-th
+eta value.</p></li>
 <li><p><strong>prune_baseline</strong> (<em>bool</em>) – If True, remove points in <cite>X_baseline</cite> that are
 highly unlikely to be the pareto optimal and better than the
 reference point. This can significantly improve computation time and
@@ -1438,6 +1666,14 @@ been submitted for evaluation but have not yet been evaluated.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#qNoisyExpectedHypervolumeImprovement.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.forward" title="Permalink to this definition">¶</a></dt>
@@ -1455,14 +1691,6 @@ evaluations.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.model">
-<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.model" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.acquisition.multi_objective.multi_fidelity">
@@ -1471,7 +1699,7 @@ evaluations.</p>
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="irshad2021momf" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id14" role="doc-backlink">Irshad2021MOMF</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id16" role="doc-backlink">Irshad2021MOMF</a><span class="fn-bracket">]</span></span>
 <p>F. Irshad, S. Karsch, and A. Döpp. Expected hypervolume improvement for
 simultaneous multi-objective and multi-fidelity optimization.
 arXiv preprint arXiv:2112.13901, 2021.</p>
@@ -1479,14 +1707,14 @@ arXiv preprint arXiv:2112.13901, 2021.</p>
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_fidelity.MOMF">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_fidelity.</span></span><span class="sig-name descname"><span class="pre">MOMF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitioning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cost_call</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_fidelity.html#MOMF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_fidelity.MOMF" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_fidelity.</span></span><span class="sig-name descname"><span class="pre">MOMF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitioning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cost_call</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_fidelity.html#MOMF"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_fidelity.MOMF" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement" title="botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">qExpectedHypervolumeImprovement</span></code></a></p>
 <p>MOMF acquisition function supporting m&gt;=2 outcomes.
 The model needs to have train_obj that has a fidelity
 objective appended to its end.
 In the following example we consider a 2-D output space
 but the ref_point is 3D because of fidelity objective.</p>
-<p>See <a class="reference internal" href="#irshad2021momf" id="id14"><span>[Irshad2021MOMF]</span></a> for details.</p>
+<p>See <a class="reference internal" href="#irshad2021momf" id="id16"><span>[Irshad2021MOMF]</span></a> for details.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
@@ -1511,8 +1739,8 @@ applying`objective` to the samples).</p></li>
 dominated front and a partitioning of the non-dominated space in hyper-
 rectangles. If constraints are present, this partitioning must only
 include feasible points.</p></li>
-<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. Defaults to
-<cite>SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)</cite>.</p></li>
+<li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If not given,
+a sampler is generated using <cite>get_sampler</cite>.</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><em>MCMultiOutputObjective</em></a><em>]</em>) – The MCMultiOutputObjective under which the samples are evaluated.
 Defaults to <cite>IdentityMultiOutputObjective()</cite>.</p></li>
 <li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
@@ -1528,8 +1756,12 @@ to have no gradient.</p></li>
 <cite>batch_shape x q x d</cite> to a cost Tensor of dimension
 <cite>batch_shape x q x m</cite>. Defaults to an AffineCostModel with
 <cite>C(s) = 1 + s</cite>.</p></li>
-<li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter for the sigmoid function used for the
-differentiable approximation of the constraints.</p></li>
+<li><p><strong>eta</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – The temperature parameter for the sigmoid function used for the
+differentiable approximation of the constraints. In case of a float the
+same eta is used for every constraint in constraints. In case of a
+tensor the length of the tensor must match the number of provided
+constraints. The i-th constraint is then estimated with the i-th
+eta value.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -1561,27 +1793,173 @@ evaluations.</p>
 <dd></dd></dl>
 </dd></dl>
 </section>
+<section id="module-botorch.acquisition.multi_objective.predictive_entropy_search">
+<span id="multi-objective-predictive-entropy-search-acquisition-functions"></span><h3>Multi-Objective Predictive Entropy Search Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_objective.predictive_entropy_search" title="Permalink to this heading">¶</a></h3>
+<p>Acquisition function for predictive entropy search for multi-objective Bayesian
+optimization (PES). The code does not support constraint handling.</p>
+<p>NOTE: The PES acquisition might not be differentiable. As a result, we recommend
+optimizing the acquisition function using finite differences.</p>
+<p>References:</p>
+<div class="citation-list" role="list">
+<div class="citation" id="garrido-merchan2019" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a href="#id17" role="doc-backlink">Garrido-Merchan2019</a><span class="fn-bracket">]</span></span>
+<p>E. Garrido-Merchan and D. Hernandez-Lobato. Predictive Entropy Search for
+Multi-objective Bayesian Optimization with Constraints. Neurocomputing. 2019.
+The computation follows the procedure described in the supplementary material:
+<a class="reference external" href="https://www.sciencedirect.com/science/article/abs/pii/S0925231219308525">https://www.sciencedirect.com/science/article/abs/pii/S0925231219308525</a></p>
+</div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.predictive_entropy_search.</span></span><span class="sig-name descname"><span class="pre">qMultiObjectivePredictiveEntropySearch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pareto_sets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_ep_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">250</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ep_jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/predictive_entropy_search.html#qMultiObjectivePredictiveEntropySearch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></p>
+<p>The acquisition function for Predictive Entropy Search. The code supports
+both single and multiple objectives as well as batching.</p>
+<p>This acquisition function approximates the mutual information between the
+observation at a candidate point <cite>X</cite> and the Pareto optimal input using the
+moment-matching procedure known as expectation propagation (EP).</p>
+<p>See the Appendix of <a class="reference internal" href="#garrido-merchan2019" id="id17"><span>[Garrido-Merchan2019]</span></a> for the description of the EP
+procedure.</p>
+<p>IMPORTANT NOTES:
+(i) The PES acquisition function estimated using EP is sometimes not
+differentiable, and therefore we advise using a finite-difference estimate of
+the gradient as opposed to the gradients identified using automatic
+differentiation, which occasionally outputs <cite>nan</cite> values.</p>
+<p>The source of this differentiability is in the <cite>_update_damping</cite> function, which
+finds the damping factor <cite>a</cite> that is used to update the EP parameters
+<cite>a * param_new + (1 - a) * param_old</cite>. The damping factor has to ensure
+that the updated covariance matrices, <cite>a * cov_f_new + (1 - a) cov_f_old</cite>, is
+positive semi-definiteness. We follow the original paper, which identifies
+<cite>a</cite> via a successive halving scheme i.e. we check <cite>a=1</cite> then <cite>a=0.5</cite> etc. This
+procedure means <cite>a</cite> is a function of the test input <cite>X</cite>. This function is not
+differentiable  in <cite>X</cite>.</p>
+<ol class="lowerroman simple" start="2">
+<li><p>EP could potentially fail for a number of reasons:</p></li>
+</ol>
+<blockquote>
+<div><p>(a) When the sampled Pareto optimal points <cite>x_p</cite> is poor compared to the
+training or testing data <cite>x_n</cite>.</p>
+<p>(b) When the training or testing data <cite>x_n</cite> is close the Pareto optimal
+points <cite>x_p</cite>.</p>
+<ol class="loweralpha simple" start="3">
+<li><p>When the convergence threshold is set too small.</p></li>
+</ol>
+<p>Problem (a) occurs because we have to compute the variable:
+<cite>alpha = (mean(x_n) - mean(x_p)) / std(x_n - x_p)</cite>, which becomes very
+large when <cite>x_n</cite> is better than <cite>x_p</cite> with high-probability. This leads to a
+log(0) error when we compute <cite>log(1 - cdf(alpha))</cite>. We have pre-emptively
+clamped some values depending on <cite>1`alpha</cite> in order to mitigate this.</p>
+<p>Problem (b) occurs because we have to compute matrix inverses for the
+two-dimensional marginals (x_n, x_p). To address this we manually add jitter
+to the diagonal of the covariance matrix i.e. <cite>ep_jitter</cite> when training and
+<cite>test_jitter</cite> when testing. The default choice is not always appropriate
+because the same jitter is used for the inversion of the covariance
+and precision matrix, which are on different scales.</p>
+<p>TODO: come up with strategy to adaptively update the jitter.</p>
+<p>Problem (c) occurs because a smaller threshold usually means that more EP
+iterations are required. Running too many EP iterations could lead to
+invertibility problems such as in problem (b). Setting a larger threshold
+or reducing the number of EP iterations could alleviate this.</p>
+</div></blockquote>
+<ol class="lowerroman simple" start="3">
+<li><p>The estimated acquisition value could be negative.</p></li>
+</ol>
+<p>Multi-objective predictive entropy search acquisition function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted batched model with <cite>M</cite> number of outputs.</p></li>
+<li><p><strong>pareto_sets</strong> (<em>Tensor</em>) – A <cite>num_pareto_samples x P x d</cite>-dim tensor containing the
+Pareto optimal set of inputs, where <cite>P</cite> is the number of pareto
+optimal points. The points in each sample have to be discrete
+otherwise expectation propagation will fail.</p></li>
+<li><p><strong>maximize</strong> (<em>bool</em>) – If true, we consider a maximization problem.</p></li>
+<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have been
+submitted for function evaluation, but have not yet been evaluated.</p></li>
+<li><p><strong>max_ep_iterations</strong> (<em>int</em>) – The maximum number of expectation propagation
+iterations. (The minimum number of iterations is set at 3.)</p></li>
+<li><p><strong>ep_jitter</strong> (<em>float</em>) – The amount of jitter added for the matrix inversion that
+occurs during the expectation propagation update during the training
+phase.</p></li>
+<li><p><strong>test_jitter</strong> (<em>float</em>) – The amount of jitter added for the matrix inversion that
+occurs during the expectation propagation update in the testing
+phase.</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) – The convergence threshold for expectation propagation. This
+assesses the relative change in the mean and covariance. We default
+to one percent change i.e. <cite>threshold = 1e-2</cite>.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/predictive_entropy_search.html#qMultiObjectivePredictiveEntropySearch.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate qMultiObjectivePredictiveEntropySearch on the candidate set <cite>X</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim
+design points each.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape’</cite>-dim Tensor of acquisition values at the given design
+points <cite>X</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.predictive_entropy_search.log_cdf_robust">
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.predictive_entropy_search.</span></span><span class="sig-name descname"><span class="pre">log_cdf_robust</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/predictive_entropy_search.html#log_cdf_robust"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.predictive_entropy_search.log_cdf_robust" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the logarithm of the normal cumulative density robustly. This uses
+the approximation log(1-z) ~ -z when z is small:</p>
+<dl class="simple">
+<dt>if x &gt; 5:</dt><dd><p>log(cdf(x)) = log(1-cdf(-x)) approx -cdf(-x)</p>
+</dd>
+<dt>else:</dt><dd><p>log(cdf(x)).</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – a <cite>x_shape</cite>-dim Tensor.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Returns</dt><dd><p>A <cite>x_shape</cite>-dim Tensor.</p>
+</dd>
+</dl>
+</dd></dl>
+</section>
 <section id="module-botorch.acquisition.knowledge_gradient">
 <span id="the-one-shot-knowledge-gradient"></span><h3>The One-Shot Knowledge Gradient<a class="headerlink" href="#module-botorch.acquisition.knowledge_gradient" title="Permalink to this heading">¶</a></h3>
 <p>Batch Knowledge Gradient (KG) via one-shot optimization as introduced in
-<a class="reference internal" href="#balandat2020botorch" id="id15"><span>[Balandat2020botorch]</span></a>. For broader discussion of KG see also <a class="reference internal" href="#frazier2008knowledge" id="id16"><span>[Frazier2008knowledge]</span></a>
-and <a class="reference internal" href="#wu2016parallelkg" id="id17"><span>[Wu2016parallelkg]</span></a>.</p>
+<a class="reference internal" href="#balandat2020botorch" id="id18"><span>[Balandat2020botorch]</span></a>. For broader discussion of KG see also <a class="reference internal" href="#frazier2008knowledge" id="id19"><span>[Frazier2008knowledge]</span></a>
+and <a class="reference internal" href="#wu2016parallelkg" id="id20"><span>[Wu2016parallelkg]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="balandat2020botorch" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Balandat2020botorch<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id3" role="doc-backlink">1</a>,<a href="#id15" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id3" role="doc-backlink">1</a>,<a href="#id18" role="doc-backlink">2</a>)</span>
 <p>M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson, and
 E. Bakshy. BoTorch: A Framework for Efficient Monte-Carlo Bayesian Optimization.
 Advances in Neural Information Processing Systems 33, 2020.</p>
 </div>
 <div class="citation" id="frazier2008knowledge" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id16" role="doc-backlink">Frazier2008knowledge</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id19" role="doc-backlink">Frazier2008knowledge</a><span class="fn-bracket">]</span></span>
 <p>P. Frazier, W. Powell, and S. Dayanik. A Knowledge-Gradient policy for
 sequential information collection. SIAM Journal on Control and Optimization,
 2008.</p>
 </div>
 <div class="citation" id="wu2016parallelkg" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id17" role="doc-backlink">Wu2016parallelkg</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id20" role="doc-backlink">Wu2016parallelkg</a><span class="fn-bracket">]</span></span>
 <p>J. Wu and P. Frazier. The parallel knowledge gradient method for batch
 bayesian optimization. NIPS 2016.</p>
 </div>
@@ -1629,10 +2007,6 @@ given the data set <cite>D u X</cite>.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.knowledge_gradient.qKnowledgeGradient.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.sampler" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.knowledge_gradient.qKnowledgeGradient.objective">
 <span class="sig-name descname"><span class="pre">objective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCAcquisitionObjective</span></em><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.objective" title="Permalink to this definition">¶</a></dt>
@@ -1851,10 +2225,6 @@ maximized at fixed <cite>X_actual[b]</cite>.</p>
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient.sampler" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient.objective">
 <span class="sig-name descname"><span class="pre">objective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCAcquisitionObjective</span></em><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient.objective" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -1915,10 +2285,10 @@ design points <cite>X</cite>.</p>
 <section id="module-botorch.acquisition.multi_step_lookahead">
 <span id="multi-step-lookahead-acquisition-functions"></span><h3>Multi-Step Lookahead Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_step_lookahead" title="Permalink to this heading">¶</a></h3>
 <p>A general implementation of multi-step look-ahead acquistion function with configurable
-value functions. See <a class="reference internal" href="#jiang2020multistep" id="id18"><span>[Jiang2020multistep]</span></a>.</p>
+value functions. See <a class="reference internal" href="#jiang2020multistep" id="id21"><span>[Jiang2020multistep]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="jiang2020multistep" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id18" role="doc-backlink">Jiang2020multistep</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id21" role="doc-backlink">Jiang2020multistep</a><span class="fn-bracket">]</span></span>
 <p>S. Jiang, D. R. Jiang, M. Balandat, B. Karrer, J. Gardner, and R. Garnett.
 Efficient Nonmyopic Bayesian Optimization via One-Shot Multi-Step Trees.
 In Advances in Neural Information Processing Systems 33, 2020.</p>
@@ -2100,10 +2470,6 @@ is the number of candidates jointly considered in look-ahead step
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.sampler" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.model">
 <span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.model" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -2157,28 +2523,28 @@ the observed value.</p>
 </dd></dl>
 </section>
 <section id="module-botorch.acquisition.max_value_entropy_search">
-<span id="entropy-based-acquisition-functions"></span><h3>Entropy-Based Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.max_value_entropy_search" title="Permalink to this heading">¶</a></h3>
+<span id="max-value-entropy-search-acquisition-functions"></span><h3>Max-value Entropy Search Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.max_value_entropy_search" title="Permalink to this heading">¶</a></h3>
 <p>Acquisition functions for Max-value Entropy Search (MES), General
 Information-Based Bayesian Optimization (GIBBON), and
 multi-fidelity MES with noisy observations and trace observations.</p>
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="moss2021gibbon" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id20" role="doc-backlink">Moss2021gibbon</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id23" role="doc-backlink">Moss2021gibbon</a><span class="fn-bracket">]</span></span>
 <p>Moss, H. B., et al.,
 GIBBON: General-purpose Information-Based Bayesian OptimisatioN
 arXiv:2102.03324, 2021</p>
 </div>
 <div class="citation" id="takeno2020mfmves" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Takeno2020mfmves<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id11" role="doc-backlink">1</a>,<a href="#id21" role="doc-backlink">2</a>,<a href="#id22" role="doc-backlink">3</a>)</span>
+<span class="backrefs">(<a href="#id12" role="doc-backlink">1</a>,<a href="#id24" role="doc-backlink">2</a>,<a href="#id25" role="doc-backlink">3</a>)</span>
 <p>S. Takeno, H. Fukuoka, Y. Tsukada, T. Koyama, M. Shiga, I. Takeuchi,
 M. Karasuyama. Multi-fidelity Bayesian Optimization with Max-value Entropy
 Search and its Parallelization. Proceedings of the 37th International
 Conference on Machine Learning, 2020.</p>
 </div>
 <div class="citation" id="wang2017mves" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id19" role="doc-backlink">Wang2017mves</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id22" role="doc-backlink">Wang2017mves</a><span class="fn-bracket">]</span></span>
 <p>Z. Wang, S. Jegelka, Max-value Entropy Search for Efficient
 Bayesian Optimization. Proceedings of the 37th International
 Conference on Machine Learning, 2017.</p>
@@ -2221,10 +2587,10 @@ Not required if the model is an instance of a GPyTorch ExactGP model.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.max_value_entropy_search.qMaxValueEntropy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.max_value_entropy_search.</span></span><span class="sig-name descname"><span class="pre">qMaxValueEntropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidate_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_fantasies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_mv_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_y_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_gumbel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/max_value_entropy_search.html#qMaxValueEntropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.max_value_entropy_search.DiscreteMaxValueBase" title="botorch.acquisition.max_value_entropy_search.DiscreteMaxValueBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteMaxValueBase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.max_value_entropy_search.DiscreteMaxValueBase" title="botorch.acquisition.max_value_entropy_search.DiscreteMaxValueBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteMaxValueBase</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSamplerMixin</span></code></p>
 <p>The acquisition function for Max-value Entropy Search.</p>
 <p>This acquisition function computes the mutual information of max values and
-a candidate point X. See <a class="reference internal" href="#wang2017mves" id="id19"><span>[Wang2017mves]</span></a> for a detailed discussion.</p>
+a candidate point X. See <a class="reference internal" href="#wang2017mves" id="id22"><span>[Wang2017mves]</span></a> for a detailed discussion.</p>
 <p>The model must be single-outcome. The batch case <cite>q &gt; 1</cite> is supported
 through cyclic optimization and fantasies.</p>
 <p class="rubric">Example</p>
@@ -2295,7 +2661,7 @@ been submitted for evaluation but have not yet been evaluated.</p>
 Bayesian Optimisation (GIBBON).</p>
 <p>This acquisition function provides a computationally cheap approximation of
 the mutual information between max values and a batch of candidate points <cite>X</cite>.
-See <a class="reference internal" href="#moss2021gibbon" id="id20"><span>[Moss2021gibbon]</span></a> for a detailed discussion.</p>
+See <a class="reference internal" href="#moss2021gibbon" id="id23"><span>[Moss2021gibbon]</span></a> for a detailed discussion.</p>
 <p>The model must be single-outcome, unless using a PosteriorTransform.
 q &gt; 1 is supported through greedy batch filling.</p>
 <p class="rubric">Example</p>
@@ -2342,7 +2708,7 @@ Not required if the model is an instance of a GPyTorch ExactGP model.</p></li>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy" title="botorch.acquisition.max_value_entropy_search.qMaxValueEntropy"><code class="xref py py-class docutils literal notranslate"><span class="pre">qMaxValueEntropy</span></code></a></p>
 <p>Multi-fidelity max-value entropy.</p>
 <p>The acquisition function for multi-fidelity max-value entropy search
-with support for trace observations. See <a class="reference internal" href="#takeno2020mfmves" id="id21"><span>[Takeno2020mfmves]</span></a>
+with support for trace observations. See <a class="reference internal" href="#takeno2020mfmves" id="id24"><span>[Takeno2020mfmves]</span></a>
 for a detailed discussion of the basic ideas on multi-fidelity MES
 (note that this implementation is somewhat different).</p>
 <p>The model must be single-outcome, unless using a PosteriorTransform.
@@ -2429,7 +2795,7 @@ with <cite>1</cite> <cite>d</cite>-dim design point each.</p>
 <p>Multi-fidelity acquisition function for General-purpose Information-Based
 Bayesian optimization (GIBBON).</p>
 <p>The acquisition function for multi-fidelity max-value entropy search
-with support for trace observations. See <a class="reference internal" href="#takeno2020mfmves" id="id22"><span>[Takeno2020mfmves]</span></a>
+with support for trace observations. See <a class="reference internal" href="#takeno2020mfmves" id="id25"><span>[Takeno2020mfmves]</span></a>
 for a detailed discussion of the basic ideas on multi-fidelity MES
 (note that this implementation is somewhat different). This acquisition function
 is similar to <cite>qMultiFidelityMaxValueEntropy</cite> but computes the information gain
@@ -2491,22 +2857,179 @@ additional (“trace”) observations.</p></li>
 <dd></dd></dl>
 </dd></dl>
 </section>
+<section id="module-botorch.acquisition.joint_entropy_search">
+<span id="joint-entropy-search-acquisition-functions"></span><h3>Joint Entropy Search Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.joint_entropy_search" title="Permalink to this heading">¶</a></h3>
+<p>Acquisition function for joint entropy search (JES). The code utilizes the
+implementation designed for the multi-objective batch setting.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.joint_entropy_search.</span></span><span class="sig-name descname"><span class="pre">qLowerBoundJointEntropySearch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimal_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimal_outputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hypercell_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimation_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/joint_entropy_search.html#qLowerBoundJointEntropySearch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch" title="botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch"><code class="xref py py-class docutils literal notranslate"><span class="pre">qLowerBoundMultiObjectiveJointEntropySearch</span></code></a></p>
+<p>The acquisition function for the Joint Entropy Search, where the batches
+<cite>q &gt; 1</cite> are supported through the lower bound formulation.</p>
+<p>This acquisition function computes the mutual information between the observation
+at a candidate point <cite>X</cite> and the optimal input-output pair.</p>
+<p>See <a class="reference internal" href="#tu2022" id="id26"><span>[Tu2022]</span></a> for a discussion on the estimation procedure.</p>
+<p>NOTES:
+(i) The estimated acquisition value could be negative.</p>
+<p>(ii) The lower bound batch acquisition function might not be monotone in the
+sense that adding more elements to the batch does not necessarily increase the
+acquisition value. Specifically, the acquisition value can become smaller when
+more inputs are added.</p>
+<p>Joint entropy search acquisition function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted single-outcome model.</p></li>
+<li><p><strong>optimal_inputs</strong> (<em>Tensor</em>) – A <cite>num_samples x d</cite>-dim tensor containing the sampled
+optimal inputs of dimension <cite>d</cite>. We assume for simplicity that each
+sample only contains one optimal set of inputs.</p></li>
+<li><p><strong>optimal_outputs</strong> (<em>Tensor</em>) – A <cite>num_samples x 1</cite>-dim Tensor containing the optimal
+set of objectives of dimension <cite>1</cite>.</p></li>
+<li><p><strong>maximize</strong> (<em>bool</em>) – If true, we consider a maximization problem.</p></li>
+<li><p><strong>hypercell_bounds</strong> (<em>Tensor</em>) – A <cite>num_samples x 2 x J x 1</cite>-dim Tensor containing the
+hyper-rectangle bounds for integration, where <cite>J</cite> is the number of
+hyper-rectangles. By default, the problem is assumed to be
+unconstrained and therefore the region of integration for a sample
+<cite>(x*, y*)</cite> is a <cite>J=1</cite> hyper-rectangle of the form  <cite>(-infty, y^*]</cite>
+for a maximization problem and <cite>[y^*, +infty)</cite> for a minimization
+problem. In the constrained setting, the region of integration also
+includes the infeasible space.</p></li>
+<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have been
+submitted for function evaluation, but have not yet been evaluated.</p></li>
+<li><p><strong>estimation_type</strong> (<em>str</em>) – A string to determine which entropy estimate is
+computed: “0”, “LB”, “LB2”, or “MC”. In the single-objective
+setting, “LB” is equivalent to “LB2”.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – The number of Monte Carlo samples used for the Monte Carlo
+estimate.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/joint_entropy_search.html#qLowerBoundJointEntropySearch.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates qLowerBoundJointEntropySearch at the design points <cite>X</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor of <cite>batch_shape</cite> t-batches with <cite>q</cite></p></li>
+<li><p><strong>each.</strong> (<em>d-dim design points</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim Tensor of acquisition values at the given design
+points <cite>X</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
+<section id="module-botorch.acquisition.predictive_entropy_search">
+<span id="predictive-entropy-search-acquisition-functions"></span><h3>Predictive Entropy Search Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.predictive_entropy_search" title="Permalink to this heading">¶</a></h3>
+<p>Acquisition function for predictive entropy search (PES). The code utilizes the
+implementation designed for the multi-objective batch setting.</p>
+<p>NOTE: The PES acquisition might not be differentiable. As a result, we recommend
+optimizing the acquisition function using finite differences.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.predictive_entropy_search.</span></span><span class="sig-name descname"><span class="pre">qPredictiveEntropySearch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimal_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_ep_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">250</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ep_jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/predictive_entropy_search.html#qPredictiveEntropySearch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch" title="botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch"><code class="xref py py-class docutils literal notranslate"><span class="pre">qMultiObjectivePredictiveEntropySearch</span></code></a></p>
+<p>The acquisition function for Predictive Entropy Search.</p>
+<p>This acquisition function approximates the mutual information between the
+observation at a candidate point <cite>X</cite> and the optimal set of inputs using
+expectation propagation (EP).</p>
+<p>NOTES:
+(i) The expectation propagation procedure can potentially fail due to the unstable
+EP updates. This is however unlikely to happen in the single-objective setting
+because we have much fewer EP factors. The jitter added in the training phase
+(<cite>ep_jitter</cite>) and testing phase (<cite>test_jitter</cite>) can be increased to prevent
+these failures from happening. More details in the description of
+<cite>qMultiObjectivePredictiveEntropySearch</cite>.</p>
+<ol class="lowerroman simple" start="2">
+<li><p>The estimated acquisition value could be negative.</p></li>
+</ol>
+<p>Predictive entropy search acquisition function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted single-outcome model.</p></li>
+<li><p><strong>optimal_inputs</strong> (<em>Tensor</em>) – A <cite>num_samples x d</cite>-dim tensor containing the sampled
+optimal inputs of dimension <cite>d</cite>. We assume for simplicity that each
+sample only contains one optimal set of inputs.</p></li>
+<li><p><strong>maximize</strong> (<em>bool</em>) – If true, we consider a maximization problem.</p></li>
+<li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have been
+submitted for function evaluation, but have not yet been evaluated.</p></li>
+<li><p><strong>max_ep_iterations</strong> (<em>int</em>) – The maximum number of expectation propagation
+iterations. (The minimum number of iterations is set at 3.)</p></li>
+<li><p><strong>ep_jitter</strong> (<em>float</em>) – The amount of jitter added for the matrix inversion that
+occurs during the expectation propagation update during the training
+phase.</p></li>
+<li><p><strong>test_jitter</strong> (<em>float</em>) – The amount of jitter added for the matrix inversion that
+occurs during the expectation propagation update in the testing
+phase.</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) – The convergence threshold for expectation propagation. This
+assesses the relative change in the mean and covariance. We default
+to one percent change i.e. <cite>threshold = 1e-2</cite>.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/predictive_entropy_search.html#qPredictiveEntropySearch.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate qPredictiveEntropySearch on the candidate set <cite>X</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim
+design points each.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape’</cite>-dim Tensor of Predictive Entropy Search values at the
+given design points <cite>X</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch.model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
 <section id="module-botorch.acquisition.active_learning">
 <span id="active-learning-acquisition-functions"></span><h3>Active Learning Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.active_learning" title="Permalink to this heading">¶</a></h3>
 <p>Active learning acquisition functions.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="seo2014activedata" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id23" role="doc-backlink">Seo2014activedata</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id27" role="doc-backlink">Seo2014activedata</a><span class="fn-bracket">]</span></span>
 <p>S. Seo, M. Wallat, T. Graepel, and K. Obermayer. Gaussian process regression:
 Active data selection and test point rejection. IJCNN 2000.</p>
 </div>
 <div class="citation" id="chen2014seqexpdesign" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id24" role="doc-backlink">Chen2014seqexpdesign</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id28" role="doc-backlink">Chen2014seqexpdesign</a><span class="fn-bracket">]</span></span>
 <p>X. Chen and Q. Zhou. Sequential experimental designs for stochastic kriging.
 Winter Simulation Conference 2014.</p>
 </div>
 <div class="citation" id="binois2017repexp" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id25" role="doc-backlink">Binois2017repexp</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id29" role="doc-backlink">Binois2017repexp</a><span class="fn-bracket">]</span></span>
 <p>M. Binois, J. Huang, R. B. Gramacy, and M. Ludkovski. Replication or
 exploration? Sequential design for stochastic simulation experiments.
 ArXiv 2017.</p>
@@ -2522,7 +3045,7 @@ ArXiv 2017.</p>
 In that, it is a proxy for global model uncertainty, and thus purely focused on
 “exploration”, rather the “exploitation” of many of the classic Bayesian
 Optimization acquisition functions.</p>
-<p>See <a class="reference internal" href="#seo2014activedata" id="id23"><span>[Seo2014activedata]</span></a>, <a class="reference internal" href="#chen2014seqexpdesign" id="id24"><span>[Chen2014seqexpdesign]</span></a>, and <a class="reference internal" href="#binois2017repexp" id="id25"><span>[Binois2017repexp]</span></a>.</p>
+<p>See <a class="reference internal" href="#seo2014activedata" id="id27"><span>[Seo2014activedata]</span></a>, <a class="reference internal" href="#chen2014seqexpdesign" id="id28"><span>[Chen2014seqexpdesign]</span></a>, and <a class="reference internal" href="#binois2017repexp" id="id29"><span>[Binois2017repexp]</span></a>.</p>
 <p>q-Integrated Negative Posterior Variance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2615,10 +3138,6 @@ of link function at X that active learning hopes to maximize</p>
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.active_learning.PairwiseMCPosteriorVariance.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.active_learning.PairwiseMCPosteriorVariance.sampler">
-<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCSampler</span></em><a class="headerlink" href="#botorch.acquisition.active_learning.PairwiseMCPosteriorVariance.sampler" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.active_learning.PairwiseMCPosteriorVariance.objective">
 <span class="sig-name descname"><span class="pre">objective</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MCAcquisitionObjective</span></em><a class="headerlink" href="#botorch.acquisition.active_learning.PairwiseMCPosteriorVariance.objective" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -2631,11 +3150,11 @@ of link function at X that active learning hopes to maximize</p>
 <section id="module-botorch.acquisition.preference">
 <span id="preference-acquisition-functions"></span><h3>Preference Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.preference" title="Permalink to this heading">¶</a></h3>
 <p>Preference acquisition functions. This includes:
-Analytical EUBO acquisition function as introduced in <a class="reference internal" href="#lin2022preference" id="id26"><span>[Lin2022preference]</span></a>.</p>
+Analytical EUBO acquisition function as introduced in <a class="reference internal" href="#lin2022preference" id="id30"><span>[Lin2022preference]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="lin2022preference" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Lin2022preference<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id26" role="doc-backlink">1</a>,<a href="#id27" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id30" role="doc-backlink">1</a>,<a href="#id31" role="doc-backlink">2</a>)</span>
 <p>Lin, Z.J., Astudillo, R., Frazier, P.I. and Bakshy, E. Preference Exploration
 for Efficient Bayesian Optimization with Multiple Outcomes. International
 Conference on Artificial Intelligence and Statistics (AISTATS), 2022.</p>
@@ -2648,7 +3167,7 @@ Conference on Artificial Intelligence and Statistics (AISTATS), 2022.</p>
 <p>Analytic Prefential Expected Utility of Best Options, i.e., Analytical EUBO</p>
 <p>Analytic implementation of Expected Utility of the Best Option under the
 Laplace model (assumes a PairwiseGP is used as the preference model) as
-proposed in <a class="reference internal" href="#lin2022preference" id="id27"><span>[Lin2022preference]</span></a>.</p>
+proposed in <a class="reference internal" href="#lin2022preference" id="id31"><span>[Lin2022preference]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -3016,8 +3535,12 @@ an optional <cite>batch-shape x q x d</cite>-dim Tensor <cite>X</cite> to a
 feasibility.</p></li>
 <li><p><strong>infeasible_cost</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – The cost of a design if all associated samples are
 infeasible.</p></li>
-<li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter of the sigmoid function approximating
-the constraint.</p></li>
+<li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – The temperature parameter of the sigmoid function approximating
+the constraint. Can be either a float or a 1-dim tensor. In case
+of a float the same eta is used for every constraint in
+constraints. In case of a tensor the length of the tensor must
+match the number of provided constraints. The i-th constraint is
+then estimated with the i-th eta value.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3071,7 +3594,7 @@ utility values of the input.</p></li>
 <li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – Sampler for the preference model to account for uncertainty in
 preferece when calculating the objective; it’s not the one used
 in MC acquisition functions. If None,
-it uses <cite>IIDNormalSampler(num_samples=1)</cite>.</p></li>
+it uses <cite>IIDNormalSampler(sample_shape=torch.Size([1]))</cite>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3132,7 +3655,7 @@ dimension).</p>
 <dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
-<p>This method is usually not called directly, but via the objectives</p>
+<p>This method is usually not called directly, but via the objectives.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># `__call__` method:</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
@@ -3201,7 +3724,7 @@ dimension).</p>
 <dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
-<p>This method is usually not called directly, but via the objectives</p>
+<p>This method is usually not called directly, but via the objectives.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># `__call__` method:</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
@@ -3254,7 +3777,7 @@ dimension).</p>
 <dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
-<p>This method is usually not called directly, but via the objectives</p>
+<p>This method is usually not called directly, but via the objectives.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># `__call__` method:</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
@@ -3306,7 +3829,7 @@ dimension).</p>
 <dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
-<p>This method is usually not called directly, but via the objectives</p>
+<p>This method is usually not called directly, but via the objectives.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># `__call__` method:</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
@@ -3360,7 +3883,7 @@ dimension).</p>
 <dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
-<p>This method is usually not called directly, but via the objectives</p>
+<p>This method is usually not called directly, but via the objectives.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># `__call__` method:</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
@@ -3581,17 +4104,17 @@ model (required if <cite>use_mean=False</cite>, ignored if <cite>use_mean=True</
 <section id="module-botorch.acquisition.risk_measures">
 <span id="risk-measures"></span><h3>Risk Measures<a class="headerlink" href="#module-botorch.acquisition.risk_measures" title="Permalink to this heading">¶</a></h3>
 <p>Risk Measures implemented as Monte-Carlo objectives, based on Bayesian
-optimization of risk measures as introduced in <a class="reference internal" href="#cakmak2020risk" id="id28"><span>[Cakmak2020risk]</span></a>. For a
+optimization of risk measures as introduced in <a class="reference internal" href="#cakmak2020risk" id="id32"><span>[Cakmak2020risk]</span></a>. For a
 broader discussion of Monte-Carlo methods for VaR and CVaR risk measures,
-see also <a class="reference internal" href="#hong2014review" id="id29"><span>[Hong2014review]</span></a>.</p>
+see also <a class="reference internal" href="#hong2014review" id="id33"><span>[Hong2014review]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="cakmak2020risk" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id28" role="doc-backlink">Cakmak2020risk</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id32" role="doc-backlink">Cakmak2020risk</a><span class="fn-bracket">]</span></span>
 <p>S. Cakmak, R. Astudillo, P. Frazier, and E. Zhou. Bayesian Optimization of
 Risk Measures. Advances in Neural Information Processing Systems 33, 2020.</p>
 </div>
 <div class="citation" id="hong2014review" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id29" role="doc-backlink">Hong2014review</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id33" role="doc-backlink">Hong2014review</a><span class="fn-bracket">]</span></span>
 <p>L. J. Hong, Z. Hu, and G. Liu. Monte carlo methods for value-at-risk and
 conditional value-at-risk: a review. ACM Transactions on Modeling and
 Computer Simulation, 2014.</p>
@@ -3807,18 +4330,18 @@ joint distribution of the outputs, and provides more accurate risk estimates.</p
 <div class="citation-list" role="list">
 <div class="citation" id="prekopa2012mvar" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Prekopa2012MVaR<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id30" role="doc-backlink">1</a>,<a href="#id33" role="doc-backlink">2</a>,<a href="#id34" role="doc-backlink">3</a>,<a href="#id35" role="doc-backlink">4</a>)</span>
+<span class="backrefs">(<a href="#id34" role="doc-backlink">1</a>,<a href="#id37" role="doc-backlink">2</a>,<a href="#id38" role="doc-backlink">3</a>,<a href="#id39" role="doc-backlink">4</a>)</span>
 <p>A. Prekopa. Multivariate value at risk and related topics.
 Annals of Operations Research, 2012.</p>
 </div>
 <div class="citation" id="cousin2013mvar" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Cousin2013MVaR<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id31" role="doc-backlink">1</a>,<a href="#id32" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id35" role="doc-backlink">1</a>,<a href="#id36" role="doc-backlink">2</a>)</span>
 <p>A. Cousin and E. Di Bernardino. On multivariate extensions of Value-at-Risk.
 Journal of Multivariate Analysis, 2013.</p>
 </div>
 <div class="citation" id="daulton2022mars" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id36" role="doc-backlink">Daulton2022MARS</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id40" role="doc-backlink">Daulton2022MARS</a><span class="fn-bracket">]</span></span>
 <p>S. Daulton, S, Cakmak, M. Balandat, M. Osborne, E. Zhou, and E. Bakshy.
 Robust multi-objective Bayesian optimization under input noise.
 Proceedings of the 39th International Conference on Machine Learning, 2022.</p>
@@ -4031,11 +4554,11 @@ posterior samples. The q-batches should be ordered so that each
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">MVaR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expectation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocessing_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad_to_n_w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_dominated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MultiOutputRiskMeasureMCObjective</span></code></p>
-<p>The multivariate Value-at-Risk as introduced in <a class="reference internal" href="#prekopa2012mvar" id="id30"><span>[Prekopa2012MVaR]</span></a>.</p>
+<p>The multivariate Value-at-Risk as introduced in <a class="reference internal" href="#prekopa2012mvar" id="id34"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>MVaR is defined as the non-dominated set of points in the extended domain
 of the random variable that have multivariate CDF greater than or equal to
 <cite>alpha</cite>. Note that MVaR is set valued and the size of the set depends on the
-particular realizations of the random variable. <a class="reference internal" href="#cousin2013mvar" id="id31"><span>[Cousin2013MVaR]</span></a> instead
+particular realizations of the random variable. <a class="reference internal" href="#cousin2013mvar" id="id35"><span>[Cousin2013MVaR]</span></a> instead
 propose to use the expectation of the set-valued MVaR as the multivariate
 VaR. We support this alternative with an <cite>expectation</cite> flag.</p>
 <p>The multivariate Value-at-Risk.</p>
@@ -4046,7 +4569,7 @@ VaR. We support this alternative with an <cite>expectation</cite> flag.</p>
 <li><p><strong>alpha</strong> (<em>float</em>) – The risk level of MVaR, float in <cite>(0.0, 1.0]</cite>. Each MVaR value
 dominates <cite>alpha</cite> fraction of all observations.</p></li>
 <li><p><strong>expectation</strong> (<em>bool</em>) – If True, returns the expectation of the MVaR set as is
-done in <a class="reference internal" href="#cousin2013mvar" id="id32"><span>[Cousin2013MVaR]</span></a>. Otherwise, it returns the union of all
+done in <a class="reference internal" href="#cousin2013mvar" id="id36"><span>[Cousin2013MVaR]</span></a>. Otherwise, it returns the union of all
 values in the MVaR set. Default: False.</p></li>
 <li><p><strong>preprocessing_function</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A preprocessing function to apply to the
 samples before computing the risk measure. This can be used to
@@ -4064,7 +4587,7 @@ in general be much larger than the alternative. See <cite>forward</cite> for
 more details on the return shape.
 NOTE: this is only relevant if <cite>expectation=False</cite>.</p></li>
 <li><p><strong>filter_dominated</strong> (<em>bool</em>) – If True, returns the non-dominated subset of
-alpha level points (this is MVaR as defined by <a class="reference internal" href="#prekopa2012mvar" id="id33"><span>[Prekopa2012MVaR]</span></a>).
+alpha level points (this is MVaR as defined by <a class="reference internal" href="#prekopa2012mvar" id="id37"><span>[Prekopa2012MVaR]</span></a>).
 Disabling this will make it faster, and may be preferable if
 the dominated points will be filtered out later, e.g., while
 calculating the hypervolume. Disabling this is not recommended
@@ -4075,7 +4598,7 @@ if <cite>expectation=True</cite>.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_cpu">
 <span class="sig-name descname"><span class="pre">get_mvar_set_cpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR.get_mvar_set_cpu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_cpu" title="Permalink to this definition">¶</a></dt>
-<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id34"><span>[Prekopa2012MVaR]</span></a>.</p>
+<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id38"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>NOTE: This is much faster on CPU for large <cite>n_w</cite> than the alternative but it
 is significantly slower on GPU. Based on empirical evidence, this is recommended
 when running on CPU with <cite>n_w &gt; 64</cite>.</p>
@@ -4102,7 +4625,7 @@ are not in-sample points.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_gpu">
 <span class="sig-name descname"><span class="pre">get_mvar_set_gpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR.get_mvar_set_gpu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_gpu" title="Permalink to this definition">¶</a></dt>
-<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id35"><span>[Prekopa2012MVaR]</span></a>.</p>
+<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id39"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>NOTE: This is much faster on GPU than the alternative but it scales very poorly
 on CPU as <cite>n_w</cite> increases. This should be preferred if a GPU is available or
 when <cite>n_w &lt;= 64</cite>. In addition, this supports <cite>m &gt;= 2</cite> outcomes (vs <cite>m = 2</cite> for
@@ -4159,7 +4682,7 @@ a deterministic return shape.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">MARS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chebyshev_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_Y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocessing_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MARS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MARS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.risk_measures.VaR" title="botorch.acquisition.risk_measures.VaR"><code class="xref py py-class docutils literal notranslate"><span class="pre">VaR</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MultiOutputRiskMeasureMCObjective</span></code></p>
 <p>MVaR Approximation based on Random Scalarizations as introduced
-in <a class="reference internal" href="#daulton2022mars" id="id36"><span>[Daulton2022MARS]</span></a>.</p>
+in <a class="reference internal" href="#daulton2022mars" id="id40"><span>[Daulton2022MARS]</span></a>.</p>
 <p>This approximates MVaR via VaR of Chebyshev scalarizations, where each
 scalarization corresponds to a point in the MVaR set. As implemented,
 this uses one set of scalarization weights to approximate a single MVaR value.
@@ -4360,7 +4883,7 @@ acquisition function.</p></li>
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The model to be used in the acquisition function.</p></li>
 <li><p><strong>training_data</strong> (<em>Union</em><em>[</em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>, </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em><em>]</em>) – Dataset(s) used to train the model.
 Used to determine default value for <cite>best_f</cite>.</p></li>
-<li><p><strong>best_f</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Threshold above (or below) which improvement is defined.</p></li>
+<li><p><strong>best_f</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Threshold above (or below) which improvement is defined.</p></li>
 <li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – The posterior transform to be used in the
 acquisition function.</p></li>
 <li><p><strong>maximize</strong> (<em>bool</em>) – If True, consider the problem a maximization problem.</p></li>
@@ -4494,7 +5017,7 @@ submitted for function evaluation but have not yet been evaluated.
 Concatenated into X upon forward call.</p></li>
 <li><p><strong>sampler</strong> (<em>Optional</em><em>[</em><em>MCSampler</em><em>]</em>) – The sampler used to draw base samples. If omitted, uses
 the acquisition functions’s default sampler.</p></li>
-<li><p><strong>best_f</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Threshold above (or below) which improvement is defined.</p></li>
+<li><p><strong>best_f</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Threshold above (or below) which improvement is defined.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -4563,7 +5086,7 @@ the acquisition functions’s default sampler.</p></li>
 of the step function. Smaller values yield more accurate
 approximations of the function, but result in gradients
 estimates with higher variance.</p></li>
-<li><p><strong>best_f</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The best objective value observed so far (assumed noiseless). Can
+<li><p><strong>best_f</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em>) – The best objective value observed so far (assumed noiseless). Can
 be a <cite>batch_shape</cite>-shaped tensor, which in case of a batched model
 specifies potentially different values for each element of the batch.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
@@ -5252,7 +5775,7 @@ weighting.</p>
 <p>Utilities for acquisition functions.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.utils.get_acquisition_function">
-<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.utils.</span></span><span class="sig-name descname"><span class="pre">get_acquisition_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acquisition_function_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_observed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mc_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qmc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#get_acquisition_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.utils.get_acquisition_function" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.utils.</span></span><span class="sig-name descname"><span class="pre">get_acquisition_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acquisition_function_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_observed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mc_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#get_acquisition_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.utils.get_acquisition_function" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function for initializing botorch acquisition functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5272,7 +5795,6 @@ feasibility. Used when constraint_transforms are not passed
 as part of the objective.</p></li>
 <li><p><strong>mc_samples</strong> (<em>int</em>) – The number of samples to use for (q)MC evaluation of the
 acquisition function.</p></li>
-<li><p><strong>qmc</strong> (<em>bool</em>) – If True, use quasi-Monte-Carlo sampling (instead of iid).</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – If provided, perform deterministic optimization (i.e. the
 function to optimize is fixed and not stochastic).</p></li>
 </ul>
@@ -5545,6 +6067,119 @@ under <cite>num_samples</cite> samples) probability of being pareto optimal.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.utils.compute_sample_box_decomposition">
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.utils.</span></span><span class="sig-name descname"><span class="pre">compute_sample_box_decomposition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pareto_fronts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitioning=&lt;class</span> <span class="pre">'botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_constraints=0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/utils.html#compute_sample_box_decomposition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.utils.compute_sample_box_decomposition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the box decomposition associated with some sampled optimal
+objectives. This also supports the single-objective and constrained optimization
+setting. An objective <cite>y</cite> is feasible if <cite>y &lt;= 0</cite>.</p>
+<p>To take advantage of batch computations, we pad the hypercell bounds with a
+<cite>2 x (M + K)</cite>-dim Tensor of zeros <cite>[0, 0]</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pareto_fronts</strong> (<em>Tensor</em>) – A <cite>num_pareto_samples x num_pareto_points x M</cite> dim Tensor
+containing the sampled optimal set of objectives.</p></li>
+<li><p><strong>partitioning</strong> (<em>BoxDecomposition</em>) – A <cite>BoxDecomposition</cite> module that is used to obtain the
+hyper-rectangle bounds for integration. In the unconstrained case, this
+gives the partition of the dominated space. In the constrained case, this
+gives the partition of the feasible dominated space union the infeasible
+space.</p></li>
+<li><p><strong>maximize</strong> (<em>bool</em>) – If true, the box-decomposition is computed assuming maximization.</p></li>
+<li><p><strong>num_constraints</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The number of constraints <cite>K</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>num_pareto_samples x 2 x J x (M + K)</cite>-dim Tensor containing the bounds for
+the hyper-rectangles. The number <cite>J</cite> is the smallest number of boxes needed
+to partition all the Pareto samples.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.utils.random_search_optimizer">
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.utils.</span></span><span class="sig-name descname"><span class="pre">random_search_optimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1024</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/utils.html#random_search_optimizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.utils.random_search_optimizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optimize a function via random search.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.deterministic.GenericDeterministicModel" title="botorch.models.deterministic.GenericDeterministicModel"><em>GenericDeterministicModel</em></a>) – The model.</p></li>
+<li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite>-dim Tensor containing the input bounds.</p></li>
+<li><p><strong>num_points</strong> (<em>int</em>) – The number of optimal points to be outputted.</p></li>
+<li><p><strong>maximize</strong> (<em>bool</em>) – If true, we consider a maximization problem.</p></li>
+<li><p><strong>pop_size</strong> (<em>int</em>) – The number of function evaluations per try.</p></li>
+<li><p><strong>max_tries</strong> (<em>int</em>) – The maximum number of tries.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A two-element tuple containing</p>
+<ul class="simple">
+<li><p>A <cite>num_points x d</cite>-dim Tensor containing the collection of optimal inputs.</p></li>
+<li><dl class="simple">
+<dt>A <cite>num_points x M</cite>-dim Tensor containing the collection of optimal</dt><dd><p>objectives.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.utils.sample_optimal_points">
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.utils.</span></span><span class="sig-name descname"><span class="pre">sample_optimal_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer=&lt;function</span> <span class="pre">random_search_optimizer&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_rff_features=512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/utils.html#sample_optimal_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.utils.sample_optimal_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute a collection of optimal inputs and outputs from samples of a Gaussian
+Process (GP).</p>
+<p>Steps:
+(1) The samples are generated using random Fourier features (RFFs).
+(2) The samples are optimized sequentially using an optimizer.</p>
+<dl class="simple">
+<dt>TODO: We can generalize the GP sampling step to accommodate for other sampling</dt><dd><p>strategies rather than restricting to RFFs e.g. decoupled sampling.</p>
+</dd>
+<dt>TODO: Currently this defaults to random search optimization, might want to</dt><dd><p>explore some other alternatives.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The model. This does not support models which include fantasy
+observations.</p></li>
+<li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite>-dim Tensor containing the input bounds.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – The number of GP samples.</p></li>
+<li><p><strong>num_points</strong> (<em>int</em>) – The number of optimal points to be outputted.</p></li>
+<li><p><strong>optimizer</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="models.html#botorch.models.deterministic.GenericDeterministicModel" title="botorch.models.deterministic.GenericDeterministicModel"><em>GenericDeterministicModel</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>bool</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A callable that solves the deterministic optimization problem.</p></li>
+<li><p><strong>num_rff_features</strong> (<em>int</em>) – The number of random Fourier features.</p></li>
+<li><p><strong>maximize</strong> (<em>bool</em>) – If true, we consider a maximization problem.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – The additional arguments for the optimizer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A two-element tuple containing</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>A <cite>num_samples x num_points x d</cite>-dim Tensor containing the collection of</dt><dd><p>optimal inputs.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>A <cite>num_samples x num_points x M</cite>-dim Tensor containing the collection of</dt><dd><p>optimal objectives.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>]</p>
+</dd>
+</dl>
+</dd></dl>
 </section>
 </section>
 </section>
@@ -5593,7 +6228,7 @@ under <cite>num_samples</cite> samples) probability of being pareto optimal.</p>
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

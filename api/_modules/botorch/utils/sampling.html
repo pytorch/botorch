@@ -42,7 +42,6 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
@@ -51,8 +50,6 @@
 <span class="kn">import</span> <span class="nn">scipy</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">SamplingWarning</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.qmc</span> <span class="kn">import</span> <span class="n">NormalQMCEngine</span>
 <span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">Delaunay</span><span class="p">,</span> <span class="n">HalfspaceIntersection</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">LongTensor</span><span class="p">,</span> <span class="n">Tensor</span>
@@ -81,103 +78,6 @@
     <span class="k">finally</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">torch</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">set_rng_state</span><span class="p">(</span><span class="n">old_state</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="construct_base_samples"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.construct_base_samples">[docs]</a><span class="k">def</span> <span class="nf">construct_base_samples</span><span class="p">(</span>
-    <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
-    <span class="n">output_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
-    <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
-    <span class="n">qmc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">dtype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Construct base samples from a multi-variate standard normal N(0, I_qo).</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        batch_shape: The batch shape of the base samples to generate. Typically,</span>
-<span class="sd">            this is used with each dimension of size 1, so as to eliminate</span>
-<span class="sd">            sampling variance across batches.</span>
-<span class="sd">        output_shape: The output shape (`q x m`) of the base samples to generate.</span>
-<span class="sd">        sample_shape: The sample shape of the samples to draw.</span>
-<span class="sd">        qmc: If True, use quasi-MC sampling (instead of iid draws).</span>
-<span class="sd">        seed: If provided, use as a seed for the RNG.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        A `sample_shape x batch_shape x mutput_shape` dimensional tensor of base</span>
-<span class="sd">        samples, drawn from a N(0, I_qm) distribution (using QMC if `qmc=True`).</span>
-<span class="sd">        Here `output_shape = q x m`.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; batch_shape = torch.Size([2])</span>
-<span class="sd">        &gt;&gt;&gt; output_shape = torch.Size([3])</span>
-<span class="sd">        &gt;&gt;&gt; sample_shape = torch.Size([10])</span>
-<span class="sd">        &gt;&gt;&gt; samples = construct_base_samples(batch_shape, output_shape, sample_shape)</span>
-<span class="sd">    """</span>
-    <span class="n">base_sample_shape</span> <span class="o">=</span> <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">output_shape</span>
-    <span class="n">output_dim</span> <span class="o">=</span> <span class="n">output_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">qmc</span> <span class="ow">and</span> <span class="n">output_dim</span> <span class="o">&lt;=</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">batch_shape</span><span class="p">)</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
-        <span class="n">base_samples</span> <span class="o">=</span> <span class="n">draw_sobol_normal_samples</span><span class="p">(</span>
-            <span class="n">d</span><span class="o">=</span><span class="n">output_dim</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span>
-        <span class="p">)</span>
-        <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">base_sample_shape</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">qmc</span> <span class="ow">and</span> <span class="n">output_dim</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Number of output elements (q*d=</span><span class="si">{</span><span class="n">output_dim</span><span class="si">}</span><span class="s2">) greater than "</span>
-                <span class="sa">f</span><span class="s2">"maximum supported by qmc (</span><span class="si">{</span><span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="si">}</span><span class="s2">). "</span>
-                <span class="s2">"Using iid sampling instead."</span><span class="p">,</span>
-                <span class="n">SamplingWarning</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">with</span> <span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">):</span>
-            <span class="n">base_samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span>
-                <span class="n">sample_shape</span> <span class="o">+</span> <span class="n">base_sample_shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span>
-            <span class="p">)</span>
-    <span class="k">return</span> <span class="n">base_samples</span></div>
-
-
-<div class="viewcode-block" id="construct_base_samples_from_posterior"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.construct_base_samples_from_posterior">[docs]</a><span class="k">def</span> <span class="nf">construct_base_samples_from_posterior</span><span class="p">(</span>
-    <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span>
-    <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
-    <span class="n">qmc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">collapse_batch_dims</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Construct a tensor of normally distributed base samples.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        posterior: A Posterior object.</span>
-<span class="sd">        sample_shape: The sample shape of the samples to draw.</span>
-<span class="sd">        qmc: If True, use quasi-MC sampling (instead of iid draws).</span>
-<span class="sd">        seed: If provided, use as a seed for the RNG.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        A `num_samples x 1 x q x m` dimensional Tensor of base samples, drawn</span>
-<span class="sd">        from a N(0, I_qm) distribution (using QMC if `qmc=True`). Here `q` and</span>
-<span class="sd">        `m` are the same as in the posterior's `event_shape` `b x q x m`.</span>
-<span class="sd">        Importantly, this only obtain a single t-batch of samples, so as to not</span>
-<span class="sd">        introduce any sampling variance across t-batches.</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; sample_shape = torch.Size([10])</span>
-<span class="sd">        &gt;&gt;&gt; samples = construct_base_samples_from_posterior(posterior, sample_shape)</span>
-<span class="sd">    """</span>
-    <span class="n">output_shape</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>  <span class="c1"># shape of joint output: q x m</span>
-    <span class="k">if</span> <span class="n">collapse_batch_dims</span><span class="p">:</span>
-        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]))</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-    <span class="n">base_samples</span> <span class="o">=</span> <span class="n">construct_base_samples</span><span class="p">(</span>
-        <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
-        <span class="n">output_shape</span><span class="o">=</span><span class="n">output_shape</span><span class="p">,</span>
-        <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span>
-        <span class="n">qmc</span><span class="o">=</span><span class="n">qmc</span><span class="p">,</span>
-        <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
-        <span class="n">device</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
-        <span class="n">dtype</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">base_samples</span></div>
 
 
 <div class="viewcode-block" id="draw_sobol_samples"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.draw_sobol_samples">[docs]</a><span class="k">def</span> <span class="nf">draw_sobol_samples</span><span class="p">(</span>
@@ -1045,7 +945,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

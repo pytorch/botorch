@@ -27,38 +27,20 @@
 <span id="botorch-fit"></span><h1>botorch.fit<a class="headerlink" href="#module-botorch.fit" title="Permalink to this heading">¶</a></h1>
 <p>Model fitting routines.</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="botorch.fit.DEFAULT_WARNING_FILTER">
-<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_WARNING_FILTER</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging_patterns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{10:</span> <span class="pre">re.compile('TOTAL</span> <span class="pre">NO.</span> <span class="pre">of</span> <span class="pre">(ITERATIONS</span> <span class="pre">REACHED</span> <span class="pre">LIMIT|f</span> <span class="pre">AND</span> <span class="pre">g</span> <span class="pre">EVALUATIONS</span> <span class="pre">EXCEEDS</span> <span class="pre">LIMIT)')}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#DEFAULT_WARNING_FILTER"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.DEFAULT_WARNING_FILTER" title="Permalink to this definition">¶</a></dt>
-<dd><p>Default warning resolution policy: retry upon encountering an
-OptimizationWarning that does not match any logging pattern.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>w</strong> (<em>WarningMessage</em>) – Candidate for filtering.</p></li>
-<li><p><strong>logging_patterns</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>Pattern</em><em>]</em>) – Dictionary mapping logging levels to regular expressions.
-Warning messages are compared against these expressions and matches are
-awarded first-come-first-serve when iterating through the dictionary.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Boolean indicating whether the warning is unresolved.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
 <dt class="sig sig-object py" id="botorch.fit.fit_gpytorch_mll">
-<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_mll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_gpytorch_mll"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_gpytorch_mll" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_mll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">closure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">closure_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_gpytorch_mll"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_gpytorch_mll" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clearing house for fitting models passed as GPyTorch MarginalLogLikelihoods.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A GPyTorch MarginalLogLikelihood instance.</p></li>
+<li><p><strong>closure</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – Forward-backward closure for obtaining objective values and gradients.
+Responsible for setting parameters’ <cite>grad</cite> attributes. If no closure is
+provided, one will be obtained by calling <cite>get_loss_closure_with_grads</cite>.</p></li>
 <li><p><strong>optimizer</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – User specified optimization algorithm. When <cite>optimizer is None</cite>,
 this keyword argument is omitted when calling the dispatcher.</p></li>
-<li><p><strong>optimizer_kwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – A dictionary of keyword arguments passed when
+<li><p><strong>closure_kwargs</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Keyword arguments passed when calling <cite>closure</cite>.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – A dictionary of keyword arguments passed when
 calling <cite>optimizer</cite>.</p></li>
 <li><p><strong>**kwargs</strong> (<em>Any</em>) – Keyword arguments passed down through the dispatcher to
 fit subroutines. Unexpected keywords are ignored.</p></li>
@@ -82,15 +64,15 @@ details, see <cite>fit_gpytorch_mll</cite>.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A GPyTorch MarginalLogLikelihood instance.</p></li>
-<li><p><strong>optimizer</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>MarginalLogLikelihood</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>MarginalLogLikelihood</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>]</em>) – User specified optimization algorithm. When <cite>optimizer is None</cite>,
+<li><p><strong>optimizer</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – User specified optimization algorithm. When <cite>optimizer is None</cite>,
 this keyword argument is omitted when calling the dispatcher from inside
 <cite>fit_gpytorch_mll</cite>.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Keyword arguments passed to <cite>optimizer</cite>.</p></li>
 <li><p><strong>exclude</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Legacy argument for specifying parameters <cite>x</cite> that should be held fixed
 during optimization. Internally, used to temporarily set <cite>x.requires_grad</cite>
 to False.</p></li>
 <li><p><strong>max_retries</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Legacy name for <cite>max_attempts</cite>. When <cite>max_retries is None</cite>,
 this keyword argument is omitted when calling <cite>fit_gpytorch_mll</cite>.</p></li>
-<li><p><strong>optimizer_kwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – </p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -175,7 +157,7 @@ errors, e.g., <a class="reference external" href="https://github.com/pyro-ppl/py
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

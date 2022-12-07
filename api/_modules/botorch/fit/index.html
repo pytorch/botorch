@@ -36,95 +36,78 @@
 
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">nullcontext</span>
-<span class="kn">from</span> <span class="nn">re</span> <span class="kn">import</span> <span class="nb">compile</span><span class="p">,</span> <span class="n">Pattern</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
-<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">catch_warnings</span><span class="p">,</span> <span class="n">simplefilter</span><span class="p">,</span> <span class="n">warn</span><span class="p">,</span> <span class="n">WarningMessage</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">filterfalse</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">catch_warnings</span><span class="p">,</span> <span class="n">simplefilter</span><span class="p">,</span> <span class="n">warn</span><span class="p">,</span> <span class="n">warn_explicit</span><span class="p">,</span> <span class="n">WarningMessage</span>
 
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">ModelFittingError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span><span class="p">,</span> <span class="n">OptimizationWarning</span>
+<span class="kn">from</span> <span class="nn">botorch.models.approximate_gp</span> <span class="kn">import</span> <span class="n">ApproximateGPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.converter</span> <span class="kn">import</span> <span class="n">batched_to_model_list</span><span class="p">,</span> <span class="n">model_list_to_batched</span>
 <span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">SaasFullyBayesianSingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian_multitask</span> <span class="kn">import</span> <span class="n">SaasFullyBayesianMultiTaskGP</span>
-
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_scipy</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.closures</span> <span class="kn">import</span> <span class="n">get_loss_closure_with_grads</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.core</span> <span class="kn">import</span> <span class="n">_LBFGSB_MAXITER_MAXFUN_REGEX</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll_scipy</span><span class="p">,</span> <span class="n">fit_gpytorch_mll_torch</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_warning_handler_template</span><span class="p">,</span>
     <span class="n">allclose_mll</span><span class="p">,</span>
-    <span class="n">del_attribute_ctx</span><span class="p">,</span>
-    <span class="n">parameter_rollback_ctx</span><span class="p">,</span>
-    <span class="n">requires_grad_ctx</span><span class="p">,</span>
+    <span class="n">get_parameters</span><span class="p">,</span>
     <span class="n">sample_all_priors</span><span class="p">,</span>
-    <span class="n">state_rollback_ctx</span><span class="p">,</span>
-    <span class="n">Tkwargs</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.settings</span> <span class="kn">import</span> <span class="n">debug</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.dispatcher</span> <span class="kn">import</span> <span class="n">Dispatcher</span><span class="p">,</span> <span class="n">MDNotImplementedError</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.context_managers</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">del_attribute_ctx</span><span class="p">,</span>
+    <span class="n">module_rollback_ctx</span><span class="p">,</span>
+    <span class="n">parameter_rollback_ctx</span><span class="p">,</span>
+    <span class="n">requires_grad_ctx</span><span class="p">,</span>
+    <span class="n">TensorCheckpoint</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.dispatcher</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Dispatcher</span><span class="p">,</span>
+    <span class="n">MDNotImplementedError</span><span class="p">,</span>
+    <span class="n">type_bypassing_encoder</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="n">Likelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls._approximate_mll</span> <span class="kn">import</span> <span class="n">_ApproximateMarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.sum_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">SumMarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">linear_operator.utils.errors</span> <span class="kn">import</span> <span class="n">NotPSDError</span>
 <span class="kn">from</span> <span class="nn">pyro.infer.mcmc</span> <span class="kn">import</span> <span class="n">MCMC</span><span class="p">,</span> <span class="n">NUTS</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">device</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">Tensor</span>
-
-<span class="n">OptimizerType</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">MarginalLogLikelihood</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">MarginalLogLikelihood</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
-<span class="n">DEFAULT_LOGGING_PATTERNS</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Pattern</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">:</span> <span class="nb">compile</span><span class="p">(</span>  <span class="c1"># catch warning corresponding to `maxiter` and `maxfun`</span>
-        <span class="s2">"TOTAL NO. of (ITERATIONS REACHED LIMIT|f AND g EVALUATIONS EXCEEDS LIMIT)"</span>
-    <span class="p">)</span>
-<span class="p">}</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Parameter</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
 
 
-<div class="viewcode-block" id="DEFAULT_WARNING_FILTER"><a class="viewcode-back" href="../../fit.html#botorch.fit.DEFAULT_WARNING_FILTER">[docs]</a><span class="k">def</span> <span class="nf">DEFAULT_WARNING_FILTER</span><span class="p">(</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">WarningMessage</span><span class="p">,</span>
-    <span class="n">logging_patterns</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Pattern</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_LOGGING_PATTERNS</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Default warning resolution policy: retry upon encountering an</span>
-<span class="sd">    OptimizationWarning that does not match any logging pattern.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        w: Candidate for filtering.</span>
-<span class="sd">        logging_patterns: Dictionary mapping logging levels to regular expressions.</span>
-<span class="sd">            Warning messages are compared against these expressions and matches are</span>
-<span class="sd">            awarded first-come-first-serve when iterating through the dictionary.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Boolean indicating whether the warning is unresolved.</span>
-<span class="sd">    """</span>
-    <span class="k">for</span> <span class="n">level</span><span class="p">,</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">logging_patterns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">message</span><span class="p">)):</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">False</span>
-
-    <span class="c1"># Rethrow OptimizationWarnings but mark them as resolved</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">):</span>
-        <span class="n">warn</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">False</span>
-
-    <span class="k">return</span> <span class="kc">True</span></div>
-
-
-<span class="c1"># Dispatcher for `fit_gpytorch_mll`</span>
-<span class="k">def</span> <span class="nf">_type_bypassing_encoder</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">:</span>
-    <span class="c1"># Allow type variables to be passed as pre-encoded arguments</span>
-    <span class="k">return</span> <span class="n">arg</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
-
-
-<span class="n">dispatcher</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="s2">"fit_gpytorch_mll"</span><span class="p">,</span> <span class="n">encoder</span><span class="o">=</span><span class="n">_type_bypassing_encoder</span><span class="p">)</span>
+<span class="n">DEFAULT_WARNING_HANDLER</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+    <span class="n">_warning_handler_template</span><span class="p">,</span>
+    <span class="n">debug</span><span class="o">=</span><span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="n">_LBFGSB_MAXITER_MAXFUN_REGEX</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">message</span><span class="p">)),</span>
+    <span class="n">rethrow</span><span class="o">=</span><span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="n">FitGPyTorchMLL</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="s2">"fit_gpytorch_mll"</span><span class="p">,</span> <span class="n">encoder</span><span class="o">=</span><span class="n">type_bypassing_encoder</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="fit_gpytorch_mll"><a class="viewcode-back" href="../../fit.html#botorch.fit.fit_gpytorch_mll">[docs]</a><span class="k">def</span> <span class="nf">fit_gpytorch_mll</span><span class="p">(</span>
     <span class="n">mll</span><span class="p">:</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span>
+    <span class="n">closure</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">closure_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MarginalLogLikelihood</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Clearing house for fitting models passed as GPyTorch MarginalLogLikelihoods.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        mll: A GPyTorch MarginalLogLikelihood instance.</span>
+<span class="sd">        closure: Forward-backward closure for obtaining objective values and gradients.</span>
+<span class="sd">            Responsible for setting parameters' `grad` attributes. If no closure is</span>
+<span class="sd">            provided, one will be obtained by calling `get_loss_closure_with_grads`.</span>
 <span class="sd">        optimizer: User specified optimization algorithm. When `optimizer is None`,</span>
 <span class="sd">            this keyword argument is omitted when calling the dispatcher.</span>
+<span class="sd">        closure_kwargs: Keyword arguments passed when calling `closure`.</span>
 <span class="sd">        optimizer_kwargs: A dictionary of keyword arguments passed when</span>
 <span class="sd">            calling `optimizer`.</span>
 <span class="sd">        **kwargs: Keyword arguments passed down through the dispatcher to</span>
@@ -137,10 +120,12 @@
     <span class="k">if</span> <span class="n">optimizer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># defer to per-method defaults</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"optimizer"</span><span class="p">]</span> <span class="o">=</span> <span class="n">optimizer</span>
 
-    <span class="k">return</span> <span class="n">dispatcher</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">FitGPyTorchMLL</span><span class="p">(</span>
         <span class="n">mll</span><span class="p">,</span>
         <span class="nb">type</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">likelihood</span><span class="p">),</span>
         <span class="nb">type</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">),</span>
+        <span class="n">closure</span><span class="o">=</span><span class="n">closure</span><span class="p">,</span>
+        <span class="n">closure_kwargs</span><span class="o">=</span><span class="n">closure_kwargs</span><span class="p">,</span>
         <span class="n">optimizer_kwargs</span><span class="o">=</span><span class="n">optimizer_kwargs</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span></div>
@@ -148,7 +133,7 @@
 
 <div class="viewcode-block" id="fit_gpytorch_model"><a class="viewcode-back" href="../../fit.html#botorch.fit.fit_gpytorch_model">[docs]</a><span class="k">def</span> <span class="nf">fit_gpytorch_model</span><span class="p">(</span>
     <span class="n">mll</span><span class="p">:</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span>
-    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OptimizerType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_retries</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -162,6 +147,7 @@
 <span class="sd">        optimizer: User specified optimization algorithm. When `optimizer is None`,</span>
 <span class="sd">            this keyword argument is omitted when calling the dispatcher from inside</span>
 <span class="sd">            `fit_gpytorch_mll`.</span>
+<span class="sd">        optimizer_kwargs: Keyword arguments passed to `optimizer`.</span>
 <span class="sd">        exclude: Legacy argument for specifying parameters `x` that should be held fixed</span>
 <span class="sd">            during optimization. Internally, used to temporarily set `x.requires_grad`</span>
 <span class="sd">            to False.</span>
@@ -177,7 +163,7 @@
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"max_attempts"</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_retries</span>
 
     <span class="n">optimizer_kwargs</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">optimizer_kwargs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">optimizer_kwargs</span>
-    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"bounds"</span><span class="p">,</span> <span class="s2">"options"</span><span class="p">,</span> <span class="s2">"track_iterations"</span><span class="p">,</span> <span class="s2">"approx_mll"</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"bounds"</span><span class="p">,</span> <span class="s2">"options"</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="k">continue</span>
 
@@ -205,16 +191,18 @@
     <span class="k">return</span> <span class="n">mll</span></div>
 
 
-<span class="nd">@dispatcher</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">MarginalLogLikelihood</span><span class="p">,</span> <span class="nb">object</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
+<span class="nd">@FitGPyTorchMLL</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">MarginalLogLikelihood</span><span class="p">,</span> <span class="nb">object</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">_fit_fallback</span><span class="p">(</span>
     <span class="n">mll</span><span class="p">:</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span>
     <span class="n">_</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="nb">object</span><span class="p">],</span>
     <span class="n">__</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="nb">object</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="n">fit_gpytorch_scipy</span><span class="p">,</span>
-    <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">closure</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="n">fit_gpytorch_mll_scipy</span><span class="p">,</span>
+    <span class="n">closure_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_attempts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
-    <span class="n">warning_filter</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">WarningMessage</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_WARNING_FILTER</span><span class="p">,</span>
+    <span class="n">warning_handler</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">WarningMessage</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_WARNING_HANDLER</span><span class="p">,</span>
     <span class="n">caught_exception_types</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">NotPSDError</span><span class="p">,),</span>
     <span class="o">**</span><span class="n">ignore</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MarginalLogLikelihood</span><span class="p">:</span>
@@ -226,8 +214,12 @@
 <span class="sd">    by resampling tunable parameters.</span>
 
 <span class="sd">    Args:</span>
+<span class="sd">        closure: Forward-backward closure for obtaining objective values and gradients.</span>
+<span class="sd">            Responsible for setting parameters' `grad` attributes. If no closure is</span>
+<span class="sd">            provided, one will be obtained by calling `get_loss_closure_with_grads`.</span>
 <span class="sd">        optimizer: The underlying optimization algorithm to run.</span>
-<span class="sd">        optimizer_kwargs: Keyword arguments passed when calling `optimizer`.</span>
+<span class="sd">        closure_kwargs: Keyword arguments passed to `closure`.</span>
+<span class="sd">        optimizer_kwargs: Keyword arguments passed to `optimizer`.</span>
 <span class="sd">        max_attempts: The maximum number of fit attempts allowed. The attempt budget</span>
 <span class="sd">            is NOT shared between calls to this method.</span>
 <span class="sd">        warning_filter: A function used to filter warnings produced when calling</span>
@@ -241,34 +233,46 @@
 <span class="sd">        The `mll` instance. If fitting succeeded, then `mll` will be in evaluation mode,</span>
 <span class="sd">        i.e. `mll.training == False`. Otherwise, `mll` will be in training mode.</span>
 <span class="sd">    """</span>
-    <span class="n">ckpt</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tkwargs</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># lazy CPU-based checkpoint</span>
-    <span class="n">ckpt_nograd</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tkwargs</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># subset for fixed parameters</span>
+    <span class="c1"># Setup</span>
     <span class="n">optimizer_kwargs</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">optimizer_kwargs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">optimizer_kwargs</span>
+    <span class="n">params_nograd</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># pyre-ignore [9]</span>
+    <span class="n">ckpt_nograd</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TensorCheckpoint</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># pyre-ignore [9]</span>
+    <span class="n">ckpt</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TensorCheckpoint</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># pyre-ignore [9]</span>
 
+    <span class="c1"># Build closure</span>
     <span class="n">mll</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">max_attempts</span><span class="p">):</span>
-        <span class="c1"># Wrap with rollback contextmanager so each loop iteration reloads the original</span>
-        <span class="c1"># state_dict upon exiting (unless `ckpt` is cleared).</span>
-        <span class="k">with</span> <span class="n">state_rollback_ctx</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">checkpoint</span><span class="o">=</span><span class="n">ckpt</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">(</span><span class="s2">"cpu"</span><span class="p">))</span> <span class="k">as</span> <span class="n">ckpt</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">ckpt_nograd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">ckpt_nograd</span> <span class="o">=</span> <span class="p">{</span>  <span class="c1"># reuse cached values from primary checkpoint</span>
-                    <span class="n">k</span><span class="p">:</span> <span class="n">ckpt</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">mll</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">requires_grad</span>
-                <span class="p">}</span>
+    <span class="k">if</span> <span class="n">closure</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">closure</span> <span class="o">=</span> <span class="n">get_loss_closure_with_grads</span><span class="p">(</span>
+            <span class="n">mll</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">get_parameters</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">closure_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">closure</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">closure</span><span class="p">,</span> <span class="o">**</span><span class="n">closure_kwargs</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">attempt</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># maybe resample parameters that require gradients</span>
-                <span class="k">with</span> <span class="n">parameter_rollback_ctx</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">checkpoint</span><span class="o">=</span><span class="n">ckpt_nograd</span><span class="p">):</span>
+    <span class="c1"># Attempt to fit the model</span>
+    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">max_attempts</span><span class="p">):</span>
+        <span class="c1"># Wrap with rollback contextmanager so that each loop iteration reloads the</span>
+        <span class="c1"># original state_dict upon exiting (unless we clear `ckpt`).</span>
+        <span class="k">with</span> <span class="n">module_rollback_ctx</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">checkpoint</span><span class="o">=</span><span class="n">ckpt</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">(</span><span class="s2">"cpu"</span><span class="p">))</span> <span class="k">as</span> <span class="n">ckpt</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">attempt</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># resample free parameters</span>
+                <span class="k">if</span> <span class="n">params_nograd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">params_nograd</span> <span class="o">=</span> <span class="n">get_parameters</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">ckpt_nograd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># reuse primary checkpoint</span>
+                    <span class="n">ckpt_nograd</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">ckpt</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">params_nograd</span><span class="p">}</span>
+
+                <span class="k">with</span> <span class="n">parameter_rollback_ctx</span><span class="p">(</span><span class="n">params_nograd</span><span class="p">,</span> <span class="n">checkpoint</span><span class="o">=</span><span class="n">ckpt_nograd</span><span class="p">):</span>
                     <span class="n">sample_all_priors</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
 
             <span class="k">try</span><span class="p">:</span>
                 <span class="c1"># Fit the model</span>
                 <span class="k">with</span> <span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">warning_list</span><span class="p">,</span> <span class="n">debug</span><span class="p">(</span><span class="kc">True</span><span class="p">):</span>
                     <span class="n">simplefilter</span><span class="p">(</span><span class="s2">"always"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">OptimizationWarning</span><span class="p">)</span>
-                    <span class="n">mll</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimizer</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="o">**</span><span class="n">optimizer_kwargs</span><span class="p">)</span>
+                    <span class="n">optimizer</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">closure</span><span class="o">=</span><span class="n">closure</span><span class="p">,</span> <span class="o">**</span><span class="n">optimizer_kwargs</span><span class="p">)</span>
 
-                <span class="c1"># Resolve warning messages and determine whether or not to retry</span>
+                <span class="c1"># Resolved warnings and determine whether or not to retry</span>
                 <span class="n">done</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="k">for</span> <span class="n">unresolved_warning</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">(</span><span class="n">warning_filter</span><span class="p">,</span> <span class="n">warning_list</span><span class="p">):</span>
-                    <span class="n">warn</span><span class="p">(</span><span class="n">unresolved_warning</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="n">unresolved_warning</span><span class="o">.</span><span class="n">category</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">filterfalse</span><span class="p">(</span><span class="n">warning_handler</span><span class="p">,</span> <span class="n">warning_list</span><span class="p">):</span>
+                    <span class="n">warn_explicit</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">message</span><span class="p">),</span> <span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">lineno</span><span class="p">)</span>
                     <span class="n">done</span> <span class="o">=</span> <span class="kc">False</span>
 
                 <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
@@ -290,10 +294,14 @@
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                 <span class="p">)</span>
 
-    <span class="k">raise</span> <span class="n">ModelFittingError</span><span class="p">(</span><span class="s2">"All attempts to fit the model have failed."</span><span class="p">)</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s2">"All attempts to fit the model have failed."</span>
+    <span class="k">if</span> <span class="n">debug</span><span class="o">.</span><span class="n">off</span><span class="p">():</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span> <span class="o">+</span> <span class="s2">" For more information, try enabling botorch.settings.debug mode."</span>
+
+    <span class="k">raise</span> <span class="n">ModelFittingError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
 
-<span class="nd">@dispatcher</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">SumMarginalLogLikelihood</span><span class="p">,</span> <span class="n">Likelihood</span><span class="p">,</span> <span class="n">ModelListGP</span><span class="p">)</span>
+<span class="nd">@FitGPyTorchMLL</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">SumMarginalLogLikelihood</span><span class="p">,</span> <span class="nb">object</span><span class="p">,</span> <span class="n">ModelListGP</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">_fit_list</span><span class="p">(</span>
     <span class="n">mll</span><span class="p">:</span> <span class="n">SumMarginalLogLikelihood</span><span class="p">,</span>
     <span class="n">_</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">Likelihood</span><span class="p">],</span>
@@ -317,18 +325,26 @@
     <span class="k">return</span> <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">sub_mll</span><span class="o">.</span><span class="n">training</span> <span class="k">for</span> <span class="n">sub_mll</span> <span class="ow">in</span> <span class="n">mll</span><span class="o">.</span><span class="n">mlls</span><span class="p">)</span> <span class="k">else</span> <span class="n">mll</span>
 
 
-<span class="nd">@dispatcher</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">MarginalLogLikelihood</span><span class="p">,</span> <span class="n">Likelihood</span><span class="p">,</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">)</span>
+<span class="nd">@FitGPyTorchMLL</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">MarginalLogLikelihood</span><span class="p">,</span> <span class="n">_ApproximateMarginalLogLikelihood</span><span class="p">),</span>
+    <span class="nb">object</span><span class="p">,</span>
+    <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="k">def</span> <span class="nf">_fit_multioutput_independent</span><span class="p">(</span>
     <span class="n">mll</span><span class="p">:</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span>
     <span class="n">_</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">Likelihood</span><span class="p">],</span>
     <span class="n">__</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
+    <span class="n">closure</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sequential</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MarginalLogLikelihood</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Fitting routine for multioutput Gaussian processes.</span>
 
 <span class="sd">    Args:</span>
+<span class="sd">        closure: Forward-backward closure for obtaining objective values and gradients.</span>
+<span class="sd">            Responsible for setting parameters' `grad` attributes. If no closure is</span>
+<span class="sd">            provided, one will be obtained by calling `get_loss_closure_with_grads`.</span>
 <span class="sd">        sequential: Boolean specifying whether or not to an attempt should be made to</span>
 <span class="sd">            fit the model as a collection of independent GPs. Only relevant for</span>
 <span class="sd">            certain types of GPs with independent outputs, see `batched_to_model_list`.</span>
@@ -340,6 +356,7 @@
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="p">(</span>  <span class="c1"># incompatible models</span>
         <span class="ow">not</span> <span class="n">sequential</span>
+        <span class="ow">or</span> <span class="n">closure</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="ow">or</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">==</span> <span class="mi">1</span>
         <span class="ow">or</span> <span class="n">mll</span><span class="o">.</span><span class="n">likelihood</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">"likelihood"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="p">):</span>
@@ -366,7 +383,7 @@
             <span class="c1"># Repackage submodels and copy over state_dict</span>
             <span class="n">repacked_model</span> <span class="o">=</span> <span class="n">model_list_to_batched</span><span class="p">(</span><span class="n">unpacked_mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">())</span>
             <span class="n">repacked_mll</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">mll</span><span class="p">)(</span><span class="n">repacked_model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">repacked_model</span><span class="p">)</span>
-            <span class="k">with</span> <span class="n">state_rollback_ctx</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">(</span><span class="s2">"cpu"</span><span class="p">))</span> <span class="k">as</span> <span class="n">ckpt</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">module_rollback_ctx</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">(</span><span class="s2">"cpu"</span><span class="p">))</span> <span class="k">as</span> <span class="n">ckpt</span><span class="p">:</span>
                 <span class="n">mll</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">repacked_mll</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">allclose_mll</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">repacked_mll</span><span class="p">):</span>
                     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>  <span class="c1"># validate model repacking</span>
@@ -383,6 +400,55 @@
                 <span class="n">BotorchWarning</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">raise</span> <span class="n">MDNotImplementedError</span>
+
+
+<span class="nd">@FitGPyTorchMLL</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">_ApproximateMarginalLogLikelihood</span><span class="p">,</span> <span class="nb">object</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_fit_fallback_approximate</span><span class="p">(</span>
+    <span class="n">mll</span><span class="p">:</span> <span class="n">_ApproximateMarginalLogLikelihood</span><span class="p">,</span>
+    <span class="n">_</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">Likelihood</span><span class="p">],</span>
+    <span class="n">__</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">ApproximateGPyTorchModel</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">closure</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">data_loader</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DataLoader</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">full_batch_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span>  <span class="c1"># TODO: To be determined.</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ApproximateMarginalLogLikelihood</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Fallback method for fitting approximate Gaussian processes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        closure: Forward-backward closure for obtaining objective values and gradients.</span>
+<span class="sd">            Responsible for setting parameters' `grad` attributes. If no closure is</span>
+<span class="sd">            provided, one will be obtained by calling `get_loss_closure_with_grads`.</span>
+<span class="sd">        optimizer: The underlying optimization algorithm to run. Default to</span>
+<span class="sd">            `fit_gpytorch_mll_scipy` when `closure=None` and the model's internal</span>
+<span class="sd">            training set has no more than `full_batch_cutoff` observations; otherwise,</span>
+<span class="sd">            defaults to `fit_gpytorch_mll_torch`.</span>
+<span class="sd">        data_loader: An optional DataLoader to pass to `get_loss_closure_with_grads`.</span>
+<span class="sd">            May only be provided when `closure=None`.</span>
+<span class="sd">        full_batch_limit: Threshold for determining the default choice of `optimizer`</span>
+<span class="sd">            when `closure=None`.</span>
+<span class="sd">        **kwargs: Keyword arguments passed to `_fit_fallback`.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">data_loader</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">closure</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Only one of `data_loader` or `closure` may be passed."</span>
+            <span class="p">)</span>
+        <span class="n">closure</span> <span class="o">=</span> <span class="n">get_loss_closure_with_grads</span><span class="p">(</span>
+            <span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span>
+            <span class="n">data_loader</span><span class="o">=</span><span class="n">data_loader</span><span class="p">,</span>
+            <span class="n">parameters</span><span class="o">=</span><span class="n">get_parameters</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">optimizer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">optimizer</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">fit_gpytorch_mll_scipy</span>
+            <span class="k">if</span> <span class="n">closure</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_targets</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">full_batch_limit</span>
+            <span class="k">else</span> <span class="n">fit_gpytorch_mll_torch</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_fit_fallback</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">__</span><span class="p">,</span> <span class="n">closure</span><span class="o">=</span><span class="n">closure</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="fit_fully_bayesian_model_nuts"><a class="viewcode-back" href="../../fit.html#botorch.fit.fit_fully_bayesian_model_nuts">[docs]</a><span class="k">def</span> <span class="nf">fit_fully_bayesian_model_nuts</span><span class="p">(</span>
@@ -488,7 +554,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

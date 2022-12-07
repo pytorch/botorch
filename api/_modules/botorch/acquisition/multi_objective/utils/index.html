@@ -38,24 +38,35 @@
 
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">monte_carlo</span>  <span class="c1"># noqa F401</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.objective</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">IdentityMCMultiOutputObjective</span><span class="p">,</span>
     <span class="n">MCMultiOutputObjective</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span><span class="p">,</span> <span class="n">SamplingWarning</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span>
+<span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">GenericDeterministicModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">MCMC_DIM</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.get_sampler</span> <span class="kn">import</span> <span class="n">get_sampler</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.gp_sampling</span> <span class="kn">import</span> <span class="n">get_gp_samples</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.box_decomposition</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BoxDecomposition</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.box_decomposition_list</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BoxDecompositionList</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.dominated</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DominatedPartitioning</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.pareto</span> <span class="kn">import</span> <span class="n">is_non_dominated</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">draw_sobol_samples</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span><span class="p">,</span> <span class="n">normalize_indices</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
 
 
 <div class="viewcode-block" id="get_default_partitioning_alpha"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.utils.get_default_partitioning_alpha">[docs]</a><span class="k">def</span> <span class="nf">get_default_partitioning_alpha</span><span class="p">(</span><span class="n">num_objectives</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -139,16 +150,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"max_frac must take values in (0, 1], is </span><span class="si">{</span><span class="n">max_frac</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">debug</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Sample dimension q*m=</span><span class="si">{</span><span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span><span class="si">}</span><span class="s2"> exceeding Sobol "</span>
-                <span class="sa">f</span><span class="s2">"max dimension (</span><span class="si">{</span><span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="si">}</span><span class="s2">). Using iid samples instead."</span><span class="p">,</span>
-                <span class="n">SamplingWarning</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="n">sampler</span> <span class="o">=</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span>
+    <span class="n">sampler</span> <span class="o">=</span> <span class="n">get_sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_samples</span><span class="p">]))</span>
     <span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">objective</span> <span class="o">=</span> <span class="n">IdentityMCMultiOutputObjective</span><span class="p">()</span>
@@ -187,6 +189,230 @@
     <span class="n">effective_n_w</span> <span class="o">=</span> <span class="n">obj_vals</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">//</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
     <span class="n">idcs</span> <span class="o">=</span> <span class="p">(</span><span class="n">idcs</span> <span class="o">/</span> <span class="n">effective_n_w</span><span class="p">)</span><span class="o">.</span><span class="n">long</span><span class="p">()</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">idcs</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="compute_sample_box_decomposition"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.utils.compute_sample_box_decomposition">[docs]</a><span class="k">def</span> <span class="nf">compute_sample_box_decomposition</span><span class="p">(</span>
+    <span class="n">pareto_fronts</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">partitioning</span><span class="p">:</span> <span class="n">BoxDecomposition</span> <span class="o">=</span> <span class="n">DominatedPartitioning</span><span class="p">,</span>
+    <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Computes the box decomposition associated with some sampled optimal</span>
+<span class="sd">    objectives. This also supports the single-objective and constrained optimization</span>
+<span class="sd">    setting. An objective `y` is feasible if `y &lt;= 0`.</span>
+
+<span class="sd">    To take advantage of batch computations, we pad the hypercell bounds with a</span>
+<span class="sd">    `2 x (M + K)`-dim Tensor of zeros `[0, 0]`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        pareto_fronts: A `num_pareto_samples x num_pareto_points x M` dim Tensor</span>
+<span class="sd">            containing the sampled optimal set of objectives.</span>
+<span class="sd">        partitioning: A `BoxDecomposition` module that is used to obtain the</span>
+<span class="sd">            hyper-rectangle bounds for integration. In the unconstrained case, this</span>
+<span class="sd">            gives the partition of the dominated space. In the constrained case, this</span>
+<span class="sd">            gives the partition of the feasible dominated space union the infeasible</span>
+<span class="sd">            space.</span>
+<span class="sd">        maximize: If true, the box-decomposition is computed assuming maximization.</span>
+<span class="sd">        num_constraints: The number of constraints `K`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `num_pareto_samples x 2 x J x (M + K)`-dim Tensor containing the bounds for</span>
+<span class="sd">        the hyper-rectangles. The number `J` is the smallest number of boxes needed</span>
+<span class="sd">        to partition all the Pareto samples.</span>
+<span class="sd">    """</span>
+    <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">pareto_fronts</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">pareto_fronts</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+    <span class="c1"># We will later compute `norm.log_prob(NEG_INF)`, this is `-inf` if `NEG_INF` is</span>
+    <span class="c1"># too small.</span>
+    <span class="n">NEG_INF</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1e10</span>
+
+    <span class="k">if</span> <span class="n">pareto_fronts</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="s2">"Currently this only supports Pareto fronts of the shape "</span>
+            <span class="s2">"`num_pareto_samples x num_pareto_points x num_objectives`."</span>
+        <span class="p">)</span>
+
+    <span class="n">num_pareto_samples</span> <span class="o">=</span> <span class="n">pareto_fronts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">pareto_fronts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="n">num_constraints</span>
+    <span class="n">ref_point</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span> <span class="o">*</span> <span class="n">NEG_INF</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="n">maximize</span> <span class="k">else</span> <span class="o">-</span><span class="mf">1.0</span>
+
+    <span class="k">if</span> <span class="n">M</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># Only consider a Pareto front with one element.</span>
+        <span class="n">extreme_values</span> <span class="o">=</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">weight</span> <span class="o">*</span> <span class="n">pareto_fronts</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">ref_point</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">extreme_values</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">maximize</span><span class="p">:</span>
+            <span class="n">hypercell_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">extreme_values</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">2</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">hypercell_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">extreme_values</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">2</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bd_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pareto_samples</span><span class="p">):</span>
+            <span class="n">bd_list</span> <span class="o">=</span> <span class="n">bd_list</span> <span class="o">+</span> <span class="p">[</span>
+                <span class="n">partitioning</span><span class="p">(</span><span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">weight</span> <span class="o">*</span> <span class="n">pareto_fronts</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:])</span>
+            <span class="p">]</span>
+
+        <span class="c1"># `num_pareto_samples x 2 x J x (M + K)`</span>
+        <span class="n">hypercell_bounds</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">BoxDecompositionList</span><span class="p">(</span><span class="o">*</span><span class="n">bd_list</span><span class="p">)</span><span class="o">.</span><span class="n">get_hypercell_bounds</span><span class="p">()</span><span class="o">.</span><span class="n">movedim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># If minimizing, then the bounds should be negated and flipped</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">maximize</span><span class="p">:</span>
+            <span class="n">hypercell_bounds</span> <span class="o">=</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">hypercell_bounds</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Add an extra box for the inequality constraint.</span>
+    <span class="k">if</span> <span class="n">K</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># `num_pareto_samples x 2 x (J - 1) x K`</span>
+        <span class="n">feasible_boxes</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="n">hypercell_bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">K</span><span class="p">]),</span> <span class="o">**</span><span class="n">tkwargs</span>
+        <span class="p">)</span>
+
+        <span class="n">feasible_boxes</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">NEG_INF</span>
+        <span class="c1"># `num_pareto_samples x 2 x (J - 1) x (M + K)`</span>
+        <span class="n">hypercell_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">hypercell_bounds</span><span class="p">,</span> <span class="n">feasible_boxes</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># `num_pareto_samples x 2 x 1 x (M + K)`</span>
+        <span class="n">infeasible_box</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="n">hypercell_bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="n">M</span> <span class="o">+</span> <span class="n">K</span><span class="p">]),</span> <span class="o">**</span><span class="n">tkwargs</span>
+        <span class="p">)</span>
+        <span class="n">infeasible_box</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:,</span> <span class="n">M</span><span class="p">:]</span> <span class="o">=</span> <span class="o">-</span><span class="n">NEG_INF</span>
+        <span class="n">infeasible_box</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">:</span><span class="n">M</span><span class="p">]</span> <span class="o">=</span> <span class="n">NEG_INF</span>
+        <span class="n">infeasible_box</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">:</span><span class="n">M</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">NEG_INF</span>
+
+        <span class="c1"># `num_pareto_samples x 2 x J x (M + K)`</span>
+        <span class="n">hypercell_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">hypercell_bounds</span><span class="p">,</span> <span class="n">infeasible_box</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># `num_pareto_samples x 2 x J x (M + K)`</span>
+    <span class="k">return</span> <span class="n">hypercell_bounds</span></div>
+
+
+<div class="viewcode-block" id="random_search_optimizer"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.utils.random_search_optimizer">[docs]</a><span class="k">def</span> <span class="nf">random_search_optimizer</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">GenericDeterministicModel</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">num_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">pop_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span>
+    <span class="n">max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Optimize a function via random search.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: The model.</span>
+<span class="sd">        bounds: A `2 x d`-dim Tensor containing the input bounds.</span>
+<span class="sd">        num_points: The number of optimal points to be outputted.</span>
+<span class="sd">        maximize: If true, we consider a maximization problem.</span>
+<span class="sd">        pop_size: The number of function evaluations per try.</span>
+<span class="sd">        max_tries: The maximum number of tries.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A two-element tuple containing</span>
+
+<span class="sd">        - A `num_points x d`-dim Tensor containing the collection of optimal inputs.</span>
+<span class="sd">        - A `num_points x M`-dim Tensor containing the collection of optimal</span>
+<span class="sd">            objectives.</span>
+<span class="sd">    """</span>
+    <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">bounds</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="n">maximize</span> <span class="k">else</span> <span class="o">-</span><span class="mf">1.0</span>
+    <span class="n">optimal_inputs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([],</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+    <span class="n">optimal_outputs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([],</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+    <span class="n">num_tries</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">ratio</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">while</span> <span class="n">ratio</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">num_tries</span> <span class="o">&lt;</span> <span class="n">max_tries</span><span class="p">:</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">draw_sobol_samples</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">pop_size</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">X_aug</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">optimal_inputs</span><span class="p">,</span> <span class="n">X</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">Y_aug</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">optimal_outputs</span><span class="p">,</span> <span class="n">Y</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">pareto_mask</span> <span class="o">=</span> <span class="n">is_non_dominated</span><span class="p">(</span><span class="n">weight</span> <span class="o">*</span> <span class="n">Y_aug</span><span class="p">)</span>
+        <span class="n">optimal_inputs</span> <span class="o">=</span> <span class="n">X_aug</span><span class="p">[</span><span class="n">pareto_mask</span><span class="p">]</span>
+        <span class="n">optimal_outputs</span> <span class="o">=</span> <span class="n">Y_aug</span><span class="p">[</span><span class="n">pareto_mask</span><span class="p">]</span>
+        <span class="n">num_found</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">optimal_inputs</span><span class="p">)</span>
+        <span class="n">ratio</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="n">num_points</span> <span class="o">/</span> <span class="n">num_found</span><span class="p">)</span>
+        <span class="n">num_tries</span> <span class="o">=</span> <span class="n">num_tries</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="c1"># If maximum number of retries exceeded throw out a runtime error.</span>
+    <span class="k">if</span> <span class="n">ratio</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">error_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Only found </span><span class="si">{</span><span class="n">num_found</span><span class="si">}</span><span class="s2"> optimal points instead of </span><span class="si">{</span><span class="n">num_points</span><span class="si">}</span><span class="s2">."</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">error_text</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">optimal_inputs</span><span class="p">[:</span><span class="n">num_points</span><span class="p">],</span> <span class="n">optimal_outputs</span><span class="p">[:</span><span class="n">num_points</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="sample_optimal_points"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.utils.sample_optimal_points">[docs]</a><span class="k">def</span> <span class="nf">sample_optimal_points</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span>
+        <span class="p">[</span><span class="n">GenericDeterministicModel</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="n">random_search_optimizer</span><span class="p">,</span>
+    <span class="n">num_rff_features</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+    <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Compute a collection of optimal inputs and outputs from samples of a Gaussian</span>
+<span class="sd">    Process (GP).</span>
+
+<span class="sd">    Steps:</span>
+<span class="sd">    (1) The samples are generated using random Fourier features (RFFs).</span>
+<span class="sd">    (2) The samples are optimized sequentially using an optimizer.</span>
+
+<span class="sd">    TODO: We can generalize the GP sampling step to accommodate for other sampling</span>
+<span class="sd">        strategies rather than restricting to RFFs e.g. decoupled sampling.</span>
+
+<span class="sd">    TODO: Currently this defaults to random search optimization, might want to</span>
+<span class="sd">        explore some other alternatives.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: The model. This does not support models which include fantasy</span>
+<span class="sd">            observations.</span>
+<span class="sd">        bounds: A `2 x d`-dim Tensor containing the input bounds.</span>
+<span class="sd">        num_samples: The number of GP samples.</span>
+<span class="sd">        num_points: The number of optimal points to be outputted.</span>
+<span class="sd">        optimizer: A callable that solves the deterministic optimization problem.</span>
+<span class="sd">        num_rff_features: The number of random Fourier features.</span>
+<span class="sd">        maximize: If true, we consider a maximization problem.</span>
+<span class="sd">        optimizer_kwargs: The additional arguments for the optimizer.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A two-element tuple containing</span>
+
+<span class="sd">        - A `num_samples x num_points x d`-dim Tensor containing the collection of</span>
+<span class="sd">            optimal inputs.</span>
+<span class="sd">        - A `num_samples x num_points x M`-dim Tensor containing the collection of</span>
+<span class="sd">            optimal objectives.</span>
+<span class="sd">    """</span>
+    <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">bounds</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">M</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">num_points</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"For single-objective optimization `num_points` should be 1."</span>
+            <span class="p">)</span>
+    <span class="k">if</span> <span class="n">optimizer_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">optimizer_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">pareto_sets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">num_points</span><span class="p">,</span> <span class="n">d</span><span class="p">),</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+    <span class="n">pareto_fronts</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">num_points</span><span class="p">,</span> <span class="n">M</span><span class="p">),</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_samples</span><span class="p">):</span>
+        <span class="n">sample_i</span> <span class="o">=</span> <span class="n">get_gp_samples</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">num_outputs</span><span class="o">=</span><span class="n">M</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_rff_features</span><span class="o">=</span><span class="n">num_rff_features</span>
+        <span class="p">)</span>
+        <span class="n">ps_i</span><span class="p">,</span> <span class="n">pf_i</span> <span class="o">=</span> <span class="n">optimizer</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">sample_i</span><span class="p">,</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+            <span class="n">num_points</span><span class="o">=</span><span class="n">num_points</span><span class="p">,</span>
+            <span class="n">maximize</span><span class="o">=</span><span class="n">maximize</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">optimizer_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">pareto_sets</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ps_i</span>
+        <span class="n">pareto_fronts</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">pf_i</span>
+
+    <span class="k">return</span> <span class="n">pareto_sets</span><span class="p">,</span> <span class="n">pareto_fronts</span></div>
 </pre></div>
 </div>
 </div>
@@ -233,7 +459,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {
