@@ -32,25 +32,18 @@ jobs:
         python-version: 3.8
     - name: Fetch all history for all tags and branches
       run: git fetch --prune --unshallow
-    - if: ${{ inputs.publish_versioned_website }}    
-      name: Install dependencies for versioned website
-      # there may not be a compatible Ax pip version, so we use the development version
-      env:
-        ALLOW_BOTORCH_LATEST: true  # allow Ax to install w/ new BoTorch release
-      run: |
-        pip install .[dev]
-        pip install git+https://github.com/facebook/Ax.git
-        pip install .[tutorials]
-        pip install beautifulsoup4 ipython nbconvert jinja2
     - if: ${{ !inputs.publish_versioned_website }}    
-      name: Install dependencies for latest website
-      env:
-        ALLOW_LATEST_GPYTORCH_LINOP: true
-        ALLOW_BOTORCH_LATEST: true  # allow Ax to install w/ new BoTorch release
+      name: Install latest GPyTorch and Linear Operator
       run: |
         pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install .[dev]
+    - name: Install common dependencies
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
+        ALLOW_BOTORCH_LATEST: true  # Allow Ax to install w/ new BoTorch release.
+      run: |
+        pip install ."[dev, tutorials]"
+        # There may not be a compatible Ax pip version, so we use the development version.
         pip install git+https://github.com/facebook/Ax.git
         pip install beautifulsoup4 ipython nbconvert jinja2
     - if: ${{ inputs.publish_versioned_website }}
