@@ -7,7 +7,8 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-
+# TODO: Revert to PyTorch nightly after Pyro supports PyTorch 2.0
+# TODO: Also, revert the corresponding change in requirements.txt
 jobs:
 
   tests-and-coverage-pip:
@@ -28,7 +29,7 @@ jobs:
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
-        pip install --pre torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+        pip install torch torchvision
         pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
@@ -60,7 +61,7 @@ jobs:
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
-        conda install -y -c pytorch-nightly pytorch cpuonly
+        conda install pytorch torchvision -c pytorch
         conda install -y pip scipy sphinx pytest flake8
         pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
