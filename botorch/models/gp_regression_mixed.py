@@ -76,7 +76,7 @@ class MixedSingleTaskGP(SingleTaskGP):
                 the input `X` that should be considered categorical features.
             cont_kernel_factory: A method that accepts `ard_num_dims` and
                 `active_dims` arguments and returns an instantiated GPyTorch
-                `Kernel` object to be used as the ase kernel for the continuous
+                `Kernel` object to be used as the base kernel for the continuous
                 dimensions. If omitted, this model uses a Matern-2.5 kernel as
                 the kernel for the ordinal parameters.
             likelihood: A likelihood. If omitted, use a standard
