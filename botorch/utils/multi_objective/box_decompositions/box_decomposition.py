@@ -56,6 +56,11 @@ class BoxDecomposition(Module, ABC):
         self.num_outcomes = ref_point.shape[-1]
 
         if Y is not None:
+            if Y.isnan().any():
+                raise ValueError(
+                    "NaN inputs are not supported. Got Y with "
+                    f"{Y.isnan().sum()} NaN values."
+                )
             self._neg_Y = -Y
             self._validate_inputs()
             self._neg_pareto_Y = self._compute_pareto_Y()
@@ -172,6 +177,11 @@ class BoxDecomposition(Module, ABC):
         Returns:
             A boolean indicating if _neg_Y was initialized.
         """
+        if Y.isnan().any():
+            raise ValueError(
+                "NaN inputs are not supported. Got Y with "
+                f"{Y.isnan().sum()} NaN values."
+            )
         # multiply by -1, since internally we minimize.
         if self._neg_Y is not None:
             self._neg_Y = torch.cat([self._neg_Y, -Y], dim=-2)
