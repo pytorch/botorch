@@ -270,6 +270,18 @@ class TestBoxDecomposition(BotorchTestCase):
                 with self.assertRaises(NotImplementedError):
                     DummyFastPartitioning(ref_point=ref_point, Y=Y.unsqueeze(0))
 
+    def test_nan_values(self) -> None:
+        Y = torch.rand(10, 2)
+        Y[8:, 1] = float("nan")
+        ref_pt = torch.rand(2)
+        # On init.
+        with self.assertRaisesRegex(ValueError, "with 2 NaN values"):
+            DummyBoxDecomposition(ref_point=ref_pt, sort=True, Y=Y)
+        # On update.
+        bd = DummyBoxDecomposition(ref_point=ref_pt, sort=True)
+        with self.assertRaisesRegex(ValueError, "with 2 NaN values"):
+            bd.update(Y=Y)
+
 
 class TestBoxDecomposition_no_set_up(BotorchTestCase):
     def helper_hypervolume(self, Box_Decomp_cls: type) -> None:
