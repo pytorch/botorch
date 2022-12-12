@@ -28,7 +28,7 @@
     },
     {
       "id": "baxus",
-      "title": "Bayesian Optimization with Adaptive Axis-Aligned Uniform Subspaces (BAxUS)"
+      "title": "Bayesian optimization with adaptively expanding subspaces (BAxUS)"
     },
     {
       "id": "scalable_constrained_bo",
