@@ -497,7 +497,7 @@ class Log(OutcomeTransform):
             )
         return Y_utf, Yvar
 
-    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+    def untransform_posterior(self, posterior: Posterior) -> TransformedPosterior:
         r"""Un-transform the log-transformed posterior.
 
         Args:
@@ -626,7 +626,7 @@ class Power(OutcomeTransform):
             )
         return Y_utf, Yvar
 
-    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+    def untransform_posterior(self, posterior: Posterior) -> TransformedPosterior:
         r"""Un-transform the power-transformed posterior.
 
         Args:
@@ -750,7 +750,7 @@ class Bilog(OutcomeTransform):
             )
         return Y_utf, Yvar
 
-    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+    def untransform_posterior(self, posterior: Posterior) -> TransformedPosterior:
         r"""Un-transform the bilog-transformed posterior.
 
         Args:

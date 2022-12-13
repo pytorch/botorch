@@ -10,14 +10,39 @@ Model List GP Regression models.
 
 from __future__ import annotations
 
-from copy import deepcopy
-from typing import Any, List
+import inspect
 
-from botorch.exceptions.errors import BotorchTensorDimensionError
+from copy import deepcopy
+from typing import Any, List, Tuple
+
+from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.models.gpytorch import GPyTorchModel, ModelListGPyTorchModel
 from botorch.models.model import FantasizeMixin
+from botorch.models.transforms.outcome import ChainedOutcomeTransform, OutcomeTransform
 from gpytorch.models import IndependentModelList
 from torch import Tensor
+
+
+def is_unsupported_outcome_transform(
+    outcome_transform: OutcomeTransform,
+) -> Tuple[bool, str]:
+    """
+    Check if the outcome transform's `untrasform_posterior` method returns
+    a `TransformedPosterior` object, or if it is a `ChainedOutcomeTransform`
+    that recursively contains such transforms.
+
+    These transforms are not supported for `ModelListGP` because they return a
+    `TransformedPosterior`, which can't be part of a `GPyTorchPosterior`.
+    """
+    if isinstance(outcome_transform, ChainedOutcomeTransform):
+        for oct in outcome_transform.values():
+            is_unsupported, type_name = is_unsupported_outcome_transform(oct)
+            if is_unsupported:
+                return True, type_name
+
+    sig = inspect.signature(outcome_transform.untransform_posterior)
+    is_unsupported = sig.return_annotation == "TransformedPosterior"
+    return is_unsupported, type(outcome_transform).__name__
 
 
 class ModelListGP(IndependentModelList, ModelListGPyTorchModel, FantasizeMixin):
@@ -51,6 +76,22 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel, FantasizeMixin):
             >>> model = ModelListGP(model1, model2)
         """
         super().__init__(*gp_models)
+
+        for i, model in enumerate(self.models):
+            if hasattr(model, "outcome_transform"):
+                is_unsupported, type_name = is_unsupported_outcome_transform(
+                    model.outcome_transform
+                )
+                if isinstance(model.outcome_transform, ChainedOutcomeTransform):
+                    type_str = "a ChainedOutcomeTransform that contains a"
+                else:
+                    type_str = "an outcome"
+                if is_unsupported:
+                    raise UnsupportedError(
+                        f"Sub-model {i} has {type_str} transform of type {type_name}. "
+                        "This is not supported for ModelListGP; please use ModelList "
+                        "instead."
+                    )
 
     # pyre-fixme[14]: Inconsistent override. Here `X` is a List[Tensor], but in the
     # parent method it's a Tensor.

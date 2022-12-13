@@ -617,10 +617,10 @@ class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
         # apply output transforms of individual models if present
         mvns = []
         for i, mvn in mvn_gen:
-            try:
+            if hasattr(self.models[i], "outcome_transform"):
                 oct = self.models[i].outcome_transform
                 tf_mvn = oct.untransform_posterior(GPyTorchPosterior(mvn)).distribution
-            except AttributeError:
+            else:
                 tf_mvn = mvn
             mvns.append(tf_mvn)
         # return result as a GPyTorchPosteriors/FullyBayesianPosterior

@@ -9,12 +9,12 @@ import warnings
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
-from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import ModelListGP
 from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
-from botorch.models.transforms import Standardize
+from botorch.models.transforms import ChainedOutcomeTransform, Log, Standardize
 from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.normal import IIDNormalSampler
@@ -28,14 +28,34 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 from gpytorch.priors import GammaPrior
 
 
-def _get_model(fixed_noise=False, use_octf=False, use_intf=False, **tkwargs):
+def _get_model(
+    fixed_noise=False, outcome_transform: str = "None", use_intf=False, **tkwargs
+) -> ModelListGP:
     train_x1, train_y1 = _get_random_data(
         batch_shape=torch.Size(), m=1, n=10, **tkwargs
     )
+
+    train_y1 = torch.exp(train_y1)
     train_x2, train_y2 = _get_random_data(
         batch_shape=torch.Size(), m=1, n=11, **tkwargs
     )
-    octfs = [Standardize(m=1), Standardize(m=1)] if use_octf else [None, None]
+    if outcome_transform == "Standardize":
+        octfs = [Standardize(m=1), Standardize(m=1)]
+    elif outcome_transform == "Log":
+        octfs = [Log(), Standardize(m=1)]
+    elif outcome_transform == "Chained":
+        octfs = [
+            ChainedOutcomeTransform(
+                chained=ChainedOutcomeTransform(log=Log(), standardize=Standardize(m=1))
+            ),
+            None,
+        ]
+    elif outcome_transform == "None":
+        octfs = [None, None]
+    else:
+        raise KeyError(
+            "outcome_transform must be one of 'Standardize', 'Log', or 'None'."
+        )
     intfs = [Normalize(d=1), Normalize(d=1)] if use_intf else [None, None]
     if fixed_noise:
         train_y1_var = 0.1 + 0.1 * torch.rand_like(train_y1, **tkwargs)
@@ -73,10 +93,12 @@ def _get_model(fixed_noise=False, use_octf=False, use_intf=False, **tkwargs):
 
 class TestModelListGP(BotorchTestCase):
     def _base_test_ModelListGP(
-        self, fixed_noise: bool, dtype, use_octf: bool
+        self, fixed_noise: bool, dtype, outcome_transform: str
     ) -> ModelListGP:
         tkwargs = {"device": self.device, "dtype": dtype}
-        model = _get_model(fixed_noise=fixed_noise, use_octf=use_octf, **tkwargs)
+        model = _get_model(
+            fixed_noise=fixed_noise, outcome_transform=outcome_transform, **tkwargs
+        )
         self.assertIsInstance(model, ModelListGP)
         self.assertIsInstance(model.likelihood, LikelihoodList)
         for m in model.models:
@@ -85,7 +107,7 @@ class TestModelListGP(BotorchTestCase):
             matern_kernel = m.covar_module.base_kernel
             self.assertIsInstance(matern_kernel, MaternKernel)
             self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
-            if use_octf:
+            if outcome_transform != "None":
                 self.assertIsInstance(m.outcome_transform, Standardize)
 
         # test constructing likelihood wrapper
@@ -122,8 +144,13 @@ class TestModelListGP(BotorchTestCase):
         test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
         posterior = model.posterior(test_x)
         self.assertIsInstance(posterior, GPyTorchPosterior)
+        submodel = model.models[0]
+        p0 = submodel.posterior(test_x)
+        self.assertTrue(torch.allclose(posterior.mean[:, [0]], p0.mean))
+        self.assertTrue(torch.allclose(posterior.variance[:, [0]], p0.variance))
+
         self.assertIsInstance(posterior.distribution, MultitaskMultivariateNormal)
-        if use_octf:
+        if outcome_transform != "None":
             # ensure un-transformation is applied
             submodel = model.models[0]
             p0 = submodel.posterior(test_x)
@@ -187,12 +214,12 @@ class TestModelListGP(BotorchTestCase):
         return model
 
     def test_ModelListGP(self) -> None:
-        for dtype, use_octf in itertools.product(
-            (torch.float, torch.double), (False, True)
+        for dtype, outcome_transform in itertools.product(
+            (torch.float, torch.double), ("None", "Standardize")
         ):
 
             model = self._base_test_ModelListGP(
-                fixed_noise=False, dtype=dtype, use_octf=use_octf
+                fixed_noise=False, dtype=dtype, outcome_transform=outcome_transform
             )
             tkwargs = {"device": self.device, "dtype": dtype}
 
@@ -204,11 +231,11 @@ class TestModelListGP(BotorchTestCase):
 
     def test_ModelListGP_fixed_noise(self) -> None:
 
-        for dtype, use_octf in itertools.product(
-            (torch.float, torch.double), (False, True)
+        for dtype, outcome_transform in itertools.product(
+            (torch.float, torch.double), ("None", "Standardize")
         ):
             model = self._base_test_ModelListGP(
-                fixed_noise=True, dtype=dtype, use_octf=use_octf
+                fixed_noise=True, dtype=dtype, outcome_transform=outcome_transform
             )
             tkwargs = {"device": self.device, "dtype": dtype}
             f_x = [torch.rand(2, 1, **tkwargs) for _ in range(2)]
@@ -219,6 +246,22 @@ class TestModelListGP(BotorchTestCase):
                 model.condition_on_observations(
                     f_x, f_y, noise=torch.rand(2, 3, **tkwargs)
                 )
+
+    def test_ModelListGP_raises_when_incompatible_transform(self) -> None:
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "Sub-model 0 has an outcome transform of type Log. This is not "
+            "supported for ModelListGP; please use ModelList instead.",
+        ):
+            _get_model(fixed_noise=False, outcome_transform="Log")
+
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "Sub-model 0 has a ChainedOutcomeTransform that contains a "
+            "transform of type Log. This is not supported for ModelListGP; "
+            "please use ModelList instead.",
+        ):
+            _get_model(fixed_noise=False, outcome_transform="Chained")
 
     def test_ModelListGP_single(self):
         tkwargs = {"device": self.device, "dtype": torch.float}
