@@ -143,7 +143,7 @@ class TestDeterministicModels(BotorchTestCase):
         test_X = torch.rand(3, 2)
         post_tf = ScalarizedPosteriorTransform(weights=torch.rand(2))
         # expect error due to post_tf expecting an MVN
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(NotImplementedError):
             model.posterior(test_X, posterior_transform=post_tf)
 
     def test_PosteriorMeanModel(self):

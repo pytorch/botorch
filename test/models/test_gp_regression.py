@@ -349,6 +349,12 @@ class TestSingleTaskGP(BotorchTestCase):
                     p_sub.variance, p.variance[..., [0]], atol=1e-4, rtol=1e-4
                 )
             )
+            # test subsetting each of the outputs (follows a different code branch)
+            subset_all_model = model.subset_output([0, 1])
+            p_sub_all = subset_all_model.posterior(X)
+            self.assertTrue(torch.allclose(p_sub_all.mean, p.mean))
+            # subsetting should still return a copy
+            self.assertNotEqual(model, subset_all_model)
 
     def test_construct_inputs(self):
         for batch_shape, dtype in itertools.product(

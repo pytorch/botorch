@@ -472,6 +472,11 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
 
         m = len(idcs)
         new_model = deepcopy(self)
+
+        subset_everything = self.num_outputs == m and idcs == list(range(m))
+        if subset_everything:
+            return new_model
+
         tidxr = torch.tensor(idcs, device=new_model.train_targets.device)
         idxr = tidxr if m > 1 else idcs[0]
         new_tail_bs = torch.Size([m]) if m > 1 else torch.Size()
