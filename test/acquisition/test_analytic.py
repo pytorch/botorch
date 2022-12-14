@@ -459,7 +459,7 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
 class TestNoisyExpectedImprovement(BotorchTestCase):
     def _get_model(self, dtype=torch.float):
         state_dict = {
-            "mean_module.constant": torch.tensor([-0.0066]),
+            "mean_module.raw_constant": torch.tensor([-0.0066]),
             "covar_module.raw_outputscale": torch.tensor(1.0143),
             "covar_module.base_kernel.raw_lengthscale": torch.tensor([[-0.99]]),
             "covar_module.base_kernel.lengthscale_prior.concentration": torch.tensor(
