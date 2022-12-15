@@ -120,7 +120,7 @@ def _psd_safe_pyro_mvn_sample(
                 # Not-PSD can be also caught in Distribution.__init__ during parameter
                 # validation, which raises a ValueError. Only catch those errors.
                 raise e
-            jitter = jitter * (10**i)
+            jitter = jitter * 10
             warnings.warn(
                 "Received a linear algebra error while sampling with Pyro. Adding a "
                 f"jitter of {jitter} to the covariance matrix and retrying.",

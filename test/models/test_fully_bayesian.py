@@ -9,6 +9,8 @@ import itertools
 import warnings
 from unittest import mock
 
+import pyro
+
 import torch
 from botorch import fit_fully_bayesian_model_nuts
 from botorch.acquisition.analytic import (
@@ -697,11 +699,20 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             with mock.patch(
                 "torch.distributions.multivariate_normal.Distribution.__init__",
                 wraps=mock_init,
-            ), warnings.catch_warnings(record=True) as ws:
+            ), mock.patch(
+                "pyro.distributions.MultivariateNormal",
+                wraps=pyro.distributions.MultivariateNormal,
+            ) as mock_mvn, warnings.catch_warnings(
+                record=True
+            ) as ws:
                 warnings.simplefilter("always")
                 _psd_safe_pyro_mvn_sample(
                     name="Y", loc=loc, covariance_matrix=not_psd_covar, obs=obs
                 )
+            # Check that it added the jitter.
+            self.assertGreaterEqual(
+                mock_mvn.call_args[-1]["covariance_matrix"][0, 0].item(), 1 + 1e-8
+            )
             # With a not-PSD covar, it should get called multiple times.
             self.assertTrue(any("linear algebra error" in str(w.message) for w in ws))
             # We don't catch random Value errors.
