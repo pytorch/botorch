@@ -16,42 +16,34 @@ from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Typ
 from warnings import catch_warnings, simplefilter, warn, warn_explicit, WarningMessage
 
 from botorch.exceptions.errors import ModelFittingError, UnsupportedError
-from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
+from botorch.exceptions.warnings import OptimizationWarning
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
-from botorch.models.converter import batched_to_model_list, model_list_to_batched
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
-from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.optim.closures import get_loss_closure_with_grads
 from botorch.optim.core import _LBFGSB_MAXITER_MAXFUN_REGEX
 from botorch.optim.fit import fit_gpytorch_mll_scipy, fit_gpytorch_mll_torch
 from botorch.optim.utils import (
     _warning_handler_template,
-    allclose_mll,
     get_parameters,
     sample_all_priors,
 )
 from botorch.settings import debug
 from botorch.utils.context_managers import (
-    del_attribute_ctx,
     module_rollback_ctx,
     parameter_rollback_ctx,
     requires_grad_ctx,
     TensorCheckpoint,
 )
-from botorch.utils.dispatcher import (
-    Dispatcher,
-    MDNotImplementedError,
-    type_bypassing_encoder,
-)
+from botorch.utils.dispatcher import Dispatcher, type_bypassing_encoder
 from gpytorch.likelihoods import Likelihood
 from gpytorch.mlls._approximate_mll import _ApproximateMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from linear_operator.utils.errors import NotPSDError
 from pyro.infer.mcmc import MCMC, NUTS
-from torch import device, mean, Tensor
+from torch import device, Tensor
 from torch.nn import Parameter
 from torch.utils.data import DataLoader
 
@@ -299,83 +291,6 @@ def _fit_list(
     return mll.eval() if not any(sub_mll.training for sub_mll in mll.mlls) else mll
 
 
-@FitGPyTorchMLL.register(
-    (MarginalLogLikelihood, _ApproximateMarginalLogLikelihood),
-    object,
-    BatchedMultiOutputGPyTorchModel,
-)
-def _fit_multioutput_independent(
-    mll: MarginalLogLikelihood,
-    _: Type[Likelihood],
-    __: Type[BatchedMultiOutputGPyTorchModel],
-    *,
-    closure: Optional[Callable[[], Tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
-    sequential: bool = True,
-    **kwargs: Any,
-) -> MarginalLogLikelihood:
-    r"""Fitting routine for multioutput Gaussian processes.
-
-    Args:
-        closure: Forward-backward closure for obtaining objective values and gradients.
-            Responsible for setting parameters' `grad` attributes. If no closure is
-            provided, one will be obtained by calling `get_loss_closure_with_grads`.
-        sequential: Boolean specifying whether or not to an attempt should be made to
-            fit the model as a collection of independent GPs. Only relevant for
-            certain types of GPs with independent outputs, see `batched_to_model_list`.
-        **kwargs: Passed to the next method unaltered.
-
-    Returns:
-        The `mll` instance. If fitting succeeded, then `mll` will be in evaluation mode,
-        i.e. `mll.training == False`. Otherwise, `mll` will be in training mode.
-    """
-    if (  # incompatible models
-        not sequential
-        or closure is not None
-        or mll.model.num_outputs == 1
-        or mll.likelihood is not getattr(mll.model, "likelihood", None)
-    ):
-        raise MDNotImplementedError  # defer to generic
-
-    # TODO: Unpacking of OutcomeTransforms not yet supported. Targets are often
-    # pre-transformed in __init__, so try fitting with outcome_transform hidden
-    mll.train()
-    with del_attribute_ctx(mll.model, "outcome_transform"):
-        try:
-            # Attempt to unpack batched model into a list of independent submodels
-            unpacked_model = batched_to_model_list(mll.model)
-            unpacked_mll = SumMarginalLogLikelihood(  # avg. over MLLs internally
-                unpacked_model.likelihood, unpacked_model
-            )
-            if not allclose_mll(a=mll, b=unpacked_mll, transform_a=mean):
-                raise RuntimeError(  # validate model unpacking
-                    "Training loss of unpacked model differs from that of the original."
-                )
-
-            # Fit submodels independently
-            unpacked_mll = fit_gpytorch_mll(unpacked_mll, **kwargs)
-
-            # Repackage submodels and copy over state_dict
-            repacked_model = model_list_to_batched(unpacked_mll.model.train())
-            repacked_mll = type(mll)(repacked_model.likelihood, repacked_model)
-            with module_rollback_ctx(mll, device=device("cpu")) as ckpt:
-                mll.load_state_dict(repacked_mll.state_dict())
-                if not allclose_mll(a=mll, b=repacked_mll):
-                    raise RuntimeError(  # validate model repacking
-                        "Training loss of repacked model differs from that of the "
-                        "original."
-                    )
-                ckpt.clear()  # do not rollback when exiting
-                return mll.eval()  # DONE!
-
-        except (AttributeError, RuntimeError, UnsupportedError) as err:
-            msg = f"Failed to independently fit submodels with exception: {err}"
-            warn(
-                f"{msg.rstrip('.')}. Deferring to generic dispatch...",
-                BotorchWarning,
-            )
-            raise MDNotImplementedError
-
-
 @FitGPyTorchMLL.register(_ApproximateMarginalLogLikelihood, object, object)
 def _fit_fallback_approximate(
     mll: _ApproximateMarginalLogLikelihood,
@@ -385,7 +300,7 @@ def _fit_fallback_approximate(
     closure: Optional[Callable[[], Tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
     data_loader: Optional[DataLoader] = None,
     optimizer: Optional[Callable] = None,
-    full_batch_limit: int = 1024,  # TODO: To be determined.
+    full_batch_limit: int = 1024,
     **kwargs: Any,
 ) -> _ApproximateMarginalLogLikelihood:
     r"""Fallback method for fitting approximate Gaussian processes.

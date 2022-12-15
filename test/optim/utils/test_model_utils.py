@@ -6,11 +6,9 @@
 
 from __future__ import annotations
 
-import math
 import re
 import warnings
 from copy import deepcopy
-from itertools import product
 from string import ascii_lowercase
 from unittest.mock import MagicMock, patch
 
@@ -19,7 +17,6 @@ from botorch import settings
 from botorch.models import ModelListGP, SingleTaskGP
 from botorch.optim.utils import (
     _get_extra_mll_args,
-    allclose_mll,
     get_data_loader,
     get_name_filter,
     get_parameters,
@@ -253,31 +250,3 @@ class TestSampleAllPriors(BotorchTestCase):
             original_state_dict = dict(deepcopy(mll.model.state_dict()))
             with self.assertRaises(RuntimeError):
                 sample_all_priors(model)
-
-
-class TestAllcloseMLL(BotorchTestCase):
-    def setUp(self):
-        with torch.random.fork_rng():
-            torch.manual_seed(0)
-            train_X = torch.linspace(0, 1, 10).unsqueeze(-1)
-            train_Y = torch.sin((2 * math.pi) * train_X)
-            train_Y = train_Y + 0.1 * torch.randn_like(train_Y)
-
-        self.mlls = []
-        for nu in (1.5, 2.5):
-            model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
-            model.covar_module.base_kernel.nu = nu
-            self.mlls.append(ExactMarginalLogLikelihood(model.likelihood, model))
-
-    def test_allclose_mll(self):
-        self.assertTrue(allclose_mll(a=self.mlls[0], b=self.mlls[0]))
-        for transform_a, transform_b in product(
-            *(2 * [(None, lambda vals: torch.zeros_like(vals))])
-        ):
-            out = allclose_mll(
-                a=self.mlls[0],
-                b=self.mlls[1],
-                transform_a=transform_a,
-                transform_b=transform_b,
-            )
-            self.assertEqual(out, transform_a is not None and transform_b is not None)
