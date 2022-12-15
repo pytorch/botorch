@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import math
+
 from functools import lru_cache
 from math import pi
 from numbers import Number
@@ -19,6 +21,7 @@ CaseNd = Tuple[Callable[[], BoolTensor], Callable[[BoolTensor], Tensor]]
 
 _inv_sqrt_2pi = (2 * pi) ** -0.5
 _neg_inv_sqrt2 = -(2**-0.5)
+_log_sqrt_2pi = math.log(2 * pi) / 2
 STANDARDIZED_RANGE: Tuple[float, float] = (-1e6, 1e6)
 
 
@@ -130,6 +133,12 @@ def phi(x: Tensor) -> Tensor:
     r"""Standard normal PDF."""
     inv_sqrt_2pi, neg_half = get_constants_like((_inv_sqrt_2pi, -0.5), x)
     return inv_sqrt_2pi * (neg_half * x.square()).exp()
+
+
+def log_phi(x: Tensor) -> Tensor:
+    r"""Logarithm of standard normal pdf"""
+    log_sqrt_2pi, neg_half = get_constants_like((_log_sqrt_2pi, -0.5), x)
+    return neg_half * x.square() - log_sqrt_2pi
 
 
 def swap_along_dim_(
