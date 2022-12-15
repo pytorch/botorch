@@ -14,6 +14,7 @@ from typing import Callable, Dict, Iterator, Optional, Tuple, Union
 
 import numpy as np
 import torch
+from botorch.optim.utils.common import TNone
 from numpy import ndarray
 from torch import Tensor
 
@@ -136,21 +137,16 @@ def set_tensors_from_ndarray_1d(
 
 def get_bounds_as_ndarray(
     parameters: Dict[str, Tensor],
-    bounds: Dict[str, Tuple[Optional[float], Optional[float]]],
+    bounds: Dict[str, Tuple[Union[float, Tensor, TNone], Union[float, Tensor, TNone]]],
 ) -> Optional[np.ndarray]:
-    r"""Helper method for extracting a module's parameters and their respective
-    ranges.
+    r"""Helper method for converting bounds into an ndarray.
 
     Args:
-        module: The target module from which parameters are to be extracted.
-        name_filter: Optional Boolean function used to filter parameters by name.
-        requires_grad: Optional Boolean used to filter parameters based on whether
-            or not their require_grad attribute matches the user provided value.
-        default_bounds: Default lower and upper bounds for constrained parameters
-            with `None` typed bounds.
+        parameters: A dictionary of parameters.
+        bounds: A dictionary of (optional) lower and upper bounds.
 
     Returns:
-        A dictionary of parameters and a dictionary of parameter bounds.
+        An ndarray of bounds.
     """
     inf = float("inf")
     out = None
@@ -159,8 +155,8 @@ def get_bounds_as_ndarray(
         size = prod(param.shape)
         if name in bounds:
             lower, upper = bounds[name]
-            lower = -inf if lower is None else lower
-            upper = inf if upper is None else upper
+            lower = -inf if lower is None else float(lower)
+            upper = inf if upper is None else float(upper)
             if lower != -inf or upper != inf:
                 if out is None:
                     full_size = sum(prod(param.shape) for param in parameters.values())
