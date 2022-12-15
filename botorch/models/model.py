@@ -335,8 +335,7 @@ class FantasizeMixin(ABC):
 class ModelList(Model):
     r"""A multi-output Model represented by a list of independent models.
 
-    All
-    BoTorch models are acceptable as inputs. The cost of this flexibility is
+    All BoTorch models are acceptable as inputs. The cost of this flexibility is
     that `ModelList` does not support all methods that may be implemented by its
     component models. One use case for `ModelList` is combining a regression
     model and a deterministic model in one multi-output container model, e.g.
@@ -353,7 +352,7 @@ class ModelList(Model):
             >>> m_1 = SingleTaskGP(train_X, train_Y)
             >>> m_2 = GenericDeterministicModel(lambda x: x.sum(dim=-1))
             >>> m_12 = ModelList(m_1, m_2)
-            >>> m_12.predict(test_X)
+            >>> m_12.posterior(test_X)
         """
         super().__init__()
         self.models = ModuleList(models)
