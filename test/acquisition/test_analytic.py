@@ -8,9 +8,12 @@ import math
 
 import torch
 from botorch.acquisition.analytic import (
+    _ei_helper,
+    _log_ei_helper,
     AnalyticAcquisitionFunction,
     ConstrainedExpectedImprovement,
     ExpectedImprovement,
+    LogExpectedImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
@@ -81,20 +84,25 @@ class TestExpectedImprovement(BotorchTestCase):
 
             # basic test
             module = ExpectedImprovement(model=mm, best_f=0.0)
+            log_module = LogExpectedImprovement(model=mm, best_f=0.0)
             X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
-            ei = module(X)
+            ei, log_ei = module(X), log_module(X)
             ei_expected = torch.tensor(0.19780, device=self.device, dtype=dtype)
             self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
+            self.assertTrue(torch.allclose(log_ei, ei_expected.log(), atol=1e-4))
 
             # test maximize
             module = ExpectedImprovement(model=mm, best_f=0.0, maximize=False)
+            log_module = LogExpectedImprovement(model=mm, best_f=0.0, maximize=False)
             X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
-            ei = module(X)
+            ei, log_ei = module(X), log_module(X)
             ei_expected = torch.tensor(0.6978, device=self.device, dtype=dtype)
             self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
+            self.assertTrue(torch.allclose(log_ei, ei_expected.log(), atol=1e-4))
             with self.assertRaises(UnsupportedError):
                 module.set_X_pending(None)
-
+            with self.assertRaises(UnsupportedError):
+                log_module.set_X_pending(None)
             # test posterior transform (single-output)
             mean = torch.tensor([0.5], device=self.device, dtype=dtype)
             covar = torch.tensor([[0.16]], device=self.device, dtype=dtype)
@@ -106,9 +114,13 @@ class TestExpectedImprovement(BotorchTestCase):
             ei = ExpectedImprovement(
                 model=mm, best_f=0.0, posterior_transform=transform
             )
+            log_ei = LogExpectedImprovement(
+                model=mm, best_f=0.0, posterior_transform=transform
+            )
             X = torch.rand(1, 2, device=self.device, dtype=dtype)
             ei_expected = torch.tensor(0.2601, device=self.device, dtype=dtype)
-            torch.allclose(ei(X), ei_expected, atol=1e-4)
+            self.assertTrue(torch.allclose(ei(X), ei_expected, atol=1e-4))
+            self.assertTrue(torch.allclose(log_ei(X), ei_expected.log(), atol=1e-4))
 
             # test posterior transform (multi-output)
             mean = torch.tensor([[-0.25, 0.5]], device=self.device, dtype=dtype)
@@ -123,9 +135,47 @@ class TestExpectedImprovement(BotorchTestCase):
             ei = ExpectedImprovement(
                 model=mm, best_f=0.0, posterior_transform=transform
             )
+            log_ei = LogExpectedImprovement(
+                model=mm, best_f=0.0, posterior_transform=transform
+            )
             X = torch.rand(1, 2, device=self.device, dtype=dtype)
             ei_expected = torch.tensor(0.6910, device=self.device, dtype=dtype)
-            torch.allclose(ei(X), ei_expected, atol=1e-4)
+            self.assertTrue(torch.allclose(ei(X), ei_expected, atol=1e-4))
+            self.assertTrue(torch.allclose(log_ei(X), ei_expected.log(), atol=1e-4))
+
+            # making sure we compare the lower branch of _log_ei_helper to _ei_helper
+            z = torch.tensor(-2.13, dtype=dtype, device=self.device)
+            self.assertTrue(
+                torch.allclose(_log_ei_helper(z), _ei_helper(z).log(), atol=1e-6)
+            )
+
+            # numerical stress test for log EI
+            digits = 100 if dtype == torch.float64 else 20
+            zero = torch.tensor([0], dtype=dtype, device=self.device)
+            ten = torch.tensor(10, dtype=dtype, device=self.device)
+            digits_tensor = torch.arange(0, digits, dtype=dtype, device=self.device)
+            large_z = ten ** (digits_tensor)
+            small_z = ten ** (-digits_tensor)
+            # flipping the appropriate tensors so that elements are in increasing order
+            test_z = [-large_z.flip(-1), -small_z, zero, small_z.flip(-1), large_z]
+            for z in test_z:
+                z.requires_grad = True
+                y = _log_ei_helper(z)  # noqa
+                # check that y isn't NaN of Inf
+                self.assertFalse(y.isnan().any())
+                self.assertFalse(y.isinf().any())
+                # function values should increase with z
+                self.assertTrue((y.diff() >= 0).all())
+                # lets check the backward pass
+                y.sum().backward()
+                # check that gradients aren't NaN of Inf
+                g = z.grad
+                self.assertFalse(g.isnan().any())
+                self.assertFalse(g.isinf().any())
+                self.assertTrue((g >= 0).all())  # gradient is positive for all z
+
+        with self.assertRaises(TypeError):
+            _log_ei_helper(z.to(dtype=torch.float16))
 
     def test_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
@@ -135,19 +185,22 @@ class TestExpectedImprovement(BotorchTestCase):
             variance = torch.ones(3, 1, 1, device=self.device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
             module = ExpectedImprovement(model=mm, best_f=0.0)
+            log_module = LogExpectedImprovement(model=mm, best_f=0.0)
             X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)  # dummy
-            ei = module(X)
+            ei, log_ei = module(X), log_module(X)
             ei_expected = torch.tensor(
                 [0.19780, 0.39894, 0.69780], device=self.device, dtype=dtype
             )
             self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
+            self.assertTrue(torch.allclose(log_ei, ei_expected.log(), atol=1e-4))
             # check for proper error if multi-output model
             mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             variance2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
             with self.assertRaises(UnsupportedError):
                 ExpectedImprovement(model=mm2, best_f=0.0)
-
+            with self.assertRaises(UnsupportedError):
+                LogExpectedImprovement(model=mm2, best_f=0.0)
             # test posterior transform (single-output)
             mean = torch.tensor([[[0.5]], [[0.25]]], device=self.device, dtype=dtype)
             covar = torch.tensor(
@@ -161,11 +214,15 @@ class TestExpectedImprovement(BotorchTestCase):
             ei = ExpectedImprovement(
                 model=mm, best_f=0.0, posterior_transform=transform
             )
+            log_ei = LogExpectedImprovement(
+                model=mm, best_f=0.0, posterior_transform=transform
+            )
             X = torch.rand(2, 1, 2, device=self.device, dtype=dtype)
             ei_expected = torch.tensor(
                 [[0.2601], [0.1500]], device=self.device, dtype=dtype
             )
-            torch.allclose(ei(X), ei_expected, atol=1e-4)
+            self.assertTrue(torch.allclose(ei(X), ei_expected, atol=1e-4))
+            self.assertTrue(torch.allclose(log_ei(X), ei(X).log(), atol=1e-4))
 
             # test posterior transform (multi-output)
             mean = torch.tensor(
@@ -184,15 +241,23 @@ class TestExpectedImprovement(BotorchTestCase):
             ei = ExpectedImprovement(
                 model=mm, best_f=0.0, posterior_transform=transform
             )
+            log_ei = LogExpectedImprovement(
+                model=mm, best_f=0.0, posterior_transform=transform
+            )
             X = torch.rand(2, 1, 2, device=self.device, dtype=dtype)
             ei_expected = torch.tensor(
                 [0.6910, 0.5371], device=self.device, dtype=dtype
             )
-            torch.allclose(ei(X), ei_expected, atol=1e-4)
+            self.assertTrue(torch.allclose(ei(X), ei_expected, atol=1e-4))
+            self.assertTrue(torch.allclose(log_ei(X), ei_expected.log(), atol=1e-4))
 
         # test bad posterior transform class
         with self.assertRaises(UnsupportedError):
             ExpectedImprovement(
+                model=mm, best_f=0.0, posterior_transform=IdentityMCObjective()
+            )
+        with self.assertRaises(UnsupportedError):
+            LogExpectedImprovement(
                 model=mm, best_f=0.0, posterior_transform=IdentityMCObjective()
             )
 

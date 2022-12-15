@@ -4,6 +4,15 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+r"""
+Special implementations of mathematical functions that
+solve numerical issues of naive implementations.
+
+.. [Maechler2012accurate]
+    M. Mächler. Accurately Computing log (1 - exp (-| a|))
+        Assessed by the Rmpfr package. Technical report, 2012.
+"""
+
 from __future__ import annotations
 
 import math
@@ -11,6 +20,8 @@ import math
 import torch
 from botorch.utils.constants import get_constants_like
 from torch import finfo, Tensor
+
+_log2 = math.log(2)
 
 
 # Unary ops
@@ -48,3 +59,16 @@ def mul(a: Tensor, b: Tensor) -> Tensor:
     _0 = get_constants_like(values=0, ref=a)
     case = (a.isinf() & (b == _0)) | (b.isinf() & (a == _0))
     return torch.where(case, _0, a * torch.where(case, _0, b))
+
+
+def log1mexp(x: Tensor) -> Tensor:
+    """Numerically accurate evaluation of log(1 - exp(x)) for x < 0.
+    See [Maechler2012accurate]_ for details.
+    """
+    log2 = get_constants_like(values=_log2, ref=x)
+    mask = -log2 < x  # x < 0
+    return torch.where(
+        mask,
+        (-x.expm1()).log(),
+        (-x.exp()).log1p(),
+    )
