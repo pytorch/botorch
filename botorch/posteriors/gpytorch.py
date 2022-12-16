@@ -250,7 +250,7 @@ def scalarize_posterior_gpytorch(
     posterior: GPyTorchPosterior,
     weights: Tensor,
     offset: float = 0.0,
-) -> Tuple[Tensor, LinearOperator]:
+) -> Tuple[Tensor, Union[Tensor, LinearOperator]]:
     r"""Helper function for `scalarize_posterior`, producing a mean and
     variance.
 

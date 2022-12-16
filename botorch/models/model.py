@@ -24,6 +24,7 @@ from typing import (
     List,
     Mapping,
     Optional,
+    TYPE_CHECKING,
     TypeVar,
     Union,
 )
@@ -38,6 +39,9 @@ from botorch.utils.datasets import BotorchDataset
 from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
 from torch.nn import Module, ModuleList
+
+if TYPE_CHECKING:
+    from botorch.acquisition.objective import PosteriorTransform  # pragma: no cover
 
 TFantasizeMixin = TypeVar("TFantasizeMixin", bound="FantasizeMixin")
 
@@ -76,7 +80,7 @@ class Model(Module, ABC):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
-        posterior_transform: Optional[Callable[[Posterior], Posterior]] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         **kwargs: Any,
     ) -> Posterior:
         r"""Computes the posterior over model outputs at the provided points.

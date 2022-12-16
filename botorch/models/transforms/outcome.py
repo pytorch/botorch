@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import torch
 from botorch.models.transforms.utils import (
@@ -323,15 +323,18 @@ class Standardize(OutcomeTransform):
         Yvar_utf = self._stdvs_sq * Yvar if Yvar is not None else None
         return Y_utf, Yvar_utf
 
-    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+    def untransform_posterior(
+        self, posterior: Posterior
+    ) -> Union[GPyTorchPosterior, TransformedPosterior]:
         r"""Un-standardize the posterior.
 
         Args:
             posterior: A posterior in the standardized space.
 
         Returns:
-            The un-standardized posterior. If the input posterior is a MVN,
-            the transformed posterior is again an MVN.
+            The un-standardized posterior. If the input posterior is a
+            `GPyTorchPosterior`, return a `GPyTorchPosterior`. Otherwise, return a
+            `TransformedPosterior`.
         """
         if self._outputs is not None:
             raise NotImplementedError(
@@ -497,7 +500,7 @@ class Log(OutcomeTransform):
             )
         return Y_utf, Yvar
 
-    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+    def untransform_posterior(self, posterior: Posterior) -> TransformedPosterior:
         r"""Un-transform the log-transformed posterior.
 
         Args:
@@ -626,7 +629,7 @@ class Power(OutcomeTransform):
             )
         return Y_utf, Yvar
 
-    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+    def untransform_posterior(self, posterior: Posterior) -> TransformedPosterior:
         r"""Un-transform the power-transformed posterior.
 
         Args:
@@ -750,7 +753,7 @@ class Bilog(OutcomeTransform):
             )
         return Y_utf, Yvar
 
-    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+    def untransform_posterior(self, posterior: Posterior) -> TransformedPosterior:
         r"""Un-transform the bilog-transformed posterior.
 
         Args:
