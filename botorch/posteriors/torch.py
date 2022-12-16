@@ -57,6 +57,8 @@ class TorchPosterior(Posterior):
             Samples from the posterior, a tensor of shape
             `self._extended_shape(sample_shape=sample_shape)`.
         """
+        if sample_shape is None:
+            sample_shape = torch.Size()
         return self.distribution.rsample(sample_shape=sample_shape)
 
     @property

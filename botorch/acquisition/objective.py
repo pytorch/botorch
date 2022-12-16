@@ -11,19 +11,22 @@ from __future__ import annotations
 import inspect
 import warnings
 from abc import ABC, abstractmethod
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, TYPE_CHECKING, Union
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
-from botorch.posteriors.posterior import Posterior
 from botorch.sampling import IIDNormalSampler, MCSampler
 from botorch.utils import apply_constraints
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from linear_operator.operators.dense_linear_operator import to_linear_operator
 from torch import Tensor
 from torch.nn import Module
+
+if TYPE_CHECKING:
+    from botorch.posteriors.posterior import Posterior  # pragma: no cover
+    from botorch.posteriors.posterior_list import PosteriorList  # pragma: no cover
 
 
 class AcquisitionObjective(Module, ABC):
@@ -43,8 +46,6 @@ class PosteriorTransform(Module, ABC):
     :meta private:
     """
 
-    scalarize: bool  # True if the transform reduces to single-output
-
     @abstractmethod
     def evaluate(self, Y: Tensor) -> Tensor:
         r"""Evaluate the transform on a set of outcomes.
@@ -58,7 +59,7 @@ class PosteriorTransform(Module, ABC):
         pass  # pragma: no cover
 
     @abstractmethod
-    def forward(self, posterior: Posterior) -> Posterior:
+    def forward(self, posterior) -> Posterior:
         r"""Compute the transformed posterior.
 
         Args:
@@ -117,7 +118,9 @@ class ScalarizedPosteriorTransform(PosteriorTransform):
         """
         return self.offset + Y @ self.weights
 
-    def forward(self, posterior: GPyTorchPosterior) -> GPyTorchPosterior:
+    def forward(
+        self, posterior: Union[GPyTorchPosterior, PosteriorList]
+    ) -> GPyTorchPosterior:
         r"""Compute the posterior of the affine transformation.
 
         Args:
