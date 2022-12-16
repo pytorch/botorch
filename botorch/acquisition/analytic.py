@@ -210,7 +210,7 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
         self.register_buffer("best_f", torch.as_tensor(best_f))
         self.maximize = maximize
 
-    @t_batch_mode_transform(expected_q=1, assert_output_shape=False)
+    @t_batch_mode_transform(expected_q=1)
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate Expected Improvement on the candidate set X.
 
@@ -270,7 +270,7 @@ class LogExpectedImprovement(AnalyticAcquisitionFunction):
         self.register_buffer("best_f", torch.as_tensor(best_f))
         self.maximize = maximize
 
-    @t_batch_mode_transform(expected_q=1, assert_output_shape=False)
+    @t_batch_mode_transform(expected_q=1)
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate logarithm of Expected Improvement on the candidate set X.
 
@@ -498,6 +498,7 @@ class NoisyExpectedImprovement(ExpectedImprovement):
         best_f, _ = Y_fantasized.max(dim=-1) if maximize else Y_fantasized.min(dim=-1)
         super().__init__(model=fantasy_model, best_f=best_f, maximize=maximize)
 
+    @t_batch_mode_transform(expected_q=1)
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate Expected Improvement on the candidate set X.
 
@@ -509,7 +510,9 @@ class NoisyExpectedImprovement(ExpectedImprovement):
             the given design points `X`.
         """
         # add batch dimension for broadcasting to fantasy models
-        return super().forward(X.unsqueeze(-3)).mean(dim=-1)
+        mean, sigma = self._mean_and_sigma(X.unsqueeze(-3))
+        u = _scaled_improvement(mean, sigma, self.best_f, self.maximize)
+        return (sigma * _ei_helper(u)).mean(dim=-1)
 
 
 def _get_noiseless_fantasy_model(
