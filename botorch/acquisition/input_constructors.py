@@ -32,6 +32,7 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.analytic import (
     ConstrainedExpectedImprovement,
     ExpectedImprovement,
+    LogExpectedImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
@@ -271,7 +272,9 @@ def construct_inputs_analytic_base(
     }
 
 
-@acqf_input_constructor(ExpectedImprovement, ProbabilityOfImprovement)
+@acqf_input_constructor(
+    ExpectedImprovement, LogExpectedImprovement, ProbabilityOfImprovement
+)
 def construct_inputs_best_f(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
