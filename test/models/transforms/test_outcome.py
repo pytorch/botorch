@@ -63,6 +63,36 @@ class TestOutcomeTransforms(BotorchTestCase):
         with self.assertRaises(NotImplementedError):
             oct.untransform_posterior(None)
 
+    def test_standardize_raises_when_mean_not_set(self) -> None:
+        posterior = _get_test_posterior(
+            shape=torch.Size([1, 1]), device=self.device, dtype=torch.float64
+        )
+        for transform in [
+            Standardize(m=1),
+            ChainedOutcomeTransform(
+                chained=ChainedOutcomeTransform(stand=Standardize(m=1))
+            ),
+        ]:
+            with self.assertRaises(
+                RuntimeError,
+                msg="`Standardize` transforms must be called on outcome data "
+                "(e.g. `transform(Y)`) before calling `untransform_posterior`, since "
+                "means and standard deviations need to be computed.",
+            ):
+                transform.untransform_posterior(posterior)
+
+            new_tf = transform.subset_output([0])
+            assert isinstance(new_tf, type(transform))
+
+            y = torch.arange(3, device=self.device, dtype=torch.float64)
+            with self.assertRaises(
+                RuntimeError,
+                msg="`Standardize` transforms must be called on outcome data "
+                "(e.g. `transform(Y)`) before calling `untransform`, since "
+                "means and standard deviations need to be computed.",
+            ):
+                transform.untransform(y)
+
     def test_standardize(self):
         # test error on incompatible dim
         tf = Standardize(m=1)
@@ -208,8 +238,15 @@ class TestOutcomeTransforms(BotorchTestCase):
 
             # test error on incompatible output dimension
             # TODO: add a unit test for MTGP posterior once #840 goes in
-            tf_big = Standardize(m=4).eval()
-            with self.assertRaises(RuntimeError):
+            tf_big = Standardize(m=4)
+            Y = torch.arange(4, device=self.device, dtype=dtype).reshape((1, 4))
+            tf_big(Y)
+            with self.assertRaises(
+                RuntimeError,
+                msg="Incompatible output dimensions encountered. Transform has output "
+                f"dimension {tf._m} and posterior has "
+                f"{posterior._extended_shape()[-1]}.",
+            ):
                 tf_big.untransform_posterior(posterior2)
 
         # test transforming a subset of outcomes

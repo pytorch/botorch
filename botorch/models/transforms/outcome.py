@@ -223,9 +223,9 @@ class Standardize(OutcomeTransform):
                 standardization (if lower, only de-mean the data).
         """
         super().__init__()
-        self.register_buffer("means", torch.zeros(*batch_shape, 1, m))
-        self.register_buffer("stdvs", torch.zeros(*batch_shape, 1, m))
-        self.register_buffer("_stdvs_sq", torch.zeros(*batch_shape, 1, m))
+        self.register_buffer("means", None)
+        self.register_buffer("stdvs", None)
+        self.register_buffer("_stdvs_sq", None)
         self._outputs = normalize_indices(outputs, d=m)
         self._m = m
         self._batch_shape = batch_shape
@@ -296,9 +296,10 @@ class Standardize(OutcomeTransform):
             batch_shape=self._batch_shape,
             min_stdv=self._min_stdv,
         )
-        new_tf.means = self.means[..., nlzd_idcs]
-        new_tf.stdvs = self.stdvs[..., nlzd_idcs]
-        new_tf._stdvs_sq = self._stdvs_sq[..., nlzd_idcs]
+        if self.means is not None:
+            new_tf.means = self.means[..., nlzd_idcs]
+            new_tf.stdvs = self.stdvs[..., nlzd_idcs]
+            new_tf._stdvs_sq = self._stdvs_sq[..., nlzd_idcs]
         if not self.training:
             new_tf.eval()
         return new_tf
@@ -319,6 +320,13 @@ class Standardize(OutcomeTransform):
             - The un-standardized outcome observations.
             - The un-standardized observation noise (if applicable).
         """
+        if self.means is None:
+            raise RuntimeError(
+                "`Standardize` transforms must be called on outcome data "
+                "(e.g. `transform(Y)`) before calling `untransform`, since "
+                "means and standard deviations need to be computed."
+            )
+
         Y_utf = self.means + self.stdvs * Y
         Yvar_utf = self._stdvs_sq * Yvar if Yvar is not None else None
         return Y_utf, Yvar_utf
@@ -341,13 +349,20 @@ class Standardize(OutcomeTransform):
                 "Standardize does not yet support output selection for "
                 "untransform_posterior"
             )
+        if self.means is None:
+            raise RuntimeError(
+                "`Standardize` transforms must be called on outcome data "
+                "(e.g. `transform(Y)`) before calling `untransform_posterior`, since "
+                "means and standard deviations need to be computed."
+            )
         is_mtgp_posterior = False
         if type(posterior) is GPyTorchPosterior:
             is_mtgp_posterior = posterior._is_mt
         if not self._m == posterior._extended_shape()[-1] and not is_mtgp_posterior:
             raise RuntimeError(
-                "Incompatible output dimensions encountered for transform "
-                f"{self._m} and posterior {posterior._extended_shape()[-1]}."
+                "Incompatible output dimensions encountered. Transform has output "
+                f"dimension {self._m} and posterior has "
+                f"{posterior._extended_shape()[-1]}."
             )
 
         if type(posterior) is not GPyTorchPosterior:
