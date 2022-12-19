@@ -32,7 +32,6 @@ References:
 
 
 import math
-import warnings
 from abc import abstractmethod
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
@@ -56,7 +55,6 @@ from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.means.mean import Mean
 from gpytorch.models.exact_gp import ExactGP
-from linear_operator import settings
 from torch import Tensor
 
 MIN_INFERRED_NOISE_LEVEL = 1e-6
@@ -90,42 +88,34 @@ def _psd_safe_pyro_mvn_sample(
     to the covariance matrix each time we get a LinAlgError.
 
     This is modelled after linear_operator's `psd_safe_cholesky`.
+
+    TODO: Remove when Pyro can catch `LinAlgError`
     """
-    jitter = settings.cholesky_jitter.value(loc.dtype)
-    max_tries = settings.cholesky_max_tries.value()
-    for i in range(max_tries + 1):
-        jitter_matrix = (
-            torch.eye(
-                covariance_matrix.shape[-1],
-                device=covariance_matrix.device,
-                dtype=covariance_matrix.dtype,
-            )
-            * jitter
+    try:
+        pyro.sample(
+            name,
+            pyro.distributions.MultivariateNormal(
+                loc=loc,
+                covariance_matrix=covariance_matrix,
+            ),
+            obs=obs,
         )
-        jittered_covar = (
-            covariance_matrix if i == 0 else covariance_matrix + jitter_matrix
+        return
+    except (torch.linalg.LinAlgError, ValueError) as e:
+        # Pyro can sometimes sample very extreme hyperparameters that may result in
+        # numerical issues. Pyro relies on catching the corresponding exceptions by
+        # looking for "is not positive-definite" in the error message. As a workaround,
+        # we raise a new error message that Pyro can catch.
+        if isinstance(
+            e, ValueError
+        ) and "satisfy the constraint PositiveDefinite()" not in str(e):
+            # Not-PSD can be also caught in Distribution.__init__ during parameter
+            # validation, which raises a ValueError. Only catch those errors.
+            raise e
+        raise RuntimeError(
+            "The factorization could not be completed because the input "
+            "is not positive-definite."
         )
-        try:
-            pyro.sample(
-                name,
-                pyro.distributions.MultivariateNormal(
-                    loc=loc,
-                    covariance_matrix=jittered_covar,
-                ),
-                obs=obs,
-            )
-            return
-        except (torch.linalg.LinAlgError, ValueError) as e:
-            if isinstance(e, ValueError) and "satisfy the constraint" not in str(e):
-                # Not-PSD can be also caught in Distribution.__init__ during parameter
-                # validation, which raises a ValueError. Only catch those errors.
-                raise e
-            jitter = jitter * 10
-            warnings.warn(
-                "Received a linear algebra error while sampling with Pyro. Adding a "
-                f"jitter of {jitter} to the covariance matrix and retrying.",
-                RuntimeWarning,
-            )
 
 
 class PyroModel:

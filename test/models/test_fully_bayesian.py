@@ -6,10 +6,7 @@
 
 
 import itertools
-import warnings
 from unittest import mock
-
-import pyro
 
 import torch
 from botorch import fit_fully_bayesian_model_nuts
@@ -681,40 +678,19 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             obs = torch.rand(5, **tkwargs)
             psd_covar = torch.eye(5, **tkwargs)
             not_psd_covar = torch.ones(5, 5, **tkwargs)
-            with warnings.catch_warnings(record=True) as ws:
-                warnings.simplefilter("always")
-                _psd_safe_pyro_mvn_sample(
-                    name="Y", loc=loc, covariance_matrix=psd_covar, obs=obs
-                )
-            self.assertFalse(any("linear algebra error" in str(w.message) for w in ws))
-            # With a PSD covar, it should only get called once.
-            # Raised as a ValueError:
-            with warnings.catch_warnings(record=True) as ws:
-                warnings.simplefilter("always")
-                _psd_safe_pyro_mvn_sample(
-                    name="Y", loc=loc, covariance_matrix=not_psd_covar, obs=obs
-                )
-            self.assertTrue(any("linear algebra error" in str(w.message) for w in ws))
-            # Raised as a LinAlgError:
-            with mock.patch(
-                "torch.distributions.multivariate_normal.Distribution.__init__",
-                wraps=mock_init,
-            ), mock.patch(
-                "pyro.distributions.MultivariateNormal",
-                wraps=pyro.distributions.MultivariateNormal,
-            ) as mock_mvn, warnings.catch_warnings(
-                record=True
-            ) as ws:
-                warnings.simplefilter("always")
-                _psd_safe_pyro_mvn_sample(
-                    name="Y", loc=loc, covariance_matrix=not_psd_covar, obs=obs
-                )
-            # Check that it added the jitter.
-            self.assertGreaterEqual(
-                mock_mvn.call_args[-1]["covariance_matrix"][0, 0].item(), 1 + 1e-8
+            # This should work
+            _psd_safe_pyro_mvn_sample(
+                name="Y", loc=loc, covariance_matrix=psd_covar, obs=obs
             )
-            # With a not-PSD covar, it should get called multiple times.
-            self.assertTrue(any("linear algebra error" in str(w.message) for w in ws))
+            # This should result in a RuntimeError
+            with self.assertRaisesRegexp(
+                RuntimeError,
+                "The factorization could not be completed because the input "
+                "is not positive-definite.",
+            ):
+                _psd_safe_pyro_mvn_sample(
+                    name="Y", loc=loc, covariance_matrix=not_psd_covar, obs=obs
+                )
             # We don't catch random Value errors.
             with mock.patch(
                 "torch.distributions.multivariate_normal.Distribution.__init__",
