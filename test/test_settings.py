@@ -6,6 +6,8 @@
 
 import warnings
 
+import gpytorch.settings as gp_settings
+import linear_operator.settings as linop_settings
 from botorch import settings
 from botorch.exceptions import BotorchWarning
 from botorch.utils.testing import BotorchTestCase
@@ -46,3 +48,13 @@ class TestSettings(BotorchTestCase):
         with warnings.catch_warnings(record=True) as ws:
             warnings.warn("test", BotorchWarning)
         self.assertEqual(len(ws), 0)
+
+
+class TestDefaultGPyTorchLinOpSettings(BotorchTestCase):
+    def test_default_gpytorch_linop_settings(self):
+        self.assertTrue(linop_settings._fast_covar_root_decomposition.off())
+        self.assertTrue(linop_settings._fast_log_prob.off())
+        self.assertTrue(linop_settings._fast_solves.off())
+        self.assertEqual(linop_settings.cholesky_max_tries.value(), 6)
+        self.assertEqual(linop_settings.max_cholesky_size.value(), 4096)
+        self.assertEqual(gp_settings.max_eager_kernel_size.value(), 4096)
