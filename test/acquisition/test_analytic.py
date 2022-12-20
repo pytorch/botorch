@@ -14,6 +14,7 @@ from botorch.acquisition.analytic import (
     ConstrainedExpectedImprovement,
     ExpectedImprovement,
     LogExpectedImprovement,
+    LogNoisyExpectedImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
@@ -551,14 +552,33 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             model = self._get_model(dtype=dtype)
             X_observed = model.train_inputs[0]
-            nEI = NoisyExpectedImprovement(model, X_observed, num_fantasies=5)
+            nfan = 5
+            nEI = NoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
+            LogNEI = LogNoisyExpectedImprovement(model, X_observed, num_fantasies=nfan)
+            # before assigning, check that the attributes exist
+            self.assertTrue(hasattr(LogNEI, "model"))
+            self.assertTrue(hasattr(LogNEI, "best_f"))
+            self.assertTrue(isinstance(LogNEI.model, FixedNoiseGP))
+            LogNEI.model = nEI.model  # let the two share their values and fantasies
+            LogNEI.best_f = nEI.best_f
+
             X_test = torch.tensor(
                 [[[0.25]], [[0.75]]],
                 device=X_observed.device,
                 dtype=dtype,
-                requires_grad=True,
             )
+            X_test_log = X_test.clone()
+            X_test.requires_grad = True
+            X_test_log.requires_grad = True
             val = nEI(X_test)
+            # testing logNEI yields the same result (also checks dtype)
+            log_val = LogNEI(X_test_log)
+            exp_log_val = log_val.exp()
+            # notably, val[1] is usually zero in this test, which is precisely what
+            # gives rise to problems during optimization, and what logNEI avoids
+            # since it generally takes a large negative number (<-2000) and has
+            # strong gradient signals in this regime.
+            self.assertTrue(torch.allclose(exp_log_val, val))
             # test basics
             self.assertEqual(val.dtype, dtype)
             self.assertEqual(val.device.type, X_observed.device.type)
@@ -569,17 +589,35 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             # test gradient
             val.sum().backward()
             self.assertGreater(X_test.grad[0].abs().item(), 1e-5)
-            # test without gradient
-            with torch.no_grad():
-                nEI(X_test)
+            # testing gradient through exp of log computation
+            exp_log_val.sum().backward()
+            # testing that first gradient element coincides. The second is in the
+            # regime where the naive implementation looses accuracy.
+            atol = 1e-5 if dtype == torch.float32 else 1e-14
+            self.assertTrue(
+                torch.allclose(X_test.grad[0], X_test_log.grad[0], atol=atol)
+            )
+
             # test non-FixedNoiseGP model
             other_model = SingleTaskGP(X_observed, model.train_targets.unsqueeze(-1))
-            with self.assertRaises(UnsupportedError):
-                NoisyExpectedImprovement(other_model, X_observed, num_fantasies=5)
-            # Test with minimize
-            nEI = NoisyExpectedImprovement(
-                model, X_observed, num_fantasies=5, maximize=False
-            )
+            for constructor in (NoisyExpectedImprovement, LogNoisyExpectedImprovement):
+                with self.assertRaises(UnsupportedError):
+                    constructor(other_model, X_observed, num_fantasies=5)
+                # Test constructor with minimize
+                acqf = constructor(model, X_observed, num_fantasies=5, maximize=False)
+                # test evaluation without gradients enabled
+                with torch.no_grad():
+                    acqf(X_test)
+
+                # testing gradients are only propagated if X_observed requires them
+                # i.e. kernel hyper-parameters are not tracked through to best_f
+                X_observed.requires_grad = False
+                acqf = constructor(model, X_observed, num_fantasies=5)
+                self.assertFalse(acqf.best_f.requires_grad)
+
+                X_observed.requires_grad = True
+                acqf = constructor(model, X_observed, num_fantasies=5)
+                self.assertTrue(acqf.best_f.requires_grad)
 
 
 class TestScalarizedPosteriorMean(BotorchTestCase):
