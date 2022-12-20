@@ -33,6 +33,7 @@ from botorch.acquisition.analytic import (
     ConstrainedExpectedImprovement,
     ExpectedImprovement,
     LogExpectedImprovement,
+    LogNoisyExpectedImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
@@ -380,7 +381,7 @@ def construct_inputs_constrained_ei(
     raise NotImplementedError  # pragma: nocover
 
 
-@acqf_input_constructor(NoisyExpectedImprovement)
+@acqf_input_constructor(NoisyExpectedImprovement, LogNoisyExpectedImprovement)
 def construct_inputs_noisy_ei(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
