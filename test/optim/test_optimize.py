@@ -374,11 +374,11 @@ class TestOptimizeAcqf(BotorchTestCase):
         message = (
             "Optimization failed in `gen_candidates_scipy` with the following "
             "warning(s):\n[OptimizationWarning('Optimization failed within "
-            "`scipy.optimize.minimize` with status 2.')]\nBecause you specified"
-            " `batch_initial_conditions`, optimization will not be retried with"
-            " new initial conditions and will proceed with the current "
-            "solution. Suggested remediation: Try again with different "
-            "`batch_initial_conditions`, or don't provide "
+            "`scipy.optimize.minimize` with status 2 and message ABNORMAL_TERMINATION"
+            "_IN_LNSRCH.')]\nBecause you specified `batch_initial_conditions`, "
+            "optimization will not be retried with new initial conditions and will "
+            "proceed with the current solution. Suggested remediation: Try again with "
+            "different `batch_initial_conditions`, or don't provide "
             "`batch_initial_conditions.`"
         )
         expected_warning_raised = any(
@@ -422,8 +422,8 @@ class TestOptimizeAcqf(BotorchTestCase):
         message = (
             "Optimization failed in `gen_candidates_scipy` with the following "
             "warning(s):\n[OptimizationWarning('Optimization failed within "
-            "`scipy.optimize.minimize` with status 2.')]\nTrying again with a "
-            "new set of initial conditions."
+            "`scipy.optimize.minimize` with status 2 and message ABNORMAL_TERMINATION"
+            "_IN_LNSRCH.')]\nTrying again with a new set of initial conditions."
         )
         expected_warning_raised = any(
             (
@@ -470,8 +470,8 @@ class TestOptimizeAcqf(BotorchTestCase):
         message_1 = (
             "Optimization failed in `gen_candidates_scipy` with the following "
             "warning(s):\n[OptimizationWarning('Optimization failed within "
-            "`scipy.optimize.minimize` with status 2.')]\nTrying again with a "
-            "new set of initial conditions."
+            "`scipy.optimize.minimize` with status 2 and message ABNORMAL_TERMINATION"
+            "_IN_LNSRCH.')]\nTrying again with a new set of initial conditions."
         )
 
         message_2 = (
