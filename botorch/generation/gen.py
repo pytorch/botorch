@@ -440,6 +440,6 @@ def _process_scipy_result(res: OptimizeResult, options: Dict[str, Any]) -> None:
                 warnings.simplefilter("always", category=OptimizationWarning)
                 warnings.warn(
                     f"Optimization failed within `scipy.optimize.minimize` with status "
-                    f"{res.status}.",
+                    f"{res.status} and message {res.message}.",
                     OptimizationWarning,
                 )
