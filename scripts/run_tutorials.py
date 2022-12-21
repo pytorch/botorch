@@ -102,10 +102,8 @@ def run_tutorials(
         if not tutorial.is_file or tutorial.suffix != ".ipynb":
             continue
         if not include_ignored and tutorial.name in ignored_tutorials:
-            print(f"Ignoring tutorial {tutorial.name}.")
             continue
-        if tutorial.name[:3] >= "con":
-            print(f"Not running {tutorial.name}")
+        if not ((tutorial.name >= "con") and (tutorial.name < "m")):
             continue
         print(f"running {tutorial.name}")
         num_runs += 1
