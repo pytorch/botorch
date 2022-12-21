@@ -104,8 +104,10 @@ def run_tutorials(
         if not include_ignored and tutorial.name in ignored_tutorials:
             print(f"Ignoring tutorial {tutorial.name}.")
             continue
-        if tutorial.name[0] >= "m":
+        if tutorial.name[:3] >= "con":
+            print(f"Not running {tutorial.name}")
             continue
+        print(f"running {tutorial.name}")
         num_runs += 1
         error = run_tutorial(tutorial, smoke_test=smoke_test)
         if error is not None:
