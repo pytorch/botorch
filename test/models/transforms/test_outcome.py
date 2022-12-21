@@ -93,10 +93,34 @@ class TestOutcomeTransforms(BotorchTestCase):
             ):
                 transform.untransform(y)
 
+    def test_is_linear(self) -> None:
+        posterior = _get_test_posterior(
+            shape=torch.Size([1, 1]), device=self.device, dtype=torch.float64
+        )
+        y = torch.arange(2, dtype=torch.float64, device=self.device)[:, None]
+        standardize_tf = Standardize(m=1)
+        standardize_tf(y)
+
+        for transform in [
+            standardize_tf,
+            Power(power=0.5),
+            Log(),
+            ChainedOutcomeTransform(
+                chained=ChainedOutcomeTransform(stand=standardize_tf)
+            ),
+            ChainedOutcomeTransform(log=Log()),
+        ]:
+            posterior_is_gpt = isinstance(
+                transform.untransform_posterior(posterior), GPyTorchPosterior
+            )
+            self.assertEqual(posterior_is_gpt, transform._is_linear)
+
     def test_standardize(self):
         # test error on incompatible dim
         tf = Standardize(m=1)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(
+            RuntimeError, msg="Wrong output dimension. Y.size(-1) is 2; expected 1."
+        ):
             tf(torch.zeros(3, 2, device=self.device), None)
         # test error on incompatible batch shape
         with self.assertRaises(RuntimeError):

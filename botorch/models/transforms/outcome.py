@@ -101,8 +101,22 @@ class OutcomeTransform(Module, ABC):
             f"{self.__class__.__name__} does not implement the `untransform` method"
         )
 
+    @property
+    def _is_linear(self) -> bool:
+        """
+        True for transformations such as `Standardize`; these should be able to apply
+        `untransform_posterior` to a GPyTorchPosterior and return a GPyTorchPosterior,
+        because a multivariate normal distribution should remain multivariate normal
+        after applying the transform.
+        """
+        return False
+
     def untransform_posterior(self, posterior: Posterior) -> Posterior:
-        r"""Un-transform a posterior
+        r"""Un-transform a posterior.
+
+        Posteriors with `_is_linear=True` should return a `GPyTorchPosterior` when
+        `posterior` is a `GPyTorchPosterior`. Posteriors with `_is_linear=False`
+        likely return a `TransformedPosterior` instead.
 
         Args:
             posterior: A posterior in the transformed space.
@@ -182,6 +196,14 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
             Y, Yvar = tf.untransform(Y, Yvar)
         return Y, Yvar
 
+    @property
+    def _is_linear(self) -> bool:
+        """
+        A `ChainedOutcomeTransform` is linear only if all of the component transforms
+        are linear.
+        """
+        return all((octf._is_linear for octf in self.values()))
+
     def untransform_posterior(self, posterior: Posterior) -> Posterior:
         r"""Un-transform a posterior
 
@@ -255,7 +277,10 @@ class Standardize(OutcomeTransform):
             if Y.shape[:-2] != self._batch_shape:
                 raise RuntimeError("wrong batch shape")
             if Y.size(-1) != self._m:
-                raise RuntimeError("wrong output dimension")
+                raise RuntimeError(
+                    f"Wrong output dimension. Y.size(-1) is {Y.size(-1)}; expected "
+                    f"{self._m}."
+                )
             stdvs = Y.std(dim=-2, keepdim=True)
             stdvs = stdvs.where(stdvs >= self._min_stdv, torch.full_like(stdvs, 1.0))
             means = Y.mean(dim=-2, keepdim=True)
@@ -330,6 +355,10 @@ class Standardize(OutcomeTransform):
         Y_utf = self.means + self.stdvs * Y
         Yvar_utf = self._stdvs_sq * Yvar if Yvar is not None else None
         return Y_utf, Yvar_utf
+
+    @property
+    def _is_linear(self) -> bool:
+        return True
 
     def untransform_posterior(
         self, posterior: Posterior
