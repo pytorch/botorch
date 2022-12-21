@@ -91,7 +91,30 @@ def run_tutorials(
     include_ignored: bool = False,
     smoke_test: bool = False,
 ) -> None:
-    return
+    print(f"Running tutorials in {'smoke test' if smoke_test else 'standard'} mode.")
+    if not smoke_test:
+        print("This may take a long time...")
+    tutorial_dir = Path(repo_dir).joinpath("tutorials")
+    num_runs = 0
+    num_errors = 0
+    ignored_tutorials = IGNORE if smoke_test else IGNORE | IGNORE_SMOKE_TEST_ONLY
+    for tutorial in tutorial_dir.iterdir():
+        if not tutorial.is_file or tutorial.suffix != ".ipynb":
+            continue
+        if not include_ignored and tutorial.name in ignored_tutorials:
+            print(f"Ignoring tutorial {tutorial.name}.")
+            continue
+        if tutorial.name[0] >= "m":
+            continue
+        num_runs += 1
+        error = run_tutorial(tutorial, smoke_test=smoke_test)
+        if error is not None:
+            num_errors += 1
+            print(error)
+    if num_errors > 0:
+        raise RuntimeError(
+            f"Running {num_runs} tutorials resulted in {num_errors} errors."
+        )
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ on:
 
 jobs:
   run_tutorials_with_smoke_test:
-    name: Run tutorials with smoke test on latest PyTorch / GPyTorch / Ax
+    name: Run tutorials without smoke test on latest PyTorch / GPyTorch / Ax
     uses: ./.github/workflows/reusable_tutorials.yml
     with:
       smoke_test: false
