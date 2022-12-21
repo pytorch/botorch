@@ -103,8 +103,9 @@ def run_tutorials(
             continue
         if not include_ignored and tutorial.name in ignored_tutorials:
             continue
-        # the offending tutorial has (tutorial.name >= "con") and (tutorial.name < "m")
-        if not ((tutorial.name >= "cus") and (tutorial.name < "m")):
+        # the offending tutorial has (tutorial.name >= "con") and (tutorial.name < "cus")
+        # this would be either constraint_active_search or constrained_multi_bojective_bo
+        if "constraint_active" not in tutorial.name:
             continue
         print(f"running {tutorial.name}")
         num_runs += 1
