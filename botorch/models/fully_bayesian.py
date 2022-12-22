@@ -243,7 +243,7 @@ class SaasPyroModel(PyroModel):
     def sample_noise(self, **tkwargs: Any) -> Tensor:
         r"""Sample the noise variance."""
         if self.train_Yvar is None:
-            return pyro.sample(
+            return MIN_INFERRED_NOISE_LEVEL + pyro.sample(
                 "noise",
                 pyro.distributions.Gamma(
                     torch.tensor(0.9, **tkwargs),
