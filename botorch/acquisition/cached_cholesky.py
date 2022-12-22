@@ -22,7 +22,6 @@ from botorch.models.multitask import KroneckerMultiTaskGP, MultiTaskGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
 from botorch.utils.low_rank import extract_batch_covar, sample_cached_cholesky
-from gpytorch import settings as gpt_settings
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
 )
@@ -93,8 +92,7 @@ class CachedCholeskyMCAcquisitionFunction(ABC):
             lazy_covar = extract_batch_covar(posterior.distribution)
         else:
             lazy_covar = posterior.distribution.lazy_covariance_matrix
-        with gpt_settings.fast_computations.covar_root_decomposition(False):
-            lazy_covar_root = lazy_covar.root_decomposition()
+        lazy_covar_root = lazy_covar.root_decomposition()
         return lazy_covar_root.root.to_dense()
 
     def _get_f_X_samples(self, posterior: GPyTorchPosterior, q_in: int) -> Tensor:
