@@ -14,7 +14,7 @@ from typing import Callable, Optional
 
 import torch
 from botorch.exceptions import BotorchWarning, UnsupportedError
-from botorch.models.model import Model
+from botorch.models.model import Model, ModelDict
 from botorch.posteriors.posterior import Posterior
 from botorch.sampling.base import MCSampler
 from botorch.sampling.get_sampler import get_sampler
@@ -168,3 +168,30 @@ class MCSamplerMixin(ABC):
                 posterior=posterior, sample_shape=self._default_sample_shape
             )
         return self.sampler(posterior=posterior)
+
+
+class MultiModelAcquisitionFunction(AcquisitionFunction, ABC):
+    r"""Abstract base class for acquisition functions that require
+    multiple types of models.
+
+    The intended use case for these acquisition functions are those
+    where we have multiple models, each serving a distinct purpose.
+    As an example, we can have a "regression" model that predicts
+    one or more outcomes, and a "classification" model that predicts
+    the probabilty that a given parameterization is feasible. The
+    multi-model acquisition function can then weight the acquisition
+    value computed with the "regression" model with the feasibility
+    value predicted by the "classification" model to produce the
+    composite acquisition value.
+
+    :meta private:
+    """
+
+    def __init__(self, model_dict: ModelDict) -> None:
+        r"""Constructor for the MultiModelAcquisitionFunction base class.
+
+        Args:
+            model_dict: A ModelDict mapping labels to models.
+        """
+        super(AcquisitionFunction, self).__init__()
+        self.model_dict: ModelDict = model_dict

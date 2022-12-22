@@ -32,13 +32,14 @@ from typing import (
 import numpy as np
 import torch
 from botorch import settings
+from botorch.exceptions.errors import InputDataError
 from botorch.models.utils.assorted import fantasize as fantasize_flag
 from botorch.posteriors import Posterior, PosteriorList
 from botorch.sampling.base import MCSampler
 from botorch.utils.datasets import BotorchDataset
 from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
-from torch.nn import Module, ModuleList
+from torch.nn import Module, ModuleDict, ModuleList
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import PosteriorTransform  # pragma: no cover
@@ -514,3 +515,21 @@ class ModelList(Model):
                 }
                 m.load_state_dict(filtered_dict)
         super().load_state_dict(state_dict=state_dict, strict=strict)
+
+
+class ModelDict(ModuleDict):
+    r"""A lightweight container mapping labels to models."""
+
+    def __init__(self, **models: Dict[str, Model]) -> None:
+        r"""Initialize a ModelDict.
+
+        Args:
+            models: An arbitrary number of labels each mapping to a Model.
+                Each model can be any type of BoTorch Model, including
+                multi-output models and ModelList.
+        """
+        if any(not isinstance(m, Model) for m in models.values()):
+            raise InputDataError(
+                f"Expected all models to be a BoTorch model. Got {models}."
+            )
+        super().__init__(modules=models)
