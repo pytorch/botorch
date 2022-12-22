@@ -520,7 +520,7 @@ class ModelList(Model):
 class ModelDict(ModuleDict):
     r"""A lightweight container mapping labels to models."""
 
-    def __init__(self, **models: Dict[str, Model]) -> None:
+    def __init__(self, **models: Model) -> None:
         r"""Initialize a ModelDict.
 
         Args:
