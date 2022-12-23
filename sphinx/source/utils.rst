@@ -42,6 +42,11 @@ Objective
 .. automodule:: botorch.utils.objective
 		:members:
 
+Profiling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.profiling
+		:members:
+
 Rounding
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.rounding
