@@ -25,7 +25,7 @@ IGNORE = {  # ignored in smoke tests and full runs
     "preference_bo.ipynb",  # failing. Fix planned
     # Causing the tutorials to crash when run without smoke test. Likely OOM.
     # Fix planned.
-    "constraint_active_search",
+    "constraint_active_search.ipynb",
 }
 IGNORE_SMOKE_TEST_ONLY = {  # only used in smoke tests
     "thompson_sampling.ipynb",  # very slow without KeOps + GPU
@@ -105,10 +105,7 @@ def run_tutorials(
         if not tutorial.is_file or tutorial.suffix != ".ipynb":
             continue
         if not include_ignored and tutorial.name in ignored_tutorials:
-            continue
-        # the offending tutorial has (tutorial.name >= "con") and (tutorial.name < "cus")
-        # this would be either constraint_active_search or constrained_multi_bojective_bo
-        if "constraint_active" not in tutorial.name:
+            print(f"Ignoring tutorial {tutorial.name}.")
             continue
         print(f"running {tutorial.name}")
         num_runs += 1
