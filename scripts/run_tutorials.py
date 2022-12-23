@@ -45,6 +45,7 @@ def parse_ipynb(file: Path) -> str:
     return script
 
 
+@get_memory_usage_preserving_output
 def run_script(script: str, env: Optional[Dict[str, str]] = None) -> None:
     # need to keep the file around & close it so subprocess does not run into I/O issues
     with tempfile.NamedTemporaryFile(delete=False) as tf:
@@ -70,10 +71,7 @@ def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
     print(f"Running tutorial {tutorial.name}.")
     env = {"SMOKE_TEST": "True"} if smoke_test else None
     try:
-        # run_out = run_script(script, env=env)
-        run_out, mem_usage = get_memory_usage_preserving_output(
-            run_script, script, env=env
-        )
+        run_out, mem_usage = run_script(script, env=env)
     except subprocess.TimeoutExpired:
         return f"Tutorial {tutorial.name} exceeded the maximum runtime of 30 minutes."
 
