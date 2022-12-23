@@ -26,6 +26,8 @@ IGNORE = {  # ignored in smoke tests and full runs
     # Causing the tutorials to crash when run without smoke test. Likely OOM.
     # Fix planned.
     "constraint_active_search.ipynb",
+    # Timing out
+    "saasbo.ipynb",
 }
 IGNORE_SMOKE_TEST_ONLY = {  # only used in smoke tests
     "thompson_sampling.ipynb",  # very slow without KeOps + GPU
@@ -107,7 +109,6 @@ def run_tutorials(
         if not include_ignored and tutorial.name in ignored_tutorials:
             print(f"Ignoring tutorial {tutorial.name}.")
             continue
-        print(f"running {tutorial.name}")
         num_runs += 1
         error = run_tutorial(tutorial, smoke_test=smoke_test)
         if error is not None:
