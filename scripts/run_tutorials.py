@@ -28,6 +28,8 @@ IGNORE = {  # ignored in smoke tests and full runs
     "constraint_active_search.ipynb",
     # Timing out
     "saasbo.ipynb",
+    # Timing out
+    "scalable_constrained_bo.ipynb",
 }
 IGNORE_SMOKE_TEST_ONLY = {  # only used in smoke tests
     "thompson_sampling.ipynb",  # very slow without KeOps + GPU
