@@ -16,6 +16,7 @@ from subprocess import CalledProcessError
 from typing import Dict, Optional
 
 import nbformat
+from botorch.utils.profiling import get_memory_usage_preserving_output
 from nbconvert import PythonExporter
 
 
@@ -69,7 +70,10 @@ def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
     print(f"Running tutorial {tutorial.name}.")
     env = {"SMOKE_TEST": "True"} if smoke_test else None
     try:
-        run_out = run_script(script, env=env)
+        # run_out = run_script(script, env=env)
+        run_out, mem_usage = get_memory_usage_preserving_output(
+            run_script, script, env=env
+        )
     except subprocess.TimeoutExpired:
         return f"Tutorial {tutorial.name} exceeded the maximum runtime of 30 minutes."
 
@@ -86,7 +90,10 @@ def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
             ]
         )
     runtime = time.monotonic() - tic
-    print(f"Running tutorial {tutorial.name} took {runtime:.2f} seconds.")
+    print(
+        f"Running tutorial {tutorial.name} took {runtime:.2f} seconds. Memory usage "
+        f"started at {mem_usage[0]} MB and the maximum was {max(mem_usage)} MB."
+    )
 
 
 def run_tutorials(
