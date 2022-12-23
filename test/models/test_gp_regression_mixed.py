@@ -10,6 +10,7 @@ import warnings
 import torch
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
+from botorch.models.converter import batched_to_model_list
 from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.transforms import Normalize
@@ -121,6 +122,10 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             pvar = posterior_pred.variance
             pvar_exp = _get_pvar_expected(posterior, model, X, m)
             self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
+
+            # test that model converter throws an exception
+            with self.assertRaisesRegex(NotImplementedError, "not supported"):
+                batched_to_model_list(model)
 
     def test_condition_on_observations(self):
         d = 3

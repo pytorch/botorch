@@ -200,7 +200,4 @@ class SobolQMCNormalSampler(NormalMCSampler):
             )
             base_samples = base_samples.view(target_shape)
             self.register_buffer("base_samples", base_samples)
-        if self.base_samples.device != posterior.device:
-            self.to(device=posterior.device)  # pragma: nocover
-        if self.base_samples.dtype != posterior.dtype:
-            self.to(dtype=posterior.dtype)
+        self.to(device=posterior.device, dtype=posterior.dtype)

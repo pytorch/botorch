@@ -8,8 +8,10 @@ import torch
 from botorch.acquisition.acquisition import (
     AcquisitionFunction,
     MCSamplerMixin,
+    MultiModelAcquisitionFunction,
     OneShotAcquisitionFunction,
 )
+from botorch.models.model import ModelDict
 from botorch.sampling.normal import IIDNormalSampler
 from botorch.sampling.stochastic_samplers import StochasticSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -21,6 +23,11 @@ class DummyMCAcqf(AcquisitionFunction, MCSamplerMixin):
         super().__init__(model)
         MCSamplerMixin.__init__(self, sampler)
 
+    def forward(self, X):
+        raise NotImplementedError
+
+
+class DummyMultiModelAcqf(MultiModelAcquisitionFunction):
     def forward(self, X):
         raise NotImplementedError
 
@@ -48,3 +55,15 @@ class TestMCSamplerMixin(BotorchTestCase):
         sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
         acqf.sampler = sampler
         self.assertIs(acqf.sampler, sampler)
+
+
+class TestMultiModelAcquisitionFunction(BotorchTestCase):
+    def test_multi_model_acquisition_function(self):
+        model_dict = ModelDict(
+            m1=MockModel(MockPosterior()),
+            m2=MockModel(MockPosterior()),
+        )
+        with self.assertRaises(TypeError):
+            MultiModelAcquisitionFunction(model_dict=model_dict)
+        acqf = DummyMultiModelAcqf(model_dict=model_dict)
+        self.assertIs(acqf.model_dict, model_dict)

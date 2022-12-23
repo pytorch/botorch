@@ -5,9 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-import warnings
 from contextlib import nullcontext
-from copy import deepcopy
 from itertools import filterfalse, product
 from typing import Callable, Iterable, Optional
 from unittest.mock import MagicMock, patch
@@ -16,29 +14,20 @@ from warnings import catch_warnings, warn, WarningMessage
 import torch
 from botorch import fit
 from botorch.exceptions.errors import ModelFittingError, UnsupportedError
-from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
-from botorch.fit import fit_gpytorch_mll
-from botorch.models import (
-    FixedNoiseGP,
-    HeteroskedasticSingleTaskGP,
-    SingleTaskGP,
-    SingleTaskVariationalGP,
-)
-from botorch.models.converter import batched_to_model_list
+from botorch.exceptions.warnings import OptimizationWarning
+from botorch.models import SingleTaskGP, SingleTaskVariationalGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 
 from botorch.optim.closures import get_loss_closure_with_grads
 from botorch.optim.fit import fit_gpytorch_mll_scipy, fit_gpytorch_mll_torch
-from botorch.optim.utils import allclose_mll, get_data_loader
+from botorch.optim.utils import get_data_loader
 from botorch.settings import debug
 from botorch.utils.context_managers import (
-    del_attribute_ctx,
     module_rollback_ctx,
     requires_grad_ctx,
     TensorCheckpoint,
 )
-from botorch.utils.dispatcher import MDNotImplementedError
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import MaternKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood, VariationalELBO
@@ -94,6 +83,30 @@ class TestFitAPI(BotorchTestCase):
                 outcome_transform=Standardize(m=1),
             )
             self.mll = ExactMarginalLogLikelihood(model.likelihood, model)
+
+    def test_fit_gpytorch_mll(self):
+        # Test that `optimizer` is only passed when non-None
+        with patch.object(fit, "FitGPyTorchMLL") as mock_dispatcher:
+            fit.fit_gpytorch_mll(self.mll, optimizer=None)
+            mock_dispatcher.assert_called_once_with(
+                self.mll,
+                type(self.mll.likelihood),
+                type(self.mll.model),
+                closure=None,
+                closure_kwargs=None,
+                optimizer_kwargs=None,
+            )
+
+            fit.fit_gpytorch_mll(self.mll, optimizer="foo")
+            mock_dispatcher.assert_called_with(
+                self.mll,
+                type(self.mll.likelihood),
+                type(self.mll.model),
+                closure=None,
+                closure_kwargs=None,
+                optimizer="foo",
+                optimizer_kwargs=None,
+            )
 
     def test_fit_gyptorch_model(self):
         r"""Test support for legacy API"""
@@ -460,216 +473,3 @@ class TestFitFallbackAppoximate(BotorchTestCase):
                 closure=self.closure,
                 data_loader=self.data_loader,
             )
-
-
-class TestFitMultioutputIndependent(BotorchTestCase):
-    def setUp(self):
-        with torch.random.fork_rng():
-            torch.manual_seed(0)
-            train_X = torch.linspace(0, 1, 10).unsqueeze(-1)
-            train_F = torch.sin(2 * math.pi * train_X)
-
-        self.mlls = {}
-        self.checkpoints = {}
-        self.converted_mlls = {}
-        for model_type, output_dim in product(
-            [SingleTaskGP, FixedNoiseGP, HeteroskedasticSingleTaskGP], [1, 2]
-        ):
-            train_Y = train_F.repeat(1, output_dim)
-            train_Y = train_Y + 0.1 * torch.randn_like(train_Y)
-            model = model_type(
-                train_X=train_X,
-                train_Y=train_Y,
-                input_transform=Normalize(d=1),
-                outcome_transform=Standardize(m=output_dim),
-                **(
-                    {}
-                    if model_type is SingleTaskGP
-                    else {"train_Yvar": torch.full_like(train_Y, 0.1)}
-                ),
-            )
-            self.assertIsInstance(model.covar_module.base_kernel, MaternKernel)
-            model.covar_module.base_kernel.nu = 2.5
-
-            mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            for dtype in (torch.float32, torch.float64):
-                key = model_type, output_dim
-                self.mlls[key] = mll.to(dtype=dtype).train()
-                self.checkpoints[key] = {
-                    k: TensorCheckpoint(
-                        values=v.detach().clone(), device=v.device, dtype=v.dtype
-                    )
-                    for k, v in mll.state_dict().items()
-                }
-                if output_dim > 1:
-                    with del_attribute_ctx(mll.model, "outcome_transform"):
-                        _mll = self.converted_mlls[key] = deepcopy(mll)
-                        _mll.model = deepcopy(mll.model)
-                        _mll.model.covar_module.base_kernel.nu = 1.5  # break on purpose
-
-    def test_main(self):
-        for case, mll in self.mlls.items():
-            self._test_main(mll, self.checkpoints[case])
-
-    def test_unpack(self):
-        for case, mll in self.mlls.items():
-            if case in self.converted_mlls:
-                self._test_unpack(
-                    mll, self.checkpoints[case], self.converted_mlls[case]
-                )
-
-    def test_repack(self):
-        for case, mll in self.mlls.items():
-            if case in self.converted_mlls:
-                self._test_repack(
-                    mll, self.checkpoints[case], self.converted_mlls[case]
-                )
-
-    def test_exceptions(self):
-        for case, mll in self.mlls.items():
-            if case in self.converted_mlls:
-                self._test_exceptions(
-                    mll, self.checkpoints[case], self.converted_mlls[case]
-                )
-
-    def _test_main(self, mll, ckpt):
-        # Test that ineligible models error out approriately, then short-circuit
-        if mll.model.num_outputs == 1 or mll.likelihood is not getattr(
-            mll.model, "likelihood", None
-        ):
-            with self.assertRaises(MDNotImplementedError):
-                fit._fit_multioutput_independent(mll, None, None)
-
-            return
-
-        optimizer = MockOptimizer()
-        with module_rollback_ctx(mll, checkpoint=ckpt), debug(
-            True
-        ), warnings.catch_warnings(record=True) as ws:
-            warnings.simplefilter("always", BotorchWarning)
-            warnings.simplefilter("ignore", DeprecationWarning)
-            try:
-                fit._fit_multioutput_independent(
-                    mll,
-                    None,
-                    None,
-                    optimizer=optimizer,
-                    warning_handler=lambda w: True,  # mark all warnings as resolved
-                    max_attempts=1,
-                )
-            except Exception:
-                pass  # exception handling tested separately
-            else:
-                self.assertEqual(0, len(ws))
-                self.assertFalse(mll.training)
-                self.assertEqual(optimizer.call_count, mll.model.num_outputs)
-                self.assertTrue(
-                    all(
-                        v.equal(ckpt[k].values) != v.requires_grad
-                        for k, v in mll.named_parameters()
-                    )
-                )
-
-    def _test_unpack(self, mll, ckpt, bad_mll):
-        # Test that model unpacking fails gracefully
-        optimizer = MockOptimizer()
-        converter = MagicMock(return_value=bad_mll.model)
-        with patch.multiple(
-            fit,
-            batched_to_model_list=converter,
-            SumMarginalLogLikelihood=MagicMock(return_value=bad_mll),
-        ):
-            with catch_warnings(record=True) as ws, debug(True):
-                with self.assertRaises(MDNotImplementedError):
-                    fit._fit_multioutput_independent(
-                        mll, None, None, optimizer=optimizer, max_attempts=1
-                    )
-
-            self.assertEqual(converter.call_count, 1)
-            self.assertEqual(optimizer.call_count, 0)  # should fail beforehand
-            self.assertTrue(
-                all(v.equal(ckpt[k].values) for k, v in mll.state_dict().items())
-            )
-            self.assertTrue(any("unpacked model differs" in str(w.message) for w in ws))
-
-    def _test_repack(self, mll, ckpt, bad_mll):
-        # Test that model repacking fails gracefully
-        with patch.multiple(
-            fit,  # skips unpacking + fitting, tests bad model repacking
-            allclose_mll=lambda a, b, **kwargs: allclose_mll(a, b),
-            batched_to_model_list=lambda model: model,
-            SumMarginalLogLikelihood=MagicMock(return_value=mll),
-            fit_gpytorch_mll=lambda mll, **kwargs: mll,
-            model_list_to_batched=MagicMock(return_value=bad_mll.model),
-        ):
-            with catch_warnings(record=True) as ws, debug(True):
-                with self.assertRaises(MDNotImplementedError):
-                    fit._fit_multioutput_independent(mll, None, None, max_attempts=1)
-
-            self.assertTrue(
-                all(v.equal(ckpt[k].values) for k, v in mll.state_dict().items())
-            )
-            self.assertTrue(any("repacked model differs" in str(w.message) for w in ws))
-
-    def _test_exceptions(self, mll, ckpt, bad_mll):
-        for exception in (
-            AttributeError("test_attribute_error"),
-            RuntimeError("test_runtime_error"),
-            UnsupportedError("test_unsupported_error"),
-        ):
-            converter = MagicMock(return_value=bad_mll.model)
-            with catch_warnings(record=True) as ws, debug(True):
-
-                def mock_fit_gpytorch_mll(*args, **kwargs):
-                    raise exception
-
-                try:
-                    with patch.multiple(
-                        fit,  # skip unpacking, throw exception from fit_gpytorch_mll
-                        allclose_mll=lambda a, b, **kwargs: True,
-                        batched_to_model_list=converter,
-                        model_list_to_batched=converter,  # should not get called
-                        fit_gpytorch_mll=mock_fit_gpytorch_mll,
-                        SumMarginalLogLikelihood=type(mll),
-                        module_rollback_ctx=lambda *args, **kwargs: nullcontext({}),
-                    ):
-                        fit._fit_multioutput_independent(mll, None, None)
-                except MDNotImplementedError:
-                    pass
-
-            self.assertEqual(converter.call_count, 1)
-            self.assertTrue(any(str(exception) in str(w.message) for w in ws))
-
-
-class TestFitOther(BotorchTestCase):
-    def helper_fit_with_converter(self, dtype) -> None:
-        # Check that sequential optimization using converter does not
-        # break input transforms.
-        tkwargs = {"device": self.device, "dtype": dtype}
-        # Set the seed to a number that doesn't generate numerical
-        # issues (no NaNs)
-        torch.manual_seed(0)
-        X = torch.rand(5, 2, **tkwargs) * 10
-        Y = X**2
-        intf = Normalize(2)
-        model = SingleTaskGP(X, Y, input_transform=intf)
-        mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        with patch(
-            f"{fit_gpytorch_mll.__module__}.batched_to_model_list",
-            wraps=batched_to_model_list,
-        ) as wrapped_converter, warnings.catch_warnings(record=True) as ws:
-            warnings.simplefilter("always", BotorchWarning)
-            fit_gpytorch_mll(mll)
-        # Check that MLL repacking succeeded.
-        self.assertFalse(
-            any("Training loss of repacked model" in str(w.message) for w in ws)
-        )
-        wrapped_converter.assert_called_once()
-        self.assertFalse(torch.allclose(intf.mins, torch.zeros(1, 2, **tkwargs)))
-        self.assertFalse(torch.allclose(intf.ranges, torch.ones(1, 2, **tkwargs)))
-
-    def test_fit_with_converter_float32(self) -> None:
-        self.helper_fit_with_converter(torch.float)
-
-    def test_fit_with_converter_float64(self) -> None:
-        self.helper_fit_with_converter(torch.double)

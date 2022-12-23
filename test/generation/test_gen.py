@@ -202,7 +202,8 @@ class TestGenCandidates(TestBaseCandidateGeneration):
         with warnings.catch_warnings(record=True) as ws:
             self.test_gen_candidates(options={"maxls": 1})
         expected_msg = (
-            "Optimization failed within `scipy.optimize.minimize` with status 2."
+            "Optimization failed within `scipy.optimize.minimize` with status 2"
+            " and message ABNORMAL_TERMINATION_IN_LNSRCH."
         )
         expected_warning_raised = any(
             (
