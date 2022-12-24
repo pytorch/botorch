@@ -14,9 +14,9 @@ import time
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import Dict, Optional
-from memory_profiler import memory_usage
 
 import nbformat
+from memory_profiler import memory_usage
 from nbconvert import PythonExporter
 
 
