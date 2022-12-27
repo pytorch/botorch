@@ -27,11 +27,16 @@ from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.utils.constants import get_constants_like
-from botorch.utils.probability.utils import log_phi, ndtr as Phi, phi
+from botorch.utils.probability.utils import (
+    log_ndtr as log_Phi,
+    log_phi,
+    log_prob_normal_in,
+    ndtr as Phi,
+    phi,
+)
 from botorch.utils.safe_math import log1mexp
 from botorch.utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
 from torch import Tensor
-from torch.distributions import Normal
 
 _sqrt_2pi = math.sqrt(2 * math.pi)
 # the following two numbers are needed for _log_ei_helper
@@ -291,13 +296,87 @@ class LogExpectedImprovement(AnalyticAcquisitionFunction):
         return _log_ei_helper(u) + sigma.log()
 
 
+class LogConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
+    r"""Log Constrained Expected Improvement (feasibility-weighted).
+
+    Computes the logarithm of the analytic expected improvement for a Normal posterior
+    distribution weighted by a probability of feasibility. The objective and
+    constraints are assumed to be independent and have Gaussian posterior
+    distributions. Only supports non-batch mode (i.e. `q=1`). The model should be
+    multi-outcome, with the index of the objective and constraints passed to
+    the constructor.
+
+    `LogConstrainedEI(x) = log(EI(x)) + Sum_i log(P(y_i \in [lower_i, upper_i]))`,
+    where `y_i ~ constraint_i(x)` and `lower_i`, `upper_i` are the lower and
+    upper bounds for the i-th constraint, respectively.
+
+    Example:
+        # example where the 0th output has a non-negativity constraint and
+        # the 1st output is the objective
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> constraints = {0: (0.0, None)}
+        >>> LogCEI = LogConstrainedExpectedImprovement(model, 0.2, 1, constraints)
+        >>> cei = LogCEI(test_X)
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        best_f: Union[float, Tensor],
+        objective_index: int,
+        constraints: Dict[int, Tuple[Optional[float], Optional[float]]],
+        maximize: bool = True,
+    ) -> None:
+        r"""Analytic Log Constrained Expected Improvement.
+
+        Args:
+            model: A fitted multi-output model.
+            best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
+                the best feasible function value observed so far (assumed noiseless).
+            objective_index: The index of the objective.
+            constraints: A dictionary of the form `{i: [lower, upper]}`, where
+                `i` is the output index, and `lower` and `upper` are lower and upper
+                bounds on that output (resp. interpreted as -Inf / Inf if None)
+            maximize: If True, consider the problem a maximization problem.
+        """
+        # Use AcquisitionFunction constructor to avoid check for posterior transform.
+        super(AnalyticAcquisitionFunction, self).__init__(model=model)
+        self.posterior_transform = None
+        self.maximize = maximize
+        self.objective_index = objective_index
+        self.constraints = constraints
+        self.register_buffer("best_f", torch.as_tensor(best_f))
+        _preprocess_constraint_bounds(self, constraints=constraints)
+        self.register_forward_pre_hook(convert_to_target_pre_hook)
+
+    @t_batch_mode_transform(expected_q=1)
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Evaluate Constrained Log Expected Improvement on the candidate set X.
+
+        Args:
+            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design
+                points each.
+
+        Returns:
+            A `(b)`-dim Tensor of Log Expected Improvement values at the given
+            design points `X`.
+        """
+        means, sigmas = self._mean_and_sigma(X)  # (b) x 1 + (m = num constraints)
+        ind = self.objective_index
+        mean_obj, sigma_obj = means[..., ind], sigmas[..., ind]
+        u = _scaled_improvement(mean_obj, sigma_obj, self.best_f, self.maximize)
+        log_ei = _log_ei_helper(u) + sigma_obj.log()
+        log_prob_feas = _compute_log_prob_feas(self, means=means, sigmas=sigmas)
+        return log_ei + log_prob_feas
+
+
 class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
     r"""Constrained Expected Improvement (feasibility-weighted).
 
     Computes the analytic expected improvement for a Normal posterior
     distribution, weighted by a probability of feasibility. The objective and
     constraints are assumed to be independent and have Gaussian posterior
-    distributions. Only supports the case `q=1`. The model should be
+    distributions. Only supports non-batch mode (i.e. `q=1`). The model should be
     multi-outcome, with the index of the objective and constraints passed to
     the constructor.
 
@@ -306,8 +385,8 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
     upper bounds for the i-th constraint, respectively.
 
     Example:
-        >>> # example where 0th output has a non-negativity constraint and
-        ... # 1st output is the objective
+        # example where the 0th output has a non-negativity constraint and
+        # 1st output is the objective
         >>> model = SingleTaskGP(train_X, train_Y)
         >>> constraints = {0: (0.0, None)}
         >>> cEI = ConstrainedExpectedImprovement(model, 0.2, 1, constraints)
@@ -341,7 +420,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         self.objective_index = objective_index
         self.constraints = constraints
         self.register_buffer("best_f", torch.as_tensor(best_f))
-        self._preprocess_constraint_bounds(constraints=constraints)
+        _preprocess_constraint_bounds(self, constraints=constraints)
         self.register_forward_pre_hook(convert_to_target_pre_hook)
 
     @t_batch_mode_transform(expected_q=1)
@@ -358,89 +437,11 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         """
         means, sigmas = self._mean_and_sigma(X)  # (b) x 1 + (m = num constraints)
         ind = self.objective_index
-        mean_obj, sigma_obj = means[..., ind : ind + 1], sigmas[..., ind : ind + 1]
+        mean_obj, sigma_obj = means[..., ind], sigmas[..., ind]
         u = _scaled_improvement(mean_obj, sigma_obj, self.best_f, self.maximize)
         ei = sigma_obj * _ei_helper(u)
-        prob_feas = self._compute_prob_feas(X=X, means=means, sigmas=sigmas)
-        return ei.mul(prob_feas).squeeze(dim=-1)  # squeezing the constraint dimension
-
-    def _preprocess_constraint_bounds(
-        self, constraints: Dict[int, Tuple[Optional[float], Optional[float]]]
-    ) -> None:
-        r"""Set up constraint bounds.
-
-        Args:
-            constraints: A dictionary of the form `{i: [lower, upper]}`, where
-                `i` is the output index, and `lower` and `upper` are lower and upper
-                bounds on that output (resp. interpreted as -Inf / Inf if None)
-        """
-        con_lower, con_lower_inds = [], []
-        con_upper, con_upper_inds = [], []
-        con_both, con_both_inds = [], []
-        con_indices = list(constraints.keys())
-        if len(con_indices) == 0:
-            raise ValueError("There must be at least one constraint.")
-        if self.objective_index in con_indices:
-            raise ValueError(
-                "Output corresponding to objective should not be a constraint."
-            )
-        for k in con_indices:
-            if constraints[k][0] is not None and constraints[k][1] is not None:
-                if constraints[k][1] <= constraints[k][0]:
-                    raise ValueError("Upper bound is less than the lower bound.")
-                con_both_inds.append(k)
-                con_both.append([constraints[k][0], constraints[k][1]])
-            elif constraints[k][0] is not None:
-                con_lower_inds.append(k)
-                con_lower.append(constraints[k][0])
-            elif constraints[k][1] is not None:
-                con_upper_inds.append(k)
-                con_upper.append(constraints[k][1])
-        # tensor-based indexing is much faster than list-based advanced indexing
-        for name, indices in [
-            ("con_lower_inds", con_lower_inds),
-            ("con_upper_inds", con_upper_inds),
-            ("con_both_inds", con_both_inds),
-            ("con_both", con_both),
-            ("con_lower", con_lower),
-            ("con_upper", con_upper),
-        ]:
-            self.register_buffer(name, tensor=torch.as_tensor(indices))
-
-    def _compute_prob_feas(self, X: Tensor, means: Tensor, sigmas: Tensor) -> Tensor:
-        r"""Compute feasibility probability for each batch of X.
-
-        Args:
-            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design
-                points each.
-            means: A `(b) x m`-dim Tensor of means.
-            sigmas: A `(b) x m`-dim Tensor of standard deviations.
-        Returns:
-            A `(b) x 1`-dim tensor of feasibility probabilities
-
-        Note: This function does case-work for upper bound, lower bound, and both-sided
-        bounds. Another way to do it would be to use 'inf' and -'inf' for the
-        one-sided bounds and use the logic for the both-sided case. But this
-        causes an issue with autograd since we get 0 * inf.
-        TODO: Investigate further.
-        """
-        output_shape = X.shape[:-2] + torch.Size([1])
-        prob_feas = torch.ones(output_shape, device=X.device, dtype=X.dtype)
-
-        if len(self.con_lower_inds) > 0:
-            normal_lower = _construct_dist(means, sigmas, self.con_lower_inds)
-            prob_l = 1 - normal_lower.cdf(self.con_lower)
-            prob_feas = prob_feas.mul(torch.prod(prob_l, dim=-1, keepdim=True))
-        if len(self.con_upper_inds) > 0:
-            normal_upper = _construct_dist(means, sigmas, self.con_upper_inds)
-            prob_u = normal_upper.cdf(self.con_upper)
-            prob_feas = prob_feas.mul(torch.prod(prob_u, dim=-1, keepdim=True))
-        if len(self.con_both_inds) > 0:
-            normal_both = _construct_dist(means, sigmas, self.con_both_inds)
-            prob_u = normal_both.cdf(self.con_both[:, 1])
-            prob_l = normal_both.cdf(self.con_both[:, 0])
-            prob_feas = prob_feas.mul(torch.prod(prob_u - prob_l, dim=-1, keepdim=True))
-        return prob_feas
+        log_prob_feas = _compute_log_prob_feas(self, means=means, sigmas=sigmas)
+        return ei.mul(log_prob_feas.exp())
 
 
 class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
@@ -852,15 +853,6 @@ def _log_abs_u_Phi_div_phi(u: Tensor) -> Tensor:
     return torch.log(torch.special.erfcx(a * u) * u.abs()) + b
 
 
-def _construct_dist(means: Tensor, sigmas: Tensor, inds: Tensor) -> Normal:
-    """Constructs a torch.Normal distribution object with location parameter
-    means[... inds], and scale (i.e. standard deviation) sigmas[..., inds].
-    """
-    mean = means.index_select(dim=-1, index=inds)
-    sigma = sigmas.index_select(dim=-1, index=inds)
-    return Normal(loc=mean, scale=sigma)
-
-
 def _get_noiseless_fantasy_model(
     model: FixedNoiseGP, batch_X_observed: Tensor, Y_fantasized: Tensor
 ) -> FixedNoiseGP:
@@ -898,3 +890,89 @@ def _get_noiseless_fantasy_model(
     state_dict = deepcopy(model.state_dict())
     fantasy_model.load_state_dict(state_dict)
     return fantasy_model
+
+
+def _preprocess_constraint_bounds(
+    acqf: Union[LogConstrainedExpectedImprovement, ConstrainedExpectedImprovement],
+    constraints: Dict[int, Tuple[Optional[float], Optional[float]]],
+) -> None:
+    r"""Set up constraint bounds.
+
+    Args:
+        constraints: A dictionary of the form `{i: [lower, upper]}`, where
+            `i` is the output index, and `lower` and `upper` are lower and upper
+            bounds on that output (resp. interpreted as -Inf / Inf if None)
+    """
+    con_lower, con_lower_inds = [], []
+    con_upper, con_upper_inds = [], []
+    con_both, con_both_inds = [], []
+    con_indices = list(constraints.keys())
+    if len(con_indices) == 0:
+        raise ValueError("There must be at least one constraint.")
+    if acqf.objective_index in con_indices:
+        raise ValueError(
+            "Output corresponding to objective should not be a constraint."
+        )
+    for k in con_indices:
+        if constraints[k][0] is not None and constraints[k][1] is not None:
+            if constraints[k][1] <= constraints[k][0]:
+                raise ValueError("Upper bound is less than the lower bound.")
+            con_both_inds.append(k)
+            con_both.append([constraints[k][0], constraints[k][1]])
+        elif constraints[k][0] is not None:
+            con_lower_inds.append(k)
+            con_lower.append(constraints[k][0])
+        elif constraints[k][1] is not None:
+            con_upper_inds.append(k)
+            con_upper.append(constraints[k][1])
+    # tensor-based indexing is much faster than list-based advanced indexing
+    for name, indices in [
+        ("con_lower_inds", con_lower_inds),
+        ("con_upper_inds", con_upper_inds),
+        ("con_both_inds", con_both_inds),
+        ("con_both", con_both),
+        ("con_lower", con_lower),
+        ("con_upper", con_upper),
+    ]:
+        acqf.register_buffer(name, tensor=torch.as_tensor(indices))
+
+
+def _compute_log_prob_feas(
+    acqf: Union[LogConstrainedExpectedImprovement, ConstrainedExpectedImprovement],
+    means: Tensor,
+    sigmas: Tensor,
+) -> Tensor:
+    r"""Compute logarithm of the feasibility probability for each batch of X.
+
+    Args:
+        X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design
+            points each.
+        means: A `(b) x m`-dim Tensor of means.
+        sigmas: A `(b) x m`-dim Tensor of standard deviations.
+    Returns:
+        A `b`-dim tensor of log feasibility probabilities
+
+    Note: This function does case-work for upper bound, lower bound, and both-sided
+    bounds. Another way to do it would be to use 'inf' and -'inf' for the
+    one-sided bounds and use the logic for the both-sided case. But this
+    causes an issue with autograd since we get 0 * inf.
+    TODO: Investigate further.
+    """
+    acqf.to(device=means.device)
+    log_prob = torch.zeros_like(means[..., 0])
+    if len(acqf.con_lower_inds) > 0:
+        i = acqf.con_lower_inds
+        dist_l = (acqf.con_lower - means[..., i]) / sigmas[..., i]
+        log_prob = log_prob + log_Phi(-dist_l).sum(dim=-1)  # 1 - Phi(x) = Phi(-x)
+    if len(acqf.con_upper_inds) > 0:
+        i = acqf.con_upper_inds
+        dist_u = (acqf.con_upper - means[..., i]) / sigmas[..., i]
+        log_prob = log_prob + log_Phi(dist_u).sum(dim=-1)
+    if len(acqf.con_both_inds) > 0:
+        i = acqf.con_both_inds
+        con_lower, con_upper = acqf.con_both[:, 0], acqf.con_both[:, 1]
+        # scaled distance to lower and upper constraint boundary:
+        dist_l = (con_lower - means[..., i]) / sigmas[..., i]
+        dist_u = (con_upper - means[..., i]) / sigmas[..., i]
+        log_prob = log_prob + log_prob_normal_in(a=dist_l, b=dist_u).sum(dim=-1)
+    return log_prob
