@@ -14,13 +14,17 @@ from numbers import Number
 from typing import Any, Callable, Iterable, Iterator, Optional, Tuple, Union
 
 import torch
+from botorch.utils.safe_math import log1mexp
 from numpy.polynomial.legendre import leggauss as numpy_leggauss
 from torch import BoolTensor, LongTensor, Tensor
 
 CaseNd = Tuple[Callable[[], BoolTensor], Callable[[BoolTensor], Tensor]]
 
+_log_2 = math.log(2)
+_sqrt_pi = math.sqrt(pi)
+_inv_sqrt_pi = 1 / _sqrt_pi
 _inv_sqrt_2pi = (2 * pi) ** -0.5
-_neg_inv_sqrt2 = -(2**-0.5)
+_neg_inv_sqrt_2 = -(2**-0.5)
 _log_sqrt_2pi = math.log(2 * pi) / 2
 STANDARDIZED_RANGE: Tuple[float, float] = (-1e6, 1e6)
 
@@ -125,8 +129,8 @@ def leggauss(deg: int, **tkwargs: Any) -> Tuple[Tensor, Tensor]:
 
 def ndtr(x: Tensor) -> Tensor:
     r"""Standard normal CDF."""
-    half, ninv_sqrt2 = get_constants_like((0.5, _neg_inv_sqrt2), x)
-    return half * torch.erfc(ninv_sqrt2 * x)
+    half, neg_inv_sqrt_2 = get_constants_like((0.5, _neg_inv_sqrt_2), x)
+    return half * torch.erfc(neg_inv_sqrt_2 * x)
 
 
 def phi(x: Tensor) -> Tensor:
@@ -139,6 +143,79 @@ def log_phi(x: Tensor) -> Tensor:
     r"""Logarithm of standard normal pdf"""
     log_sqrt_2pi, neg_half = get_constants_like((_log_sqrt_2pi, -0.5), x)
     return neg_half * x.square() - log_sqrt_2pi
+
+
+def log_ndtr(x: Tensor, bound: Optional[float] = None) -> Tensor:
+    """Implementation of log_ndtr that remedies problems of torch.special's version
+    for large negative x, where the torch implementation yields Inf or NaN gradients.
+
+    In particular, we use the fact that erfc(ninv_sqrt2 * x) / 2 = ndtr(x) and
+    expand erfc at -Inf, yielding log(erfc(x)) = -x^2 + 1 / (sqrt(pi) * x) + O(1/x^3).
+    The formula has an absolute error of O(1/x^3) and a relative error of O(1/x^5).
+    The torch implementation yields NaN values in the gradients at -1e10 and below,
+    while this implementation is tested down to at least -1e100.
+
+    Args:
+        x: An input tensor with dtype torch.float32 or torch.float64.
+        bound: An optional float controlling the threshold below which the first
+            order expansion of erfc is used, mainly for testing purposes.
+
+    Returns:
+        A tensor of values of the same type and shape as x containing log(ndtr(x)).
+    """
+    if not (x.dtype == torch.float32 or x.dtype == torch.float64):
+        raise TypeError(
+            f"log_Phi only supports torch.float32 and torch.float64 "
+            f"dtypes, but received {x.dtype = }."
+        )
+
+    if bound is None:
+        bound = -1e6 if x.dtype == torch.float64 else -1e3  # to mask out NaN gradients
+
+    below_bound = x < bound
+    x_lower = x.masked_fill(~below_bound, bound)
+    # required as erfc(ninv_sqrt2 * x) / 2 = ndtr(x), and we use an expansion of erfc
+    x_lower = x_lower * get_constants_like(_neg_inv_sqrt_2, x)
+    x_upper = x.masked_fill(below_bound, bound)
+    inv_sqrt_pi, log_2 = get_constants_like((_inv_sqrt_pi, _log_2), x)
+    return torch.where(
+        below_bound,
+        # The large-x case is based on a series expansion of erfc at x = -inf.
+        # The absolute error of the expansion is O(1 / 2*sqrt(pi)*x.abs()^3),
+        # which is below machine epsilon for x < bound. The relative error is
+        # O(1/abs()^5), due to the x_lower.square() term, justyfing the bound.
+        -x_lower.square() + inv_sqrt_pi / x_lower - log_2,
+        torch.special.log_ndtr(x_upper),
+    )
+
+
+def log_prob_normal_in(a: Tensor, b: Tensor) -> Tensor:
+    r"""Computes the probability that a standard normal random variable takes a value
+    in \[a, b\], i.e. log(Phi(b) - Phi(a)), where Phi is the standard normal CDF.
+    Returns accurate values and permits numerically stable backward passes for inputs
+    in [-1e100, 1e100] for double precision and [-1e20, 1e20] for single precision.
+    In contrast, a naive approach is not numerically accurate beyond [-10, 10].
+
+    Args:
+        a: Tensor of lower integration bounds of the Gaussian probability measure.
+        b: Tensor of upper integration bounds of the Gaussian probability measure.
+
+    Returns:
+        Tensor of the log probabilities.
+    """
+    if not (a < b).all():
+        raise ValueError("Received input tensors a, b for which not all a < b.")
+    # if abs(b) > abs(a), we use Phi(b) - Phi(a) = Phi(-a) - Phi(-b), since the
+    # right tail converges to 0 from below, leading to digit cancellation issues, while
+    # the left tail of log_ndtr is well behaved and results in large negative numbers
+    rev_cond = b.abs() > a.abs()  # condition for reversal of inputs
+    if rev_cond.any():
+        c = torch.where(rev_cond, -b, a)
+        b = torch.where(rev_cond, -a, b)
+        a = c  # after we updated b, can assign c to a
+    log_Phi_b = log_ndtr(b)
+    # Phi(b) > Phi(a), so 0 > log(Phi(a) / Phi(b)) and we can use log1mexp
+    return log_Phi_b + log1mexp(log_ndtr(a) - log_Phi_b)
 
 
 def swap_along_dim_(
