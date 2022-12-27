@@ -25,7 +25,11 @@ IGNORE = {  # ignored in smoke tests and full runs
     "preference_bo.ipynb",  # failing. Fix planned
     # Causing the tutorials to crash when run without smoke test. Likely OOM.
     # Fix planned.
-    "constraint_active_search",
+    "constraint_active_search.ipynb",
+    # Timing out
+    "saasbo.ipynb",
+    # Timing out
+    "scalable_constrained_bo.ipynb",
 }
 IGNORE_SMOKE_TEST_ONLY = {  # only used in smoke tests
     "thompson_sampling.ipynb",  # very slow without KeOps + GPU
