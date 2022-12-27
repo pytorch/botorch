@@ -68,25 +68,27 @@ Optimization simply use Ax.
 
 The latest release of BoTorch is easily installed either via
 [Anaconda](https://www.anaconda.com/distribution/#download-section) (recommended):
+
+First install PyTorch:
 ```bash
-conda install botorch -c pytorch -c gpytorch -c conda-forge
+# Needed for OSX only, see below.
+conda install pytorch torchvision -c pytorch 
+```
+
+_Recommendation for MacOS users:_ PyTorch is a required dependency of BoTorch, and can be automatically installed via `pip`. However, we recommend installing PyTorch manually (as above) so that PyTorch is properly linked against MKL (a library that optimizes mathematical computation for Intel processors). This will result in up to an order-of-magnitude speed-up for Bayesian optimization, as at the moment, installing PyTorch from pip does not link against MKL.
+
+If you need CUDA on MacOS, or want to customize your installation (i.e. CPU-only option), please follow the [PyTorch installation instructions](https://pytorch.org/get-started/locally/) to build from source.
+
+Then install BoTorch:
+```bash
+conda install botorch -c conda-forge
 ```
 or via `pip`:
 ```bash
 pip install botorch
 ```
 
-You can customize your PyTorch installation (i.e. CUDA version, CPU only option)
-by following the [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
-
-***Important note for MacOS users:***
-* Make sure your PyTorch build is linked against MKL (the non-optimized version
-  of BoTorch can be up to an order of magnitude slower in some settings).
-  Setting this up manually on MacOS can be tricky - to ensure this works properly,
-  please follow the [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
-* If you need CUDA on MacOS, you will need to build PyTorch from source. Please
-  consult the PyTorch installation instructions above.
-
+_Note_: Make sure the `pip` being used is actually the one from the newly created Conda environment. If you're using a Unix-based OS, you can use `which pip` to check.
 
 ##### Installing from latest main branch
 
