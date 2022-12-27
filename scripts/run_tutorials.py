@@ -8,9 +8,12 @@ from __future__ import annotations
 
 import argparse
 import os
+import resource
 import subprocess
+import sys
 import tempfile
 import time
+from functools import partial
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import Dict, Optional
@@ -39,6 +42,11 @@ IGNORE_SMOKE_TEST_ONLY = {  # only used in smoke tests
 }
 
 
+def _limit_memory(soft: int, hard: int = resource.RLIM_INFINITY) -> None:
+    """Limit the memory usage of a running python process"""
+    resource.setrlimit(resource.RLIMIT_AS, (soft, hard))
+
+
 def parse_ipynb(file: Path) -> str:
     with open(file, "r") as nb_file:
         nb_str = nb_file.read()
@@ -56,12 +64,18 @@ def run_script(script: str, env: Optional[Dict[str, str]] = None) -> None:
             tmp_script.write(script)
     if env is not None:
         env = {**os.environ, **env}
+    if sys.platform != "darwin":
+        # limiting memory usage fails on Mac (at least Apple Silicon)
+        preexec_fn = partial(_limit_memory, 4 * 1024 * 1024)  # 4GB memory limit
+    else:
+        preexec_fn = None
     run_out = subprocess.run(
         ["ipython", tf_name],
         capture_output=True,
         text=True,
         env=env,
         timeout=1800,  # Count runtime >30 minutes as a failure
+        preexec_fn=preexec_fn,  # Memory limit to avoid crashing the whole run
     )
     os.remove(tf_name)
     return run_out
