@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import resource
 import subprocess
 import sys
 import tempfile
@@ -42,8 +41,13 @@ IGNORE_SMOKE_TEST_ONLY = {  # only used in smoke tests
 }
 
 
-def _limit_memory(soft: int, hard: int = resource.RLIM_INFINITY) -> None:
+def _limit_memory(soft: int, hard: Optional[int] = None) -> None:
     """Limit the memory usage of a running python process"""
+    import resource
+    
+    if hard is None:
+        hard = resource.RLIM_INFINITY
+    
     resource.setrlimit(resource.RLIMIT_AS, (soft, hard))
 
 
