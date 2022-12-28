@@ -145,20 +145,12 @@ def log_phi(x: Tensor) -> Tensor:
     return neg_half * x.square() - log_sqrt_2pi
 
 
-def log_ndtr(x: Tensor, bound: Optional[float] = None) -> Tensor:
+def log_ndtr(x: Tensor) -> Tensor:
     """Implementation of log_ndtr that remedies problems of torch.special's version
     for large negative x, where the torch implementation yields Inf or NaN gradients.
 
-    In particular, we use the fact that erfc(ninv_sqrt2 * x) / 2 = ndtr(x) and
-    expand erfc at -Inf, yielding log(erfc(x)) = -x^2 + 1 / (sqrt(pi) * x) + O(1/x^3).
-    The formula has an absolute error of O(1/x^3) and a relative error of O(1/x^5).
-    The torch implementation yields NaN values in the gradients at -1e10 and below,
-    while this implementation is tested down to at least -1e100.
-
     Args:
         x: An input tensor with dtype torch.float32 or torch.float64.
-        bound: An optional float controlling the threshold below which the first
-            order expansion of erfc is used, mainly for testing purposes.
 
     Returns:
         A tensor of values of the same type and shape as x containing log(ndtr(x)).
@@ -168,24 +160,33 @@ def log_ndtr(x: Tensor, bound: Optional[float] = None) -> Tensor:
             f"log_Phi only supports torch.float32 and torch.float64 "
             f"dtypes, but received {x.dtype = }."
         )
+    neg_inv_sqrt_2, log_2 = get_constants_like((_neg_inv_sqrt_2, _log_2), x)
+    return log_erfc(neg_inv_sqrt_2 * x) - log_2
 
-    if bound is None:
-        bound = -1e6 if x.dtype == torch.float64 else -1e3  # to mask out NaN gradients
 
-    below_bound = x < bound
-    x_lower = x.masked_fill(~below_bound, bound)
-    # required as erfc(ninv_sqrt2 * x) / 2 = ndtr(x), and we use an expansion of erfc
-    x_lower = x_lower * get_constants_like(_neg_inv_sqrt_2, x)
-    x_upper = x.masked_fill(below_bound, bound)
-    inv_sqrt_pi, log_2 = get_constants_like((_inv_sqrt_pi, _log_2), x)
+def log_erfc(x: Tensor) -> Tensor:
+    """Computes the logarithm of the complementary error function in a numerically
+    stable manner. The GitHub issue https://github.com/pytorch/pytorch/issues/31945
+    tracks progress toward moving this feature into PyTorch in C++.
+
+    Args:
+        x: An input tensor with dtype torch.float32 or torch.float64.
+
+    Returns:
+        A tensor of values of the same type and shape as x containing log(erfc(x)).
+    """
+    if not (x.dtype == torch.float32 or x.dtype == torch.float64):
+        raise TypeError(
+            f"log_erfc only supports torch.float32 and torch.float64 "
+            f"dtypes, but received {x.dtype = }."
+        )
+    is_pos = x > 0
+    x_pos = x.masked_fill(~is_pos, 0)
+    x_neg = x.masked_fill(is_pos, 0)
     return torch.where(
-        below_bound,
-        # The large-x case is based on a series expansion of erfc at x = -inf.
-        # The absolute error of the expansion is O(1 / 2*sqrt(pi)*x.abs()^3),
-        # which is below machine epsilon for x < bound. The relative error is
-        # O(1/abs()^5), due to the x_lower.square() term, justyfing the bound.
-        -x_lower.square() + inv_sqrt_pi / x_lower - log_2,
-        torch.special.log_ndtr(x_upper),
+        is_pos,
+        torch.log(torch.special.erfcx(x_pos)) - x_pos.square(),
+        torch.log(torch.special.erfc(x_neg)),
     )
 
 
