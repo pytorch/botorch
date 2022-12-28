@@ -31,6 +31,7 @@ from botorch.optim.utils.numpy_utils import (
     get_tensors_as_ndarray_1d,
     set_tensors_from_ndarray_1d,
 )
+from botorch.optim.utils.timeout import minimize_with_timeout
 
 __all__ = [
     "_filter_kwargs",
@@ -48,6 +49,7 @@ __all__ = [
     "get_parameters_and_bounds",
     "get_tensors_as_ndarray_1d",
     "get_X_baseline",
+    "minimize_with_timeout",
     "sample_all_priors",
     "set_tensors_from_ndarray_1d",
     "TorchAttr",
