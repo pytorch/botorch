@@ -35,6 +35,7 @@ from botorch.acquisition.analytic import (
     LogConstrainedExpectedImprovement,
     LogExpectedImprovement,
     LogNoisyExpectedImprovement,
+    LogProbabilityOfImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
@@ -275,7 +276,10 @@ def construct_inputs_analytic_base(
 
 
 @acqf_input_constructor(
-    ExpectedImprovement, LogExpectedImprovement, ProbabilityOfImprovement
+    ExpectedImprovement,
+    LogExpectedImprovement,
+    ProbabilityOfImprovement,
+    LogProbabilityOfImprovement,
 )
 def construct_inputs_best_f(
     model: Model,

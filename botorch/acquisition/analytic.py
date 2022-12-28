@@ -115,6 +115,67 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
         return mean, sigma
 
 
+class LogProbabilityOfImprovement(AnalyticAcquisitionFunction):
+    r"""Single-outcome Log Probability of Improvement.
+
+    Logarithm of the probability of improvement over the current best observed value,
+    computed using the analytic formula under a Normal posterior distribution. Only
+    supports the case of q=1. Requires the posterior to be Gaussian. The model must be
+    single-outcome.
+
+    The logarithm of the probability of improvement is numerically better behaved
+    than the original function, which can lead to significantly improved optimization
+    of the acquisition function. This is analogous to the common practice of optimizing
+    the *log* likelihood of a probabilistic model - rather the likelihood - for the
+    sake of maximium likelihood estimation.
+
+    `logPI(x) = log(P(y >= best_f)), y ~ f(x)`
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> LogPI = LogProbabilityOfImprovement(model, best_f=0.2)
+        >>> log_pi = LogPI(test_X)
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        best_f: Union[float, Tensor],
+        posterior_transform: Optional[PosteriorTransform] = None,
+        maximize: bool = True,
+        **kwargs,
+    ):
+        r"""Single-outcome Probability of Improvement.
+
+        Args:
+            model: A fitted single-outcome model.
+            best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
+                the best function value observed so far (assumed noiseless).
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
+            maximize: If True, consider the problem a maximization problem.
+        """
+        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        self.register_buffer("best_f", torch.as_tensor(best_f))
+        self.maximize = maximize
+
+    @t_batch_mode_transform(expected_q=1)
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Evaluate the Log Probability of Improvement on the candidate set X.
+
+        Args:
+            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.
+
+        Returns:
+            A `(b1 x ... bk)`-dim tensor of Log Probability of Improvement values at
+            the given design points `X`.
+        """
+        mean, sigma = self._mean_and_sigma(X)
+        u = _scaled_improvement(mean, sigma, self.best_f, self.maximize)
+        return log_Phi(u)
+
+
 class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
     r"""Single-outcome Probability of Improvement.
 
