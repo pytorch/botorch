@@ -32,6 +32,7 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.analytic import (
     ConstrainedExpectedImprovement,
     ExpectedImprovement,
+    LogConstrainedExpectedImprovement,
     LogExpectedImprovement,
     LogNoisyExpectedImprovement,
     NoisyExpectedImprovement,
@@ -346,7 +347,9 @@ def construct_inputs_ucb(
     return {**base_inputs, "beta": beta, "maximize": maximize}
 
 
-@acqf_input_constructor(ConstrainedExpectedImprovement)
+@acqf_input_constructor(
+    ConstrainedExpectedImprovement, LogConstrainedExpectedImprovement
+)
 def construct_inputs_constrained_ei(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],

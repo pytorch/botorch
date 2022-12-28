@@ -66,9 +66,9 @@ def log1mexp(x: Tensor) -> Tensor:
     See [Maechler2012accurate]_ for details.
     """
     log2 = get_constants_like(values=_log2, ref=x)
-    mask = -log2 < x  # x < 0
+    is_small = -log2 < x  # x < 0
     return torch.where(
-        mask,
+        is_small,
         (-x.expm1()).log(),
         (-x.exp()).log1p(),
     )
