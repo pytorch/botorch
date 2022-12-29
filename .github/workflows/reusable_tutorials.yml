@@ -1,6 +1,17 @@
 name: Reusable Tutorials Workflow
 
 on:
+  workflow_dispatch:
+    inputs:
+      smoke_test:
+        required: true
+        type: boolean
+      use_stable_pytorch_gpytorch:
+        required: true
+        type: boolean
+      use_stable_ax:
+        required: true
+        type: boolean
   workflow_call:
     inputs:
       smoke_test:

@@ -89,29 +89,17 @@ class MixedSingleTaskGP(SingleTaskGP):
                 `.posterior` on the model will be on the original scale).
             input_transform: An input transform that is applied in the model's
                 forward pass. Only input transforms are allowed which do not
-                transform the categorical dimensions. This can be achieved
-                by using the `indices` argument when constructing the transform.
+                transform the categorical dimensions. If you want to use it
+                for example in combination with a `OneHotToNumeric` input transform
+                one has to instantiate the transform with `transform_on_train` == False
+                and pass in the already transformed input.
         """
-        if input_transform is not None:
-            if not hasattr(input_transform, "indices"):
-                raise ValueError(
-                    "Only continuous inputs can be transformed. "
-                    "Please use `indices` in the `input_transform`."
-                )
-            # check that no cat dim is in indices
-            elif any(idx in input_transform.indices for idx in cat_dims):
-                raise ValueError(
-                    "Only continuous inputs can be transformed. "
-                    "Categorical index found in `indices` of the `input_transform`."
-                )
         if len(cat_dims) == 0:
             raise ValueError(
                 "Must specify categorical dimensions for MixedSingleTaskGP"
             )
         self._ignore_X_dims_scaling_check = cat_dims
-        input_batch_shape, aug_batch_shape = self.get_batch_dimensions(
-            train_X=train_X, train_Y=train_Y
-        )
+        _, aug_batch_shape = self.get_batch_dimensions(train_X=train_X, train_Y=train_Y)
 
         if cont_kernel_factory is None:
 

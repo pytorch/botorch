@@ -5,7 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
-import random
 import warnings
 
 import torch
@@ -44,15 +43,6 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             )
             cat_dims = list(range(ncat))
             ord_dims = sorted(set(range(d)) - set(cat_dims))
-            with self.assertRaises(ValueError):
-                MixedSingleTaskGP(
-                    train_X,
-                    train_Y,
-                    cat_dims=cat_dims,
-                    input_transform=Normalize(
-                        d=d, bounds=bounds.to(**tkwargs), transform_on_train=True
-                    ),
-                )
             # test correct indices
             if (ncat < 3) and (ncat > 0):
                 MixedSingleTaskGP(
@@ -66,30 +56,6 @@ class TestMixedSingleTaskGP(BotorchTestCase):
                         indices=ord_dims,
                     ),
                 )
-                with self.assertRaises(ValueError):
-                    MixedSingleTaskGP(
-                        train_X,
-                        train_Y,
-                        cat_dims=cat_dims,
-                        input_transform=Normalize(
-                            d=d,
-                            bounds=bounds.to(**tkwargs),
-                            transform_on_train=True,
-                            indices=cat_dims,
-                        ),
-                    )
-                with self.assertRaises(ValueError):
-                    MixedSingleTaskGP(
-                        train_X,
-                        train_Y,
-                        cat_dims=cat_dims,
-                        input_transform=Normalize(
-                            d=d,
-                            bounds=bounds.to(**tkwargs),
-                            transform_on_train=True,
-                            indices=ord_dims + [random.choice(cat_dims)],
-                        ),
-                    )
 
             if len(cat_dims) == 0:
                 with self.assertRaises(ValueError):

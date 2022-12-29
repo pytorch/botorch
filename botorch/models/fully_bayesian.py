@@ -47,7 +47,7 @@ from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
-from gpytorch.kernels.kernel import Distance, Kernel
+from gpytorch.kernels.kernel import dist, Kernel
 from gpytorch.likelihoods.gaussian_likelihood import (
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
@@ -61,21 +61,20 @@ from torch import Tensor
 
 MIN_INFERRED_NOISE_LEVEL = 1e-6
 
+_sqrt5 = math.sqrt(5)
+
 
 def matern52_kernel(X: Tensor, lengthscale: Tensor) -> Tensor:
     """Matern-5/2 kernel."""
-    nu = 5 / 2
     dist = compute_dists(X=X, lengthscale=lengthscale)
-    exp_component = torch.exp(-math.sqrt(nu * 2) * dist)
-    constant_component = (math.sqrt(5) * dist).add(1).add(5.0 / 3.0 * (dist**2))
-    return constant_component * exp_component
+    sqrt5_dist = _sqrt5 * dist
+    return sqrt5_dist.add(1 + 5 / 3 * (dist**2)) * torch.exp(-sqrt5_dist)
 
 
 def compute_dists(X: Tensor, lengthscale: Tensor) -> Tensor:
     """Compute kernel distances."""
-    return Distance()._dist(
-        X / lengthscale, X / lengthscale, postprocess=False, x1_eq_x2=True
-    )
+    scaled_X = X / lengthscale
+    return dist(scaled_X, scaled_X, x1_eq_x2=True)
 
 
 def reshape_and_detach(target: Tensor, new_value: Tensor) -> None:
@@ -270,7 +269,7 @@ class SaasPyroModel(PyroModel):
         )
         lengthscale = pyro.deterministic(
             "lengthscale",
-            (1.0 / inv_length_sq).sqrt(),
+            inv_length_sq.rsqrt(),
         )
         return lengthscale
 
@@ -286,7 +285,7 @@ class SaasPyroModel(PyroModel):
             mcmc_samples["kernel_tausq"].unsqueeze(-1)
             * mcmc_samples["_kernel_inv_length_sq"]
         )
-        mcmc_samples["lengthscale"] = (1.0 / inv_length_sq).sqrt()
+        mcmc_samples["lengthscale"] = inv_length_sq.rsqrt()
         # Delete `kernel_tausq` and `_kernel_inv_length_sq` since they aren't loaded
         # into the final model.
         del mcmc_samples["kernel_tausq"], mcmc_samples["_kernel_inv_length_sq"]

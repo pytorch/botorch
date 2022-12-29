@@ -8,13 +8,16 @@ import math
 
 import torch
 from botorch.acquisition.analytic import (
+    _compute_log_prob_feas,
     _ei_helper,
     _log_ei_helper,
     AnalyticAcquisitionFunction,
     ConstrainedExpectedImprovement,
     ExpectedImprovement,
+    LogConstrainedExpectedImprovement,
     LogExpectedImprovement,
     LogNoisyExpectedImprovement,
+    LogProbabilityOfImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
@@ -305,21 +308,26 @@ class TestPosteriorMean(BotorchTestCase):
 class TestProbabilityOfImprovement(BotorchTestCase):
     def test_probability_of_improvement(self):
         for dtype in (torch.float, torch.double):
-            mean = torch.tensor([0.0], device=self.device, dtype=dtype).view(1, 1)
+            mean = torch.zeros(1, 1, device=self.device, dtype=dtype)
             variance = torch.ones(1, 1, device=self.device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
 
-            module = ProbabilityOfImprovement(model=mm, best_f=1.96)
+            kwargs = {"model": mm, "best_f": 1.96}
+            module = ProbabilityOfImprovement(**kwargs)
+            log_module = LogProbabilityOfImprovement(**kwargs)
             X = torch.zeros(1, 1, device=self.device, dtype=dtype)
-            pi = module(X)
+            pi, log_pi = module(X), log_module(X)
             pi_expected = torch.tensor(0.0250, device=self.device, dtype=dtype)
             self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
-
-            module = ProbabilityOfImprovement(model=mm, best_f=1.96, maximize=False)
+            self.assertTrue(torch.allclose(log_pi.exp(), pi))
+            kwargs = {"model": mm, "best_f": 1.96, "maximize": False}
+            module = ProbabilityOfImprovement(**kwargs)
+            log_module = LogProbabilityOfImprovement(**kwargs)
             X = torch.zeros(1, 1, device=self.device, dtype=dtype)
-            pi = module(X)
+            pi, log_pi = module(X), log_module(X)
             pi_expected = torch.tensor(0.9750, device=self.device, dtype=dtype)
             self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
+            self.assertTrue(torch.allclose(log_pi.exp(), pi))
 
             # check for proper error if multi-output model
             mean2 = torch.rand(1, 2, device=self.device, dtype=dtype)
@@ -327,6 +335,9 @@ class TestProbabilityOfImprovement(BotorchTestCase):
             mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
             with self.assertRaises(UnsupportedError):
                 ProbabilityOfImprovement(model=mm2, best_f=0.0)
+
+            with self.assertRaises(UnsupportedError):
+                LogProbabilityOfImprovement(model=mm2, best_f=0.0)
 
     def test_probability_of_improvement_batch(self):
         for dtype in (torch.float, torch.double):
@@ -336,16 +347,21 @@ class TestProbabilityOfImprovement(BotorchTestCase):
             variance = torch.ones_like(mean)
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
             module = ProbabilityOfImprovement(model=mm, best_f=0.0)
+            log_module = LogProbabilityOfImprovement(model=mm, best_f=0.0)
             X = torch.zeros(2, 1, 1, device=self.device, dtype=dtype)
-            pi = module(X)
+            pi, log_pi = module(X), log_module(X)
             pi_expected = torch.tensor([0.5, 0.75], device=self.device, dtype=dtype)
             self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
+            self.assertTrue(torch.allclose(log_pi.exp(), pi))
             # check for proper error if multi-output model
             mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             variance2 = torch.ones_like(mean2)
             mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
             with self.assertRaises(UnsupportedError):
                 ProbabilityOfImprovement(model=mm2, best_f=0.0)
+
+            with self.assertRaises(UnsupportedError):
+                LogProbabilityOfImprovement(model=mm2, best_f=0.0)
 
 
 class TestUpperConfidenceBound(BotorchTestCase):
@@ -407,9 +423,15 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
                 dim=-2
             )
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
-            module = ConstrainedExpectedImprovement(
-                model=mm, best_f=0.0, objective_index=0, constraints={1: [None, 0]}
-            )
+            kwargs = {
+                "model": mm,
+                "best_f": 0.0,
+                "objective_index": 0,
+                "constraints": {1: [None, 0]},
+            }
+            module = ConstrainedExpectedImprovement(**kwargs)
+            log_module = LogConstrainedExpectedImprovement(**kwargs)
+
             # test initialization
             for k in [
                 "con_lower_inds",
@@ -420,6 +442,7 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
                 "con_upper",
             ]:
                 self.assertIn(k, module._buffers)
+                self.assertIn(k, log_module._buffers)
 
             X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
             ei = module(X)
@@ -428,24 +451,41 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
             )
             ei_expected = ei_expected_unconstrained * 0.5
             self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
+            log_ei = log_module(X)
+            self.assertTrue(torch.allclose(log_ei, ei.log(), atol=1e-5))
+            # testing LogCEI and CEI for lower, upper, and simultaneous bounds
+            for bounds in [[None, 0], [0, None], [0, 1]]:
+                kwargs["constraints"] = {1: bounds}
+                module = ConstrainedExpectedImprovement(**kwargs)
+                log_module = LogConstrainedExpectedImprovement(**kwargs)
+                ei, log_ei = module(X), log_module(X)
+                self.assertTrue(torch.allclose(log_ei, ei.log(), atol=1e-5))
 
-            # check that error raised if no constraints
-            with self.assertRaises(ValueError):
-                module = ConstrainedExpectedImprovement(
-                    model=mm, best_f=0.0, objective_index=0, constraints={}
-                )
+            constructors = [
+                ConstrainedExpectedImprovement,
+                LogConstrainedExpectedImprovement,
+            ]
+            for constructor in constructors:
+                # check that error raised if no constraints
+                with self.assertRaises(ValueError):
+                    module = constructor(
+                        model=mm, best_f=0.0, objective_index=0, constraints={}
+                    )
 
-            # check that error raised if objective is a constraint
-            with self.assertRaises(ValueError):
-                module = ConstrainedExpectedImprovement(
-                    model=mm, best_f=0.0, objective_index=0, constraints={0: [None, 0]}
-                )
+                # check that error raised if objective is a constraint
+                with self.assertRaises(ValueError):
+                    module = constructor(
+                        model=mm,
+                        best_f=0.0,
+                        objective_index=0,
+                        constraints={0: [None, 0]},
+                    )
 
-            # check that error raised if constraint lower > upper
-            with self.assertRaises(ValueError):
-                module = ConstrainedExpectedImprovement(
-                    model=mm, best_f=0.0, objective_index=0, constraints={0: [1, 0]}
-                )
+                # check that error raised if constraint lower > upper
+                with self.assertRaises(ValueError):
+                    module = constructor(
+                        model=mm, best_f=0.0, objective_index=0, constraints={0: [1, 0]}
+                    )
 
             # three constraints
             N = torch.distributions.Normal(loc=0.0, scale=1.0)
@@ -457,12 +497,14 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
                 dim=-2
             )
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
-            module = ConstrainedExpectedImprovement(
-                model=mm,
-                best_f=0.0,
-                objective_index=0,
-                constraints={1: [None, 0], 2: [5.0, None], 3: [-a, a]},
-            )
+            kwargs = {
+                "model": mm,
+                "best_f": 0.0,
+                "objective_index": 0,
+                "constraints": {1: [None, 0], 2: [5.0, None], 3: [-a, a]},
+            }
+            module = ConstrainedExpectedImprovement(**kwargs)
+            log_module = LogConstrainedExpectedImprovement(**kwargs)
             X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
             ei = module(X)
             ei_expected_unconstrained = torch.tensor(
@@ -470,28 +512,81 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
             )
             ei_expected = ei_expected_unconstrained * 0.5 * 0.5 * 0.5
             self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
+            # testing log module with regular implementation
+            log_ei = log_module(X)
+            self.assertTrue(torch.allclose(log_ei, ei_expected.log(), atol=1e-4))
             # test maximize
-            module_min = ConstrainedExpectedImprovement(
-                model=mm,
-                best_f=0.0,
-                objective_index=0,
-                constraints={1: [None, 0]},
-                maximize=False,
-            )
+            kwargs = {
+                "model": mm,
+                "best_f": 0.0,
+                "objective_index": 0,
+                "constraints": {1: [None, 0]},
+                "maximize": False,
+            }
+            module_min = ConstrainedExpectedImprovement(**kwargs)
+            log_module_min = LogConstrainedExpectedImprovement(**kwargs)
             ei_min = module_min(X)
             ei_expected_unconstrained_min = torch.tensor(
                 0.6978, device=self.device, dtype=dtype
             )
             ei_expected_min = ei_expected_unconstrained_min * 0.5
             self.assertTrue(torch.allclose(ei_min, ei_expected_min, atol=1e-4))
+            log_ei_min = log_module_min(X)
+            self.assertTrue(torch.allclose(log_ei_min, ei_min.log(), atol=1e-4))
+
             # test invalid onstraints
-            with self.assertRaises(ValueError):
-                ConstrainedExpectedImprovement(
-                    model=mm,
-                    best_f=0.0,
-                    objective_index=0,
-                    constraints={1: [1.0, -1.0]},
-                )
+            for constructor in constructors:
+                with self.assertRaises(ValueError):
+                    constructor(
+                        model=mm,
+                        best_f=0.0,
+                        objective_index=0,
+                        constraints={1: [1.0, -1.0]},
+                    )
+
+            # numerical stress test for _compute_log_prob_feas, which gets added to
+            # log_ei in the forward pass, a quantity we already tested above
+            # the limits here are determined by the largest power of ten x, such that
+            #                          x - (b - a) < x
+            # evaluates to true. In this test, the bounds are a, b = -digits, digits.
+            digits = 10 if dtype == torch.float64 else 5
+            zero = torch.tensor([0], dtype=dtype, device=self.device)
+            ten = torch.tensor(10, dtype=dtype, device=self.device)
+            digits_tensor = 1 + torch.arange(
+                -digits, digits, dtype=dtype, device=self.device
+            )
+            X_positive = ten ** (digits_tensor)
+            # flipping -X_positive so that elements are in increasing order
+            means = torch.cat((-X_positive.flip(-1), zero, X_positive)).unsqueeze(-1)
+            means.requires_grad = True
+            log_module = LogConstrainedExpectedImprovement(
+                model=mm,
+                best_f=0.0,
+                objective_index=1,
+                constraints={0: [-5, 5]},
+            )
+            log_prob = _compute_log_prob_feas(
+                log_module, means=means, sigmas=torch.ones_like(means)
+            )
+            log_prob.sum().backward()
+            self.assertFalse(log_prob.isnan().any())
+            self.assertFalse(log_prob.isinf().any())
+            self.assertFalse(means.grad.isnan().any())
+            self.assertFalse(means.grad.isinf().any())
+            # probability of feasibility increases until X = 0, decreases from there on
+            prob_diff = log_prob.diff()
+            k = len(X_positive)
+            eps = 1e-6 if dtype == torch.float32 else 1e-15
+            self.assertTrue((prob_diff[:k] > -eps).all())
+            self.assertTrue((means.grad[:k] > -eps).all())
+            # probability has stationary point at zero
+            mean_grad_at_zero = means.grad[len(X_positive)]
+            self.assertTrue(
+                torch.allclose(mean_grad_at_zero, torch.zeros_like(mean_grad_at_zero))
+            )
+            # probability increases again
+            self.assertTrue((prob_diff[-k:] < eps).all())
+            self.assertTrue((means.grad[-k:] < eps).all())
 
     def test_constrained_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
@@ -506,20 +601,24 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
             N = torch.distributions.Normal(loc=0.0, scale=1.0)
             a = N.icdf(torch.tensor(0.75))  # get a so that P(-a <= N <= a) = 0.5
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
-            module = ConstrainedExpectedImprovement(
-                model=mm,
-                best_f=0.0,
-                objective_index=0,
-                constraints={1: [None, 0], 2: [5.0, None], 3: [-a, a]},
-            )
+            kwargs = {
+                "model": mm,
+                "best_f": 0.0,
+                "objective_index": 0,
+                "constraints": {1: [None, 0], 2: [5.0, None], 3: [-a, a]},
+            }
+            module = ConstrainedExpectedImprovement(**kwargs)
+            log_module = LogConstrainedExpectedImprovement(**kwargs)
             X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)  # dummy
-            ei = module(X)
+            ei, log_ei = module(X), log_module(X)
             self.assertTrue(ei.shape == torch.Size([3]))
+            self.assertTrue(log_ei.shape == torch.Size([3]))
             ei_expected_unconstrained = torch.tensor(
                 [0.19780, 0.39894, 0.69780], device=self.device, dtype=dtype
             )
             ei_expected = ei_expected_unconstrained * 0.5 * 0.5 * 0.5
             self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
+            self.assertTrue(torch.allclose(log_ei, ei.log(), atol=1e-4))
 
 
 class TestNoisyExpectedImprovement(BotorchTestCase):

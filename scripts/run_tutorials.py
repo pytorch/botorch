@@ -16,6 +16,7 @@ from subprocess import CalledProcessError
 from typing import Dict, Optional
 
 import nbformat
+from memory_profiler import memory_usage
 from nbconvert import PythonExporter
 
 
@@ -25,7 +26,11 @@ IGNORE = {  # ignored in smoke tests and full runs
     "preference_bo.ipynb",  # failing. Fix planned
     # Causing the tutorials to crash when run without smoke test. Likely OOM.
     # Fix planned.
-    "constraint_active_search",
+    "constraint_active_search.ipynb",
+    # Timing out
+    "saasbo.ipynb",
+    # Timing out
+    "scalable_constrained_bo.ipynb",
 }
 IGNORE_SMOKE_TEST_ONLY = {  # only used in smoke tests
     "thompson_sampling.ipynb",  # very slow without KeOps + GPU
@@ -69,7 +74,9 @@ def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
     print(f"Running tutorial {tutorial.name}.")
     env = {"SMOKE_TEST": "True"} if smoke_test else None
     try:
-        run_out = run_script(script, env=env)
+        mem_usage, run_out = memory_usage(
+            (run_script, (script,), {"env": env}), retval=True, include_children=True
+        )
     except subprocess.TimeoutExpired:
         return f"Tutorial {tutorial.name} exceeded the maximum runtime of 30 minutes."
 
@@ -86,7 +93,10 @@ def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
             ]
         )
     runtime = time.monotonic() - tic
-    print(f"Running tutorial {tutorial.name} took {runtime:.2f} seconds.")
+    print(
+        f"Running tutorial {tutorial.name} took {runtime:.2f} seconds. Memory usage "
+        f"started at {mem_usage[0]} MB and the maximum was {max(mem_usage)} MB."
+    )
 
 
 def run_tutorials(

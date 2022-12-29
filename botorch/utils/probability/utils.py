@@ -14,13 +14,17 @@ from numbers import Number
 from typing import Any, Callable, Iterable, Iterator, Optional, Tuple, Union
 
 import torch
+from botorch.utils.safe_math import log1mexp
 from numpy.polynomial.legendre import leggauss as numpy_leggauss
 from torch import BoolTensor, LongTensor, Tensor
 
 CaseNd = Tuple[Callable[[], BoolTensor], Callable[[BoolTensor], Tensor]]
 
+_log_2 = math.log(2)
+_sqrt_pi = math.sqrt(pi)
+_inv_sqrt_pi = 1 / _sqrt_pi
 _inv_sqrt_2pi = (2 * pi) ** -0.5
-_neg_inv_sqrt2 = -(2**-0.5)
+_neg_inv_sqrt_2 = -(2**-0.5)
 _log_sqrt_2pi = math.log(2 * pi) / 2
 STANDARDIZED_RANGE: Tuple[float, float] = (-1e6, 1e6)
 
@@ -125,8 +129,8 @@ def leggauss(deg: int, **tkwargs: Any) -> Tuple[Tensor, Tensor]:
 
 def ndtr(x: Tensor) -> Tensor:
     r"""Standard normal CDF."""
-    half, ninv_sqrt2 = get_constants_like((0.5, _neg_inv_sqrt2), x)
-    return half * torch.erfc(ninv_sqrt2 * x)
+    half, neg_inv_sqrt_2 = get_constants_like((0.5, _neg_inv_sqrt_2), x)
+    return half * torch.erfc(neg_inv_sqrt_2 * x)
 
 
 def phi(x: Tensor) -> Tensor:
@@ -139,6 +143,80 @@ def log_phi(x: Tensor) -> Tensor:
     r"""Logarithm of standard normal pdf"""
     log_sqrt_2pi, neg_half = get_constants_like((_log_sqrt_2pi, -0.5), x)
     return neg_half * x.square() - log_sqrt_2pi
+
+
+def log_ndtr(x: Tensor) -> Tensor:
+    """Implementation of log_ndtr that remedies problems of torch.special's version
+    for large negative x, where the torch implementation yields Inf or NaN gradients.
+
+    Args:
+        x: An input tensor with dtype torch.float32 or torch.float64.
+
+    Returns:
+        A tensor of values of the same type and shape as x containing log(ndtr(x)).
+    """
+    if not (x.dtype == torch.float32 or x.dtype == torch.float64):
+        raise TypeError(
+            f"log_Phi only supports torch.float32 and torch.float64 "
+            f"dtypes, but received {x.dtype = }."
+        )
+    neg_inv_sqrt_2, log_2 = get_constants_like((_neg_inv_sqrt_2, _log_2), x)
+    return log_erfc(neg_inv_sqrt_2 * x) - log_2
+
+
+def log_erfc(x: Tensor) -> Tensor:
+    """Computes the logarithm of the complementary error function in a numerically
+    stable manner. The GitHub issue https://github.com/pytorch/pytorch/issues/31945
+    tracks progress toward moving this feature into PyTorch in C++.
+
+    Args:
+        x: An input tensor with dtype torch.float32 or torch.float64.
+
+    Returns:
+        A tensor of values of the same type and shape as x containing log(erfc(x)).
+    """
+    if not (x.dtype == torch.float32 or x.dtype == torch.float64):
+        raise TypeError(
+            f"log_erfc only supports torch.float32 and torch.float64 "
+            f"dtypes, but received {x.dtype = }."
+        )
+    is_pos = x > 0
+    x_pos = x.masked_fill(~is_pos, 0)
+    x_neg = x.masked_fill(is_pos, 0)
+    return torch.where(
+        is_pos,
+        torch.log(torch.special.erfcx(x_pos)) - x_pos.square(),
+        torch.log(torch.special.erfc(x_neg)),
+    )
+
+
+def log_prob_normal_in(a: Tensor, b: Tensor) -> Tensor:
+    r"""Computes the probability that a standard normal random variable takes a value
+    in \[a, b\], i.e. log(Phi(b) - Phi(a)), where Phi is the standard normal CDF.
+    Returns accurate values and permits numerically stable backward passes for inputs
+    in [-1e100, 1e100] for double precision and [-1e20, 1e20] for single precision.
+    In contrast, a naive approach is not numerically accurate beyond [-10, 10].
+
+    Args:
+        a: Tensor of lower integration bounds of the Gaussian probability measure.
+        b: Tensor of upper integration bounds of the Gaussian probability measure.
+
+    Returns:
+        Tensor of the log probabilities.
+    """
+    if not (a < b).all():
+        raise ValueError("Received input tensors a, b for which not all a < b.")
+    # if abs(b) > abs(a), we use Phi(b) - Phi(a) = Phi(-a) - Phi(-b), since the
+    # right tail converges to 0 from below, leading to digit cancellation issues, while
+    # the left tail of log_ndtr is well behaved and results in large negative numbers
+    rev_cond = b.abs() > a.abs()  # condition for reversal of inputs
+    if rev_cond.any():
+        c = torch.where(rev_cond, -b, a)
+        b = torch.where(rev_cond, -a, b)
+        a = c  # after we updated b, can assign c to a
+    log_Phi_b = log_ndtr(b)
+    # Phi(b) > Phi(a), so 0 > log(Phi(a) / Phi(b)) and we can use log1mexp
+    return log_Phi_b + log1mexp(log_ndtr(a) - log_Phi_b)
 
 
 def swap_along_dim_(
