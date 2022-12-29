@@ -63,34 +63,36 @@ Optimization simply use Ax.
 - scipy
 - multiple-dispatch
 
+### Prerequisite only for MacOS users:
+Before installing BoTorch, we recommend first installing PyTorch manually. PyTorch is a required dependency of BoTorch, and installing it according to the [PyTorch installation instructions](https://pytorch.org/get-started/locally/) ensures that it is properly linked against MKL, library that optimizes mathematical computation for Intel processors. This will result in up to an order-of-magnitude speed-up for Bayesian optimization, as at the moment, installing PyTorch from pip does not link against MKL.
 
-##### Installing the latest release
+The PyTorch installation instructions currently recommend:
+1. Install [Anaconda](https://www.anaconda.com/distribution/#download-section). Note that there are different installers for Intel and M1 Macs.
+2. Install PyTorch with `conda install pytorch torchvision -c pytorch`.
+
+If you want to customize your installation, please follow the [PyTorch installation instructions](https://pytorch.org/get-started/locally/) to build from source.
+
+### BoTorch installation Option 1: Installing the latest release
 
 The latest release of BoTorch is easily installed either via
-[Anaconda](https://www.anaconda.com/distribution/#download-section) (recommended):
+[Anaconda](https://www.anaconda.com/distribution/#download-section) (recommended) or pip.
 
-First install PyTorch:
+* If you are not on OSX and have not already installed PyTorch following the instructions above, install from Anaconda with
 ```bash
-# Needed for OSX on Intel Macs only, see below.
-conda install pytorch torchvision -c pytorch 
+conda install botorch -c pytorch -c gpytorch -c conda-forge
 ```
-
-_Recommendation for MacOS users:_ PyTorch is a required dependency of BoTorch, and can be automatically installed via `pip`. However, if you are using an Intel Mac we recommend installing PyTorch manually (as above) so that PyTorch is properly linked against MKL (a library that optimizes mathematical computation for Intel processors). This will result in up to an order-of-magnitude speed-up for Bayesian optimization, as at the moment, installing PyTorch from pip does not link against MKL.
-
-If you need CUDA on MacOS, or want to customize your installation (i.e. CPU-only option), please follow the [PyTorch installation instructions](https://pytorch.org/get-started/locally/) to build from source.
-
-Then install BoTorch:
+* If you are on OSX and have already installed PyTorch, install BoTorch from Anaconda with
 ```bash
 conda install botorch -c conda-forge
 ```
-Alternatively, you can install BoTorch via `pip`:
+* To install with `pip`, do
 ```bash
 pip install botorch
 ```
 
 _Note_: Make sure the `pip` being used is actually the one from the newly created Conda environment. If you're using a Unix-based OS, you can use `which pip` to check.
 
-##### Installing from latest main branch
+### Option 2: Installing from latest main branch
 
 If you would like to try our bleeding edge features (and don't mind potentially
 running into the occasional bug here or there), you can install the latest
@@ -104,7 +106,7 @@ export ALLOW_LATEST_GPYTORCH_LINOP=true
 pip install --upgrade git+https://github.com/pytorch/botorch.git
 ```
 
-**Manual / Dev install**
+### Option 3:
 
 Alternatively, you can do a manual install. For a basic install, run:
 ```bash
