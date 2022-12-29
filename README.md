@@ -108,7 +108,7 @@ pip install --upgrade git+https://github.com/pytorch/botorch.git
 ### Option 3: Editable/dev install
 
 If you want to [contribute](CONTRIBUTING.md) to BoTorch, you will want to install editably so that you can change files and have the
-changes reflected in your local install. 
+changes reflected in your local install.
 
 If you want to install the current `gpytorch` and `linear_operator` development versions, as in Option 2, do that
 before proceeding.
