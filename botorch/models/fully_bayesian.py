@@ -47,7 +47,7 @@ from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
-from gpytorch.kernels.kernel import Distance, Kernel
+from gpytorch.kernels.kernel import dist, Kernel
 from gpytorch.likelihoods.gaussian_likelihood import (
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
@@ -74,7 +74,7 @@ def matern52_kernel(X: Tensor, lengthscale: Tensor) -> Tensor:
 def compute_dists(X: Tensor, lengthscale: Tensor) -> Tensor:
     """Compute kernel distances."""
     scaled_X = X / lengthscale
-    return Distance()._dist(scaled_X, scaled_X, postprocess=False, x1_eq_x2=True)
+    return dist(scaled_X, scaled_X, x1_eq_x2=True)
 
 
 def reshape_and_detach(target: Tensor, new_value: Tensor) -> None:
