@@ -17,6 +17,7 @@ from botorch.acquisition.analytic import (
     LogConstrainedExpectedImprovement,
     LogExpectedImprovement,
     LogNoisyExpectedImprovement,
+    LogProbabilityOfImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
@@ -307,21 +308,26 @@ class TestPosteriorMean(BotorchTestCase):
 class TestProbabilityOfImprovement(BotorchTestCase):
     def test_probability_of_improvement(self):
         for dtype in (torch.float, torch.double):
-            mean = torch.tensor([0.0], device=self.device, dtype=dtype).view(1, 1)
+            mean = torch.zeros(1, 1, device=self.device, dtype=dtype)
             variance = torch.ones(1, 1, device=self.device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
 
-            module = ProbabilityOfImprovement(model=mm, best_f=1.96)
+            kwargs = {"model": mm, "best_f": 1.96}
+            module = ProbabilityOfImprovement(**kwargs)
+            log_module = LogProbabilityOfImprovement(**kwargs)
             X = torch.zeros(1, 1, device=self.device, dtype=dtype)
-            pi = module(X)
+            pi, log_pi = module(X), log_module(X)
             pi_expected = torch.tensor(0.0250, device=self.device, dtype=dtype)
             self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
-
-            module = ProbabilityOfImprovement(model=mm, best_f=1.96, maximize=False)
+            self.assertTrue(torch.allclose(log_pi.exp(), pi))
+            kwargs = {"model": mm, "best_f": 1.96, "maximize": False}
+            module = ProbabilityOfImprovement(**kwargs)
+            log_module = LogProbabilityOfImprovement(**kwargs)
             X = torch.zeros(1, 1, device=self.device, dtype=dtype)
-            pi = module(X)
+            pi, log_pi = module(X), log_module(X)
             pi_expected = torch.tensor(0.9750, device=self.device, dtype=dtype)
             self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
+            self.assertTrue(torch.allclose(log_pi.exp(), pi))
 
             # check for proper error if multi-output model
             mean2 = torch.rand(1, 2, device=self.device, dtype=dtype)
@@ -329,6 +335,9 @@ class TestProbabilityOfImprovement(BotorchTestCase):
             mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
             with self.assertRaises(UnsupportedError):
                 ProbabilityOfImprovement(model=mm2, best_f=0.0)
+
+            with self.assertRaises(UnsupportedError):
+                LogProbabilityOfImprovement(model=mm2, best_f=0.0)
 
     def test_probability_of_improvement_batch(self):
         for dtype in (torch.float, torch.double):
@@ -338,16 +347,21 @@ class TestProbabilityOfImprovement(BotorchTestCase):
             variance = torch.ones_like(mean)
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
             module = ProbabilityOfImprovement(model=mm, best_f=0.0)
+            log_module = LogProbabilityOfImprovement(model=mm, best_f=0.0)
             X = torch.zeros(2, 1, 1, device=self.device, dtype=dtype)
-            pi = module(X)
+            pi, log_pi = module(X), log_module(X)
             pi_expected = torch.tensor([0.5, 0.75], device=self.device, dtype=dtype)
             self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
+            self.assertTrue(torch.allclose(log_pi.exp(), pi))
             # check for proper error if multi-output model
             mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             variance2 = torch.ones_like(mean2)
             mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
             with self.assertRaises(UnsupportedError):
                 ProbabilityOfImprovement(model=mm2, best_f=0.0)
+
+            with self.assertRaises(UnsupportedError):
+                LogProbabilityOfImprovement(model=mm2, best_f=0.0)
 
 
 class TestUpperConfidenceBound(BotorchTestCase):
@@ -562,16 +576,17 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
             # probability of feasibility increases until X = 0, decreases from there on
             prob_diff = log_prob.diff()
             k = len(X_positive)
-            self.assertTrue((prob_diff[:k] > 0).all())
-            self.assertTrue((means.grad[:k] > 0).all())
+            eps = 1e-6 if dtype == torch.float32 else 1e-15
+            self.assertTrue((prob_diff[:k] > -eps).all())
+            self.assertTrue((means.grad[:k] > -eps).all())
             # probability has stationary point at zero
             mean_grad_at_zero = means.grad[len(X_positive)]
             self.assertTrue(
                 torch.allclose(mean_grad_at_zero, torch.zeros_like(mean_grad_at_zero))
             )
             # probability increases again
-            self.assertTrue((prob_diff[-k:] < 0).all())
-            self.assertTrue((means.grad[-k:] < 0).all())
+            self.assertTrue((prob_diff[-k:] < eps).all())
+            self.assertTrue((means.grad[-k:] < eps).all())
 
     def test_constrained_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
