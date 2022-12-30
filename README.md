@@ -63,12 +63,17 @@ Optimization simply use Ax.
 - scipy
 - multiple-dispatch
 
-### Prerequisite only for MacOS users:
-Before installing BoTorch, we recommend first manually installing PyTorch, a required dependency of BoTorch. Installing it according to the [PyTorch installation instructions](https://pytorch.org/get-started/locally/) ensures that it is properly linked against MKL, a library that optimizes mathematical computation for Intel processors. This will result in up to an order-of-magnitude speed-up for Bayesian optimization, as at the moment, installing PyTorch from pip does not link against MKL.
+### Prerequisite only for MacOS users with Intel processors:
+Before installing BoTorch, we recommend first manually installing PyTorch, a required dependency of
+BoTorch. Installing it according to the [PyTorch installation instructions](https://pytorch.org/get-started/locally/)
+ensures that it is properly linked against MKL, a library that optimizes mathematical computation for Intel processors.
+This will result in up to an order-of-magnitude speed-up for Bayesian optimization, as at the moment,
+installing PyTorch from pip does not link against MKL.
 
 The PyTorch installation instructions currently recommend:
 1. Install [Anaconda](https://www.anaconda.com/distribution/#download-section). Note that there are different installers for Intel and M1 Macs.
-2. Install PyTorch with `conda install pytorch torchvision -c pytorch`.
+2. Install PyTorch following the [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
+Currently, this suggests running `conda install pytorch torchvision -c pytorch`.
 
 If you want to customize your installation, please follow the [PyTorch installation instructions](https://pytorch.org/get-started/locally/) to build from source.
 
