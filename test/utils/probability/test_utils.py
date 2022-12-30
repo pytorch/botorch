@@ -153,13 +153,18 @@ class TestProbabilityUtils(BotorchTestCase):
 
     def test_gaussian_probabilities(self):
         # testing Gaussian probability functions
-        n = 16
         for dtype in (torch.float, torch.double):
             rtol = 1e-12 if dtype == torch.double else 1e-6
+            atol = rtol
+            n = 16
             x = 3 * torch.randn(n, device=self.device, dtype=dtype)
             # first, test consistency between regular and log versions
-            self.assertTrue(torch.allclose(phi(x), log_phi(x).exp(), rtol=rtol))
-            self.assertTrue(torch.allclose(ndtr(x), log_ndtr(x).exp(), rtol=rtol))
+            self.assertTrue(
+                torch.allclose(phi(x), log_phi(x).exp(), atol=atol, rtol=rtol)
+            )
+            self.assertTrue(
+                torch.allclose(ndtr(x), log_ndtr(x).exp(), atol=atol, rtol=rtol)
+            )
 
             # test correctness of log_erfc(x) against log(erfc(x)) for positive and
             # negative x
@@ -169,14 +174,18 @@ class TestProbabilityUtils(BotorchTestCase):
             x.requires_grad = True
             log_erfc_x = log_erfc(x)
             special_log_erfc_x = torch.special.erfc(x).log()
-            self.assertTrue(torch.allclose(log_erfc_x, special_log_erfc_x))
+            self.assertTrue(
+                torch.allclose(log_erfc_x, special_log_erfc_x, atol=atol, rtol=rtol)
+            )
             # testing backward passes
             log_erfc_x.sum().backward()
             x_grad = x.grad
             x.grad[:] = 0
             special_log_erfc_x.sum().backward()
             special_x_grad = x.grad
-            self.assertTrue(torch.allclose(x_grad, special_x_grad))
+            self.assertTrue(
+                torch.allclose(x_grad, special_x_grad, atol=atol, rtol=rtol)
+            )
 
             # testing robustness of log_erfc for large inputs
             # large positive numbers are difficult for a naive implementation
@@ -188,7 +197,11 @@ class TestProbabilityUtils(BotorchTestCase):
             x = torch.cat((-x, x))  # looking at both tails
             x.requires_grad = True
             log_erfc_x = log_erfc(x)
-            self.assertTrue(torch.allclose(log_erfc_x.exp(), torch.special.erfc(x)))
+            self.assertTrue(
+                torch.allclose(
+                    log_erfc_x.exp(), torch.special.erfc(x), atol=atol, rtol=rtol
+                )
+            )
             self.assertFalse(log_erfc_x.isnan().any())
             self.assertFalse(log_erfc_x.isinf().any())
             # we can't just take the log of erfc because it will be -inf in the tail
@@ -211,7 +224,9 @@ class TestProbabilityUtils(BotorchTestCase):
 
             torch_log_ndtr_x = torch.special.log_ndtr(x)
             log_ndtr_x = log_ndtr(x)
-            self.assertTrue(torch.allclose(log_ndtr_x, torch_log_ndtr_x, rtol=rtol))
+            self.assertTrue(
+                torch.allclose(log_ndtr_x, torch_log_ndtr_x, atol=atol, rtol=rtol)
+            )
 
             # let's test gradients too
             # first, note that the standard implementation exhibits numerical problems:
@@ -245,7 +260,10 @@ class TestProbabilityUtils(BotorchTestCase):
             b = 5 / 2 * torch.rand(n, dtype=dtype, device=self.device) + 1 / 2
             self.assertTrue(
                 torch.allclose(
-                    log_prob_normal_in(a, b).exp(), ndtr(b) - ndtr(a), rtol=rtol
+                    log_prob_normal_in(a, b).exp(),
+                    ndtr(b) - ndtr(a),
+                    atol=atol,
+                    rtol=rtol,
                 )
             )
 

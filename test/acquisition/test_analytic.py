@@ -677,7 +677,9 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             # gives rise to problems during optimization, and what logNEI avoids
             # since it generally takes a large negative number (<-2000) and has
             # strong gradient signals in this regime.
-            self.assertTrue(torch.allclose(exp_log_val, val))
+            rtol = 1e-12 if dtype == torch.double else 1e-6
+            atol = rtol
+            self.assertTrue(torch.allclose(exp_log_val, val, atol=atol, rtol=rtol))
             # test basics
             self.assertEqual(val.dtype, dtype)
             self.assertEqual(val.device.type, X_observed.device.type)
@@ -692,14 +694,18 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             exp_log_val.sum().backward()
             # testing that first gradient element coincides. The second is in the
             # regime where the naive implementation looses accuracy.
-            atol = 1e-5 if dtype == torch.float32 else 1e-14
+            atol = 1e-5 if dtype == torch.float32 else 1e-12
+            rtol = atol
             self.assertTrue(
-                torch.allclose(X_test.grad[0], X_test_log.grad[0], atol=atol)
+                torch.allclose(X_test.grad[0], X_test_log.grad[0], atol=atol, rtol=rtol)
             )
 
             # test non-FixedNoiseGP model
             other_model = SingleTaskGP(X_observed, model.train_targets.unsqueeze(-1))
-            for constructor in (NoisyExpectedImprovement, LogNoisyExpectedImprovement):
+            for constructor in (
+                NoisyExpectedImprovement,
+                LogNoisyExpectedImprovement,
+            ):
                 with self.assertRaises(UnsupportedError):
                     constructor(other_model, X_observed, num_fantasies=5)
                 # Test constructor with minimize
