@@ -112,10 +112,7 @@ class TestLowerBoundMultiObjectiveEntropySearch(BotorchTestCase):
             train_Y = torch.rand(4, 3, num_objectives, **tkwargs)
             model = SingleTaskGP(train_X, train_Y)
             num_pareto_samples = 3
-            if num_objectives > 1:
-                num_pareto_points = 4
-            else:
-                num_pareto_points = 1
+            num_pareto_points = 1 if num_objectives == 1 else 4
 
             pareto_sets = dummy_sample_pareto_sets(
                 model, num_pareto_samples, num_pareto_points
@@ -205,21 +202,13 @@ class TestLowerBoundMultiObjectiveEntropySearch(BotorchTestCase):
 
 
 class TestQLowerBoundMultiObjectiveJointEntropySearch(BotorchTestCase):
-    def test_lower_bound_multi_objective_joint_entropy_search(self):
+    def _base_test_lb_moo_joint_entropy_search(self, estimation_type):
         torch.manual_seed(1)
         tkwargs = {"device": self.device}
-        estimation_types = ("0", "LB", "LB2", "MC")
 
-        for (
-            dtype,
-            num_objectives,
-            estimation_type,
-            use_model_list,
-            standardize_model,
-        ) in product(
+        for (dtype, num_objectives, use_model_list, standardize_model,) in product(
             (torch.float, torch.double),
             (1, 2, 3),
-            estimation_types,
             (False, True),
             (False, True),
         ):
@@ -243,8 +232,7 @@ class TestQLowerBoundMultiObjectiveJointEntropySearch(BotorchTestCase):
 
             # test acquisition
             X_pending_list = [None, torch.rand(2, input_dim, **tkwargs)]
-            for i in range(len(X_pending_list)):
-                X_pending = X_pending_list[i]
+            for X_pending in X_pending_list:
                 acq = qLowerBoundMultiObjectiveJointEntropySearch(
                     model=model,
                     pareto_sets=pareto_sets,
@@ -263,7 +251,19 @@ class TestQLowerBoundMultiObjectiveJointEntropySearch(BotorchTestCase):
                     torch.rand(4, 5, 3, input_dim, **tkwargs),
                 ]
 
-                for j in range(len(test_Xs)):
-                    acq_X = acq(test_Xs[j])
+                for test_X in test_Xs:
+                    acq_X = acq(test_X)
                     # assess shape
-                    self.assertTrue(acq_X.shape == test_Xs[j].shape[:-2])
+                    self.assertTrue(acq_X.shape == test_X.shape[:-2])
+
+    def test_lb_moo_joint_entropy_search_0(self):
+        self._base_test_lb_moo_joint_entropy_search(estimation_type="0")
+
+    def test_lb_moo_joint_entropy_search_LB(self):
+        self._base_test_lb_moo_joint_entropy_search(estimation_type="LB")
+
+    def test_lb_moo_joint_entropy_search_LB2(self):
+        self._base_test_lb_moo_joint_entropy_search(estimation_type="LB2")
+
+    def test_lb_moo_joint_entropy_search_MC(self):
+        self._base_test_lb_moo_joint_entropy_search(estimation_type="MC")
