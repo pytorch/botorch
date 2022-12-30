@@ -67,7 +67,9 @@ class TestBaseCandidateGeneration(BotorchTestCase):
 
 
 class TestGenCandidates(TestBaseCandidateGeneration):
-    def test_gen_candidates(self, gen_candidates=gen_candidates_scipy, options=None):
+    def test_gen_candidates(
+        self, gen_candidates=gen_candidates_scipy, options=None, timeout_sec=None
+    ):
         options = options or {}
         options = {**options, "maxiter": options.get("maxiter", 5)}
         for double in (True, False):
@@ -89,6 +91,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                     "lower_bounds": 0,
                     "upper_bounds": 1,
                     "options": options or {},
+                    "timeout_sec": timeout_sec,
                 }
                 if gen_candidates is gen_candidates_torch:
                     kwargs["callback"] = mock.MagicMock()
@@ -145,7 +148,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
         )
 
     def test_gen_candidates_with_fixed_features(
-        self, gen_candidates=gen_candidates_scipy, options=None
+        self, gen_candidates=gen_candidates_scipy, options=None, timeout_sec=None
     ):
         options = options or {}
         options = {**options, "maxiter": 5}
@@ -168,6 +171,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                     upper_bounds=1,
                     fixed_features={1: 0.25},
                     options=options,
+                    timeout_sec=timeout_sec,
                 )
 
                 if isinstance(acqf, qKnowledgeGradient):
@@ -176,6 +180,28 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 candidates = candidates.squeeze(0)
                 self.assertTrue(-EPS <= candidates[0] <= 1 + EPS)
                 self.assertTrue(candidates[1].item() == 0.25)
+
+    def test_gen_candidates_with_fixed_features_and_timeout(self):
+        with self.assertLogs("botorch", level="INFO") as logs:
+            self.test_gen_candidates_with_fixed_features(
+                options={"disp": False},
+                timeout_sec=1e-4,
+            )
+        self.assertTrue(any("Optimization timed out" in o for o in logs.output))
+
+    def test_gen_candidates_torch_with_fixed_features(self):
+        self.test_gen_candidates_with_fixed_features(
+            gen_candidates=gen_candidates_torch, options={"disp": False}
+        )
+
+    def test_gen_candidates_torch_with_fixed_features_and_timeout(self):
+        with self.assertLogs("botorch", level="INFO") as logs:
+            self.test_gen_candidates_with_fixed_features(
+                gen_candidates=gen_candidates_torch,
+                options={"disp": False},
+                timeout_sec=1e-4,
+            )
+        self.assertTrue(any("Optimization timed out" in o for o in logs.output))
 
     def test_gen_candidates_scipy_with_fixed_features_inequality_constraints(self):
         options = {"maxiter": 5}
@@ -235,6 +261,29 @@ class TestGenCandidates(TestBaseCandidateGeneration):
         self.assertFalse(any(issubclass(w.category, OptimizationWarning) for w in ws))
         self.assertTrue("function evaluation limit" in logs.output[-1])
 
+    def test_gen_candidates_scipy_timeout_behavior(self):
+        # Check that no warnings are raised & log produced on hitting timeout.
+        for method in ("SLSQP", "L-BFGS-B"):
+            with warnings.catch_warnings(record=True) as ws, self.assertLogs(
+                "botorch", level="INFO"
+            ) as logs:
+                self.test_gen_candidates(options={"method": method}, timeout_sec=0.001)
+            self.assertFalse(
+                any(issubclass(w.category, OptimizationWarning) for w in ws)
+            )
+            self.assertTrue("Optimization timed out" in logs.output[-1])
+
+    def test_gen_candidates_torch_timeout_behavior(self):
+        # Check that no warnings are raised & log produced on hitting timeout.
+        with warnings.catch_warnings(record=True) as ws, self.assertLogs(
+            "botorch", level="INFO"
+        ) as logs:
+            self.test_gen_candidates(
+                gen_candidates=gen_candidates_torch, timeout_sec=0.001
+            )
+        self.assertFalse(any(issubclass(w.category, OptimizationWarning) for w in ws))
+        self.assertTrue("Optimization timed out" in logs.output[-1])
+
     def test_gen_candidates_scipy_warns_opt_no_res(self):
         ckwargs = {"dtype": torch.float, "device": self.device}
 
@@ -244,7 +293,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             "status returned to `res.`"
         )
         with mock.patch(
-            "botorch.generation.gen.minimize"
+            "botorch.generation.gen.minimize_with_timeout"
         ) as mock_minimize, warnings.catch_warnings(record=True) as ws:
             mock_minimize.return_value = OptimizeResult(x=test_ics.cpu().numpy())
 
@@ -260,11 +309,6 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             )
         )
         self.assertTrue(expected_warning_raised)
-
-    def test_gen_candidates_torch_with_fixed_features(self):
-        self.test_gen_candidates_with_fixed_features(
-            gen_candidates=gen_candidates_torch, options={"disp": False}
-        )
 
     def test_gen_candidates_scipy_nan_handling(self):
         for dtype, expected_regex in [
@@ -330,3 +374,16 @@ class TestRandomRestartOptimization(TestBaseCandidateGeneration):
                 batch_candidates=batch_candidates, batch_values=batch_acq_values
             )
             self.assertTrue(-EPS <= candidates <= 1 + EPS)
+
+
+class TestDeprecateMinimize(BotorchTestCase):
+    def test_deprecate_minimize(self):
+        from botorch.generation.gen import minimize
+
+        with self.assertWarnsRegex(
+            DeprecationWarning, "botorch.generation.gen.minimize_with_timeout"
+        ):
+            try:
+                minimize(None, None)
+            except Exception:
+                pass

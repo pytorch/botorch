@@ -541,7 +541,9 @@ class TestOptimizeAcqf(BotorchTestCase):
 
             # Make sure we return the initial solution if SLSQP fails to return
             # a feasible point.
-            with mock.patch("botorch.generation.gen.minimize") as mock_minimize:
+            with mock.patch(
+                "botorch.generation.gen.minimize_with_timeout"
+            ) as mock_minimize:
                 # By setting "success" to True and "status" to 0, we prevent a
                 # warning that `minimize` failed, which isn't the behavior
                 # we're looking to test here.
