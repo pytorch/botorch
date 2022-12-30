@@ -116,21 +116,13 @@ class TestQMultiObjectivePredictiveEntropySearch(BotorchTestCase):
                     pareto_sets=pareto_sets.unsqueeze(-1),
                 )
 
-    def test_multi_objective_predictive_entropy_search(self):
+    def test_moo_predictive_entropy_search(self, use_model_list=False, maximize=False):
         torch.manual_seed(1)
         tkwargs = {"device": self.device}
 
-        for (
-            dtype,
-            num_objectives,
-            use_model_list,
-            standardize_model,
-            maximize,
-        ) in product(
+        for (dtype, num_objectives, standardize_model,) in product(
             (torch.float, torch.double),
             (1, 2, 3),
-            (False, True),
-            (False, True),
             (False, True),
         ):
             tkwargs["dtype"] = dtype
@@ -140,10 +132,7 @@ class TestQMultiObjectivePredictiveEntropySearch(BotorchTestCase):
             model = get_model(train_X, train_Y, use_model_list, standardize_model)
 
             num_pareto_samples = 3
-            if num_objectives == 1:
-                num_pareto_points = 1
-            else:
-                num_pareto_points = 4
+            num_pareto_points = 1 if num_objectives == 1 else 4
 
             pareto_sets = dummy_sample_pareto_sets(
                 model, num_pareto_samples, num_pareto_points
@@ -167,10 +156,19 @@ class TestQMultiObjectivePredictiveEntropySearch(BotorchTestCase):
                     torch.rand(4, 5, 3, input_dim, **tkwargs),
                 ]
 
-                for j in range(len(test_Xs)):
-                    acq_X = acq(test_Xs[j])
+                for test_X in test_Xs:
+                    acq_X = acq(test_X)
                     # assess shape
-                    self.assertTrue(acq_X.shape == test_Xs[j].shape[:-2])
+                    self.assertTrue(acq_X.shape == test_X.shape[:-2])
+
+    def test_moo_predictive_entropy_search_maximize(self):
+        self.test_moo_predictive_entropy_search(maximize=True)
+
+    def test_moo_predictive_entropy_search_model_list(self):
+        self.test_moo_predictive_entropy_search(use_model_list=True)
+
+    def test_moo_predictive_entropy_search_model_list_maximize(self):
+        self.test_moo_predictive_entropy_search(use_model_list=True, maximize=True)
 
     def test_update_damping(self):
         # test error when old and new covariance are not positive semi-definite
