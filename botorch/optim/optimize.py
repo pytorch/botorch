@@ -10,6 +10,7 @@ Methods for optimizing acquisition functions.
 
 from __future__ import annotations
 
+import time
 import warnings
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -130,6 +131,9 @@ def optimize_acqf(
         >>>     qEI, bounds, 3, 15, 256, sequential=True
         >>> )
     """
+    start_time: float = time.monotonic()
+    timeout_sec = kwargs.pop("timeout_sec", None)
+
     if inequality_constraints is None:
         if not (bounds.ndim == 2 and bounds.shape[0] == 2):
             raise ValueError(
@@ -175,7 +179,12 @@ def optimize_acqf(
                 else gen_batch_initial_conditions
             )
 
+    # Perform sequential optimization via successive conditioning on pending points
     if sequential and q > 1:
+        if timeout_sec is not None:
+            # When using sequential optimization, we allocate the total timeout
+            # evenly across the individual acquisition optimizations.
+            timeout_sec = (timeout_sec - start_time) / q
         if not return_best_only:
             raise NotImplementedError(
                 "`return_best_only=False` only supported for joint optimization."
@@ -188,6 +197,7 @@ def optimize_acqf(
         candidate_list, acq_value_list = [], []
         base_X_pending = acq_function.X_pending
         for i in range(q):
+
             candidate, acq_value = optimize_acqf(
                 acq_function=acq_function,
                 bounds=bounds,
@@ -204,6 +214,7 @@ def optimize_acqf(
                 return_best_only=True,
                 sequential=False,
                 ic_generator=ic_gen,
+                timeout_sec=timeout_sec,
             )
 
             candidate_list.append(candidate)
@@ -219,6 +230,7 @@ def optimize_acqf(
         acq_function.set_X_pending(base_X_pending)
         return candidates, torch.stack(acq_value_list)
 
+    # Batch optimization (including the case q=1)
     options = options or {}
 
     # Handle the trivial case when all features are fixed
@@ -252,22 +264,27 @@ def optimize_acqf(
         "batch_limit", num_restarts if not nonlinear_inequality_constraints else 1
     )
 
-    def _optimize_batch_candidates() -> Tuple[Tensor, Tensor, List[Warning]]:
+    def _optimize_batch_candidates(
+        timeout_sec: Optional[float],
+    ) -> Tuple[Tensor, Tensor, List[Warning]]:
         batch_candidates_list: List[Tensor] = []
         batch_acq_values_list: List[Tensor] = []
         batched_ics = batch_initial_conditions.split(batch_limit)
         opt_warnings = []
+        if timeout_sec is not None:
+            timeout_sec = (timeout_sec - start_time) / len(batched_ics)
 
-        scipy_kws = dict(
-            acquisition_function=acq_function,
-            lower_bounds=None if bounds[0].isinf().all() else bounds[0],
-            upper_bounds=None if bounds[1].isinf().all() else bounds[1],
-            options={k: v for k, v in options.items() if k not in INIT_OPTION_KEYS},
-            inequality_constraints=inequality_constraints,
-            equality_constraints=equality_constraints,
-            nonlinear_inequality_constraints=nonlinear_inequality_constraints,
-            fixed_features=fixed_features,
-        )
+        scipy_kws = {
+            "acquisition_function": acq_function,
+            "lower_bounds": None if bounds[0].isinf().all() else bounds[0],
+            "upper_bounds": None if bounds[1].isinf().all() else bounds[1],
+            "options": {k: v for k, v in options.items() if k not in INIT_OPTION_KEYS},
+            "inequality_constraints": inequality_constraints,
+            "equality_constraints": equality_constraints,
+            "nonlinear_inequality_constraints": nonlinear_inequality_constraints,
+            "fixed_features": fixed_features,
+            "timeout_sec": timeout_sec,
+        }
 
         for i, batched_ics_ in enumerate(batched_ics):
             # optimize using random restart optimization
@@ -285,7 +302,7 @@ def optimize_acqf(
         batch_acq_values = torch.cat(batch_acq_values_list)
         return batch_candidates, batch_acq_values, opt_warnings
 
-    batch_candidates, batch_acq_values, ws = _optimize_batch_candidates()
+    batch_candidates, batch_acq_values, ws = _optimize_batch_candidates(timeout_sec)
 
     optimization_warning_raised = any(
         (issubclass(w.category, OptimizationWarning) for w in ws)
@@ -319,7 +336,9 @@ def optimize_acqf(
                 **kwargs,
             )
 
-            batch_candidates, batch_acq_values, ws = _optimize_batch_candidates()
+            batch_candidates, batch_acq_values, ws = _optimize_batch_candidates(
+                timeout_sec
+            )
 
             optimization_warning_raised = any(
                 (issubclass(w.category, OptimizationWarning) for w in ws)

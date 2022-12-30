@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-from contextlib import nullcontext
+from contextlib import ExitStack, nullcontext
 from itertools import filterfalse, product
 from typing import Callable, Iterable, Optional
 from unittest.mock import MagicMock, patch
@@ -278,6 +278,9 @@ class TestFitFallback(BotorchTestCase):
         optimizer.warnings = [
             WarningMessage("test_runtime_warning", RuntimeWarning, __file__, 0),
             WarningMessage(MAX_ITER_MSG, OptimizationWarning, __file__, 0),
+            WarningMessage(
+                "Optimization timed out after X", OptimizationWarning, __file__, 0
+            ),
         ]
 
         warning_handlers = {
@@ -286,9 +289,15 @@ class TestFitFallback(BotorchTestCase):
             "all": lambda w: True,
         }
         for case, warning_handler in warning_handlers.items():
-            with (
-                self.assertLogs(level="DEBUG") if case == "default" else nullcontext()
-            ) as logs, catch_warnings(record=True) as ws, debug(True):
+            with ExitStack() as es:
+                logs = es.enter_context(
+                    self.assertLogs(level="DEBUG")
+                    if case == "default"
+                    else nullcontext()
+                )
+                ws = es.enter_context(catch_warnings(record=True))
+                es.enter_context(debug(True))
+
                 try:
                     fit._fit_fallback(
                         mll,

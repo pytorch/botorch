@@ -219,7 +219,10 @@ class TestOptimizeAcqf(BotorchTestCase):
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
     def test_optimize_acqf_sequential(
-        self, mock_gen_candidates_scipy, mock_gen_batch_initial_conditions
+        self,
+        mock_gen_candidates_scipy,
+        mock_gen_batch_initial_conditions,
+        timeout_sec=None,
     ):
         q = 3
         num_restarts = 2
@@ -261,6 +264,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                 inequality_constraints=inequality_constraints,
                 post_processing_func=rounding_func,
                 sequential=True,
+                timeout_sec=timeout_sec,
             )
             self.assertTrue(torch.equal(candidates, expected_candidates))
             self.assertTrue(
@@ -311,6 +315,9 @@ class TestOptimizeAcqf(BotorchTestCase):
                 batch_initial_conditions=mock_gen_batch_initial_conditions,
                 sequential=True,
             )
+
+    def test_optimize_acqf_sequential_timeout(self):
+        self.test_optimize_acqf_sequential(timeout_sec=1e-4)
 
     def test_optimize_acqf_sequential_notimplemented(self):
         # Sequential acquisition function optimization only supported
