@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import time
 from functools import partial
 from typing import Dict
 from unittest.mock import MagicMock, patch
@@ -46,6 +47,16 @@ class ToyModule(Module):
         return {n: p for n, p in self.named_parameters() if p.requires_grad}
 
 
+def norm_squared(x, delay: float = 0.0):
+    if x.grad is not None:
+        x.grad.zero_()
+    loss = x.square().sum()
+    loss.backward()
+    if delay:
+        time.sleep(delay)
+    return loss, [x.grad]
+
+
 class TestScipyMinimize(BotorchTestCase):
     def setUp(self):
         super().setUp()
@@ -62,18 +73,18 @@ class TestScipyMinimize(BotorchTestCase):
 
     def test_basic(self):
         x = Parameter(torch.rand([]))
-
-        def closure():
-            if x.grad is not None:
-                x.grad.zero_()
-
-            loss = x.square().sum()
-            loss.backward()
-            return loss, [x.grad]
-
+        closure = partial(norm_squared, x)
         result = scipy_minimize(closure, {"x": x})
         self.assertEqual(result.status, OptimizationStatus.SUCCESS)
         self.assertTrue(allclose(result.fval, 0.0))
+
+    def test_timeout(self):
+        x = Parameter(torch.tensor(1.0))
+        # adding a small delay here to combat some timing issues on windows
+        closure = partial(norm_squared, x, delay=1e-3)
+        result = scipy_minimize(closure, {"x": x}, timeout_sec=1e-4)
+        self.assertEqual(result.status, OptimizationStatus.STOPPED)
+        self.assertTrue("Optimization timed out after" in result.message)
 
     def test_main(self):
         def _callback(parameters, result, out) -> None:
@@ -125,12 +136,12 @@ class TestScipyMinimize(BotorchTestCase):
     def test_post_processing(self):
         closure = next(iter(self.closures.values()))
         wrapper = NdarrayOptimizationClosure(closure, closure.parameters)
-        with patch.object(core, "minimize") as mock_minimize:
+        with patch.object(core, "minimize_with_timeout") as mock_minimize_with_timeout:
             for status, msg in (
                 (OptimizationStatus.FAILURE, b"ABNORMAL_TERMINATION_IN_LNSRCH"),
                 (OptimizationStatus.STOPPED, "TOTAL NO. of ITERATIONS REACHED LIMIT"),
             ):
-                mock_minimize.return_value = OptimizeResult(
+                mock_minimize_with_timeout.return_value = OptimizeResult(
                     x=wrapper.state,
                     fun=1.0,
                     nit=3,
@@ -139,7 +150,9 @@ class TestScipyMinimize(BotorchTestCase):
                 )
                 result = core.scipy_minimize(wrapper, closure.parameters)
                 self.assertEqual(result.status, status)
-                self.assertEqual(result.fval, mock_minimize.return_value.fun)
+                self.assertEqual(
+                    result.fval, mock_minimize_with_timeout.return_value.fun
+                )
                 self.assertEqual(
                     result.message, msg if isinstance(msg, str) else msg.decode("ascii")
                 )
@@ -161,18 +174,18 @@ class TestTorchMinimize(BotorchTestCase):
 
     def test_basic(self):
         x = Parameter(torch.tensor([0.02]))
-
-        def closure():
-            if x.grad is not None:
-                x.grad.zero_()
-
-            loss = x.square().sum()
-            loss.backward()
-            return loss, [x.grad]
-
+        closure = partial(norm_squared, x)
         result = torch_minimize(closure, {"x": x}, step_limit=100)
         self.assertEqual(result.status, OptimizationStatus.STOPPED)
         self.assertTrue(allclose(result.fval, 0.0))
+
+    def test_timeout(self):
+        x = Parameter(torch.tensor(1.0))
+        # adding a small delay here to combat some timing issues on windows
+        closure = partial(norm_squared, x, delay=1e-3)
+        result = torch_minimize(closure, {"x": x}, timeout_sec=1e-4)
+        self.assertEqual(result.status, OptimizationStatus.STOPPED)
+        self.assertTrue("stopped due to timeout after" in result.message)
 
     def test_main(self):
         def _callback(parameters, result, out) -> None:
@@ -239,7 +252,7 @@ class TestTorchMinimize(BotorchTestCase):
                 parameters=closure.parameters,
                 stopping_criterion=lambda fval: next(stopping_decisions),
             )
-            self.assertEqual(result.step, 2)
+            self.assertEqual(result.step, 3)
             self.assertEqual(result.status, OptimizationStatus.STOPPED)
 
             # Test passing `scheduler`

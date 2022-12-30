@@ -48,10 +48,26 @@ from torch.nn import Parameter
 from torch.utils.data import DataLoader
 
 
+def _debug_warn(w: WarningMessage) -> bool:
+    if _LBFGSB_MAXITER_MAXFUN_REGEX.search(str(w.message)):
+        return True
+    # TODO: Better handle cases where warning handling logic
+    # affects both debug and rethrow functions.
+    return False
+
+
+def _rethrow_warn(w: WarningMessage) -> bool:
+    if not issubclass(w.category, OptimizationWarning):
+        return True
+    if "Optimization timed out after" in str(w.message):
+        return True
+    return False
+
+
 DEFAULT_WARNING_HANDLER = partial(
     _warning_handler_template,
-    debug=lambda w: _LBFGSB_MAXITER_MAXFUN_REGEX.search(str(w.message)),
-    rethrow=lambda w: not issubclass(w.category, OptimizationWarning),
+    debug=_debug_warn,
+    rethrow=_rethrow_warn,
 )
 FitGPyTorchMLL = Dispatcher("fit_gpytorch_mll", encoder=type_bypassing_encoder)
 
@@ -188,9 +204,9 @@ def _fit_fallback(
         optimizer_kwargs: Keyword arguments passed to `optimizer`.
         max_attempts: The maximum number of fit attempts allowed. The attempt budget
             is NOT shared between calls to this method.
-        warning_filter: A function used to filter warnings produced when calling
-            `optimizer`. Any unfiltered warnings will be rethrown and trigger a
-            model fitting retry.
+        warning_handler: A function used to filter warnings produced when calling
+            `optimizer`. Any unfiltered warnings (those for which `warning_handler`
+            returns `False`) will be rethrown and trigger a model fitting retry.
         caught_exception_types: A tuple of exception types whose instances should
             be redirected to `logging.DEBUG`.
         **ignore: This function ignores unrecognized keyword arguments.
