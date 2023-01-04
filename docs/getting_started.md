@@ -19,7 +19,7 @@ Before jumping the gun, we recommend you start with the high-level
 - linear_operator == 0.2.0
 - scipy
 - multiple-dispatch
-- pyro-ppl >= 1.8.2
+- pyro-ppl >= 1.8.4
 
 BoTorch is easily installed via
 [Anaconda](https://www.anaconda.com/distribution/#download-section) (recommended)
