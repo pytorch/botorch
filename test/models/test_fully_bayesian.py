@@ -6,7 +6,6 @@
 
 
 import itertools
-import warnings
 from unittest import mock
 
 import pyro
@@ -35,7 +34,6 @@ from botorch.acquisition.utils import prune_inferior_points
 from botorch.models import ModelList, ModelListGP
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.fully_bayesian import (
-    _psd_safe_pyro_mvn_sample,
     MCMC_DIM,
     MIN_INFERRED_NOISE_LEVEL,
     PyroModel,
@@ -55,6 +53,7 @@ from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihood
 from gpytorch.means import ConstantMean
 from linear_operator.operators import to_linear_operator
+from pyro.ops.integrator import potential_grad, register_exception_handler
 
 
 EXPECTED_KEYS = [
@@ -665,61 +664,55 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                     )
                 )
 
-    def test_psd_safe_pyro_mvn_sample(self):
-        def mock_init(
-            batch_shape=torch.Size(),  # noqa
-            event_shape=torch.Size(),  # noqa
-            validate_args=None,
-        ):
-            self._batch_shape = batch_shape
-            self._event_shape = event_shape
-            self._validate_args = False
 
-        for dtype in (torch.float, torch.double):
-            tkwargs = {"dtype": dtype, "device": self.device}
-            loc = torch.rand(5, **tkwargs)
-            obs = torch.rand(5, **tkwargs)
-            psd_covar = torch.eye(5, **tkwargs)
-            not_psd_covar = torch.ones(5, 5, **tkwargs)
-            with warnings.catch_warnings(record=True) as ws:
-                warnings.simplefilter("always")
-                _psd_safe_pyro_mvn_sample(
-                    name="Y", loc=loc, covariance_matrix=psd_covar, obs=obs
-                )
-            self.assertFalse(any("linear algebra error" in str(w.message) for w in ws))
-            # With a PSD covar, it should only get called once.
-            # Raised as a ValueError:
-            with warnings.catch_warnings(record=True) as ws:
-                warnings.simplefilter("always")
-                _psd_safe_pyro_mvn_sample(
-                    name="Y", loc=loc, covariance_matrix=not_psd_covar, obs=obs
-                )
-            self.assertTrue(any("linear algebra error" in str(w.message) for w in ws))
-            # Raised as a LinAlgError:
-            with mock.patch(
-                "torch.distributions.multivariate_normal.Distribution.__init__",
-                wraps=mock_init,
-            ), mock.patch(
-                "pyro.distributions.MultivariateNormal",
-                wraps=pyro.distributions.MultivariateNormal,
-            ) as mock_mvn, warnings.catch_warnings(
-                record=True
-            ) as ws:
-                warnings.simplefilter("always")
-                _psd_safe_pyro_mvn_sample(
-                    name="Y", loc=loc, covariance_matrix=not_psd_covar, obs=obs
-                )
-            # Check that it added the jitter.
-            self.assertGreaterEqual(
-                mock_mvn.call_args[-1]["covariance_matrix"][0, 0].item(), 1 + 1e-8
+class TestPyroCatchNumericalErrors(BotorchTestCase):
+    def test_pyro_catch_error(self):
+        def potential_fn(z):
+            mvn = pyro.distributions.MultivariateNormal(
+                loc=torch.zeros(2),
+                covariance_matrix=z["K"],
             )
-            # With a not-PSD covar, it should get called multiple times.
-            self.assertTrue(any("linear algebra error" in str(w.message) for w in ws))
-            # We don't catch random Value errors.
-            with mock.patch(
-                "torch.distributions.multivariate_normal.Distribution.__init__",
-                side_effect=ValueError("dummy error"),
-            ), self.assertRaisesRegex(ValueError, "dummy"):
-                _psd_safe_pyro_mvn_sample(
-                    name="Y", loc=loc, covariance_matrix=not_psd_covar, obs=obs
-                )
+            return mvn.log_prob(torch.zeros(2))
+
+        # Test base case where everything is fine
+        z = {"K": torch.eye(2)}
+        grads, val = potential_grad(potential_fn, z)
+        self.assertTrue(torch.allclose(grads["K"], -0.5 * torch.eye(2)))
+        norm_mvn = torch.distributions.Normal(0, 1)
+        self.assertTrue(torch.allclose(val, 2 * norm_mvn.log_prob(torch.zeros(1))))
+
+        # Default behavior should catch the ValueError when trying to instantiate
+        # the MVN and return NaN instead
+        z = {"K": torch.ones(2, 2)}
+        _, val = potential_grad(potential_fn, z)
+        self.assertTrue(torch.isnan(val))
+
+        # Default behavior should catch the LinAlgError when peforming a
+        # Cholesky decomposition and return NaN instead
+        def potential_fn_chol(z):
+            return torch.linalg.cholesky(z["K"])
+
+        _, val = potential_grad(potential_fn_chol, z)
+        self.assertTrue(torch.isnan(val))
+
+        # Default behavior should not catch other errors
+        def potential_fn_rterr_foo(z):
+            raise RuntimeError("foo")
+
+        with self.assertRaisesRegex(RuntimeError, "foo"):
+            potential_grad(potential_fn_rterr_foo, z)
+
+        # But once we register this specific error then it should
+        def catch_runtime_error(e):
+            return type(e) == RuntimeError and "foo" in str(e)
+
+        register_exception_handler("foo_runtime", catch_runtime_error)
+        _, val = potential_grad(potential_fn_rterr_foo, z)
+        self.assertTrue(torch.isnan(val))
+
+        # Unless the error message is different
+        def potential_fn_rterr_bar(z):
+            raise RuntimeError("bar")
+
+        with self.assertRaisesRegex(RuntimeError, "bar"):
+            potential_grad(potential_fn_rterr_bar, z)
