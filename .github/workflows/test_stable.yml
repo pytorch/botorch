@@ -48,7 +48,7 @@ jobs:
         conda install -y -c pytorch pytorch cpuonly
         conda install -y pip scipy pytest
         conda install -y -c gpytorch gpytorch
-        conda install -y -c conda-forge pyro-ppl>=1.8.2
+        conda install -y -c conda-forge pyro-ppl>=1.8.4
         pip install .[test]
     - name: Unit tests
       shell: bash -l {0}

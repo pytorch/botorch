@@ -105,7 +105,7 @@ jobs:
         conda install -y scipy multipledispatch setuptools_scm conda-build conda-verify
         conda config --set anaconda_upload no
         conda install -y -c pytorch-nightly pytorch cpuonly
-        conda install -y -c conda-forge pyro-ppl>=1.8.2
+        conda install -y -c conda-forge pyro-ppl>=1.8.4
         pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
     - name: Build and verify conda package
