@@ -131,6 +131,7 @@ def get_acquisition_function(
             X_pending=X_pending,
             prune_baseline=kwargs.get("prune_baseline", False),
             marginalize_dim=kwargs.get("marginalize_dim"),
+            cache_root=kwargs.get("cache_root", True),
         )
     elif acquisition_function_name == "qSR":
         return monte_carlo.qSimpleRegret(
