@@ -217,6 +217,23 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
         self.assertEqual(kwargs["marginalize_dim"], 0)
+        self.assertEqual(kwargs["cache_root"], True)
+        # test with cache_root = False
+        acqf = get_acquisition_function(
+            acquisition_function_name="qNEI",
+            model=self.model,
+            objective=self.objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            seed=self.seed,
+            marginalize_dim=0,
+            cache_root=False,
+        )
+        self.assertTrue(acqf == mock_acqf.return_value)
+        self.assertTrue(mock_acqf.call_count, 1)
+        args, kwargs = mock_acqf.call_args
+        self.assertEqual(kwargs["cache_root"], False)
         # test with non-qmc, no X_pending
         acqf = get_acquisition_function(
             acquisition_function_name="qNEI",
