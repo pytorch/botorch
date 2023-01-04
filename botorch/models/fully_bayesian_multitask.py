@@ -14,7 +14,6 @@ import pyro
 import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.fully_bayesian import (
-    _psd_safe_pyro_mvn_sample,
     matern52_kernel,
     MIN_INFERRED_NOISE_LEVEL,
     PyroModel,
@@ -94,7 +93,7 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         noise = self.sample_noise(**tkwargs)
 
         lengthscale = self.sample_lengthscale(dim=self.ard_num_dims, **tkwargs)
-        k = matern52_kernel(X=self.train_X[..., base_idxr], lengthscale=lengthscale)
+        K = matern52_kernel(X=self.train_X[..., base_idxr], lengthscale=lengthscale)
 
         # compute task covar matrix
         task_latent_features = self.sample_latent_features(**tkwargs)[task_indices]
@@ -102,12 +101,14 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         task_covar = matern52_kernel(
             X=task_latent_features, lengthscale=task_lengthscale
         )
-        k = k.mul(task_covar)
-        k = outputscale * k + noise * torch.eye(self.train_X.shape[0], **tkwargs)
-        _psd_safe_pyro_mvn_sample(
-            name="Y",
-            loc=mean.view(-1).expand(self.train_X.shape[0]),
-            covariance_matrix=k,
+        K = K.mul(task_covar)
+        K = outputscale * K + noise * torch.eye(self.train_X.shape[0], **tkwargs)
+        pyro.sample(
+            "Y",
+            pyro.distributions.MultivariateNormal(
+                loc=mean.view(-1).expand(self.train_X.shape[0]),
+                covariance_matrix=K,
+            ),
             obs=self.train_Y.squeeze(-1),
         )
 
