@@ -57,7 +57,7 @@ class SACKernel(Kernel):
 
         super().__init__(batch_shape=batch_shape)
         self.decomposition = decomposition
-        self.device = device
+        self._device = device
 
         num_param = len(next(iter(decomposition.values())))
         for active_parameters in decomposition.values():
@@ -85,6 +85,10 @@ class SACKernel(Kernel):
                 base_kernel=self.base_kernel, outputscale_prior=GammaPrior(2.0, 15.0)
             )
         self.kernel_dict = ModuleDict(self.kernel_dict)
+
+    @property
+    def device(self) -> Optional[torch.device]:
+        return self._device
 
     def forward(
         self,

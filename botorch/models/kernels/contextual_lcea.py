@@ -61,7 +61,7 @@ class LCEAKernel(Kernel):
         self.decomposition = decomposition
         self.batch_shape = batch_shape
         self.train_embedding = train_embedding
-        self.device = device
+        self._device = device
 
         num_param = len(next(iter(decomposition.values())))
         self.context_list = list(decomposition.keys())
@@ -127,6 +127,10 @@ class LCEAKernel(Kernel):
             lambda m, v: m._set_outputscale_list(v),
         )
         self.register_constraint("raw_outputscale_list", Positive())
+
+    @property
+    def device(self) -> Optional[torch.device]:
+        return self._device
 
     @property
     def outputscale_list(self) -> Tensor:
