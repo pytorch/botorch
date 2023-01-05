@@ -8,7 +8,7 @@ The release log for BoTorch.
 * This release includes changes for compatibility with the newest versions of linear_operator and gpytorch.
 * Several acquisition functions now have "Log" counterparts, which provide better
 numerical behavior for improvement-based acquisition functions in areas where the probability of
-imporvement is low. For example, `LogExpectedImprovement` (#1565) should be more accurate than
+improvement is low. For example, `LogExpectedImprovement` (#1565) should be more accurate than
 `ExpectedImprovement`. These new acquisition functions are
     * `LogExpectedImprovement` (#1565).
     * `LogNoisyExpectedImprovement` (#1577).
@@ -38,8 +38,8 @@ imporvement is low. For example, `LogExpectedImprovement` (#1565) should be more
 
 #### Bug fixes
 * Error rather than failing silently for NaN values in box decomposition (#1554).
-* Fix jitter in `_psd_safe_pyro_mvn_sample` (#1564).
 * Make `get_bounds_as_ndarray` device-safe (#1567).
+
 
 ## [0.8.0] - Dec 6, 2022
 
