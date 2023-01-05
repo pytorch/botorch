@@ -2,6 +2,45 @@
 
 The release log for BoTorch.
 
+## [0.8.1] - Jan 5, 2023
+
+### Highlights
+* This release includes changes for compatibility with the newest versions of linear_operator and gpytorch.
+* Several acquisition functions now have "Log" counterparts, which provide better
+numerical behavior for improvement-based acquisition functions in areas where the probability of
+imporvement is low. For example, `LogExpectedImprovement` (#1565) should be more accurate than
+`ExpectedImprovement`. These new acquisition functions are
+    * `LogExpectedImprovement` (#1565).
+    * `LogNoisyExpectedImprovement` (#1577).
+    * `LogProbabilityOfImprovement` (#1594).
+    * `LogConstrainedExpectedImprovement` (#1594).
+* Bug fix: Stop `ModelListGP.posterior` from quietly ignoring `Log`, `Power`, and `Bilog` outcome transforms (#1563).
+* Turn off `fast_computations` setting in linear_operator by default (#1547).
+
+#### Compatibility
+* Require linear_operator == 0.3.0 (#1538).
+* Require pyro-ppl >= 1.8.4 (#1606).
+* Require gpytorch == 1.9.1 (#1612).
+
+#### New Features
+* Add `eta` to `get_acquisition_function` (#1541).
+* Support 0d-features in `FixedFeatureAcquisitionFunction` (#1546).
+* Add timeout ability to optimization functions (#1562, #1598).
+* Add `MultiModelAcquisitionFunction`, an abstract base class for acquisition functions that require multiple types of models (#1584).
+* Add `cache_root` option for qNEI in `get_acquisition_function` (#1608).
+
+#### Other changes
+* Docstring corrections (#1551, #1557, #1573).
+* Removal of `_fit_multioutput_independent` and `allclose_mll` (#1570).
+* Better numerical behavior for fully Bayesian models (#1576).
+* More verbose Scipy `minimize` failure messages (#1579).
+* Lower-bound noise in`SaasPyroModel` to avoid Cholesky errors (#1586).
+
+#### Bug fixes
+* Error rather than failing silently for NaN values in box decomposition (#1554).
+* Fix jitter in `_psd_safe_pyro_mvn_sample` (#1564).
+* Make `get_bounds_as_ndarray` device-safe (#1567).
+
 ## [0.8.0] - Dec 6, 2022
 
 ### Highlights
