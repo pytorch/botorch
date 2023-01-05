@@ -8,7 +8,7 @@ The release log for BoTorch.
 * This release includes changes for compatibility with the newest versions of linear_operator and gpytorch.
 * Several acquisition functions now have "Log" counterparts, which provide better
 numerical behavior for improvement-based acquisition functions in areas where the probability of
-improvement is low. For example, `LogExpectedImprovement` (#1565) should be more accurate than
+improvement is low. For example, `LogExpectedImprovement` (#1565) should behave better than
 `ExpectedImprovement`. These new acquisition functions are
     * `LogExpectedImprovement` (#1565).
     * `LogNoisyExpectedImprovement` (#1577).
