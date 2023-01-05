@@ -164,7 +164,10 @@ candidate  # tensor([0.4887, 0.5063])
           <ol>
             <li>
               <h4>Install BoTorch:</h4>
+              <a>via Conda (strongly recommended for OSX):</a>
               <MarkdownBlock>{bash`conda install botorch -c pytorch -c gpytorch -c conda-forge`}</MarkdownBlock>
+              <a>via pip:</a>
+              <MarkdownBlock>{bash`pip install botorch`}</MarkdownBlock>
             </li>
             <li>
               <h4>Fit a model:</h4>

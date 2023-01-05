@@ -14,13 +14,21 @@ Before jumping the gun, we recommend you start with the high-level
 #### Installation Requirements:
 
 BoTorch is easily installed via
-[Anaconda](https://www.anaconda.com/distribution/#download-section):
+[Anaconda](https://www.anaconda.com/distribution/#download-section) (strongly recommended for OSX)
+or `pip`:
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Conda-->
 ```bash
 conda install botorch -c pytorch -c gpytorch -c conda-forge
 ```
+<!--pip-->
+```bash
+pip install botorch
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
 
-For more installation options and more detailed instructions, please see the
+For more installation options and detailed instructions, please see the
 [Project Readme](https://github.com/pytorch/botorch/blob/main/README.md)
 on GitHub.
 
