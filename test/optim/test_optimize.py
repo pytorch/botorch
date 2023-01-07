@@ -520,7 +520,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                     sequential=True,
                     raw_samples=16,
                 )
-            self.assertTrue(torch.allclose(candidates, 4 * torch.ones(1, 3, **tkwargs)))
+            self.assertAllClose(candidates, 4 * torch.ones(1, 3, **tkwargs))
 
             # Constrain the sum to be <= 4 in which case the solution is a
             # permutation of [4, 0, 0]
@@ -565,9 +565,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                     batch_initial_conditions=batch_initial_conditions,
                     num_restarts=1,
                 )
-                self.assertTrue(
-                    torch.allclose(candidates, batch_initial_conditions[0, ...])
-                )
+                self.assertAllClose(candidates, batch_initial_conditions[0, ...])
 
             # Constrain all variables to be >= 1. The global optimum is 2.45 and
             # is attained by some permutation of [1, 1, 2]
@@ -1251,8 +1249,8 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             best_idcs = torch.topk(exp_acq_vals, q).indices
             expected_candidates = choices[best_idcs]
             expected_acq_value = exp_acq_vals[best_idcs].reshape_as(acq_value)
-            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
-            self.assertTrue(torch.allclose(candidates, expected_candidates))
+            self.assertAllClose(acq_value, expected_acq_value)
+            self.assertAllClose(candidates, expected_candidates)
 
             # test non-unique (test does not properly use pending points)
             candidates, acq_value = optimize_acqf_discrete(
@@ -1261,8 +1259,8 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             best_idx = torch.argmax(exp_acq_vals)
             expected_candidates = choices[best_idx].repeat(q, 1)
             expected_acq_value = exp_acq_vals[best_idx].repeat(q).reshape_as(acq_value)
-            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
-            self.assertTrue(torch.allclose(candidates, expected_candidates))
+            self.assertAllClose(acq_value, expected_acq_value)
+            self.assertAllClose(candidates, expected_candidates)
 
             # test max_batch_limit
             candidates, acq_value = optimize_acqf_discrete(
@@ -1271,8 +1269,8 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             best_idcs = torch.topk(exp_acq_vals, q).indices
             expected_candidates = choices[best_idcs]
             expected_acq_value = exp_acq_vals[best_idcs].reshape_as(acq_value)
-            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
-            self.assertTrue(torch.allclose(candidates, expected_candidates))
+            self.assertAllClose(acq_value, expected_acq_value)
+            self.assertAllClose(candidates, expected_candidates)
 
             # test max_batch_limit & unique
             candidates, acq_value = optimize_acqf_discrete(
@@ -1285,8 +1283,8 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             best_idx = torch.argmax(exp_acq_vals)
             expected_candidates = choices[best_idx].repeat(q, 1)
             expected_acq_value = exp_acq_vals[best_idx].repeat(q).reshape_as(acq_value)
-            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
-            self.assertTrue(torch.allclose(candidates, expected_candidates))
+            self.assertAllClose(acq_value, expected_acq_value)
+            self.assertAllClose(candidates, expected_candidates)
 
         with self.assertRaises(UnsupportedError):
             acqf = MockOneShotAcquisitionFunction()
@@ -1336,7 +1334,7 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
                 unique=False,
             )
             expected_candidates = torch.tensor([[6, 4, 9], [6, 4, 9]], **tkwargs)
-            self.assertTrue(torch.allclose(candidates, expected_candidates[:q]))
+            self.assertAllClose(candidates, expected_candidates[:q])
 
             # test X_avoid and batch_initial_conditions
             candidates, acq_value = optimize_acqf_discrete_local_search(
@@ -1399,13 +1397,13 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             X_filtered = _filter_infeasible(
                 X=X, inequality_constraints=inequality_constraints
             )
-            self.assertTrue(torch.allclose(X[:2], X_filtered))
+            self.assertAllClose(X[:2], X_filtered)
 
             # test _filter_invalid
             X_filtered = _filter_invalid(X=X, X_avoid=X[1].unsqueeze(0))
-            self.assertTrue(torch.allclose(X[[0, 2]], X_filtered))
+            self.assertAllClose(X[[0, 2]], X_filtered)
             X_filtered = _filter_invalid(X=X, X_avoid=X[[0, 2]])
-            self.assertTrue(torch.allclose(X[1].unsqueeze(0), X_filtered))
+            self.assertAllClose(X[1].unsqueeze(0), X_filtered)
 
             # test _generate_neighbors
             X_loc = _generate_neighbors(
@@ -1438,4 +1436,4 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
                 min_points=20,
             )
             self.assertEqual(len(X), 20)
-            self.assertTrue(torch.allclose(torch.unique(X, dim=0), X))
+            self.assertAllClose(torch.unique(X, dim=0), X)

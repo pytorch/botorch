@@ -50,8 +50,8 @@ class TestTorchPosterior(BotorchTestCase):
             expected = torch.stack(
                 [posterior.distribution.icdf(q) for q in q_value], dim=0
             )
-            self.assertTrue(torch.allclose(posterior.quantile(q_value), expected))
+            self.assertAllClose(posterior.quantile(q_value), expected)
             expected = torch.stack(
                 [posterior.distribution.log_prob(q).exp() for q in q_value], dim=0
             )
-            self.assertTrue(torch.allclose(posterior.density(q_value), expected))
+            self.assertAllClose(posterior.density(q_value), expected)

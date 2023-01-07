@@ -186,13 +186,13 @@ class TestGetReferencePoint(BotorchTestCase):
             nadir = Y.min(dim=0).values
             ideal = Y.max(dim=0).values
             expected_ref_point = nadir - 0.1 * (ideal - nadir)
-            self.assertTrue(torch.allclose(ref_point, expected_ref_point))
+            self.assertAllClose(ref_point, expected_ref_point)
             # test with scale
             expected_ref_point = nadir - 0.2 * (ideal - nadir)
             ref_point = infer_reference_point(
                 max_ref_point=max_ref_point, pareto_Y=Y, scale=0.2
             )
-            self.assertTrue(torch.allclose(ref_point, expected_ref_point))
+            self.assertAllClose(ref_point, expected_ref_point)
 
             # test case when one objective is better than max_ref_point, and
             # one objective is worse
@@ -241,5 +241,5 @@ class TestGetReferencePoint(BotorchTestCase):
             # test no max_ref_point specified
             expected_ref_point = nadir - 0.2 * (ideal - nadir)
             ref_point = infer_reference_point(pareto_Y=Y, scale=0.2)
-            self.assertTrue(torch.allclose(ref_point, expected_ref_point))
+            self.assertAllClose(ref_point, expected_ref_point)
             ref_point = infer_reference_point(pareto_Y=Y)

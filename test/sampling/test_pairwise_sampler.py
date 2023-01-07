@@ -34,7 +34,7 @@ class TestPairwiseIIDNormalSampler(BotorchTestCase):
             self.assertEqual(samples.shape, torch.Size([4, 3, 2]))
             # ensure samples are the same
             samples2 = sampler(posterior)
-            self.assertTrue(torch.allclose(samples, samples2))
+            self.assertAllClose(samples, samples2)
             # ensure this works with a differently shaped posterior
             posterior_batched = _get_test_posterior(
                 device=self.device, dtype=dtype, batched=True
@@ -76,7 +76,7 @@ class TestPairwiseSobolQMCNormalSampler(BotorchTestCase):
             self.assertEqual(samples.shape, torch.Size([4, 3, 2]))
             # ensure samples are the same
             samples2 = sampler(posterior)
-            self.assertTrue(torch.allclose(samples, samples2))
+            self.assertAllClose(samples, samples2)
             # ensure this works with a differently shaped posterior
             posterior_batched = _get_test_posterior(
                 device=self.device, dtype=dtype, batched=True

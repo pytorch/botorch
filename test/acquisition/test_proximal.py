@@ -89,7 +89,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     ) / torch.exp(mv_normal.log_prob(last_X))
 
                     ei_prox = EI_prox(test_X)
-                    self.assertTrue(torch.allclose(ei_prox, ei * test_prox_weight))
+                    self.assertAllClose(ei_prox, ei * test_prox_weight)
                     self.assertEqual(ei_prox.shape, torch.Size([1]))
 
                     # test with beta specified
@@ -116,7 +116,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     )
 
                     ei_prox_beta = EI_prox_beta(test_X)
-                    self.assertTrue(torch.allclose(ei_prox_beta, ei * test_prox_weight))
+                    self.assertAllClose(ei_prox_beta, ei * test_prox_weight)
                     self.assertEqual(ei_prox_beta.shape, torch.Size([1]))
 
                     # test t-batch with broadcasting
@@ -272,7 +272,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             # test calculation
             ei_prox = EI_prox(test_X)
 
-            self.assertTrue(torch.allclose(ei_prox, ei * test_prox_weight))
+            self.assertAllClose(ei_prox, ei * test_prox_weight)
             self.assertEqual(ei_prox.shape, torch.Size([1]))
 
             # test MC acquisition function
@@ -289,7 +289,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             )
 
             qei_prox = qEI_prox(test_X)
-            self.assertTrue(torch.allclose(qei_prox, qei * test_prox_weight.flatten()))
+            self.assertAllClose(qei_prox, qei * test_prox_weight.flatten())
             self.assertEqual(qei_prox.shape, torch.Size([4]))
 
             # test gradient

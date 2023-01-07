@@ -198,13 +198,11 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
             self.assertIsNone(model.covar_module)
             self.assertIsNone(model.likelihood)
             self.assertIsInstance(model.pyro_model, MultitaskSaasPyroModel)
-            self.assertTrue(torch.allclose(train_X, model.pyro_model.train_X))
-            self.assertTrue(torch.allclose(train_Y, model.pyro_model.train_Y))
-            self.assertTrue(
-                torch.allclose(
-                    train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
-                    model.pyro_model.train_Yvar,
-                )
+            self.assertAllClose(train_X, model.pyro_model.train_X)
+            self.assertAllClose(train_Y, model.pyro_model.train_Y)
+            self.assertAllClose(
+                train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
+                model.pyro_model.train_Yvar,
             )
 
             # Fit a model and check that the hyperparameters have the correct shape
@@ -320,9 +318,9 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
 
             # Make sure the model shapes are set correctly
             self.assertEqual(model.pyro_model.train_X.shape, torch.Size([n, d + 1]))
-            self.assertTrue(torch.allclose(model.pyro_model.train_X, train_X))
+            self.assertAllClose(model.pyro_model.train_X, train_X)
             model.train()  # Put the model in train mode
-            self.assertTrue(torch.allclose(train_X, model.pyro_model.train_X))
+            self.assertAllClose(train_X, model.pyro_model.train_X)
             self.assertIsNone(model.mean_module)
             self.assertIsNone(model.covar_module)
             self.assertIsNone(model.likelihood)
@@ -382,8 +380,8 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
             posterior2 = gp2.posterior(X=test_X, output_indices=[0])
             pred_mean2, pred_var2 = posterior2.mean, posterior2.variance
 
-        self.assertTrue(torch.allclose(pred_mean1, pred_mean2))
-        self.assertTrue(torch.allclose(pred_var1, pred_var2))
+        self.assertAllClose(pred_mean1, pred_mean2)
+        self.assertAllClose(pred_var1, pred_var2)
 
     def test_acquisition_functions(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
@@ -542,7 +540,7 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
             )
             self.assertTrue(torch.equal(data_dict["train_X"], train_X))
             self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
-            self.assertTrue(torch.allclose(data_dict["train_Yvar"], train_Yvar))
+            self.assertAllClose(data_dict["train_Yvar"], train_Yvar)
             self.assertEqual(data_dict["task_feature"], task_feature)
             self.assertEqual(data_dict["rank"], 1)
             self.assertTrue("task_covar_prior" not in data_dict)

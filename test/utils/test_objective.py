@@ -140,7 +140,7 @@ class TestApplyConstraints(BotorchTestCase):
             obj = apply_constraints(
                 obj=obj, constraints=[zeros_f], samples=samples, infeasible_cost=2.0
             )
-            self.assertTrue(torch.allclose(obj, samples.clamp_min(-1.0) * 0.5 - 1.0))
+            self.assertAllClose(obj, samples.clamp_min(-1.0) * 0.5 - 1.0)
             # negative objective, one constraint, infeasible_cost, explicit eta
             obj = samples.clone().clamp_min(-1.0)
             obj = apply_constraints(
@@ -150,7 +150,7 @@ class TestApplyConstraints(BotorchTestCase):
                 infeasible_cost=2.0,
                 eta=torch.tensor([10e-3]).to(**tkwargs),
             )
-            self.assertTrue(torch.allclose(obj, samples.clamp_min(-1.0) * 0.5 - 1.0))
+            self.assertAllClose(obj, samples.clamp_min(-1.0) * 0.5 - 1.0)
             # nonnegative objective, one constraint, eta = 0
             obj = samples
             with self.assertRaises(ValueError):

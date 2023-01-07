@@ -129,7 +129,7 @@ class TestDeterministicModels(BotorchTestCase):
             posterior = model.posterior(test_X)
             msg = "does not have a `train_inputs` attribute"
             self.assertTrue(any(msg in str(w.message) for w in ws))
-        self.assertTrue(torch.allclose(expected_Y, posterior.mean))
+        self.assertAllClose(expected_Y, posterior.mean)
         # check that model.train/eval works and raises the warning
         model.train()
         with self.assertWarns(RuntimeWarning):

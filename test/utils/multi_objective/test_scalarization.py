@@ -100,4 +100,4 @@ class TestGetChebyshevScalarization(BotorchTestCase):
                 expected_Y_transformed = (weights * normalized_Y_test).min(
                     dim=-1
                 ).values + 0.05 * (weights * normalized_Y_test).sum(dim=-1)
-                self.assertTrue(torch.allclose(Y_transformed, expected_Y_transformed))
+                self.assertAllClose(Y_transformed, expected_Y_transformed)

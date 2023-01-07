@@ -151,14 +151,14 @@ class TestPivotedCholesky(BotorchTestCase):
         Kba = K[:, m:, 0:m]
         L_augmented = augment_cholesky(Laa, Kbb, Kba)
         L = torch.linalg.cholesky(K)
-        self.assertTrue(torch.allclose(L_augmented, L))
+        self.assertAllClose(L_augmented, L)
 
         # with jitter
         jitter = 3e-2
         Laa = torch.linalg.cholesky(Kaa + jitter * torch.eye(m).unsqueeze(0))
         L_augmented = augment_cholesky(Laa, Kbb, Kba, jitter=jitter)
         L = torch.linalg.cholesky(K + jitter * torch.eye(n).unsqueeze(0))
-        self.assertTrue(torch.allclose(L_augmented, L))
+        self.assertAllClose(L_augmented, L)
 
     def test_errors(self):
         matrix = self.matrix

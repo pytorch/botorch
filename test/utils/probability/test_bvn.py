@@ -136,7 +136,7 @@ class TestBVN(BotorchTestCase):
         yl = self.yl[..., use_polar]
         with self.subTest(msg="exact_unconstrained"):
             prob = _bvnu_polar(r, torch.full_like(r, -1e16), torch.full_like(r, -1e16))
-            self.assertTrue(torch.allclose(prob, torch.ones_like(prob)))
+            self.assertAllClose(prob, torch.ones_like(prob))
 
         with self.subTest(msg="exact_marginal"):
             prob = _bvnu_polar(
@@ -145,12 +145,12 @@ class TestBVN(BotorchTestCase):
                 yl,
             )
             test = Phi(-yl)  # same as: 1 - P(y < yl)
-            self.assertTrue(torch.allclose(prob, test))
+            self.assertAllClose(prob, test)
 
         with self.subTest(msg="exact_independent"):
             prob = _bvnu_polar(torch.zeros_like(xl), xl, yl)
             test = Phi(-xl) * Phi(-yl)
-            self.assertTrue(torch.allclose(prob, test))
+            self.assertAllClose(prob, test)
 
     def test_bvnu_taylor(self) -> None:
         r"""Test special cases where bvnu admits closed-form solutions.
@@ -163,7 +163,7 @@ class TestBVN(BotorchTestCase):
         yl = self.yl[..., use_taylor]
         with self.subTest(msg="exact_unconstrained"):
             prob = _bvnu_taylor(r, torch.full_like(r, -1e16), torch.full_like(r, -1e16))
-            self.assertTrue(torch.allclose(prob, torch.ones_like(prob)))
+            self.assertAllClose(prob, torch.ones_like(prob))
 
         with self.subTest(msg="exact_marginal"):
             prob = _bvnu_taylor(
@@ -172,12 +172,12 @@ class TestBVN(BotorchTestCase):
                 yl,
             )
             test = Phi(-yl)  # same as: 1 - P(y < yl)
-            self.assertTrue(torch.allclose(prob, test))
+            self.assertAllClose(prob, test)
 
         with self.subTest(msg="exact_independent"):
             prob = _bvnu_polar(torch.zeros_like(xl), xl, yl)
             test = Phi(-xl) * Phi(-yl)
-            self.assertTrue(torch.allclose(prob, test))
+            self.assertAllClose(prob, test)
 
     def test_bvn(self):
         r"""Monte Carlo unit test for `bvn`."""
@@ -207,7 +207,7 @@ class TestBVN(BotorchTestCase):
         )
 
         atol = self.mc_atol_multiplier * (self.mc_num_samples**-0.5)
-        self.assertTrue(torch.allclose(estimates, solves, rtol=0, atol=atol))
+        self.assertAllClose(estimates, solves, rtol=0, atol=atol)
 
     def test_bvnmom(self):
         r"""Monte Carlo unit test for `bvn`."""
@@ -237,5 +237,5 @@ class TestBVN(BotorchTestCase):
         ):
             if n:
                 atol = self.mc_atol_multiplier * (n**-0.5)
-                self.assertTrue(torch.allclose(ex, _ex, rtol=0, atol=atol))
-                self.assertTrue(torch.allclose(ey, _ey, rtol=0, atol=atol))
+                self.assertAllClose(ex, _ex, rtol=0, atol=atol)
+                self.assertAllClose(ey, _ey, rtol=0, atol=atol)

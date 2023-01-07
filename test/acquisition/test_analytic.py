@@ -92,8 +92,8 @@ class TestExpectedImprovement(BotorchTestCase):
             X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
             ei, log_ei = module(X), log_module(X)
             ei_expected = torch.tensor(0.19780, device=self.device, dtype=dtype)
-            self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
-            self.assertTrue(torch.allclose(log_ei, ei_expected.log(), atol=1e-4))
+            self.assertAllClose(ei, ei_expected, atol=1e-4)
+            self.assertAllClose(log_ei, ei_expected.log(), atol=1e-4)
 
             # test maximize
             module = ExpectedImprovement(model=mm, best_f=0.0, maximize=False)
@@ -101,8 +101,8 @@ class TestExpectedImprovement(BotorchTestCase):
             X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
             ei, log_ei = module(X), log_module(X)
             ei_expected = torch.tensor(0.6978, device=self.device, dtype=dtype)
-            self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
-            self.assertTrue(torch.allclose(log_ei, ei_expected.log(), atol=1e-4))
+            self.assertAllClose(ei, ei_expected, atol=1e-4)
+            self.assertAllClose(log_ei, ei_expected.log(), atol=1e-4)
             with self.assertRaises(UnsupportedError):
                 module.set_X_pending(None)
             with self.assertRaises(UnsupportedError):
@@ -123,8 +123,8 @@ class TestExpectedImprovement(BotorchTestCase):
             )
             X = torch.rand(1, 2, device=self.device, dtype=dtype)
             ei_expected = torch.tensor(0.2601, device=self.device, dtype=dtype)
-            self.assertTrue(torch.allclose(ei(X), ei_expected, atol=1e-4))
-            self.assertTrue(torch.allclose(log_ei(X), ei_expected.log(), atol=1e-4))
+            self.assertAllClose(ei(X), ei_expected, atol=1e-4)
+            self.assertAllClose(log_ei(X), ei_expected.log(), atol=1e-4)
 
             # test posterior transform (multi-output)
             mean = torch.tensor([[-0.25, 0.5]], device=self.device, dtype=dtype)
@@ -144,14 +144,12 @@ class TestExpectedImprovement(BotorchTestCase):
             )
             X = torch.rand(1, 2, device=self.device, dtype=dtype)
             ei_expected = torch.tensor([0.6910], device=self.device, dtype=dtype)
-            self.assertTrue(torch.allclose(ei(X), ei_expected, atol=1e-4))
-            self.assertTrue(torch.allclose(log_ei(X), ei_expected.log(), atol=1e-4))
+            self.assertAllClose(ei(X), ei_expected, atol=1e-4)
+            self.assertAllClose(log_ei(X), ei_expected.log(), atol=1e-4)
 
             # making sure we compare the lower branch of _log_ei_helper to _ei_helper
             z = torch.tensor(-2.13, dtype=dtype, device=self.device)
-            self.assertTrue(
-                torch.allclose(_log_ei_helper(z), _ei_helper(z).log(), atol=1e-6)
-            )
+            self.assertAllClose(_log_ei_helper(z), _ei_helper(z).log(), atol=1e-6)
 
             # numerical stress test for log EI
             digits = 100 if dtype == torch.float64 else 20
@@ -195,8 +193,8 @@ class TestExpectedImprovement(BotorchTestCase):
             ei_expected = torch.tensor(
                 [0.19780, 0.39894, 0.69780], device=self.device, dtype=dtype
             )
-            self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
-            self.assertTrue(torch.allclose(log_ei, ei_expected.log(), atol=1e-4))
+            self.assertAllClose(ei, ei_expected, atol=1e-4)
+            self.assertAllClose(log_ei, ei_expected.log(), atol=1e-4)
             # check for proper error if multi-output model
             mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             variance2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
@@ -225,8 +223,8 @@ class TestExpectedImprovement(BotorchTestCase):
             ei_expected = torch.tensor(
                 [[0.2601], [0.1500]], device=self.device, dtype=dtype
             )
-            self.assertTrue(torch.allclose(ei(X), ei_expected, atol=1e-4))
-            self.assertTrue(torch.allclose(log_ei(X), ei(X).log(), atol=1e-4))
+            self.assertAllClose(ei(X), ei_expected, atol=1e-4)
+            self.assertAllClose(log_ei(X), ei(X).log(), atol=1e-4)
 
             # test posterior transform (multi-output)
             mean = torch.tensor(
@@ -252,8 +250,8 @@ class TestExpectedImprovement(BotorchTestCase):
             ei_expected = torch.tensor(
                 [0.6910, 0.5371], device=self.device, dtype=dtype
             )
-            self.assertTrue(torch.allclose(ei(X), ei_expected, atol=1e-4))
-            self.assertTrue(torch.allclose(log_ei(X), ei_expected.log(), atol=1e-4))
+            self.assertAllClose(ei(X), ei_expected, atol=1e-4)
+            self.assertAllClose(log_ei(X), ei_expected.log(), atol=1e-4)
 
         # test bad posterior transform class
         with self.assertRaises(UnsupportedError):
@@ -318,16 +316,16 @@ class TestProbabilityOfImprovement(BotorchTestCase):
             X = torch.zeros(1, 1, device=self.device, dtype=dtype)
             pi, log_pi = module(X), log_module(X)
             pi_expected = torch.tensor(0.0250, device=self.device, dtype=dtype)
-            self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
-            self.assertTrue(torch.allclose(log_pi.exp(), pi))
+            self.assertAllClose(pi, pi_expected, atol=1e-4)
+            self.assertAllClose(log_pi.exp(), pi)
             kwargs = {"model": mm, "best_f": 1.96, "maximize": False}
             module = ProbabilityOfImprovement(**kwargs)
             log_module = LogProbabilityOfImprovement(**kwargs)
             X = torch.zeros(1, 1, device=self.device, dtype=dtype)
             pi, log_pi = module(X), log_module(X)
             pi_expected = torch.tensor(0.9750, device=self.device, dtype=dtype)
-            self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
-            self.assertTrue(torch.allclose(log_pi.exp(), pi))
+            self.assertAllClose(pi, pi_expected, atol=1e-4)
+            self.assertAllClose(log_pi.exp(), pi)
 
             # check for proper error if multi-output model
             mean2 = torch.rand(1, 2, device=self.device, dtype=dtype)
@@ -351,8 +349,8 @@ class TestProbabilityOfImprovement(BotorchTestCase):
             X = torch.zeros(2, 1, 1, device=self.device, dtype=dtype)
             pi, log_pi = module(X), log_module(X)
             pi_expected = torch.tensor([0.5, 0.75], device=self.device, dtype=dtype)
-            self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
-            self.assertTrue(torch.allclose(log_pi.exp(), pi))
+            self.assertAllClose(pi, pi_expected, atol=1e-4)
+            self.assertAllClose(log_pi.exp(), pi)
             # check for proper error if multi-output model
             mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             variance2 = torch.ones_like(mean2)
@@ -375,13 +373,13 @@ class TestUpperConfidenceBound(BotorchTestCase):
             X = torch.zeros(1, 1, device=self.device, dtype=dtype)
             ucb = module(X)
             ucb_expected = torch.tensor(1.5, device=self.device, dtype=dtype)
-            self.assertTrue(torch.allclose(ucb, ucb_expected, atol=1e-4))
+            self.assertAllClose(ucb, ucb_expected, atol=1e-4)
 
             module = UpperConfidenceBound(model=mm, beta=1.0, maximize=False)
             X = torch.zeros(1, 1, device=self.device, dtype=dtype)
             ucb = module(X)
             ucb_expected = torch.tensor(0.5, device=self.device, dtype=dtype)
-            self.assertTrue(torch.allclose(ucb, ucb_expected, atol=1e-4))
+            self.assertAllClose(ucb, ucb_expected, atol=1e-4)
 
             # check for proper error if multi-output model
             mean2 = torch.rand(1, 2, device=self.device, dtype=dtype)
@@ -403,7 +401,7 @@ class TestUpperConfidenceBound(BotorchTestCase):
             X = torch.zeros(2, 1, 1, device=self.device, dtype=dtype)
             ucb = module(X)
             ucb_expected = torch.tensor([1.0, 2.5], device=self.device, dtype=dtype)
-            self.assertTrue(torch.allclose(ucb, ucb_expected, atol=1e-4))
+            self.assertAllClose(ucb, ucb_expected, atol=1e-4)
             # check for proper error if multi-output model
             mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             variance2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
@@ -450,16 +448,16 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
                 [0.19780], device=self.device, dtype=dtype
             )
             ei_expected = ei_expected_unconstrained * 0.5
-            self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
+            self.assertAllClose(ei, ei_expected, atol=1e-4)
             log_ei = log_module(X)
-            self.assertTrue(torch.allclose(log_ei, ei.log(), atol=1e-5))
+            self.assertAllClose(log_ei, ei.log(), atol=1e-5)
             # testing LogCEI and CEI for lower, upper, and simultaneous bounds
             for bounds in [[None, 0], [0, None], [0, 1]]:
                 kwargs["constraints"] = {1: bounds}
                 module = ConstrainedExpectedImprovement(**kwargs)
                 log_module = LogConstrainedExpectedImprovement(**kwargs)
                 ei, log_ei = module(X), log_module(X)
-                self.assertTrue(torch.allclose(log_ei, ei.log(), atol=1e-5))
+                self.assertAllClose(log_ei, ei.log(), atol=1e-5)
 
             constructors = [
                 ConstrainedExpectedImprovement,
@@ -511,10 +509,10 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
                 [0.19780], device=self.device, dtype=dtype
             )
             ei_expected = ei_expected_unconstrained * 0.5 * 0.5 * 0.5
-            self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
+            self.assertAllClose(ei, ei_expected, atol=1e-4)
             # testing log module with regular implementation
             log_ei = log_module(X)
-            self.assertTrue(torch.allclose(log_ei, ei_expected.log(), atol=1e-4))
+            self.assertAllClose(log_ei, ei_expected.log(), atol=1e-4)
             # test maximize
             kwargs = {
                 "model": mm,
@@ -530,9 +528,9 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
                 [0.6978], device=self.device, dtype=dtype
             )
             ei_expected_min = ei_expected_unconstrained_min * 0.5
-            self.assertTrue(torch.allclose(ei_min, ei_expected_min, atol=1e-4))
+            self.assertAllClose(ei_min, ei_expected_min, atol=1e-4)
             log_ei_min = log_module_min(X)
-            self.assertTrue(torch.allclose(log_ei_min, ei_min.log(), atol=1e-4))
+            self.assertAllClose(log_ei_min, ei_min.log(), atol=1e-4)
 
             # test invalid onstraints
             for constructor in constructors:
@@ -617,8 +615,8 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
                 [0.19780, 0.39894, 0.69780], device=self.device, dtype=dtype
             )
             ei_expected = ei_expected_unconstrained * 0.5 * 0.5 * 0.5
-            self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
-            self.assertTrue(torch.allclose(log_ei, ei.log(), atol=1e-4))
+            self.assertAllClose(ei, ei_expected, atol=1e-4)
+            self.assertAllClose(log_ei, ei.log(), atol=1e-4)
 
 
 class TestNoisyExpectedImprovement(BotorchTestCase):
@@ -679,7 +677,7 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             # strong gradient signals in this regime.
             rtol = 1e-12 if dtype == torch.double else 1e-6
             atol = rtol
-            self.assertTrue(torch.allclose(exp_log_val, val, atol=atol, rtol=rtol))
+            self.assertAllClose(exp_log_val, val, atol=atol, rtol=rtol)
             # test basics
             self.assertEqual(val.dtype, dtype)
             self.assertEqual(val.device.type, X_observed.device.type)
