@@ -69,7 +69,7 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         kernel.eval()
 
         sc_dists = x1.unsqueeze(-2) != x2.unsqueeze(-3)
-        sc_dists = sc_dists / lengthscales.unsqueeze(-2)
+        sc_dists = sc_dists / lengthscales
         actual = torch.exp(-sc_dists.mean(-1))
         res = kernel(x1, x2).to_dense()
         self.assertTrue(torch.allclose(res, actual))

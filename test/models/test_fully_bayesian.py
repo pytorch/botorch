@@ -679,7 +679,7 @@ class TestPyroCatchNumericalErrors(BotorchTestCase):
         grads, val = potential_grad(potential_fn, z)
         self.assertTrue(torch.allclose(grads["K"], -0.5 * torch.eye(2)))
         norm_mvn = torch.distributions.Normal(0, 1)
-        self.assertTrue(torch.allclose(val, 2 * norm_mvn.log_prob(torch.zeros(1))))
+        self.assertTrue(torch.allclose(val, 2 * norm_mvn.log_prob(torch.tensor(0.0))))
 
         # Default behavior should catch the ValueError when trying to instantiate
         # the MVN and return NaN instead
