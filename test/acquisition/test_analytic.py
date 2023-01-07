@@ -143,7 +143,7 @@ class TestExpectedImprovement(BotorchTestCase):
                 model=mm, best_f=0.0, posterior_transform=transform
             )
             X = torch.rand(1, 2, device=self.device, dtype=dtype)
-            ei_expected = torch.tensor(0.6910, device=self.device, dtype=dtype)
+            ei_expected = torch.tensor([0.6910], device=self.device, dtype=dtype)
             self.assertTrue(torch.allclose(ei(X), ei_expected, atol=1e-4))
             self.assertTrue(torch.allclose(log_ei(X), ei_expected.log(), atol=1e-4))
 
@@ -374,13 +374,13 @@ class TestUpperConfidenceBound(BotorchTestCase):
             module = UpperConfidenceBound(model=mm, beta=1.0)
             X = torch.zeros(1, 1, device=self.device, dtype=dtype)
             ucb = module(X)
-            ucb_expected = torch.tensor([1.5], device=self.device, dtype=dtype)
+            ucb_expected = torch.tensor(1.5, device=self.device, dtype=dtype)
             self.assertTrue(torch.allclose(ucb, ucb_expected, atol=1e-4))
 
             module = UpperConfidenceBound(model=mm, beta=1.0, maximize=False)
             X = torch.zeros(1, 1, device=self.device, dtype=dtype)
             ucb = module(X)
-            ucb_expected = torch.tensor([0.5], device=self.device, dtype=dtype)
+            ucb_expected = torch.tensor(0.5, device=self.device, dtype=dtype)
             self.assertTrue(torch.allclose(ucb, ucb_expected, atol=1e-4))
 
             # check for proper error if multi-output model
@@ -447,7 +447,7 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
             X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
             ei = module(X)
             ei_expected_unconstrained = torch.tensor(
-                0.19780, device=self.device, dtype=dtype
+                [0.19780], device=self.device, dtype=dtype
             )
             ei_expected = ei_expected_unconstrained * 0.5
             self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
@@ -508,7 +508,7 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
             X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
             ei = module(X)
             ei_expected_unconstrained = torch.tensor(
-                0.19780, device=self.device, dtype=dtype
+                [0.19780], device=self.device, dtype=dtype
             )
             ei_expected = ei_expected_unconstrained * 0.5 * 0.5 * 0.5
             self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
@@ -527,7 +527,7 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
             log_module_min = LogConstrainedExpectedImprovement(**kwargs)
             ei_min = module_min(X)
             ei_expected_unconstrained_min = torch.tensor(
-                0.6978, device=self.device, dtype=dtype
+                [0.6978], device=self.device, dtype=dtype
             )
             ei_expected_min = ei_expected_unconstrained_min * 0.5
             self.assertTrue(torch.allclose(ei_min, ei_expected_min, atol=1e-4))
