@@ -45,7 +45,7 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         sc_dists = (x1.unsqueeze(-2) != x2.unsqueeze(-3)) / lengthscale
         actual = torch.exp(-sc_dists.mean(-1))
         res = kernel(x1, x2).to_dense()
-        self.assertTrue(torch.allclose(res, actual))
+        self.assertAllClose(res, actual)
 
     def test_active_dims(self):
         x1 = torch.tensor([[4, 2], [3, 1], [8, 5], [7, 6]], dtype=torch.float)
@@ -57,7 +57,7 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         sc_dists = dists / lengthscale
         actual = torch.exp(-sc_dists.mean(-1))
         res = kernel(x1, x2).to_dense()
-        self.assertTrue(torch.allclose(res, actual))
+        self.assertAllClose(res, actual)
 
     def test_ard(self):
         x1 = torch.tensor([[4, 2], [3, 1], [8, 5]], dtype=torch.float)
@@ -72,21 +72,21 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         sc_dists = sc_dists / lengthscales
         actual = torch.exp(-sc_dists.mean(-1))
         res = kernel(x1, x2).to_dense()
-        self.assertTrue(torch.allclose(res, actual))
+        self.assertAllClose(res, actual)
 
         # diag
         res = kernel(x1, x2).diag()
         actual = torch.diagonal(actual, dim1=-1, dim2=-2)
-        self.assertTrue(torch.allclose(res, actual))
+        self.assertAllClose(res, actual)
 
         # batch_dims
         actual = torch.exp(-sc_dists).transpose(-1, -3)
         res = kernel(x1, x2, last_dim_is_batch=True).to_dense()
-        self.assertTrue(torch.allclose(res, actual))
+        self.assertAllClose(res, actual)
 
         # batch_dims + diag
         res = kernel(x1, x2, last_dim_is_batch=True).diag()
-        self.assertTrue(torch.allclose(res, torch.diagonal(actual, dim1=-1, dim2=-2)))
+        self.assertAllClose(res, torch.diagonal(actual, dim1=-1, dim2=-2))
 
     def test_ard_batch(self):
         x1 = torch.tensor(
@@ -107,7 +107,7 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         sc_dists = sc_dists / lengthscales.unsqueeze(-2)
         actual = torch.exp(-sc_dists.mean(-1))
         res = kernel(x1, x2).to_dense()
-        self.assertTrue(torch.allclose(res, actual))
+        self.assertAllClose(res, actual)
 
     def test_ard_separate_batch(self):
         x1 = torch.tensor(
@@ -128,18 +128,18 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         sc_dists = sc_dists / lengthscales.unsqueeze(-2)
         actual = torch.exp(-sc_dists.mean(-1))
         res = kernel(x1, x2).to_dense()
-        self.assertTrue(torch.allclose(res, actual))
+        self.assertAllClose(res, actual)
 
         # diag
         res = kernel(x1, x2).diag()
         actual = torch.diagonal(actual, dim1=-1, dim2=-2)
-        self.assertTrue(torch.allclose(res, actual))
+        self.assertAllClose(res, actual)
 
         # batch_dims
         actual = torch.exp(-sc_dists).transpose(-1, -3)
         res = kernel(x1, x2, last_dim_is_batch=True).to_dense()
-        self.assertTrue(torch.allclose(res, actual))
+        self.assertAllClose(res, actual)
 
         # batch_dims + diag
         res = kernel(x1, x2, last_dim_is_batch=True).diag()
-        self.assertTrue(torch.allclose(res, torch.diagonal(actual, dim1=-1, dim2=-2)))
+        self.assertAllClose(res, torch.diagonal(actual, dim1=-1, dim2=-2))

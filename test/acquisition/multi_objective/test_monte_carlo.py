@@ -1453,7 +1453,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                         torch.manual_seed(0)
                         val2 = acqf_no_cache(test_X2)
                     mock_sample_cached.assert_not_called()
-                    self.assertTrue(torch.allclose(val, val2, **all_close_kwargs))
+                    self.assertAllClose(val, val2, **all_close_kwargs)
                     val2.sum().backward()
                     if dtype == torch.double:
                         # The gradient computation is very unstable in single precision

@@ -181,7 +181,7 @@ class TestGPyTorchModel(BotorchTestCase):
                 p_tf = model.posterior(test_X)
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(p_tf).variance
-                self.assertTrue(torch.allclose(posterior.variance, expected_var))
+                self.assertAllClose(posterior.variance, expected_var)
             # test observation noise
             posterior = model.posterior(test_X, observation_noise=True)
             self.assertIsInstance(posterior, GPyTorchPosterior)

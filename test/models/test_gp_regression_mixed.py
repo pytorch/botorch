@@ -107,7 +107,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             self.assertEqual(posterior_pred.variance.shape, expected_shape)
             pvar = posterior_pred.variance
             pvar_exp = _get_pvar_expected(posterior, model, X, m)
-            self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
+            self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
             # test batch evaluation
             X = torch.rand(2, *batch_shape, 3, d, **tkwargs)
@@ -121,7 +121,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             self.assertEqual(posterior_pred.mean.shape, expected_shape)
             pvar = posterior_pred.variance
             pvar_exp = _get_pvar_expected(posterior, model, X, m)
-            self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
+            self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
             # test that model converter throws an exception
             with self.assertRaisesRegex(NotImplementedError, "not supported"):

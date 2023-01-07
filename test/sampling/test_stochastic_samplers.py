@@ -26,7 +26,7 @@ class TestForkedRNGSampler(BotorchTestCase):
         with torch.random.fork_rng():
             torch.manual_seed(0)
             expected = posterior.rsample(sample_shape=torch.Size([2]))
-        self.assertTrue(torch.allclose(samples, expected))
+        self.assertAllClose(samples, expected)
 
 
 class TestStochasticSampler(BotorchTestCase):

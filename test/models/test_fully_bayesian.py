@@ -188,8 +188,8 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             self.assertIsNone(model.covar_module)
             self.assertIsNone(model.likelihood)
             self.assertIsInstance(model.pyro_model, SaasPyroModel)
-            self.assertTrue(torch.allclose(train_X, model.pyro_model.train_X))
-            self.assertTrue(torch.allclose(train_Y, model.pyro_model.train_Y))
+            self.assertAllClose(train_X, model.pyro_model.train_X)
+            self.assertAllClose(train_Y, model.pyro_model.train_Y)
             if infer_noise:
                 self.assertIsNone(model.pyro_model.train_Yvar)
             else:
@@ -350,9 +350,9 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
 
             # Make sure the model shapes are set correctly
             self.assertEqual(model.pyro_model.train_X.shape, torch.Size([n, d]))
-            self.assertTrue(torch.allclose(model.pyro_model.train_X, train_X))
+            self.assertAllClose(model.pyro_model.train_X, train_X)
             model.train()  # Put the model in train mode
-            self.assertTrue(torch.allclose(train_X, model.pyro_model.train_X))
+            self.assertAllClose(train_X, model.pyro_model.train_X)
             self.assertIsNone(model.mean_module)
             self.assertIsNone(model.covar_module)
             self.assertIsNone(model.likelihood)
@@ -401,8 +401,8 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 posterior2 = gp2.posterior(test_X)
                 pred_mean2, pred_var2 = posterior2.mean, posterior2.variance
 
-            self.assertTrue(torch.allclose(pred_mean1, pred_mean2))
-            self.assertTrue(torch.allclose(pred_var1, pred_var2))
+            self.assertAllClose(pred_mean1, pred_mean2)
+            self.assertAllClose(pred_var1, pred_var2)
 
     def test_acquisition_functions(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
@@ -577,8 +577,8 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             ):
                 model.load_state_dict({})
             self.assertIsInstance(model.pyro_model, CustomPyroModel)
-            self.assertTrue(torch.allclose(model.pyro_model.train_X, train_X))
-            self.assertTrue(torch.allclose(model.pyro_model.train_Y, train_Y))
+            self.assertAllClose(model.pyro_model.train_X, train_X)
+            self.assertAllClose(model.pyro_model.train_Y, train_Y)
             if infer_noise:
                 self.assertIsNone(model.pyro_model.train_Yvar)
             else:
@@ -677,9 +677,9 @@ class TestPyroCatchNumericalErrors(BotorchTestCase):
         # Test base case where everything is fine
         z = {"K": torch.eye(2)}
         grads, val = potential_grad(potential_fn, z)
-        self.assertTrue(torch.allclose(grads["K"], -0.5 * torch.eye(2)))
+        self.assertAllClose(grads["K"], -0.5 * torch.eye(2))
         norm_mvn = torch.distributions.Normal(0, 1)
-        self.assertTrue(torch.allclose(val, 2 * norm_mvn.log_prob(torch.tensor(0.0))))
+        self.assertAllClose(val, 2 * norm_mvn.log_prob(torch.tensor(0.0)))
 
         # Default behavior should catch the ValueError when trying to instantiate
         # the MVN and return NaN instead

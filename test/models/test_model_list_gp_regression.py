@@ -154,8 +154,8 @@ class TestModelListGP(BotorchTestCase):
         self.assertIsInstance(posterior, expected_type)
         submodel = model.models[0]
         p0 = submodel.posterior(test_x)
-        self.assertTrue(torch.allclose(posterior.mean[:, [0]], p0.mean))
-        self.assertTrue(torch.allclose(posterior.variance[:, [0]], p0.variance))
+        self.assertAllClose(posterior.mean[:, [0]], p0.mean)
+        self.assertAllClose(posterior.variance[:, [0]], p0.variance)
 
         if gpytorch_posterior_expected:
             self.assertIsInstance(posterior.distribution, MultitaskMultivariateNormal)
@@ -168,7 +168,7 @@ class TestModelListGP(BotorchTestCase):
             p0_tf = submodel.posterior(test_x)
             submodel.outcome_transform = tmp_tf
             expected_var = tmp_tf.untransform_posterior(p0_tf).variance
-            self.assertTrue(torch.allclose(p0.variance, expected_var))
+            self.assertAllClose(p0.variance, expected_var)
 
         # test output_indices
         posterior = model.posterior(test_x, output_indices=[0], observation_noise=True)

@@ -280,7 +280,7 @@ class TestMultiTaskGP(BotorchTestCase):
                 p_utf = model.posterior(test_x)
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(p_utf).variance
-                self.assertTrue(torch.allclose(posterior_f.variance, expected_var))
+                self.assertAllClose(posterior_f.variance, expected_var)
 
     def test_MultiTaskGP_single_output(self):
         for dtype in (torch.float, torch.double):
@@ -412,7 +412,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
                 pp_tf = model.posterior(test_x)
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(pp_tf).variance
-                self.assertTrue(torch.allclose(posterior_pred.variance, expected_var))
+                self.assertAllClose(posterior_pred.variance, expected_var)
 
             # test that posterior w/ observation noise raises appropriate error
             with self.assertRaises(NotImplementedError):
@@ -594,7 +594,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             )
             self.assertTrue(torch.equal(data_dict["train_X"], train_X))
             self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
-            self.assertTrue(torch.allclose(data_dict["train_Yvar"], train_Yvar))
+            self.assertAllClose(data_dict["train_Yvar"], train_Yvar)
             self.assertEqual(data_dict["task_feature"], task_feature)
             self.assertIsInstance(data_dict["task_covar_prior"], LKJCovariancePrior)
 
@@ -676,7 +676,7 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
                 p_tf = model.posterior(test_x)
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(p_tf).variance
-                self.assertTrue(torch.allclose(posterior_f.variance, expected_var))
+                self.assertAllClose(posterior_f.variance, expected_var)
             else:
                 # test observation noise
                 # TODO: outcome transform + likelihood noise?

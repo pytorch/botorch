@@ -67,7 +67,7 @@ class TestHigherOrderGPPosterior(BotorchTestCase):
             samples_2 = posterior.rsample_from_base_samples(
                 base_samples=base_samples, sample_shape=torch.Size((8,))
             )
-            self.assertTrue(torch.allclose(samples_1, samples_2))
+            self.assertAllClose(samples_1, samples_2)
 
             # test that botorch.sampler picks up the correct shapes
             sampler = IIDNormalSampler(sample_shape=torch.Size([5]))

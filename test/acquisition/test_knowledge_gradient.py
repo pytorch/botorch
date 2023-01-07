@@ -162,7 +162,7 @@ class TestQKnowledgeGradient(BotorchTestCase):
                     patch_f.assert_called_once()
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 1, 1]))
-            self.assertTrue(torch.allclose(val, mean.mean(), atol=1e-4))
+            self.assertAllClose(val, mean.mean(), atol=1e-4)
             self.assertTrue(torch.equal(qKG.extract_candidates(X), X[..., :-n_f, :]))
             # batched evaluation
             b = 2
@@ -204,8 +204,9 @@ class TestQKnowledgeGradient(BotorchTestCase):
                     patch_f.assert_called_once()
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 3, 1]))
+
             expected = (mean.mean() - current_value).reshape([])
-            self.assertTrue(torch.allclose(val, expected, atol=1e-4))
+            self.assertAllClose(val, expected, atol=1e-4)
             self.assertTrue(torch.equal(qKG.extract_candidates(X), X[..., :-n_f, :]))
             # test objective (inner MC sampling)
             objective = GenericMCObjective(objective=lambda Y, X: Y.norm(dim=-1))
@@ -223,7 +224,7 @@ class TestQKnowledgeGradient(BotorchTestCase):
                     patch_f.assert_called_once()
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 1, 1]))
-            self.assertTrue(torch.allclose(val, objective(samples).mean(), atol=1e-4))
+            self.assertAllClose(val, objective(samples).mean(), atol=1e-4)
             self.assertTrue(torch.equal(qKG.extract_candidates(X), X[..., :-n_f, :]))
             # test scalarized posterior transform
             weights = torch.rand(2, device=self.device, dtype=dtype)
@@ -248,7 +249,7 @@ class TestQKnowledgeGradient(BotorchTestCase):
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 1, 1]))
                     val_expected = (mean * weights).sum(-1).mean(0)[0]
-                    self.assertTrue(torch.allclose(val, val_expected))
+                    self.assertAllClose(val, val_expected)
 
     def test_evaluate_kg(self):
         # a thorough test using real model and dtype double
@@ -362,7 +363,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 1, 1]))
             val_exp = mock_util(X, mean.squeeze(-1) - current_value).mean(dim=0)
-            self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
+            self.assertAllClose(val, val_exp, atol=1e-4)
             self.assertTrue(torch.equal(qMFKG.extract_candidates(X), X[..., :-n_f, :]))
             # batched evaluation
             b = 2
@@ -387,7 +388,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([b, 1, 1]))
             val_exp = mock_util(X, mean.squeeze(-1) - current_value).mean(dim=0)
-            self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
+            self.assertAllClose(val, val_exp, atol=1e-4)
             self.assertTrue(torch.equal(qMFKG.extract_candidates(X), X[..., :-n_f, :]))
             # pending points and current value
             mean = torch.rand(n_f, 1, 1, **tkwargs)
@@ -412,7 +413,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 3, 1]))
             val_exp = mock_util(X, mean.squeeze(-1) - current_value).mean(dim=0)
-            self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
+            self.assertAllClose(val, val_exp, atol=1e-4)
             self.assertTrue(torch.equal(qMFKG.extract_candidates(X), X[..., :-n_f, :]))
             # test objective (inner MC sampling)
             objective = GenericMCObjective(objective=lambda Y, X: Y.norm(dim=-1))
@@ -435,7 +436,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 1, 1]))
             val_exp = mock_util(X, objective(samples) - current_value).mean(dim=0)
-            self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
+            self.assertAllClose(val, val_exp, atol=1e-4)
             self.assertTrue(torch.equal(qMFKG.extract_candidates(X), X[..., :-n_f, :]))
             # test valfunc_cls and valfunc_argfac
             d, p, d_prime = 4, 3, 2
@@ -463,7 +464,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 16, 4]))
                     val_exp = torch.tensor([1.375], **tkwargs)
-                    self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
+                    self.assertAllClose(val, val_exp, atol=1e-4)
 
                     patch_f.reset_mock()
                     # Make posterior sample shape agree with X
@@ -480,7 +481,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 16, 4]))
                     val_exp = torch.tensor(1.0, device=self.device, dtype=dtype)
-                    self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
+                    self.assertAllClose(val, val_exp, atol=1e-4)
 
     def test_fixed_evaluation_qMFKG(self):
         # mock test qMFKG.evaluate() with expand, project & cost aware utility
