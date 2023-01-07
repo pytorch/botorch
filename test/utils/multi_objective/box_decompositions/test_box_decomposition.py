@@ -318,7 +318,7 @@ class TestBoxDecomposition_no_set_up(BotorchTestCase):
             box_decomp = Box_Decomp_cls(ref_point=ref_point, Y=Y)
             hv = box_decomp.compute_hypervolume()
             self.assertEqual(hv.shape, expected_shape)
-            self.assertTrue(torch.allclose(hv, torch.tensor(0.0)))
+            self.assertTrue(torch.allclose(hv, torch.zeros(expected_shape)))
 
     def test_hypervolume(self) -> None:
         for cl in [
