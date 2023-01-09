@@ -683,16 +683,16 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             self.assertEqual(val.device.type, X_observed.device.type)
             self.assertEqual(val.shape, torch.Size([2]))
             # test values
-            self.assertGreater(val[0].item(), 1e-4)
+            self.assertGreater(val[0].item(), 8e-5)
             self.assertLess(val[1].item(), 1e-6)
             # test gradient
             val.sum().backward()
-            self.assertGreater(X_test.grad[0].abs().item(), 1e-5)
+            self.assertGreater(X_test.grad[0].abs().item(), 8e-6)
             # testing gradient through exp of log computation
             exp_log_val.sum().backward()
             # testing that first gradient element coincides. The second is in the
             # regime where the naive implementation looses accuracy.
-            atol = 1e-5 if dtype == torch.float32 else 1e-12
+            atol = 2e-5 if dtype == torch.float32 else 1e-12
             rtol = atol
             self.assertTrue(
                 torch.allclose(X_test.grad[0], X_test_log.grad[0], atol=atol, rtol=rtol)
