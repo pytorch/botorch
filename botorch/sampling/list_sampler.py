@@ -10,8 +10,8 @@ A `SamplerList` for sampling from a `PosteriorList`.
 
 from __future__ import annotations
 
+import torch
 from botorch.exceptions.errors import UnsupportedError
-
 from botorch.posteriors.posterior_list import PosteriorList
 from botorch.sampling.base import MCSampler
 from torch import Tensor
@@ -37,6 +37,12 @@ class ListSampler(MCSampler):
             raise UnsupportedError(
                 "ListSampler requires all samplers to have the same sample shape."
             )
+
+    @property
+    def sample_shape(self) -> torch.Size:
+        r"""The sample shape of the underlying samplers."""
+        self._validate_samplers()
+        return self.samplers[0].sample_shape
 
     def forward(self, posterior: PosteriorList) -> Tensor:
         r"""Samples from the posteriors and concatenates the samples.
