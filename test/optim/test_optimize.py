@@ -520,7 +520,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                     sequential=True,
                     raw_samples=16,
                 )
-            self.assertTrue(torch.allclose(candidates, 4 * torch.ones(3, **tkwargs)))
+            self.assertTrue(torch.allclose(candidates, 4 * torch.ones(1, 3, **tkwargs)))
 
             # Constrain the sum to be <= 4 in which case the solution is a
             # permutation of [4, 0, 0]
@@ -565,7 +565,9 @@ class TestOptimizeAcqf(BotorchTestCase):
                     batch_initial_conditions=batch_initial_conditions,
                     num_restarts=1,
                 )
-                self.assertTrue(torch.allclose(candidates, batch_initial_conditions))
+                self.assertTrue(
+                    torch.allclose(candidates, batch_initial_conditions[0, ...])
+                )
 
             # Constrain all variables to be >= 1. The global optimum is 2.45 and
             # is attained by some permutation of [1, 1, 2]
@@ -1248,7 +1250,7 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             )
             best_idcs = torch.topk(exp_acq_vals, q).indices
             expected_candidates = choices[best_idcs]
-            expected_acq_value = exp_acq_vals[best_idcs]
+            expected_acq_value = exp_acq_vals[best_idcs].reshape_as(acq_value)
             self.assertTrue(torch.allclose(acq_value, expected_acq_value))
             self.assertTrue(torch.allclose(candidates, expected_candidates))
 
@@ -1258,7 +1260,7 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             )
             best_idx = torch.argmax(exp_acq_vals)
             expected_candidates = choices[best_idx].repeat(q, 1)
-            expected_acq_value = exp_acq_vals[best_idx].repeat(q)
+            expected_acq_value = exp_acq_vals[best_idx].repeat(q).reshape_as(acq_value)
             self.assertTrue(torch.allclose(acq_value, expected_acq_value))
             self.assertTrue(torch.allclose(candidates, expected_candidates))
 
@@ -1268,7 +1270,7 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             )
             best_idcs = torch.topk(exp_acq_vals, q).indices
             expected_candidates = choices[best_idcs]
-            expected_acq_value = exp_acq_vals[best_idcs]
+            expected_acq_value = exp_acq_vals[best_idcs].reshape_as(acq_value)
             self.assertTrue(torch.allclose(acq_value, expected_acq_value))
             self.assertTrue(torch.allclose(candidates, expected_candidates))
 
@@ -1282,7 +1284,7 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             )
             best_idx = torch.argmax(exp_acq_vals)
             expected_candidates = choices[best_idx].repeat(q, 1)
-            expected_acq_value = exp_acq_vals[best_idx].repeat(q)
+            expected_acq_value = exp_acq_vals[best_idx].repeat(q).reshape_as(acq_value)
             self.assertTrue(torch.allclose(acq_value, expected_acq_value))
             self.assertTrue(torch.allclose(candidates, expected_candidates))
 

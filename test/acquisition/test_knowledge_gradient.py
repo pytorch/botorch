@@ -204,7 +204,8 @@ class TestQKnowledgeGradient(BotorchTestCase):
                     patch_f.assert_called_once()
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 3, 1]))
-            self.assertTrue(torch.allclose(val, mean.mean() - current_value, atol=1e-4))
+            expected = (mean.mean() - current_value).reshape([])
+            self.assertTrue(torch.allclose(val, expected, atol=1e-4))
             self.assertTrue(torch.equal(qKG.extract_candidates(X), X[..., :-n_f, :]))
             # test objective (inner MC sampling)
             objective = GenericMCObjective(objective=lambda Y, X: Y.norm(dim=-1))
@@ -246,7 +247,7 @@ class TestQKnowledgeGradient(BotorchTestCase):
                     patch_f.assert_called_once()
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 1, 1]))
-                    val_expected = (mean * weights).sum(-1).mean(0)
+                    val_expected = (mean * weights).sum(-1).mean(0)[0]
                     self.assertTrue(torch.allclose(val, val_expected))
 
     def test_evaluate_kg(self):
@@ -478,7 +479,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                     patch_f.assert_called_once()
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 16, 4]))
-                    val_exp = torch.tensor([1.0], device=self.device, dtype=dtype)
+                    val_exp = torch.tensor(1.0, device=self.device, dtype=dtype)
                     self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
 
     def test_fixed_evaluation_qMFKG(self):
