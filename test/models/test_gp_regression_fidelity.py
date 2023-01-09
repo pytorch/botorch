@@ -166,7 +166,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                     pp_tf = model.posterior(X)
                     model.outcome_transform = tmp_tf
                     expected_var = tmp_tf.untransform_posterior(pp_tf).variance
-                    self.assertTrue(torch.allclose(posterior.variance, expected_var))
+                    self.assertAllClose(posterior.variance, expected_var)
 
                 # test batch evaluation
                 X = torch.rand(2, *batch_shape, 3, num_dim, **tkwargs)
@@ -182,7 +182,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                     pp_tf = model.posterior(X)
                     model.outcome_transform = tmp_tf
                     expected_var = tmp_tf.untransform_posterior(pp_tf).variance
-                    self.assertTrue(torch.allclose(posterior.variance, expected_var))
+                    self.assertAllClose(posterior.variance, expected_var)
 
     def test_condition_on_observations(self):
         for (iteration_fidelity, data_fidelity) in self.FIDELITY_TEST_PAIRS:

@@ -91,7 +91,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
                     )
                     for _ in range(2)
                 ]
-                self.assertTrue(torch.allclose(*samples))
+                self.assertAllClose(*samples)
             # Quantile & Density.
             marginal = Normal(
                 loc=mean.unsqueeze(-1), scale=variance.unsqueeze(-1).sqrt()
@@ -100,11 +100,11 @@ class TestGPyTorchPosterior(BotorchTestCase):
             quantile = posterior.quantile(q_val)
             self.assertEqual(quantile.shape, posterior._extended_shape(torch.Size([2])))
             expected = torch.stack([marginal.icdf(q) for q in q_val], dim=0)
-            self.assertTrue(torch.allclose(quantile, expected))
+            self.assertAllClose(quantile, expected)
             density = posterior.density(q_val)
             self.assertEqual(density.shape, posterior._extended_shape(torch.Size([2])))
             expected = torch.stack([marginal.log_prob(q).exp() for q in q_val], dim=0)
-            self.assertTrue(torch.allclose(density, expected))
+            self.assertAllClose(density, expected)
             # collapse_batch_dims
             b_mean = torch.rand(2, 3, dtype=dtype, device=self.device)
             b_variance = 1 + torch.rand(2, 3, dtype=dtype, device=self.device)
@@ -143,7 +143,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             samples_b2 = posterior.rsample(
                 sample_shape=torch.Size([4]), base_samples=base_samples
             )
-            self.assertTrue(torch.allclose(samples_b1, samples_b2))
+            self.assertAllClose(samples_b1, samples_b2)
             base_samples2 = torch.randn(4, 2, 3, 2, device=self.device, dtype=dtype)
             samples2_b1 = posterior.rsample(
                 sample_shape=torch.Size([4, 2]), base_samples=base_samples2
@@ -151,7 +151,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             samples2_b2 = posterior.rsample(
                 sample_shape=torch.Size([4, 2]), base_samples=base_samples2
             )
-            self.assertTrue(torch.allclose(samples2_b1, samples2_b2))
+            self.assertAllClose(samples2_b1, samples2_b2)
             # collapse_batch_dims
             b_mean = torch.rand(2, 3, 2, dtype=dtype, device=self.device)
             b_variance = 1 + torch.rand(2, 3, 2, dtype=dtype, device=self.device)
@@ -199,7 +199,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             samples_b2 = posterior.rsample(
                 sample_shape=torch.Size([4]), base_samples=base_samples
             )
-            self.assertTrue(torch.allclose(samples_b1, samples_b2))
+            self.assertAllClose(samples_b1, samples_b2)
             base_samples2 = torch.randn(4, 2, 3, 1, device=self.device, dtype=dtype)
             samples2_b1 = posterior.rsample(
                 sample_shape=torch.Size([4, 2]), base_samples=base_samples2
@@ -207,7 +207,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             samples2_b2 = posterior.rsample(
                 sample_shape=torch.Size([4, 2]), base_samples=base_samples2
             )
-            self.assertTrue(torch.allclose(samples2_b1, samples2_b2))
+            self.assertAllClose(samples2_b1, samples2_b2)
             # collapse_batch_dims
             b_mean = torch.rand(2, 3, dtype=dtype, device=self.device)
             b_degenerate_covar = degenerate_covar.expand(2, *degenerate_covar.shape)
@@ -258,7 +258,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             samples_b2 = posterior.rsample(
                 sample_shape=torch.Size([4]), base_samples=base_samples
             )
-            self.assertTrue(torch.allclose(samples_b1, samples_b2))
+            self.assertAllClose(samples_b1, samples_b2)
             base_samples2 = torch.randn(4, 2, 3, 2, device=self.device, dtype=dtype)
             samples2_b1 = posterior.rsample(
                 sample_shape=torch.Size([4, 2]), base_samples=base_samples2
@@ -266,7 +266,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             samples2_b2 = posterior.rsample(
                 sample_shape=torch.Size([4, 2]), base_samples=base_samples2
             )
-            self.assertTrue(torch.allclose(samples2_b1, samples2_b2))
+            self.assertAllClose(samples2_b1, samples2_b2)
             # collapse_batch_dims
             b_mean = torch.rand(2, 3, dtype=dtype, device=self.device)
             b_degenerate_covar = degenerate_covar.expand(2, *degenerate_covar.shape)
@@ -302,7 +302,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             exp_size = torch.Size(batch_shape + [1, 1])
             self.assertEqual(new_posterior.mean.shape, exp_size)
             new_mean_exp = offset + (mean @ weights).unsqueeze(-1)
-            self.assertTrue(torch.allclose(new_posterior.mean, new_mean_exp))
+            self.assertAllClose(new_posterior.mean, new_mean_exp)
             self.assertEqual(new_posterior.variance.shape, exp_size)
             new_covar_exp = ((covar @ weights) @ weights).unsqueeze(-1)
             self.assertTrue(
@@ -321,17 +321,17 @@ class TestGPyTorchPosterior(BotorchTestCase):
             exp_size = torch.Size(batch_shape + [q, 1])
             self.assertEqual(new_posterior.mean.shape, exp_size)
             new_mean_exp = offset + (mean @ weights).unsqueeze(-1)
-            self.assertTrue(torch.allclose(new_posterior.mean, new_mean_exp))
+            self.assertAllClose(new_posterior.mean, new_mean_exp)
             self.assertEqual(new_posterior.variance.shape, exp_size)
             new_covar = new_posterior.distribution.covariance_matrix
             if m == 1:
-                self.assertTrue(torch.allclose(new_covar, weights**2 * covar))
+                self.assertAllClose(new_covar, weights**2 * covar)
             else:
                 w = weights.unsqueeze(0)
                 covar00_exp = (w * covar[..., :m, :m] * w.t()).sum(-1).sum(-1)
-                self.assertTrue(torch.allclose(new_covar[..., 0, 0], covar00_exp))
+                self.assertAllClose(new_covar[..., 0, 0], covar00_exp)
                 covarnn_exp = (w * covar[..., -m:, -m:] * w.t()).sum(-1).sum(-1)
-                self.assertTrue(torch.allclose(new_covar[..., -1, -1], covarnn_exp))
+                self.assertAllClose(new_covar[..., -1, -1], covarnn_exp)
             # test q=2, non-interleaved
             # test independent special case as well
             for independent in (False, True) if m > 1 else (False,):
@@ -352,11 +352,11 @@ class TestGPyTorchPosterior(BotorchTestCase):
                 exp_size = torch.Size(batch_shape + [q, 1])
                 self.assertEqual(new_posterior.mean.shape, exp_size)
                 new_mean_exp = offset + (mean @ weights).unsqueeze(-1)
-                self.assertTrue(torch.allclose(new_posterior.mean, new_mean_exp))
+                self.assertAllClose(new_posterior.mean, new_mean_exp)
                 self.assertEqual(new_posterior.variance.shape, exp_size)
                 new_covar = new_posterior.distribution.covariance_matrix
                 if m == 1:
-                    self.assertTrue(torch.allclose(new_covar, weights**2 * covar))
+                    self.assertAllClose(new_covar, weights**2 * covar)
                 else:
                     # construct the indices manually
                     cs = list(itertools.combinations_with_replacement(range(m), 2))
@@ -368,10 +368,10 @@ class TestGPyTorchPosterior(BotorchTestCase):
                     w = weights[idx_nlzd[:, 0]] * weights[idx_nlzd[:, 1]]
                     idx = q * idx_nlzd
                     covar00_exp = (covar[..., idx[:, 0], idx[:, 1]] * w).sum(-1)
-                    self.assertTrue(torch.allclose(new_covar[..., 0, 0], covar00_exp))
+                    self.assertAllClose(new_covar[..., 0, 0], covar00_exp)
                     idx_ = q - 1 + idx
                     covarnn_exp = (covar[..., idx_[:, 0], idx_[:, 1]] * w).sum(-1)
-                    self.assertTrue(torch.allclose(new_covar[..., -1, -1], covarnn_exp))
+                    self.assertAllClose(new_covar[..., -1, -1], covarnn_exp)
 
             # test errors
             with self.assertRaises(RuntimeError):

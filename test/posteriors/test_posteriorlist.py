@@ -70,7 +70,7 @@ class TestPosteriorList(BotorchTestCase):
             new_posterior = scalarize_posterior(posterior, weights, offset)
             new_post_from_list = scalarize_posterior(posterior_list, weights, offset)
             self.assertEqual(new_posterior.mean.shape, new_post_from_list.mean.shape)
-            self.assertTrue(torch.allclose(new_posterior.mean, new_post_from_list.mean))
+            self.assertAllClose(new_posterior.mean, new_post_from_list.mean)
             self.assertTrue(
                 torch.allclose(new_posterior.variance, new_post_from_list.variance)
             )

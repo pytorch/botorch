@@ -176,7 +176,7 @@ class TestMVNXPB(BotorchTestCase):
                 if est == 0.0:
                     continue
 
-                self.assertTrue(torch.allclose(est, prob, rtol=0, atol=atol))
+                self.assertAllClose(est, prob, rtol=0, atol=atol)
 
     def test_augment(self):
         r"""Test `augment`."""

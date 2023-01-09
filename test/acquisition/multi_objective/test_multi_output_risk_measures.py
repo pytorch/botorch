@@ -528,31 +528,31 @@ class TestMARS(BotorchTestCase):
             bounds = MARS._get_Y_normalization_bounds(Y=torch.empty(0, 3, **tkwargs))
             expected = torch.zeros(2, 3, **tkwargs)
             expected[1] = 1.0
-            self.assertTrue(torch.allclose(bounds, expected))
+            self.assertAllClose(bounds, expected)
 
             # Single point in pareto_Y.
             bounds = MARS._get_Y_normalization_bounds(Y=torch.zeros(1, 3, **tkwargs))
-            self.assertTrue(torch.allclose(bounds, expected))
+            self.assertAllClose(bounds, expected)
 
             # With reference point.
             bounds = MARS._get_Y_normalization_bounds(
                 Y=torch.zeros(1, 3, **tkwargs), ref_point=-torch.ones(3)
             )
-            self.assertTrue(torch.allclose(bounds, expected - 1))
+            self.assertAllClose(bounds, expected - 1)
 
             # Check that dominated points are ignored.
             Y = torch.tensor([[0.0, 0.0], [0.5, 1.0], [1.0, 0.5]], **tkwargs)
             expected = expected[:, :2]
             expected[0] = 0.5
             bounds = MARS._get_Y_normalization_bounds(Y=Y)
-            self.assertTrue(torch.allclose(bounds, expected))
+            self.assertAllClose(bounds, expected)
 
             # Multiple pareto with ref point.
             # Nothing better than ref.
             bounds = MARS._get_Y_normalization_bounds(
                 Y=Y, ref_point=torch.ones(2) * 0.75
             )
-            self.assertTrue(torch.allclose(bounds, expected))
+            self.assertAllClose(bounds, expected)
 
             # W/ points better than ref.
             Y = torch.tensor(
@@ -562,7 +562,7 @@ class TestMARS(BotorchTestCase):
                 Y=Y, ref_point=torch.ones(2) * 0.6
             )
             expected = torch.tensor([[0.6, 0.6], [0.9, 0.8]], **tkwargs)
-            self.assertTrue(torch.allclose(bounds, expected))
+            self.assertAllClose(bounds, expected)
 
     def test_chebyshev_objective(self):
         # Check that the objective is destroyed on setters.
@@ -603,7 +603,7 @@ class TestMARS(BotorchTestCase):
             )
             obj = mars.chebyshev_objective
             Y = torch.ones(2, 2, **tkwargs)
-            self.assertTrue(torch.allclose(obj(Y), torch.ones(2, **tkwargs)))
+            self.assertAllClose(obj(Y), torch.ones(2, **tkwargs))
             # With pre-processing.
             mars = MARS(
                 alpha=0.5,
@@ -614,7 +614,7 @@ class TestMARS(BotorchTestCase):
             )
             obj = mars.chebyshev_objective
             Y = -torch.ones(2, 2, **tkwargs)
-            self.assertTrue(torch.allclose(obj(Y), torch.ones(2, **tkwargs)))
+            self.assertAllClose(obj(Y), torch.ones(2, **tkwargs))
             # With ref point.
             mars = MARS(
                 alpha=0.5,
@@ -625,7 +625,7 @@ class TestMARS(BotorchTestCase):
             )
             obj = mars.chebyshev_objective
             Y = torch.ones(2, 2, **tkwargs)
-            self.assertTrue(torch.allclose(obj(Y), torch.zeros(2, **tkwargs)))
+            self.assertAllClose(obj(Y), torch.zeros(2, **tkwargs))
 
     def test_end_to_end(self):
         for dtype in (torch.float, torch.double):

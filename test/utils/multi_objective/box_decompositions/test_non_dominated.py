@@ -149,7 +149,7 @@ class TestNonDominatedPartitioning(BotorchTestCase):
                     ],
                     dim=0,
                 )
-                self.assertTrue(torch.allclose(hvs, hvs_non_batch))
+                self.assertAllClose(hvs, hvs_non_batch)
 
             # test batched m>2
             ref_point = torch.zeros(3, **tkwargs)

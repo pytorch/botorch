@@ -330,7 +330,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                     _arg_to_cos = X / base_kernel.lengthscale @ rff.weights
                     _bias_expanded = rff.bias.unsqueeze(-2)
                     expected_Y = _constant * (torch.cos(_arg_to_cos + _bias_expanded))
-                    self.assertTrue(torch.allclose(Y, expected_Y))
+                    self.assertAllClose(Y, expected_Y)
 
             # test get_weights
             for sample_shape in [torch.Size(), torch.Size([5])]:
@@ -415,7 +415,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                     expected_Y = torch.stack(
                         [basis(X) @ w for w, basis in zip(weights, bases)], dim=-1
                     )
-                    self.assertTrue(torch.allclose(Y, expected_Y))
+                    self.assertAllClose(Y, expected_Y)
                     self.assertEqual(Y.shape, torch.Size([*batch_shape, 1, m]))
 
     def test_get_deterministic_model_multi_samples(self):
@@ -468,7 +468,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                 Y = model(X)
                 for i in range(m):
                     expected_Yi = (bases[i](X) @ weights[i].unsqueeze(-1)).squeeze(-1)
-                    self.assertTrue(torch.allclose(Y[..., i], expected_Yi))
+                    self.assertAllClose(Y[..., i], expected_Yi)
                 self.assertEqual(
                     Y.shape,
                     torch.Size([*batch_shape_x, n_samples, 1, m]),
@@ -502,7 +502,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                 Y = Y_true + sigma * torch.randn_like(Y_true)
                 posterior = get_weights_posterior(X=X, y=Y, sigma_sq=sigma**2)
                 self.assertIsInstance(posterior, MultivariateNormal)
-                self.assertTrue(torch.allclose(w, posterior.mean, atol=1e-1))
+                self.assertAllClose(w, posterior.mean, atol=1e-1)
                 w_samp = posterior.sample()
                 self.assertEqual(w_samp.shape, w.shape)
 
@@ -566,7 +566,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                 Y_hat_rff = samples.mean(dim=0)
                 with torch.no_grad():
                     Y_hat = model.posterior(X).mean
-                self.assertTrue(torch.allclose(Y_hat_rff, Y_hat, atol=5e-1))
+                self.assertAllClose(Y_hat_rff, Y_hat, atol=5e-1)
 
                 # test batched evaluation
                 test_X = torch.randn(13, n_samples, 3, X.shape[-1], **tkwargs)
@@ -636,7 +636,7 @@ class TestRandomFourierFeatures(BotorchTestCase):
                 Y_hat_rff = torch.stack(means, dim=0).mean(dim=0)
                 with torch.no_grad():
                     Y_hat = model.posterior(X).mean
-                self.assertTrue(torch.allclose(Y_hat_rff, Y_hat, atol=5e-1))
+                self.assertAllClose(Y_hat_rff, Y_hat, atol=5e-1)
                 # test batched evaluation
                 test_X = torch.randn(13, 5, 3, X.shape[-1], **tkwargs)
                 if batched_inputs:

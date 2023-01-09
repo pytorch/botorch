@@ -114,7 +114,7 @@ class TestDH(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
             test_X[1] = 1.0
             actual = f(test_X)
             expected = torch.tensor(self.expected[i], device=self.device)
-            self.assertTrue(torch.allclose(actual, expected))
+            self.assertAllClose(actual, expected)
 
 
 class TestDTLZ(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):

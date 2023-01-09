@@ -889,7 +889,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             cm = kwargs["cost_aware_utility"].cost_model
             w = torch.tensor(list(fidelity_weights.values()), dtype=cm.weights.dtype)
             self.assertEqual(cm.fixed_cost, cost_intercept)
-            self.assertTrue(torch.allclose(cm.weights, w))
+            self.assertAllClose(cm.weights, w)
 
         with self.subTest("test_missing_fidelity_weights"):
             kwargs = construct_inputs_mf_base(
@@ -900,7 +900,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
                 cost_intercept=cost_intercept,
             )
             cm = kwargs["cost_aware_utility"].cost_model
-            self.assertTrue(torch.allclose(cm.weights, torch.ones_like(cm.weights)))
+            self.assertAllClose(cm.weights, torch.ones_like(cm.weights))
 
         with self.subTest("test_mismatched_weights"):
             with self.assertRaisesRegex(

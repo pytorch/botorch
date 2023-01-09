@@ -217,12 +217,12 @@ class TestInputTransforms(BotorchTestCase):
 
                 nlz.eval()
                 X_unnlzd = nlz.untransform(X_nlzd)
-                self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
+                self.assertAllClose(X, X_unnlzd, atol=1e-4, rtol=1e-4)
                 expected_bounds = torch.cat(
                     [X.min(dim=-2, keepdim=True)[0], X.max(dim=-2, keepdim=True)[0]],
                     dim=-2,
                 )
-                self.assertTrue(torch.allclose(nlz.bounds, expected_bounds))
+                self.assertAllClose(nlz.bounds, expected_bounds)
                 # test errors on wrong shape
                 nlz = Normalize(d=2, batch_shape=batch_shape)
                 X = torch.randn(*batch_shape, 2, 1, device=self.device, dtype=dtype)
@@ -238,7 +238,7 @@ class TestInputTransforms(BotorchTestCase):
                 X_nlzd = nlz(X)
                 self.assertTrue(torch.equal(nlz.bounds, bounds))
                 X_unnlzd = nlz.untransform(X_nlzd)
-                self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
+                self.assertAllClose(X, X_unnlzd, atol=1e-4, rtol=1e-4)
 
                 # test no normalization on eval
                 nlz = Normalize(
@@ -246,7 +246,7 @@ class TestInputTransforms(BotorchTestCase):
                 )
                 X_nlzd = nlz(X)
                 X_unnlzd = nlz.untransform(X_nlzd)
-                self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
+                self.assertAllClose(X, X_unnlzd, atol=1e-4, rtol=1e-4)
                 nlz.eval()
                 self.assertTrue(torch.equal(nlz(X), X))
 
@@ -262,16 +262,16 @@ class TestInputTransforms(BotorchTestCase):
                 nlz.eval()
                 X_nlzd = nlz(X)
                 X_unnlzd = nlz.untransform(X_nlzd)
-                self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
+                self.assertAllClose(X, X_unnlzd, atol=1e-4, rtol=1e-4)
 
                 # test reverse
                 nlz = Normalize(
                     d=2, bounds=bounds, batch_shape=batch_shape, reverse=True
                 )
                 X2 = nlz(X_nlzd)
-                self.assertTrue(torch.allclose(X2, X, atol=1e-4, rtol=1e-4))
+                self.assertAllClose(X2, X, atol=1e-4, rtol=1e-4)
                 X_nlzd2 = nlz.untransform(X2)
-                self.assertTrue(torch.allclose(X_nlzd, X_nlzd2, atol=1e-4, rtol=1e-4))
+                self.assertAllClose(X_nlzd, X_nlzd2, atol=1e-4, rtol=1e-4)
 
                 # test non complete indices
                 indices = [0, 2]
@@ -280,10 +280,10 @@ class TestInputTransforms(BotorchTestCase):
                 X_nlzd = nlz(X)
                 self.assertEqual(X_nlzd[..., indices].min().item(), 0.0)
                 self.assertEqual(X_nlzd[..., indices].max().item(), 1.0)
-                self.assertTrue(torch.allclose(X_nlzd[..., 1], X[..., 1]))
+                self.assertAllClose(X_nlzd[..., 1], X[..., 1])
                 nlz.eval()
                 X_unnlzd = nlz.untransform(X_nlzd)
-                self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
+                self.assertAllClose(X, X_unnlzd, atol=1e-4, rtol=1e-4)
                 expected_bounds = torch.cat(
                     [X.min(dim=-2, keepdim=True)[0], X.max(dim=-2, keepdim=True)[0]],
                     dim=-2,
@@ -392,11 +392,11 @@ class TestInputTransforms(BotorchTestCase):
 
                 stdz.eval()
                 X_unstdz = stdz.untransform(X_stdz)
-                self.assertTrue(torch.allclose(X, X_unstdz, atol=1e-4, rtol=1e-4))
+                self.assertAllClose(X, X_unstdz, atol=1e-4, rtol=1e-4)
                 expected_means = X.mean(dim=-2, keepdim=True)
                 expected_stds = X.std(dim=-2, keepdim=True)
-                self.assertTrue(torch.allclose(stdz.means, expected_means))
-                self.assertTrue(torch.allclose(stdz.stds, expected_stds))
+                self.assertAllClose(stdz.means, expected_means)
+                self.assertAllClose(stdz.stds, expected_stds)
 
                 # test to
                 other_dtype = torch.float if dtype == torch.double else torch.double
@@ -416,7 +416,7 @@ class TestInputTransforms(BotorchTestCase):
                 X = torch.randn(*batch_shape, 4, 2, device=self.device, dtype=dtype)
                 X_stdz = stdz(X)
                 X_unstdz = stdz.untransform(X_stdz)
-                self.assertTrue(torch.allclose(X, X_unstdz, atol=1e-4, rtol=1e-4))
+                self.assertAllClose(X, X_unstdz, atol=1e-4, rtol=1e-4)
                 stdz.eval()
                 self.assertTrue(torch.equal(stdz(X), X))
 
@@ -428,7 +428,7 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertTrue(torch.equal(stdz(X), X))
                 stdz.eval()
                 X_unstdz = stdz.untransform(X_stdz)
-                self.assertTrue(torch.allclose(X, X_unstdz, atol=1e-4, rtol=1e-4))
+                self.assertAllClose(X, X_unstdz, atol=1e-4, rtol=1e-4)
 
                 # test indices
                 indices = [0, 2]
@@ -444,10 +444,10 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertTrue(
                     torch.all((X_stdz[..., indices].std(dim=-2) - 1.0).abs() < 1e-4)
                 )
-                self.assertTrue(torch.allclose(X_stdz[..., 1], X[..., 1]))
+                self.assertAllClose(X_stdz[..., 1], X[..., 1])
                 stdz.eval()
                 X_unstdz = stdz.untransform(X_stdz)
-                self.assertTrue(torch.allclose(X, X_unstdz, atol=1e-4, rtol=1e-4))
+                self.assertAllClose(X, X_unstdz, atol=1e-4, rtol=1e-4)
 
                 # test equals
                 stdz = InputStandardize(d=2, batch_shape=batch_shape, reverse=True)
@@ -492,7 +492,7 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue(tf2.training)
             self.assertTrue(torch.equal(X_tf, X_tf_))
             X_utf = tf.untransform(X_tf)
-            self.assertTrue(torch.allclose(X_utf, X, atol=1e-4, rtol=1e-4))
+            self.assertAllClose(X_utf, X, atol=1e-4, rtol=1e-4)
 
             # test not transformed on eval
             tf1.transform_on_eval = False
@@ -710,7 +710,7 @@ class TestInputTransforms(BotorchTestCase):
                 # check non-integers parameters are unchanged
                 self.assertTrue(torch.equal(expected_X_tf, X_tf))
                 untransformed_X = log_tf.untransform(X_tf)
-                self.assertTrue(torch.allclose(untransformed_X, X))
+                self.assertAllClose(untransformed_X, X)
 
                 # test no transform on eval
                 log_tf = Log10(indices=indices, transform_on_eval=False)
@@ -947,10 +947,10 @@ class TestAppendFeatures(BotorchTestCase):
                 ],
                 **tkwargs,
             )
-            self.assertTrue(torch.allclose(tf_X, expected_X))
+            self.assertAllClose(tf_X, expected_X)
             # Batched evaluation.
             tf_X = append_tf(pert_tf(test_X.expand(3, 5, -1, -1)))
-            self.assertTrue(torch.allclose(tf_X, expected_X.expand(3, 5, -1, -1)))
+            self.assertAllClose(tf_X, expected_X.expand(3, 5, -1, -1))
 
     def test_w_f(self):
         def f1(x: Tensor, n_f: int = 1) -> Tensor:
@@ -991,7 +991,7 @@ class TestAppendFeatures(BotorchTestCase):
             )
             X_transformed = transform(X)
             self.assertEqual(X_transformed.shape, torch.Size((1, 4)))
-            self.assertTrue(torch.allclose(X.sum(dim=-1), X_transformed[..., -1]))
+            self.assertAllClose(X.sum(dim=-1), X_transformed[..., -1])
 
             X = torch.rand(10, 3, **tkwargs)
             transform = AppendFeatures(
@@ -1002,7 +1002,7 @@ class TestAppendFeatures(BotorchTestCase):
             )
             X_transformed = transform(X)
             self.assertEqual(X_transformed.shape, torch.Size((10, 4)))
-            self.assertTrue(torch.allclose(X.sum(dim=-1), X_transformed[..., -1]))
+            self.assertAllClose(X.sum(dim=-1), X_transformed[..., -1])
 
             transform = AppendFeatures(
                 f=f1,
@@ -1064,7 +1064,7 @@ class TestAppendFeatures(BotorchTestCase):
             )
             X_transformed = transform(X)
             self.assertEqual(X_transformed.shape, torch.Size((2, 10, 5)))
-            self.assertTrue(torch.allclose(X[..., -2:], X_transformed[..., -2:]))
+            self.assertAllClose(X[..., -2:], X_transformed[..., -2:])
 
             # test functionality with n_f > 1
             X = torch.rand(10, 3, **tkwargs)
@@ -1299,7 +1299,7 @@ class TestInputPerturbation(BotorchTestCase):
             # in eval - transform
             transform.eval()
             transformed = transform(X)
-            self.assertTrue(torch.allclose(transformed, expected))
+            self.assertAllClose(transformed, expected)
             # in fantasize - no transform
             with fantasize():
                 transformed = transform(X)
@@ -1335,7 +1335,7 @@ class TestInputPerturbation(BotorchTestCase):
                 dtype=dtype,
             )
             transformed = transform(X)
-            self.assertTrue(torch.allclose(transformed, expected))
+            self.assertAllClose(transformed, expected)
 
             # Make sure .to calls work.
             transform.to(device=torch.device("cpu"), dtype=torch.half)
@@ -1363,7 +1363,7 @@ class TestInputPerturbation(BotorchTestCase):
                 device=self.device,
                 dtype=dtype,
             )
-            self.assertTrue(torch.allclose(transformed, expected))
+            self.assertAllClose(transformed, expected)
 
             # heteroscedastic
             def perturbation_generator(X: Tensor) -> Tensor:
@@ -1382,7 +1382,7 @@ class TestInputPerturbation(BotorchTestCase):
                 ],
                 dim=-2,
             )
-            self.assertTrue(torch.allclose(transformed, expected))
+            self.assertAllClose(transformed, expected)
 
             # testing same heteroscedastic transform with subset of indices
             indices = [0, 1]
@@ -1392,10 +1392,10 @@ class TestInputPerturbation(BotorchTestCase):
             X_repeat = X.repeat(1, 1, 2)
             subset_transformed = subset_transform(X_repeat)
             # first set of two indices are the same as with previous transform
-            self.assertTrue(torch.allclose(subset_transformed[..., :2], expected))
+            self.assertAllClose(subset_transformed[..., :2], expected)
 
             # second set of two indices are untransformed but have expanded batch shape
             num_pert = subset_transform.batch_shape[-1]
             sec_expected = X.unsqueeze(-2).expand(*X.shape[:-1], num_pert, -1)
             sec_expected = sec_expected.flatten(-3, -2)
-            self.assertTrue(torch.allclose(subset_transformed[..., 2:], sec_expected))
+            self.assertAllClose(subset_transformed[..., 2:], sec_expected)

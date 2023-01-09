@@ -38,7 +38,7 @@ class TestStoppingCriterion(BotorchTestCase):
                 self.assertEqual(sc.rel_tol, 0.0375)
                 self.assertIsNone(sc._prev_fvals)
                 weights_exp = torch.tensor([0.1416, 0.1976, 0.2758, 0.3849])
-                self.assertTrue(torch.allclose(sc.weights, weights_exp, atol=1e-4))
+                self.assertAllClose(sc.weights, weights_exp, atol=1e-4)
                 f_vals = 1 + torch.linspace(1, 0, 25, **tkwargs) ** 2
                 if not minimize:
                     f_vals = -f_vals

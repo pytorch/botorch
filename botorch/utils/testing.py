@@ -126,7 +126,7 @@ class SyntheticTestFunctionBaseTestCase(BaseTestProblemBaseTestCase):
                 res = f(Xopt, noise=False)
                 # if we have optimizers, we have the optimal value
                 res_exp = torch.full_like(res, f.optimal_value)
-                self.assertTrue(torch.allclose(res, res_exp, atol=1e-3, rtol=1e-3))
+                self.assertAllClose(res, res_exp, atol=1e-3, rtol=1e-3)
                 if f._check_grad_at_opt:
                     grad = torch.autograd.grad([*res], Xopt)[0]
                     self.assertLess(grad.abs().max().item(), 1e-3)
