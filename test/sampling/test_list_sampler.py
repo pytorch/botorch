@@ -24,6 +24,7 @@ class TestListSampler(BotorchTestCase):
         )
         self.assertIsInstance(sampler.samplers[0], IIDNormalSampler)
         self.assertIsInstance(sampler.samplers[1], StochasticSampler)
+        self.assertEqual(sampler.sample_shape, torch.Size([2]))
 
         # Test validation.
         with self.assertRaisesRegex(UnsupportedError, "all samplers to have the "):
