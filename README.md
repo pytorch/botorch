@@ -57,44 +57,52 @@ Optimization simply use Ax.
 **Installation Requirements**
 - Python >= 3.8
 - PyTorch >= 1.11
-- gpytorch == 1.9.0
-- linear_operator == 0.2.0
-- pyro-ppl >= 1.8.2
+- gpytorch == 1.9.1
+- linear_operator == 0.3.0
+- pyro-ppl >= 1.8.4
 - scipy
 - multiple-dispatch
 
+### Prerequisite only for MacOS users with Intel processors:
+Before installing BoTorch, we recommend first manually installing PyTorch, a required dependency of
+BoTorch. Installing it according to the [PyTorch installation instructions](https://pytorch.org/get-started/locally/)
+ensures that it is properly linked against MKL, a library that optimizes mathematical computation for Intel processors.
+This will result in up to an order-of-magnitude speed-up for Bayesian optimization, as at the moment,
+installing PyTorch from pip does not link against MKL.
 
-##### Installing the latest release
+The PyTorch installation instructions currently recommend:
+1. Install [Anaconda](https://www.anaconda.com/distribution/#download-section). Note that there are different installers for Intel and M1 Macs.
+2. Install PyTorch following the [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
+Currently, this suggests running `conda install pytorch torchvision -c pytorch`.
+
+If you want to customize your installation, please follow the [PyTorch installation instructions](https://pytorch.org/get-started/locally/) to build from source.
+
+### Option 1: Installing the latest release
 
 The latest release of BoTorch is easily installed either via
-[Anaconda](https://www.anaconda.com/distribution/#download-section) (recommended):
+[Anaconda](https://www.anaconda.com/distribution/#download-section) (recommended) or pip.
+
+**To install BoTorch from Anaconda**, run
 ```bash
 conda install botorch -c pytorch -c gpytorch -c conda-forge
 ```
-or via `pip`:
+The above command installs BoTorch and any needed dependencies. ` -c pytorch -c gpytorch -c conda-forge` means that the most preferred source to install from is the PyTorch channel, the next most preferred is the GPyTorch channel,
+and the least preferred is conda-forge.
+
+**Alternatively, to install with `pip`**, do
 ```bash
 pip install botorch
 ```
 
-You can customize your PyTorch installation (i.e. CUDA version, CPU only option)
-by following the [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
+_Note_: Make sure the `pip` being used is actually the one from the newly created Conda environment. If you're using a Unix-based OS, you can use `which pip` to check.
 
-***Important note for MacOS users:***
-* Make sure your PyTorch build is linked against MKL (the non-optimized version
-  of BoTorch can be up to an order of magnitude slower in some settings).
-  Setting this up manually on MacOS can be tricky - to ensure this works properly,
-  please follow the [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
-* If you need CUDA on MacOS, you will need to build PyTorch from source. Please
-  consult the PyTorch installation instructions above.
-
-
-##### Installing from latest main branch
+### Option 2: Installing from latest main branch
 
 If you would like to try our bleeding edge features (and don't mind potentially
 running into the occasional bug here or there), you can install the latest
 development version directly from GitHub. If you want to also install the
 current `gpytorch` and `linear_operator` development versions, you will need
-to ensure that the `ALLOW_LATEST_GPYTORCH_LINOP` environment variable is set):
+to ensure that the `ALLOW_LATEST_GPYTORCH_LINOP` environment variable is set:
 ```bash
 pip install --upgrade git+https://github.com/cornellius-gp/linear_operator.git
 pip install --upgrade git+https://github.com/cornellius-gp/gpytorch.git
@@ -102,21 +110,35 @@ export ALLOW_LATEST_GPYTORCH_LINOP=true
 pip install --upgrade git+https://github.com/pytorch/botorch.git
 ```
 
-**Manual / Dev install**
+### Option 3: Editable/dev install
 
-Alternatively, you can do a manual install. For a basic install, run:
+If you want to [contribute](CONTRIBUTING.md) to BoTorch, you will want to install editably so that you can change files and have the
+changes reflected in your local install.
+
+If you want to install the current `gpytorch` and `linear_operator` development versions, as in Option 2, do that
+before proceeding.
+
+#### Option 3a: Bare-bones editable install
+
 ```bash
 git clone https://github.com/pytorch/botorch.git
 cd botorch
 pip install -e .
 ```
 
-To customize the installation, you can also run the following variants of the
-above:
-* `pip install -e .[dev]`: Also installs all tools necessary for development
-  (testing, linting, docs building; see [Contributing](#contributing) below).
-* `pip install -e .[tutorials]`: Also installs all packages necessary for running the tutorial notebooks.
+#### Option 3b: Editable install with development and tutorials dependencies
 
+```bash
+git clone https://github.com/pytorch/botorch.git
+cd botorch
+export ALLOW_BOTORCH_LATEST=true
+pip install -e ".[dev, tutorials]"
+```
+
+* `dev`: Specifies tools necessary for development
+  (testing, linting, docs building; see [Contributing](#contributing) below).
+* `tutorials`: Also installs all packages necessary for running the tutorial notebooks.
+* You can also install either the dev or tutorials dependencies without installing both, e.g. by changing the last command to `pip install -e ".[dev]"`.
 
 ## Getting Started
 

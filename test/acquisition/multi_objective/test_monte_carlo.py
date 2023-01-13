@@ -37,6 +37,9 @@ from botorch.models import (
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.transforms.input import InputPerturbation
 from botorch.models.transforms.outcome import Standardize
+from botorch.posteriors.posterior_list import PosteriorList
+from botorch.posteriors.transformed import TransformedPosterior
+from botorch.sampling.list_sampler import ListSampler
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
 from botorch.utils.multi_objective.box_decompositions.dominated import (
@@ -1453,7 +1456,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                         torch.manual_seed(0)
                         val2 = acqf_no_cache(test_X2)
                     mock_sample_cached.assert_not_called()
-                    self.assertTrue(torch.allclose(val, val2, **all_close_kwargs))
+                    self.assertAllClose(val, val2, **all_close_kwargs)
                     val2.sum().backward()
                     if dtype == torch.double:
                         # The gradient computation is very unstable in single precision
@@ -1624,3 +1627,30 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     rtol=1e-4,
                 )
             )
+
+    def test_with_transformed(self):
+        # Verify that _set_sampler works with transformed posteriors.
+        mm = MockModel(
+            posterior=PosteriorList(
+                TransformedPosterior(
+                    MockPosterior(samples=torch.rand(2, 3, 1)), lambda X: X
+                ),
+                TransformedPosterior(
+                    MockPosterior(samples=torch.rand(2, 3, 1)), lambda X: X
+                ),
+            )
+        )
+        sampler = ListSampler(
+            IIDNormalSampler(sample_shape=torch.Size([2])),
+            IIDNormalSampler(sample_shape=torch.Size([2])),
+        )
+        # This calls _set_sampler which used to error out in
+        # NormalMCSampler._update_base_samples with TransformedPosterior
+        # due to the missing batch_shape (fixed in #1625).
+        qNoisyExpectedHypervolumeImprovement(
+            model=mm,
+            ref_point=torch.tensor([0.0, 0.0]),
+            X_baseline=torch.rand(3, 2),
+            sampler=sampler,
+            cache_root=False,
+        )

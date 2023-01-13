@@ -76,7 +76,7 @@ class TestScalarizedPosteriorTransform(BotorchTestCase):
             exp_size = torch.Size(batch_shape + [1, 1])
             self.assertEqual(new_posterior.mean.shape, exp_size)
             new_mean_exp = offset + mean @ weights
-            self.assertTrue(torch.allclose(new_posterior.mean[..., -1], new_mean_exp))
+            self.assertAllClose(new_posterior.mean[..., -1], new_mean_exp)
             self.assertEqual(new_posterior.variance.shape, exp_size)
             new_covar_exp = ((covar @ weights) @ weights).unsqueeze(-1)
             self.assertTrue(
@@ -97,7 +97,7 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
         # Without weights.
         tf = ExpectationPosteriorTransform(n_w=5)
         self.assertEqual(tf.n_w, 5)
-        self.assertTrue(torch.allclose(tf.weights, torch.ones(5, 1) * 0.2))
+        self.assertAllClose(tf.weights, torch.ones(5, 1) * 0.2)
         # Errors with weights.
         with self.assertRaisesRegex(ValueError, "a tensor of size"):
             ExpectationPosteriorTransform(n_w=3, weights=torch.ones(5, 1))
@@ -106,7 +106,7 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
         # Successful init with weights.
         weights = torch.tensor([[1.0, 2.0], [2.0, 4.0], [3.0, 6.0]])
         tf = ExpectationPosteriorTransform(n_w=3, weights=weights)
-        self.assertTrue(torch.allclose(tf.weights, weights / torch.tensor([6.0, 12.0])))
+        self.assertAllClose(tf.weights, weights / torch.tensor([6.0, 12.0]))
 
     def test_evaluate(self):
         for dtype in (torch.float, torch.double):
@@ -121,7 +121,7 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
             weights = torch.tensor([[1.0, 2.0], [2.0, 1.0]])
             tf = ExpectationPosteriorTransform(n_w=2, weights=weights)
             expected = (Y.view(3, 3, 2, 2) * weights.to(Y)).sum(dim=-2) / 3.0
-            self.assertTrue(torch.allclose(tf.evaluate(Y), expected))
+            self.assertAllClose(tf.evaluate(Y), expected)
 
     def test_expectation_posterior_transform(self):
         tkwargs = {"dtype": torch.float, "device": self.device}
@@ -150,10 +150,8 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
         expected_loc = torch.tensor([2.0, 5.0], **tkwargs)
         # This is the average of each 3 x 3 block.
         expected_covar = torch.tensor([[0.8667, 0.1722], [0.1722, 0.7778]], **tkwargs)
-        self.assertTrue(torch.allclose(tf_mvn.loc, expected_loc))
-        self.assertTrue(
-            torch.allclose(tf_mvn.covariance_matrix, expected_covar, atol=1e-3)
-        )
+        self.assertAllClose(tf_mvn.loc, expected_loc)
+        self.assertAllClose(tf_mvn.covariance_matrix, expected_covar, atol=1e-3)
 
         # With weights, 2 outputs, batched.
         tkwargs = {"dtype": torch.double, "device": self.device}
@@ -223,10 +221,8 @@ class TestExpectationPosteriorTransform(BotorchTestCase):
             ],
             **tkwargs,
         ).repeat(3, 1, 1)
-        self.assertTrue(torch.allclose(tf_mvn.loc, expected_loc, atol=1e-3))
-        self.assertTrue(
-            torch.allclose(tf_mvn.covariance_matrix, expected_covar, atol=1e-3)
-        )
+        self.assertAllClose(tf_mvn.loc, expected_loc, atol=1e-3)
+        self.assertAllClose(tf_mvn.covariance_matrix, expected_covar, atol=1e-3)
 
 
 class TestMCAcquisitionObjective(BotorchTestCase):

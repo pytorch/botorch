@@ -219,7 +219,10 @@ class TestOptimizeAcqf(BotorchTestCase):
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
     def test_optimize_acqf_sequential(
-        self, mock_gen_candidates_scipy, mock_gen_batch_initial_conditions
+        self,
+        mock_gen_candidates_scipy,
+        mock_gen_batch_initial_conditions,
+        timeout_sec=None,
     ):
         q = 3
         num_restarts = 2
@@ -261,6 +264,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                 inequality_constraints=inequality_constraints,
                 post_processing_func=rounding_func,
                 sequential=True,
+                timeout_sec=timeout_sec,
             )
             self.assertTrue(torch.equal(candidates, expected_candidates))
             self.assertTrue(
@@ -311,6 +315,9 @@ class TestOptimizeAcqf(BotorchTestCase):
                 batch_initial_conditions=mock_gen_batch_initial_conditions,
                 sequential=True,
             )
+
+    def test_optimize_acqf_sequential_timeout(self):
+        self.test_optimize_acqf_sequential(timeout_sec=1e-4)
 
     def test_optimize_acqf_sequential_notimplemented(self):
         # Sequential acquisition function optimization only supported
@@ -374,11 +381,11 @@ class TestOptimizeAcqf(BotorchTestCase):
         message = (
             "Optimization failed in `gen_candidates_scipy` with the following "
             "warning(s):\n[OptimizationWarning('Optimization failed within "
-            "`scipy.optimize.minimize` with status 2.')]\nBecause you specified"
-            " `batch_initial_conditions`, optimization will not be retried with"
-            " new initial conditions and will proceed with the current "
-            "solution. Suggested remediation: Try again with different "
-            "`batch_initial_conditions`, or don't provide "
+            "`scipy.optimize.minimize` with status 2 and message ABNORMAL_TERMINATION"
+            "_IN_LNSRCH.')]\nBecause you specified `batch_initial_conditions`, "
+            "optimization will not be retried with new initial conditions and will "
+            "proceed with the current solution. Suggested remediation: Try again with "
+            "different `batch_initial_conditions`, or don't provide "
             "`batch_initial_conditions.`"
         )
         expected_warning_raised = any(
@@ -422,8 +429,8 @@ class TestOptimizeAcqf(BotorchTestCase):
         message = (
             "Optimization failed in `gen_candidates_scipy` with the following "
             "warning(s):\n[OptimizationWarning('Optimization failed within "
-            "`scipy.optimize.minimize` with status 2.')]\nTrying again with a "
-            "new set of initial conditions."
+            "`scipy.optimize.minimize` with status 2 and message ABNORMAL_TERMINATION"
+            "_IN_LNSRCH.')]\nTrying again with a new set of initial conditions."
         )
         expected_warning_raised = any(
             (
@@ -470,8 +477,8 @@ class TestOptimizeAcqf(BotorchTestCase):
         message_1 = (
             "Optimization failed in `gen_candidates_scipy` with the following "
             "warning(s):\n[OptimizationWarning('Optimization failed within "
-            "`scipy.optimize.minimize` with status 2.')]\nTrying again with a "
-            "new set of initial conditions."
+            "`scipy.optimize.minimize` with status 2 and message ABNORMAL_TERMINATION"
+            "_IN_LNSRCH.')]\nTrying again with a new set of initial conditions."
         )
 
         message_2 = (
@@ -513,7 +520,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                     sequential=True,
                     raw_samples=16,
                 )
-            self.assertTrue(torch.allclose(candidates, 4 * torch.ones(3, **tkwargs)))
+            self.assertAllClose(candidates, 4 * torch.ones(1, 3, **tkwargs))
 
             # Constrain the sum to be <= 4 in which case the solution is a
             # permutation of [4, 0, 0]
@@ -541,7 +548,9 @@ class TestOptimizeAcqf(BotorchTestCase):
 
             # Make sure we return the initial solution if SLSQP fails to return
             # a feasible point.
-            with mock.patch("botorch.generation.gen.minimize") as mock_minimize:
+            with mock.patch(
+                "botorch.generation.gen.minimize_with_timeout"
+            ) as mock_minimize:
                 # By setting "success" to True and "status" to 0, we prevent a
                 # warning that `minimize` failed, which isn't the behavior
                 # we're looking to test here.
@@ -556,7 +565,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                     batch_initial_conditions=batch_initial_conditions,
                     num_restarts=1,
                 )
-                self.assertTrue(torch.allclose(candidates, batch_initial_conditions))
+                self.assertAllClose(candidates, batch_initial_conditions[0, ...])
 
             # Constrain all variables to be >= 1. The global optimum is 2.45 and
             # is attained by some permutation of [1, 1, 2]
@@ -1239,9 +1248,9 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             )
             best_idcs = torch.topk(exp_acq_vals, q).indices
             expected_candidates = choices[best_idcs]
-            expected_acq_value = exp_acq_vals[best_idcs]
-            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
-            self.assertTrue(torch.allclose(candidates, expected_candidates))
+            expected_acq_value = exp_acq_vals[best_idcs].reshape_as(acq_value)
+            self.assertAllClose(acq_value, expected_acq_value)
+            self.assertAllClose(candidates, expected_candidates)
 
             # test non-unique (test does not properly use pending points)
             candidates, acq_value = optimize_acqf_discrete(
@@ -1249,9 +1258,9 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             )
             best_idx = torch.argmax(exp_acq_vals)
             expected_candidates = choices[best_idx].repeat(q, 1)
-            expected_acq_value = exp_acq_vals[best_idx].repeat(q)
-            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
-            self.assertTrue(torch.allclose(candidates, expected_candidates))
+            expected_acq_value = exp_acq_vals[best_idx].repeat(q).reshape_as(acq_value)
+            self.assertAllClose(acq_value, expected_acq_value)
+            self.assertAllClose(candidates, expected_candidates)
 
             # test max_batch_limit
             candidates, acq_value = optimize_acqf_discrete(
@@ -1259,9 +1268,9 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             )
             best_idcs = torch.topk(exp_acq_vals, q).indices
             expected_candidates = choices[best_idcs]
-            expected_acq_value = exp_acq_vals[best_idcs]
-            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
-            self.assertTrue(torch.allclose(candidates, expected_candidates))
+            expected_acq_value = exp_acq_vals[best_idcs].reshape_as(acq_value)
+            self.assertAllClose(acq_value, expected_acq_value)
+            self.assertAllClose(candidates, expected_candidates)
 
             # test max_batch_limit & unique
             candidates, acq_value = optimize_acqf_discrete(
@@ -1273,9 +1282,9 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             )
             best_idx = torch.argmax(exp_acq_vals)
             expected_candidates = choices[best_idx].repeat(q, 1)
-            expected_acq_value = exp_acq_vals[best_idx].repeat(q)
-            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
-            self.assertTrue(torch.allclose(candidates, expected_candidates))
+            expected_acq_value = exp_acq_vals[best_idx].repeat(q).reshape_as(acq_value)
+            self.assertAllClose(acq_value, expected_acq_value)
+            self.assertAllClose(candidates, expected_candidates)
 
         with self.assertRaises(UnsupportedError):
             acqf = MockOneShotAcquisitionFunction()
@@ -1325,7 +1334,7 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
                 unique=False,
             )
             expected_candidates = torch.tensor([[6, 4, 9], [6, 4, 9]], **tkwargs)
-            self.assertTrue(torch.allclose(candidates, expected_candidates[:q]))
+            self.assertAllClose(candidates, expected_candidates[:q])
 
             # test X_avoid and batch_initial_conditions
             candidates, acq_value = optimize_acqf_discrete_local_search(
@@ -1388,13 +1397,13 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             X_filtered = _filter_infeasible(
                 X=X, inequality_constraints=inequality_constraints
             )
-            self.assertTrue(torch.allclose(X[:2], X_filtered))
+            self.assertAllClose(X[:2], X_filtered)
 
             # test _filter_invalid
             X_filtered = _filter_invalid(X=X, X_avoid=X[1].unsqueeze(0))
-            self.assertTrue(torch.allclose(X[[0, 2]], X_filtered))
+            self.assertAllClose(X[[0, 2]], X_filtered)
             X_filtered = _filter_invalid(X=X, X_avoid=X[[0, 2]])
-            self.assertTrue(torch.allclose(X[1].unsqueeze(0), X_filtered))
+            self.assertAllClose(X[1].unsqueeze(0), X_filtered)
 
             # test _generate_neighbors
             X_loc = _generate_neighbors(
@@ -1427,4 +1436,4 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
                 min_points=20,
             )
             self.assertEqual(len(X), 20)
-            self.assertTrue(torch.allclose(torch.unique(X, dim=0), X))
+            self.assertAllClose(torch.unique(X, dim=0), X)

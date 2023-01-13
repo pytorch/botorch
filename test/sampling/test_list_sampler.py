@@ -24,6 +24,7 @@ class TestListSampler(BotorchTestCase):
         )
         self.assertIsInstance(sampler.samplers[0], IIDNormalSampler)
         self.assertIsInstance(sampler.samplers[1], StochasticSampler)
+        self.assertEqual(sampler.sample_shape, torch.Size([2]))
 
         # Test validation.
         with self.assertRaisesRegex(UnsupportedError, "all samplers to have the "):
@@ -38,7 +39,7 @@ class TestListSampler(BotorchTestCase):
         p2 = MockPosterior(samples=org_samples[:, 2:])
         p_list = PosteriorList(p1, p2)
         samples = sampler(p_list)
-        self.assertTrue(torch.allclose(samples, org_samples.repeat(2, 1, 1)))
+        self.assertAllClose(samples, org_samples.repeat(2, 1, 1))
 
         # Test _update_base_samples.
         sampler = ListSampler(

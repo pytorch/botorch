@@ -9,7 +9,7 @@ from __future__ import annotations
 import math
 import warnings
 from collections import OrderedDict
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, Union
 from unittest import TestCase
 
 import torch
@@ -49,6 +49,36 @@ class BotorchTestCase(TestCase):
             "ignore",
             message="The model inputs are of type",
             category=UserWarning,
+        )
+
+    def assertAllClose(
+        self,
+        input: torch.Tensor,
+        other: Union[torch.Tensor, float],
+        rtol: float = 1e-05,
+        atol: float = 1e-08,
+        equal_nan: bool = False,
+    ) -> None:
+        r"""
+        Calls torch.testing.assert_close, using the signature and default behavior
+        of torch.allclose.
+
+        Example output:
+            AssertionError: Scalars are not close!
+
+            Absolute difference: 1.0000034868717194 (up to 0.0001 allowed)
+            Relative difference: 0.8348668001940709 (up to 1e-05 allowed)
+        """
+        # Why not just use the signature and behavior of `torch.testing.assert_close`?
+        # Because we used `torch.allclose` for testing in the past, and the two don't
+        # behave exactly the same. In particular, `assert_close` requires both `atol`
+        # and `rtol` to be set if either one is.
+        torch.testing.assert_close(
+            input,
+            other,
+            rtol=rtol,
+            atol=atol,
+            equal_nan=equal_nan,
         )
 
 
@@ -96,7 +126,7 @@ class SyntheticTestFunctionBaseTestCase(BaseTestProblemBaseTestCase):
                 res = f(Xopt, noise=False)
                 # if we have optimizers, we have the optimal value
                 res_exp = torch.full_like(res, f.optimal_value)
-                self.assertTrue(torch.allclose(res, res_exp, atol=1e-3, rtol=1e-3))
+                self.assertAllClose(res, res_exp, atol=1e-3, rtol=1e-3)
                 if f._check_grad_at_opt:
                     grad = torch.autograd.grad([*res], Xopt)[0]
                     self.assertLess(grad.abs().max().item(), 1e-3)

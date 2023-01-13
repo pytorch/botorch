@@ -63,10 +63,64 @@ class TestOutcomeTransforms(BotorchTestCase):
         with self.assertRaises(NotImplementedError):
             oct.untransform_posterior(None)
 
+    def test_standardize_raises_when_mean_not_set(self) -> None:
+        posterior = _get_test_posterior(
+            shape=torch.Size([1, 1]), device=self.device, dtype=torch.float64
+        )
+        for transform in [
+            Standardize(m=1),
+            ChainedOutcomeTransform(
+                chained=ChainedOutcomeTransform(stand=Standardize(m=1))
+            ),
+        ]:
+            with self.assertRaises(
+                RuntimeError,
+                msg="`Standardize` transforms must be called on outcome data "
+                "(e.g. `transform(Y)`) before calling `untransform_posterior`, since "
+                "means and standard deviations need to be computed.",
+            ):
+                transform.untransform_posterior(posterior)
+
+            new_tf = transform.subset_output([0])
+            assert isinstance(new_tf, type(transform))
+
+            y = torch.arange(3, device=self.device, dtype=torch.float64)
+            with self.assertRaises(
+                RuntimeError,
+                msg="`Standardize` transforms must be called on outcome data "
+                "(e.g. `transform(Y)`) before calling `untransform`, since "
+                "means and standard deviations need to be computed.",
+            ):
+                transform.untransform(y)
+
+    def test_is_linear(self) -> None:
+        posterior = _get_test_posterior(
+            shape=torch.Size([1, 1]), device=self.device, dtype=torch.float64
+        )
+        y = torch.arange(2, dtype=torch.float64, device=self.device)[:, None]
+        standardize_tf = Standardize(m=1)
+        standardize_tf(y)
+
+        for transform in [
+            standardize_tf,
+            Power(power=0.5),
+            Log(),
+            ChainedOutcomeTransform(
+                chained=ChainedOutcomeTransform(stand=standardize_tf)
+            ),
+            ChainedOutcomeTransform(log=Log()),
+        ]:
+            posterior_is_gpt = isinstance(
+                transform.untransform_posterior(posterior), GPyTorchPosterior
+            )
+            self.assertEqual(posterior_is_gpt, transform._is_linear)
+
     def test_standardize(self):
         # test error on incompatible dim
         tf = Standardize(m=1)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(
+            RuntimeError, msg="Wrong output dimension. Y.size(-1) is 2; expected 1."
+        ):
             tf(torch.zeros(3, 2, device=self.device), None)
         # test error on incompatible batch shape
         with self.assertRaises(RuntimeError):
@@ -97,7 +151,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            self.assertTrue(torch.allclose(Y_utf, Y))
+            self.assertAllClose(Y_utf, Y)
             self.assertIsNone(Yvar_utf)
 
             # subset_output
@@ -120,12 +174,12 @@ class TestOutcomeTransforms(BotorchTestCase):
             self.assertTrue(tf.training)
             self.assertTrue(torch.all(Y_tf.mean(dim=-2).abs() < 1e-4))
             Yvar_tf_expected = Yvar / Y.std(dim=-2, keepdim=True) ** 2
-            self.assertTrue(torch.allclose(Yvar_tf, Yvar_tf_expected))
+            self.assertAllClose(Yvar_tf, Yvar_tf_expected)
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            self.assertTrue(torch.allclose(Y_utf, Y))
-            self.assertTrue(torch.allclose(Yvar_utf, Yvar))
+            self.assertAllClose(Y_utf, Y)
+            self.assertAllClose(Yvar_utf, Yvar)
 
             # untransform_posterior
             for interleaved, lazy in itertools.product((True, False), (True, False)):
@@ -144,8 +198,8 @@ class TestOutcomeTransforms(BotorchTestCase):
                 self.assertTrue(p_utf.dtype == dtype)
                 mean_expected = tf.means + tf.stdvs * posterior.mean
                 variance_expected = tf.stdvs**2 * posterior.variance
-                self.assertTrue(torch.allclose(p_utf.mean, mean_expected))
-                self.assertTrue(torch.allclose(p_utf.variance, variance_expected))
+                self.assertAllClose(p_utf.mean, mean_expected)
+                self.assertAllClose(p_utf.variance, variance_expected)
                 samples = p_utf.rsample()
                 self.assertEqual(samples.shape, torch.Size([1]) + shape)
                 samples = p_utf.rsample(sample_shape=torch.Size([4]))
@@ -173,8 +227,8 @@ class TestOutcomeTransforms(BotorchTestCase):
                 self.assertTrue(p_utf.dtype == dtype)
                 mean_expected = tf.means + tf.stdvs * posterior.mean
                 variance_expected = tf.stdvs**2 * posterior.variance
-                self.assertTrue(torch.allclose(p_utf.mean, mean_expected))
-                self.assertTrue(torch.allclose(p_utf.variance, variance_expected))
+                self.assertAllClose(p_utf.mean, mean_expected)
+                self.assertAllClose(p_utf.variance, variance_expected)
                 self.assertIsInstance(
                     p_utf.distribution.lazy_covariance_matrix, DiagLinearOperator
                 )
@@ -196,8 +250,8 @@ class TestOutcomeTransforms(BotorchTestCase):
             self.assertTrue(p_utf2.dtype == dtype)
             mean_expected = tf.means + tf.stdvs * posterior.mean
             variance_expected = tf.stdvs**2 * posterior.variance
-            self.assertTrue(torch.allclose(p_utf2.mean, mean_expected))
-            self.assertTrue(torch.allclose(p_utf2.variance, variance_expected))
+            self.assertAllClose(p_utf2.mean, mean_expected)
+            self.assertAllClose(p_utf2.variance, variance_expected)
             # TODO: Test expected covar (both interleaved and non-interleaved)
             samples = p_utf2.rsample()
             self.assertEqual(samples.shape, torch.Size([1]) + shape)
@@ -208,8 +262,15 @@ class TestOutcomeTransforms(BotorchTestCase):
 
             # test error on incompatible output dimension
             # TODO: add a unit test for MTGP posterior once #840 goes in
-            tf_big = Standardize(m=4).eval()
-            with self.assertRaises(RuntimeError):
+            tf_big = Standardize(m=4)
+            Y = torch.arange(4, device=self.device, dtype=dtype).reshape((1, 4))
+            tf_big(Y)
+            with self.assertRaises(
+                RuntimeError,
+                msg="Incompatible output dimensions encountered. Transform has output "
+                f"dimension {tf._m} and posterior has "
+                f"{posterior._extended_shape()[-1]}.",
+            ):
                 tf_big.untransform_posterior(posterior2)
 
         # test transforming a subset of outcomes
@@ -234,12 +295,12 @@ class TestOutcomeTransforms(BotorchTestCase):
             self.assertTrue(tf.training)
             Y_tf_mean = Y_tf.mean(dim=-2)
             self.assertTrue(torch.all(Y_tf_mean[..., 1].abs() < 1e-4))
-            self.assertTrue(torch.allclose(Y_tf_mean[..., 0], Y.mean(dim=-2)[..., 0]))
+            self.assertAllClose(Y_tf_mean[..., 0], Y.mean(dim=-2)[..., 0])
             self.assertIsNone(Yvar_tf)
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            self.assertTrue(torch.allclose(Y_utf, Y))
+            self.assertAllClose(Y_utf, Y)
             self.assertIsNone(Yvar_utf)
 
             # subset_output
@@ -262,15 +323,15 @@ class TestOutcomeTransforms(BotorchTestCase):
             self.assertTrue(tf.training)
             Y_tf_mean = Y_tf.mean(dim=-2)
             self.assertTrue(torch.all(Y_tf_mean[..., 1].abs() < 1e-4))
-            self.assertTrue(torch.allclose(Y_tf_mean[..., 0], Y.mean(dim=-2)[..., 0]))
+            self.assertAllClose(Y_tf_mean[..., 0], Y.mean(dim=-2)[..., 0])
             Yvar_tf_expected = Yvar / Y.std(dim=-2, keepdim=True) ** 2
-            self.assertTrue(torch.allclose(Yvar_tf[..., 1], Yvar_tf_expected[..., 1]))
-            self.assertTrue(torch.allclose(Yvar_tf[..., 0], Yvar[..., 0]))
+            self.assertAllClose(Yvar_tf[..., 1], Yvar_tf_expected[..., 1])
+            self.assertAllClose(Yvar_tf[..., 0], Yvar[..., 0])
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            self.assertTrue(torch.allclose(Y_utf, Y))
-            self.assertTrue(torch.allclose(Yvar_utf, Yvar))
+            self.assertAllClose(Y_utf, Y)
+            self.assertAllClose(Yvar_utf, Yvar)
 
             # error on untransform_posterior
             with self.assertRaises(NotImplementedError):
@@ -293,7 +354,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
             Y_tf, Yvar_tf = tf(Y, None)
             self.assertTrue(tf.training)
-            self.assertTrue(torch.allclose(Y_tf, torch.log(Y)))
+            self.assertAllClose(Y_tf, torch.log(Y))
             self.assertIsNone(Yvar_tf)
             tf.eval()
             self.assertFalse(tf.training)
@@ -334,8 +395,8 @@ class TestOutcomeTransforms(BotorchTestCase):
             variance_expected = norm_to_lognorm_variance(
                 posterior.mean, posterior.variance
             )
-            self.assertTrue(torch.allclose(p_utf.mean, mean_expected))
-            self.assertTrue(torch.allclose(p_utf.variance, variance_expected))
+            self.assertAllClose(p_utf.mean, mean_expected)
+            self.assertAllClose(p_utf.variance, variance_expected)
             samples = p_utf.rsample()
             self.assertEqual(samples.shape, torch.Size([1]) + shape)
             samples = p_utf.rsample(sample_shape=torch.Size([4]))
@@ -359,8 +420,8 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
             Y_tf, Yvar_tf = tf(Y, None)
             self.assertTrue(tf.training)
-            self.assertTrue(torch.allclose(Y_tf[..., 1], torch.log(Y[..., 1])))
-            self.assertTrue(torch.allclose(Y_tf[..., 0], Y[..., 0]))
+            self.assertAllClose(Y_tf[..., 1], torch.log(Y[..., 1]))
+            self.assertAllClose(Y_tf[..., 0], Y[..., 0])
             self.assertIsNone(Yvar_tf)
             tf.eval()
             self.assertFalse(tf.training)
@@ -419,7 +480,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y_tf_, Yvar_tf_ = tf2_(*tf1_(Y, None))
             self.assertTrue(tf.training)
             self.assertIsNone(Yvar_tf_)
-            self.assertTrue(torch.allclose(Y_tf, Y_tf_))
+            self.assertAllClose(Y_tf, Y_tf_)
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
@@ -486,7 +547,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y_tf_, Yvar_tf_ = tf2_(*tf1_(Y, None))
             self.assertTrue(tf.training)
             self.assertIsNone(Yvar_tf_)
-            self.assertTrue(torch.allclose(Y_tf, Y_tf_))
+            self.assertAllClose(Y_tf, Y_tf_)
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
@@ -525,12 +586,12 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
             Y_tf, Yvar_tf = tf(Y, None)
             self.assertTrue(tf.training)
-            self.assertTrue(torch.allclose(Y_tf, Y.pow(power)))
+            self.assertAllClose(Y_tf, Y.pow(power))
             self.assertIsNone(Yvar_tf)
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            self.assertTrue(torch.allclose(Y_utf, Y))
+            self.assertAllClose(Y_utf, Y)
             self.assertIsNone(Yvar_utf)
 
             # subset_output
@@ -584,13 +645,13 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
             Y_tf, Yvar_tf = tf(Y, None)
             self.assertTrue(tf.training)
-            self.assertTrue(torch.allclose(Y_tf[..., 1], Y[..., 1].pow(power)))
-            self.assertTrue(torch.allclose(Y_tf[..., 0], Y[..., 0]))
+            self.assertAllClose(Y_tf[..., 1], Y[..., 1].pow(power))
+            self.assertAllClose(Y_tf[..., 0], Y[..., 0])
             self.assertIsNone(Yvar_tf)
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            self.assertTrue(torch.allclose(Y_utf, Y))
+            self.assertAllClose(Y_utf, Y)
             self.assertIsNone(Yvar_utf)
 
             # subset_output
@@ -636,12 +697,12 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
             Y_tf, Yvar_tf = tf(Y, None)
             self.assertTrue(tf.training)
-            self.assertTrue(torch.allclose(Y_tf, Y.sign() * (Y.abs() + 1).log()))
+            self.assertAllClose(Y_tf, Y.sign() * (Y.abs() + 1).log())
             self.assertIsNone(Yvar_tf)
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            self.assertTrue(torch.allclose(Y_utf, Y, atol=1e-7))
+            self.assertAllClose(Y_utf, Y, atol=1e-7)
             self.assertIsNone(Yvar_utf)
 
             # subset_output
@@ -700,12 +761,12 @@ class TestOutcomeTransforms(BotorchTestCase):
                     Y_tf[..., 1], Y[..., 1].sign() * (Y[..., 1].abs() + 1).log()
                 )
             )
-            self.assertTrue(torch.allclose(Y_tf[..., 0], Y[..., 0]))
+            self.assertAllClose(Y_tf[..., 0], Y[..., 0])
             self.assertIsNone(Yvar_tf)
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            self.assertTrue(torch.allclose(Y_utf, Y))
+            self.assertAllClose(Y_utf, Y)
             self.assertIsNone(Yvar_utf)
 
             # subset_output

@@ -24,6 +24,7 @@ from typing import (
     List,
     Mapping,
     Optional,
+    TYPE_CHECKING,
     TypeVar,
     Union,
 )
@@ -31,13 +32,17 @@ from typing import (
 import numpy as np
 import torch
 from botorch import settings
+from botorch.exceptions.errors import InputDataError
 from botorch.models.utils.assorted import fantasize as fantasize_flag
 from botorch.posteriors import Posterior, PosteriorList
 from botorch.sampling.base import MCSampler
 from botorch.utils.datasets import BotorchDataset
 from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
-from torch.nn import Module, ModuleList
+from torch.nn import Module, ModuleDict, ModuleList
+
+if TYPE_CHECKING:
+    from botorch.acquisition.objective import PosteriorTransform  # pragma: no cover
 
 TFantasizeMixin = TypeVar("TFantasizeMixin", bound="FantasizeMixin")
 
@@ -76,7 +81,7 @@ class Model(Module, ABC):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
-        posterior_transform: Optional[Callable[[Posterior], Posterior]] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         **kwargs: Any,
     ) -> Posterior:
         r"""Computes the posterior over model outputs at the provided points.
@@ -335,8 +340,7 @@ class FantasizeMixin(ABC):
 class ModelList(Model):
     r"""A multi-output Model represented by a list of independent models.
 
-    All
-    BoTorch models are acceptable as inputs. The cost of this flexibility is
+    All BoTorch models are acceptable as inputs. The cost of this flexibility is
     that `ModelList` does not support all methods that may be implemented by its
     component models. One use case for `ModelList` is combining a regression
     model and a deterministic model in one multi-output container model, e.g.
@@ -353,7 +357,7 @@ class ModelList(Model):
             >>> m_1 = SingleTaskGP(train_X, train_Y)
             >>> m_2 = GenericDeterministicModel(lambda x: x.sum(dim=-1))
             >>> m_12 = ModelList(m_1, m_2)
-            >>> m_12.predict(test_X)
+            >>> m_12.posterior(test_X)
         """
         super().__init__()
         self.models = ModuleList(models)
@@ -388,7 +392,7 @@ class ModelList(Model):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
-        posterior_transform: Optional[Callable[[Posterior], Posterior]] = None,
+        posterior_transform: Optional[Callable[[PosteriorList], Posterior]] = None,
         **kwargs: Any,
     ) -> Posterior:
         r"""Computes the posterior over model outputs at the provided points.
@@ -511,3 +515,20 @@ class ModelList(Model):
                 }
                 m.load_state_dict(filtered_dict)
         super().load_state_dict(state_dict=state_dict, strict=strict)
+
+
+class ModelDict(ModuleDict):
+    r"""A lightweight container mapping model names to models."""
+
+    def __init__(self, **models: Model) -> None:
+        r"""Initialize a `ModelDict`.
+
+        Args:
+            models: An arbitrary number of models. Each model can be any type
+                of BoTorch `Model`, including multi-output models and `ModelList`.
+        """
+        if any(not isinstance(m, Model) for m in models.values()):
+            raise InputDataError(
+                f"Expected all models to be a BoTorch `Model`. Got {models}."
+            )
+        super().__init__(modules=models)

@@ -98,4 +98,4 @@ class TestTransformedPosterior(BotorchTestCase):
                 mean_transform=lambda x, _: x + 1,
             )
             transformed_mean = transformed_post.mean
-            self.assertTrue(torch.allclose(transformed_mean, torch.ones(5)))
+            self.assertAllClose(transformed_mean, torch.ones(5))

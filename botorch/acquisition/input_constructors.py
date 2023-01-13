@@ -32,6 +32,10 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.analytic import (
     ConstrainedExpectedImprovement,
     ExpectedImprovement,
+    LogConstrainedExpectedImprovement,
+    LogExpectedImprovement,
+    LogNoisyExpectedImprovement,
+    LogProbabilityOfImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
@@ -271,7 +275,12 @@ def construct_inputs_analytic_base(
     }
 
 
-@acqf_input_constructor(ExpectedImprovement, ProbabilityOfImprovement)
+@acqf_input_constructor(
+    ExpectedImprovement,
+    LogExpectedImprovement,
+    ProbabilityOfImprovement,
+    LogProbabilityOfImprovement,
+)
 def construct_inputs_best_f(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
@@ -342,7 +351,9 @@ def construct_inputs_ucb(
     return {**base_inputs, "beta": beta, "maximize": maximize}
 
 
-@acqf_input_constructor(ConstrainedExpectedImprovement)
+@acqf_input_constructor(
+    ConstrainedExpectedImprovement, LogConstrainedExpectedImprovement
+)
 def construct_inputs_constrained_ei(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
@@ -377,7 +388,7 @@ def construct_inputs_constrained_ei(
     raise NotImplementedError  # pragma: nocover
 
 
-@acqf_input_constructor(NoisyExpectedImprovement)
+@acqf_input_constructor(NoisyExpectedImprovement, LogNoisyExpectedImprovement)
 def construct_inputs_noisy_ei(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],

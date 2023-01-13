@@ -139,11 +139,11 @@ class TestSingleTaskGP(BotorchTestCase):
                 pp_tf = model.posterior(X, observation_noise=True)
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(pp_tf).variance
-                self.assertTrue(torch.allclose(posterior_pred.variance, expected_var))
+                self.assertAllClose(posterior_pred.variance, expected_var)
             else:
                 pvar = posterior_pred.variance
                 pvar_exp = _get_pvar_expected(posterior, model, X, m)
-                self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
+                self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
             # test batch evaluation
             X = torch.rand(2, *batch_shape, 3, 1, **tkwargs)
@@ -163,11 +163,11 @@ class TestSingleTaskGP(BotorchTestCase):
                 pp_tf = model.posterior(X, observation_noise=True)
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(pp_tf).variance
-                self.assertTrue(torch.allclose(posterior_pred.variance, expected_var))
+                self.assertAllClose(posterior_pred.variance, expected_var)
             else:
                 pvar = posterior_pred.variance
                 pvar_exp = _get_pvar_expected(posterior, model, X, m)
-                self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
+                self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
     def test_custom_init(self):
         extra_model_kwargs = self._get_extra_model_kwargs()
@@ -349,6 +349,12 @@ class TestSingleTaskGP(BotorchTestCase):
                     p_sub.variance, p.variance[..., [0]], atol=1e-4, rtol=1e-4
                 )
             )
+            # test subsetting each of the outputs (follows a different code branch)
+            subset_all_model = model.subset_output([0, 1])
+            p_sub_all = subset_all_model.posterior(X)
+            self.assertAllClose(p_sub_all.mean, p.mean)
+            # subsetting should still return a copy
+            self.assertNotEqual(model, subset_all_model)
 
     def test_construct_inputs(self):
         for batch_shape, dtype in itertools.product(

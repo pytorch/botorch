@@ -481,11 +481,9 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                     torch.manual_seed(0)
                     val2 = acqf_no_cache(test_X2)
                 mock_sample_cached.assert_not_called()
-                self.assertTrue(torch.allclose(val, val2, **all_close_kwargs))
+                self.assertAllClose(val, val2, **all_close_kwargs)
                 val2.sum().backward()
-                self.assertTrue(
-                    torch.allclose(X_grad, test_X2.grad, **all_close_kwargs)
-                )
+                self.assertAllClose(X_grad, test_X2.grad, **all_close_kwargs)
             # test we fall back to standard sampling for
             # ill-conditioned covariances
             acqf._baseline_L = torch.zeros_like(acqf._baseline_L)

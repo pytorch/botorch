@@ -13,7 +13,7 @@ from __future__ import annotations
 import warnings
 
 from contextlib import ExitStack
-from typing import Optional, Tuple
+from typing import Optional, Tuple, TYPE_CHECKING, Union
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -29,9 +29,13 @@ from linear_operator.operators import (
 from torch import Tensor
 from torch.distributions import Normal
 
+if TYPE_CHECKING:
+    from botorch.posteriors.posterior_list import PosteriorList  # pragma: no cover
+
 
 class GPyTorchPosterior(TorchPosterior):
     r"""A posterior based on GPyTorch's multi-variate Normal distributions."""
+    distribution: MultivariateNormal
 
     def __init__(
         self,
@@ -233,10 +237,26 @@ class GPyTorchPosterior(TorchPosterior):
         return marginal.log_prob(value).exp()
 
 
-def scalarize_posterior(
-    posterior: GPyTorchPosterior, weights: Tensor, offset: float = 0.0
-) -> GPyTorchPosterior:
-    r"""Affine transformation of a multi-output posterior.
+def _validate_scalarize_inputs(weights: Tensor, m: int) -> None:
+    if weights.ndim > 1:
+        raise BotorchTensorDimensionError("`weights` must be one-dimensional")
+    if m != weights.size(0):
+        raise RuntimeError(
+            f"Output shape not equal to that of weights. Output shape is {m} and "
+            f"weights are {weights.shape}"
+        )
+
+
+def scalarize_posterior_gpytorch(
+    posterior: GPyTorchPosterior,
+    weights: Tensor,
+    offset: float = 0.0,
+) -> Tuple[Tensor, Union[Tensor, LinearOperator]]:
+    r"""Helper function for `scalarize_posterior`, producing a mean and
+    variance.
+
+    This mean and variance are consumed by `scalarize_posterior` to produce
+    a `GPyTorchPosterior`.
 
     Args:
         posterior: The posterior over `m` outcomes to be scalarized.
@@ -255,23 +275,21 @@ def scalarize_posterior(
         >>> X = torch.rand(1, 2)
         >>> posterior = model.posterior(X)
         >>> weights = torch.tensor([0.5, 0.25])
-        >>> new_posterior = scalarize_posterior(posterior, weights=weights)
+        >>> mean, cov = scalarize_posterior_gpytorch(posterior, weights=weights)
+        >>> mvn = MultivariateNormal(mean, cov)
+        >>> new_posterior = GPyTorchPosterior
     """
-    if weights.ndim > 1:
-        raise BotorchTensorDimensionError("`weights` must be one-dimensional")
     mean = posterior.mean
     q, m = mean.shape[-2:]
+    _validate_scalarize_inputs(weights, m)
     batch_shape = mean.shape[:-2]
-    if m != weights.size(0):
-        raise RuntimeError("Output shape not equal to that of weights")
     mvn = posterior.distribution
     cov = mvn.lazy_covariance_matrix if mvn.islazy else mvn.covariance_matrix
 
     if m == 1:  # just scaling, no scalarization necessary
         new_mean = offset + (weights[0] * mean).view(*batch_shape, q)
         new_cov = weights[0] ** 2 * cov
-        new_mvn = MultivariateNormal(new_mean, new_cov)
-        return GPyTorchPosterior(new_mvn)
+        return new_mean, new_cov
 
     new_mean = offset + (mean @ weights).view(*batch_shape, q)
 
@@ -292,8 +310,7 @@ def scalarize_posterior(
                         for i in range(cov.base_linear_op.size(-3))
                     ]
                 )
-                new_mvn = MultivariateNormal(new_mean, new_cov)
-                return GPyTorchPosterior(new_mvn)
+                return new_mean, new_cov
 
             w_cov = torch.repeat_interleave(weights, q).unsqueeze(0)
             sum_shape = batch_shape + torch.Size([m, q, m, q])
@@ -307,5 +324,70 @@ def scalarize_posterior(
             cov_scaled = cov_scaled.to_dense()
         new_cov = cov_scaled.view(sum_shape).sum(dim=sum_dims[0]).sum(dim=sum_dims[1])
 
-    new_mvn = MultivariateNormal(new_mean, new_cov)
-    return GPyTorchPosterior(new_mvn)
+    return new_mean, new_cov
+
+
+def scalarize_posterior(
+    posterior: Union[GPyTorchPosterior, PosteriorList],
+    weights: Tensor,
+    offset: float = 0.0,
+) -> GPyTorchPosterior:
+    r"""Affine transformation of a multi-output posterior.
+
+    Args:
+        posterior: The posterior over `m` outcomes to be scalarized.
+            Supports `t`-batching. Can be either a `GPyTorchPosterior`,
+            or a `PosteriorList` that contains GPyTorchPosteriors all with q=1.
+        weights: A tensor of weights of size `m`.
+        offset: The offset of the affine transformation.
+
+    Returns:
+        The transformed (single-output) posterior. If the input posterior has
+            mean `mu` and covariance matrix `Sigma`, this posterior has mean
+            `weights^T * mu` and variance `weights^T Sigma w`.
+
+    Example:
+        Example for a model with two outcomes:
+
+        >>> X = torch.rand(1, 2)
+        >>> posterior = model.posterior(X)
+        >>> weights = torch.tensor([0.5, 0.25])
+        >>> new_posterior = scalarize_posterior(posterior, weights=weights)
+    """
+    # GPyTorchPosterior case
+    if hasattr(posterior, "distribution"):
+        mean, cov = scalarize_posterior_gpytorch(posterior, weights, offset)
+        mvn = MultivariateNormal(mean, cov)
+        return GPyTorchPosterior(mvn)
+
+    # PosteriorList case
+    if not hasattr(posterior, "posteriors"):
+        raise NotImplementedError(
+            "scalarize_posterior only works with a posterior that has an attribute "
+            "`distribution`, such as a GPyTorchPosterior, or a posterior that contains "
+            "sub-posteriors in an attribute `posteriors`, as in a PosteriorList."
+        )
+
+    mean = posterior.mean
+    q, m = mean.shape[-2:]
+
+    _validate_scalarize_inputs(weights, m)
+    batch_shape = mean.shape[:-2]
+
+    if q != 1:
+        raise NotImplementedError(
+            "scalarize_posterior only works with a PosteriorList if each sub-posterior "
+            "has q=1."
+        )
+
+    means = [post.mean for post in posterior.posteriors]
+    if {mean.shape[-1] for mean in means} != {1}:
+        raise NotImplementedError(
+            "scalarize_posterior only works with a PosteriorList if each sub-posterior "
+            "has one outcome."
+        )
+
+    new_mean = offset + (mean @ weights).view(*batch_shape, q)
+    new_cov = (posterior.variance @ (weights**2))[:, None]
+    mvn = MultivariateNormal(new_mean, new_cov)
+    return GPyTorchPosterior(mvn)

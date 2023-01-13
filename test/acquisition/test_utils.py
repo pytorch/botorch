@@ -217,6 +217,23 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
         self.assertEqual(kwargs["marginalize_dim"], 0)
+        self.assertEqual(kwargs["cache_root"], True)
+        # test with cache_root = False
+        acqf = get_acquisition_function(
+            acquisition_function_name="qNEI",
+            model=self.model,
+            objective=self.objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            seed=self.seed,
+            marginalize_dim=0,
+            cache_root=False,
+        )
+        self.assertTrue(acqf == mock_acqf.return_value)
+        self.assertTrue(mock_acqf.call_count, 1)
+        args, kwargs = mock_acqf.call_args
+        self.assertEqual(kwargs["cache_root"], False)
         # test with non-qmc, no X_pending
         acqf = get_acquisition_function(
             acquisition_function_name="qNEI",
@@ -571,22 +588,22 @@ class TestGetInfeasibleCost(BotorchTestCase):
             M = get_infeasible_cost(
                 X=X, model=mm, objective=lambda Y: Y.squeeze(-1) - 5.0
             )
-            self.assertTrue(torch.allclose(M, torch.tensor([6.0], **tkwargs)))
+            self.assertAllClose(M, torch.tensor([6.0], **tkwargs))
             # Test default objective (squeeze last dim).
             M2 = get_infeasible_cost(X=X, model=mm)
-            self.assertTrue(torch.allclose(M2, torch.tensor([1.0], **tkwargs)))
+            self.assertAllClose(M2, torch.tensor([1.0], **tkwargs))
             # Test multi-output.
             m_ = means.repeat(1, 2)
             m_[:, 1] -= 10
             mm = MockModel(MockPosterior(mean=m_, variance=variances.expand(-1, 2)))
             M3 = get_infeasible_cost(X=X, model=mm)
-            self.assertTrue(torch.allclose(M3, torch.tensor([1.0, 11.0], **tkwargs)))
+            self.assertAllClose(M3, torch.tensor([1.0, 11.0], **tkwargs))
             # With a batched model.
             means = means.expand(2, 4, -1, -1)
             variances = variances.expand(2, 4, -1, -1)
             mm = MockModel(MockPosterior(mean=means, variance=variances))
             M4 = get_infeasible_cost(X=X, model=mm)
-            self.assertTrue(torch.allclose(M4, torch.tensor([1.0], **tkwargs)))
+            self.assertAllClose(M4, torch.tensor([1.0], **tkwargs))
 
 
 class TestPruneInferiorPoints(BotorchTestCase):
@@ -729,7 +746,7 @@ class TestFidelityUtils(BotorchTestCase):
             grad_exp[..., fdims] = 1 + sum(
                 (i + 1) / (num_tr + 1) for i in range(num_tr)
             )
-            self.assertTrue(torch.allclose(X.grad, grad_exp))
+            self.assertAllClose(X.grad, grad_exp)
 
     def test_project_to_sample_points(self):
         for batch_shape, dtype in itertools.product(
@@ -741,10 +758,6 @@ class TestFidelityUtils(BotorchTestCase):
             X_augmented = project_to_sample_points(X=X, sample_points=sample_points)
             self.assertEqual(X_augmented.shape, torch.Size(batch_shape + [p, d]))
             if batch_shape == [2]:
-                self.assertTrue(
-                    torch.allclose(X_augmented[0, :, -d_prime:], sample_points)
-                )
+                self.assertAllClose(X_augmented[0, :, -d_prime:], sample_points)
             else:
-                self.assertTrue(
-                    torch.allclose(X_augmented[:, -d_prime:], sample_points)
-                )
+                self.assertAllClose(X_augmented[:, -d_prime:], sample_points)

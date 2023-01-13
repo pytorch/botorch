@@ -14,9 +14,9 @@ from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import ModelListGP
 from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
-from botorch.models.transforms import Standardize
 from botorch.models.transforms.input import Normalize
-from botorch.posteriors import GPyTorchPosterior
+from botorch.models.transforms.outcome import ChainedOutcomeTransform, Log, Standardize
+from botorch.posteriors import GPyTorchPosterior, PosteriorList, TransformedPosterior
 from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
@@ -28,14 +28,34 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 from gpytorch.priors import GammaPrior
 
 
-def _get_model(fixed_noise=False, use_octf=False, use_intf=False, **tkwargs):
+def _get_model(
+    fixed_noise=False, outcome_transform: str = "None", use_intf=False, **tkwargs
+) -> ModelListGP:
     train_x1, train_y1 = _get_random_data(
         batch_shape=torch.Size(), m=1, n=10, **tkwargs
     )
+    train_y1 = torch.exp(train_y1)
     train_x2, train_y2 = _get_random_data(
         batch_shape=torch.Size(), m=1, n=11, **tkwargs
     )
-    octfs = [Standardize(m=1), Standardize(m=1)] if use_octf else [None, None]
+    if outcome_transform == "Standardize":
+        octfs = [Standardize(m=1), Standardize(m=1)]
+    elif outcome_transform == "Log":
+        octfs = [Log(), Standardize(m=1)]
+    elif outcome_transform == "Chained":
+        octfs = [
+            ChainedOutcomeTransform(
+                chained=ChainedOutcomeTransform(log=Log(), standardize=Standardize(m=1))
+            ),
+            Standardize(m=1),
+        ]
+    elif outcome_transform == "None":
+        octfs = [None, None]
+    else:
+        raise KeyError(  # pragma: no cover
+            "outcome_transform must be one of 'Standardize', 'Log', 'Chained', or "
+            "'None'."
+        )
     intfs = [Normalize(d=1), Normalize(d=1)] if use_intf else [None, None]
     if fixed_noise:
         train_y1_var = 0.1 + 0.1 * torch.rand_like(train_y1, **tkwargs)
@@ -73,10 +93,12 @@ def _get_model(fixed_noise=False, use_octf=False, use_intf=False, **tkwargs):
 
 class TestModelListGP(BotorchTestCase):
     def _base_test_ModelListGP(
-        self, fixed_noise: bool, dtype, use_octf: bool
+        self, fixed_noise: bool, dtype, outcome_transform: str
     ) -> ModelListGP:
         tkwargs = {"device": self.device, "dtype": dtype}
-        model = _get_model(fixed_noise=fixed_noise, use_octf=use_octf, **tkwargs)
+        model = _get_model(
+            fixed_noise=fixed_noise, outcome_transform=outcome_transform, **tkwargs
+        )
         self.assertIsInstance(model, ModelListGP)
         self.assertIsInstance(model.likelihood, LikelihoodList)
         for m in model.models:
@@ -85,8 +107,12 @@ class TestModelListGP(BotorchTestCase):
             matern_kernel = m.covar_module.base_kernel
             self.assertIsInstance(matern_kernel, MaternKernel)
             self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
-            if use_octf:
-                self.assertIsInstance(m.outcome_transform, Standardize)
+            if outcome_transform != "None":
+                self.assertIsInstance(
+                    m.outcome_transform, (Log, Standardize, ChainedOutcomeTransform)
+                )
+            else:
+                assert not hasattr(m, "outcome_transform")
 
         # test constructing likelihood wrapper
         mll = SumMarginalLogLikelihood(model.likelihood, model)
@@ -121,9 +147,19 @@ class TestModelListGP(BotorchTestCase):
         # test posterior
         test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
         posterior = model.posterior(test_x)
-        self.assertIsInstance(posterior, GPyTorchPosterior)
-        self.assertIsInstance(posterior.distribution, MultitaskMultivariateNormal)
-        if use_octf:
+        gpytorch_posterior_expected = outcome_transform in ("None", "Standardize")
+        expected_type = (
+            GPyTorchPosterior if gpytorch_posterior_expected else PosteriorList
+        )
+        self.assertIsInstance(posterior, expected_type)
+        submodel = model.models[0]
+        p0 = submodel.posterior(test_x)
+        self.assertAllClose(posterior.mean[:, [0]], p0.mean)
+        self.assertAllClose(posterior.variance[:, [0]], p0.variance)
+
+        if gpytorch_posterior_expected:
+            self.assertIsInstance(posterior.distribution, MultitaskMultivariateNormal)
+        if outcome_transform != "None":
             # ensure un-transformation is applied
             submodel = model.models[0]
             p0 = submodel.posterior(test_x)
@@ -132,12 +168,13 @@ class TestModelListGP(BotorchTestCase):
             p0_tf = submodel.posterior(test_x)
             submodel.outcome_transform = tmp_tf
             expected_var = tmp_tf.untransform_posterior(p0_tf).variance
-            self.assertTrue(torch.allclose(p0.variance, expected_var))
+            self.assertAllClose(p0.variance, expected_var)
 
         # test output_indices
         posterior = model.posterior(test_x, output_indices=[0], observation_noise=True)
-        self.assertIsInstance(posterior, GPyTorchPosterior)
-        self.assertIsInstance(posterior.distribution, MultivariateNormal)
+        self.assertIsInstance(posterior, expected_type)
+        if gpytorch_posterior_expected:
+            self.assertIsInstance(posterior.distribution, MultivariateNormal)
 
         # test condition_on_observations
         f_x = [torch.rand(2, 1, **tkwargs) for _ in range(2)]
@@ -176,39 +213,50 @@ class TestModelListGP(BotorchTestCase):
         X = torch.rand(3, 1, **tkwargs)
         weights = torch.tensor([1, 2], **tkwargs)
         post_tf = ScalarizedPosteriorTransform(weights=weights)
-        posterior_tf = model.posterior(X, posterior_transform=post_tf)
-        self.assertTrue(
-            torch.allclose(
-                posterior_tf.mean,
-                model.posterior(X).mean @ weights.unsqueeze(-1),
+        if gpytorch_posterior_expected:
+            posterior_tf = model.posterior(X, posterior_transform=post_tf)
+            self.assertTrue(
+                torch.allclose(
+                    posterior_tf.mean,
+                    model.posterior(X).mean @ weights.unsqueeze(-1),
+                )
             )
-        )
 
         return model
 
     def test_ModelListGP(self) -> None:
-        for dtype, use_octf in itertools.product(
-            (torch.float, torch.double), (False, True)
+        for dtype, outcome_transform in itertools.product(
+            (torch.float, torch.double), ("None", "Standardize", "Log", "Chained")
         ):
 
             model = self._base_test_ModelListGP(
-                fixed_noise=False, dtype=dtype, use_octf=use_octf
+                fixed_noise=False, dtype=dtype, outcome_transform=outcome_transform
             )
             tkwargs = {"device": self.device, "dtype": dtype}
 
             # test observation_noise
             test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
             posterior = model.posterior(test_x, observation_noise=True)
-            self.assertIsInstance(posterior, GPyTorchPosterior)
-            self.assertIsInstance(posterior.distribution, MultitaskMultivariateNormal)
+
+            gpytorch_posterior_expected = outcome_transform in ("None", "Standardize")
+            expected_type = (
+                GPyTorchPosterior if gpytorch_posterior_expected else PosteriorList
+            )
+            self.assertIsInstance(posterior, expected_type)
+            if gpytorch_posterior_expected:
+                self.assertIsInstance(
+                    posterior.distribution, MultitaskMultivariateNormal
+                )
+            else:
+                self.assertIsInstance(posterior.posteriors[0], TransformedPosterior)
 
     def test_ModelListGP_fixed_noise(self) -> None:
 
-        for dtype, use_octf in itertools.product(
-            (torch.float, torch.double), (False, True)
+        for dtype, outcome_transform in itertools.product(
+            (torch.float, torch.double), ("None", "Standardize")
         ):
             model = self._base_test_ModelListGP(
-                fixed_noise=True, dtype=dtype, use_octf=use_octf
+                fixed_noise=True, dtype=dtype, outcome_transform=outcome_transform
             )
             tkwargs = {"device": self.device, "dtype": dtype}
             f_x = [torch.rand(2, 1, **tkwargs) for _ in range(2)]

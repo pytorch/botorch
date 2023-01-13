@@ -193,7 +193,7 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
         model_2 = SingleTaskVariationalGP(train_X=train_X_2, inducing_points=5)
         model_2_inducing = model_2.model.variational_strategy.inducing_points
 
-        self.assertTrue(torch.allclose(model_1_inducing, model_2_inducing))
+        self.assertAllClose(model_1_inducing, model_2_inducing)
 
         # multi-task
         model_1 = SingleTaskVariationalGP(
@@ -211,7 +211,7 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
             model_2.model.variational_strategy.base_variational_strategy.inducing_points
         )
 
-        self.assertTrue(torch.allclose(model_1_inducing, model_2_inducing))
+        self.assertAllClose(model_1_inducing, model_2_inducing)
 
         # batched inputs
         train_X_1 = torch.rand(2, 15, 1, device=self.device)
@@ -231,4 +231,4 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
 
         self.assertTrue(model_1_inducing.shape == (2, 5, 1))
         self.assertTrue(model_2_inducing.shape == (2, 5, 1))
-        self.assertTrue(torch.allclose(model_1_inducing, model_2_inducing))
+        self.assertAllClose(model_1_inducing, model_2_inducing)

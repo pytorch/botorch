@@ -18,6 +18,7 @@ from botorch.exceptions import UnsupportedError
 from botorch.posteriors import Posterior
 from botorch.posteriors.higher_order import HigherOrderGPPosterior
 from botorch.posteriors.multitask import MultitaskGPPosterior
+from botorch.posteriors.transformed import TransformedPosterior
 from botorch.sampling.base import MCSampler
 from botorch.utils.sampling import draw_sobol_normal_samples, manual_seed
 from torch import Tensor
@@ -112,8 +113,13 @@ class NormalMCSampler(MCSampler, ABC):
                     ..., -n_train_samples:
                 ]
             else:
+                batch_shape = (
+                    posterior._posterior.batch_shape
+                    if isinstance(posterior, TransformedPosterior)
+                    else posterior.batch_shape
+                )
                 single_output = (
-                    len(posterior.base_sample_shape) - len(posterior.batch_shape)
+                    len(posterior.base_sample_shape) - len(batch_shape)
                 ) == 1
                 if single_output:
                     self.base_samples[
@@ -200,7 +206,4 @@ class SobolQMCNormalSampler(NormalMCSampler):
             )
             base_samples = base_samples.view(target_shape)
             self.register_buffer("base_samples", base_samples)
-        if self.base_samples.device != posterior.device:
-            self.to(device=posterior.device)  # pragma: nocover
-        if self.base_samples.dtype != posterior.dtype:
-            self.to(dtype=posterior.dtype)
+        self.to(device=posterior.device, dtype=posterior.dtype)

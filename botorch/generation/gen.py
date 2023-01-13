@@ -10,6 +10,7 @@ Candidate generation utilities.
 
 from __future__ import annotations
 
+import time
 import warnings
 from functools import partial
 from typing import Any, Callable, Dict, List, NoReturn, Optional, Tuple, Type, Union
@@ -29,7 +30,7 @@ from botorch.optim.parameter_constraints import (
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
 from botorch.optim.utils import _filter_kwargs, columnwise_clamp, fix_features
-from scipy.optimize import minimize
+from botorch.optim.utils.timeout import minimize_with_timeout
 from scipy.optimize.optimize import OptimizeResult
 from torch import Tensor
 from torch.optim import Optimizer
@@ -47,6 +48,7 @@ def gen_candidates_scipy(
     nonlinear_inequality_constraints: Optional[List[Callable]] = None,
     options: Optional[Dict[str, Any]] = None,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
+    timeout_sec: Optional[float] = None,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of candidates using `scipy.optimize.minimize`.
 
@@ -80,6 +82,9 @@ def gen_candidates_scipy(
             If the dictionary value is None, then that feature will just be
             fixed to the clamped value and not optimized. Assumes values to be
             compatible with lower_bounds and upper_bounds!
+        timeout_sec: Timeout (in seconds) for `scipy.optimize.minimize` routine -
+            if provided, optimization will stop after this many seconds and return
+            the best solution found so far.
 
     Returns:
         2-element tuple containing
@@ -140,6 +145,7 @@ def gen_candidates_scipy(
             equality_constraints=_no_fixed_features.equality_constraints,
             options=options,
             fixed_features=None,
+            timeout_sec=timeout_sec,
         )
         clamped_candidates = _no_fixed_features.acquisition_function._construct_X_full(
             clamped_candidates
@@ -221,7 +227,7 @@ def gen_candidates_scipy(
     def f(x):
         return -acquisition_function(x)
 
-    res = minimize(
+    res = minimize_with_timeout(
         fun=f_np_wrapper,
         args=(f,),
         x0=x0,
@@ -235,6 +241,7 @@ def gen_candidates_scipy(
             for k, v in options.items()
             if k not in ["method", "callback", "with_grad"]
         },
+        timeout_sec=timeout_sec,
     )
     _process_scipy_result(res=res, options=options)
 
@@ -273,6 +280,7 @@ def gen_candidates_torch(
     options: Optional[Dict[str, Union[float, str]]] = None,
     callback: Optional[Callable[[int, Tensor, Tensor], NoReturn]] = None,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
+    timeout_sec: Optional[float] = None,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of candidates using a `torch.optim` optimizer.
 
@@ -296,6 +304,9 @@ def gen_candidates_torch(
             If the dictionary value is None, then that feature will just be
             fixed to the clamped value and not optimized. Assumes values to be
             compatible with lower_bounds and upper_bounds!
+        timeout_sec: Timeout (in seconds) for optimization. If provided,
+            `gen_candidates_torch` will stop after this many seconds and return
+            the best solution found so far.
 
     Returns:
         2-element tuple containing
@@ -316,6 +327,7 @@ def gen_candidates_torch(
                 upper_bounds=bounds[1],
             )
     """
+    start_time = time.monotonic()
     options = options or {}
 
     # if there are fixed features we may optimize over a domain of lower dimension
@@ -331,6 +343,7 @@ def gen_candidates_torch(
         )
 
         # call the routine with no fixed_features
+        elapsed = time.monotonic() - start_time
         clamped_candidates, batch_acquisition = gen_candidates_torch(
             initial_conditions=subproblem.initial_conditions,
             acquisition_function=subproblem.acquisition_function,
@@ -340,6 +353,7 @@ def gen_candidates_torch(
             options=options,
             callback=callback,
             fixed_features=None,
+            timeout_sec=timeout_sec - elapsed if timeout_sec else None,
         )
         clamped_candidates = subproblem.acquisition_function._construct_X_full(
             clamped_candidates
@@ -372,6 +386,11 @@ def gen_candidates_torch(
 
         _optimizer.step(assign_grad)
         stop = stopping_criterion.evaluate(fvals=loss.detach())
+        if timeout_sec is not None:
+            runtime = time.monotonic() - start_time
+            if runtime > timeout_sec:
+                stop = True
+                logger.info(f"Optimization timed out after {runtime} seconds.")
 
     clamped_candidates = _clamp(clamped_candidates)
     with torch.no_grad():
@@ -435,11 +454,25 @@ def _process_scipy_result(res: OptimizeResult, options: Dict[str, Any]) -> None:
                 "`scipy.minimize` exited by reaching the function evaluation limit of "
                 f"`maxfun: {options.get('maxfun')}`."
             )
+        elif "Optimization timed out after" in res.message:
+            logger.info(res.message)
         else:
             with warnings.catch_warnings():
                 warnings.simplefilter("always", category=OptimizationWarning)
                 warnings.warn(
                     f"Optimization failed within `scipy.optimize.minimize` with status "
-                    f"{res.status}.",
+                    f"{res.status} and message {res.message}.",
                     OptimizationWarning,
                 )
+
+
+def minimize(*args, **kwargs):
+    """Deprecated, use `botorch.generation.gen.minimize_with_timeout`."""
+    # TODO: Reap this after the next stable Ax release.
+    warnings.warn(
+        "`botorch.generation.gen.minimize` is an alias for "
+        "`botorch.generation.gen.minimize_with_timeout` and will "
+        "be removed in a future release.",
+        DeprecationWarning,
+    )
+    return minimize_with_timeout(*args, **kwargs)

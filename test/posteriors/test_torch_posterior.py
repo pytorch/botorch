@@ -23,6 +23,12 @@ class TestTorchPosterior(BotorchTestCase):
                 posterior.rsample(torch.Size([5])).shape, torch.Size([5, 1, 2])
             )
             self.assertTrue(torch.equal(posterior.rate, rate))
+            # test sampling with no size provided
+            samples_with_unspecified_size = posterior.rsample()
+            self.assertEqual(
+                samples_with_unspecified_size.shape,
+                posterior._batch_shape + posterior._event_shape,
+            )
             # Single quantile & density.
             q_value = torch.tensor([0.5], **tkwargs)
             self.assertTrue(
@@ -44,8 +50,8 @@ class TestTorchPosterior(BotorchTestCase):
             expected = torch.stack(
                 [posterior.distribution.icdf(q) for q in q_value], dim=0
             )
-            self.assertTrue(torch.allclose(posterior.quantile(q_value), expected))
+            self.assertAllClose(posterior.quantile(q_value), expected)
             expected = torch.stack(
                 [posterior.distribution.log_prob(q).exp() for q in q_value], dim=0
             )
-            self.assertTrue(torch.allclose(posterior.density(q_value), expected))
+            self.assertAllClose(posterior.density(q_value), expected)

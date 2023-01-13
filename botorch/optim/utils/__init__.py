@@ -18,7 +18,6 @@ from botorch.optim.utils.common import (
 )
 from botorch.optim.utils.model_utils import (
     _get_extra_mll_args,
-    allclose_mll,
     get_data_loader,
     get_name_filter,
     get_parameters,
@@ -32,13 +31,13 @@ from botorch.optim.utils.numpy_utils import (
     get_tensors_as_ndarray_1d,
     set_tensors_from_ndarray_1d,
 )
+from botorch.optim.utils.timeout import minimize_with_timeout
 
 __all__ = [
     "_filter_kwargs",
     "_get_extra_mll_args",
     "_handle_numerical_errors",
     "_warning_handler_template",
-    "allclose_mll",
     "as_ndarray",
     "columnwise_clamp",
     "DEFAULT",
@@ -50,6 +49,7 @@ __all__ = [
     "get_parameters_and_bounds",
     "get_tensors_as_ndarray_1d",
     "get_X_baseline",
+    "minimize_with_timeout",
     "sample_all_priors",
     "set_tensors_from_ndarray_1d",
     "TorchAttr",

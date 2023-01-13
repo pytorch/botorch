@@ -297,7 +297,7 @@ class TestBoxDecomposition_no_set_up(BotorchTestCase):
         box_decomp = Box_Decomp_cls(ref_point=ref_point, Y=Y)
         hv = box_decomp.compute_hypervolume()
         self.assertEqual(hv.shape, (batch_dim,))
-        self.assertTrue(torch.allclose(hv, torch.ones(batch_dim)))
+        self.assertAllClose(hv, torch.ones(batch_dim))
 
         # no batching
         Y = torch.ones(n, n_outcomes)
@@ -305,7 +305,7 @@ class TestBoxDecomposition_no_set_up(BotorchTestCase):
         box_decomp = Box_Decomp_cls(ref_point=ref_point, Y=Y)
         hv = box_decomp.compute_hypervolume()
         self.assertEqual(hv.shape, ())
-        self.assertTrue(torch.allclose(hv, torch.tensor(1.0)))
+        self.assertAllClose(hv, torch.tensor(1.0))
 
         # cases where there is nothing in Y, either because n=0 or Y is None
         n = 0
@@ -318,7 +318,7 @@ class TestBoxDecomposition_no_set_up(BotorchTestCase):
             box_decomp = Box_Decomp_cls(ref_point=ref_point, Y=Y)
             hv = box_decomp.compute_hypervolume()
             self.assertEqual(hv.shape, expected_shape)
-            self.assertTrue(torch.allclose(hv, torch.tensor(0.0)))
+            self.assertAllClose(hv, torch.zeros(expected_shape))
 
     def test_hypervolume(self) -> None:
         for cl in [
