@@ -12,6 +12,7 @@ from botorch.logging import logger
 from botorch.posteriors.deterministic import DeterministicPosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
+from botorch.posteriors.ensemble import EnsemblePosterior
 from botorch.posteriors.posterior_list import PosteriorList
 from botorch.posteriors.torch import TorchPosterior
 from botorch.posteriors.transformed import TransformedPosterior
@@ -112,6 +113,14 @@ def _get_sampler_deterministic(
     posterior: DeterministicPosterior, sample_shape: torch.Size, **kwargs: Any
 ) -> MCSampler:
     r"""Get the dummy `StochasticSampler` for the `DeterministicPosterior`."""
+    return StochasticSampler(sample_shape=sample_shape, **kwargs)
+
+
+@GetSampler.register(EnsemblePosterior)
+def _get_sampler_ensemble(
+    posterior: EnsemblePosterior, sample_shape: torch.Size, **kwargs: Any
+) -> MCSampler:
+    r"""Get the dummy `StochasticSampler` for the `EnsemblePosterior`."""
     return StochasticSampler(sample_shape=sample_shape, **kwargs)
 
 
