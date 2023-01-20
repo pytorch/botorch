@@ -30,6 +30,8 @@ class EnsemblePosterior(Posterior):
         """
         if values.ndim < 3:
             raise ValueError("Values has to be at least three-dimensional.")
+        if values.shape[-1] < 2:
+            raise ValueError("Ensemble size has to be at least two.")
         self.values = values
 
     @property
