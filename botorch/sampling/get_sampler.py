@@ -10,9 +10,9 @@ from typing import Any, Type, Union
 import torch
 from botorch.logging import logger
 from botorch.posteriors.deterministic import DeterministicPosterior
+from botorch.posteriors.ensemble import EnsemblePosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
-from botorch.posteriors.ensemble import EnsemblePosterior
 from botorch.posteriors.posterior_list import PosteriorList
 from botorch.posteriors.torch import TorchPosterior
 from botorch.posteriors.transformed import TransformedPosterior
