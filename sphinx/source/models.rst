@@ -25,6 +25,11 @@ Deterministic Model API
 .. automodule:: botorch.models.deterministic
     :members:
 
+Ensemble Model API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.ensemble
+    :members:
+
 
 Models
 -------------------------------------------
