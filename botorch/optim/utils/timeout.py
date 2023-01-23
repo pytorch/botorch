@@ -7,12 +7,10 @@
 from __future__ import annotations
 
 import time
-import warnings
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from botorch.exceptions.errors import OptimizationTimeoutError
-from botorch.exceptions.warnings import OptimizationWarning
 from scipy import optimize
 
 
@@ -95,7 +93,6 @@ def minimize_with_timeout(
         )
     except OptimizationTimeoutError as e:
         msg = f"Optimization timed out after {e.runtime} seconds."
-        warnings.warn(msg, OptimizationWarning)
         current_fun, *_ = fun(e.current_x, *args)
 
         return optimize.OptimizeResult(

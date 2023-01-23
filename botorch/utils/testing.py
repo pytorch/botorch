@@ -15,6 +15,7 @@ from unittest import TestCase
 import torch
 from botorch import settings
 from botorch.acquisition.objective import PosteriorTransform
+from botorch.exceptions.warnings import BotorchTensorDimensionWarning, InputDataWarning
 from botorch.models.model import FantasizeMixin, Model
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
@@ -49,6 +50,16 @@ class BotorchTestCase(TestCase):
             "ignore",
             message="The model inputs are of type",
             category=UserWarning,
+        )
+        warnings.filterwarnings(
+            "ignore",
+            message="Non-strict enforcement of botorch tensor conventions.",
+            category=BotorchTensorDimensionWarning,
+        )
+        warnings.filterwarnings(
+            "ignore",
+            message="Input data is not standardized.",
+            category=InputDataWarning,
         )
 
     def assertAllClose(
