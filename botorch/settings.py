@@ -10,10 +10,6 @@ BoTorch settings.
 
 from __future__ import annotations
 
-import typing  # noqa F401
-import warnings
-
-from botorch.exceptions import BotorchWarning
 from botorch.logging import LOG_LEVEL_DEFAULT, logger
 
 
@@ -55,30 +51,19 @@ class propagate_grads(_Flag):
     _state: bool = False
 
 
-def suppress_botorch_warnings(suppress: bool) -> None:
-    r"""Set botorch warning filter.
-
-    Args:
-        state: A boolean indicating whether warnings should be prints
-    """
-    warnings.simplefilter("ignore" if suppress else "default", BotorchWarning)
-
-
 class debug(_Flag):
-    r"""Flag for printing verbose BotorchWarnings.
+    r"""Flag for printing verbose warnings.
 
-    When set to `True`, verbose `BotorchWarning`s will be printed for debuggability.
-    Warnings that are not subclasses of `BotorchWarning` will not be affected by
-    this context_manager.
+    To make sure a warning is only raised in debug mode:
+        >>> if debug.on():
+        >>>     warnings.warn(<some warning>)
     """
 
     _state: bool = False
-    suppress_botorch_warnings(suppress=not _state)
 
     @classmethod
     def _set_state(cls, state: bool) -> None:
         cls._state = state
-        suppress_botorch_warnings(suppress=not cls._state)
 
 
 class validate_input_scaling(_Flag):
