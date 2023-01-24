@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from botorch.sampling.base import MCSampler
+from botorch.sampling.deterministic import DeterministicSampler
 from botorch.sampling.get_sampler import get_sampler
 from botorch.sampling.list_sampler import ListSampler
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
@@ -19,6 +20,7 @@ from torch.quasirandom import SobolEngine
 
 
 __all__ = [
+    "DeterministicSampler",
     "ForkedRNGSampler",
     "get_sampler",
     "IIDNormalSampler",
