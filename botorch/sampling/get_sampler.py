@@ -16,13 +16,13 @@ from botorch.posteriors.posterior_list import PosteriorList
 from botorch.posteriors.torch import TorchPosterior
 from botorch.posteriors.transformed import TransformedPosterior
 from botorch.sampling.base import MCSampler
+from botorch.sampling.deterministic import DeterministicSampler
 from botorch.sampling.list_sampler import ListSampler
 from botorch.sampling.normal import (
     IIDNormalSampler,
     NormalMCSampler,
     SobolQMCNormalSampler,
 )
-from botorch.sampling.stochastic_samplers import StochasticSampler
 from botorch.utils.dispatcher import Dispatcher
 from gpytorch.distributions import MultivariateNormal
 from torch.distributions import Distribution
@@ -112,7 +112,7 @@ def _get_sampler_deterministic(
     posterior: DeterministicPosterior, sample_shape: torch.Size, **kwargs: Any
 ) -> MCSampler:
     r"""Get the dummy `StochasticSampler` for the `DeterministicPosterior`."""
-    return StochasticSampler(sample_shape=sample_shape, **kwargs)
+    return DeterministicSampler(sample_shape=sample_shape, **kwargs)
 
 
 @GetSampler.register(object)
