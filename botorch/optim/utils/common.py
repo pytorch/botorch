@@ -11,7 +11,7 @@ from __future__ import annotations
 from inspect import signature
 from logging import debug as logging_debug
 from typing import Any, Callable, Optional, Tuple
-from warnings import warn_explicit, WarningMessage
+from warnings import warn, warn_explicit, WarningMessage
 
 import numpy as np
 from linear_operator.utils.errors import NanError, NotPSDError
@@ -29,7 +29,15 @@ DEFAULT = _TDefault()
 def _filter_kwargs(function: Callable, **kwargs: Any) -> Any:
     r"""Filter out kwargs that are not applicable for a given function.
     Return a copy of given kwargs dict with only the required kwargs."""
-    return {k: v for k, v in kwargs.items() if k in signature(function).parameters}
+    allowed_params = signature(function).parameters
+    removed = {k for k in kwargs.keys() if k not in allowed_params}
+    if len(removed) > 0:
+        warn(
+            f"Keyword arguments {list(removed)} will be ignored because they are"
+            f" not allowed parameters for function {function.__name__}. Allowed "
+            f"parameters are {list(allowed_params.keys())}."
+        )
+    return {k: v for k, v in kwargs.items() if k not in removed}
 
 
 def _handle_numerical_errors(
