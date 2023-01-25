@@ -84,7 +84,7 @@ class TorchPosterior(Posterior):
         Pickle uses `__get/setstate__` to serialize / deserialize the objects.
         Since we define `__getattr__` above, it takes precedence over these
         methods, and we end up in an infinite loop unless we also define
-        `__getattr__` and `__setattr__`.
+        `__getstate__` and `__setstate__`.
         """
         return self.__dict__
 
