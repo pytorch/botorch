@@ -79,7 +79,13 @@ class TorchPosterior(Posterior):
         return getattr(self.distribution, name)
 
     def __getstate__(self) -> Dict[str, Any]:
-        r"""A minimal utility to support pickle protocol."""
+        r"""A minimal utility to support pickle protocol.
+
+        Pickle uses `__get/setstate__` to serialize / deserialize the objects.
+        Since we define `__getattr__` above, it takes precedence over these
+        methods, and we end up in an infinite loop unless we also define
+        `__getattr__` and `__setattr__`.
+        """
         return self.__dict__
 
     def __setstate__(self, d: Dict[str, Any]) -> None:
