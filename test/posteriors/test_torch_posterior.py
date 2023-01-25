@@ -4,7 +4,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import os
 import tempfile
+import unittest
+
 
 import torch
 from botorch.posteriors.torch import TorchPosterior
@@ -57,6 +60,7 @@ class TestTorchPosterior(BotorchTestCase):
             )
             self.assertAllClose(posterior.density(q_value), expected)
 
+    @unittest.skipIf(os.name == "nt", "Pickle test is not supported on Windows.")
     def test_pickle(self) -> None:
         for dtype in (torch.float, torch.double):
             tkwargs = {"dtype": dtype, "device": self.device}
