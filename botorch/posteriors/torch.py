@@ -78,6 +78,14 @@ class TorchPosterior(Posterior):
         """
         return getattr(self.distribution, name)
 
+    def __getstate__(self) -> Dict[str, Any]:
+        r"""A minimal utility to support pickle protocol."""
+        return self.__dict__
+
+    def __setstate__(self, d: Dict[str, Any]) -> None:
+        r"""A minimal utility to support pickle protocol."""
+        self.__dict__ = d
+
     def quantile(self, value: Tensor) -> Tensor:
         r"""Compute quantiles of the distribution.
 

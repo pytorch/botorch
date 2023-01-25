@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import tempfile
 
 import torch
 from botorch.posteriors.torch import TorchPosterior
@@ -55,3 +56,19 @@ class TestTorchPosterior(BotorchTestCase):
                 [posterior.distribution.log_prob(q).exp() for q in q_value], dim=0
             )
             self.assertAllClose(posterior.density(q_value), expected)
+
+    def test_pickle(self) -> None:
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"dtype": dtype, "device": self.device}
+            posterior = TorchPosterior(Exponential(rate=torch.rand(1, 2, **tkwargs)))
+            with tempfile.NamedTemporaryFile() as tmp_file:
+                torch.save(posterior, tmp_file.name)
+                loaded_posterior = torch.load(tmp_file.name)
+            self.assertEqual(posterior.dtype, loaded_posterior.dtype)
+            self.assertEqual(posterior.device, loaded_posterior.device)
+            self.assertTrue(
+                torch.equal(
+                    posterior.distribution.rate,
+                    loaded_posterior.distribution.rate,
+                )
+            )
