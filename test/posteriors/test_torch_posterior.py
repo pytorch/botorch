@@ -8,7 +8,6 @@ import os
 import tempfile
 import unittest
 
-
 import torch
 from botorch.posteriors.torch import TorchPosterior
 from botorch.utils.testing import BotorchTestCase
