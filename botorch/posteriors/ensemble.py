@@ -111,4 +111,4 @@ class EnsemblePosterior(Posterior):
     ) -> Tensor:
         if base_samples.shape != sample_shape:
             raise ValueError("Base samples to not match sample shape.")
-        return self.values[..., base_samples].reshape(self._extended_shape)
+        return self.values[..., base_samples].reshape(self._extended_shape())
