@@ -17,6 +17,7 @@ from botorch.posteriors.posterior_list import PosteriorList
 from botorch.posteriors.torch import TorchPosterior
 from botorch.posteriors.transformed import TransformedPosterior
 from botorch.sampling.base import MCSampler
+from botorch.sampling.index_sampler import IndexSampler
 from botorch.sampling.list_sampler import ListSampler
 from botorch.sampling.normal import (
     IIDNormalSampler,
@@ -121,7 +122,7 @@ def _get_sampler_ensemble(
     posterior: EnsemblePosterior, sample_shape: torch.Size, **kwargs: Any
 ) -> MCSampler:
     r"""Get the dummy `StochasticSampler` for the `EnsemblePosterior`."""
-    return StochasticSampler(sample_shape=sample_shape, **kwargs)
+    return IndexSampler(sample_shape=sample_shape, **kwargs)
 
 
 @GetSampler.register(object)
