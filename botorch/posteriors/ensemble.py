@@ -72,7 +72,7 @@ class EnsemblePosterior(Posterior):
         r"""Returns the shape of the samples produced by the posterior with
         the given `sample_shape`.
         """
-        return sample_shape + self.values.shape
+        return sample_shape + self.values.shape[:-1]
 
     def rsample(
         self,
@@ -94,6 +94,21 @@ class EnsemblePosterior(Posterior):
         """
         if sample_shape is None:
             sample_shape = torch.Size([1])
+        # get indices as base_samples
+        base_samples = torch.multinomial(
+            torch.ones(self.size) / self.size,
+            num_samples=sample_shape.numel(),
+            replacement=True,
+        ).reshape(sample_shape)
         # sample_indices = torch.arange(0, sample_shape[0]).to(dtype=torch.int64)
         # return self.values[..., sample_indices]
-        return self.values.expand(self._extended_shape(sample_shape))
+        return self.rsample_from_base_samples(
+            sample_shape=sample_shape, base_samples=base_samples
+        )
+
+    def rsample_from_base_samples(
+        self, sample_shape: torch.Size, base_samples: Tensor
+    ) -> Tensor:
+        if base_samples.shape != sample_shape:
+            raise ValueError("Base samples to not match sample shape.")
+        return self.values[..., base_samples].reshape(self._extended_shape)
