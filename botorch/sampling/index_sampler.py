@@ -12,9 +12,13 @@ from botorch.utils.sampling import manual_seed
 import torch
 
 
-class BaseSampler(MCSampler):
+class IndexSampler(MCSampler):
     def forward(self, posterior: Posterior) -> Tensor:
-        return super().forward(posterior)
+        self._construct_base_samples(posterior=posterior)
+        samples = posterior.rsample_from_base_samples(
+            sample_shape=self.sample_shape, base_samples=self.base_samples
+        )
+        return samples
 
     def _construct_base_samples(self, posterior: Posterior):
         if self.base_samples is None or self.base_samples.shape != self.sample_shape:
