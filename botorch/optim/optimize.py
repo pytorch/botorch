@@ -45,7 +45,6 @@ INIT_OPTION_KEYS = {
     "sample_around_best",
     "sample_around_best_sigma",
     "sample_around_best_prob_perturb",
-    "sample_around_best_prob_perturb",
     "seed",
     "thinning",
 }
