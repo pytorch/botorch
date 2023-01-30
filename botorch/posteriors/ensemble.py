@@ -43,6 +43,12 @@ class EnsemblePosterior(Posterior):
         return self.values.shape[-1]
 
     @property
+    def weights(self) -> Tensor:
+        r"""The weights of the individual models in the ensemble.
+        Equally weighted by default."""
+        return torch.ones(self.size) / self.size
+
+    @property
     def device(self) -> torch.device:
         r"""The torch device of the posterior."""
         return self.values.device
@@ -95,7 +101,7 @@ class EnsemblePosterior(Posterior):
             sample_shape = torch.Size([1])
         # get indices as base_samples
         base_samples = torch.multinomial(
-            torch.ones(self.size) / self.size,
+            self.weights,
             num_samples=sample_shape.numel(),
             replacement=True,
         ).reshape(sample_shape)
@@ -106,6 +112,21 @@ class EnsemblePosterior(Posterior):
     def rsample_from_base_samples(
         self, sample_shape: torch.Size, base_samples: Tensor
     ) -> Tensor:
+        r"""_summary_
+
+        Args:
+            sample_shape (torch.Size): _description_
+            base_samples (Tensor): _description_
+
+        Raises:
+            ValueError: _description_
+
+        Returns:
+            Tensor: _description_
+        """
         if base_samples.shape != sample_shape:
             raise ValueError("Base samples to not match sample shape.")
-        return self.values[..., base_samples].reshape(self._extended_shape())
+        # move sample axis to front
+        values = self.values.movedim(-1, 0)
+        # sample from the first dimension of values
+        return values[base_samples, ...]

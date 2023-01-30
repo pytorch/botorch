@@ -24,7 +24,7 @@ class IndexSampler(MCSampler):
         if self.base_samples is None or self.base_samples.shape != self.sample_shape:
             with manual_seed(seed=self.seed):
                 base_samples = torch.multinomial(
-                    torch.ones(self.size) / self.size,
+                    posterior.weights,
                     num_samples=self.sample_shape.numel(),
                     replacement=True,
                 ).reshape(self.sample_shape)
