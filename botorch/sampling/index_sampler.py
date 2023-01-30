@@ -20,7 +20,7 @@ class IndexSampler(MCSampler):
         )
         return samples
 
-    def _construct_base_samples(self, posterior: Posterior):
+    def _construct_base_samples(self, posterior: Posterior) -> None:
         if self.base_samples is None or self.base_samples.shape != self.sample_shape:
             with manual_seed(seed=self.seed):
                 base_samples = torch.multinomial(
