@@ -5,8 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Ensemble posteriors. Used in conjunction with ensemble
-models.
+Ensemble posteriors. Used in conjunction with ensemble models.
 """
 
 from __future__ import annotations
