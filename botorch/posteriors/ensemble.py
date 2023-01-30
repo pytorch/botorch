@@ -61,7 +61,7 @@ class EnsemblePosterior(Posterior):
     def variance(self) -> Tensor:
         r"""The variance of the posterior as a `(b) x n x m`-dim Tensor.
 
-        As this is a deterministic posterior, this is a tensor of zeros.
+        Computed as the sample variance across the ensemble outputs.
         """
         return self.values.var(dim=-1)
 
