@@ -28,8 +28,8 @@ class EnsemblePosterior(Posterior):
         r"""
         Args:
             values: Values of the samples produced by this posterior as
-                a (b) x q x m x s tensor where m is the output size of the
-                model and s is the ensemble size.
+                a `(b) x q x m x s` tensor where `m` is the output size of the
+                model and `s` is the ensemble size.
         """
         if values.ndim < 3:
             raise ValueError("Values has to be at least three-dimensional.")
