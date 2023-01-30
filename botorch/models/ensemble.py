@@ -37,7 +37,7 @@ class EnsembleModel(Model, ABC):
 
         Returns:
             A `batch_shape x n x m x s`-dimensional output tensor where
-            s is the size of the ensemble.
+            `s` is the size of the ensemble.
         """
         pass  # pragma: no cover
 
