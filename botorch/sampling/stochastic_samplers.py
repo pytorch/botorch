@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import torch
 from botorch.posteriors import Posterior
-from botorch.posteriors.deterministic import DeterministicPosterior
 from botorch.sampling.base import MCSampler
 from torch import Tensor
 
@@ -64,18 +63,3 @@ class StochasticSampler(MCSampler):
             The samples drawn from the posterior.
         """
         return posterior.rsample(sample_shape=self.sample_shape)
-
-    def _update_base_samples(
-        self, posterior: Posterior, base_sampler: StochasticSampler
-    ) -> None:
-        r"""Update the sampler to use the original base samples for X_baseline.
-
-        This is used in CachedCholeskyAcquisitionFunctions to ensure consistency.
-        This is a no-op for DeterministicPosterior and errors out otherwise.
-
-        Args:
-            posterior: The posterior for which the base samples are constructed.
-            base_sampler: The base sampler to retrieve the base samples from.
-        """
-        if not isinstance(posterior, DeterministicPosterior):
-            super()._update_base_samples(posterior=posterior, base_sampler=base_sampler)

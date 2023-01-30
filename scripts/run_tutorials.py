@@ -103,17 +103,24 @@ def run_tutorials(
     repo_dir: str,
     include_ignored: bool = False,
     smoke_test: bool = False,
+    name: Optional[str] = None,
 ) -> None:
-    print(f"Running tutorials in {'smoke test' if smoke_test else 'standard'} mode.")
+    print(f"Running tutorial(s) in {'smoke test' if smoke_test else 'standard'} mode.")
     if not smoke_test:
         print("This may take a long time...")
     tutorial_dir = Path(repo_dir).joinpath("tutorials")
     num_runs = 0
     num_errors = 0
     ignored_tutorials = IGNORE if smoke_test else IGNORE | IGNORE_SMOKE_TEST_ONLY
-    for tutorial in tutorial_dir.iterdir():
-        if not tutorial.is_file or tutorial.suffix != ".ipynb":
-            continue
+
+    tutorials = sorted(
+        t for t in tutorial_dir.iterdir() if t.is_file and t.suffix == ".ipynb"
+    )
+    if name is not None:
+        tutorials = [t for t in tutorials if t.name == name]
+        if len(tutorials) == 0:
+            raise RuntimeError(f"Specified tutorial {name} not found in directory.")
+    for tutorial in tutorials:
         if not include_ignored and tutorial.name in ignored_tutorials:
             print(f"Ignoring tutorial {tutorial.name}.")
             continue
@@ -141,9 +148,17 @@ if __name__ == "__main__":
         action="store_true",
         help="Run all tutorials (incl. ignored).",
     )
+    parser.add_argument(
+        "-n",
+        "--name",
+        help="Run a specific tutorial by name. The name should include the "
+        ".ipynb extension. If the tutorial is on the ignore list, you still need "
+        "to specify --include-ignored.",
+    )
     args = parser.parse_args()
     run_tutorials(
         repo_dir=args.path,
         include_ignored=args.include_ignored,
         smoke_test=args.smoke,
+        name=args.name,
     )
