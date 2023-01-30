@@ -99,8 +99,6 @@ class EnsemblePosterior(Posterior):
             num_samples=sample_shape.numel(),
             replacement=True,
         ).reshape(sample_shape)
-        # sample_indices = torch.arange(0, sample_shape[0]).to(dtype=torch.int64)
-        # return self.values[..., sample_indices]
         return self.rsample_from_base_samples(
             sample_shape=sample_shape, base_samples=base_samples
         )
