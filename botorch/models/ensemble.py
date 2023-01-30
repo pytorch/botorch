@@ -69,7 +69,7 @@ class EnsembleModel(Model, ABC):
             posterior_transform: An optional PosteriorTransform.
 
         Returns:
-            A `EnsemblePosterior` object, representing `batch_shape` joint
+            An `EnsemblePosterior` object, representing `batch_shape` joint
             posteriors over `n` points and the outputs selected by `output_indices`.
         """
         # Apply the input transforms in `eval` mode.
