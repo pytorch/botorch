@@ -121,7 +121,7 @@ def _get_sampler_deterministic(
 def _get_sampler_ensemble(
     posterior: EnsemblePosterior, sample_shape: torch.Size, **kwargs: Any
 ) -> MCSampler:
-    r"""Get the dummy `StochasticSampler` for the `EnsemblePosterior`."""
+    r"""Get the dummy `IndexSampler` for the `EnsemblePosterior`."""
     return IndexSampler(sample_shape=sample_shape, **kwargs)
 
 
