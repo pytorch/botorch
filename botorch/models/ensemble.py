@@ -46,12 +46,6 @@ class EnsembleModel(Model, ABC):
         r"""The number of outputs of the model."""
         return self._num_outputs
 
-    @abstractmethod
-    @property
-    def size(self) -> int:
-        r"""The size of the ensemble model"""
-        pass
-
     def posterior(
         self,
         X: Tensor,
