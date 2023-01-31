@@ -368,13 +368,25 @@ class AffineInputTransform(ReversibleInputTransform, Module):
         torch.broadcast_shapes(coefficient.shape, offset.shape)
 
         self._d = d
-        self.register_buffer("coefficient", coefficient)
-        self.register_buffer("offset", offset)
+        self.register_buffer("_coefficient", coefficient)
+        self.register_buffer("_offset", offset)
         self.batch_shape = batch_shape
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
         self.transform_on_fantasize = transform_on_fantasize
         self.reverse = reverse
+
+    @property
+    def coefficient(self) -> Tensor:
+        r"""The tensor of linear coefficients."""
+        coeff = self._coefficient
+        return coeff if self.learn_coefficients and self.training else coeff.detach()
+
+    @property
+    def offset(self) -> Tensor:
+        r"""The tensor of offset coefficients."""
+        offset = self._offset
+        return offset if self.learn_coefficients and self.training else offset.detach()
 
     @property
     def learn_coefficients(self) -> bool:
@@ -459,8 +471,8 @@ class AffineInputTransform(ReversibleInputTransform, Module):
 
     def _to(self, X: Tensor) -> None:
         r"""Makes coefficient and offset have same device and dtype as X."""
-        self.coefficient = self.coefficient.to(X)
-        self.offset = self.offset.to(X)
+        self._coefficient = self.coefficient.to(X)
+        self._offset = self.offset.to(X)
 
     def _update_coefficients(self, X: Tensor) -> None:
         r"""Updates affine coefficients. Implemented by subclasses,
@@ -569,9 +581,9 @@ class Normalize(AffineInputTransform):
         # Aggregate mins and ranges over extra batch and marginal dims
         batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
         reduce_dims = (*range(X.ndim - batch_ndim - 2), X.ndim - 2)
-        self.offset = torch.amin(X, dim=reduce_dims).unsqueeze(-2)
-        self.coefficient = torch.amax(X, dim=reduce_dims).unsqueeze(-2) - self.offset
-        self.coefficient.clamp_(min=self.min_range)
+        self._offset = torch.amin(X, dim=reduce_dims).unsqueeze(-2)
+        self._coefficient = torch.amax(X, dim=reduce_dims).unsqueeze(-2) - self.offset
+        self._coefficient.clamp_(min=self.min_range)
 
 
 class InputStandardize(AffineInputTransform):
@@ -641,11 +653,11 @@ class InputStandardize(AffineInputTransform):
         # Aggregate means and standard deviations over extra batch and marginal dims
         batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
         reduce_dims = (*range(X.ndim - batch_ndim - 2), X.ndim - 2)
-        coefficient, self.offset = (
+        coefficient, self._offset = (
             values.unsqueeze(-2)
             for values in torch.std_mean(X, dim=reduce_dims, unbiased=True)
         )
-        self.coefficient = coefficient.clamp_(min=self.min_std)
+        self._coefficient = coefficient.clamp_(min=self.min_std)
 
 
 class Round(InputTransform, Module):
