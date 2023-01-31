@@ -38,6 +38,7 @@ __all__ = [
     "AffineDeterministicModel",
     "AffineFidelityCostModel",
     "ApproximateGPyTorchModel",
+    "BOSpecificSingleTaskVariationalGP",
     "FixedNoiseGP",
     "FixedNoiseMultiTaskGP",
     "SaasFullyBayesianSingleTaskGP",
