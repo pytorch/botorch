@@ -13,8 +13,6 @@ from botorch.optim.utils.common import (
     _filter_kwargs,
     _handle_numerical_errors,
     _warning_handler_template,
-    DEFAULT,
-    TNone,
 )
 from botorch.optim.utils.model_utils import (
     _get_extra_mll_args,
@@ -40,7 +38,6 @@ __all__ = [
     "_warning_handler_template",
     "as_ndarray",
     "columnwise_clamp",
-    "DEFAULT",
     "fix_features",
     "get_name_filter",
     "get_bounds_as_ndarray",
@@ -53,5 +50,4 @@ __all__ = [
     "sample_all_priors",
     "set_tensors_from_ndarray_1d",
     "TorchAttr",
-    "TNone",
 ]

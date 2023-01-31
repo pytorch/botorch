@@ -9,7 +9,7 @@ import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.multitask import KroneckerMultiTaskGP
 from botorch.posteriors.multitask import MultitaskGPPosterior
-from botorch.sampling import IIDNormalSampler
+from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.testing import BotorchTestCase
 
 
