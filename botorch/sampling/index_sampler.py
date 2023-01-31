@@ -9,11 +9,11 @@ Sampler to be used with `EnsemblePosteriors` to enable
 deterministic optimization of acquisition functions with ensemble models.
 """
 
-from botorch.sampling.base import MCSampler
-from botorch.posteriors import Posterior
-from torch import Tensor
-from botorch.utils.sampling import manual_seed
 import torch
+from botorch.posteriors import Posterior
+from botorch.sampling.base import MCSampler
+from botorch.utils.sampling import manual_seed
+from torch import Tensor
 
 
 class IndexSampler(MCSampler):

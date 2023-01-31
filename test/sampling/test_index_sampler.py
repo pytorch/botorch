@@ -5,9 +5,9 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
+from botorch.posteriors.ensemble import EnsemblePosterior
 from botorch.sampling.index_sampler import IndexSampler
 from botorch.utils.testing import BotorchTestCase
-from botorch.posteriors.ensemble import EnsemblePosterior
 
 
 class TestIndexSampler(BotorchTestCase):
