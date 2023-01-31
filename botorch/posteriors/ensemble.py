@@ -85,8 +85,8 @@ class EnsemblePosterior(Posterior):
     ) -> Tensor:
         r"""Sample from the posterior (with gradients).
 
-        For the deterministic posterior, this just returns the values expanded
-        to the requested shape.
+        Based on the sample shape, base samples are generated and passed to
+        `rsample_from_base_samples`.
 
         Args:
             sample_shape: A `torch.Size` object specifying the sample shape. To
@@ -100,11 +100,15 @@ class EnsemblePosterior(Posterior):
         if sample_shape is None:
             sample_shape = torch.Size([1])
         # get indices as base_samples
-        base_samples = torch.multinomial(
-            self.weights,
-            num_samples=sample_shape.numel(),
-            replacement=True,
-        ).reshape(sample_shape)
+        base_samples = (
+            torch.multinomial(
+                self.weights,
+                num_samples=sample_shape.numel(),
+                replacement=True,
+            )
+            .reshape(sample_shape)
+            .to(device=self.device)
+        )
         return self.rsample_from_base_samples(
             sample_shape=sample_shape, base_samples=base_samples
         )
@@ -112,17 +116,24 @@ class EnsemblePosterior(Posterior):
     def rsample_from_base_samples(
         self, sample_shape: torch.Size, base_samples: Tensor
     ) -> Tensor:
-        r"""_summary_
+        r"""Sample from the posterior (with gradients) using base samples.
+
+        This is intended to be used with a sampler that produces the corresponding base
+        samples, and enables acquisition optimization via Sample Average Approximation.
 
         Args:
-            sample_shape (torch.Size): _description_
-            base_samples (Tensor): _description_
-
-        Raises:
-            ValueError: _description_
+            sample_shape: A `torch.Size` object specifying the sample shape. To
+                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
+                of `n` samples each, set to `torch.Size([b, n])`.
+            base_samples: A Tensor of indices as base samples of shape
+                `sample_shape x base_sample_shape`, typically obtained from
+                `IndexSampler`. This is used for deterministic optimization. The
+                predictions of the ensemble corresponding to the indices are then
+                sampled.
 
         Returns:
-            Tensor: _description_
+            Samples from the posterior, a tensor of shape
+            `self._extended_shape(sample_shape=sample_shape)`.
         """
         if base_samples.shape != sample_shape:
             raise ValueError("Base samples to not match sample shape.")
