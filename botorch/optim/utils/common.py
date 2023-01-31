@@ -16,15 +16,6 @@ from warnings import warn, warn_explicit, WarningMessage
 import numpy as np
 from linear_operator.utils.errors import NanError, NotPSDError
 
-TNone = type(None)
-
-
-class _TDefault:
-    pass
-
-
-DEFAULT = _TDefault()
-
 
 def _filter_kwargs(function: Callable, **kwargs: Any) -> Any:
     r"""Filter out kwargs that are not applicable for a given function.
