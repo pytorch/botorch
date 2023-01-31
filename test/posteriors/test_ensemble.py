@@ -22,23 +22,35 @@ class TestEnsemblePosterior(BotorchTestCase):
 
     def test_EnsemblePosterior(self):
         for shape, dtype in itertools.product(
-            ((5, 2, 16), (2, 5, 2, 32)), (torch.float, torch.double)
+            ((5, 2, 16), (2, 5, 2, 16)), (torch.float, torch.double)
         ):
             values = torch.randn(*shape, device=self.device, dtype=dtype)
             p = EnsemblePosterior(values)
             self.assertEqual(p.device.type, self.device.type)
             self.assertEqual(p.dtype, dtype)
             self.assertEqual(p.size, shape[-1])
+            self.assertAllClose(p.weights, torch.tensor([1.0 / p.size] * p.size))
+            # test mean and variance
             self.assertTrue(torch.equal(p.mean, values.mean(dim=-1)))
             self.assertTrue(torch.equal(p.variance, values.var(dim=-1)))
-
-            # tests regarding sampling are commented out as this seems still
-            # to be incorrect
-            # self.assertEqual(p._extended_shape(), values.shape)
-            # with self.assertRaises(NotImplementedError):
-            #    p.base_sample_shape
-            # test sampling
-            # samples = p.rsample()
-            # self.assertTrue(torch.equal(samples, values.unsqueeze(0)))
-            # samples = p.rsample(torch.Size([2]))
-            # self.assertTrue(torch.equal(samples, values.expand(2, *values.shape)))
+            # test extended shape
+            self.assertEqual(
+                p._extended_shape(torch.Size((128,))),
+                torch.Size((128,)) + p.values.shape[:-1],
+            )
+            # test rsample
+            samples = p.rsample(torch.Size((1024,)))
+            self.assertEqual(samples.shape, p._extended_shape(torch.Size((1024,))))
+            # test rsample from base samples
+            # test that produced samples are correct
+            samples = p.rsample_from_base_samples(
+                sample_shape=torch.Size((16,)), base_samples=torch.arange(16)
+            )
+            self.assertEqual(samples.shape, p._extended_shape(torch.Size((16,))))
+            self.assertAllClose(p.mean, samples.mean(dim=0))
+            self.assertAllClose(p.variance, samples.var(dim=0))
+            # test error on base_samples, sample_shape mismatch
+            with self.assertRaises(ValueError):
+                p.rsample_from_base_samples(
+                    sample_shape=torch.Size((17,)), base_samples=torch.arange(16)
+                )
