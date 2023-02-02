@@ -25,6 +25,7 @@ functions or in other places where a `Model` is expected.
 """
 
 from __future__ import annotations
+
 from abc import abstractmethod
 from typing import Any, Callable, List, Optional, Union
 
