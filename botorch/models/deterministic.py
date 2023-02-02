@@ -27,13 +27,11 @@ functions or in other places where a `Model` is expected.
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Any, Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import torch
-from botorch.acquisition.objective import PosteriorTransform
-from botorch.exceptions.errors import UnsupportedError
 from botorch.models.ensemble import EnsembleModel
-from botorch.posteriors.deterministic import DeterministicPosterior
+from botorch.models.model import Model
 from torch import Tensor
 
 
