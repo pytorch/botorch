@@ -33,8 +33,6 @@ class EnsemblePosterior(Posterior):
         """
         if values.ndim < 3:
             raise ValueError("Values has to be at least three-dimensional.")
-        if values.shape[-1] < 2:
-            raise ValueError("Ensemble size has to be at least two.")
         self.values = values
 
     @property
@@ -69,6 +67,8 @@ class EnsemblePosterior(Posterior):
 
         Computed as the sample variance across the ensemble outputs.
         """
+        if self.size == 1:
+            return torch.zeros_like(self.values[..., -1])
         return self.values.var(dim=-1)
 
     def _extended_shape(

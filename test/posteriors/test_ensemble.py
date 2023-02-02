@@ -14,11 +14,31 @@ from botorch.utils.testing import BotorchTestCase
 class TestEnsemblePosterior(BotorchTestCase):
     def test_EnsemblePosterior_invalid(self):
         for shape, dtype in itertools.product(
-            ((5, 2), (2, 5, 2, 1), (5, 2, 1)), (torch.float, torch.double)
+            ((5, 2), (5, 1)), (torch.float, torch.double)
         ):
             values = torch.randn(*shape, device=self.device, dtype=dtype)
             with self.assertRaises(ValueError):
                 EnsemblePosterior(values)
+
+    def testEnsemblePosteriorAsDeterministic(self):
+        for shape, dtype in itertools.product(
+            ((3, 2, 1), (2, 3, 1, 1)), (torch.float, torch.double)
+        ):
+            values = torch.randn(*shape, device=self.device, dtype=dtype)
+            p = EnsemblePosterior(values)
+            self.assertEqual(p.size, 1)
+            self.assertEqual(p.device.type, self.device.type)
+            self.assertEqual(p.dtype, dtype)
+            # self.assertEqual(p._extended_shape(), values.shape)
+            with self.assertRaises(NotImplementedError):
+                p.base_sample_shape
+            self.assertTrue(torch.equal(p.mean, values[..., -1]))
+            self.assertTrue(torch.equal(p.variance, torch.zeros_like(values[..., -1])))
+            # test sampling
+            samples = p.rsample()
+            self.assertTrue(torch.equal(samples, values[..., -1].unsqueeze(0)))
+            samples = p.rsample(torch.Size([2]))
+            self.assertEqual(samples.shape, p._extended_shape(torch.Size((2,))))
 
     def test_EnsemblePosterior(self):
         for shape, dtype in itertools.product(
