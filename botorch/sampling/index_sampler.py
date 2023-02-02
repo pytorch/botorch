@@ -54,6 +54,9 @@ class IndexSampler(MCSampler):
         if self.base_samples.device != posterior.device:
             self.to(device=posterior.device)  # pragma: nocover
 
-
-#        if self.base_samples.dtype != posterior.dtype:
-#            self.to(dtype=posterior.dtype)
+    def _update_base_samples(
+        self, posterior: Posterior, base_sampler: MCSampler
+    ) -> None:
+        r"""Null operation just needed for compatibility with
+        `CachedCholeskyAcquisitionFunction`."""
+        pass
