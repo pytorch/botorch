@@ -14,7 +14,10 @@ from botorch.models.approximate_gp import (
 )
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Log
-from botorch.models.utils.inducing_point_allocators import GreedyImprovementReduction, GreedyVarianceReduction
+from botorch.models.utils.inducing_point_allocators import (
+    GreedyImprovementReduction,
+    GreedyVarianceReduction,
+)
 from botorch.posteriors import GPyTorchPosterior, TransformedPosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.likelihoods import GaussianLikelihood, MultitaskGaussianLikelihood
@@ -184,21 +187,24 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
 
         # test default inducing point allocator
         self.assertIsInstance(model._inducing_point_allocator, GreedyVarianceReduction)
-        
+
         # test that can specify an inducing point allocator
-        for ipa in [GreedyVarianceReduction(), GreedyImprovementReduction(model, maximize=True)]:
+        for ipa in [
+            GreedyVarianceReduction(),
+            GreedyImprovementReduction(model, maximize=True),
+        ]:
             model = SingleTaskVariationalGP(train_X, inducing_point_allocator=ipa)
             self.assertTrue(type(model._inducing_point_allocator), type(ipa))
 
-        # test warning when using an inducing point allocator but not turning off learning
+        # test warning when learning on and custom IPA provided
         with self.assertWarns(UserWarning):
             SingleTaskVariationalGP(
-            train_X, 
-            learn_inducing_points=True,
-            inducing_point_allocator=GreedyVarianceReduction(),
+                train_X,
+                learn_inducing_points=True,
+                inducing_point_allocator=GreedyVarianceReduction(),
             )
 
-    def test_standard_inducing_point_init(self):
+    def test_inducing_point_init(self):
         train_X_1 = torch.rand(15, 1, device=self.device)
         train_X_2 = torch.rand(15, 1, device=self.device)
 
@@ -223,6 +229,7 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
             model_1.model.variational_strategy.base_variational_strategy.inducing_points
         )
 
+
         model_2 = SingleTaskVariationalGP(
             train_X=train_X_2, inducing_points=5, num_outputs=2
         )
@@ -244,7 +251,6 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
         )
         model_1.init_inducing_points(train_X_2)
         model_1_inducing = model_1.model.variational_strategy.inducing_points
-
         model_2 = SingleTaskVariationalGP(
             train_X=train_X_2, train_Y=train_Y, inducing_points=5
         )
@@ -254,44 +260,51 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
         self.assertTrue(model_2_inducing.shape == (2, 5, 1))
         self.assertAllClose(model_1_inducing, model_2_inducing)
 
-
     def test_custom_inducing_point_init(self):
         train_X_0 = torch.rand(15, 1, device=self.device)
         train_X_1 = torch.rand(15, 1, device=self.device)
         train_X_2 = torch.rand(15, 1, device=self.device)
         train_X_3 = torch.rand(15, 1, device=self.device)
 
-        #check error if multi-output
-        #check error if batched inputs
+        # check error if multi-output
+        # check error if batched inputs
 
         # todo
 
-        model_from_previous_step = SingleTaskVariationalGP(train_X=train_X_0, inducing_points=5)
+        model_from_previous_step = SingleTaskVariationalGP(
+            train_X=train_X_0, inducing_points=5
+        )
 
         model_1 = SingleTaskVariationalGP(
-            train_X=train_X_1, 
-            inducing_points=5, 
-            inducing_point_allocator = GreedyImprovementReduction(model_from_previous_step, maximize=True)
-            )
+            train_X=train_X_1,
+            inducing_points=5,
+            inducing_point_allocator=GreedyImprovementReduction(
+                model_from_previous_step, maximize=True
+            ),
+        )
         model_1.init_inducing_points(train_X_2)
         model_1_inducing = model_1.model.variational_strategy.inducing_points
 
         model_2 = SingleTaskVariationalGP(
-            train_X=train_X_2, 
-            inducing_points=5, 
-            inducing_point_allocator = GreedyImprovementReduction(model_from_previous_step, maximize=True)
-            )
+            train_X=train_X_2,
+            inducing_points=5,
+            inducing_point_allocator=GreedyImprovementReduction(
+                model_from_previous_step, maximize=True
+            ),
+        )
         model_2_inducing = model_2.model.variational_strategy.inducing_points
 
         model_3 = SingleTaskVariationalGP(
-            train_X=train_X_3, 
+            train_X=train_X_3,
             inducing_points=5,
-            inducing_point_allocator = GreedyImprovementReduction(model_from_previous_step, maximize=False) 
-            )
+            inducing_point_allocator=GreedyImprovementReduction(
+                model_from_previous_step, maximize=False
+            ),
+        )
         model_3.init_inducing_points(train_X_2)
         model_3_inducing = model_3.model.variational_strategy.inducing_points
 
         self.assertTrue(model_1_inducing.shape == (5, 1))
         self.assertTrue(model_2_inducing.shape == (5, 1))
         self.assertAllClose(model_1_inducing, model_2_inducing)
-        self.assertFalse(model_1_inducing[0,0] == model_3_inducing[0,0])
+        self.assertFalse(model_1_inducing[0, 0] == model_3_inducing[0, 0])

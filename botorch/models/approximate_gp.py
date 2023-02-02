@@ -68,6 +68,7 @@ from torch import Tensor
 
 MIN_INFERRED_NOISE_LEVEL = 1e-4
 
+
 class ApproximateGPyTorchModel(GPyTorchModel):
     r"""
     Botorch wrapper class for various (variational) approximate GP models in
@@ -266,7 +267,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
 
     By default, the inducing points are initialized though the
     `GreedyVarianceReduction` of [burt2020svgp]_, which is known to be
-    effective for building globally accurate models. However, custom 
+    effective for building globally accurate models. However, custom
     inducing point allocators designed for specific down-stream tasks can also be
     provided (see [moss2023ipa]_ for details), e.g. `GreedyImprovementReduction`
     when the goal is to build a model suitable for standard BO.
@@ -373,7 +374,6 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         else:
             self._is_custom_likelihood = True
 
-
         if learn_inducing_points and (inducing_point_allocator is not None):
             warnings.warn(
                 "After all the effort of specifying an inducing point allocator,"
@@ -386,7 +386,6 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         if inducing_point_allocator is None:
             inducing_point_allocator = GreedyVarianceReduction()
         self._inducing_point_allocator = inducing_point_allocator
-
 
         model = _SingleTaskVariationalGP(
             train_X=transformed_X,

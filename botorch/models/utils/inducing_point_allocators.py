@@ -30,26 +30,23 @@ References
 
 from __future__ import annotations
 
-
 from abc import ABC, abstractmethod
-from typing import Union, Callable
+from typing import Callable, Union
 
 import torch
+from botorch.models.model import Model
+
+from botorch.utils.probability.utils import ndtr as Phi, phi
 from gpytorch.module import Module
 from linear_operator.operators import LinearOperator
 from torch import Tensor
-
-from botorch.utils.probability.utils import (
-    ndtr as Phi,
-    phi,
-)
 
 NEG_INF = -(torch.tensor(float("inf")))
 
 
 class InducingPointAllocator(ABC):
     r"""
-    This class provides functionality to initialize the inducing point locations 
+    This class provides functionality to initialize the inducing point locations
     of an inducing point-based model, e.g. a `SingleTaskVariationalGP`.
     """
 
@@ -82,7 +79,7 @@ class InducingPointAllocator(ABC):
         covar_module: Module,
         num_inducing: int,
         input_batch_shape: torch.Size,
-        quality_function: Callable[[Tensor], Tensor],  
+        quality_function: Callable[[Tensor], Tensor],
     ) -> Tensor:
         r"""
         Private method to allow inducing point allocators to support
@@ -159,6 +156,90 @@ class InducingPointAllocator(ABC):
         return inducing_points
 
 
+class QualityFunction(ABC):
+    """
+    A function that scores inputs with respect
+    to a specific criterion.
+    """
+
+    @abstractmethod
+    def __call__(inputs: Tensor) -> Tensor:  # [n, d] -> [n]
+        """
+        Args:
+            inputs: inputs (of shape n x d)
+        Returns:
+            A tensor of quality scores for each input, of shape [n]
+        """
+
+        pass
+
+
+class UnitQualityFunction(QualityFunction):
+    """
+    A function returning ones for each element. Using this quality function
+    for inducing point allocation corresponds to allocating inducing points
+    with the sole aim of minimizing predictive variance, i.e. the approach
+    of [burt202svgp]_.
+    """
+
+    @torch.no_grad()
+    def __call__(self, inputs:Tensor) -> Tensor: # [n, d]-> [n]
+        """
+        Args:
+            inputs: inputs (of shape n x d)
+        Returns:
+            A tensor of ones for each input, of shape [n]
+        """
+        return torch.ones([inputs.shape[0]], dtype=inputs.dtype)
+
+
+
+class ExpectedImprovementQualityFunction(QualityFunction):
+    """
+    A function measuring the quality of input points as their expected
+    improvement with respect to a conservative baseline. Expectations
+    are according to the model from the previous BO step. See [moss2023ipa]_
+    for details and justification.
+    """
+
+    def __init__(self, model:Model, maximize: bool):
+        r"""
+        Args:
+            model: The model fitted during the previous BO step. For now, this
+                must be a single task model (i.e. num_outputs=1).
+            maximize: Set True if we are performing function maximization, else
+                set False.
+        """
+        if model.num_outputs != 1:
+            raise NotImplementedError(
+                "Multi-output models are currently not supported. "
+            )
+        self._model = model
+        self._maximize = maximize
+
+
+    @torch.no_grad()
+    def __call__(self, inputs: Tensor) -> Tensor:  # [n, d] -> [n]
+        """
+        Args:
+            inputs: inputs (of shape n x d)
+        Returns:
+            A tensor of quality scores for each input, of shape [n]
+        """
+
+        posterior = self._model.posterior(inputs)
+        mean = posterior.mean.squeeze(-2).squeeze(
+            -1
+        )  # removing redundant dimensions
+        sigma = posterior.variance.clamp_min(1e-12).sqrt().view(mean.shape)
+
+        best_f = torch.max(mean) if self._maximize else torch.min(mean)
+        u = (mean - best_f) / sigma if self._maximize else -(mean - best_f) / sigma
+        return sigma * (phi(u) + u * Phi(u))
+
+
+
+
 class GreedyVarianceReduction(InducingPointAllocator):
     r"""
     The inducing point allocator proposed by [burt2020svgp]_, that
@@ -174,7 +255,7 @@ class GreedyVarianceReduction(InducingPointAllocator):
         input_batch_shape: torch.Size,
     ) -> Tensor:
         """
-        Greedily initialize the `num_inducing` inducing points following [burt2020svgp]_.
+        Greedily initialize `num_inducing` inducing points following [burt2020svgp]_.
 
         Args:
             inputs: A (*batch_shape, n, d)-dim input data tensor.
@@ -186,46 +267,27 @@ class GreedyVarianceReduction(InducingPointAllocator):
             A (*batch_shape, m, d)-dim tensor of inducing point locations.
         """
 
-        def unit_quality_function(inputs: Tensor) -> Tensor:  # [n, d] -> [n]
-            """
-            A function returning ones for each element. Using this quality function for
-            inducing point allocation corresponds to allocating inducing points with
-            the sole aim of minimizing predictive variance.
-            Args:
-                inputs: inputs (of shape n x d)
-            Returns:
-                A tensor of ones for each input, of shape [n]
-            """
-            return torch.ones([inputs.shape[0]], dtype=inputs.dtype)
-
         return self._allocate_inducing_points(
-            inputs, covar_module, num_inducing, input_batch_shape, unit_quality_function
+            inputs, covar_module, num_inducing, input_batch_shape, UnitQualityFunction()
         )
 
 
 class GreedyImprovementReduction(InducingPointAllocator):
     r"""
     An inducing point allocator that greedily chooses inducing points with large
-    predictive variance and that are in promising regions of the
-    search space (according to the model form the previous BO step), see :cite:`moss2023IPA`.
+    predictive variance and that are in promising regions of the search
+    space (according to the model form the previous BO step), see :cite:`moss2023IPA`.
     """
 
     def __init__(self, model: Model, maximize: bool):
         r"""
 
         Args:
-            model: The model fitter during the previous BO step. For now, this
-                must be a single task model (i.e. num_outputs=1).
+            model: The model fitted during the previous BO step.
             maximize: Set True if we are performing function maximization, else
                 set False.
         """
-        if model.num_outputs!=1:
-            raise NotImplementedError(
-                    "Multi-output models are currently not supported. "
-                    )
-
-
-        self._model= model
+        self._model = model
         self._maximize = maximize
 
     def allocate_inducing_points(
@@ -236,8 +298,8 @@ class GreedyImprovementReduction(InducingPointAllocator):
         input_batch_shape: torch.Size,
     ) -> Tensor:
         """
-        Greedily initialize the `num_inducing` inducing points following the IMP-DPP strategy
-        of [moss2023ipa]_.
+        Greedily initialize the `num_inducing` inducing points following the IMP-DPP
+        strategy of [moss2023ipa]_.
 
         Args:
             inputs: A (*batch_shape, n, d)-dim input data tensor.
@@ -249,29 +311,13 @@ class GreedyImprovementReduction(InducingPointAllocator):
             A (*batch_shape, m, d)-dim tensor of inducing point locations.
         """
 
-        @torch.no_grad()
-        def expected_improvement_quality_function(inputs: Tensor) -> Tensor: # [n, d] -> [n]
-            """
-            A function measuring the quality of input points as their expected
-            improvement with respect to a conservative baseline. Expectations are according
-            to the model from the previous BO step. See [moss2023ipa]_ for details
-            and justification.
-            Args:
-                inputs: inputs (of shape n x d)
-            Returns:
-                A tensor of quality scores for each input, of shape [n]
-            """
-
-            posterior = self._model.posterior(inputs)
-            mean = posterior.mean.squeeze(-2).squeeze(-1)   # removing redundant dimensions
-            sigma = posterior.variance.clamp_min(1e-12).sqrt().view(mean.shape)
-
-            best_f = torch.max(mean) if self._maximize else torch.min(mean)
-            u = (mean - best_f) / sigma if self._maximize else -(mean - best_f) / sigma
-            return sigma *(phi(u) + u * Phi(u))
-
-
-        return self._allocate_inducing_points(inputs,covar_module,num_inducing,input_batch_shape,expected_improvement_quality_function)
+        return self._allocate_inducing_points(
+            inputs,
+            covar_module,
+            num_inducing,
+            input_batch_shape,
+            ExpectedImprovementQualityFunction(self._model,self._maximize),
+        )
 
 
 def _pivoted_cholesky_init(
@@ -279,7 +325,7 @@ def _pivoted_cholesky_init(
     kernel_matrix: Union[Tensor, LinearOperator],
     max_length: int,
     quality_scores: Tensor,
-    epsilon: float = 1e-12,
+    epsilon: float = 1e-6,
 ) -> Tensor:
     r"""
     A pivoted Cholesky initialization method for the inducing points,
@@ -297,7 +343,8 @@ def _pivoted_cholesky_init(
         kernel_matrix: kernel matrix on the training
             inputs
         max_length: number of inducing points to initialize
-        quality_scores: scores representing the quality of each candidate input (of shape [n])
+        quality_scores: scores representing the quality of each candidate
+            input (of shape [n])
         epsilon: numerical jitter for stability.
 
     Returns:
@@ -310,14 +357,12 @@ def _pivoted_cholesky_init(
     # TODO: use gpytorch's pivoted cholesky instead once that gets an exposed list
     # TODO: ensure this works in batch mode, which it does not currently.
 
-    # tod test for shape of quality function
+    # todo test for shape of quality function
 
-
-    if quality_scores.shape[0] != train_inputs.shape[1]:
-            raise ValueError(
-                "_pivoted_cholesky_init requires a quality score for each of train_inputs"
-            )
-
+    if quality_scores.shape[0] != train_inputs.shape[0]:
+        raise ValueError(
+            "_pivoted_cholesky_init requires a quality score for each of train_inputs"
+        )
 
     item_size = kernel_matrix.shape[-2]
     cis = torch.zeros(
@@ -346,4 +391,4 @@ def _pivoted_cholesky_init(
 
     ind_points = train_inputs[torch.stack(selected_items)]
 
-    return ind_points
+    return ind_points[:max_length,:]
