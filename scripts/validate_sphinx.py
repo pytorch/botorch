@@ -69,7 +69,12 @@ def validate_complete_sphinx(path_to_botorch: str) -> None:
     # Verify that all top-level modules have a corresponding rst
     missing_rsts = modules.difference(rsts)
     if not len(missing_rsts) == 0:
-        raise RuntimeError(f"Not all modules have corresponding rst: {missing_rsts}")
+        raise RuntimeError(
+            f"""Not all modules have corresponding rst:
+            {missing_rsts}
+            Please add them to the appropriate rst file in {SPHINX_RST_PATH}.
+            """
+        )
 
     # Track all modules that are not in docs (so can print all)
     modules_not_in_docs = []
