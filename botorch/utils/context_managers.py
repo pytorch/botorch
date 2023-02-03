@@ -24,7 +24,7 @@ class TensorCheckpoint(NamedTuple):
 
 
 @contextmanager
-def del_attribute_ctx(
+def delattr_ctx(
     instance: object, *attrs: str, enforce_hasattr: bool = False
 ) -> Generator[None, None, None]:
     r"""Contextmanager for temporarily deleting attributes."""

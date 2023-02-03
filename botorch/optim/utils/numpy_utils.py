@@ -14,7 +14,7 @@ from typing import Callable, Dict, Iterator, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from botorch.optim.utils.common import TNone
+from botorch.utils.types import NoneType
 from numpy import ndarray
 from torch import Tensor
 
@@ -137,7 +137,9 @@ def set_tensors_from_ndarray_1d(
 
 def get_bounds_as_ndarray(
     parameters: Dict[str, Tensor],
-    bounds: Dict[str, Tuple[Union[float, Tensor, TNone], Union[float, Tensor, TNone]]],
+    bounds: Dict[
+        str, Tuple[Union[float, Tensor, NoneType], Union[float, Tensor, NoneType]]
+    ],
 ) -> Optional[np.ndarray]:
     r"""Helper method for converting bounds into an ndarray.
 

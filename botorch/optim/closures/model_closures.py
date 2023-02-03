@@ -12,8 +12,8 @@ from itertools import chain, repeat
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
 from botorch.optim.closures.core import ForwardBackwardClosure
-from botorch.optim.utils import TNone
 from botorch.utils.dispatcher import Dispatcher, type_bypassing_encoder
+from botorch.utils.types import NoneType
 from gpytorch.mlls import (
     ExactMarginalLogLikelihood,
     MarginalLogLikelihood,
@@ -151,9 +151,9 @@ def _get_loss_closure_fallback_external(
     return closure
 
 
-@GetLossClosure.register(MarginalLogLikelihood, object, object, TNone)
+@GetLossClosure.register(MarginalLogLikelihood, object, object, NoneType)
 def _get_loss_closure_fallback_internal(
-    mll: MarginalLogLikelihood, _: object, __: object, ___: TNone, **ignore: Any
+    mll: MarginalLogLikelihood, _: object, __: object, ___: NoneType, **ignore: Any
 ) -> Callable[[], Tensor]:
     r"""Fallback loss closure with internally managed data."""
 
@@ -165,9 +165,9 @@ def _get_loss_closure_fallback_internal(
     return closure
 
 
-@GetLossClosure.register(ExactMarginalLogLikelihood, object, object, TNone)
+@GetLossClosure.register(ExactMarginalLogLikelihood, object, object, NoneType)
 def _get_loss_closure_exact_internal(
-    mll: ExactMarginalLogLikelihood, _: object, __: object, ___: TNone, **ignore: Any
+    mll: ExactMarginalLogLikelihood, _: object, __: object, ___: NoneType, **ignore: Any
 ) -> Callable[[], Tensor]:
     r"""ExactMarginalLogLikelihood loss closure with internally managed data."""
 
@@ -181,9 +181,9 @@ def _get_loss_closure_exact_internal(
     return closure
 
 
-@GetLossClosure.register(SumMarginalLogLikelihood, object, object, TNone)
+@GetLossClosure.register(SumMarginalLogLikelihood, object, object, NoneType)
 def _get_loss_closure_sum_internal(
-    mll: SumMarginalLogLikelihood, _: object, __: object, ___: TNone, **ignore: Any
+    mll: SumMarginalLogLikelihood, _: object, __: object, ___: NoneType, **ignore: Any
 ) -> Callable[[], Tensor]:
     r"""SumMarginalLogLikelihood loss closure with internally managed data."""
 

@@ -9,7 +9,7 @@ import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.higher_order_gp import HigherOrderGP
 from botorch.posteriors.higher_order import HigherOrderGPPosterior
-from botorch.sampling import IIDNormalSampler
+from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.testing import BotorchTestCase
 
 
