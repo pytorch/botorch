@@ -22,7 +22,9 @@ Posterior module to be used with ensemble models.
 
 
 class EnsemblePosterior(Posterior):
-    r"""Ensemble posterior."""
+    r"""Ensemble posterior, that should be used for ensemble models that compute
+    eagerly a finite number of samples per X value as for example a deep ensemble
+    or a random forest."""
 
     def __init__(self, values: Tensor) -> None:
         r"""
