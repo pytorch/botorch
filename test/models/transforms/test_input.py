@@ -165,6 +165,20 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue(
                 torch.equal(nlz.mins, bounds[..., 1:2, :] - bounds[..., 0:1, :])
             )
+            # with grad
+            bounds.requires_grad = True
+            bounds = bounds * 2
+            self.assertIsNotNone(bounds.grad_fn)
+            nlz = Normalize(d=2, bounds=bounds)
+            # Set learn_coefficients=True for testing.
+            nlz.learn_coefficients = True
+            # We have grad in train mode.
+            self.assertIsNotNone(nlz.coefficient.grad_fn)
+            self.assertIsNotNone(nlz.offset.grad_fn)
+            # Grad is detached in eval mode.
+            nlz.eval()
+            self.assertIsNone(nlz.coefficient.grad_fn)
+            self.assertIsNone(nlz.offset.grad_fn)
 
             # basic init, provided indices
             with self.assertRaises(ValueError):
@@ -325,6 +339,18 @@ class TestInputTransforms(BotorchTestCase):
                 nlz9 = Normalize(d=3, batch_shape=batch_shape, indices=[0, 1])
                 nlz10 = Normalize(d=3, batch_shape=batch_shape, indices=[0, 2])
                 self.assertFalse(nlz9.equals(nlz10))
+
+                # test with grad
+                nlz = Normalize(d=1)
+                X.requires_grad = True
+                X = X * 2
+                self.assertIsNotNone(X.grad_fn)
+                nlz(X)
+                self.assertIsNotNone(nlz.coefficient.grad_fn)
+                self.assertIsNotNone(nlz.offset.grad_fn)
+                nlz.eval()
+                self.assertIsNone(nlz.coefficient.grad_fn)
+                self.assertIsNone(nlz.offset.grad_fn)
 
     def test_standardize(self):
         for dtype in (torch.float, torch.double):
