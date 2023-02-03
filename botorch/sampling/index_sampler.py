@@ -40,7 +40,7 @@ class IndexSampler(MCSampler):
         the Posterior
 
         Args:
-            posterior (Posterior): The ensemble posterior to construct the base samples
+            posterior: The ensemble posterior to construct the base samples
                 for.
         """
         if self.base_samples is None or self.base_samples.shape != self.sample_shape:
