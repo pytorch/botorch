@@ -229,7 +229,6 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
             model_1.model.variational_strategy.base_variational_strategy.inducing_points
         )
 
-
         model_2 = SingleTaskVariationalGP(
             train_X=train_X_2, inducing_points=5, num_outputs=2
         )

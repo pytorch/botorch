@@ -183,7 +183,7 @@ class UnitQualityFunction(QualityFunction):
     """
 
     @torch.no_grad()
-    def __call__(self, inputs:Tensor) -> Tensor: # [n, d]-> [n]
+    def __call__(self, inputs: Tensor) -> Tensor:  # [n, d]-> [n]
         """
         Args:
             inputs: inputs (of shape n x d)
@@ -191,7 +191,6 @@ class UnitQualityFunction(QualityFunction):
             A tensor of ones for each input, of shape [n]
         """
         return torch.ones([inputs.shape[0]], dtype=inputs.dtype)
-
 
 
 class ExpectedImprovementQualityFunction(QualityFunction):
@@ -202,7 +201,7 @@ class ExpectedImprovementQualityFunction(QualityFunction):
     for details and justification.
     """
 
-    def __init__(self, model:Model, maximize: bool):
+    def __init__(self, model: Model, maximize: bool):
         r"""
         Args:
             model: The model fitted during the previous BO step. For now, this
@@ -217,7 +216,6 @@ class ExpectedImprovementQualityFunction(QualityFunction):
         self._model = model
         self._maximize = maximize
 
-
     @torch.no_grad()
     def __call__(self, inputs: Tensor) -> Tensor:  # [n, d] -> [n]
         """
@@ -228,16 +226,12 @@ class ExpectedImprovementQualityFunction(QualityFunction):
         """
 
         posterior = self._model.posterior(inputs)
-        mean = posterior.mean.squeeze(-2).squeeze(
-            -1
-        )  # removing redundant dimensions
+        mean = posterior.mean.squeeze(-2).squeeze(-1)  # removing redundant dimensions
         sigma = posterior.variance.clamp_min(1e-12).sqrt().view(mean.shape)
 
         best_f = torch.max(mean) if self._maximize else torch.min(mean)
         u = (mean - best_f) / sigma if self._maximize else -(mean - best_f) / sigma
         return sigma * (phi(u) + u * Phi(u))
-
-
 
 
 class GreedyVarianceReduction(InducingPointAllocator):
@@ -316,7 +310,7 @@ class GreedyImprovementReduction(InducingPointAllocator):
             covar_module,
             num_inducing,
             input_batch_shape,
-            ExpectedImprovementQualityFunction(self._model,self._maximize),
+            ExpectedImprovementQualityFunction(self._model, self._maximize),
         )
 
 
@@ -391,4 +385,4 @@ def _pivoted_cholesky_init(
 
     ind_points = train_inputs[torch.stack(selected_items)]
 
-    return ind_points[:max_length,:]
+    return ind_points[:max_length, :]
