@@ -44,7 +44,8 @@ class IndexSampler(MCSampler):
                 for.
         """
         if self.base_samples is None or self.base_samples.shape != self.sample_shape:
-            with manual_seed(seed=self.seed):
+            with torch.random.fork_rng():
+                torch.manual_seed(self.seed)
                 base_samples = torch.multinomial(
                     posterior.weights,
                     num_samples=self.sample_shape.numel(),
