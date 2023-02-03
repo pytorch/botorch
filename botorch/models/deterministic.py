@@ -56,10 +56,8 @@ class DeterministicModel(EnsembleModel):
         pass  # pragma: no cover
 
     def forward_(self, X: Tensor) -> Tensor:
-        # in case of the deterministic model we have to append the sample
-        # dimension for backward compatibility
-        values = self.forward(X=X)
-        return values.unsqueeze(-1)
+        r"""Compatilizes the `DeterministicModel` with `EnsemblePosterior`"""
+        return self.forward(X=X).unsqueeze(-3)
 
 
 class GenericDeterministicModel(DeterministicModel):

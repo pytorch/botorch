@@ -22,41 +22,49 @@ class TestEnsemblePosterior(BotorchTestCase):
 
     def testEnsemblePosteriorAsDeterministic(self):
         for shape, dtype in itertools.product(
-            ((3, 2, 1), (2, 3, 1, 1)), (torch.float, torch.double)
+            ((1, 3, 2), (2, 1, 3, 2)), (torch.float, torch.double)
         ):
             values = torch.randn(*shape, device=self.device, dtype=dtype)
             p = EnsemblePosterior(values)
             self.assertEqual(p.size, 1)
             self.assertEqual(p.device.type, self.device.type)
             self.assertEqual(p.dtype, dtype)
-            # self.assertEqual(p._extended_shape(), values.shape)
+            self.assertEqual(
+                p._extended_shape(torch.Size((1,))),
+                torch.Size((1, 3, 2)) if len(shape) == 3 else torch.Size((1, 2, 3, 2)),
+            )
+            self.assertEqual(p.weights, torch.ones(1))
             with self.assertRaises(NotImplementedError):
                 p.base_sample_shape
-            self.assertTrue(torch.equal(p.mean, values[..., -1]))
-            self.assertTrue(torch.equal(p.variance, torch.zeros_like(values[..., -1])))
+            self.assertTrue(torch.equal(p.mean, values.squeeze(-3)))
+            self.assertTrue(
+                torch.equal(p.variance, torch.zeros_like(values.squeeze(-3)))
+            )
             # test sampling
             samples = p.rsample()
-            self.assertTrue(torch.equal(samples, values[..., -1].unsqueeze(0)))
+            self.assertTrue(torch.equal(samples, values.squeeze(-3).unsqueeze(0)))
             samples = p.rsample(torch.Size([2]))
-            self.assertEqual(samples.shape, p._extended_shape(torch.Size((2,))))
+            self.assertEqual(samples.shape, p._extended_shape(torch.Size([2])))
 
     def test_EnsemblePosterior(self):
         for shape, dtype in itertools.product(
-            ((5, 2, 16), (2, 5, 2, 16)), (torch.float, torch.double)
+            ((16, 5, 2), (2, 16, 5, 2)), (torch.float, torch.double)
         ):
             values = torch.randn(*shape, device=self.device, dtype=dtype)
             p = EnsemblePosterior(values)
             self.assertEqual(p.device.type, self.device.type)
             self.assertEqual(p.dtype, dtype)
-            self.assertEqual(p.size, shape[-1])
+            self.assertEqual(p.size, 16)
             self.assertAllClose(p.weights, torch.tensor([1.0 / p.size] * p.size))
             # test mean and variance
-            self.assertTrue(torch.equal(p.mean, values.mean(dim=-1)))
-            self.assertTrue(torch.equal(p.variance, values.var(dim=-1)))
+            self.assertTrue(torch.equal(p.mean, values.mean(dim=-3)))
+            self.assertTrue(torch.equal(p.variance, values.var(dim=-3)))
             # test extended shape
             self.assertEqual(
                 p._extended_shape(torch.Size((128,))),
-                torch.Size((128,)) + p.values.shape[:-1],
+                torch.Size((128, 5, 2))
+                if len(shape) == 3
+                else torch.Size((128, 2, 5, 2)),
             )
             # test rsample
             samples = p.rsample(torch.Size((1024,)))

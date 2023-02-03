@@ -36,7 +36,7 @@ class EnsembleModel(Model, ABC):
             X: A `batch_shape x n x d`-dim input tensor `X`.
 
         Returns:
-            A `batch_shape x n x m x s`-dimensional output tensor where
+            A `batch_shape x s x n x m`-dimensional output tensor where
             `s` is the size of the ensemble.
         """
         pass  # pragma: no cover
@@ -87,7 +87,7 @@ class EnsembleModel(Model, ABC):
         if hasattr(self, "outcome_transform"):
             values, _ = self.outcome_transform.untransform(values)
         if output_indices is not None:
-            values = values[..., output_indices, :]
+            values = values[..., output_indices]
         posterior = EnsemblePosterior(values=values)
         if posterior_transform is not None:
             return posterior_transform(posterior)

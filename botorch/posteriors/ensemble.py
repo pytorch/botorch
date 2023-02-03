@@ -30,7 +30,7 @@ class EnsemblePosterior(Posterior):
         r"""
         Args:
             values: Values of the samples produced by this posterior as
-                a `(b) x q x m x s` tensor where `m` is the output size of the
+                a `(b) x s x q x m` tensor where `m` is the output size of the
                 model and `s` is the ensemble size.
         """
         if values.ndim < 3:
@@ -40,7 +40,7 @@ class EnsemblePosterior(Posterior):
     @property
     def size(self) -> int:
         r"""The size of the ensemble"""
-        return self.values.shape[-1]
+        return self.values.shape[-3]
 
     @property
     def weights(self) -> Tensor:
@@ -61,7 +61,7 @@ class EnsemblePosterior(Posterior):
     @property
     def mean(self) -> Tensor:
         r"""The mean of the posterior as a `(b) x n x m`-dim Tensor."""
-        return self.values.mean(dim=-1)
+        return self.values.mean(dim=-3)
 
     @property
     def variance(self) -> Tensor:
@@ -70,8 +70,8 @@ class EnsemblePosterior(Posterior):
         Computed as the sample variance across the ensemble outputs.
         """
         if self.size == 1:
-            return torch.zeros_like(self.values[..., -1])
-        return self.values.var(dim=-1)
+            return torch.zeros_like(self.values.squeeze(-3))
+        return self.values.var(dim=-3)
 
     def _extended_shape(
         self, sample_shape: torch.Size = torch.Size()  # noqa: B008
@@ -79,7 +79,9 @@ class EnsemblePosterior(Posterior):
         r"""Returns the shape of the samples produced by the posterior with
         the given `sample_shape`.
         """
-        return sample_shape + self.values.shape[:-1]
+        mask = self.values.ndim * [True]
+        mask[-3] = False
+        return sample_shape + tuple(torch.tensor(self.values.shape)[mask].tolist())
 
     def rsample(
         self,
@@ -140,6 +142,6 @@ class EnsemblePosterior(Posterior):
         if base_samples.shape != sample_shape:
             raise ValueError("Base samples to not match sample shape.")
         # move sample axis to front
-        values = self.values.movedim(-1, 0)
+        values = self.values.movedim(-3, 0)
         # sample from the first dimension of values
         return values[base_samples, ...]
