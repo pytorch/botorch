@@ -13,6 +13,7 @@ class DummyEnsembleModel(EnsembleModel):
     r"""A dummy ensemble model."""
 
     def __init__(self):
+        r"""Init model."""
         super().__init__()
         self._num_outputs = 2
         self.a = torch.rand(16, 3, 2)
