@@ -11,7 +11,7 @@ from botorch.utils.testing import BotorchTestCase
 
 
 class TestIndexSampler(BotorchTestCase):
-    def test_deterministic_sampler(self):
+    def test_index_sampler(self):
         # Basic usage.
         posterior = EnsemblePosterior(
             values=torch.randn(torch.Size((50, 16, 1, 1))).to(self.device)
