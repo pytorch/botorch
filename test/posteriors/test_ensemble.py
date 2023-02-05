@@ -17,7 +17,10 @@ class TestEnsemblePosterior(BotorchTestCase):
             ((5, 2), (5, 1)), (torch.float, torch.double)
         ):
             values = torch.randn(*shape, device=self.device, dtype=dtype)
-            with self.assertRaises(ValueError):
+            with self.assertRaisesRegex(
+                ValueError,
+                "Values has to be at least three-dimensional",
+            ):
                 EnsemblePosterior(values)
 
     def testEnsemblePosteriorAsDeterministic(self):
