@@ -41,7 +41,7 @@ class EnsembleModel(Model, ABC):
         """
         pass  # pragma: no cover
 
-    def forward_(self, X: Tensor) -> Tensor:
+    def _forward(self, X: Tensor) -> Tensor:
         return self.forward(X=X)
 
     @property
@@ -80,7 +80,7 @@ class EnsembleModel(Model, ABC):
             raise UnsupportedError(
                 "Deterministic models do not support observation noise."
             )
-        values = self.forward_(X)
+        values = self._forward(X)
         # NOTE: The `outcome_transform` `untransform`s the predictions rather than the
         # `posterior` (as is done in GP models). This is more general since it works
         # even if the transform doesn't support `untransform_posterior`.

@@ -55,7 +55,7 @@ class DeterministicModel(EnsembleModel):
         """
         pass  # pragma: no cover
 
-    def forward_(self, X: Tensor) -> Tensor:
+    def _forward(self, X: Tensor) -> Tensor:
         r"""Compatibilizes the `DeterministicModel` with `EnsemblePosterior`"""
         return self.forward(X=X).unsqueeze(-3)
 
