@@ -23,7 +23,7 @@ class TestEnsemblePosterior(BotorchTestCase):
             ):
                 EnsemblePosterior(values)
 
-    def testEnsemblePosteriorAsDeterministic(self):
+    def test_EnsemblePosterior_as_Deterministic(self):
         for shape, dtype in itertools.product(
             ((1, 3, 2), (2, 1, 3, 2)), (torch.float, torch.double)
         ):
