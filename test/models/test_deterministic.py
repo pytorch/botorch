@@ -62,7 +62,7 @@ class TestDeterministicModels(BotorchTestCase):
         # basic test
         p = model.posterior(X)
         self.assertIsInstance(p, EnsemblePosterior)
-        self.assertEqual(p.size, 1)
+        self.assertEqual(p.ensemble_size, 1)
         self.assertTrue(torch.equal(p.mean, f(X)))
         # check that observation noise doesn't change things
         p_noisy = model.posterior(X, observation_noise=True)

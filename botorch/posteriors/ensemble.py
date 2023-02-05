@@ -38,7 +38,7 @@ class EnsemblePosterior(Posterior):
         self.values = values
 
     @property
-    def size(self) -> int:
+    def ensemble_size(self) -> int:
         r"""The size of the ensemble"""
         return self.values.shape[-3]
 
@@ -46,7 +46,7 @@ class EnsemblePosterior(Posterior):
     def weights(self) -> Tensor:
         r"""The weights of the individual models in the ensemble.
         Equally weighted by default."""
-        return torch.ones(self.size) / self.size
+        return torch.ones(self.ensemble_size) / self.ensemble_size
 
     @property
     def device(self) -> torch.device:
@@ -69,7 +69,7 @@ class EnsemblePosterior(Posterior):
 
         Computed as the sample variance across the ensemble outputs.
         """
-        if self.size == 1:
+        if self.ensemble_size == 1:
             return torch.zeros_like(self.values.squeeze(-3))
         return self.values.var(dim=-3)
 

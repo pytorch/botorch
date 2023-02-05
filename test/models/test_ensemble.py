@@ -16,11 +16,11 @@ class DummyEnsembleModel(EnsembleModel):
         r"""Init model."""
         super().__init__()
         self._num_outputs = 2
-        self.a = torch.rand(16, 3, 2)
+        self.a = torch.rand(4, 3, 2)
 
     def forward(self, X):
         return torch.stack(
-            [torch.einsum("...d,dm", X, self.a[i]) for i in range(16)], dim=-3
+            [torch.einsum("...d,dm", X, self.a[i]) for i in range(4)], dim=-3
         )
 
 
@@ -34,4 +34,4 @@ class TestEnsembleModels(BotorchTestCase):
             e = DummyEnsembleModel()
             X = torch.randn(*shape)
             p = e.posterior(X)
-            self.assertEqual(p.size, 16)
+            self.assertEqual(p.ensemble_size, 4)

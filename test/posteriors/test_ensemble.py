@@ -29,7 +29,7 @@ class TestEnsemblePosterior(BotorchTestCase):
         ):
             values = torch.randn(*shape, device=self.device, dtype=dtype)
             p = EnsemblePosterior(values)
-            self.assertEqual(p.size, 1)
+            self.assertEqual(p.ensemble_size, 1)
             self.assertEqual(p.device.type, self.device.type)
             self.assertEqual(p.dtype, dtype)
             self.assertEqual(
@@ -57,8 +57,10 @@ class TestEnsemblePosterior(BotorchTestCase):
             p = EnsemblePosterior(values)
             self.assertEqual(p.device.type, self.device.type)
             self.assertEqual(p.dtype, dtype)
-            self.assertEqual(p.size, 16)
-            self.assertAllClose(p.weights, torch.tensor([1.0 / p.size] * p.size))
+            self.assertEqual(p.ensemble_size, 16)
+            self.assertAllClose(
+                p.weights, torch.tensor([1.0 / p.ensemble_size] * p.ensemble_size)
+            )
             # test mean and variance
             self.assertTrue(torch.equal(p.mean, values.mean(dim=-3)))
             self.assertTrue(torch.equal(p.variance, values.var(dim=-3)))
