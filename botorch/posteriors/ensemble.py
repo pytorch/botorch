@@ -79,9 +79,7 @@ class EnsemblePosterior(Posterior):
         r"""Returns the shape of the samples produced by the posterior with
         the given `sample_shape`.
         """
-        mask = self.values.ndim * [True]
-        mask[-3] = False
-        return sample_shape + tuple(torch.tensor(self.values.shape)[mask].tolist())
+        return sample_shape + self.values.shape[:-3] + self.values.shape[-2:]
 
     def rsample(
         self,
