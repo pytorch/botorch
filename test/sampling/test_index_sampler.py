@@ -29,7 +29,9 @@ class TestIndexSampler(BotorchTestCase):
         self.assertTrue(sampler.base_samples is None)
         sampler._construct_base_samples(posterior=posterior)
         self.assertTrue(sampler.base_samples.shape == torch.Size((4, 128)))
-        self.assertTrue(sampler.base_samples.device == posterior.device == self.device)
+        self.assertTrue(
+            sampler.base_samples.device.type == posterior.device.type == self.device.type
+        )
         base_samples = sampler.base_samples
         sampler = IndexSampler(sample_shape=torch.Size((4, 128)), seed=42)
         sampler._construct_base_samples(posterior=posterior)
