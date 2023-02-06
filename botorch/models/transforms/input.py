@@ -1383,9 +1383,9 @@ class OneHotToNumeric(InputTransform, Module):
         self,
         dim: int,
         categorical_features: Optional[Dict[int, int]] = None,
-        transform_on_train: bool = False,
+        transform_on_train: bool = True,
         transform_on_eval: bool = True,
-        transform_on_fantasize: bool = False,
+        transform_on_fantasize: bool = True,
     ) -> None:
         r"""Initialize.
 
