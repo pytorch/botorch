@@ -365,7 +365,7 @@ class AffineInputTransform(ReversibleInputTransform, Module):
                 raise ValueError("Elements of `indices` have to be smaller than `d`!")
             if len(indices.unique()) != len(indices):
                 raise ValueError("Elements of `indices` tensor must be unique!")
-            self.indices = indices
+            self.register_buffer("indices", indices)
         torch.broadcast_shapes(coefficient.shape, offset.shape)
 
         self._d = d

@@ -197,7 +197,13 @@ class TestInputTransforms(BotorchTestCase):
             self.assertEqual(nlz.mins.shape, torch.Size([1, 1]))
             self.assertEqual(nlz.ranges.shape, torch.Size([1, 1]))
             self.assertEqual(len(nlz.indices), 1)
-            self.assertTrue((nlz.indices == torch.tensor([0], dtype=torch.long)).all())
+            nlz.to(device=self.device)
+            self.assertTrue(
+                (
+                    nlz.indices
+                    == torch.tensor([0], dtype=torch.long, device=self.device)
+                ).all()
+            )
 
             # test .to
             other_dtype = torch.float if dtype == torch.double else torch.double
@@ -382,17 +388,25 @@ class TestInputTransforms(BotorchTestCase):
             self.assertEqual(stdz.means.shape, torch.Size([1, 1]))
             self.assertEqual(stdz.stds.shape, torch.Size([1, 1]))
             self.assertEqual(len(stdz.indices), 1)
+            stdz.to(device=self.device)
             self.assertTrue(
-                torch.equal(stdz.indices, torch.tensor([0], dtype=torch.long))
+                torch.equal(
+                    stdz.indices,
+                    torch.tensor([0], dtype=torch.long, device=self.device),
+                )
             )
             stdz = InputStandardize(d=2, indices=[0], batch_shape=torch.Size([3]))
+            stdz.to(device=self.device)
             self.assertTrue(stdz.training)
             self.assertEqual(stdz._d, 2)
             self.assertEqual(stdz.means.shape, torch.Size([3, 1, 1]))
             self.assertEqual(stdz.stds.shape, torch.Size([3, 1, 1]))
             self.assertEqual(len(stdz.indices), 1)
             self.assertTrue(
-                torch.equal(stdz.indices, torch.tensor([0], dtype=torch.long))
+                torch.equal(
+                    stdz.indices,
+                    torch.tensor([0], device=self.device, dtype=torch.long),
+                )
             )
 
             # test jitter
