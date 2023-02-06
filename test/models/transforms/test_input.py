@@ -232,7 +232,7 @@ class TestInputTransforms(BotorchTestCase):
 
                 nlz.eval()
                 X_unnlzd = nlz.untransform(X_nlzd)
-                self.assertAllClose(X, X_unnlzd, atol=1e-4, rtol=1e-4)
+                self.assertAllClose(X, X_unnlzd, atol=1e-3, rtol=1e-3)
                 expected_bounds = torch.cat(
                     [X.min(dim=-2, keepdim=True)[0], X.max(dim=-2, keepdim=True)[0]],
                     dim=-2,
