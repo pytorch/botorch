@@ -14,7 +14,7 @@ from numbers import Number
 from typing import Any, Callable, Iterable, Iterator, Optional, Tuple, Union
 
 import torch
-from botorch.utils.safe_math import log1mexp
+from botorch.utils.safe_math import logdiffexp
 from numpy.polynomial.legendre import leggauss as numpy_leggauss
 from torch import BoolTensor, LongTensor, Tensor
 
@@ -214,9 +214,7 @@ def log_prob_normal_in(a: Tensor, b: Tensor) -> Tensor:
         c = torch.where(rev_cond, -b, a)
         b = torch.where(rev_cond, -a, b)
         a = c  # after we updated b, can assign c to a
-    log_Phi_b = log_ndtr(b)
-    # Phi(b) > Phi(a), so 0 > log(Phi(a) / Phi(b)) and we can use log1mexp
-    return log_Phi_b + log1mexp(log_ndtr(a) - log_Phi_b)
+    return logdiffexp(log_a=log_ndtr(a), log_b=log_ndtr(b))
 
 
 def swap_along_dim_(
