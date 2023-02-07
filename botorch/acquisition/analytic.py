@@ -34,7 +34,7 @@ from botorch.utils.probability.utils import (
     ndtr as Phi,
     phi,
 )
-from botorch.utils.safe_math import log1mexp
+from botorch.utils.safe_math import log1mexp, logmeanexp
 from botorch.utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
 from torch import Tensor
 
@@ -587,7 +587,7 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
         u = _scaled_improvement(mean, sigma, self.best_f, self.maximize)
         log_ei = _log_ei_helper(u) + sigma.log()
         # this is mathematically - though not numerically - equivalent to log(mean(ei))
-        return torch.logsumexp(log_ei, dim=-1) - math.log(log_ei.shape[-1])
+        return logmeanexp(log_ei, dim=-1)
 
 
 class NoisyExpectedImprovement(ExpectedImprovement):

@@ -72,3 +72,30 @@ def log1mexp(x: Tensor) -> Tensor:
         (-x.expm1()).log(),
         (-x.exp()).log1p(),
     )
+
+
+def logdiffexp(log_a: Tensor, log_b: Tensor) -> Tensor:
+    """Computes log(b - a) accurately given log(a) and log(b).
+    Assumes, log_b > log_a, i.e. b > a > 0.
+
+    Args:
+        log_a (Tensor): The logarithm of a, assumed to be less than log_b.
+        log_b (Tensor): The logarithm of b, assumed to be larger than log_a.
+
+    Returns:
+        A Tensor of values corresponding to log(b - a).
+    """
+    return log_b + log1mexp(log_a - log_b)
+
+
+def logmeanexp(X: Tensor, dim: int = -1) -> Tensor:
+    """Computes log(mean(exp(X), dim=dim)).
+
+    Args:
+        X (Tensor): The logarithm of a, assumed to be less than log_b.
+        dim (int): The dimension over which to compute the mean. Default is -1.
+
+    Returns:
+        A Tensor of values corresponding to log(mean(exp(X), dim=dim)).
+    """
+    return torch.logsumexp(X, dim=dim) - math.log(X.shape[dim])
