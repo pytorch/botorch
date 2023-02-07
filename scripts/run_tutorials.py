@@ -13,9 +13,10 @@ import tempfile
 import time
 from pathlib import Path
 from subprocess import CalledProcessError
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import nbformat
+import pandas as pd
 from memory_profiler import memory_usage
 from nbconvert import PythonExporter
 
@@ -68,7 +69,13 @@ def run_script(script: str, env: Optional[Dict[str, str]] = None) -> None:
     return run_out
 
 
-def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
+def run_tutorial(
+    tutorial: Path, smoke_test: bool = False
+) -> Tuple[Optional[str], Dict[str, Any]]:
+    """
+    Runs the tutorial in a subprocess, catches any raised errors and returns them as a
+    string, and returns runtime and memory information as a dict.
+    """
     script = parse_ipynb(tutorial)
     tic = time.monotonic()
     print(f"Running tutorial {tutorial.name}.")
@@ -78,12 +85,13 @@ def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
             (run_script, (script,), {"env": env}), retval=True, include_children=True
         )
     except subprocess.TimeoutExpired:
-        return f"Tutorial {tutorial.name} exceeded the maximum runtime of 30 minutes."
+        error = f"Tutorial {tutorial.name} exceeded the maximum runtime of 30 minutes."
+        return error, {}
 
     try:
         run_out.check_returncode()
     except CalledProcessError:
-        return "\n".join(
+        error = "\n".join(
             [
                 f"Encountered error running tutorial {tutorial.name}:",
                 "stdout:",
@@ -92,11 +100,15 @@ def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
                 run_out.stderr,
             ]
         )
+        return error, {}
     runtime = time.monotonic() - tic
-    print(
-        f"Running tutorial {tutorial.name} took {runtime:.2f} seconds. Memory usage "
-        f"started at {mem_usage[0]} MB and the maximum was {max(mem_usage)} MB."
-    )
+    performance_info = {
+        "runtime": runtime,
+        "start_mem": mem_usage[0],
+        "max_mem": max(mem_usage),
+    }
+
+    return None, performance_info
 
 
 def run_tutorials(
@@ -105,7 +117,12 @@ def run_tutorials(
     smoke_test: bool = False,
     name: Optional[str] = None,
 ) -> None:
-    print(f"Running tutorial(s) in {'smoke test' if smoke_test else 'standard'} mode.")
+    """
+    Run each tutorial, print statements on how it ran, and write a data set as a csv
+    to a directory.
+    """
+    mode = "smoke test" if smoke_test else "standard"
+    print(f"Running tutorial(s) in {mode} mode.")
     if not smoke_test:
         print("This may take a long time...")
     tutorial_dir = Path(repo_dir).joinpath("tutorials")
@@ -120,19 +137,44 @@ def run_tutorials(
         tutorials = [t for t in tutorials if t.name == name]
         if len(tutorials) == 0:
             raise RuntimeError(f"Specified tutorial {name} not found in directory.")
+
+    df = pd.DataFrame(
+        {
+            "name": [t.name for t in tutorials],
+            "ran_successfully": False,
+            "runtime": float("nan"),
+            "start_mem": float("nan"),
+            "max_mem": float("nan"),
+        }
+    ).set_index("name")
+
     for tutorial in tutorials:
         if not include_ignored and tutorial.name in ignored_tutorials:
             print(f"Ignoring tutorial {tutorial.name}.")
             continue
         num_runs += 1
-        error = run_tutorial(tutorial, smoke_test=smoke_test)
-        if error is not None:
+        error, performance_info = run_tutorial(tutorial, smoke_test=smoke_test)
+        if error:
             num_errors += 1
             print(error)
+        else:
+            print(
+                f"Running tutorial {tutorial.name} took "
+                f"{performance_info['runtime']:.2f} seconds. Memory usage "
+                f"started at {performance_info['start_mem']} MB and the maximum"
+                f" was {performance_info['max_mem']} MB."
+            )
+            df.loc[tutorial.name, "ran_successfully"] = True
+            for k in ["runtime", "start_mem", "max_mem"]:
+                df.loc[tutorial.name, k] = performance_info[k]
+        print(df)
+        break
+
     if num_errors > 0:
         raise RuntimeError(
             f"Running {num_runs} tutorials resulted in {num_errors} errors."
         )
+    df.to_csv(Path(repo_dir).joinpath("tutorials_actions_artifacts", "report.csv"))
 
 
 if __name__ == "__main__":
