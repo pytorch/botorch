@@ -88,7 +88,7 @@ jobs:
       name: Run tutorials without smoke test
       run: |
         python scripts/run_tutorials.py -p "$(pwd)"
-    - if: ${{ upload_artifact }}
+    - if: ${{ inputs.upload_artifact }}
       name: Upload performance info artifact
       uses: actions/upload-artifact@v3
       with:
