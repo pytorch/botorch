@@ -81,3 +81,9 @@ jobs:
       name: Run tutorials without smoke test
       run: |
         python scripts/run_tutorials.py -p "$(pwd)"
+    - if: ${{ nightly_cron }}
+      name: Upload performance info artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: tutorials-report
+        path: tutorials_actions_artifacts/report.csv

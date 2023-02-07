@@ -125,15 +125,10 @@ jobs:
       publish_versioned_website: false
 
   run_tutorials:
-    steps:
-      - name: Run tutorials without smoke test on latest PyTorch / GPyTorch / Ax
-        uses: ./.github/workflows/reusable_tutorials.yml
-        with:
-          smoke_test: false
-          use_stable_pytorch_gpytorch: false
-          use_stable_ax: false
-      - name: Upload performance info artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: tutorials-report
-          path: tutorials_actions_artifacts/report.csv
+    name: Run tutorials without smoke test on latest PyTorch / GPyTorch / Ax
+    uses: ./.github/workflows/reusable_tutorials.yml
+    with:
+      smoke_test: false
+      use_stable_pytorch_gpytorch: false
+      use_stable_ax: false
+      nightly_cron: true

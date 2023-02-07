@@ -89,6 +89,7 @@ jobs:
       smoke_test: false
       use_stable_pytorch_gpytorch: true
       use_stable_ax: false
+      nightly_cron: false
 
   run_tutorials_stable_w_stable_ax:
     name: Run tutorials without smoke test on min req. versions of PyTorch & GPyTorch and stable Ax
@@ -97,3 +98,4 @@ jobs:
       smoke_test: false
       use_stable_pytorch_gpytorch: true
       use_stable_ax: true
+      nightly_cron: false
