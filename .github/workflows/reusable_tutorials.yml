@@ -12,6 +12,9 @@ on:
       use_stable_ax:
         required: true
         type: boolean
+      upload_artifact:
+        required: true
+        type: boolean
   workflow_call:
     inputs:
       smoke_test:
@@ -23,6 +26,10 @@ on:
         type: boolean
         default: false
       use_stable_ax:
+        required: false
+        type: boolean
+        default: false
+      upload_artifact:
         required: false
         type: boolean
         default: false
@@ -81,7 +88,7 @@ jobs:
       name: Run tutorials without smoke test
       run: |
         python scripts/run_tutorials.py -p "$(pwd)"
-    - if: ${{ nightly_cron }}
+    - if: ${{ upload_artifact }}
       name: Upload performance info artifact
       uses: actions/upload-artifact@v3
       with:

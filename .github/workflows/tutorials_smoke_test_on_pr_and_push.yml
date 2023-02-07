@@ -16,4 +16,3 @@ jobs:
       smoke_test: true
       use_stable_pytorch_gpytorch: false
       use_stable_ax: false
-      nightly_cron: false

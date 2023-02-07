@@ -131,4 +131,4 @@ jobs:
       smoke_test: false
       use_stable_pytorch_gpytorch: false
       use_stable_ax: false
-      nightly_cron: true
+      upload_artifact: true
