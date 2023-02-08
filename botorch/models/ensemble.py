@@ -78,7 +78,7 @@ class EnsembleModel(Model, ABC):
         if isinstance(kwargs.get("observation_noise"), Tensor):
             # TODO: Consider returning an MVN here instead
             raise UnsupportedError(
-                "Deterministic models do not support observation noise."
+                "Ensemble models do not support observation noise."
             )
         values = self._forward(X)
         # NOTE: The `outcome_transform` `untransform`s the predictions rather than the
