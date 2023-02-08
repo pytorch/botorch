@@ -43,12 +43,12 @@ from botorch.optim.stopping import ExpMAStoppingCriterion
 from botorch.optim.utils import (
     _filter_kwargs,
     _get_extra_mll_args,
-    DEFAULT,
     get_name_filter,
     get_parameters_and_bounds,
     TorchAttr,
 )
 from botorch.optim.utils.model_utils import get_parameters
+from botorch.utils.types import DEFAULT
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.settings import fast_computations
 from numpy import ndarray

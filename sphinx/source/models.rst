@@ -136,6 +136,11 @@ Input Transforms
 .. automodule:: botorch.models.transforms.input
     :members:
 
+Transform Factory Methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.transforms.factory
+    :members:
+
 Transform Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.transforms.utils

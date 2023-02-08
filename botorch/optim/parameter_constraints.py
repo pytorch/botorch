@@ -73,7 +73,7 @@ def make_scipy_linear_constraints(
     r"""Generate scipy constraints from torch representation.
 
     Args:
-        shapeX: The shape of the torch.Tensor to optimize over (i.e. `b x q x d`)
+        shapeX: The shape of the torch.Tensor to optimize over (i.e. `(b) x q x d`)
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`, where
@@ -219,10 +219,35 @@ def _make_linear_constraints(
             version of the input tensor `X`, returning a scalar.
         - "jac": A callable evaluating the constraint's Jacobian on `x`, a flattened
             version of the input tensor `X`, returning a numpy array.
+
+    >>> shapeX = torch.Size([3, 5, 4])
+    >>> constraints = _make_linear_constraints(
+    ...     indices=torch.tensor([1., 2.]),
+    ...     coefficients=torch.tensor([-0.5, 1.3]),
+    ...     rhs=0.49,
+    ...     shapeX=shapeX,
+    ...     eq=True
+    ... )
+    >>> len(constraints)
+    15
+    >>> constraints[0].keys()
+    dict_keys(['type', 'fun', 'jac'])
+    >>> x = np.arange(60).reshape(shapeX)
+    >>> constraints[0]["fun"](x)
+    1.61  # 1 * -0.5 + 2 * 1.3 - 0.49
+    >>> constraints[0]["jac"](x)
+    [0., -0.5, 1.3, 0., 0., ...]
+    >>> constraints[1]["fun"](x)  #
+    4.81
     """
-    if len(shapeX) != 3:
-        raise UnsupportedError("`shapeX` must be `b x q x d`")
+    if len(shapeX) not in (2, 3):
+        raise UnsupportedError(
+            f"`shapeX` must be `(b) x q x d` (at least two-dimensional). It is "
+            f"{shapeX}."
+        )
     q, d = shapeX[-2:]
+    if len(shapeX) == 2:
+        shapeX = torch.Size([1, q, d])
     n = shapeX.numel()
     constraints: List[ScipyConstraintDict] = []
     coeffs = _arrayify(coefficients)

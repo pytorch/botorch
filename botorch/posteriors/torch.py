@@ -10,7 +10,7 @@ Posterior module to be used with PyTorch distributions.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 import torch
 from botorch.posteriors.posterior import Posterior
@@ -77,6 +77,20 @@ class TorchPosterior(Posterior):
         Returns the attributes of the distribution instead.
         """
         return getattr(self.distribution, name)
+
+    def __getstate__(self) -> Dict[str, Any]:
+        r"""A minimal utility to support pickle protocol.
+
+        Pickle uses `__get/setstate__` to serialize / deserialize the objects.
+        Since we define `__getattr__` above, it takes precedence over these
+        methods, and we end up in an infinite loop unless we also define
+        `__getstate__` and `__setstate__`.
+        """
+        return self.__dict__
+
+    def __setstate__(self, d: Dict[str, Any]) -> None:
+        r"""A minimal utility to support pickle protocol."""
+        self.__dict__ = d
 
     def quantile(self, value: Tensor) -> Tensor:
         r"""Compute quantiles of the distribution.

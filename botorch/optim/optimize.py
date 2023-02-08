@@ -45,7 +45,6 @@ INIT_OPTION_KEYS = {
     "sample_around_best",
     "sample_around_best_sigma",
     "sample_around_best_prob_perturb",
-    "sample_around_best_prob_perturb",
     "seed",
     "thinning",
 }
@@ -111,7 +110,9 @@ def optimize_acqf(
     Returns:
         A two-element tuple containing
 
-        - a `(num_restarts) x q x d`-dim tensor of generated candidates.
+        - A tensor of generated candidates. The shape is
+            -- `q x d` if `return_best_only` is True (default)
+            -- `num_restarts x q x d` if `return_best_only` is False
         - a tensor of associated acquisition values. If `sequential=False`,
             this is a `(num_restarts)`-dim tensor of joint acquisition values
             (with explicit restart dimension if `return_best_only=False`). If
@@ -158,6 +159,19 @@ def optimize_acqf(
             "initializer or use the `ic_generator` kwarg to generate "
             "initial conditions for the case of nonlinear inequality constraints."
         )
+
+    d = bounds.shape[1]
+    if initial_conditions_provided:
+        if batch_initial_conditions.ndim not in (2, 3):
+            raise ValueError(
+                "batch_initial_conditions must be 2-dimensional or 3-dimensional. "
+                f"Its shape is {batch_initial_conditions.shape}."
+            )
+        if batch_initial_conditions.shape[-1] != d:
+            raise ValueError(
+                f"batch_initial_conditions.shape[-1] must be {d}. The "
+                f"shape is {batch_initial_conditions.shape}."
+            )
 
     # Sets initial condition generator ic_gen if initial conditions not provided
     if not initial_conditions_provided:
@@ -299,7 +313,7 @@ def optimize_acqf(
             logger.info(f"Generated candidate batch {i+1} of {len(batched_ics)}.")
 
         batch_candidates = torch.cat(batch_candidates_list)
-        batch_acq_values = torch.cat(batch_acq_values_list)
+        batch_acq_values = torch.stack(batch_acq_values_list).flatten()
         return batch_candidates, batch_acq_values, opt_warnings
 
     batch_candidates, batch_acq_values, ws = _optimize_batch_candidates(timeout_sec)

@@ -31,6 +31,7 @@ from gpytorch.priors import Prior
 from torch import nn, Tensor
 from torch.distributions import Kumaraswamy
 from torch.nn import Module, ModuleDict
+from torch.nn.functional import one_hot
 
 
 class InputTransform(ABC):
@@ -364,17 +365,29 @@ class AffineInputTransform(ReversibleInputTransform, Module):
                 raise ValueError("Elements of `indices` have to be smaller than `d`!")
             if len(indices.unique()) != len(indices):
                 raise ValueError("Elements of `indices` tensor must be unique!")
-            self.indices = indices
+            self.register_buffer("indices", indices)
         torch.broadcast_shapes(coefficient.shape, offset.shape)
 
         self._d = d
-        self.register_buffer("coefficient", coefficient)
-        self.register_buffer("offset", offset)
+        self.register_buffer("_coefficient", coefficient)
+        self.register_buffer("_offset", offset)
         self.batch_shape = batch_shape
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
         self.transform_on_fantasize = transform_on_fantasize
         self.reverse = reverse
+
+    @property
+    def coefficient(self) -> Tensor:
+        r"""The tensor of linear coefficients."""
+        coeff = self._coefficient
+        return coeff if self.learn_coefficients and self.training else coeff.detach()
+
+    @property
+    def offset(self) -> Tensor:
+        r"""The tensor of offset coefficients."""
+        offset = self._offset
+        return offset if self.learn_coefficients and self.training else offset.detach()
 
     @property
     def learn_coefficients(self) -> bool:
@@ -459,8 +472,8 @@ class AffineInputTransform(ReversibleInputTransform, Module):
 
     def _to(self, X: Tensor) -> None:
         r"""Makes coefficient and offset have same device and dtype as X."""
-        self.coefficient = self.coefficient.to(X)
-        self.offset = self.offset.to(X)
+        self._coefficient = self.coefficient.to(X)
+        self._offset = self.offset.to(X)
 
     def _update_coefficients(self, X: Tensor) -> None:
         r"""Updates affine coefficients. Implemented by subclasses,
@@ -569,9 +582,9 @@ class Normalize(AffineInputTransform):
         # Aggregate mins and ranges over extra batch and marginal dims
         batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
         reduce_dims = (*range(X.ndim - batch_ndim - 2), X.ndim - 2)
-        self.offset = torch.amin(X, dim=reduce_dims).unsqueeze(-2)
-        self.coefficient = torch.amax(X, dim=reduce_dims).unsqueeze(-2) - self.offset
-        self.coefficient.clamp_(min=self.min_range)
+        self._offset = torch.amin(X, dim=reduce_dims).unsqueeze(-2)
+        self._coefficient = torch.amax(X, dim=reduce_dims).unsqueeze(-2) - self.offset
+        self._coefficient.clamp_(min=self.min_range)
 
 
 class InputStandardize(AffineInputTransform):
@@ -641,11 +654,11 @@ class InputStandardize(AffineInputTransform):
         # Aggregate means and standard deviations over extra batch and marginal dims
         batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
         reduce_dims = (*range(X.ndim - batch_ndim - 2), X.ndim - 2)
-        coefficient, self.offset = (
+        coefficient, self._offset = (
             values.unsqueeze(-2)
             for values in torch.std_mean(X, dim=reduce_dims, unbiased=True)
         )
-        self.coefficient = coefficient.clamp_(min=self.min_std)
+        self._coefficient = coefficient.clamp_(min=self.min_std)
 
 
 class Round(InputTransform, Module):
@@ -1358,3 +1371,135 @@ class InputPerturbation(InputTransform, Module):
         else:
             p = p(X) if self.indices is None else p(X[..., self.indices])
         return p.transpose(-3, -2)  # p is batch_shape x n_p x n x d
+
+
+class OneHotToNumeric(InputTransform, Module):
+    r"""Transform categorical parameters from a one-hot to a numeric representation.
+
+    This assumes that the categoricals are the trailing dimensions.
+    """
+
+    def __init__(
+        self,
+        dim: int,
+        categorical_features: Optional[Dict[int, int]] = None,
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
+        transform_on_fantasize: bool = True,
+    ) -> None:
+        r"""Initialize.
+
+        Args:
+            dim: The dimension of the one-hot-encoded input.
+            categorical_features: A dictionary mapping the starting index of each
+                categorical feature to its cardinality. This assumes that categoricals
+                are one-hot encoded.
+            transform_on_train: A boolean indicating whether to apply the
+                transforms in train() mode. Default: False.
+            transform_on_eval: A boolean indicating whether to apply the
+                transform in eval() mode. Default: True.
+            transform_on_fantasize: A boolean indicating whether to apply the
+                transform when called from within a `fantasize` call. Default: False.
+
+        Returns:
+            A `batch_shape x n x d'`-dim tensor of where the one-hot encoded
+            categoricals are transformed to integer representation.
+        """
+        super().__init__()
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
+        self.transform_on_fantasize = transform_on_fantasize
+        categorical_features = categorical_features or {}
+        # sort by starting index
+        self.categorical_features = OrderedDict(
+            sorted(categorical_features.items(), key=lambda x: x[0])
+        )
+        if len(self.categorical_features) > 0:
+            self.categorical_start_idx = min(self.categorical_features.keys())
+            # check that the trailing dimensions are categoricals
+            end = self.categorical_start_idx
+            err_msg = (
+                f"{self.__class__.__name__} requires that the categorical "
+                "parameters are the rightmost elements."
+            )
+            for start, card in self.categorical_features.items():
+                # the end of one one-hot representation should be followed
+                # by the start of the next
+                if end != start:
+                    raise ValueError(err_msg)
+                # This assumes that the categoricals are the trailing
+                # dimensions
+                end = start + card
+            if end != dim:
+                # check end
+                raise ValueError(err_msg)
+            # the numeric representation dimension is the total number of parameters
+            # (continuous, integer, and categorical)
+            self.numeric_dim = self.categorical_start_idx + len(categorical_features)
+
+    def transform(self, X: Tensor) -> Tensor:
+        r"""Transform the categorical inputs into integer representation.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d'`-dim tensor of where the one-hot encoded
+            categoricals are transformed to integer representation.
+        """
+        if len(self.categorical_features) > 0:
+            X_numeric = X[..., : self.numeric_dim].clone()
+            idx = self.categorical_start_idx
+            for start, card in self.categorical_features.items():
+                X_numeric[..., idx] = X[..., start : start + card].argmax(dim=-1)
+                idx += 1
+            return X_numeric
+        return X
+
+    def untransform(self, X: Tensor) -> Tensor:
+        r"""Transform the categoricals from integer representation to one-hot.
+
+        Args:
+            X: A `batch_shape x n x d'`-dim tensor of transformed inputs, where
+                the categoricals are represented as integers.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of inputs, where the categoricals
+            have been transformed to one-hot representation.
+        """
+        if len(self.categorical_features) > 0:
+            self.numeric_dim
+            one_hot_categoricals = [
+                # note that self.categorical_features is sorted by the starting index
+                # in one-hot representation
+                one_hot(
+                    X[..., idx - len(self.categorical_features)].long(),
+                    num_classes=cardinality,
+                )
+                for idx, cardinality in enumerate(self.categorical_features.values())
+            ]
+            X = torch.cat(
+                [
+                    X[..., : self.categorical_start_idx],
+                    *one_hot_categoricals,
+                ],
+                dim=-1,
+            )
+        return X
+
+    def equals(self, other: InputTransform) -> bool:
+        r"""Check if another input transform is equivalent.
+
+        Args:
+            other: Another input transform.
+
+        Returns:
+            A boolean indicating if the other transform is equivalent.
+        """
+        return (
+            type(self) == type(other)
+            and (self.transform_on_train == other.transform_on_train)
+            and (self.transform_on_eval == other.transform_on_eval)
+            and (self.transform_on_fantasize == other.transform_on_fantasize)
+            and self.categorical_features == other.categorical_features
+        )

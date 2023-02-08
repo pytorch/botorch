@@ -4,6 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from itertools import product
+
 import numpy as np
 import torch
 from botorch.exceptions.errors import CandidateGenerationError, UnsupportedError
@@ -45,9 +47,11 @@ class TestParameterConstraints(BotorchTestCase):
         self.assertTrue(all(np.equal(res, np.array([1.0, 0.0, -2.0]))))
 
     def test_make_linear_constraints(self):
+        # equality constraints, 1d indices
         indices = torch.tensor([1, 2], dtype=torch.long, device=self.device)
-        shapeX = torch.Size([3, 2, 4])
-        for dtype in (torch.float, torch.double):
+        for dtype, shapeX in product(
+            (torch.float, torch.double), (torch.Size([3, 2, 4]), torch.Size([2, 4]))
+        ):
             coefficients = torch.tensor([1.0, 2.0], dtype=dtype, device=self.device)
             constraints = _make_linear_constraints(
                 indices=indices,
@@ -70,21 +74,27 @@ class TestParameterConstraints(BotorchTestCase):
             jac_exp = np.zeros(shapeX.numel())
             jac_exp[[-3, -2]] = [1, 2]
             self.assertTrue(np.allclose(constraints[-1]["jac"](x), jac_exp))
-        # check inequality type
-        lcs = _make_linear_constraints(
-            indices=torch.tensor([1]),
-            coefficients=torch.tensor([1.0]),
-            rhs=1.0,
-            shapeX=torch.Size([1, 1, 2]),
-            eq=False,
-        )
-        self.assertEqual(len(lcs), 1)
-        self.assertEqual(lcs[0]["type"], "ineq")
 
-        # check constraint across q-batch
+        # inequality constraints, 1d indices
+        for shapeX in [torch.Size([1, 1, 2]), torch.Size([1, 2])]:
+            lcs = _make_linear_constraints(
+                indices=torch.tensor([1]),
+                coefficients=torch.tensor([1.0]),
+                rhs=1.0,
+                shapeX=shapeX,
+                eq=False,
+            )
+            self.assertEqual(len(lcs), 1)
+            self.assertEqual(lcs[0]["type"], "ineq")
+
+        # constraint across q-batch (2d indics), equality constraint
         indices = torch.tensor([[0, 3], [1, 2]], dtype=torch.long, device=self.device)
-        shapeX = torch.Size([3, 2, 4])
-        for dtype in (torch.float, torch.double):
+
+        for dtype, shapeX in product(
+            (torch.float, torch.double), (torch.Size([3, 2, 4]), torch.Size([2, 4]))
+        ):
+            q, d = shapeX[-2:]
+            b = 1 if len(shapeX) == 2 else shapeX[0]
             coefficients = torch.tensor([1.0, 2.0], dtype=dtype, device=self.device)
             constraints = _make_linear_constraints(
                 indices=indices,
@@ -97,11 +107,11 @@ class TestParameterConstraints(BotorchTestCase):
                 all(set(c.keys()) == {"fun", "jac", "type"} for c in constraints)
             )
             self.assertTrue(all(c["type"] == "eq" for c in constraints))
-            self.assertEqual(len(constraints), shapeX[0])
+            self.assertEqual(len(constraints), b)
             x = np.random.rand(shapeX.numel())
-            offsets = [shapeX[i:].numel() for i in range(1, len(shapeX))]
+            offsets = [q * d, d]
             # rule is [i, j, k] is i * offset[0] + j * offset[1] + k
-            for i in range(shapeX[0]):
+            for i in range(b):
                 pos1 = i * offsets[0] + 3
                 pos2 = i * offsets[0] + 1 * offsets[1] + 2
                 self.assertEqual(constraints[i]["fun"](x), x[pos1] + 2 * x[pos2] - 1.0)
@@ -119,49 +129,52 @@ class TestParameterConstraints(BotorchTestCase):
             )
 
     def test_make_scipy_linear_constraints(self):
-        shapeX = torch.Size([2, 1, 4])
-        res = make_scipy_linear_constraints(
-            shapeX=shapeX, inequality_constraints=None, equality_constraints=None
-        )
-        self.assertEqual(res, [])
-        indices = torch.tensor([0, 1], dtype=torch.long, device=self.device)
-        coefficients = torch.tensor([1.5, -1.0], device=self.device)
-        cs = make_scipy_linear_constraints(
-            shapeX=shapeX,
-            inequality_constraints=[(indices, coefficients, 1.0)],
-            equality_constraints=[(indices, coefficients, 1.0)],
-        )
-        self.assertEqual(len(cs), 4)
-        self.assertTrue({c["type"] for c in cs} == {"ineq", "eq"})
-        cs = make_scipy_linear_constraints(
-            shapeX=shapeX, inequality_constraints=[(indices, coefficients, 1.0)]
-        )
-        self.assertEqual(len(cs), 2)
-        self.assertTrue(all(c["type"] == "ineq" for c in cs))
-        cs = make_scipy_linear_constraints(
-            shapeX=shapeX, equality_constraints=[(indices, coefficients, 1.0)]
-        )
-        self.assertEqual(len(cs), 2)
-        self.assertTrue(all(c["type"] == "eq" for c in cs))
-
-        # test that len(shapeX) < 3 raises an error
-        with self.assertRaises(UnsupportedError):
-            make_scipy_linear_constraints(
-                shapeX=torch.Size([2, 1]),
+        for shapeX in [torch.Size([2, 1, 4]), torch.Size([1, 4])]:
+            b = shapeX[0] if len(shapeX) == 3 else 1
+            res = make_scipy_linear_constraints(
+                shapeX=shapeX, inequality_constraints=None, equality_constraints=None
+            )
+            self.assertEqual(res, [])
+            indices = torch.tensor([0, 1], dtype=torch.long, device=self.device)
+            coefficients = torch.tensor([1.5, -1.0], device=self.device)
+            # both inequality and equality constraints
+            cs = make_scipy_linear_constraints(
+                shapeX=shapeX,
                 inequality_constraints=[(indices, coefficients, 1.0)],
                 equality_constraints=[(indices, coefficients, 1.0)],
             )
-        # test that 2-dim indices work properly
-        indices = indices.unsqueeze(0)
-        cs = make_scipy_linear_constraints(
-            shapeX=shapeX,
-            inequality_constraints=[(indices, coefficients, 1.0)],
-            equality_constraints=[(indices, coefficients, 1.0)],
-        )
-        self.assertEqual(len(cs), 4)
-        self.assertTrue({c["type"] for c in cs} == {"ineq", "eq"})
+            self.assertEqual(len(cs), 2 * b)
+            self.assertTrue({c["type"] for c in cs} == {"ineq", "eq"})
+            # inequality only
+            cs = make_scipy_linear_constraints(
+                shapeX=shapeX, inequality_constraints=[(indices, coefficients, 1.0)]
+            )
+            self.assertEqual(len(cs), b)
+            self.assertTrue(all(c["type"] == "ineq" for c in cs))
+            # equality only
+            cs = make_scipy_linear_constraints(
+                shapeX=shapeX, equality_constraints=[(indices, coefficients, 1.0)]
+            )
+            self.assertEqual(len(cs), b)
+            self.assertTrue(all(c["type"] == "eq" for c in cs))
+
+            # test that 2-dim indices work properly
+            indices = indices.unsqueeze(0)
+            cs = make_scipy_linear_constraints(
+                shapeX=shapeX,
+                inequality_constraints=[(indices, coefficients, 1.0)],
+                equality_constraints=[(indices, coefficients, 1.0)],
+            )
+            self.assertEqual(len(cs), 2 * b)
+            self.assertTrue({c["type"] for c in cs} == {"ineq", "eq"})
+
+    def test_make_scipy_linear_constraints_unsupported(self):
+        shapeX = torch.Size([2, 1, 4])
+        coefficients = torch.tensor([1.5, -1.0], device=self.device)
+
         # test that >2-dim indices raises an UnsupportedError
-        indices = indices.unsqueeze(0)
+        indices = torch.tensor([0, 1], dtype=torch.long, device=self.device)
+        indices = indices.unsqueeze(0).unsqueeze(0)
         with self.assertRaises(UnsupportedError):
             make_scipy_linear_constraints(
                 shapeX=shapeX,

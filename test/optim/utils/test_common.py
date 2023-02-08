@@ -10,12 +10,31 @@ from functools import partial
 from warnings import catch_warnings, warn
 
 import numpy as np
-from botorch.optim.utils import _handle_numerical_errors, _warning_handler_template
+from botorch.optim.utils import (
+    _filter_kwargs,
+    _handle_numerical_errors,
+    _warning_handler_template,
+)
 from botorch.utils.testing import BotorchTestCase
 from linear_operator.utils.errors import NanError, NotPSDError
 
 
 class TestUtilsCommon(BotorchTestCase):
+    def test__filter_kwargs(self) -> None:
+        def mock_adam(params, lr: float = 0.001) -> None:
+            return  # pragma: nocover
+
+        kwargs = {"lr": 0.01, "maxiter": 3000}
+        with catch_warnings(record=True) as ws:
+            valid_kwargs = _filter_kwargs(mock_adam, **kwargs)
+        expected_msg = (
+            "Keyword arguments ['maxiter'] will be ignored because they are not"
+            " allowed parameters for function mock_adam. Allowed parameters are "
+            "['params', 'lr']."
+        )
+        self.assertEqual(expected_msg, str(ws[0].message))
+        self.assertEqual(set(valid_kwargs.keys()), {"lr"})
+
     def test_handle_numerical_errors(self):
         x = np.zeros(1, dtype=np.float64)
 

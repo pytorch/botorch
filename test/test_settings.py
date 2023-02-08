@@ -25,28 +25,32 @@ class TestSettings(BotorchTestCase):
             self.assertTrue(flag.off())
 
     def test_debug(self):
-        # turn on BotorchWarning
+        # Turn on debug.
         settings.debug._set_state(True)
-        # check that warnings are suppressed
+        # Check that debug warnings are suppressed when it is turned off.
         with settings.debug(False):
             with warnings.catch_warnings(record=True) as ws:
-                warnings.warn("test", BotorchWarning)
+                if settings.debug.on():
+                    warnings.warn("test", BotorchWarning)
             self.assertEqual(len(ws), 0)
-        # check that warnings are not suppressed outside of context manager
+        # Check that warnings are not suppressed outside of context manager.
         with warnings.catch_warnings(record=True) as ws:
-            warnings.warn("test", BotorchWarning)
+            if settings.debug.on():
+                warnings.warn("test", BotorchWarning)
         self.assertEqual(len(ws), 1)
 
-        # turn off BotorchWarnings
+        # Turn off debug.
         settings.debug._set_state(False)
-        # check that warnings are not suppressed
+        # Check that warnings are not suppressed within debug.
         with settings.debug(True):
             with warnings.catch_warnings(record=True) as ws:
-                warnings.warn("test", BotorchWarning)
+                if settings.debug.on():
+                    warnings.warn("test", BotorchWarning)
             self.assertEqual(len(ws), 1)
-        # check that warnings are suppressed outside of context manager
+        # Check that warnings are suppressed outside of context manager.
         with warnings.catch_warnings(record=True) as ws:
-            warnings.warn("test", BotorchWarning)
+            if settings.debug.on():
+                warnings.warn("test", BotorchWarning)
         self.assertEqual(len(ws), 0)
 
 

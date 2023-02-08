@@ -12,6 +12,11 @@ Monte-Carlo Sampler API
 .. automodule:: botorch.sampling.base
     :members:
 
+Deterministic Sampler
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.deterministic
+    :members:
+
 Get Sampler Helper
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.sampling.get_sampler
@@ -40,4 +45,43 @@ QMC Base Functionality
 Stochastic Samplers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.sampling.stochastic_samplers
+    :members:
+
+
+Pathwise Sampling
+-------------------------------------------
+
+Feature Maps
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.pathwise.features.maps
+    :members:
+
+Feature Map Generators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.pathwise.features.generators
+    :members:
+
+Sample Paths
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.pathwise.paths
+    :members:
+
+Pathwise Prior Samplers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.pathwise.prior_samplers
+    :members:
+
+Pathwise Posterior Samplers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.pathwise.posterior_samplers
+    :members:
+
+Pathwise Update Strategies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.pathwise.update_strategies
+    :members:
+
+Utilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.pathwise.utils
     :members:

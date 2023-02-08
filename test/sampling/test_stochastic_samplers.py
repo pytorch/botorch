@@ -7,7 +7,6 @@
 from unittest import mock
 
 import torch
-from botorch.posteriors.deterministic import DeterministicPosterior
 from botorch.posteriors.torch import TorchPosterior
 from botorch.sampling.stochastic_samplers import ForkedRNGSampler, StochasticSampler
 from botorch.utils.testing import BotorchTestCase, MockPosterior
@@ -40,7 +39,3 @@ class TestStochasticSampler(BotorchTestCase):
         # Test _update_base_samples.
         with self.assertRaisesRegex(NotImplementedError, "_update_base_samples"):
             sampler._update_base_samples(posterior=posterior, base_sampler=sampler)
-        sampler._update_base_samples(
-            posterior=DeterministicPosterior(values=torch.rand(1, 2)),
-            base_sampler=sampler,
-        )
