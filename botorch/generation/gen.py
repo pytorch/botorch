@@ -37,6 +37,8 @@ from torch.optim import Optimizer
 
 logger = _get_logger()
 
+TGenCandidates = Callable[[Tensor, AcquisitionFunction, Any], Tuple[Tensor, Tensor]]
+
 
 def gen_candidates_scipy(
     initial_conditions: Tensor,
@@ -152,7 +154,6 @@ def gen_candidates_scipy(
             clamped_candidates
         )
         return clamped_candidates, batch_acquisition
-
     clamped_candidates = columnwise_clamp(
         X=initial_conditions, lower=lower_bounds, upper=upper_bounds
     )
@@ -360,7 +361,6 @@ def gen_candidates_torch(
             clamped_candidates
         )
         return clamped_candidates, batch_acquisition
-
     _clamp = partial(columnwise_clamp, lower=lower_bounds, upper=upper_bounds)
     clamped_candidates = _clamp(initial_conditions).requires_grad_(True)
     _optimizer = optimizer(params=[clamped_candidates], lr=options.get("lr", 0.025))

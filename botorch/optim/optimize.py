@@ -23,13 +23,14 @@ from botorch.acquisition.acquisition import (
 from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
 from botorch.exceptions import InputDataError, UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
-from botorch.generation.gen import gen_candidates_scipy
+from botorch.generation.gen import gen_candidates_scipy, TGenCandidates
 from botorch.logging import logger
 from botorch.optim.initializers import (
     gen_batch_initial_conditions,
     gen_one_shot_kg_initial_conditions,
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
+from botorch.optim.utils import _filter_kwargs
 from torch import Tensor
 
 INIT_OPTION_KEYS = {
@@ -64,6 +65,7 @@ def optimize_acqf(
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
     return_best_only: bool = True,
+    gen_candidates: Optional[TGenCandidates] = None,
     sequential: bool = False,
     **kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
@@ -103,6 +105,12 @@ def optimize_acqf(
             this if you do not want to use default initialization strategy.
         return_best_only: If False, outputs the solutions corresponding to all
             random restart initializations of the optimization.
+        gen_candidates: A callable for generating candidates (and their associated
+            acquisition values) given a tensor of initial conditions and an
+            acquisition function. Other common inputs include lower and upper bounds
+            and a dictionary of options, but refer to the documentation of specific
+            generation functions (e.g gen_candidates_scipy and gen_candidates_torch)
+            for method-specific inputs. Default: `gen_candidates_scipy`
         sequential: If False, uses joint optimization, otherwise uses sequential
             optimization.
         kwargs: Additonal keyword arguments.
@@ -134,6 +142,9 @@ def optimize_acqf(
     """
     start_time: float = time.monotonic()
     timeout_sec = kwargs.pop("timeout_sec", None)
+    # using a default of None simplifies unit testing
+    if gen_candidates is None:
+        gen_candidates = gen_candidates_scipy
 
     if inequality_constraints is None:
         if not (bounds.ndim == 2 and bounds.shape[0] == 2):
@@ -229,6 +240,7 @@ def optimize_acqf(
                 sequential=False,
                 ic_generator=ic_gen,
                 timeout_sec=timeout_sec,
+                gen_candidates=gen_candidates,
             )
 
             candidate_list.append(candidate)
@@ -277,6 +289,11 @@ def optimize_acqf(
     batch_limit: int = options.get(
         "batch_limit", num_restarts if not nonlinear_inequality_constraints else 1
     )
+    has_parameter_constraints = (
+        inequality_constraints is not None
+        or equality_constraints is not None
+        or nonlinear_inequality_constraints is not None
+    )
 
     def _optimize_batch_candidates(
         timeout_sec: Optional[float],
@@ -288,24 +305,36 @@ def optimize_acqf(
         if timeout_sec is not None:
             timeout_sec = (timeout_sec - start_time) / len(batched_ics)
 
-        scipy_kws = {
+        gen_kwargs = {
             "acquisition_function": acq_function,
             "lower_bounds": None if bounds[0].isinf().all() else bounds[0],
             "upper_bounds": None if bounds[1].isinf().all() else bounds[1],
             "options": {k: v for k, v in options.items() if k not in INIT_OPTION_KEYS},
-            "inequality_constraints": inequality_constraints,
-            "equality_constraints": equality_constraints,
-            "nonlinear_inequality_constraints": nonlinear_inequality_constraints,
             "fixed_features": fixed_features,
             "timeout_sec": timeout_sec,
         }
+
+        if has_parameter_constraints:
+            # only add parameter constraints to gen_kwargs if they are specified
+            # to avoid unnecessary warnings in _filter_kwargs
+            gen_kwargs.update(
+                {
+                    "inequality_constraints": inequality_constraints,
+                    "equality_constraints": equality_constraints,
+                    # the line is too long
+                    "nonlinear_inequality_constraints": (
+                        nonlinear_inequality_constraints
+                    ),
+                }
+            )
+        filtered_gen_kwargs = _filter_kwargs(gen_candidates, **gen_kwargs)
 
         for i, batched_ics_ in enumerate(batched_ics):
             # optimize using random restart optimization
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always", category=OptimizationWarning)
-                batch_candidates_curr, batch_acq_values_curr = gen_candidates_scipy(
-                    initial_conditions=batched_ics_, **scipy_kws
+                batch_candidates_curr, batch_acq_values_curr = gen_candidates(
+                    initial_conditions=batched_ics_, **filtered_gen_kwargs
                 )
             opt_warnings += ws
             batch_candidates_list.append(batch_candidates_curr)
