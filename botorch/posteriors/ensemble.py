@@ -16,10 +16,6 @@ import torch
 from botorch.posteriors.posterior import Posterior
 from torch import Tensor
 
-r"""
-Posterior module to be used with ensemble models.
-"""
-
 
 class EnsemblePosterior(Posterior):
     r"""Ensemble posterior, that should be used for ensemble models that compute
