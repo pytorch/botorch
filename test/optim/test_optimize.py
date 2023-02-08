@@ -334,24 +334,64 @@ class TestOptimizeAcqf(BotorchTestCase):
             )
 
     def test_optimize_acqf_runs_given_batch_initial_conditions(self):
-        num_restarts, raw_samples, dim = 1, 1, 1
+        num_restarts, raw_samples, dim = 1, 2, 3
 
         opt_x = 2 / np.pi
-        # start near one (of many) optima
-        initial_conditions = (opt_x * 1.01) * torch.ones(
-            (num_restarts, raw_samples, dim)
-        )
+        # -x[i] * 1 >= -opt_x * 1.01 => x[i] <= opt_x * 1.01
+        inequality_constraints = [
+            (torch.tensor([i]), -torch.tensor([1]), -opt_x * 1.01) for i in range(dim)
+        ] + [
+            # x[i] * 1 >= opt_x * .99
+            (torch.tensor([i]), torch.tensor([1]), opt_x * 0.99)
+            for i in range(dim)
+        ]
+        q = 1
+
+        ic_shapes = [(1, 2, dim), (2, 1, dim), (1, dim)]
+
         torch.manual_seed(0)
-        batch_candidates, acq_value_list = optimize_acqf(
-            acq_function=SinOneOverXAcqusitionFunction(),
-            bounds=torch.stack([-1 * torch.ones(dim), torch.ones(dim)]),
-            q=1,
-            num_restarts=num_restarts,
-            raw_samples=raw_samples,
-            batch_initial_conditions=initial_conditions,
-        )
-        self.assertAlmostEqual(batch_candidates.item(), opt_x, delta=1e-5)
-        self.assertAlmostEqual(acq_value_list.item(), 1)
+        for shape in ic_shapes:
+            with self.subTest(shape=shape):
+                # start near one (of many) optima
+                initial_conditions = (opt_x * 1.01) * torch.ones(shape)
+                batch_candidates, acq_value_list = optimize_acqf(
+                    acq_function=SinOneOverXAcqusitionFunction(),
+                    bounds=torch.stack([-1 * torch.ones(dim), torch.ones(dim)]),
+                    q=q,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    batch_initial_conditions=initial_conditions,
+                    inequality_constraints=inequality_constraints,
+                )
+                self.assertAllClose(
+                    batch_candidates,
+                    opt_x * torch.ones_like(batch_candidates),
+                    # must be at least 50% closer to the optimum than it started
+                    atol=0.004,
+                    rtol=0.005,
+                )
+                self.assertAlmostEqual(acq_value_list.item(), 1, places=3)
+
+    def test_optimize_acqf_wrong_ic_shape_inequality_constraints(self) -> None:
+        dim = 3
+        ic_shapes = [(1, 2, dim + 1), (1, 2, dim, 1), (1, dim + 1), (1, 1), (dim,)]
+
+        for shape in ic_shapes:
+            with self.subTest(shape=shape):
+                initial_conditions = torch.ones(shape)
+                expected_error = (
+                    rf"batch_initial_conditions.shape\[-1\] must be {dim}\."
+                    if len(shape) in (2, 3)
+                    else r"batch_initial_conditions must be 2\-dimensional or "
+                )
+                with self.assertRaisesRegex(ValueError, expected_error):
+                    optimize_acqf(
+                        acq_function=MockAcquisitionFunction(),
+                        bounds=torch.stack([-1 * torch.ones(dim), torch.ones(dim)]),
+                        q=4,
+                        batch_initial_conditions=initial_conditions,
+                        num_restarts=1,
+                    )
 
     def test_optimize_acqf_warns_on_opt_failure(self):
         """
@@ -808,15 +848,20 @@ class TestOptimizeAcqfCyclic(BotorchTestCase):
         tkwargs = {"device": self.device}
         bounds = torch.stack([torch.zeros(3), 4 * torch.ones(3)])
         inequality_constraints = [
-            [torch.tensor([3]), torch.tensor([4]), torch.tensor(5)]
+            [torch.tensor([2], dtype=int), torch.tensor([4.0]), torch.tensor(5.0)]
         ]
         mock_acq_function = MockAcquisitionFunction()
         for q, dtype in itertools.product([1, 3], (torch.float, torch.double)):
-            inequality_constraints[0] = [
-                t.to(**tkwargs) for t in inequality_constraints[0]
+            tkwargs["dtype"] = dtype
+            inequality_constraints = [
+                (
+                    # indices can't be floats or doubles
+                    inequality_constraints[0][0],
+                    inequality_constraints[0][1].to(**tkwargs),
+                    inequality_constraints[0][2].to(**tkwargs),
+                )
             ]
             mock_optimize_acqf.reset_mock()
-            tkwargs["dtype"] = dtype
             bounds = bounds.to(**tkwargs)
             candidate_rvs = []
             acq_val_rvs = []
@@ -855,23 +900,23 @@ class TestOptimizeAcqfCyclic(BotorchTestCase):
                     post_processing_func=rounding_func,
                     cyclic_options={"maxiter": num_cycles},
                 )
-                # check that X_pending is set correctly in cyclic optimization
-                if q > 1:
-                    x_pending_call_args_list = mock_set_X_pending.call_args_list
-                    idxr = torch.ones(q, dtype=torch.bool, device=self.device)
-                    for i in range(len(x_pending_call_args_list) - 1):
-                        idxr[i] = 0
-                        self.assertTrue(
-                            torch.equal(
-                                x_pending_call_args_list[i][0][0], orig_candidates[idxr]
-                            )
+            # check that X_pending is set correctly in cyclic optimization
+            if q > 1:
+                x_pending_call_args_list = mock_set_X_pending.call_args_list
+                idxr = torch.ones(q, dtype=torch.bool, device=self.device)
+                for i in range(len(x_pending_call_args_list) - 1):
+                    idxr[i] = 0
+                    self.assertTrue(
+                        torch.equal(
+                            x_pending_call_args_list[i][0][0], orig_candidates[idxr]
                         )
-                        idxr[i] = 1
-                        orig_candidates[i] = candidate_rvs[i + 1]
-                    # check reset to base_X_pendingg
-                    self.assertIsNone(x_pending_call_args_list[-1][0][0])
-                else:
-                    mock_set_X_pending.assert_not_called()
+                    )
+                    idxr[i] = 1
+                    orig_candidates[i] = candidate_rvs[i + 1]
+                # check reset to base_X_pendingg
+                self.assertIsNone(x_pending_call_args_list[-1][0][0])
+            else:
+                mock_set_X_pending.assert_not_called()
             # check final candidates
             expected_candidates = (
                 torch.cat(candidate_rvs[-q:], dim=0) if q > 1 else candidate_rvs[0]
