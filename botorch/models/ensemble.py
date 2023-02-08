@@ -59,7 +59,7 @@ class EnsembleModel(Model, ABC):
         r"""Compute the ensemble posterior at X.
 
         Args:
-            X: A `batch_shape x n x d`-dim input tensor `X`.
+            X: A `batch_shape x q x d`-dim input tensor `X`.
             output_indices: A list of indices, corresponding to the outputs over
                 which to compute the posterior. If omitted, computes the posterior
                 over all model outputs.
