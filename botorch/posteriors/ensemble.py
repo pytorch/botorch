@@ -124,10 +124,10 @@ class EnsemblePosterior(Posterior):
                 draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
                 of `n` samples each, set to `torch.Size([b, n])`.
             base_samples: A Tensor of indices as base samples of shape
-                `sample_shape x base_sample_shape`, typically obtained from
-                `IndexSampler`. This is used for deterministic optimization. The
-                predictions of the ensemble corresponding to the indices are then
-                sampled.
+                `sample_shape`, typically obtained from `IndexSampler`.
+                This is used for deterministic optimization. The predictions of
+                the ensemble corresponding to the indices are then sampled.
+
 
         Returns:
             Samples from the posterior, a tensor of shape
