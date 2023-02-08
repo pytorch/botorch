@@ -25,8 +25,10 @@ from botorch.acquisition.objective import (
 )
 from botorch.acquisition.utils import project_to_sample_points
 from botorch.exceptions.errors import UnsupportedError
+from botorch.generation.gen import gen_candidates_scipy
 from botorch.models import SingleTaskGP
 from botorch.optim.optimize import optimize_acqf
+from botorch.optim.utils import _filter_kwargs
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -593,7 +595,13 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                         torch.zeros(2, n_f + 1, 2, **tkwargs),
                         torch.zeros(2, **tkwargs),
                     ),
+                ), mock.patch(
+                    f"{optimize_acqf.__module__}._filter_kwargs",
+                    wraps=lambda f, **kwargs: _filter_kwargs(
+                        function=gen_candidates_scipy, **kwargs
+                    ),
                 ):
+
                     candidate, value = optimize_acqf(
                         acq_function=kg,
                         bounds=bounds,
