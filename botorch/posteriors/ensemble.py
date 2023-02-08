@@ -134,7 +134,7 @@ class EnsemblePosterior(Posterior):
             `self._extended_shape(sample_shape=sample_shape)`.
         """
         if base_samples.shape != sample_shape:
-            raise ValueError("Base samples to not match sample shape.")
+            raise ValueError("Base samples do not match sample shape.")
         # move sample axis to front
         values = self.values.movedim(-3, 0)
         # sample from the first dimension of values
