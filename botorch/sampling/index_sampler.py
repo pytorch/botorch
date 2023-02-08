@@ -55,7 +55,7 @@ class IndexSampler(MCSampler):
             self.to(device=posterior.device)  # pragma: nocover
 
     def _update_base_samples(
-        self, posterior: Posterior, base_sampler: MCSampler
+        self, posterior: EnsemblePosterior, base_sampler: IndexSampler
     ) -> None:
         r"""Null operation just needed for compatibility with
         `CachedCholeskyAcquisitionFunction`."""
