@@ -9,6 +9,8 @@ Sampler to be used with `EnsemblePosteriors` to enable
 deterministic optimization of acquisition functions with ensemble models.
 """
 
+from __future__ import annotations
+
 import torch
 from botorch.posteriors.ensemble import EnsemblePosterior
 from botorch.sampling.base import MCSampler
