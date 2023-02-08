@@ -34,7 +34,7 @@ class IndexSampler(MCSampler):
         )
         return samples
 
-    def _construct_base_samples(self, posterior: Posterior) -> None:
+    def _construct_base_samples(self, posterior: EnsemblePosterior) -> None:
         r"""Constructs base samples as indices to sample with them from
         the Posterior.
 
