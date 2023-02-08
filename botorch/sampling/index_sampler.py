@@ -19,7 +19,7 @@ class IndexSampler(MCSampler):
     r"""A sampler that calls `posterior.rsample_from_base_samples` to
     generate the samples via index base samples."""
 
-    def forward(self, posterior: Posterior) -> Tensor:
+    def forward(self, posterior: EnsemblePosterior) -> Tensor:
         r"""Draws MC samples from the posterior.
 
         Args:
