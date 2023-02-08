@@ -56,7 +56,8 @@ def gen_candidates_scipy(
     using `scipy.optimize.minimize` via a numpy converter.
 
     Args:
-        initial_conditions: Starting points for optimization.
+        initial_conditions: Starting points for optimization, with shape
+            (b) x q x d.
         acquisition_function: Acquisition function to be used.
         lower_bounds: Minimum values for each column of initial_conditions.
         upper_bounds: Maximum values for each column of initial_conditions.
@@ -162,7 +163,7 @@ def gen_candidates_scipy(
         X=initial_conditions, lower_bounds=lower_bounds, upper_bounds=upper_bounds
     )
     constraints = make_scipy_linear_constraints(
-        shapeX=clamped_candidates.shape,
+        shapeX=shapeX,
         inequality_constraints=inequality_constraints,
         equality_constraints=equality_constraints,
     )
