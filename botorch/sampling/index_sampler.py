@@ -10,7 +10,7 @@ deterministic optimization of acquisition functions with ensemble models.
 """
 
 import torch
-from botorch.posteriors import Posterior
+from botorch.posteriors.ensemble import EnsemblePosterior
 from botorch.sampling.base import MCSampler
 from torch import Tensor
 
