@@ -127,6 +127,14 @@ class TestParameterConstraints(BotorchTestCase):
                 shapeX=torch.Size([1, 1, 2]),
                 eq=False,
             )
+        # test that len(shapeX) < 2 raises an error
+        with self.assertRaises(UnsupportedError):
+            _make_linear_constraints(
+                shapeX=torch.Size([2]),
+                indices=indices,
+                coefficients=coefficients,
+                rhs=0.0,
+            )
 
     def test_make_scipy_linear_constraints(self):
         for shapeX in [torch.Size([2, 1, 4]), torch.Size([1, 4])]:
