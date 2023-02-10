@@ -959,7 +959,8 @@ class TestOptimizeAcqf(BotorchTestCase):
 
 
 class TestOptimizeAcqfCyclic(BotorchTestCase):
-    @mock.patch("botorch.optim.optimize.optimize_acqf")  # noqa: C901
+    @mock.patch("botorch.optim.optimize._optimize_acqf")  # noqa: C901
+    # TODO: make sure this runs without mock
     def test_optimize_acqf_cyclic(self, mock_optimize_acqf):
         num_restarts = 2
         raw_samples = 10
