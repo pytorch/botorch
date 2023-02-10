@@ -342,7 +342,11 @@ def optimize_acqf(
             logger.info(f"Generated candidate batch {i+1} of {len(batched_ics)}.")
 
         batch_candidates = torch.cat(batch_candidates_list)
-        batch_acq_values = torch.stack(batch_acq_values_list).flatten()
+        has_scalars = batch_acq_values_list[0].ndim == 0
+        if has_scalars:
+            batch_acq_values = torch.stack(batch_acq_values_list)
+        else:
+            batch_acq_values = torch.cat(batch_acq_values_list).flatten()
         return batch_candidates, batch_acq_values, opt_warnings
 
     batch_candidates, batch_acq_values, ws = _optimize_batch_candidates(timeout_sec)
