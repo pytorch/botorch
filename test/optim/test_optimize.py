@@ -382,6 +382,36 @@ class TestOptimizeAcqf(BotorchTestCase):
                 sequential=True,
             )
 
+    def test_optimize_acqf_batch_limit(self) -> None:
+        num_restarts = 3
+        raw_samples = 5
+        dim = 4
+        q = 4
+        batch_limit = 2
+
+        options = {"batch_limit": batch_limit}
+        initial_conditions = [
+            torch.ones(shape) for shape in [(1, 2, dim), (2, 1, dim), (1, dim)]
+        ] + [None]
+
+        for gen_candidates, ics in zip(
+            [gen_candidates_scipy, gen_candidates_torch], initial_conditions
+        ):
+            with self.subTest(gen_candidates=gen_candidates, initial_conditions=ics):
+                _, acq_value_list = optimize_acqf(
+                    acq_function=SinOneOverXAcqusitionFunction(),
+                    bounds=torch.stack([-1 * torch.ones(dim), torch.ones(dim)]),
+                    q=q,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    options=options,
+                    return_best_only=False,
+                    gen_candidates=gen_candidates,
+                    batch_initial_conditions=ics,
+                )
+                expected_shape = (num_restarts,) if ics is None else (ics.shape[0],)
+                self.assertEqual(acq_value_list.shape, expected_shape)
+
     def test_optimize_acqf_runs_given_batch_initial_conditions(self):
         num_restarts, raw_samples, dim = 1, 2, 3
 
