@@ -18,6 +18,9 @@ class DeterministicSampler(StochasticSampler):
     r"""A sampler that simply calls `posterior.rsample`, intended to be used with
     `DeterministicModel` & `DeterministicPosterior`.
 
+    [DEPRECATED] - Use `IndexSampler` in conjunction with `EnsemblePosterior`
+    instead of `DeterministicSampler` with `DeterministicPosterior`.
+
     This is effectively signals that `StochasticSampler` is safe to use with
     deterministic models since their output is deterministic by definition.
     """
