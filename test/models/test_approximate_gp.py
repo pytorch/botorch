@@ -197,7 +197,9 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
             self.assertTrue(type(model._inducing_point_allocator), type(ipa))
 
         # test warning when learning on and custom IPA provided
-        with self.assertWarns(UserWarning):
+        with self.assertWarnsRegex(
+            UserWarning, r"set `learn_inducing_points` to False"
+        ):
             SingleTaskVariationalGP(
                 train_X,
                 learn_inducing_points=True,
@@ -216,8 +218,8 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
         model_2 = SingleTaskVariationalGP(train_X=train_X_2, inducing_points=5)
         model_2_inducing = model_2.model.variational_strategy.inducing_points
 
-        self.assertTrue(model_1_inducing.shape == (5, 1))
-        self.assertTrue(model_2_inducing.shape == (5, 1))
+        self.assertEqual(model_1_inducing.shape, (5, 1))
+        self.assertEqual(model_2_inducing.shape, (5, 1))
         self.assertAllClose(model_1_inducing, model_2_inducing)
 
         # multi-task
@@ -236,8 +238,8 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
             model_2.model.variational_strategy.base_variational_strategy.inducing_points
         )
 
-        self.assertTrue(model_1_inducing.shape == (5, 1))
-        self.assertTrue(model_2_inducing.shape == (5, 1))
+        self.assertEqual(model_1_inducing.shape, (5, 1))
+        self.assertEqual(model_2_inducing.shape, (5, 1))
         self.assertAllClose(model_1_inducing, model_2_inducing)
 
         # batched inputs
@@ -255,8 +257,8 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
         )
         model_2_inducing = model_2.model.variational_strategy.inducing_points
 
-        self.assertTrue(model_1_inducing.shape == (2, 5, 1))
-        self.assertTrue(model_2_inducing.shape == (2, 5, 1))
+        self.assertEqual(model_1_inducing.shape, (2, 5, 1))
+        self.assertEqual(model_2_inducing.shape, (2, 5, 1))
         self.assertAllClose(model_1_inducing, model_2_inducing)
 
     def test_custom_inducing_point_init(self):
@@ -303,7 +305,7 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
         model_3.init_inducing_points(train_X_2)
         model_3_inducing = model_3.model.variational_strategy.inducing_points
 
-        self.assertTrue(model_1_inducing.shape == (5, 1))
-        self.assertTrue(model_2_inducing.shape == (5, 1))
+        self.assertEqual(model_1_inducing.shape, (5, 1))
+        self.assertEqual(model_2_inducing.shape, (5, 1))
         self.assertAllClose(model_1_inducing, model_2_inducing)
         self.assertFalse(model_1_inducing[0, 0] == model_3_inducing[0, 0])

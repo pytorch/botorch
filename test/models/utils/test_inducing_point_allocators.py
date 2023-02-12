@@ -133,11 +133,11 @@ class TestGreedyVarianceReduction(BotorchTestCase):
             )
 
             if len(train_X) == 3:  # batched inputs
-                self.assertTrue(inducing_points_1.shape == (2, 5, 1))
-                self.assertTrue(inducing_points_2.shape == (2, 5, 1))
+                self.assertEqual(inducing_points_1.shape, (2, 5, 1))
+                self.assertEqual(inducing_points_2.shape, (2, 5, 1))
             else:
-                self.assertTrue(inducing_points_1.shape == (5, 1))
-                self.assertTrue(inducing_points_2.shape == (5, 1))
+                self.assertEqual(inducing_points_1.shape, (5, 1))
+                self.assertEqual(inducing_points_2.shape, (5, 1))
             self.assertAllClose(inducing_points_1, inducing_points_2)
 
     def test_that_we_dont_get_redundant_inducing_points(self):
@@ -217,11 +217,11 @@ class TestGreedyImprovementReduction(BotorchTestCase):
             )
 
             if len(train_X) == 3:  # batched inputs
-                self.assertTrue(inducing_points_1.shape == (2, 5, 1))
-                self.assertTrue(inducing_points_2.shape == (2, 5, 1))
+                self.assertEqual(inducing_points_1.shape, (2, 5, 1))
+                self.assertEqual(inducing_points_2.shape, (2, 5, 1))
             else:
-                self.assertTrue(inducing_points_1.shape == (5, 1))
-                self.assertTrue(inducing_points_2.shape == (5, 1))
+                self.assertEqual(inducing_points_1.shape, (5, 1))
+                self.assertEqual(inducing_points_2.shape, (5, 1))
             self.assertAllClose(inducing_points_1, inducing_points_2)
 
     def test_that_we_dont_get_redundant_inducing_points(self):

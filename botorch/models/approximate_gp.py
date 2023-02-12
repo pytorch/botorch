@@ -167,7 +167,7 @@ class _SingleTaskVariationalGP(ApproximateGP):
         variational_distribution: Optional[_VariationalDistribution] = None,
         variational_strategy: Type[_VariationalStrategy] = VariationalStrategy,
         inducing_points: Optional[Union[Tensor, int]] = None,
-        inducing_point_allocator: InducingPointAllocator = GreedyVarianceReduction(),
+        inducing_point_allocator: Optional[InducingPointAllocator] = None,
     ) -> None:
         r"""
         Args:
@@ -185,8 +185,9 @@ class _SingleTaskVariationalGP(ApproximateGP):
                 VariationalStrategy). The default setting uses "whitening" of the
                 variational distribution to make training easier.
             inducing_points: The number or specific locations of the inducing points.
-            inducing_point_allocator: The `InducingPointAllocator` used to initialize
-                the inducing point locations. If omitted, uses `GreedyVarianceReduction`
+            inducing_point_allocator: The `InducingPointAllocator` used to
+            initialize the inducing point locations. If omitted,
+            uses `GreedyVarianceReduction`.
         """
         # We use the model subclass wrapper to deal with input / outcome transforms.
         # The number of outputs will be correct here due to the check in
@@ -216,6 +217,9 @@ class _SingleTaskVariationalGP(ApproximateGP):
                 "covar_module.raw_outputscale": -1,
                 "covar_module.base_kernel.raw_lengthscale": -3,
             }
+
+        if inducing_point_allocator is None:
+            inducing_point_allocator = GreedyVarianceReduction()
 
         # initialize inducing points if they are not given
         if not isinstance(inducing_points, Tensor):
@@ -313,7 +317,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         inducing_points: Optional[Union[Tensor, int]] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
-        inducing_point_allocator: InducingPointAllocator = GreedyVarianceReduction(),
+        inducing_point_allocator: Optional[InducingPointAllocator] = None,
     ) -> None:
         r"""
         Args:
@@ -334,8 +338,9 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
                 VariationalStrategy). The default setting uses "whitening" of the
                 variational distribution to make training easier.
             inducing_points: The number or specific locations of the inducing points.
-            inducing_point_allocator: The `InducingPointAllocator` used to initialize
-                the inducing point locations. If omitted, uses `GreedyVarianceReduction`
+            inducing_point_allocator: The `InducingPointAllocator` used to
+                initialize the inducing point locations. If omitted,
+                uses `GreedyVarianceReduction`.
         """
         with torch.no_grad():
             transformed_X = self.transform_inputs(
@@ -376,9 +381,9 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
 
         if learn_inducing_points and (inducing_point_allocator is not None):
             warnings.warn(
-                "After all the effort of specifying an inducing point allocator,"
+                "After all the effort of specifying an inducing point allocator, "
                 "you probably want to stop the inducing point locations "
-                "being further optimized during the model fit. If so"
+                "being further optimized during the model fit. If so "
                 "then set `learn_inducing_points` to False.",
                 UserWarning,
             )

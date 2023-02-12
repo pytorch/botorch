@@ -31,7 +31,7 @@ References
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Callable, Union
+from typing import Union
 
 import torch
 from botorch.models.model import Model
@@ -41,7 +41,7 @@ from gpytorch.module import Module
 from linear_operator.operators import LinearOperator
 from torch import Tensor
 
-NEG_INF = -(torch.tensor(float("inf")))
+NEG_INF = torch.tensor(float("-inf"))
 
 
 class InducingPointAllocator(ABC):
@@ -51,52 +51,39 @@ class InducingPointAllocator(ABC):
     """
 
     @abstractmethod
-    def allocate_inducing_points(
-        inputs: Tensor,
-        covar_module: Module,
-        num_inducing: int,
-        input_batch_shape: torch.Size,
-    ) -> Tensor:
+    def _get_quality_function(
+        self,
+    ) -> QualityFunction:
         """
-        Initialize the `num_inducing` inducing point locations according to a
-        specific initialization strategy.
-
-        Args:
-            inputs: A (*batch_shape, n, d)-dim input data tensor.
-            covar_module: GPyTorch Module returning a LinearOperator kernel matrix.
-            num_inducing: The maximun number (m) of inducing points (m <= n).
-            input_batch_shape: The non-task-related batch shape.
+        Build the quality function required for this inducing point allocation strategy.
 
         Returns:
-            A (*batch_shape, m, d)-dim tensor of inducing point locations.
+            A quality function.
         """
 
-        pass
+        pass  # pragma: no cover
 
-    def _allocate_inducing_points(
+    def allocate_inducing_points(
         self,
         inputs: Tensor,
         covar_module: Module,
         num_inducing: int,
         input_batch_shape: torch.Size,
-        quality_function: Callable[[Tensor], Tensor],
     ) -> Tensor:
         r"""
-        Private method to allow inducing point allocators to support
-        multi-task models and models with batched inputs.
+        Initialize the `num_inducing` inducing point locations according to a
+        specific initialization strategy. todo say something about quality
 
         Args:
             inputs: A (*batch_shape, n, d)-dim input data tensor.
             covar_module: GPyTorch Module returning a LinearOperator kernel matrix.
             num_inducing: The maximun number (m) of inducing points (m <= n).
             input_batch_shape: The non-task-related batch shape.
-            quality_function: A callable mapping `inputs` to scores representing
-                the utility of allocating an inducing point to each input (of
-                shape [n] ).
 
         Returns:
             A (*batch_shape, m, d)-dim tensor of inducing point locations.
         """
+        quality_function = self._get_quality_function()
 
         train_train_kernel = covar_module(inputs).evaluate_kernel()
 
@@ -163,15 +150,16 @@ class QualityFunction(ABC):
     """
 
     @abstractmethod
-    def __call__(inputs: Tensor) -> Tensor:  # [n, d] -> [n]
+    def __call__(self, inputs: Tensor) -> Tensor:  # [n, d] -> [n]
         """
         Args:
             inputs: inputs (of shape n x d)
+
         Returns:
             A tensor of quality scores for each input, of shape [n]
         """
 
-        pass
+        pass  # pragma: no cover
 
 
 class UnitQualityFunction(QualityFunction):
@@ -187,10 +175,11 @@ class UnitQualityFunction(QualityFunction):
         """
         Args:
             inputs: inputs (of shape n x d)
+
         Returns:
             A tensor of ones for each input, of shape [n]
         """
-        return torch.ones([inputs.shape[0]], dtype=inputs.dtype)
+        return torch.ones([inputs.shape[0]], device=inputs.device, dtype=inputs.dtype)
 
 
 class ExpectedImprovementQualityFunction(QualityFunction):
@@ -221,6 +210,7 @@ class ExpectedImprovementQualityFunction(QualityFunction):
         """
         Args:
             inputs: inputs (of shape n x d)
+
         Returns:
             A tensor of quality scores for each input, of shape [n]
         """
@@ -241,29 +231,18 @@ class GreedyVarianceReduction(InducingPointAllocator):
     predictive variance.
     """
 
-    def allocate_inducing_points(
+    def _get_quality_function(
         self,
-        inputs: Tensor,
-        covar_module: Module,
-        num_inducing: int,
-        input_batch_shape: torch.Size,
-    ) -> Tensor:
+    ) -> QualityFunction:
         """
-        Greedily initialize `num_inducing` inducing points following [burt2020svgp]_.
-
-        Args:
-            inputs: A (*batch_shape, n, d)-dim input data tensor.
-            covar_module: GPyTorch Module returning a LinearOperator kernel matrix.
-            num_inducing: The maximun number (m) of inducing points (m <= n).
-            input_batch_shape: The non-task-related batch shape.
+        Build the unit quality function required for the greedy variance
+        reduction inducing point allocation strategy.
 
         Returns:
-            A (*batch_shape, m, d)-dim tensor of inducing point locations.
+            A quality function.
         """
 
-        return self._allocate_inducing_points(
-            inputs, covar_module, num_inducing, input_batch_shape, UnitQualityFunction()
-        )
+        return UnitQualityFunction()
 
 
 class GreedyImprovementReduction(InducingPointAllocator):
@@ -284,34 +263,18 @@ class GreedyImprovementReduction(InducingPointAllocator):
         self._model = model
         self._maximize = maximize
 
-    def allocate_inducing_points(
+    def _get_quality_function(
         self,
-        inputs: Tensor,
-        covar_module: Module,
-        num_inducing: int,
-        input_batch_shape: torch.Size,
-    ) -> Tensor:
+    ) -> QualityFunction:
         """
-        Greedily initialize the `num_inducing` inducing points following the IMP-DPP
-        strategy of [moss2023ipa]_.
-
-        Args:
-            inputs: A (*batch_shape, n, d)-dim input data tensor.
-            covar_module: GPyTorch Module returning a LinearOperator kernel matrix.
-            num_inducing: The maximun number (m) of inducing points (m <= n).
-            input_batch_shape: The non-task-related batch shape.
+        Build the improvement-based quality function required for the greedy
+        improvement reduction inducing point allocation strategy.
 
         Returns:
-            A (*batch_shape, m, d)-dim tensor of inducing point locations.
+            A quality function.
         """
 
-        return self._allocate_inducing_points(
-            inputs,
-            covar_module,
-            num_inducing,
-            input_batch_shape,
-            ExpectedImprovementQualityFunction(self._model, self._maximize),
-        )
+        return ExpectedImprovementQualityFunction(self._model, self._maximize)
 
 
 def _pivoted_cholesky_init(
@@ -334,8 +297,7 @@ def _pivoted_cholesky_init(
 
     Args:
         train_inputs: training inputs (of shape n x d)
-        kernel_matrix: kernel matrix on the training
-            inputs
+        kernel_matrix: kernel matrix on the training inputs
         max_length: number of inducing points to initialize
         quality_scores: scores representing the quality of each candidate
             input (of shape [n])

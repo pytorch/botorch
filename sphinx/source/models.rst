@@ -165,6 +165,11 @@ Model Conversion
 .. automodule:: botorch.models.converter
     :members:
 
+Inducing Point Allocators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.utils.InducingPointAllocator
+    :members:
+
 Other Utilties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.utils.assorted
