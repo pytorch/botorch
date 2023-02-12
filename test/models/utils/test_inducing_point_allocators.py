@@ -8,6 +8,7 @@
 import torch
 from botorch.models.approximate_gp import SingleTaskVariationalGP
 from botorch.models.utils.inducing_point_allocators import (
+    _pivoted_cholesky_init,
     ExpectedImprovementQualityFunction,
     GreedyImprovementReduction,
     GreedyVarianceReduction,
@@ -257,3 +258,17 @@ class TestGreedyImprovementReduction(BotorchTestCase):
         )
 
         self.assertFalse(torch.equal(inducing_points_for_min, inducing_points_for_max))
+
+
+class TestPivotedCholeskyInit(BotorchTestCase):
+    def test_raises_for_quality_function_with_invalid_shape(self):
+        with self.assertRaises(ValueError):
+            inputs = torch.rand(15, 1, device=self.device)
+            train_train_kernel = MaternKernel()(inputs).evaluate_kernel()
+            quality_scores = torch.ones([10, 1], device=self.device)
+            _pivoted_cholesky_init(
+                train_inputs=inputs,
+                kernel_matrix=train_train_kernel,
+                max_length=10,
+                quality_scores=quality_scores,
+            )
