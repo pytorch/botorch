@@ -186,8 +186,8 @@ class _SingleTaskVariationalGP(ApproximateGP):
                 variational distribution to make training easier.
             inducing_points: The number or specific locations of the inducing points.
             inducing_point_allocator: The `InducingPointAllocator` used to
-            initialize the inducing point locations. If omitted,
-            uses `GreedyVarianceReduction`.
+                initialize the inducing point locations. If omitted,
+                uses `GreedyVarianceReduction`.
         """
         # We use the model subclass wrapper to deal with input / outcome transforms.
         # The number of outputs will be correct here due to the check in

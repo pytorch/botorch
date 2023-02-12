@@ -267,11 +267,6 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
         train_X_2 = torch.rand(15, 1, device=self.device)
         train_X_3 = torch.rand(15, 1, device=self.device)
 
-        # check error if multi-output
-        # check error if batched inputs
-
-        # todo
-
         model_from_previous_step = SingleTaskVariationalGP(
             train_X=train_X_0, inducing_points=5
         )
