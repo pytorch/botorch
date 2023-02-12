@@ -6,6 +6,8 @@
 
 import itertools
 
+from warnings import catch_warnings
+
 import torch
 from botorch.posteriors.deterministic import DeterministicPosterior
 from botorch.utils.testing import BotorchTestCase
@@ -18,6 +20,11 @@ class TestDeterministicPosterior(BotorchTestCase):
         ):
             values = torch.randn(*shape, device=self.device, dtype=dtype)
             p = DeterministicPosterior(values)
+            with catch_warnings(record=True) as ws:
+                p = DeterministicPosterior(values)
+                self.assertTrue(
+                    any("marked for deprecation" in str(w.message) for w in ws)
+                )
             self.assertEqual(p.device.type, self.device.type)
             self.assertEqual(p.dtype, dtype)
             self.assertEqual(p._extended_shape(), values.shape)

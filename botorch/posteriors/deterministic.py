@@ -12,6 +12,7 @@ models.
 from __future__ import annotations
 
 from typing import Optional
+from warnings import warn
 
 import torch
 from botorch.posteriors.posterior import Posterior
@@ -19,13 +20,21 @@ from torch import Tensor
 
 
 class DeterministicPosterior(Posterior):
-    r"""Deterministic posterior."""
+    r"""Deterministic posterior.
+
+    [DEPRECATED] Use `EnsemblePosterior` instead.
+    """
 
     def __init__(self, values: Tensor) -> None:
         r"""
         Args:
             values: Values of the samples produced by this posterior.
         """
+        warn(
+            "`DeterministicPosterior` is marked for deprecation, consider using "
+            "`EnsemblePosterior`.",
+            DeprecationWarning,
+        )
         self.values = values
 
     @property

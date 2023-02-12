@@ -25,6 +25,11 @@ Deterministic Model API
 .. automodule:: botorch.models.deterministic
     :members:
 
+Ensemble Model API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.ensemble
+    :members:
+
 
 Models
 -------------------------------------------
@@ -134,6 +139,11 @@ Outcome Transforms
 Input Transforms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.transforms.input
+    :members:
+
+Transform Factory Methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.transforms.factory
     :members:
 
 Transform Utilities
