@@ -25,14 +25,23 @@ class TestUtilsCommon(BotorchTestCase):
             return  # pragma: nocover
 
         kwargs = {"lr": 0.01, "maxiter": 3000}
-        with catch_warnings(record=True) as ws:
-            valid_kwargs = _filter_kwargs(mock_adam, **kwargs)
         expected_msg = (
-            "Keyword arguments ['maxiter'] will be ignored because they are not"
-            " allowed parameters for function mock_adam. Allowed parameters are "
-            "['params', 'lr']."
+            r"Keyword arguments \['maxiter'\] will be ignored because they are "
+            r"not allowed parameters for function mock_adam. Allowed parameters "
+            r"are \['params', 'lr'\]."
         )
-        self.assertEqual(expected_msg, str(ws[0].message))
+
+        with self.assertWarnsRegex(Warning, expected_msg):
+            valid_kwargs = _filter_kwargs(mock_adam, **kwargs)
+        self.assertEqual(set(valid_kwargs.keys()), {"lr"})
+
+        mock_partial = partial(mock_adam, lr=2.0)
+        expected_msg = (
+            r"Keyword arguments \['maxiter'\] will be ignored because they are "
+            r"not allowed parameters. Allowed parameters are \['params', 'lr'\]."
+        )
+        with self.assertWarnsRegex(Warning, expected_msg):
+            valid_kwargs = _filter_kwargs(mock_partial, **kwargs)
         self.assertEqual(set(valid_kwargs.keys()), {"lr"})
 
     def test_handle_numerical_errors(self):
