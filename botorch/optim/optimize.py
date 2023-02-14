@@ -156,6 +156,24 @@ class OptimizeAcqfInputs:
         return gen_batch_initial_conditions
 
 
+def _raise_deprecation_warning_if_kwargs(fn_name: str, kwargs: Dict[str, Any]) -> None:
+    """
+    Raise a warning if kwargs are provided.
+
+    Some functions used to support **kwargs. The applicable parameters have now been
+    refactored to be named arguments, so no warning will be raised for users passing
+    the expected arguments. However, if a user had been passing an inapplicable
+    keyword argument, this will now raise a warning whereas in the past it did
+    nothing.
+    """
+    if len(kwargs) > 0:
+        warnings.warn(
+            f"`{fn_name}` does not support arguments {list(kwargs.keys())}. In "
+            "the future, this will become an error.",
+            DeprecationWarning,
+        )
+
+
 def _optimize_acqf_all_features_fixed(
     *,
     bounds: Tensor,
@@ -830,6 +848,7 @@ def optimize_acqf_mixed(
                 "are currently not supported when `q > 1`. This is needed to "
                 "compute the joint acquisition value."
             )
+    _raise_deprecation_warning_if_kwargs("optimize_acqf_mixed", kwargs)
 
     if q == 1:
         ff_candidate_list, ff_acq_value_list = [], []
@@ -932,6 +951,7 @@ def optimize_acqf_discrete(
         )
     if choices.numel() == 0:
         raise InputDataError("`choices` must be non-emtpy.")
+    _raise_deprecation_warning_if_kwargs("optimize_acqf_discrete", kwargs)
     choices_batched = choices.unsqueeze(-2)
     if q > 1:
         candidate_list, acq_value_list = [], []
@@ -1091,6 +1111,7 @@ def optimize_acqf_discrete_local_search(
         - a `q x d`-dim tensor of generated candidates.
         - an associated acquisition value.
     """
+    _raise_deprecation_warning_if_kwargs("optimize_acqf_discrete_local_search", kwargs)
     candidate_list = []
     base_X_pending = acq_function.X_pending if q > 1 else None
     base_X_avoid = X_avoid

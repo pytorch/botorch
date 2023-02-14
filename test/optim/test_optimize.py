@@ -1394,7 +1394,6 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
 
             mock_acq_function = SquaredAcquisitionFunction()
             mock_acq_function.set_X_pending(None)
-
             # ensure proper raising of errors if no choices
             with self.assertRaisesRegex(InputDataError, "`choices` must be non-emtpy."):
                 optimize_acqf_discrete(
@@ -1404,6 +1403,17 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
                 )
 
             choices = torch.rand(5, 2, **tkwargs)
+
+            # warning for unsupported keyword arguments
+            with self.assertWarnsRegex(
+                DeprecationWarning,
+                r"`optimize_acqf_discrete` does not support arguments "
+                r"\['num_restarts'\]. In the future, this will become an error.",
+            ):
+                optimize_acqf_discrete(
+                    acq_function=mock_acq_function, q=q, choices=choices, num_restarts=8
+                )
+
             exp_acq_vals = mock_acq_function(choices)
 
             # test unique
