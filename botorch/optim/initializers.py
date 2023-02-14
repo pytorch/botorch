@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import warnings
 from math import ceil
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from botorch import settings
@@ -45,6 +45,22 @@ from botorch.utils.transforms import normalize, standardize, unnormalize
 from torch import Tensor
 from torch.distributions import Normal
 from torch.quasirandom import SobolEngine
+
+TGenInitialConditions = Callable[
+    [
+        # reasoning behind this annotation: contravariance
+        qKnowledgeGradient,
+        Tensor,
+        int,
+        int,
+        int,
+        Optional[Dict[int, float]],
+        Optional[Dict[str, Union[bool, float, int]]],
+        Optional[List[Tuple[Tensor, Tensor, float]]],
+        Optional[List[Tuple[Tensor, Tensor, float]]],
+    ],
+    Optional[Tensor],
+]
 
 
 def gen_batch_initial_conditions(
