@@ -115,13 +115,10 @@ class TestOptimizeAcqf(BotorchTestCase):
                 mock_gen_candidates_scipy,
                 mock_gen_candidates_torch,
             ):
-                # Mocks don't have a __name__ attribute.
-                # Set the attribute, since it is needed for testing _filter_kwargs
                 if mock_gen_candidates == mock_gen_candidates_torch:
                     mock_signature.return_value = signature(gen_candidates_torch)
                 else:
                     mock_signature.return_value = signature(gen_candidates_scipy)
-                mock_gen_candidates.__name__ = "gen_candidates"
 
                 mock_gen_batch_initial_conditions.return_value = torch.zeros(
                     num_restarts, q, 3, device=self.device, dtype=dtype
@@ -835,13 +832,10 @@ class TestOptimizeAcqf(BotorchTestCase):
             mock_gen_candidates_torch,
             mock_gen_candidates_scipy,
         ):
-            # Mocks don't have a __name__ attribute.
-            # Set the attribute, since it is needed for testing _filter_kwargs
             if mock_gen_candidates == mock_gen_candidates_torch:
                 mock_signature.return_value = signature(gen_candidates_torch)
             else:
                 mock_signature.return_value = signature(gen_candidates_scipy)
-            mock_gen_candidates.__name__ = "gen_candidates"
             for dtype in (torch.float, torch.double):
 
                 mock_acq_function = MockAcquisitionFunction()
