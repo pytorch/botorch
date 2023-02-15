@@ -15,6 +15,10 @@
       "title": "q-Noisy Constrained EI"
     },
     {
+      "id": "discrete_mixed_bo",
+      "title": "Bayesian optimization over Discrete and Mixed Spaces via Probabilistic Reparameterization"
+    },
+    {
       "id": "preference_bo",
       "title": "Bayesian optimization with pairwise comparison data"
     },
