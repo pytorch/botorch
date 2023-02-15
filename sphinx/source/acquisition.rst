@@ -180,6 +180,11 @@ Penalized Acquisition Function Wrapper
 .. automodule:: botorch.acquisition.penalized
     :members:
 
+Probabilistic Reparameterization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.probabilistic_reparameterization
+    :members:
+
 Proximal Acquisition Function Wrapper
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.proximal
