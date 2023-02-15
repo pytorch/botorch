@@ -15,9 +15,8 @@ from typing import Callable, List, Optional
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.analytic import AnalyticAcquisitionFunction
 from botorch.acquisition.objective import GenericMCObjective
-from botorch.exceptions import UnsupportedError
+from botorch.acquisition.wrapper import AbstractAcquisitionFunctionWrapper
 from torch import Tensor
 
 
@@ -139,7 +138,7 @@ class GroupLassoPenalty(torch.nn.Module):
         return regularization_term
 
 
-class PenalizedAcquisitionFunction(AcquisitionFunction):
+class PenalizedAcquisitionFunction(AbstractAcquisitionFunctionWrapper):
     r"""Single-outcome acquisition function regularized by the given penalty.
 
     The usage is similar to:
@@ -161,28 +160,15 @@ class PenalizedAcquisitionFunction(AcquisitionFunction):
             penalty_func: The regularization function.
             regularization_parameter: Regularization parameter used in optimization.
         """
-        super().__init__(model=raw_acqf.model)
-        self.raw_acqf = raw_acqf
+        AcquisitionFunction.__init__(self, model=raw_acqf.model)
+        AbstractAcquisitionFunctionWrapper.__init__(self, acq_function=raw_acqf)
         self.penalty_func = penalty_func
         self.regularization_parameter = regularization_parameter
 
     def forward(self, X: Tensor) -> Tensor:
-        raw_value = self.raw_acqf(X=X)
+        raw_value = self.acq_func(X=X)
         penalty_term = self.penalty_func(X)
         return raw_value - self.regularization_parameter * penalty_term
-
-    @property
-    def X_pending(self) -> Optional[Tensor]:
-        return self.raw_acqf.X_pending
-
-    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
-        if not isinstance(self.raw_acqf, AnalyticAcquisitionFunction):
-            self.raw_acqf.set_X_pending(X_pending=X_pending)
-        else:
-            raise UnsupportedError(
-                "The raw acquisition function is Analytic and does not account "
-                "for X_pending yet."
-            )
 
 
 def group_lasso_regularizer(X: Tensor, groups: List[List[int]]) -> Tensor:
