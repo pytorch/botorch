@@ -44,6 +44,7 @@ from linear_operator.operators import (
     LinearOperator,
     ZeroLinearOperator,
 )
+from linear_operator.settings import _fast_solves
 from torch import Tensor
 from torch.nn import ModuleList, Parameter, ParameterList
 
@@ -158,6 +159,19 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     they would have a 6,000 x 6,000 covariance matrix, with 36 million entries.
     The Kronecker structure allows representing this as a product of 10x10,
     20x20, and 30x30 covariance matrices, with only 1,400 entries.
+
+    NOTE: This model requires the use of specialized Kronecker solves in
+    linear operator, which are disabled by default in BoTorch. These are enabled
+    by default in the `HigherOrderGP.posterior` call. However, they need to be
+    manually enabled by the user during model fitting.
+
+    Example:
+        >>> from linear_operator.settings import _fast_solves
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
+        >>> with _fast_solves(True):
+        >>>     fit_gpytorch_mll_torch(mll)
+        >>> samples = model.posterior(test_X).rsample()
     """
 
     def __init__(
@@ -448,6 +462,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         with ExitStack() as es:
             es.enter_context(gpt_posterior_settings())
             es.enter_context(fast_pred_var(True))
+            es.enter_context(_fast_solves(True))
 
             # we need to skip posterior variances here
             es.enter_context(skip_posterior_variances(True))
