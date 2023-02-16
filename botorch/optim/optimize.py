@@ -30,6 +30,7 @@ from botorch.logging import logger
 from botorch.optim.initializers import (
     gen_batch_initial_conditions,
     gen_one_shot_kg_initial_conditions,
+    TGenInitialConditions,
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
 from botorch.optim.utils import _filter_kwargs
@@ -53,7 +54,7 @@ INIT_OPTION_KEYS = {
 }
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class OptimizeAcqfInputs:
     """
     Container for inputs to `optimize_acqf`.
@@ -76,10 +77,18 @@ class OptimizeAcqfInputs:
     return_best_only: bool
     gen_candidates: TGenCandidates
     sequential: bool
-    kwargs: Dict[str, Any]
-    ic_generator: Callable = dataclasses.field(init=False)
+    ic_generator: Optional[TGenInitialConditions] = None
+    timeout_sec: Optional[float] = None
+    return_full_tree: bool = False
+    ic_gen_kwargs: Dict = dataclasses.field(default_factory=dict)
 
-    def _validate(self) -> None:
+    @property
+    def full_tree(self) -> bool:
+        return self.return_full_tree or (
+            not isinstance(self.acq_function, OneShotAcquisitionFunction)
+        )
+
+    def __post_init__(self) -> None:
         if self.inequality_constraints is None and not (
             self.bounds.ndim == 2 and self.bounds.shape[0] == 2
         ):
@@ -114,8 +123,8 @@ class OptimizeAcqfInputs:
                     f"shape is {batch_initial_conditions_shape}."
                 )
 
-        elif "ic_generator" not in self.kwargs.keys():
-            if self.nonlinear_inequality_constraints:
+        elif self.ic_generator is None:
+            if self.nonlinear_inequality_constraints is not None:
                 raise RuntimeError(
                     "`ic_generator` must be given if "
                     "there are non-linear inequality constraints."
@@ -137,14 +146,12 @@ class OptimizeAcqfInputs:
                     "acquisition functions. Must have `sequential=False`."
                 )
 
-    def __post_init__(self) -> None:
-        self._validate()
-        if "ic_generator" in self.kwargs.keys():
-            self.ic_generator = self.kwargs.pop("ic_generator")
+    def get_ic_generator(self) -> TGenInitialConditions:
+        if self.ic_generator is not None:
+            return self.ic_generator
         elif isinstance(self.acq_function, qKnowledgeGradient):
-            self.ic_generator = gen_one_shot_kg_initial_conditions
-        else:
-            self.ic_generator = gen_batch_initial_conditions
+            return gen_one_shot_kg_initial_conditions
+        return gen_batch_initial_conditions
 
 
 def _optimize_acqf_all_features_fixed(
@@ -170,34 +177,32 @@ def _optimize_acqf_all_features_fixed(
 
 
 def _optimize_acqf_sequential_q(
-    opt_inputs: OptimizeAcqfInputs,
-    timeout_sec: Optional[float],
-    start_time: float,
+    opt_inputs: OptimizeAcqfInputs, timeout_sec: Optional[float], start_time: float
 ) -> Tuple[Tensor, Tensor]:
     """
     Helper function for `optimize_acqf` when sequential=True and q > 1.
     """
-    kwargs = opt_inputs.kwargs or {}
     if timeout_sec is not None:
         # When using sequential optimization, we allocate the total timeout
         # evenly across the individual acquisition optimizations.
         timeout_sec = (timeout_sec - start_time) / opt_inputs.q
-        kwargs["timeout_sec"] = timeout_sec
 
     candidate_list, acq_value_list = [], []
     base_X_pending = opt_inputs.acq_function.X_pending
 
+    new_inputs = dataclasses.replace(
+        opt_inputs,
+        q=1,
+        batch_initial_conditions=None,
+        return_best_only=True,
+        sequential=False,
+        timeout_sec=timeout_sec,
+    )
     for i in range(opt_inputs.q):
-        kwargs["ic_generator"] = opt_inputs.ic_generator
-        new_inputs = dataclasses.replace(
-            opt_inputs,
-            q=1,
-            batch_initial_conditions=None,
-            return_best_only=True,
-            sequential=False,
-            kwargs=kwargs,
+
+        candidate, acq_value = _optimize_acqf_batch(
+            new_inputs, start_time=start_time, timeout_sec=timeout_sec
         )
-        candidate, acq_value = _optimize_acqf(new_inputs)
 
         candidate_list.append(candidate)
         acq_value_list.append(acq_value)
@@ -217,17 +222,13 @@ def _optimize_acqf_batch(
 ) -> Tuple[Tensor, Tensor]:
     options = opt_inputs.options or {}
 
-    kwargs = opt_inputs.kwargs
-    full_tree = isinstance(
-        opt_inputs.acq_function, OneShotAcquisitionFunction
-    ) and not kwargs.pop("return_full_tree", False)
-
     initial_conditions_provided = opt_inputs.batch_initial_conditions is not None
 
     if initial_conditions_provided:
         batch_initial_conditions = opt_inputs.batch_initial_conditions
     else:
-        batch_initial_conditions = opt_inputs.ic_generator(
+        # pyre-ignore[28]: Unexpected keyword argument `acq_function` to anonymous call.
+        batch_initial_conditions = opt_inputs.get_ic_generator()(
             acq_function=opt_inputs.acq_function,
             bounds=opt_inputs.bounds,
             q=opt_inputs.q,
@@ -237,7 +238,7 @@ def _optimize_acqf_batch(
             options=options,
             inequality_constraints=opt_inputs.inequality_constraints,
             equality_constraints=opt_inputs.equality_constraints,
-            **kwargs,
+            **opt_inputs.ic_gen_kwargs,
         )
 
     batch_limit: int = options.get(
@@ -330,7 +331,7 @@ def _optimize_acqf_batch(
         warnings.warn(first_warn_msg, RuntimeWarning)
 
         if not initial_conditions_provided:
-            batch_initial_conditions = opt_inputs.ic_generator(
+            batch_initial_conditions = opt_inputs.get_ic_generator()(
                 acq_function=opt_inputs.acq_function,
                 bounds=opt_inputs.bounds,
                 q=opt_inputs.q,
@@ -340,7 +341,7 @@ def _optimize_acqf_batch(
                 options=options,
                 inequality_constraints=opt_inputs.inequality_constraints,
                 equality_constraints=opt_inputs.equality_constraints,
-                **kwargs,
+                **opt_inputs.ic_gen_kwargs,
             )
 
             batch_candidates, batch_acq_values, ws = _optimize_batch_candidates(
@@ -365,7 +366,7 @@ def _optimize_acqf_batch(
         batch_candidates = batch_candidates[best]
         batch_acq_values = batch_acq_values[best]
 
-    if full_tree:
+    if not opt_inputs.full_tree:
         batch_candidates = opt_inputs.acq_function.extract_candidates(
             X_full=batch_candidates
         )
@@ -389,7 +390,11 @@ def optimize_acqf(
     return_best_only: bool = True,
     gen_candidates: Optional[TGenCandidates] = None,
     sequential: bool = False,
-    **kwargs: Any,
+    *,
+    ic_generator: Optional[TGenInitialConditions] = None,
+    timeout_sec: Optional[float] = None,
+    return_full_tree: bool = False,
+    **ic_gen_kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of candidates via multi-start optimization.
 
@@ -435,7 +440,15 @@ def optimize_acqf(
             for method-specific inputs. Default: `gen_candidates_scipy`
         sequential: If False, uses joint optimization, otherwise uses sequential
             optimization.
-        kwargs: Additonal keyword arguments.
+        ic_generator: Function for generating initial conditions. Not needed when
+            `batch_initial_conditions` are provided. Defaults to
+            `gen_one_shot_kg_initial_conditions` for `qKnowledgeGradient` acquisition
+            functions and `gen_batch_initial_conditions` otherwise. Must be specified
+            for nonlinear inequality constraints.
+        timeout_sec: Max amount of time optimization can run for.
+        return_full_tree:
+        ic_gen_kwargs: Additional keyword arguments passed to function specified by
+            `ic_generator`
 
     Returns:
         A two-element tuple containing
@@ -481,7 +494,10 @@ def optimize_acqf(
         return_best_only=return_best_only,
         gen_candidates=gen_candidates,
         sequential=sequential,
-        kwargs=kwargs,
+        ic_generator=ic_generator,
+        timeout_sec=timeout_sec,
+        return_full_tree=return_full_tree,
+        ic_gen_kwargs=ic_gen_kwargs,
     )
     return _optimize_acqf(opt_acqf_inputs)
 
@@ -501,8 +517,7 @@ def _optimize_acqf(opt_inputs: OptimizeAcqfInputs) -> Tuple[Tensor, Tensor]:
         )
 
     start_time: float = time.monotonic()
-    kwargs = opt_inputs.kwargs
-    timeout_sec = kwargs.pop("timeout_sec", None)
+    timeout_sec = opt_inputs.timeout_sec
 
     # Perform sequential optimization via successive conditioning on pending points
     if opt_inputs.sequential and opt_inputs.q > 1:
@@ -531,7 +546,11 @@ def optimize_acqf_cyclic(
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
     cyclic_options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
-    **kwargs,
+    *,
+    ic_generator: Optional[TGenInitialConditions] = None,
+    timeout_sec: Optional[float] = None,
+    return_full_tree: bool = False,
+    **ic_gen_kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of `q` candidates via cyclic optimization.
 
@@ -561,6 +580,15 @@ def optimize_acqf_cyclic(
             If no initial conditions are provided, the default initialization will
             be used.
         cyclic_options: Options for stopping criterion for outer cyclic optimization.
+        ic_generator: Function for generating initial conditions. Not needed when
+            `batch_initial_conditions` are provided. Defaults to
+            `gen_one_shot_kg_initial_conditions` for `qKnowledgeGradient` acquisition
+            functions and `gen_batch_initial_conditions` otherwise. Must be specified
+            for nonlinear inequality constraints.
+        timeout_sec: Max amount of time optimization can run for.
+        return_full_tree:
+        ic_gen_kwargs: Additional keyword arguments passed to function specified by
+            `ic_generator`
 
     Returns:
         A two-element tuple containing
@@ -596,7 +624,10 @@ def optimize_acqf_cyclic(
         return_best_only=True,
         gen_candidates=gen_candidates_scipy,
         sequential=True,
-        kwargs=kwargs,
+        ic_generator=ic_generator,
+        timeout_sec=timeout_sec,
+        return_full_tree=return_full_tree,
+        ic_gen_kwargs=ic_gen_kwargs,
     )
 
     # for the first cycle, optimize the q candidates sequentially
@@ -778,6 +809,8 @@ def optimize_acqf_mixed(
             transformations).
         batch_initial_conditions: A tensor to specify the initial conditions. Set
             this if you do not want to use default initialization strategy.
+        kwargs: kwargs do nothing. This is provided so that the same arguments can
+            be passed to different acquisition functions without raising an error.
 
     Returns:
         A two-element tuple containing
@@ -881,6 +914,8 @@ def optimize_acqf_discrete(
             a large training set.
         unique: If True return unique choices, o/w choices may be repeated
             (only relevant if `q > 1`).
+        kwargs: kwargs do nothing. This is provided so that the same arguments can
+            be passed to different acquisition functions without raising an error.
 
     Returns:
         A three-element tuple containing
@@ -1045,6 +1080,8 @@ def optimize_acqf_discrete_local_search(
             a large training set.
         unique: If True return unique choices, o/w choices may be repeated
             (only relevant if `q > 1`).
+        kwargs: kwargs do nothing. This is provided so that the same arguments can
+            be passed to different acquisition functions without raising an error.
 
     Returns:
         A two-element tuple containing
