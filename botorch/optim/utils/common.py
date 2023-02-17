@@ -23,9 +23,14 @@ def _filter_kwargs(function: Callable, **kwargs: Any) -> Any:
     allowed_params = signature(function).parameters
     removed = {k for k in kwargs.keys() if k not in allowed_params}
     if len(removed) > 0:
+        fn_descriptor = (
+            f" for function {function.__name__}"
+            if hasattr(function, "__name__")
+            else ""
+        )
         warn(
             f"Keyword arguments {list(removed)} will be ignored because they are"
-            f" not allowed parameters for function {function.__name__}. Allowed "
+            f" not allowed parameters{fn_descriptor}. Allowed "
             f"parameters are {list(allowed_params.keys())}."
         )
     return {k: v for k, v in kwargs.items() if k not in removed}

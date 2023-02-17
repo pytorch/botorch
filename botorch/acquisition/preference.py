@@ -26,6 +26,8 @@ from botorch.models.model import Model
 from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
 from torch import Tensor
 
+SIGMA_JITTER = 1e-8
+
 
 class AnalyticExpectedUtilityOfBestOption(AnalyticAcquisitionFunction):
     r"""Analytic Prefential Expected Utility of Best Options, i.e., Analytical EUBO"""
@@ -102,7 +104,9 @@ class AnalyticExpectedUtilityOfBestOption(AnalyticAcquisitionFunction):
             + pref_cov[..., 1, 1]
             - pref_cov[..., 0, 1]
             - pref_cov[..., 1, 0]
+            + SIGMA_JITTER
         )
+
         u = delta / sigma
 
         ucdf = self.std_norm.cdf(u)

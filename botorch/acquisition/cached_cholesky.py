@@ -17,7 +17,8 @@ import torch
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.higher_order_gp import HigherOrderGP
-from botorch.models.model import Model, ModelList
+from botorch.models.model import Model
+from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.multitask import KroneckerMultiTaskGP, MultiTaskGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
@@ -27,6 +28,24 @@ from gpytorch.distributions.multitask_multivariate_normal import (
 )
 from linear_operator.utils.errors import NanError, NotPSDError
 from torch import Tensor
+
+
+def supports_cache_root(model: Model) -> bool:
+    r"""Checks if a model supports the cache_root functionality.
+    The two criteria are that the model is not multi-task and the model
+    produces a GPyTorchPosterior.
+    """
+    if isinstance(model, ModelListGP):
+        return all(supports_cache_root(m) for m in model.models)
+    # Multi task models and non-GPyTorch models are not supported.
+    if isinstance(
+        model, (MultiTaskGP, KroneckerMultiTaskGP, HigherOrderGP)
+    ) or not isinstance(model, GPyTorchModel):
+        return False
+    # Models that return a TransformedPosterior are not supported.
+    if hasattr(model, "outcome_transform") and (not model.outcome_transform._is_linear):
+        return False
+    return True
 
 
 class CachedCholeskyMCAcquisitionFunction(ABC):
@@ -51,20 +70,15 @@ class CachedCholeskyMCAcquisitionFunction(ABC):
             cache_root: A boolean indicating whether to cache the Cholesky.
                 This might be overridden in the model is not compatible.
         """
-        models = model.models if isinstance(model, ModelList) else [model]
-        if any(
-            isinstance(m, (MultiTaskGP, KroneckerMultiTaskGP, HigherOrderGP))
-            or not isinstance(m, GPyTorchModel)
-            for m in models
-        ):
-            if cache_root:
-                warnings.warn(
-                    "`cache_root` is only supported for GPyTorchModels (with the "
-                    f"exception of MultiTask models). Got model={model}. Setting "
-                    "`cache_root = False",
-                    RuntimeWarning,
-                )
-                cache_root = False
+        if cache_root and not supports_cache_root(model):
+            warnings.warn(
+                "`cache_root` is only supported for GPyTorchModels (with "
+                "the exception of MultiTask models & models producing a "
+                f"TransformedPosterior). Got model={model}. Setting "
+                "`cache_root = False",
+                RuntimeWarning,
+            )
+            cache_root = False
         self._cache_root = cache_root
 
     def _compute_root_decomposition(

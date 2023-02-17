@@ -39,6 +39,11 @@ Determinstic Posterior
 .. automodule:: botorch.posteriors.deterministic
     :members:
 
+Ensemble Posterior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.posteriors.ensemble
+    :members:
+
 Higher Order GP Posterior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.posteriors.higher_order

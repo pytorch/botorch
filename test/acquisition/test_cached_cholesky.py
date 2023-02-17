@@ -16,6 +16,8 @@ from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import SingleTaskGP
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.higher_order_gp import HigherOrderGP
+from botorch.models.model import ModelList
+from botorch.models.transforms.outcome import Log
 from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.low_rank import extract_batch_covar
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -44,6 +46,18 @@ class TestCachedCholeskyMCAcquisitionFunction(BotorchTestCase):
         self.assertFalse(acqf._cache_root)
         with self.assertWarnsRegex(RuntimeWarning, "cache_root"):
             acqf._setup(model=mm, cache_root=True)
+        self.assertFalse(acqf._cache_root)
+        # Unsupported outcome transform.
+        stgp = SingleTaskGP(
+            torch.zeros(1, 1), torch.zeros(1, 1), outcome_transform=Log()
+        )
+        with self.assertWarnsRegex(RuntimeWarning, "cache_root"):
+            acqf._setup(model=stgp, cache_root=True)
+        self.assertFalse(acqf._cache_root)
+        # ModelList is not supported.
+        model_list = ModelList(SingleTaskGP(torch.zeros(1, 1), torch.zeros(1, 1)))
+        with self.assertWarnsRegex(RuntimeWarning, "cache_root"):
+            acqf._setup(model=model_list, cache_root=True)
         self.assertFalse(acqf._cache_root)
 
         # basic test w/ supported model.
