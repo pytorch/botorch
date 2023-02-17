@@ -11,8 +11,13 @@ on:
 jobs:
   run_tutorials_with_smoke_test:
     name: Run tutorials with smoke test on latest PyTorch / GPyTorch / Ax
-    uses: ./.github/workflows/reusable_tutorials.yml
-    with:
-      smoke_test: true
-      use_stable_pytorch_gpytorch: false
-      use_stable_ax: false
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+    - name: Run tutorials and upload csv
+      run: |
+        ./scripts/run_tutorials.sh
