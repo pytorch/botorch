@@ -1,3 +1,5 @@
+git config --global user.email "santorella@meta.com"
+git config --global user.name "Elizabeth Santorella"
 echo "cloning"
 git clone https://docusaurus-bot@github.com/pytorch/botorch.git botorch-main
 cd botorch-main
