@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Functionality for allocating the inducing points of sparse Gaussian 
+Functionality for allocating the inducing points of sparse Gaussian
 process models.
 
 References
