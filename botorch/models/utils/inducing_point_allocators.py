@@ -5,26 +5,16 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-References
+Functionality for allocating the inducing points of sparse Gaussian 
+process models.
 
-.. [burt2020svgp]
-    David R. Burt and Carl Edward Rasmussen and Mark van der Wilk,
-    Convergence of Sparse Variational Inference in Gaussian Process Regression,
-    Journal of Machine Learning Research, 2020,
-    http://jmlr.org/papers/v21/19-1015.html.
+References
 
 .. [chen2018dpp]
     Laming Chen and Guoxin Zhang and Hanning Zhou, Fast greedy MAP inference
     for determinantal point process to improve recommendation diversity,
     Proceedings of the 32nd International Conference on Neural Information
     Processing Systems, 2018, https://arxiv.org/abs/1709.05135.
-
-.. [moss2023ipa]
-    Henry B. Moss and Sebastian W. Ober and Victor Picheny,
-    Inducing Point Allocation for Sparse Gaussian Processes
-    in High-Throughput Bayesian Optimization,Proceedings of
-    the 25th International Conference on Artificial Intelligence
-    and Statistics, 2023, https://arxiv.org/pdf/2301.10123.pdf.
 
 """
 
@@ -75,13 +65,13 @@ class InducingPointAllocator(ABC):
         specific initialization strategy. todo say something about quality
 
         Args:
-            inputs: A (*batch_shape, n, d)-dim input data tensor.
+            inputs: A (\*batch_shape, n, d)-dim input data tensor.
             covar_module: GPyTorch Module returning a LinearOperator kernel matrix.
             num_inducing: The maximun number (m) of inducing points (m <= n).
             input_batch_shape: The non-task-related batch shape.
 
         Returns:
-            A (*batch_shape, m, d)-dim tensor of inducing point locations.
+            A (\*batch_shape, m, d)-dim tensor of inducing point locations.
         """
         quality_function = self._get_quality_function()
 
@@ -144,10 +134,8 @@ class InducingPointAllocator(ABC):
 
 
 class QualityFunction(ABC):
-    """
-    A function that scores inputs with respect
-    to a specific criterion.
-    """
+    """A function that scores inputs with respect
+    to a specific criterion."""
 
     @abstractmethod
     def __call__(self, inputs: Tensor) -> Tensor:  # [n, d] -> [n]
@@ -167,7 +155,7 @@ class UnitQualityFunction(QualityFunction):
     A function returning ones for each element. Using this quality function
     for inducing point allocation corresponds to allocating inducing points
     with the sole aim of minimizing predictive variance, i.e. the approach
-    of [burt202svgp]_.
+    of [burt2020svgp]_.
     """
 
     @torch.no_grad()
@@ -249,7 +237,7 @@ class GreedyImprovementReduction(InducingPointAllocator):
     r"""
     An inducing point allocator that greedily chooses inducing points with large
     predictive variance and that are in promising regions of the search
-    space (according to the model form the previous BO step), see :cite:`moss2023IPA`.
+    space (according to the model form the previous BO step), see [moss2023ipa]_.
     """
 
     def __init__(self, model: Model, maximize: bool):
