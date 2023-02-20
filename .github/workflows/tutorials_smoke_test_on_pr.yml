@@ -1,4 +1,4 @@
-name: Tutorials
+name: Tutorials on PR
 
 on:
   pull_request:
