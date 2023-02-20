@@ -43,9 +43,8 @@ IGNORE_SMOKE_TEST_ONLY = {  # only used in smoke tests
 
 
 def _read_command_line_output(command: str) -> str:
-    output = (
-        subprocess.run(command.split(" "), stdout=subprocess.PIPE)
-        .stdout.decode("utf-8")
+    output = subprocess.run(command.split(" "), stdout=subprocess.PIPE).stdout.decode(
+        "utf-8"
     )
     return output
 
@@ -149,7 +148,9 @@ def run_tutorials(
     """
     mode = "smoke test" if smoke_test else "standard"
     results_already_stored = (
-        elt for elt in os.listdir() if elt[-4:] == ".csv" and elt.split("_")[0] in ("smoke-test", "standard")
+        elt
+        for elt in os.listdir()
+        if elt[-4:] == ".csv" and elt.split("_")[0] in ("smoke-test", "standard")
     )
     for fname in results_already_stored:
         raise RuntimeError(
@@ -204,7 +205,6 @@ def run_tutorials(
             for k in ["runtime", "start_mem", "max_mem"]:
                 df.loc[tutorial.name, k] = performance_info[k]
         print(df)
-        break
 
     if num_errors > 0:
         raise RuntimeError(
