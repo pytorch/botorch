@@ -98,8 +98,8 @@ def run_tutorial(
     tutorial: Path, smoke_test: bool = False
 ) -> Tuple[Optional[str], Dict[str, Any]]:
     """
-    Runs the tutorial in a subprocess, catches any raised errors and returns them as a
-    string, and returns runtime and memory information as a dict.
+    Runs the tutorial in a subprocess, catches any raised errors and returns
+    them as a string, and returns runtime and memory information as a dict.
     """
     script = parse_ipynb(tutorial)
     tic = time.monotonic()
