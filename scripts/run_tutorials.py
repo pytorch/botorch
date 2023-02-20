@@ -166,55 +166,51 @@ def run_tutorials(
     num_errors = 0
     ignored_tutorials = IGNORE if smoke_test else IGNORE | IGNORE_SMOKE_TEST_ONLY
 
-    if False:
+    tutorials = sorted(
+        t for t in tutorial_dir.iterdir() if t.is_file and t.suffix == ".ipynb"
+    )
+    if name is not None:
+        tutorials = [t for t in tutorials if t.name == name]
+        if len(tutorials) == 0:
+            raise RuntimeError(f"Specified tutorial {name} not found in directory.")
 
-        tutorials = sorted(
-            t for t in tutorial_dir.iterdir() if t.is_file and t.suffix == ".ipynb"
-        )
-        if name is not None:
-            tutorials = [t for t in tutorials if t.name == name]
-            if len(tutorials) == 0:
-                raise RuntimeError(f"Specified tutorial {name} not found in directory.")
+    df = pd.DataFrame(
+        {
+            "name": [t.name for t in tutorials],
+            "ran_successfully": False,
+            "runtime": float("nan"),
+            "start_mem": float("nan"),
+            "max_mem": float("nan"),
+        }
+    ).set_index("name")
 
-        df = pd.DataFrame(
-            {
-                "name": [t.name for t in tutorials],
-                "ran_successfully": False,
-                "runtime": float("nan"),
-                "start_mem": float("nan"),
-                "max_mem": float("nan"),
-            }
-        ).set_index("name")
-
-        for tutorial in tutorials:
-            if not include_ignored and tutorial.name in ignored_tutorials:
-                print(f"Ignoring tutorial {tutorial.name}.")
-                continue
-            num_runs += 1
-            error, performance_info = run_tutorial(tutorial, smoke_test=smoke_test)
-            if error:
-                num_errors += 1
-                print(error)
-            else:
-                print(
-                    f"Running tutorial {tutorial.name} took "
-                    f"{performance_info['runtime']:.2f} seconds. Memory usage "
-                    f"started at {performance_info['start_mem']} MB and the maximum"
-                    f" was {performance_info['max_mem']} MB."
-                )
-                df.loc[tutorial.name, "ran_successfully"] = True
-                for k in ["runtime", "start_mem", "max_mem"]:
-                    df.loc[tutorial.name, k] = performance_info[k]
-            print(df)
-            break
-
-        if num_errors > 0:
-            raise RuntimeError(
-                f"Running {num_runs} tutorials resulted in {num_errors} errors."
+    for tutorial in tutorials:
+        if not include_ignored and tutorial.name in ignored_tutorials:
+            print(f"Ignoring tutorial {tutorial.name}.")
+            continue
+        num_runs += 1
+        error, performance_info = run_tutorial(tutorial, smoke_test=smoke_test)
+        if error:
+            num_errors += 1
+            print(error)
+        else:
+            print(
+                f"Running tutorial {tutorial.name} took "
+                f"{performance_info['runtime']:.2f} seconds. Memory usage "
+                f"started at {performance_info['start_mem']} MB and the maximum"
+                f" was {performance_info['max_mem']} MB."
             )
+            df.loc[tutorial.name, "ran_successfully"] = True
+            for k in ["runtime", "start_mem", "max_mem"]:
+                df.loc[tutorial.name, k] = performance_info[k]
+        print(df)
+        break
 
+    if num_errors > 0:
+        raise RuntimeError(
+            f"Running {num_runs} tutorials resulted in {num_errors} errors."
+        )
 
-    df = pd.DataFrame()
     fname = get_output_file_path(smoke_test=smoke_test)
     print(f"Writing report to {fname}.")
     df.to_csv(fname)
