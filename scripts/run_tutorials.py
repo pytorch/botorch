@@ -154,9 +154,10 @@ def run_tutorials(
     )
     for fname in results_already_stored:
         raise RuntimeError(
-            f"There are already tutorial results files stored, such as {fname}. This is not allowed "
-            "because GitHub Actions will look for all tutorial results files and write "
-            "them to the 'artifacts' branch. Please remove all files matching pattern "
+            f"There are already tutorial results files stored, such as {fname}. "
+            "This is not allowed because GitHub Actions will look for all "
+            "tutorial results files and write them to the 'artifacts' branch. "
+            "Please remove all files matching pattern "
             "'standard_*.csv' or 'smoke-test_*.csv' in the current directory."
         )
     print(f"Running tutorial(s) in {mode} mode.")
