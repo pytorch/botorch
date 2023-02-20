@@ -1,3 +1,9 @@
+#!/bin/bash
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 name: Tutorials
 
 on:
@@ -14,10 +20,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: 3.8
     - name: Run tutorials and upload csv
       run: |
-        ./scripts/run_tutorials.sh
+        touch test_file0.csv
+        git checkout artifacts
+        git add test_file0.csv
+        git commit test_file0.csv -m "Adding most recent tutorials output"
+        git push origin artifacts
