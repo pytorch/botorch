@@ -47,12 +47,12 @@ jobs:
     - name: Fetch all history for all tags and branches
       # We need to do this so setuptools_scm knows how to set the BoTorch version.
       run: git fetch --prune --unshallow
-    - if: ${{ !inputs.use_stable_pytorch_gpytorch }}
-      name: Install latest PyTorch & GPyTorch
-      run: |
-        pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
-        pip install git+https://github.com/cornellius-gp/linear_operator.git
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
+    # - if: ${{ !inputs.use_stable_pytorch_gpytorch }}
+    #   name: Install latest PyTorch & GPyTorch
+    #   run: |
+    #     pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+    #     pip install git+https://github.com/cornellius-gp/linear_operator.git
+    #     pip install git+https://github.com/cornellius-gp/gpytorch.git
     # - if: ${{ inputs.use_stable_pytorch_gpytorch }}
     #   name: Install min required PyTorch, GPyTorch, and linear_operator
     #   run: |
@@ -90,7 +90,10 @@ jobs:
     #     python scripts/run_tutorials.py -p "$(pwd)"
     - if: ${{ inputs.upload_artifact }}
       name: Upload performance info artifact
+      # https://github.com/orgs/community/discussions/26560
       run: |
+        git config user.email "github-actions@github.com"
+        git config user.name "github-actions"
         git branch -v -a
         touch test_file0.csv
         git switch artifacts
