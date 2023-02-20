@@ -47,26 +47,26 @@ jobs:
     - name: Fetch all history for all tags and branches
       # We need to do this so setuptools_scm knows how to set the BoTorch version.
       run: git fetch --prune --unshallow
-    # - if: ${{ !inputs.use_stable_pytorch_gpytorch }}
-    #   name: Install latest PyTorch & GPyTorch
-    #   run: |
-    #     pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
-    #     pip install git+https://github.com/cornellius-gp/linear_operator.git
-    #     pip install git+https://github.com/cornellius-gp/gpytorch.git
-    # - if: ${{ inputs.use_stable_pytorch_gpytorch }}
-    #   name: Install min required PyTorch, GPyTorch, and linear_operator
-    #   run: |
-    #     python setup.py egg_info
-    #     req_txt="botorch.egg-info/requires.txt"
-    #     min_torch_version=$(grep '\btorch[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
-    #     min_gpytorch_version=$(grep '\bgpytorch[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
-    #     min_linear_operator_version=$(grep '\blinear_operator[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
-    #     pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}" "linear_operator==${min_linear_operator_version}" torchvision
-    # - name: Install BoTorch with tutorials dependencies
-    #   env:
-    #     ALLOW_LATEST_GPYTORCH_LINOP: true
-    #   run: |
-    #     pip install .[tutorials]
+    - if: ${{ !inputs.use_stable_pytorch_gpytorch }}
+      name: Install latest PyTorch & GPyTorch
+      run: |
+        pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+        pip install git+https://github.com/cornellius-gp/linear_operator.git
+        pip install git+https://github.com/cornellius-gp/gpytorch.git
+    - if: ${{ inputs.use_stable_pytorch_gpytorch }}
+      name: Install min required PyTorch, GPyTorch, and linear_operator
+      run: |
+        python setup.py egg_info
+        req_txt="botorch.egg-info/requires.txt"
+        min_torch_version=$(grep '\btorch[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
+        min_gpytorch_version=$(grep '\bgpytorch[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
+        min_linear_operator_version=$(grep '\blinear_operator[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
+        pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}" "linear_operator==${min_linear_operator_version}" torchvision
+    - name: Install BoTorch with tutorials dependencies
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
+      run: |
+        pip install .[tutorials]
     # - if: ${{ !inputs.use_stable_ax }}
     #   name: Install latest Ax
     #   env:
@@ -80,27 +80,22 @@ jobs:
     #     ALLOW_BOTORCH_LATEST: true
     #   run: |
     #     pip install ax-platform --no-binary ax-platform
-    # - if: ${{ inputs.smoke_test }}
-    #   name: Run tutorials with smoke test
-    #   run: |
-    #     python scripts/run_tutorials.py -p "$(pwd)" -s
-    # - if: ${{ !inputs.smoke_test }}
-    #   name: Run tutorials without smoke test
-    #   run: |
-    #     python scripts/run_tutorials.py -p "$(pwd)"
+    - if: ${{ inputs.smoke_test }}
+      name: Run tutorials with smoke test
+      run: |
+        python scripts/run_tutorials.py -p "$(pwd)" -s
+    - if: ${{ !inputs.smoke_test }}
+      name: Run tutorials without smoke test
+      run: |
+        python scripts/run_tutorials.py -p "$(pwd)"
     - if: ${{ inputs.upload_artifact }}
-      name: Upload performance info artifact
-      # https://github.com/orgs/community/discussions/26560
+      name: Upload performance data to artifacts branch
+      # Upload any csv files (the tutorials script ensures there is only one)
       run: |
         git config user.email "github-actions@github.com"
         git config user.name "github-actions"
-        git branch -v -a
-        touch test_file0.csv
         git switch artifacts
-        git add test_file0.csv
-        git commit test_file0.csv -m "Adding most recent tutorials output"
+        mv *.csv tutorial_performance_data/
+        git add tutorial_performance_data/*.csv
+        git commit tutorial_performance_data/*.csv -m "Adding most recent tutorials output"
         git push origin artifacts
-      # uses: actions/upload-artifact@v3
-      # with:
-      #   name: tutorials-report
-      #   path: tutorials_actions_artifacts/report.csv

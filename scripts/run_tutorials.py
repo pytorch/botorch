@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime
 import os
 import subprocess
 import tempfile
@@ -39,6 +40,31 @@ IGNORE_SMOKE_TEST_ONLY = {  # only used in smoke tests
     "Multi_objective_multi_fidelity_BO.ipynb",  # TODO: very slow, speed up
     "composite_bo_with_hogp.ipynb",  # TODO: OOMing the nightly cron, reduce mem usage
 }
+
+
+def _read_command_line_output(command: str) -> str:
+    output = (
+        subprocess.run(command.split(" "), stdout=subprocess.PIPE)
+        .stdout.decode("utf-8")
+    )
+    return output
+
+
+def get_mode_as_str(smoke_test: bool) -> str:
+    return "smoke-test" if smoke_test else "standard"
+
+
+def get_output_file_path(smoke_test: bool) -> str:
+    """
+    On push and in the nightly cron, a csv will be uploaded to
+    https://github.com/pytorch/botorch/tree/artifacts/tutorial_performance_data .
+    So file name contains time (for uniqueness) and commit hash (for debugging)
+    """
+    commit_hash = _read_command_line_output("git rev-parse --short HEAD").strip("\n")
+    time = str(datetime.datetime.now())
+    mode = get_mode_as_str(smoke_test=smoke_test)
+    fname = f"{mode}_{commit_hash}_{time}.csv"
+    return fname
 
 
 def parse_ipynb(file: Path) -> str:
@@ -122,6 +148,16 @@ def run_tutorials(
     to a directory.
     """
     mode = "smoke test" if smoke_test else "standard"
+    results_already_stored = (
+        elt for elt in os.listdir() if elt[-4:] == ".csv" and elt.split("_")[0] in ("smoke-test", "standard")
+    )
+    for fname in results_already_stored:
+        raise RuntimeError(
+            f"There are already tutorial results files stored, such as {fname}. This is not allowed "
+            "because GitHub Actions will look for all tutorial results files and write "
+            "them to the 'artifacts' branch. Please remove all files matching pattern "
+            "'standard_*.csv' or 'smoke-test_*.csv' in the current directory."
+        )
     print(f"Running tutorial(s) in {mode} mode.")
     if not smoke_test:
         print("This may take a long time...")
@@ -130,51 +166,58 @@ def run_tutorials(
     num_errors = 0
     ignored_tutorials = IGNORE if smoke_test else IGNORE | IGNORE_SMOKE_TEST_ONLY
 
-    tutorials = sorted(
-        t for t in tutorial_dir.iterdir() if t.is_file and t.suffix == ".ipynb"
-    )
-    if name is not None:
-        tutorials = [t for t in tutorials if t.name == name]
-        if len(tutorials) == 0:
-            raise RuntimeError(f"Specified tutorial {name} not found in directory.")
+    if False:
 
-    df = pd.DataFrame(
-        {
-            "name": [t.name for t in tutorials],
-            "ran_successfully": False,
-            "runtime": float("nan"),
-            "start_mem": float("nan"),
-            "max_mem": float("nan"),
-        }
-    ).set_index("name")
-
-    for tutorial in tutorials:
-        if not include_ignored and tutorial.name in ignored_tutorials:
-            print(f"Ignoring tutorial {tutorial.name}.")
-            continue
-        num_runs += 1
-        error, performance_info = run_tutorial(tutorial, smoke_test=smoke_test)
-        if error:
-            num_errors += 1
-            print(error)
-        else:
-            print(
-                f"Running tutorial {tutorial.name} took "
-                f"{performance_info['runtime']:.2f} seconds. Memory usage "
-                f"started at {performance_info['start_mem']} MB and the maximum"
-                f" was {performance_info['max_mem']} MB."
-            )
-            df.loc[tutorial.name, "ran_successfully"] = True
-            for k in ["runtime", "start_mem", "max_mem"]:
-                df.loc[tutorial.name, k] = performance_info[k]
-        print(df)
-        break
-
-    if num_errors > 0:
-        raise RuntimeError(
-            f"Running {num_runs} tutorials resulted in {num_errors} errors."
+        tutorials = sorted(
+            t for t in tutorial_dir.iterdir() if t.is_file and t.suffix == ".ipynb"
         )
-    df.to_csv(Path(repo_dir).joinpath("tutorials_actions_artifacts", "report.csv"))
+        if name is not None:
+            tutorials = [t for t in tutorials if t.name == name]
+            if len(tutorials) == 0:
+                raise RuntimeError(f"Specified tutorial {name} not found in directory.")
+
+        df = pd.DataFrame(
+            {
+                "name": [t.name for t in tutorials],
+                "ran_successfully": False,
+                "runtime": float("nan"),
+                "start_mem": float("nan"),
+                "max_mem": float("nan"),
+            }
+        ).set_index("name")
+
+        for tutorial in tutorials:
+            if not include_ignored and tutorial.name in ignored_tutorials:
+                print(f"Ignoring tutorial {tutorial.name}.")
+                continue
+            num_runs += 1
+            error, performance_info = run_tutorial(tutorial, smoke_test=smoke_test)
+            if error:
+                num_errors += 1
+                print(error)
+            else:
+                print(
+                    f"Running tutorial {tutorial.name} took "
+                    f"{performance_info['runtime']:.2f} seconds. Memory usage "
+                    f"started at {performance_info['start_mem']} MB and the maximum"
+                    f" was {performance_info['max_mem']} MB."
+                )
+                df.loc[tutorial.name, "ran_successfully"] = True
+                for k in ["runtime", "start_mem", "max_mem"]:
+                    df.loc[tutorial.name, k] = performance_info[k]
+            print(df)
+            break
+
+        if num_errors > 0:
+            raise RuntimeError(
+                f"Running {num_runs} tutorials resulted in {num_errors} errors."
+            )
+
+
+    df = pd.DataFrame()
+    fname = get_output_file_path(smoke_test=smoke_test)
+    print(f"Writing report to {fname}.")
+    df.to_csv(fname)
 
 
 if __name__ == "__main__":
