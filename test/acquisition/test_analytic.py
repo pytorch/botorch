@@ -7,6 +7,7 @@
 import math
 
 import torch
+from botorch.acquisition import qAnalyticProbabilityOfImprovement
 from botorch.acquisition.analytic import (
     _compute_log_prob_feas,
     _ei_helper,
@@ -360,6 +361,161 @@ class TestProbabilityOfImprovement(BotorchTestCase):
 
             with self.assertRaises(UnsupportedError):
                 LogProbabilityOfImprovement(model=mm2, best_f=0.0)
+
+
+class TestqAnalyticProbabilityOfImprovement(BotorchTestCase):
+    def test_q_analytic_probability_of_improvement(self):
+        for dtype in (torch.float, torch.double):
+            mean = torch.zeros(1, device=self.device, dtype=dtype)
+            cov = torch.eye(n=1, device=self.device, dtype=dtype)
+            mvn = MultivariateNormal(mean=mean, covariance_matrix=cov)
+            posterior = GPyTorchPosterior(mvn)
+            mm = MockModel(posterior)
+
+            # basic test
+            module = qAnalyticProbabilityOfImprovement(model=mm, best_f=1.96)
+            X = torch.rand(1, 2, device=self.device, dtype=dtype)
+            pi = module(X)
+            pi_expected = torch.tensor(0.0250, device=self.device, dtype=dtype)
+            self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
+
+            # basic test, maximize
+            module = qAnalyticProbabilityOfImprovement(
+                model=mm, best_f=1.96, maximize=False
+            )
+            X = torch.rand(1, 2, device=self.device, dtype=dtype)
+            pi = module(X)
+            pi_expected = torch.tensor(0.9750, device=self.device, dtype=dtype)
+            self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
+
+            # basic test, posterior transform (single-output)
+            mean = torch.ones(1, device=self.device, dtype=dtype)
+            cov = torch.eye(n=1, device=self.device, dtype=dtype)
+            mvn = MultivariateNormal(mean=mean, covariance_matrix=cov)
+            posterior = GPyTorchPosterior(mvn)
+            mm = MockModel(posterior)
+            weights = torch.tensor([0.5], device=self.device, dtype=dtype)
+            transform = ScalarizedPosteriorTransform(weights)
+            module = qAnalyticProbabilityOfImprovement(
+                model=mm, best_f=0.0, posterior_transform=transform
+            )
+            X = torch.rand(1, 2, device=self.device, dtype=dtype)
+            pi = module(X)
+            pi_expected = torch.tensor(0.8413, device=self.device, dtype=dtype)
+            self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
+
+            # basic test, posterior transform (multi-output)
+            mean = torch.ones(1, 2, device=self.device, dtype=dtype)
+            cov = torch.eye(n=2, device=self.device, dtype=dtype).unsqueeze(0)
+            mvn = MultitaskMultivariateNormal(mean=mean, covariance_matrix=cov)
+            posterior = GPyTorchPosterior(mvn)
+            mm = MockModel(posterior)
+            weights = torch.ones(2, device=self.device, dtype=dtype)
+            transform = ScalarizedPosteriorTransform(weights)
+            module = qAnalyticProbabilityOfImprovement(
+                model=mm, best_f=0.0, posterior_transform=transform
+            )
+            X = torch.rand(1, 1, device=self.device, dtype=dtype)
+            pi = module(X)
+            pi_expected = torch.tensor(0.9214, device=self.device, dtype=dtype)
+            self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
+
+            # basic test, q = 2
+            mean = torch.zeros(2, device=self.device, dtype=dtype)
+            cov = torch.eye(n=2, device=self.device, dtype=dtype)
+            mvn = MultivariateNormal(mean=mean, covariance_matrix=cov)
+            posterior = GPyTorchPosterior(mvn)
+            mm = MockModel(posterior)
+            module = qAnalyticProbabilityOfImprovement(model=mm, best_f=1.96)
+            X = torch.zeros(2, 2, device=self.device, dtype=dtype)
+            pi = module(X)
+            pi_expected = torch.tensor(0.049375, device=self.device, dtype=dtype)
+            self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
+
+    def test_batch_q_analytic_probability_of_improvement(self):
+        for dtype in (torch.float, torch.double):
+            # test batch mode
+            mean = torch.tensor([[0.0], [1.0]], device=self.device, dtype=dtype)
+            cov = (
+                torch.eye(n=1, device=self.device, dtype=dtype)
+                .unsqueeze(0)
+                .repeat(2, 1, 1)
+            )
+            mvn = MultivariateNormal(mean=mean, covariance_matrix=cov)
+            posterior = GPyTorchPosterior(mvn)
+            mm = MockModel(posterior)
+            module = qAnalyticProbabilityOfImprovement(model=mm, best_f=0)
+            X = torch.rand(2, 1, 1, device=self.device, dtype=dtype)
+            pi = module(X)
+            pi_expected = torch.tensor([0.5, 0.8413], device=self.device, dtype=dtype)
+            self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
+
+            # test batched model and best_f values
+            mean = torch.zeros(2, 1, device=self.device, dtype=dtype)
+            cov = (
+                torch.eye(n=1, device=self.device, dtype=dtype)
+                .unsqueeze(0)
+                .repeat(2, 1, 1)
+            )
+            mvn = MultivariateNormal(mean=mean, covariance_matrix=cov)
+            posterior = GPyTorchPosterior(mvn)
+            mm = MockModel(posterior)
+            best_f = torch.tensor([0.0, -1.0], device=self.device, dtype=dtype)
+            module = qAnalyticProbabilityOfImprovement(model=mm, best_f=best_f)
+            X = torch.rand(2, 1, 1, device=self.device, dtype=dtype)
+            pi = module(X)
+            pi_expected = torch.tensor([[0.5, 0.8413]], device=self.device, dtype=dtype)
+            self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
+
+            # test batched model, output transform (single output)
+            mean = torch.tensor([[0.0], [1.0]], device=self.device, dtype=dtype)
+            cov = (
+                torch.eye(n=1, device=self.device, dtype=dtype)
+                .unsqueeze(0)
+                .repeat(2, 1, 1)
+            )
+            mvn = MultivariateNormal(mean=mean, covariance_matrix=cov)
+            posterior = GPyTorchPosterior(mvn)
+            mm = MockModel(posterior)
+            weights = torch.tensor([0.5], device=self.device, dtype=dtype)
+            transform = ScalarizedPosteriorTransform(weights)
+            module = qAnalyticProbabilityOfImprovement(
+                model=mm, best_f=0.0, posterior_transform=transform
+            )
+            X = torch.rand(2, 1, 2, device=self.device, dtype=dtype)
+            pi = module(X)
+            pi_expected = torch.tensor([0.5, 0.8413], device=self.device, dtype=dtype)
+            self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
+
+            # test batched model, output transform (multiple output)
+            mean = torch.tensor(
+                [[[1.0, 1.0]], [[0.0, 1.0]]], device=self.device, dtype=dtype
+            )
+            cov = (
+                torch.eye(n=2, device=self.device, dtype=dtype)
+                .unsqueeze(0)
+                .repeat(2, 1, 1)
+            )
+            mvn = MultitaskMultivariateNormal(mean=mean, covariance_matrix=cov)
+            posterior = GPyTorchPosterior(mvn)
+            mm = MockModel(posterior)
+            weights = torch.ones(2, device=self.device, dtype=dtype)
+            transform = ScalarizedPosteriorTransform(weights)
+            module = qAnalyticProbabilityOfImprovement(
+                model=mm, best_f=0.0, posterior_transform=transform
+            )
+            X = torch.rand(2, 1, 2, device=self.device, dtype=dtype)
+            pi = module(X)
+            pi_expected = torch.tensor(
+                [0.9214, 0.7602], device=self.device, dtype=dtype
+            )
+            self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
+
+            # test bad posterior transform class
+            with self.assertRaises(UnsupportedError):
+                qAnalyticProbabilityOfImprovement(
+                    model=mm, best_f=0.0, posterior_transform=IdentityMCObjective()
+                )
 
 
 class TestUpperConfidenceBound(BotorchTestCase):
