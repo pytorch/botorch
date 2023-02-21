@@ -1,8 +1,6 @@
-name: Tutorials
+name: Tutorials on PR
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -16,3 +14,4 @@ jobs:
       smoke_test: true
       use_stable_pytorch_gpytorch: false
       use_stable_ax: false
+      upload_artifact: false
