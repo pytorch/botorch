@@ -91,11 +91,14 @@ jobs:
     - if: ${{ inputs.upload_artifact }}
       name: Upload performance data to artifacts branch
       # Upload any csv files (the tutorials script ensures there is only one)
+      # concatenate all raw csv files into one, only using header once, with awk
       run: |
         git config user.email "github-actions@github.com"
         git config user.name "github-actions"
         git switch artifacts
         mv *.csv tutorial_performance_data/
-        git add tutorial_performance_data/*.csv
-        git commit tutorial_performance_data/*.csv -m "Adding most recent tutorials output"
+        cd tutorial_performance_data/
+        awk '(NR == 1) || (FNR > 1)' s*.csv > all_data.csv
+        git add *.csv
+        git commit *.csv -m "Adding most recent tutorials output"
         git push origin artifacts
