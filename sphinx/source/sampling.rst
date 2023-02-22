@@ -17,6 +17,11 @@ Deterministic Sampler
 .. automodule:: botorch.sampling.deterministic
     :members:
 
+Index Sampler
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.index_sampler
+    :members:
+
 Get Sampler Helper
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.sampling.get_sampler

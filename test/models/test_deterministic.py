@@ -19,7 +19,7 @@ from botorch.models.deterministic import (
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
-from botorch.posteriors.deterministic import DeterministicPosterior
+from botorch.posteriors.ensemble import EnsemblePosterior
 from botorch.utils.testing import BotorchTestCase
 
 
@@ -61,7 +61,8 @@ class TestDeterministicModels(BotorchTestCase):
         X = torch.rand(3, 2)
         # basic test
         p = model.posterior(X)
-        self.assertIsInstance(p, DeterministicPosterior)
+        self.assertIsInstance(p, EnsemblePosterior)
+        self.assertEqual(p.ensemble_size, 1)
         self.assertTrue(torch.equal(p.mean, f(X)))
         # check that observation noise doesn't change things
         p_noisy = model.posterior(X, observation_noise=True)
