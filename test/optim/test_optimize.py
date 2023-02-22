@@ -520,6 +520,9 @@ class TestOptimizeAcqf(BotorchTestCase):
         condition that causes failure in the first run of
         `gen_candidates_scipy`, then re-tries with a new starting point and
         succeed.
+
+        Also tests that this can be turned off by setting
+        `retry_on_optimization_warning = False`.
         """
         num_restarts, raw_samples, dim = 1, 1, 1
 
@@ -557,6 +560,28 @@ class TestOptimizeAcqf(BotorchTestCase):
         self.assertTrue(expected_warning_raised)
         # check if it succeeded on restart -- the maximum value of sin(1/x) is 1
         self.assertAlmostEqual(acq_value_list.item(), 1.0)
+
+        # Test with retry_on_optimization_warning = False.
+        torch.manual_seed(5)
+        with warnings.catch_warnings(record=True) as ws:
+            batch_candidates, acq_value_list = optimize_acqf(
+                acq_function=SinOneOverXAcqusitionFunction(),
+                bounds=bounds,
+                q=1,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                # shorten the line search to make it faster and make failure
+                # more likely
+                options={"maxls": 2},
+                retry_on_optimization_warning=False,
+            )
+        expected_warning_raised = any(
+            (
+                issubclass(w.category, RuntimeWarning) and message in str(w.message)
+                for w in ws
+            )
+        )
+        self.assertFalse(expected_warning_raised)
 
     def test_optimize_acqf_warns_on_second_opt_failure(self):
         """
