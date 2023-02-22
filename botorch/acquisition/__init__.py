@@ -19,6 +19,7 @@ from botorch.acquisition.analytic import (
     NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
+    qAnalyticProbabilityOfImprovement,
     UpperConfidenceBound,
 )
 from botorch.acquisition.cost_aware import (
@@ -77,6 +78,7 @@ __all__ = [
     "ProbabilityOfImprovement",
     "ProximalAcquisitionFunction",
     "UpperConfidenceBound",
+    "qAnalyticProbabilityOfImprovement",
     "qExpectedImprovement",
     "qKnowledgeGradient",
     "MaxValueBase",
