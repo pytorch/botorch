@@ -13,8 +13,8 @@ References
 
 .. [Moss2021gibbon]
     Moss, H. B., et al.,
-    GIBBON: General-purpose Information-Based Bayesian OptimisatioN
-    arXiv:2102.03324, 2021
+    GIBBON: General-purpose Information-Based Bayesian OptimisatioN.
+    Journal of Machine Learning Research, 2021.
 
 .. [Takeno2020mfmves]
     S. Takeno, H. Fukuoka, Y. Tsukada, T. Koyama, M. Shiga, I. Takeuchi,

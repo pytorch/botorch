@@ -165,6 +165,12 @@ Model Conversion
 .. automodule:: botorch.models.converter
     :members:
 
+Inducing Point Allocators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.utils.inducing_point_allocators
+    :members:
+    :private-members: _pivoted_cholesky_init
+
 Other Utilties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.utils.assorted
