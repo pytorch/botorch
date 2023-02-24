@@ -7,15 +7,17 @@
 from __future__ import annotations
 
 import argparse
+import datetime
 import os
 import subprocess
 import tempfile
 import time
 from pathlib import Path
 from subprocess import CalledProcessError
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import nbformat
+import pandas as pd
 from memory_profiler import memory_usage
 from nbconvert import PythonExporter
 
@@ -36,8 +38,31 @@ IGNORE_SMOKE_TEST_ONLY = {  # only used in smoke tests
     "thompson_sampling.ipynb",  # very slow without KeOps + GPU
     "composite_mtbo.ipynb",  # TODO: very slow, figure out if we can make it faster
     "Multi_objective_multi_fidelity_BO.ipynb",  # TODO: very slow, speed up
-    "composite_bo_with_hogp.ipynb",  # TODO: OOMing the nightly cron, reduce mem usage
 }
+
+
+def _read_command_line_output(command: str) -> str:
+    output = subprocess.run(command.split(" "), stdout=subprocess.PIPE).stdout.decode(
+        "utf-8"
+    )
+    return output
+
+
+def get_mode_as_str(smoke_test: bool) -> str:
+    return "smoke-test" if smoke_test else "standard"
+
+
+def get_output_file_path(smoke_test: bool) -> str:
+    """
+    On push and in the nightly cron, a csv will be uploaded to
+    https://github.com/pytorch/botorch/tree/artifacts/tutorial_performance_data .
+    So file name contains time (for uniqueness) and commit hash (for debugging)
+    """
+    commit_hash = _read_command_line_output("git rev-parse --short HEAD").strip("\n")
+    time = str(datetime.datetime.now())
+    mode = get_mode_as_str(smoke_test=smoke_test)
+    fname = f"{mode}_{commit_hash}_{time}.csv"
+    return fname
 
 
 def parse_ipynb(file: Path) -> str:
@@ -68,7 +93,13 @@ def run_script(script: str, env: Optional[Dict[str, str]] = None) -> None:
     return run_out
 
 
-def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
+def run_tutorial(
+    tutorial: Path, smoke_test: bool = False
+) -> Tuple[Optional[str], Dict[str, Any]]:
+    """
+    Runs the tutorial in a subprocess, catches any raised errors and returns
+    them as a string, and returns runtime and memory information as a dict.
+    """
     script = parse_ipynb(tutorial)
     tic = time.monotonic()
     print(f"Running tutorial {tutorial.name}.")
@@ -78,12 +109,13 @@ def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
             (run_script, (script,), {"env": env}), retval=True, include_children=True
         )
     except subprocess.TimeoutExpired:
-        return f"Tutorial {tutorial.name} exceeded the maximum runtime of 30 minutes."
+        error = f"Tutorial {tutorial.name} exceeded the maximum runtime of 30 minutes."
+        return error, {}
 
     try:
         run_out.check_returncode()
     except CalledProcessError:
-        return "\n".join(
+        error = "\n".join(
             [
                 f"Encountered error running tutorial {tutorial.name}:",
                 "stdout:",
@@ -92,11 +124,15 @@ def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
                 run_out.stderr,
             ]
         )
+        return error, {}
     runtime = time.monotonic() - tic
-    print(
-        f"Running tutorial {tutorial.name} took {runtime:.2f} seconds. Memory usage "
-        f"started at {mem_usage[0]} MB and the maximum was {max(mem_usage)} MB."
-    )
+    performance_info = {
+        "runtime": runtime,
+        "start_mem": mem_usage[0],
+        "max_mem": max(mem_usage),
+    }
+
+    return None, performance_info
 
 
 def run_tutorials(
@@ -105,7 +141,25 @@ def run_tutorials(
     smoke_test: bool = False,
     name: Optional[str] = None,
 ) -> None:
-    print(f"Running tutorial(s) in {'smoke test' if smoke_test else 'standard'} mode.")
+    """
+    Run each tutorial, print statements on how it ran, and write a data set as a csv
+    to a directory.
+    """
+    mode = "smoke test" if smoke_test else "standard"
+    results_already_stored = (
+        elt
+        for elt in os.listdir()
+        if elt[-4:] == ".csv" and elt.split("_")[0] in ("smoke-test", "standard")
+    )
+    for fname in results_already_stored:
+        raise RuntimeError(
+            f"There are already tutorial results files stored, such as {fname}. "
+            "This is not allowed because GitHub Actions will look for all "
+            "tutorial results files and write them to the 'artifacts' branch. "
+            "Please remove all files matching pattern "
+            "'standard_*.csv' or 'smoke-test_*.csv' in the current directory."
+        )
+    print(f"Running tutorial(s) in {mode} mode.")
     if not smoke_test:
         print("This may take a long time...")
     tutorial_dir = Path(repo_dir).joinpath("tutorials")
@@ -120,19 +174,46 @@ def run_tutorials(
         tutorials = [t for t in tutorials if t.name == name]
         if len(tutorials) == 0:
             raise RuntimeError(f"Specified tutorial {name} not found in directory.")
+
+    df = pd.DataFrame(
+        {
+            "name": [t.name for t in tutorials],
+            "ran_successfully": False,
+            "runtime": float("nan"),
+            "start_mem": float("nan"),
+            "max_mem": float("nan"),
+        }
+    ).set_index("name")
+
     for tutorial in tutorials:
         if not include_ignored and tutorial.name in ignored_tutorials:
             print(f"Ignoring tutorial {tutorial.name}.")
             continue
         num_runs += 1
-        error = run_tutorial(tutorial, smoke_test=smoke_test)
-        if error is not None:
+        error, performance_info = run_tutorial(tutorial, smoke_test=smoke_test)
+        if error:
             num_errors += 1
             print(error)
+        else:
+            print(
+                f"Running tutorial {tutorial.name} took "
+                f"{performance_info['runtime']:.2f} seconds. Memory usage "
+                f"started at {performance_info['start_mem']} MB and the maximum"
+                f" was {performance_info['max_mem']} MB."
+            )
+            df.loc[tutorial.name, "ran_successfully"] = True
+            for k in ["runtime", "start_mem", "max_mem"]:
+                df.loc[tutorial.name, k] = performance_info[k]
+        print(df)
+
     if num_errors > 0:
         raise RuntimeError(
             f"Running {num_runs} tutorials resulted in {num_errors} errors."
         )
+
+    fname = get_output_file_path(smoke_test=smoke_test)
+    print(f"Writing report to {fname}.")
+    df.to_csv(fname)
 
 
 if __name__ == "__main__":

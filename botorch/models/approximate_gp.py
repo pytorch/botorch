@@ -13,22 +13,25 @@ References
     Journal of Machine Learning Research, 2020,
     http://jmlr.org/papers/v21/19-1015.html.
 
-.. [chen2018dpp]
-    Laming Chen and Guoxin Zhang and Hanning Zhou, Fast greedy MAP inference
-    for determinantal point process to improve recommendation diversity,
-    Proceedings of the 32nd International Conference on Neural Information
-    Processing Systems, 2018, https://arxiv.org/abs/1709.05135.
-
 .. [hensman2013svgp]
     James Hensman and Nicolo Fusi and Neil D. Lawrence, Gaussian Processes
     for Big Data, Proceedings of the 29th Conference on Uncertainty in
     Artificial Intelligence, 2013, https://arxiv.org/abs/1309.6835.
+
+.. [moss2023ipa]
+    Henry B. Moss and Sebastian W. Ober and Victor Picheny,
+    Inducing Point Allocation for Sparse Gaussian Processes
+    in High-Throughput Bayesian Optimization,Proceedings of
+    the 25th International Conference on Artificial Intelligence
+    and Statistics, 2023, https://arxiv.org/pdf/2301.10123.pdf.
 
 """
 
 from __future__ import annotations
 
 import copy
+import warnings
+
 from typing import Optional, Type, Union
 
 import torch
@@ -36,6 +39,10 @@ from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils import validate_input_scaling
+from botorch.models.utils.inducing_point_allocators import (
+    GreedyVarianceReduction,
+    InducingPointAllocator,
+)
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions import MultivariateNormal
@@ -47,7 +54,6 @@ from gpytorch.likelihoods import (
 )
 from gpytorch.means import ConstantMean, Mean
 from gpytorch.models import ApproximateGP
-from gpytorch.module import Module
 from gpytorch.priors import GammaPrior
 from gpytorch.utils.memoize import clear_cache_hook
 from gpytorch.variational import (
@@ -57,12 +63,10 @@ from gpytorch.variational import (
     IndependentMultitaskVariationalStrategy,
     VariationalStrategy,
 )
-from linear_operator.operators import LinearOperator
 from torch import Tensor
 
 
 MIN_INFERRED_NOISE_LEVEL = 1e-4
-NEG_INF = -(torch.tensor(float("inf")))
 
 
 class ApproximateGPyTorchModel(GPyTorchModel):
@@ -97,17 +101,19 @@ class ApproximateGPyTorchModel(GPyTorchModel):
         """
         super().__init__()
 
-        if model is None:
-            model = _SingleTaskVariationalGP(num_outputs=num_outputs, *args, **kwargs)
+        self.model = (
+            _SingleTaskVariationalGP(num_outputs=num_outputs, *args, **kwargs)
+            if model is None
+            else model
+        )
 
         if likelihood is None:
             if num_outputs == 1:
-                likelihood = GaussianLikelihood()
+                self.likelihood = GaussianLikelihood()
             else:
-                likelihood = MultitaskGaussianLikelihood(num_tasks=num_outputs)
-
-        self.model = model
-        self.likelihood = likelihood
+                self.likelihood = MultitaskGaussianLikelihood(num_tasks=num_outputs)
+        else:
+            self.likelihood = likelihood
         self._desired_num_outputs = num_outputs
 
     @property
@@ -148,7 +154,8 @@ class _SingleTaskVariationalGP(ApproximateGP):
     Base class wrapper for a stochastic variational Gaussian Process (SVGP)
     model [hensman2013svgp]_.
 
-    Uses pivoted Cholesky initialization for the inducing points.
+    Uses by default pivoted Cholesky initialization for allocating inducing points,
+    however, custom inducing point allocators can be provided.
     """
 
     def __init__(
@@ -162,6 +169,7 @@ class _SingleTaskVariationalGP(ApproximateGP):
         variational_distribution: Optional[_VariationalDistribution] = None,
         variational_strategy: Type[_VariationalStrategy] = VariationalStrategy,
         inducing_points: Optional[Union[Tensor, int]] = None,
+        inducing_point_allocator: Optional[InducingPointAllocator] = None,
     ) -> None:
         r"""
         Args:
@@ -179,6 +187,9 @@ class _SingleTaskVariationalGP(ApproximateGP):
                 VariationalStrategy). The default setting uses "whitening" of the
                 variational distribution to make training easier.
             inducing_points: The number or specific locations of the inducing points.
+            inducing_point_allocator: The `InducingPointAllocator` used to
+                initialize the inducing point locations. If omitted,
+                uses `GreedyVarianceReduction`.
         """
         # We use the model subclass wrapper to deal with input / outcome transforms.
         # The number of outputs will be correct here due to the check in
@@ -188,9 +199,6 @@ class _SingleTaskVariationalGP(ApproximateGP):
         if num_outputs > 1:
             aug_batch_shape += torch.Size((num_outputs,))
         self._aug_batch_shape = aug_batch_shape
-
-        if mean_module is None:
-            mean_module = ConstantMean(batch_shape=self._aug_batch_shape).to(train_X)
 
         if covar_module is None:
             covar_module = ScaleKernel(
@@ -209,14 +217,17 @@ class _SingleTaskVariationalGP(ApproximateGP):
                 "covar_module.base_kernel.raw_lengthscale": -3,
             }
 
-        # initialize inducing points with a pivoted cholesky init if they are not given
+        if inducing_point_allocator is None:
+            inducing_point_allocator = GreedyVarianceReduction()
+
+        # initialize inducing points if they are not given
         if not isinstance(inducing_points, Tensor):
             if inducing_points is None:
                 # number of inducing points is 25% the number of data points
                 # as a heuristic
                 inducing_points = int(0.25 * train_X.shape[-2])
 
-            inducing_points = _select_inducing_points(
+            inducing_points = inducing_point_allocator.allocate_inducing_points(
                 inputs=train_X,
                 covar_module=covar_module,
                 num_inducing=inducing_points,
@@ -229,7 +240,7 @@ class _SingleTaskVariationalGP(ApproximateGP):
                 batch_shape=self._aug_batch_shape,
             )
 
-        variational_strategy = variational_strategy(
+        variational_strategy_instance = variational_strategy(
             self,
             inducing_points=inducing_points,
             variational_distribution=variational_distribution,
@@ -238,13 +249,19 @@ class _SingleTaskVariationalGP(ApproximateGP):
 
         # wrap variational models in independent multi-task variational strategy
         if num_outputs > 1:
-            variational_strategy = IndependentMultitaskVariationalStrategy(
-                base_variational_strategy=variational_strategy,
+            variational_strategy_instance = IndependentMultitaskVariationalStrategy(
+                base_variational_strategy=variational_strategy_instance,
                 num_tasks=num_outputs,
                 task_dim=-1,
             )
-        super().__init__(variational_strategy=variational_strategy)
-        self.mean_module = mean_module
+        super().__init__(variational_strategy=variational_strategy_instance)
+
+        self.mean_module = (
+            ConstantMean(batch_shape=self._aug_batch_shape).to(train_X)
+            if mean_module is None
+            else mean_module
+        )
+
         self.covar_module = covar_module
 
     def forward(self, X) -> MultivariateNormal:
@@ -255,8 +272,14 @@ class _SingleTaskVariationalGP(ApproximateGP):
 
 
 class SingleTaskVariationalGP(ApproximateGPyTorchModel):
-    r"""A single-task variational GP model following [hensman2013svgp]_ with pivoted
-    Cholesky initialization following [chen2018dpp]_ and [burt2020svgp]_.
+    r"""A single-task variational GP model following [hensman2013svgp]_.
+
+    By default, the inducing points are initialized though the
+    `GreedyVarianceReduction` of [burt2020svgp]_, which is known to be
+    effective for building globally accurate models. However, custom
+    inducing point allocators designed for specific down-stream tasks can also be
+    provided (see [moss2023ipa]_ for details), e.g. `GreedyImprovementReduction`
+    when the goal is to build a model suitable for standard BO.
 
     A single-task variational GP using relatively strong priors on the Kernel
     hyperparameters, which work best when covariates are normalized to the unit
@@ -299,6 +322,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         inducing_points: Optional[Union[Tensor, int]] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
+        inducing_point_allocator: Optional[InducingPointAllocator] = None,
     ) -> None:
         r"""
         Args:
@@ -319,6 +343,9 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
                 VariationalStrategy). The default setting uses "whitening" of the
                 variational distribution to make training easier.
             inducing_points: The number or specific locations of the inducing points.
+            inducing_point_allocator: The `InducingPointAllocator` used to
+                initialize the inducing point locations. If omitted,
+                uses `GreedyVarianceReduction`.
         """
         with torch.no_grad():
             transformed_X = self.transform_inputs(
@@ -357,6 +384,20 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         else:
             self._is_custom_likelihood = True
 
+        if learn_inducing_points and (inducing_point_allocator is not None):
+            warnings.warn(
+                "After all the effort of specifying an inducing point allocator, "
+                "you probably want to stop the inducing point locations "
+                "being further optimized during the model fit. If so "
+                "then set `learn_inducing_points` to False.",
+                UserWarning,
+            )
+
+        if inducing_point_allocator is None:
+            self._inducing_point_allocator = GreedyVarianceReduction()
+        else:
+            self._inducing_point_allocator = inducing_point_allocator
+
         model = _SingleTaskVariationalGP(
             train_X=transformed_X,
             train_Y=train_Y,
@@ -367,6 +408,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
             variational_distribution=variational_distribution,
             variational_strategy=variational_strategy,
             inducing_points=inducing_points,
+            inducing_point_allocator=self._inducing_point_allocator,
         )
 
         super().__init__(model=model, likelihood=likelihood, num_outputs=num_outputs)
@@ -390,7 +432,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
     ) -> Tensor:
         r"""
         Reinitialize the inducing point locations in-place with the current kernel
-        applied to `inputs`.
+        applied to `inputs` through the model's inducing point allocation strategy.
         The variational distribution and variational strategy caches are reset.
 
         Args:
@@ -407,7 +449,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
 
         with torch.no_grad():
             num_inducing = var_strat.inducing_points.size(-2)
-            inducing_points = _select_inducing_points(
+            inducing_points = self._inducing_point_allocator.allocate_inducing_points(
                 inputs=inputs,
                 covar_module=self.model.covar_module,
                 num_inducing=num_inducing,
@@ -417,131 +459,3 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
             var_strat.variational_params_initialized.fill_(0)
 
         return inducing_points
-
-
-def _select_inducing_points(
-    inputs: Tensor,
-    covar_module: Module,
-    num_inducing: int,
-    input_batch_shape: torch.Size,
-) -> Tensor:
-    r"""
-    Utility function that evaluates a kernel at given inputs and selects inducing point
-    locations based on the pivoted Cholesky heuristic.
-
-    Args:
-        inputs: A (*batch_shape, n, d)-dim input data tensor.
-        covar_module: GPyTorch Module returning a LinearOperator kernel matrix.
-        num_inducing: The maximun number (m) of inducing points (m <= n).
-        input_batch_shape: The non-task-related batch shape.
-
-    Returns:
-        A (*batch_shape, m, d)-dim tensor of inducing point locations.
-    """
-
-    train_train_kernel = covar_module(inputs).evaluate_kernel()
-
-    # base case
-    if train_train_kernel.ndimension() == 2:
-        inducing_points = _pivoted_cholesky_init(
-            train_inputs=inputs,
-            kernel_matrix=train_train_kernel,
-            max_length=num_inducing,
-        )
-    # multi-task case
-    elif train_train_kernel.ndimension() == 3 and len(input_batch_shape) == 0:
-        input_element = inputs[0] if inputs.ndimension() == 3 else inputs
-        kernel_element = train_train_kernel[0]
-        inducing_points = _pivoted_cholesky_init(
-            train_inputs=input_element,
-            kernel_matrix=kernel_element,
-            max_length=num_inducing,
-        )
-    # batched input cases
-    else:
-        batched_inputs = (
-            inputs.expand(*input_batch_shape, -1, -1)
-            if inputs.ndimension() == 2
-            else inputs
-        )
-        reshaped_inputs = batched_inputs.flatten(end_dim=-3)
-        inducing_points = []
-        for input_element in reshaped_inputs:
-            # the extra kernel evals are a little wasteful but make it
-            # easier to infer the task batch size
-            kernel_element = covar_module(input_element).evaluate_kernel()
-            # handle extra task batch dimension
-            kernel_element = (
-                kernel_element[0]
-                if kernel_element.ndimension() == 3
-                else kernel_element
-            )
-            inducing_points.append(
-                _pivoted_cholesky_init(
-                    train_inputs=input_element,
-                    kernel_matrix=kernel_element,
-                    max_length=num_inducing,
-                )
-            )
-        inducing_points = torch.stack(inducing_points).view(
-            *input_batch_shape, num_inducing, -1
-        )
-
-    return inducing_points
-
-
-def _pivoted_cholesky_init(
-    train_inputs: Tensor,
-    kernel_matrix: Union[Tensor, LinearOperator],
-    max_length: int,
-    epsilon: float = 1e-6,
-) -> Tensor:
-    r"""
-    A pivoted cholesky initialization method for the inducing points,
-    originally proposed in [burt2020svgp]_ with the algorithm itself coming from
-    [chen2018dpp]_. Code is a PyTorch version from [chen2018dpp]_, copied from
-    https://github.com/laming-chen/fast-map-dpp/blob/master/dpp.py.
-
-    Args:
-        train_inputs: training inputs (of shape n x d)
-        kernel_matrix: kernel matrix on the training
-            inputs
-        max_length: number of inducing points to initialize
-        epsilon: numerical jitter for stability.
-
-    Returns:
-        max_length x d tensor of the training inputs corresponding to the top
-        max_length pivots of the training kernel matrix
-    """
-
-    # this is numerically equivalent to iteratively performing a pivoted cholesky
-    # while storing the diagonal pivots at each iteration
-    # TODO: use gpytorch's pivoted cholesky instead once that gets an exposed list
-    # TODO: ensure this works in batch mode, which it does not currently.
-
-    item_size = kernel_matrix.shape[-2]
-    cis = torch.zeros(
-        (max_length, item_size), device=kernel_matrix.device, dtype=kernel_matrix.dtype
-    )
-    di2s = kernel_matrix.diag()
-    selected_items = []
-    selected_item = torch.argmax(di2s)
-    selected_items.append(selected_item)
-
-    while len(selected_items) < max_length:
-        k = len(selected_items) - 1
-        ci_optimal = cis[:k, selected_item]
-        di_optimal = torch.sqrt(di2s[selected_item])
-        elements = kernel_matrix[..., selected_item, :]
-        eis = (elements - torch.matmul(ci_optimal, cis[:k, :])) / di_optimal
-        cis[k, :] = eis
-        di2s = di2s - eis.pow(2.0)
-        di2s[selected_item] = NEG_INF
-        selected_item = torch.argmax(di2s)
-        if di2s[selected_item] < epsilon:
-            break
-        selected_items.append(selected_item)
-
-    ind_points = train_inputs[torch.stack(selected_items)]
-
-    return ind_points

@@ -80,6 +80,7 @@ class OptimizeAcqfInputs:
     ic_generator: Optional[TGenInitialConditions] = None
     timeout_sec: Optional[float] = None
     return_full_tree: bool = False
+    retry_on_optimization_warning: bool = True
     ic_gen_kwargs: Dict = dataclasses.field(default_factory=dict)
 
     @property
@@ -333,7 +334,7 @@ def _optimize_acqf_batch(
     optimization_warning_raised = any(
         (issubclass(w.category, OptimizationWarning) for w in ws)
     )
-    if optimization_warning_raised:
+    if optimization_warning_raised and opt_inputs.retry_on_optimization_warning:
         first_warn_msg = (
             "Optimization failed in `gen_candidates_scipy` with the following "
             f"warning(s):\n{[w.message for w in ws]}\nBecause you specified "
@@ -412,6 +413,7 @@ def optimize_acqf(
     ic_generator: Optional[TGenInitialConditions] = None,
     timeout_sec: Optional[float] = None,
     return_full_tree: bool = False,
+    retry_on_optimization_warning: bool = True,
     **ic_gen_kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of candidates via multi-start optimization.
@@ -465,6 +467,8 @@ def optimize_acqf(
             for nonlinear inequality constraints.
         timeout_sec: Max amount of time optimization can run for.
         return_full_tree:
+        retry_on_optimization_warning: Whether to retry candidate generation with a new
+            set of initial conditions when it fails with an `OptimizationWarning`.
         ic_gen_kwargs: Additional keyword arguments passed to function specified by
             `ic_generator`
 
@@ -515,6 +519,7 @@ def optimize_acqf(
         ic_generator=ic_generator,
         timeout_sec=timeout_sec,
         return_full_tree=return_full_tree,
+        retry_on_optimization_warning=retry_on_optimization_warning,
         ic_gen_kwargs=ic_gen_kwargs,
     )
     return _optimize_acqf(opt_acqf_inputs)
@@ -568,6 +573,7 @@ def optimize_acqf_cyclic(
     ic_generator: Optional[TGenInitialConditions] = None,
     timeout_sec: Optional[float] = None,
     return_full_tree: bool = False,
+    retry_on_optimization_warning: bool = True,
     **ic_gen_kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of `q` candidates via cyclic optimization.
@@ -605,6 +611,8 @@ def optimize_acqf_cyclic(
             for nonlinear inequality constraints.
         timeout_sec: Max amount of time optimization can run for.
         return_full_tree:
+        retry_on_optimization_warning: Whether to retry candidate generation with a new
+            set of initial conditions when it fails with an `OptimizationWarning`.
         ic_gen_kwargs: Additional keyword arguments passed to function specified by
             `ic_generator`
 
@@ -645,6 +653,7 @@ def optimize_acqf_cyclic(
         ic_generator=ic_generator,
         timeout_sec=timeout_sec,
         return_full_tree=return_full_tree,
+        retry_on_optimization_warning=retry_on_optimization_warning,
         ic_gen_kwargs=ic_gen_kwargs,
     )
 
