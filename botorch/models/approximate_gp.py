@@ -101,17 +101,19 @@ class ApproximateGPyTorchModel(GPyTorchModel):
         """
         super().__init__()
 
-        if model is None:
-            model = _SingleTaskVariationalGP(num_outputs=num_outputs, *args, **kwargs)
+        self.model = (
+            _SingleTaskVariationalGP(num_outputs=num_outputs, *args, **kwargs)
+            if model is None
+            else model
+        )
 
         if likelihood is None:
             if num_outputs == 1:
-                likelihood = GaussianLikelihood()
+                self.likelihood = GaussianLikelihood()
             else:
-                likelihood = MultitaskGaussianLikelihood(num_tasks=num_outputs)
-
-        self.model = model
-        self.likelihood = likelihood
+                self.likelihood = MultitaskGaussianLikelihood(num_tasks=num_outputs)
+        else:
+            self.likelihood = likelihood
         self._desired_num_outputs = num_outputs
 
     @property
@@ -198,9 +200,6 @@ class _SingleTaskVariationalGP(ApproximateGP):
             aug_batch_shape += torch.Size((num_outputs,))
         self._aug_batch_shape = aug_batch_shape
 
-        if mean_module is None:
-            mean_module = ConstantMean(batch_shape=self._aug_batch_shape).to(train_X)
-
         if covar_module is None:
             covar_module = ScaleKernel(
                 base_kernel=MaternKernel(
@@ -241,7 +240,7 @@ class _SingleTaskVariationalGP(ApproximateGP):
                 batch_shape=self._aug_batch_shape,
             )
 
-        variational_strategy = variational_strategy(
+        variational_strategy_instance = variational_strategy(
             self,
             inducing_points=inducing_points,
             variational_distribution=variational_distribution,
@@ -250,13 +249,19 @@ class _SingleTaskVariationalGP(ApproximateGP):
 
         # wrap variational models in independent multi-task variational strategy
         if num_outputs > 1:
-            variational_strategy = IndependentMultitaskVariationalStrategy(
-                base_variational_strategy=variational_strategy,
+            variational_strategy_instance = IndependentMultitaskVariationalStrategy(
+                base_variational_strategy=variational_strategy_instance,
                 num_tasks=num_outputs,
                 task_dim=-1,
             )
-        super().__init__(variational_strategy=variational_strategy)
-        self.mean_module = mean_module
+        super().__init__(variational_strategy=variational_strategy_instance)
+
+        self.mean_module = (
+            ConstantMean(batch_shape=self._aug_batch_shape).to(train_X)
+            if mean_module is None
+            else mean_module
+        )
+
         self.covar_module = covar_module
 
     def forward(self, X) -> MultivariateNormal:
@@ -389,8 +394,9 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
             )
 
         if inducing_point_allocator is None:
-            inducing_point_allocator = GreedyVarianceReduction()
-        self._inducing_point_allocator = inducing_point_allocator
+            self._inducing_point_allocator = GreedyVarianceReduction()
+        else:
+            self._inducing_point_allocator = inducing_point_allocator
 
         model = _SingleTaskVariationalGP(
             train_X=transformed_X,

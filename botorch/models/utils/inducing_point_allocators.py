@@ -51,8 +51,6 @@ class InducingPointAllocator(ABC):
             A quality function.
         """
 
-        pass  # pragma: no cover
-
     def allocate_inducing_points(
         self,
         inputs: Tensor,
@@ -89,7 +87,6 @@ class InducingPointAllocator(ABC):
             )
         # multi-task case
         elif train_train_kernel.ndimension() == 3 and len(input_batch_shape) == 0:
-            quality_scores = quality_function(inputs)
             input_element = inputs[0] if inputs.ndimension() == 3 else inputs
             kernel_element = train_train_kernel[0]
             quality_scores = quality_function(input_element)
@@ -147,8 +144,6 @@ class QualityFunction(ABC):
         Returns:
             A tensor of quality scores for each input, of shape [n]
         """
-
-        pass  # pragma: no cover
 
 
 class UnitQualityFunction(QualityFunction):
@@ -314,7 +309,7 @@ def _pivoted_cholesky_init(
         (max_length, item_size), device=kernel_matrix.device, dtype=kernel_matrix.dtype
     )
     di2s = kernel_matrix.diag()
-    scores = di2s * (quality_scores**2)
+    scores = di2s * torch.square(quality_scores)
     selected_items = []
     selected_item = torch.argmax(scores)
     selected_items.append(selected_item)
@@ -328,7 +323,7 @@ def _pivoted_cholesky_init(
         cis[k, :] = eis
         di2s = di2s - eis.pow(2.0)
         di2s[selected_item] = NEG_INF
-        scores = di2s * (quality_scores**2)
+        scores = di2s * torch.square(quality_scores)
         selected_item = torch.argmax(scores)
         if di2s[selected_item] < epsilon:
             break
