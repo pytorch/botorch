@@ -29,7 +29,7 @@ class TestUnitQualityFunction(BotorchTestCase):
     def test_returns_ones_and_correct_shape(self):
         train_X = torch.rand(15, 1, device=self.device)
         scores = self.quality_function(train_X)
-        self.assertTrue(torch.equal(scores, torch.ones([15])))
+        self.assertTrue(torch.equal(scores, torch.ones([15], device=self.device)))
 
 
 class TestExpectedImprovementQualityFunction(BotorchTestCase):
@@ -239,7 +239,7 @@ class TestGreedyImprovementReduction(BotorchTestCase):
         # are passed
         self.assertLess(inducing_points_1.shape[-2], num_inducing)
 
-    def test_inducing_points_different_when_minizing(self):
+    def test_inducing_points_different_when_minimizing(self):
         ipa_for_max = GreedyImprovementReduction(self.previous_model, maximize=True)
         ipa_for_min = GreedyImprovementReduction(self.previous_model, maximize=False)
 
@@ -264,7 +264,9 @@ class TestPivotedCholeskyInit(BotorchTestCase):
     def test_raises_for_quality_function_with_invalid_shape(self):
         with self.assertRaises(ValueError):
             inputs = torch.rand(15, 1, device=self.device)
-            train_train_kernel = MaternKernel()(inputs).evaluate_kernel()
+            train_train_kernel = (
+                MaternKernel().to(self.device)(inputs).evaluate_kernel()
+            )
             quality_scores = torch.ones([10, 1], device=self.device)
             _pivoted_cholesky_init(
                 train_inputs=inputs,
