@@ -2,6 +2,48 @@
 
 The release log for BoTorch.
 
+## [0.8.2] - Feb 23, 2023
+
+#### Compatibility
+* Require PyTorch >= 1.12 (#1699).
+
+#### New Features
+* Introduce pathwise sampling API for efficiently sampling functions from (approximate) GP priors and posteriors (#1463).
+* Add `OneHotToNumeric` input transform (#1517).
+* Add `get_rounding_input_transform` utility for constructing rounding input transforms (#1531).
+* Introduce `EnsemblePosterior` (#1636).
+* Inducing Point Allocators for Sparse GPs (#1652).
+* Pass `gen_candidates` callable in `optimize_acqf` (#1655).
+* Adding `logmeanexp` and `logdiffexp` numerical utilities (#1657).
+
+#### Other changes
+* Warn if inoperable keyword arguments are passed to optimizers (#1421).
+* Add `BotorchTestCase.assertAllClose` (#1618).
+* Add `sample_shape` property to `ListSampler` (#1624).
+* Do not filter out `BoTorchWarning`s by default (#1630).
+* Introduce a `DeterministicSampler` (#1641).
+* Warn when optimizer kwargs are being ignored in BoTorch optim utils `_filter_kwargs` (#1645).
+* Don't use `functools.lru_cache` on methods (#1650).
+* More informative error when someone adds a module without updating the corresponding rst file (#1653).
+* Make indices a buffer in `AffineInputTransform` (#1656).
+* Clean up `optimize_acqf` and `_make_linear_constraints` (#1660, #1676).
+* Support NaN `max_reference_point` in `infer_reference_point` (#1671).
+* Use `_fast_solves` in `HOGP.posterior` (#1682).
+* Approximate qPI using `MVNXPB` (#1684).
+* Improve filtering for `cache_root` in `CachedCholeskyMCAcquisitionFunction` (#1688).
+* Add option to disable retrying on optimization warning (#1696).
+
+#### Bug fixes
+* Fix normalization in Chebyshev scalarization (#1616).
+* Fix `TransformedPosterior` missing batch shape error in `_update_base_samples` (#1625).
+* Detach `coefficient` and `offset` in `AffineTransform` in eval mode (#1642).
+* Fix pickle error in `TorchPosterior` (#1644).
+* Fix shape error in `optimize_acqf_cyclic` (#1648).
+* Fixed bug where `optimize_acqf` didn't work with different batch sizes (#1668).
+* Fix EUBO optimization error when two Xs are identical (#1670).
+* Bug fix: `_filter_kwargs` was erroring when provided a function without a `__name__` attribute (#1678).
+
+
 ## [0.8.1] - Jan 5, 2023
 
 ### Highlights

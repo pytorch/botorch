@@ -17,6 +17,7 @@ from abc import ABC
 
 from contextlib import nullcontext
 from copy import deepcopy
+
 from typing import Dict, Optional, Tuple, Union
 
 import torch
@@ -27,6 +28,7 @@ from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.utils.constants import get_constants_like
+from botorch.utils.probability import MVNXPB
 from botorch.utils.probability.utils import (
     log_ndtr as log_Phi,
     log_phi,
@@ -37,6 +39,7 @@ from botorch.utils.probability.utils import (
 from botorch.utils.safe_math import log1mexp, logmeanexp
 from botorch.utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
 from torch import Tensor
+from torch.nn.functional import pad
 
 _sqrt_2pi = math.sqrt(2 * math.pi)
 # the following two numbers are needed for _log_ei_helper
@@ -229,6 +232,70 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
         mean, sigma = self._mean_and_sigma(X)
         u = _scaled_improvement(mean, sigma, self.best_f, self.maximize)
         return Phi(u)
+
+
+class qAnalyticProbabilityOfImprovement(AnalyticAcquisitionFunction):
+    r"""Approximate, single-outcome batch Probability of Improvement using MVNXPB.
+
+    This implementation uses MVNXPB, a bivariate conditioning algorithm for
+    approximating P(a <= Y <= b) for multivariate normal Y.
+    See [Trinh2015bivariate]_. This (analytic) approximate q-PI is given by
+    `approx-qPI(X) = P(max Y >= best_f) = 1 - P(Y < best_f), Y ~ f(X),
+    X = (x_1,...,x_q)`, where `P(Y < best_f)` is estimated using MVNXPB.
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        best_f: Union[float, Tensor],
+        posterior_transform: Optional[PosteriorTransform] = None,
+        maximize: bool = True,
+        **kwargs,
+    ) -> None:
+        """qPI using an analytic approximation.
+
+        Args:
+            model: A fitted single-outcome model.
+            best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
+                the best function value observed so far (assumed noiseless).
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
+            maximize: If True, consider the problem a maximization problem.
+        """
+        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        self.maximize = maximize
+        if not torch.is_tensor(best_f):
+            best_f = torch.tensor(best_f)
+        self.register_buffer("best_f", best_f)
+
+    @t_batch_mode_transform()
+    def forward(self, X: Tensor) -> Tensor:
+        """Evaluate approximate qPI on the candidate set X.
+
+        Args:
+            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design
+                points each
+
+        Returns:
+            A `batch_shape`-dim Tensor of approximate Probability of Improvement values
+            at the given design points `X`, where `batch_shape'` is the broadcasted
+            batch shape of model and input `X`.
+        """
+        self.best_f = self.best_f.to(X)
+        posterior = self.model.posterior(
+            X=X, posterior_transform=self.posterior_transform
+        )
+
+        covariance = posterior.distribution.covariance_matrix
+        bounds = pad(
+            (self.best_f.unsqueeze(-1) - posterior.distribution.mean).unsqueeze(-1),
+            pad=(1, 0) if self.maximize else (0, 1),
+            value=-float("inf") if self.maximize else float("inf"),
+        )
+        # 1 - P(no improvement over best_f)
+        solver = MVNXPB(covariance_matrix=covariance, bounds=bounds)
+        return -solver.solve().expm1()
 
 
 class ExpectedImprovement(AnalyticAcquisitionFunction):

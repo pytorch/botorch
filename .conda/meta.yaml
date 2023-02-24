@@ -17,7 +17,7 @@ requirements:
     - setuptools
     - setuptools_scm
   run:
-    - pytorch >=1.11
+    - pytorch >=1.12
     - gpytorch ==1.9.1
     - linear_operator ==0.3.0
     - scipy
