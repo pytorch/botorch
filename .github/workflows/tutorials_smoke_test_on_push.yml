@@ -1,0 +1,17 @@
+name: Tutorials on Push
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+
+jobs:
+  run_tutorials_with_smoke_test:
+    name: Run tutorials with smoke test on latest PyTorch / GPyTorch / Ax
+    uses: ./.github/workflows/reusable_tutorials.yml
+    with:
+      smoke_test: true
+      use_stable_pytorch_gpytorch: false
+      use_stable_ax: false
+      upload_artifact: true
