@@ -74,6 +74,7 @@ class InducingPointAllocator(ABC):
             A (\*batch_shape, m, d)-dim tensor of inducing point locations.
         """
         quality_function = self._get_quality_function()
+        covar_module = covar_module.to(inputs.device)
 
         train_train_kernel = covar_module(inputs).evaluate_kernel()
 
