@@ -90,12 +90,20 @@ jobs:
         python scripts/run_tutorials.py -p "$(pwd)"
     - if: ${{ inputs.upload_artifact }}
       name: Upload performance data to artifacts branch
-      # Upload any csv files (the tutorials script ensures there is only one)
+      # 1) Switch to artifacts branch
+      # 2) Add the new CSV file
+      # 3) Get .py and .ipynb files needed for analyzing tutorials data from main
+      # 4) Run `scripts/analyze_tutorials_performance.py` to merge CSVs and
+      #  update notebook
+      # 5) Commit updated notebook and new CSVs to artifacts branch
       run: |
         git config user.email "github-actions@github.com"
         git config user.name "github-actions"
         git switch artifacts
         mv *.csv tutorial_performance_data/
-        git add tutorial_performance_data/*.csv
-        git commit tutorial_performance_data/*.csv -m "Adding most recent tutorials output"
+        git checkout main -- scripts/analyze_tutorials_performance.py
+        git checkout main -- notebooks/tutorials_performance_tracking.ipynb
+        python scripts/analyze_tutorials_performance.py
+        git add tutorial_performance_data/*.csv notebooks/tutorials_performance_tracking.ipynb
+        git commit -a -m "Adding most recent tutorials CSVs and performance analytics notebook"
         git push origin artifacts

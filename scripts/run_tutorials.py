@@ -204,7 +204,7 @@ def run_tutorials(
             df.loc[tutorial.name, "ran_successfully"] = True
             for k in ["runtime", "start_mem", "max_mem"]:
                 df.loc[tutorial.name, k] = performance_info[k]
-        print(df)
+        break
 
     if num_errors > 0:
         raise RuntimeError(
