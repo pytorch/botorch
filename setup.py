@@ -24,6 +24,7 @@ TUTORIALS_REQUIRES = [
     "matplotlib",
     "memory_profiler",
     "pykeops",
+    "seaborn",
     "torchvision",
 ]
 
