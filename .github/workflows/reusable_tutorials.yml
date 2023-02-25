@@ -102,7 +102,6 @@ jobs:
         cp scripts/analyze_tutorials_performance.py analyze_tutorials_performance.py
         cp notebooks/tutorials_performance_tracking.ipynb tutorials_performance_tracking.ipynb 
         git switch artifacts
-        mv *.csv tutorial_performance_data/
         mkdir scripts/
         mv analyze_tutorials_performance.py scripts/
         mv tutorials_performance_tracking.ipynb notebooks/
