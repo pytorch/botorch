@@ -55,5 +55,5 @@ if __name__ == "__main__":
     repo_root = os.getcwd()
     data_dir = os.path.join(repo_root, "tutorial_performance_data")
     concatenate_data(data_dir)
-    fname = os.path.join(repo_root, "notebooks"), "tutorials_performance_tracking.ipynb"
-    pm.execute_notebook(input_path=fname, output_path=fname)
+    fname = os.path.join(repo_root, "notebooks", "tutorials_performance_tracking.ipynb")
+    pm.execute_notebook(input_path=fname, output_path=fname, progress_bar=False)
