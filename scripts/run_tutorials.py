@@ -173,7 +173,11 @@ def run_tutorials(
     tutorial_dir = Path(repo_dir).joinpath("tutorials")
     num_runs = 0
     num_errors = 0
-    ignored_tutorials = IGNORE_ALWAYS if smoke_test else IGNORE_ALWAYS | RUN_IF_SMOKE_TEST_IGNORE_IF_STANDARD
+    ignored_tutorials = (
+        IGNORE_ALWAYS
+        if smoke_test
+        else IGNORE_ALWAYS | RUN_IF_SMOKE_TEST_IGNORE_IF_STANDARD
+    )
 
     tutorials = sorted(
         t for t in tutorial_dir.iterdir() if t.is_file and t.suffix == ".ipynb"
