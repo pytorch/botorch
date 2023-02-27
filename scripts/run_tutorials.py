@@ -116,7 +116,7 @@ def run_tutorial(
     except subprocess.TimeoutExpired:
         error = (
             f"Tutorial {tutorial.name} exceeded the maximum runtime of "
-            "{timeout_minutes} minutes."
+            f"{timeout_minutes} minutes."
         )
         return error, {}
 
