@@ -17,20 +17,9 @@ main, and mirrored to the artifacts branch via GH Actions. It
 visualizations
 """
 import os
+
 import pandas as pd
-import nbformat
-from nbconvert.preprocessors import ExecutePreprocessor
-
-
-def run_tutorial(dirname: str, fname: str) -> None:
-    with open(os.path.join(dirname, fname), "r") as infile:
-        nb_str = infile.read()
-    nb = nbformat.reads(nb_str, nbformat.NO_CONVERT)
-    timeout = int(60 * 60 * 2.5)
-    ep = ExecutePreprocessor(timeout=timeout)
-
-    # execute notebook, using `tutorial_dir` as working directory
-    ep.preprocess(nb, {"metadata": {"path": dirname}})
+import papermill as pm
 
 
 def read_data_one_file(data_dir: str, fname: str) -> pd.DataFrame:
@@ -66,6 +55,5 @@ if __name__ == "__main__":
     repo_root = os.getcwd()
     data_dir = os.path.join(repo_root, "tutorial_performance_data")
     concatenate_data(data_dir)
-    run_tutorial(
-        os.path.join(repo_root, "notebooks"), "tutorials_performance_tracking.ipynb"
-    )
+    fname = os.path.join(repo_root, "notebooks"), "tutorials_performance_tracking.ipynb"
+    pm.execute_notebook(input_path=fname, output_path=fname)
