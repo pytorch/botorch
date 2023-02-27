@@ -3,6 +3,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+
 """
 The "artifacts" branch stores CSVs of tutorial runtime and memory:
 https://github.com/pytorch/botorch/tree/artifacts/tutorial_performance_data

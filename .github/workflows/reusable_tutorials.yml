@@ -100,7 +100,7 @@ jobs:
         git config user.email "github-actions@github.com"
         git config user.name "github-actions"
         cp scripts/analyze_tutorials_performance.py analyze_tutorials_performance.py
-        cp notebooks/tutorials_performance_tracking.ipynb tutorials_performance_tracking.ipynb 
+        cp notebooks/tutorials_performance_tracking.ipynb tutorials_performance_tracking.ipynb
         git switch artifacts
         mkdir scripts/
         mv analyze_tutorials_performance.py scripts/
