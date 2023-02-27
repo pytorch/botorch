@@ -74,7 +74,9 @@ def parse_ipynb(file: Path) -> str:
     return script
 
 
-def run_script(script: str, env: Optional[Dict[str, str]] = None) -> None:
+def run_script(
+    script: str, timeout_minutes: int, env: Optional[Dict[str, str]] = None
+) -> None:
     # need to keep the file around & close it so subprocess does not run into I/O issues
     with tempfile.NamedTemporaryFile(delete=False) as tf:
         tf_name = tf.name
@@ -87,7 +89,7 @@ def run_script(script: str, env: Optional[Dict[str, str]] = None) -> None:
         capture_output=True,
         text=True,
         env=env,
-        timeout=1800,  # Count runtime >30 minutes as a failure
+        timeout=timeout_minutes * 60,
     )
     os.remove(tf_name)
     return run_out
@@ -100,16 +102,22 @@ def run_tutorial(
     Runs the tutorial in a subprocess, catches any raised errors and returns
     them as a string, and returns runtime and memory information as a dict.
     """
+    timeout_minutes = 5 if smoke_test else 30
     script = parse_ipynb(tutorial)
     tic = time.monotonic()
     print(f"Running tutorial {tutorial.name}.")
     env = {"SMOKE_TEST": "True"} if smoke_test else None
     try:
         mem_usage, run_out = memory_usage(
-            (run_script, (script,), {"env": env}), retval=True, include_children=True
+            (run_script, (script, timeout_minutes), {"env": env}),
+            retval=True,
+            include_children=True,
         )
     except subprocess.TimeoutExpired:
-        error = f"Tutorial {tutorial.name} exceeded the maximum runtime of 30 minutes."
+        error = (
+            f"Tutorial {tutorial.name} exceeded the maximum runtime of "
+            f"{timeout_minutes} minutes."
+        )
         return error, {}
 
     try:
@@ -204,7 +212,6 @@ def run_tutorials(
             df.loc[tutorial.name, "ran_successfully"] = True
             for k in ["runtime", "start_mem", "max_mem"]:
                 df.loc[tutorial.name, k] = performance_info[k]
-        print(df)
 
     if num_errors > 0:
         raise RuntimeError(
