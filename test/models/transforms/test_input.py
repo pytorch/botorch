@@ -595,6 +595,13 @@ class TestInputTransforms(BotorchTestCase):
             self.assertFalse(round_tf.approximate)
             self.assertEqual(round_tf.tau, 1e-3)
 
+            # With tensor indices.
+            round_tf = Round(
+                integer_indices=torch.tensor(int_idcs, dtype=dtype, device=self.device),
+                categorical_features=categorical_feats,
+            )
+            self.assertEqual(round_tf.integer_indices.tolist(), int_idcs)
+
             # basic usage
             for batch_shape, approx, categorical_features in itertools.product(
                 (torch.Size(), torch.Size([3])),
