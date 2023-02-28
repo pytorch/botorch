@@ -28,7 +28,7 @@ from botorch.utils.rounding import approximate_round, OneHotArgmaxSTE, RoundSTE
 from gpytorch import Module as GPyTorchModule
 from gpytorch.constraints import GreaterThan
 from gpytorch.priors import Prior
-from torch import nn, Tensor
+from torch import LongTensor, nn, Tensor
 from torch.distributions import Kumaraswamy
 from torch.nn import Module, ModuleDict
 from torch.nn.functional import one_hot
@@ -708,7 +708,7 @@ class Round(InputTransform, Module):
 
     def __init__(
         self,
-        integer_indices: Optional[List[int]] = None,
+        integer_indices: Union[List[int], LongTensor, None] = None,
         categorical_features: Optional[Dict[int, int]] = None,
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
@@ -747,9 +747,9 @@ class Round(InputTransform, Module):
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
         self.transform_on_fantasize = transform_on_fantasize
-        integer_indices = integer_indices or []
+        integer_indices = integer_indices if integer_indices is not None else []
         self.register_buffer(
-            "integer_indices", torch.tensor(integer_indices, dtype=torch.long)
+            "integer_indices", torch.as_tensor(integer_indices, dtype=torch.long)
         )
         self.categorical_features = categorical_features or {}
         self.approximate = approximate
