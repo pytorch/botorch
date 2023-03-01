@@ -22,22 +22,22 @@ from memory_profiler import memory_usage
 from nbconvert import PythonExporter
 
 
-IGNORE = {  # ignored in smoke tests and full runs
+IGNORE_ALWAYS = {  # ignored in smoke tests and full runs
     "vae_mnist.ipynb",  # requires setting paths to local data
     "bope.ipynb",  # flaky, keeps failing the workflows
     "preference_bo.ipynb",  # failing. Fix planned
-    # Causing the tutorials to crash when run without smoke test. Likely OOM.
-    # Fix planned.
-    "constraint_active_search.ipynb",
-    # Timing out
-    "saasbo.ipynb",
-    # Timing out
-    "scalable_constrained_bo.ipynb",
 }
-IGNORE_SMOKE_TEST_ONLY = {  # only used in smoke tests
+RUN_IF_SMOKE_TEST_IGNORE_IF_STANDARD = {  # only used in smoke tests
     "thompson_sampling.ipynb",  # very slow without KeOps + GPU
     "composite_mtbo.ipynb",  # TODO: very slow, figure out if we can make it faster
     "Multi_objective_multi_fidelity_BO.ipynb",  # TODO: very slow, speed up
+    # Causing the tutorials to crash when run without smoke test. Likely OOM.
+    # Fix planned.
+    "constraint_active_search.ipynb",
+    # Timing out in standard mode
+    "saasbo.ipynb",
+    # Timing out in standard mode
+    "scalable_constrained_bo.ipynb",
 }
 
 
@@ -74,7 +74,9 @@ def parse_ipynb(file: Path) -> str:
     return script
 
 
-def run_script(script: str, env: Optional[Dict[str, str]] = None) -> None:
+def run_script(
+    script: str, timeout_minutes: int, env: Optional[Dict[str, str]] = None
+) -> None:
     # need to keep the file around & close it so subprocess does not run into I/O issues
     with tempfile.NamedTemporaryFile(delete=False) as tf:
         tf_name = tf.name
@@ -87,7 +89,7 @@ def run_script(script: str, env: Optional[Dict[str, str]] = None) -> None:
         capture_output=True,
         text=True,
         env=env,
-        timeout=1800,  # Count runtime >30 minutes as a failure
+        timeout=timeout_minutes * 60,
     )
     os.remove(tf_name)
     return run_out
@@ -100,16 +102,22 @@ def run_tutorial(
     Runs the tutorial in a subprocess, catches any raised errors and returns
     them as a string, and returns runtime and memory information as a dict.
     """
+    timeout_minutes = 5 if smoke_test else 30
     script = parse_ipynb(tutorial)
     tic = time.monotonic()
     print(f"Running tutorial {tutorial.name}.")
     env = {"SMOKE_TEST": "True"} if smoke_test else None
     try:
         mem_usage, run_out = memory_usage(
-            (run_script, (script,), {"env": env}), retval=True, include_children=True
+            (run_script, (script, timeout_minutes), {"env": env}),
+            retval=True,
+            include_children=True,
         )
     except subprocess.TimeoutExpired:
-        error = f"Tutorial {tutorial.name} exceeded the maximum runtime of 30 minutes."
+        error = (
+            f"Tutorial {tutorial.name} exceeded the maximum runtime of "
+            f"{timeout_minutes} minutes."
+        )
         return error, {}
 
     try:
@@ -165,7 +173,11 @@ def run_tutorials(
     tutorial_dir = Path(repo_dir).joinpath("tutorials")
     num_runs = 0
     num_errors = 0
-    ignored_tutorials = IGNORE if smoke_test else IGNORE | IGNORE_SMOKE_TEST_ONLY
+    ignored_tutorials = (
+        IGNORE_ALWAYS
+        if smoke_test
+        else IGNORE_ALWAYS | RUN_IF_SMOKE_TEST_IGNORE_IF_STANDARD
+    )
 
     tutorials = sorted(
         t for t in tutorial_dir.iterdir() if t.is_file and t.suffix == ".ipynb"
@@ -204,7 +216,6 @@ def run_tutorials(
             df.loc[tutorial.name, "ran_successfully"] = True
             for k in ["runtime", "start_mem", "max_mem"]:
                 df.loc[tutorial.name, k] = performance_info[k]
-        print(df)
 
     if num_errors > 0:
         raise RuntimeError(
