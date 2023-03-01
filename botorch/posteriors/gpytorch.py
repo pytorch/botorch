@@ -25,6 +25,7 @@ from linear_operator.operators import (
     BlockDiagLinearOperator,
     LinearOperator,
     SumLinearOperator,
+    DenseLinearOperator,
 )
 from torch import Tensor
 from torch.distributions import Normal
@@ -323,6 +324,7 @@ def scalarize_posterior_gpytorch(
         if isinstance(cov_scaled, LinearOperator):
             cov_scaled = cov_scaled.to_dense()
         new_cov = cov_scaled.view(sum_shape).sum(dim=sum_dims[0]).sum(dim=sum_dims[1])
+        new_cov = DenseLinearOperator(new_cov)
 
     return new_mean, new_cov
 
