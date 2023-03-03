@@ -586,7 +586,7 @@ class TestGetInfeasibleCost(BotorchTestCase):
             # means - 6 * std = [-0.8, -1, -0.6, 1, 3.2]. After applying the
             # objective, the minimum becomes -6.0, so 6.0 should be returned.
             M = get_infeasible_cost(
-                X=X, model=mm, objective=lambda Y: Y.squeeze(-1) - 5.0
+                X=X, model=mm, objective=lambda Y, X: Y.squeeze(-1) - 5.0
             )
             self.assertAllClose(M, torch.tensor([6.0], **tkwargs))
             # Test default objective (squeeze last dim).

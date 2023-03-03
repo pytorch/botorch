@@ -188,7 +188,7 @@ class FeasibilityWeightedMCMultiOutputObjective(MCMultiOutputObjective):
             from botorch.acquisition.utils import get_infeasible_cost
 
             inf_cost = get_infeasible_cost(
-                X=X_baseline, model=model, objective=lambda y: y
+                X=X_baseline, model=model, objective=lambda y, X_baseline: y
             )[objective_idcs]
 
             def apply_feasibility_weights(
