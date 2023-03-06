@@ -11,7 +11,7 @@ Utilities for acquisition functions.
 from __future__ import annotations
 
 import math
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union, Tuple
 
 import torch
 from botorch.acquisition import analytic, monte_carlo, multi_objective  # noqa F401
@@ -31,6 +31,8 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
     NondominatedPartitioning,
 )
+from botorch.utils.sampling import optimize_posterior_samples
+from botorch.sampling.pathwise import draw_matheron_paths
 from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
 
@@ -473,3 +475,40 @@ def project_to_sample_points(X: Tensor, sample_points: Tensor) -> Tensor:
     X_new = X.repeat(*(1 for _ in batch_shape), p, 1)  # batch_shape x p x d
     X_new[..., -d_prime:] = sample_points
     return X_new
+
+
+def get_optimal_samples(
+    model: Model,
+    bounds: Tensor,
+    num_optima: int,
+    raw_samples: int = 1024,
+    num_restarts: int = 20,
+    maximize: bool = True,
+) -> Tuple[Tensor, Tensor]:
+    """Draws sample paths from the posterior and maximizes the samples using GD.
+
+    Args:
+        model (Model): The model from which samples are drawn.
+        bounds: (Tensor): The bounds of the search space. If the model inputs are normalized,
+            the bounds should be normalized as well.
+        num_optima (int): The number of paths to be drawn and optimized.
+        raw_samples (int, optional): The number of candidates randomly sample. Defaults to 512.
+        num_restarts (int, optional): The number of candidates to do gradient-based optimization on.
+        Defaults to 20.
+        maxiter (int, optional): The maximal number of iterations of gradient-based optimization.
+        Defaults to 100.
+        maximize: Whether to maximize or minimize the samples.
+    Returns:
+        Tuple[Tensor, Tensor]: The optimal input locations and corresponding
+        outputs, x* and f*.
+
+    """
+    paths = draw_matheron_paths(model, sample_shape=torch.Size([num_optima]))
+    optimal_inputs, optimal_outputs = optimize_posterior_samples(
+        paths,
+        bounds=bounds,
+        raw_samples=raw_samples,
+        num_restarts=num_restarts,
+        maximize=maximize,
+    )
+    return optimal_inputs, optimal_outputs

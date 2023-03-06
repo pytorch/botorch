@@ -28,6 +28,7 @@ from botorch.sampling.qmc import NormalQMCEngine
 from scipy.spatial import Delaunay, HalfspaceIntersection
 from torch import LongTensor, Tensor
 from torch.quasirandom import SobolEngine
+from botorch.utils.transforms import unnormalize
 
 
 @contextmanager
@@ -873,3 +874,70 @@ def sparse_to_dense_constraints(
         A[i, indices.long()] = coefficients
         b[i] = rhs
     return A, b
+
+
+def optimize_posterior_samples(
+    paths: SamplePath,
+    bounds: Tensor,
+    candidates: Optional[Tensor] = None,
+    raw_samples: Optional[int] = 1024,
+    num_restarts: int = 20,
+    maximize: bool = True,
+    **kwargs: Any,
+) -> Tuple[Tensor, Tensor]:
+    r"""Cheaply maximizes posterior samples by random querying followed by vanilla
+    gradient descent on the best num_restarts points.
+
+    Args:
+        paths: Random Fourier Feature-based sample paths from the GP
+        bounds: The bounds on the search space.
+        candidates: A priori good candidates (typically previous design points)
+            which acts as extra initial guesses for the optimization routine.
+        raw_samples: The number of samples with which to query the samples initially.
+        num_restarts: The number of points selected for gradient-based optimization.
+        maximize: Boolean indicating whether to maimize or minimize
+    Returns:
+        A two-element tuple containing:
+            - X_opt: A `num_optima x [batch_size] x d`-dim tensor of optimal inputs x*.
+            - f_opt: A `num_optima x [batch_size] x 1`-dim tensor of optimal outputs f*.
+    """
+    if maximize:
+
+        def path_func(x):
+            return paths.forward(x)
+
+    else:
+
+        def path_func(x):
+            return -paths.forward(x)
+
+    candidate_set = unnormalize(
+        SobolEngine(dimension=bounds.shape[1], scramble=True).draw(raw_samples), bounds
+    )
+
+    # queries all samples on all candidates - output shape
+    # raw_samples * num_optima * num_models
+    candidate_queries = path_func(candidate_set)
+    argtop_k = torch.topk(candidate_queries, num_restarts, dim=-1).indices
+    X_top_k = candidate_set[argtop_k, :]
+
+    # to avoid circular import, the import occurs here
+    from botorch.generation.gen import gen_candidates_scipy
+
+    X_top_k, f_top_k = gen_candidates_scipy(
+        X_top_k, path_func, lower_bounds=bounds[0], upper_bounds=bounds[1], **kwargs
+    )
+    f_opt, arg_opt = f_top_k.max(dim=-1, keepdim=True)
+
+    # For each sample (and possibly for every model in the batch of models), this
+    # retrieves the argmax. We flatten, pick out the indices and then reshape to
+    # the original batch shapes (so instead of pickig out the argmax of a
+    # (3, 7, num_restarts, D)) along the num_restarts dim, we pick it out of a
+    # (21  , num_restarts, D)
+    final_shape = candidate_queries.shape[:-1]
+    X_opt = X_top_k.reshape(final_shape.numel(), num_restarts, -1)[
+        torch.arange(final_shape.numel()), arg_opt.flatten()
+    ].reshape(*final_shape, -1)
+    if not maximize:
+        f_opt = -f_opt
+    return X_opt, f_opt

@@ -7,7 +7,9 @@
 from itertools import product
 
 import torch
-from botorch.acquisition.joint_entropy_search import qLowerBoundJointEntropySearch
+from botorch.acquisition.joint_entropy_search import (
+    qJointEntropySearch,
+)
 
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
@@ -48,13 +50,18 @@ def get_model(train_X, train_Y, use_model_list, standardize_model):
     return model
 
 
-class TestQLowerBoundJointEntropySearch(BotorchTestCase):
-    def test_lower_bound_joint_entropy_search(self):
+class TestQJointEntropySearch(BotorchTestCase):
+    def test_joint_entropy_search(self):
         torch.manual_seed(1)
         tkwargs = {"device": self.device}
-        estimation_types = ("0", "LB", "LB2", "MC")
+        estimation_types = ("LB", "MC")
         num_objectives = 1
-        for (dtype, estimation_type, use_model_list, standardize_model,) in product(
+        for (
+            dtype,
+            estimation_type,
+            use_model_list,
+            standardize_model,
+        ) in product(
             (torch.float, torch.double),
             estimation_types,
             (False, True),
@@ -76,7 +83,7 @@ class TestQLowerBoundJointEntropySearch(BotorchTestCase):
             X_pending_list = [None, torch.rand(2, input_dim, **tkwargs)]
             for i in range(len(X_pending_list)):
                 X_pending = X_pending_list[i]
-                acq = qLowerBoundJointEntropySearch(
+                acq = qJointEntropySearch(
                     model=model,
                     optimal_inputs=optimal_inputs,
                     optimal_outputs=optimal_outputs,

@@ -14,6 +14,7 @@ from unittest import mock
 import numpy as np
 import torch
 from botorch.exceptions.errors import BotorchError
+from botorch.models import FixedNoiseGP
 from botorch.utils.sampling import (
     _convert_bounds_to_inequality_constraints,
     batched_multinomial,
@@ -28,7 +29,9 @@ from botorch.utils.sampling import (
     sample_hypersphere,
     sample_simplex,
     sparse_to_dense_constraints,
+    optimize_posterior_samples,
 )
+from botorch.sampling.pathwise import draw_matheron_paths
 from botorch.utils.testing import BotorchTestCase
 
 
@@ -361,7 +364,6 @@ class TestSampleUtils(BotorchTestCase):
 
 
 class PolytopeSamplerTestBase:
-
     sampler_class: Type[PolytopeSampler]
     sampler_kwargs: Dict[str, Any] = {}
 
@@ -505,13 +507,11 @@ class PolytopeSamplerTestBase:
 
 
 class TestHitAndRunPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
-
     sampler_class = HitAndRunPolytopeSampler
     sampler_kwargs = {"n_burnin": 2}
 
 
 class TestDelaunayPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
-
     sampler_class = DelaunayPolytopeSampler
 
     def test_sample_polytope_unbounded(self):
@@ -528,3 +528,40 @@ class TestDelaunayPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
                     interior_point=self.x0,
                     **self.sampler_kwargs,
                 )
+
+
+class TestOptimizePosteriorSamples(BotorchTestCase):
+    def test_optimize_posterior_samples(self):
+        dtypes = (torch.float32, torch.float64)
+        dims = 2
+        dtype = torch.float64
+        eps = 1e-6
+        for_testing_speed_kwargs = {"raw_samples": 250, "num_restarts": 3}
+        nums_optima = (1, 7)
+        batch_shapes = ((), (3,), (5, 2))
+        for num_optima, batch_shape in itertools.product(nums_optima, batch_shapes):
+            bounds = torch.Tensor([[0, 1]] * dims).T.to(dtype)
+            X = torch.rand(*batch_shape, 52, dims).to(dtype)
+            Y = torch.pow(X - 0.5, 2).sum(dim=-1, keepdim=True).to(dtype)
+
+            # having a noiseless model all but guarantees that the found optima
+            # will be better than the observations
+            model = FixedNoiseGP(X, Y, torch.full_like(Y, eps))
+            paths = draw_matheron_paths(
+                model=model, sample_shape=torch.Size([num_optima])
+            )
+            X_opt, f_opt = optimize_posterior_samples(
+                paths, bounds, **for_testing_speed_kwargs
+            )
+
+            correct_X_shape = (num_optima,) + batch_shape + (dims,)
+            correct_f_shape = (num_optima,) + batch_shape + (1,)
+
+            self.assertEqual(X_opt.shape, correct_X_shape)
+            self.assertEqual(f_opt.shape, correct_f_shape)
+            self.assertTrue(torch.all(X_opt >= bounds[0]))
+            self.assertTrue(torch.all(X_opt <= bounds[1]))
+
+            # Check that the all found optima are larger than the observations
+            # This is not 100% deterministic, but just about.
+            self.assertTrue(torch.all((f_opt > Y.max(dim=-2).values)))

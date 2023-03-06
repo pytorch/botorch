@@ -47,6 +47,7 @@ from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
 )
+from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 from botorch.acquisition.max_value_entropy_search import (
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
@@ -84,6 +85,7 @@ from botorch.acquisition.utils import (
     expand_trace_observations,
     project_to_target_fidelity,
 )
+from botorch.acquisition.utils import get_optimal_samples
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.deterministic import FixedSingleSampleModel
@@ -1239,3 +1241,36 @@ def optimize_objective(
         return_best_only=True,
         sequential=sequential,
     )
+
+
+# TODO make single-objective with pairwise and multi-objective with pareto
+@acqf_input_constructor(qJointEntropySearch)
+def construct_inputs_qJES(
+    model: Model,
+    training_data: MaybeDict[SupervisedDataset],
+    bounds: Tensor,
+    num_optima: int = 64,
+    maximize: bool = True,
+    condition_noiseless: bool = True,
+    X_pending: Optional[Tensor] = None,
+    estimation_type: str = "LB",
+    num_samples: int = 64,
+    **kwargs: Any,
+):
+    dtype = model.train_targets.dtype
+    optimal_inputs, optimal_outputs = get_optimal_samples(
+        model, Tensor(bounds).to(dtype).T, num_optima=num_optima, maximize=maximize
+    )
+
+    inputs = {
+        "model": model,
+        "optimal_inputs": optimal_inputs,
+        "optimal_outputs": optimal_outputs,
+        "condition_noiseless": condition_noiseless,
+        "maximize": maximize,
+        "X_pending": X_pending,
+        "estimation_type": estimation_type,
+        "num_samples": num_samples,
+        **kwargs,
+    }
+    return inputs
