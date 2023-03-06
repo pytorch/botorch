@@ -23,9 +23,9 @@ from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNorm
 from linear_operator import settings as linop_settings
 from linear_operator.operators import (
     BlockDiagLinearOperator,
+    DenseLinearOperator,
     LinearOperator,
     SumLinearOperator,
-    DenseLinearOperator,
 )
 from torch import Tensor
 from torch.distributions import Normal
