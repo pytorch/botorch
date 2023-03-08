@@ -30,7 +30,6 @@ IGNORE_ALWAYS = {  # ignored in smoke tests and full runs
 RUN_IF_SMOKE_TEST_IGNORE_IF_STANDARD = {  # only used in smoke tests
     "thompson_sampling.ipynb",  # very slow without KeOps + GPU
     "composite_mtbo.ipynb",  # TODO: very slow, figure out if we can make it faster
-    "Multi_objective_multi_fidelity_BO.ipynb",  # TODO: very slow, speed up
     # Causing the tutorials to crash when run without smoke test. Likely OOM.
     # Fix planned.
     "constraint_active_search.ipynb",
