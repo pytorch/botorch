@@ -23,6 +23,7 @@ TUTORIALS_REQUIRES = [
     "kaleido",
     "matplotlib",
     "memory_profiler",
+    "papermill",
     "pykeops",
     "torchvision",
 ]
