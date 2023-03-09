@@ -49,3 +49,9 @@ class BotorchTensorDimensionWarning(BotorchWarning):
     r"""Warning raised when a tensor possibly violates a botorch convention."""
 
     pass
+
+
+class UserInputWarning(BotorchWarning):
+    r"""Warning raised when a potential issue is detected with user provided inputs."""
+
+    pass
