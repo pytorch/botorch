@@ -10,16 +10,13 @@ import argparse
 import datetime
 import os
 import subprocess
-import tempfile
 import time
 from pathlib import Path
 from subprocess import CalledProcessError
 from typing import Any, Dict, Optional, Tuple
 
-import nbformat
 import pandas as pd
 from memory_profiler import memory_usage
-from nbconvert import PythonExporter
 
 
 IGNORE_ALWAYS = {  # ignored in smoke tests and full runs
@@ -64,33 +61,18 @@ def get_output_file_path(smoke_test: bool) -> str:
     return fname
 
 
-def parse_ipynb(file: Path) -> str:
-    with open(file, "r") as nb_file:
-        nb_str = nb_file.read()
-    nb = nbformat.reads(nb_str, nbformat.NO_CONVERT)
-    exporter = PythonExporter()
-    script, _ = exporter.from_notebook_node(nb)
-    return script
-
-
 def run_script(
-    script: str, timeout_minutes: int, env: Optional[Dict[str, str]] = None
+    tutorial: Path, timeout_minutes: int, env: Optional[Dict[str, str]] = None
 ) -> None:
-    # need to keep the file around & close it so subprocess does not run into I/O issues
-    with tempfile.NamedTemporaryFile(delete=False) as tf:
-        tf_name = tf.name
-        with open(tf_name, "w") as tmp_script:
-            tmp_script.write(script)
     if env is not None:
         env = {**os.environ, **env}
     run_out = subprocess.run(
-        ["ipython", tf_name],
+        ["papermill", tutorial, "|"],
         capture_output=True,
         text=True,
         env=env,
         timeout=timeout_minutes * 60,
     )
-    os.remove(tf_name)
     return run_out
 
 
@@ -102,13 +84,12 @@ def run_tutorial(
     them as a string, and returns runtime and memory information as a dict.
     """
     timeout_minutes = 5 if smoke_test else 30
-    script = parse_ipynb(tutorial)
     tic = time.monotonic()
     print(f"Running tutorial {tutorial.name}.")
     env = {"SMOKE_TEST": "True"} if smoke_test else None
     try:
         mem_usage, run_out = memory_usage(
-            (run_script, (script, timeout_minutes), {"env": env}),
+            (run_script, (tutorial, timeout_minutes), {"env": env}),
             retval=True,
             include_children=True,
         )
