@@ -102,11 +102,10 @@ jobs:
         cp scripts/analyze_tutorials_performance.py analyze_tutorials_performance.py
         cp notebooks/tutorials_performance_tracking.ipynb tutorials_performance_tracking.ipynb
         git switch artifacts
-        mkdir scripts/
-        mv analyze_tutorials_performance.py scripts/
         mv *.csv tutorial_performance_data/
         mv tutorials_performance_tracking.ipynb notebooks/
-        python scripts/analyze_tutorials_performance.py
+        pip install seaborn
+        python analyze_tutorials_performance.py
         git add tutorial_performance_data/*.csv notebooks/tutorials_performance_tracking.ipynb
         git commit -a -m "Adding most recent tutorials CSVs and performance analytics notebook"
         git push origin artifacts

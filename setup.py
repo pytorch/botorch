@@ -25,7 +25,6 @@ TUTORIALS_REQUIRES = [
     "memory_profiler",
     "papermill",
     "pykeops",
-    "seaborn",
     "torchvision",
 ]
 
