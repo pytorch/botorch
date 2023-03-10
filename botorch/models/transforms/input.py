@@ -22,6 +22,7 @@ from warnings import warn
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.warnings import UserInputWarning
 from botorch.models.transforms.utils import subset_transform
 from botorch.models.utils import fantasize
 from botorch.utils.rounding import approximate_round, OneHotArgmaxSTE, RoundSTE
@@ -505,6 +506,7 @@ class Normalize(AffineInputTransform):
         transform_on_fantasize: bool = True,
         reverse: bool = False,
         min_range: float = 1e-8,
+        learn_bounds: Optional[bool] = None,
     ) -> None:
         r"""Normalize the inputs to the unit cube.
 
@@ -527,7 +529,13 @@ class Normalize(AffineInputTransform):
                 the inputs.
             min_range: Amount of noise to add to the range to ensure no division by
                 zero errors.
+            learn_bounds: Whether to learn the bounds in train mode. Defaults
+                to False if bounds are provided, otherwise defaults to True.
         """
+        if learn_bounds is not None:
+            self.learn_coefficients = learn_bounds
+        else:
+            self.learn_coefficients = bounds is None
         transform_dimension = d if indices is None else len(indices)
         if bounds is not None:
             if indices is not None and bounds.size(-1) == d:
@@ -544,7 +552,12 @@ class Normalize(AffineInputTransform):
         else:
             coefficient = torch.ones(*batch_shape, 1, transform_dimension)
             offset = torch.zeros(*batch_shape, 1, transform_dimension)
-            self.learn_coefficients = True
+            if self.learn_coefficients is False:
+                warn(
+                    "learn_bounds is False and no bounds were provided. The bounds "
+                    "will not be updated and the transform will be a no-op.",
+                    UserInputWarning,
+                )
         super().__init__(
             d=d,
             coefficient=coefficient,
@@ -585,6 +598,21 @@ class Normalize(AffineInputTransform):
         self._offset = torch.amin(X, dim=reduce_dims).unsqueeze(-2)
         self._coefficient = torch.amax(X, dim=reduce_dims).unsqueeze(-2) - self.offset
         self._coefficient.clamp_(min=self.min_range)
+
+    def get_init_args(self) -> Dict[str, Any]:
+        r"""Get the arguments necessary to construct an exact copy of the transform."""
+        return {
+            "d": self._d,
+            "indices": getattr(self, "indices", None),
+            "bounds": self.bounds,
+            "batch_shape": self.batch_shape,
+            "transform_on_train": self.transform_on_train,
+            "transform_on_eval": self.transform_on_eval,
+            "transform_on_fantasize": self.transform_on_fantasize,
+            "reverse": self.reverse,
+            "min_range": self.min_range,
+            "learn_bounds": self.learn_bounds,
+        }
 
 
 class InputStandardize(AffineInputTransform):
@@ -795,6 +823,18 @@ class Round(InputTransform, Module):
             and self.approximate == other.approximate
             and self.tau == other.tau
         )
+
+    def get_init_args(self) -> Dict[str, Any]:
+        r"""Get the arguments necessary to construct an exact copy of the transform."""
+        return {
+            "integer_indices": self.integer_indices,
+            "categorical_features": self.categorical_features,
+            "transform_on_train": self.transform_on_train,
+            "transform_on_eval": self.transform_on_eval,
+            "transform_on_fantasize": self.transform_on_fantasize,
+            "approximate": self.approximate,
+            "tau": self.tau,
+        }
 
 
 class Log10(ReversibleInputTransform, Module):

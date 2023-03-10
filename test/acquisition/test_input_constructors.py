@@ -715,6 +715,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertTrue(kwargs["cache_pending"])
         self.assertEqual(kwargs["max_iep"], 0)
         self.assertTrue(kwargs["incremental_nehvi"])
+        self.assertTrue(kwargs["cache_root"])
 
         # Test check for block designs
         mock_model = mock.Mock()
@@ -748,6 +749,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             cache_pending=False,
             max_iep=1,
             incremental_nehvi=False,
+            cache_root=False,
         )
         ref_point_expected = objective(objective_thresholds)
         self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
@@ -768,6 +770,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertFalse(kwargs["cache_pending"])
         self.assertEqual(kwargs["max_iep"], 1)
         self.assertFalse(kwargs["incremental_nehvi"])
+        self.assertFalse(kwargs["cache_root"])
 
         # Test with risk measures.
         with self.assertRaisesRegex(UnsupportedError, "feasibility-weighted"):
