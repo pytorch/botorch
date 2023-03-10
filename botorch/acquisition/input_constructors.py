@@ -843,6 +843,7 @@ def construct_inputs_qNEHVI(
         "cache_pending": kwargs.get("cache_pending", True),
         "max_iep": kwargs.get("max_iep", 0),
         "incremental_nehvi": kwargs.get("incremental_nehvi", True),
+        "cache_root": kwargs.get("cache_root", True),
     }
 
 

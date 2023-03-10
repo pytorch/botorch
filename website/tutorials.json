@@ -27,6 +27,10 @@
       "title": "Trust Region Bayesian Optimization (TuRBO)"
     },
     {
+      "id": "baxus",
+      "title": "Bayesian optimization with adaptively expanding subspaces (BAxUS)"
+    },
+    {
       "id": "scalable_constrained_bo",
       "title": "Scalable Constrained Bayesian Optimization (SCBO)"
     },

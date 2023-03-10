@@ -11,6 +11,7 @@ from copy import deepcopy
 import torch
 from botorch import settings
 from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.warnings import UserInputWarning
 from botorch.models.transforms.input import (
     AffineInputTransform,
     AppendFeatures,
@@ -155,16 +156,29 @@ class TestInputTransforms(BotorchTestCase):
             self.assertEqual(nlz._d, 2)
             self.assertEqual(nlz.mins.shape, torch.Size([3, 1, 2]))
             self.assertEqual(nlz.ranges.shape, torch.Size([3, 1, 2]))
+            self.assertTrue(nlz.equals(Normalize(**nlz.get_init_args())))
+
+            # learn_bounds=False with no bounds.
+            with self.assertWarnsRegex(UserInputWarning, "learn_bounds"):
+                Normalize(d=2, learn_bounds=False)
+
+            # learn_bounds=True with bounds provided.
+            bounds = torch.zeros(2, 2, device=self.device, dtype=dtype)
+            nlz = Normalize(d=2, bounds=bounds, learn_bounds=True)
+            self.assertTrue(nlz.learn_bounds)
+            self.assertTrue(torch.equal(nlz.mins, bounds[..., 0:1, :]))
+            self.assertTrue(
+                torch.equal(nlz.ranges, bounds[..., 1:2, :] - bounds[..., 0:1, :])
+            )
 
             # basic init, fixed bounds
-            bounds = torch.zeros(2, 2, device=self.device, dtype=dtype)
             nlz = Normalize(d=2, bounds=bounds)
             self.assertFalse(nlz.learn_bounds)
             self.assertTrue(nlz.training)
             self.assertEqual(nlz._d, 2)
             self.assertTrue(torch.equal(nlz.mins, bounds[..., 0:1, :]))
             self.assertTrue(
-                torch.equal(nlz.mins, bounds[..., 1:2, :] - bounds[..., 0:1, :])
+                torch.equal(nlz.ranges, bounds[..., 1:2, :] - bounds[..., 0:1, :])
             )
             # with grad
             bounds.requires_grad = True
@@ -180,6 +194,7 @@ class TestInputTransforms(BotorchTestCase):
             nlz.eval()
             self.assertIsNone(nlz.coefficient.grad_fn)
             self.assertIsNone(nlz.offset.grad_fn)
+            self.assertTrue(nlz.equals(Normalize(**nlz.get_init_args())))
 
             # basic init, provided indices
             with self.assertRaises(ValueError):
@@ -204,6 +219,7 @@ class TestInputTransforms(BotorchTestCase):
                     == torch.tensor([0], dtype=torch.long, device=self.device)
                 ).all()
             )
+            self.assertTrue(nlz.equals(Normalize(**nlz.get_init_args())))
 
             # test .to
             other_dtype = torch.float if dtype == torch.double else torch.double
@@ -594,6 +610,15 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue(round_tf.training)
             self.assertFalse(round_tf.approximate)
             self.assertEqual(round_tf.tau, 1e-3)
+            self.assertTrue(round_tf.equals(Round(**round_tf.get_init_args())))
+
+            # With tensor indices.
+            round_tf = Round(
+                integer_indices=torch.tensor(int_idcs, dtype=dtype, device=self.device),
+                categorical_features=categorical_feats,
+            )
+            self.assertEqual(round_tf.integer_indices.tolist(), int_idcs)
+            self.assertTrue(round_tf.equals(Round(**round_tf.get_init_args())))
 
             # basic usage
             for batch_shape, approx, categorical_features in itertools.product(

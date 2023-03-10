@@ -15,6 +15,7 @@ from botorch.exceptions.warnings import (
     InputDataWarning,
     OptimizationWarning,
     SamplingWarning,
+    UserInputWarning,
 )
 from botorch.utils.testing import BotorchTestCase
 
@@ -28,6 +29,7 @@ class TestBotorchWarnings(BotorchTestCase):
         self.assertIsInstance(OptimizationWarning(), BotorchWarning)
         self.assertIsInstance(SamplingWarning(), BotorchWarning)
         self.assertIsInstance(BotorchTensorDimensionWarning(), BotorchWarning)
+        self.assertIsInstance(UserInputWarning(), BotorchWarning)
 
     def test_botorch_warnings(self):
         for WarningClass in (
@@ -38,6 +40,7 @@ class TestBotorchWarnings(BotorchTestCase):
             InputDataWarning,
             OptimizationWarning,
             SamplingWarning,
+            UserInputWarning,
         ):
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 warnings.warn("message", WarningClass)

@@ -118,6 +118,13 @@ class NotSoAbstractBaseModel(Model):
     def posterior(self, X, output_indices, observation_noise, **kwargs):
         pass
 
+    @property
+    def batch_shape(self) -> torch.Size():
+        if hasattr(self, "_batch_shape"):
+            return self._batch_shape
+        else:
+            return super().batch_shape
+
 
 class TestBatchModeTransform(BotorchTestCase):
     def test_verify_output_shape(self):
@@ -129,13 +136,25 @@ class TestBatchModeTransform(BotorchTestCase):
         X = torch.ones(1, 1, 1)
         self.assertTrue(_verify_output_shape(acqf=None, X=X, output=torch.tensor(1)))
         # shape mismatch and cls does not have model attribute
-        cls = BMIMTestClass()
+        acqf = BMIMTestClass()
         with self.assertWarns(RuntimeWarning):
-            self.assertTrue(_verify_output_shape(acqf=cls, X=X, output=X))
+            self.assertTrue(_verify_output_shape(acqf=acqf, X=X, output=X))
         # shape mismatch and cls.model does not define batch shape
-        cls.model = NotSoAbstractBaseModel()
+        acqf.model = NotSoAbstractBaseModel()
         with self.assertWarns(RuntimeWarning):
-            self.assertTrue(_verify_output_shape(acqf=cls, X=X, output=X))
+            self.assertTrue(_verify_output_shape(acqf=acqf, X=X, output=X))
+        # Output matches model batch shape.
+        acqf.model._batch_shape = torch.Size([3, 5])
+        self.assertTrue(_verify_output_shape(acqf=acqf, X=X, output=torch.empty(3, 5)))
+        # Output has additional dimensions beyond model batch shape.
+        for X_batch in [(2, 3, 5), (2, 1, 5), (2, 1, 1)]:
+            self.assertTrue(
+                _verify_output_shape(
+                    acqf=acqf,
+                    X=torch.empty(*X_batch, 1, 1),
+                    output=torch.empty(2, 3, 5),
+                )
+            )
 
     def test_t_batch_mode_transform(self):
         c = BMIMTestClass()

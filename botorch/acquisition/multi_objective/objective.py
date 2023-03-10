@@ -82,7 +82,6 @@ class IdentityMCMultiOutputObjective(MCMultiOutputObjective):
         r"""Initialize Objective.
 
         Args:
-            weights: `m'`-dim tensor of outcome weights.
             outcomes: A list of the `m'` indices that the weights should be
                 applied to.
             num_outcomes: The total number of outcomes `m`

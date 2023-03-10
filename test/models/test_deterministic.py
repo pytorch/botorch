@@ -96,7 +96,7 @@ class TestDeterministicModels(BotorchTestCase):
             X = torch.rand(*shape)
             p = model.posterior(X)
             mean_exp = model.b + (X.unsqueeze(-1) * a).sum(dim=-2)
-            self.assertTrue(torch.equal(p.mean, mean_exp))
+            self.assertAllClose(p.mean, mean_exp)
         # # test two-dim output
         a = torch.rand(3, 2)
         model = AffineDeterministicModel(a)
@@ -105,7 +105,7 @@ class TestDeterministicModels(BotorchTestCase):
             X = torch.rand(*shape)
             p = model.posterior(X)
             mean_exp = model.b + (X.unsqueeze(-1) * a).sum(dim=-2)
-            self.assertTrue(torch.equal(p.mean, mean_exp))
+            self.assertAllClose(p.mean, mean_exp)
         # test subset output
         X = torch.rand(4, 3)
         subset_model = model.subset_output([0])
