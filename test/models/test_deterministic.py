@@ -166,6 +166,7 @@ class TestDeterministicModels(BotorchTestCase):
         model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
         fss_model = FixedSingleSampleModel(model=model)
 
+        # test without specifying w and dim
         test_X = torch.rand(2, 3)
         w = fss_model.w
         post = model.posterior(test_X)
@@ -174,6 +175,20 @@ class TestDeterministicModels(BotorchTestCase):
         self.assertTrue(torch.equal(original_output, fss_output))
 
         self.assertTrue(hasattr(fss_model, "num_outputs"))
+
+        # test specifying w
+        w = torch.randn(4)
+        fss_model = FixedSingleSampleModel(model=model, w=w)
+        self.assertTrue(fss_model.w.shape == w.shape)
+        # test dim
+        dim = 5
+        fss_model = FixedSingleSampleModel(model=model, w=w, dim=dim)
+        # dim should be ignored
+        self.assertTrue(fss_model.w.shape == w.shape)
+        # test dim when no w is provided
+        fss_model = FixedSingleSampleModel(model=model, dim=dim)
+        # dim should be ignored
+        self.assertTrue(fss_model.w.shape == torch.Size([dim]))
 
         # check w dtype conversion
         train_X_double = torch.rand(2, 3, dtype=torch.double)
