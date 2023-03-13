@@ -577,7 +577,7 @@ class TestGetInfeasibleCost(BotorchTestCase):
     def test_get_infeasible_cost(self):
         for dtype in (torch.float, torch.double):
             tkwargs = {"dtype": dtype, "device": self.device}
-            X = torch.zeros(5, 1, **tkwargs)
+            X = torch.ones(5, 1, **tkwargs)
             means = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0], **tkwargs).view(-1, 1)
             variances = torch.tensor([0.09, 0.25, 0.36, 0.25, 0.09], **tkwargs).view(
                 -1, 1
@@ -586,9 +586,14 @@ class TestGetInfeasibleCost(BotorchTestCase):
             # means - 6 * std = [-0.8, -1, -0.6, 1, 3.2]. After applying the
             # objective, the minimum becomes -6.0, so 6.0 should be returned.
             M = get_infeasible_cost(
-                X=X, model=mm, objective=lambda Y: Y.squeeze(-1) - 5.0
+                X=X, model=mm, objective=lambda Y, X: Y.squeeze(-1) - 5.0
             )
             self.assertAllClose(M, torch.tensor([6.0], **tkwargs))
+            M = get_infeasible_cost(
+                X=X, model=mm, objective=lambda Y, X: Y.squeeze(-1) - 5.0 - X[0, 0]
+            )
+            self.assertAllClose(M, torch.tensor([7.0], **tkwargs))
+            # test it with using also X in the objective
             # Test default objective (squeeze last dim).
             M2 = get_infeasible_cost(X=X, model=mm)
             self.assertAllClose(M2, torch.tensor([1.0], **tkwargs))

@@ -244,7 +244,7 @@ def get_infeasible_cost(
             return Y.squeeze(-1)
 
     posterior = model.posterior(X, posterior_transform=posterior_transform)
-    lb = objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt())
+    lb = objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt(), X=X)
     if lb.ndim < posterior.mean.ndim:
         lb = lb.unsqueeze(-1)
     # Take outcome-wise min. Looping in to handle batched models.
