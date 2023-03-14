@@ -178,18 +178,39 @@ class FixedSingleSampleModel(DeterministicModel):
     We assume the outcomes are uncorrelated here.
     """
 
-    def __init__(self, model: Model, w: Optional[Tensor] = None) -> None:
+    def __init__(
+        self,
+        model: Model,
+        w: Optional[Tensor] = None,
+        dim: Optional[int] = None,
+        jitter: Optional[float] = 1e-8,
+        dtype: Optional[torch.dtype] = None,
+        device: Optional[torch.dtype] = None,
+    ) -> None:
         r"""
         Args:
             model: The base model.
             w: A 1-d tensor with length model.num_outputs.
                 If None, draw it from a standard normal distribution.
+            dim: dimensionality of w.
+                If None and w is not provided, draw w samples of size model.num_outputs.
+            jitter: jitter value to be added for numerical stability, 1e-8 by default.
+            dtype: dtype for w if specified
+            device: device for w if specified
         """
         super().__init__()
         self.model = model
         self._num_outputs = model.num_outputs
-        self.w = torch.randn(model.num_outputs)
+        self.jitter = jitter
+        if w is None:
+            self.w = (
+                torch.randn(model.num_outputs, dtype=dtype, device=device)
+                if dim is None
+                else torch.randn(dim, dtype=dtype, device=device)
+            )
+        else:
+            self.w = w
 
     def forward(self, X: Tensor) -> Tensor:
         post = self.model.posterior(X)
-        return post.mean + post.variance.sqrt() * self.w.to(X)
+        return post.mean + torch.sqrt(post.variance + self.jitter) * self.w.to(X)
