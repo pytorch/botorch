@@ -35,7 +35,7 @@ def read_data_one_file(data_dir: str, fname: str) -> pd.DataFrame:
         fname=fname,
     )
     # clean out '.ipynb' if it is present
-    df["name"] = df["name"].apply(lambda x: x[: -len(".ipynb")])
+    df["name"] = df["name"].apply(lambda x: x.replace(".ipynb", ""))
     return df
 
 
