@@ -2,6 +2,24 @@
 
 The release log for BoTorch.
 
+## [0.8.3] - Mar 15, 2023
+
+#### New Features
+* Add BAxUS tutorial (#1559).
+
+#### Other changes
+* Various improvements to tutorials (#1703, #1706, #1707, #1708, #1710, #1711, #1718, #1719, #1739, #1740, #1742).
+* Allow tensor input for `integer_indices` in `Round` transform (#1709).
+* Expose `cache_root` in qNEHVI input constructor (#1730).
+* Add `get_init_args` helper to `Normalize` & `Round` transforms (#1731).
+* Allowing custom dimensionality and improved gradient stability in `ModifiedFixedSingleSampleModel` (#1732).
+
+#### Bug fixes
+* Improve batched model handling in `_verify_output_shape` (#1715).
+* Fix qNEI with Derivative Enabled BO (#1716).
+* Fix `get_infeasible_cost` for objectives that require X (#1721).
+
+
 ## [0.8.2] - Feb 23, 2023
 
 #### Compatibility
