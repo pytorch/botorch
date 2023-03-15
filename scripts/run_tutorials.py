@@ -28,8 +28,6 @@ RUN_IF_SMOKE_TEST_IGNORE_IF_STANDARD = {  # only used in smoke tests
     "thompson_sampling.ipynb",  # very slow without KeOps + GPU
     "composite_mtbo.ipynb",  # TODO: very slow, figure out if we can make it faster
     # Timing out in standard mode
-    "saasbo.ipynb",
-    # Timing out in standard mode
     "scalable_constrained_bo.ipynb",
 }
 
