@@ -24,7 +24,7 @@ IGNORE_ALWAYS = {  # ignored in smoke tests and full runs
     "bope.ipynb",  # flaky, keeps failing the workflows
     "preference_bo.ipynb",  # failing. Fix planned
 }
-RUN_IF_SMOKE_TEST_IGNORE_IF_STANDARD = {}  # only used in smoke tests
+RUN_IF_SMOKE_TEST_IGNORE_IF_STANDARD = set()  # only used in smoke tests
 
 
 def _read_command_line_output(command: str) -> str:
