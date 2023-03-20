@@ -33,7 +33,7 @@ const siteConfig = {
   projectName: 'botorch',
 
   // Google analytics
-  gaTrackingId: 'UA-139570076-2',
+  gaTrackingId: 'G-CXN3PGE3CC',
 
   // links that will be used in the header navigation bar
   headerLinks: [
