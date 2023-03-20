@@ -245,6 +245,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         cls,
         training_data: Dict[str, SupervisedDataset],
         task_feature: int,
+        output_tasks: Optional[List[int]] = None,
         task_covar_prior: Optional[Prior] = None,
         prior_config: Optional[dict] = None,
         rank: Optional[int] = None,
@@ -256,6 +257,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
             training_data: Dictionary of `SupervisedDataset`.
             task_feature: Column index of embedded task indicator features. For details,
                 see `parse_training_data`.
+            output_tasks: A list of task indices for which to compute model
+                outputs for. If omitted, return outputs for all task indices.
             task_covar_prior: A GPyTorch `Prior` object to use as prior on
                 the cross-task covariance matrix,
             prior_config: Configuration for inter-task covariance prior.
@@ -286,6 +289,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         return {
             **base_inputs,
             "task_feature": task_feature,
+            "output_tasks": output_tasks,
             "task_covar_prior": task_covar_prior,
             "rank": rank,
         }
