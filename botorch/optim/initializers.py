@@ -63,6 +63,73 @@ TGenInitialConditions = Callable[
 ]
 
 
+def transform_constraints(
+    constraints: List[Tuple[Tensor, Tensor, float]], q: int, d: int
+) -> List[Tuple[Tensor, Tensor, float]]:
+    transformed = []
+    for constraint in constraints:
+        if len(constraint[0].shape) == 1:
+            transformed += transform_horizontal_constraint(constraint, d, q)
+        else:
+            transformed.append(transform_vertical_constraint(constraint, d))
+    return transformed
+
+
+def transform_horizontal_constraint(
+    constraint: Tuple[Tensor, Tensor, float], d: int, q: int
+) -> List[Tuple[Tensor, Tensor, float]]:
+    """_summary_
+
+    Args:
+        constraint (Tuple[Tensor, Tensor, float]): _description_
+        d (int): _description_
+        q (int): _description_
+
+    Raises:
+        ValueError: _description_
+
+    Returns:
+        List[Tuple[Tensor, Tensor, float]]: _description_
+    """
+    indices, coefficients, rhs = constraint
+    if indices.max() >= d:
+        raise ValueError()
+    return [
+        (
+            torch.tensor([i * d + j for j in indices], dtype=torch.int64),
+            coefficients,
+            rhs,
+        )
+        for i in range(q)
+    ]
+
+
+def transform_vertical_constraint(
+    constraint: Tuple[Tensor, Tensor, float], d: int
+) -> Tuple[Tensor, Tensor, float]:
+    """_summary_
+
+    Args:
+        constraint (Tuple[Tensor, Tensor, float]): _description_
+        d (int): _description_
+
+    Raises:
+        ValueError: _description_
+        ValueError: _description_
+
+    Returns:
+        Tuple[Tensor, Tensor, float]: _description_
+    """
+    indices, coefficients, rhs = constraint
+    if indices[:, 1].max() >= d:
+        raise ValueError()
+    return (
+        torch.tensor([r[0] * d + r[1] for r in indices], dtype=torch.int64),
+        coefficients,
+        rhs,
+    )
+
+
 def gen_batch_initial_conditions(
     acq_function: AcquisitionFunction,
     bounds: Tensor,

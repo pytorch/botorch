@@ -28,6 +28,9 @@ from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import SingleTaskGP
 from botorch.optim import initialize_q_batch, initialize_q_batch_nonneg
 from botorch.optim.initializers import (
+    transform_constraints,
+    transform_horizontal_constraint,
+    transform_vertical_constraint,
     gen_batch_initial_conditions,
     gen_one_shot_kg_initial_conditions,
     gen_value_function_initial_conditions,
@@ -269,6 +272,98 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                         torch.zeros(2, 1, 2, device=self.device, dtype=dtype),
                     )
                 )
+
+    def test_gen_batch_initial_conditions_transform_horizontal_constraint(self):
+        for dtype in (torch.float, torch.double):
+            constraint = (
+                torch.tensor([0, 1], dtype=torch.int64),
+                torch.tensor([-1, -1]).to(dtype=dtype),
+                -1.0,
+            )
+            constraints = transform_horizontal_constraint(
+                constraint=constraint, d=3, q=3
+            )
+            self.assertEqual(len(constraints), 3)
+            self.assertAllClose(
+                constraints[0][0], torch.tensor([0, 1], dtype=torch.int64)
+            )
+            self.assertAllClose(
+                constraints[1][0], torch.tensor([3, 4], dtype=torch.int64)
+            )
+            self.assertAllClose(
+                constraints[2][0], torch.tensor([6, 7], dtype=torch.int64)
+            )
+            for constraint in constraints:
+                self.assertAllClose(
+                    torch.tensor([-1, -1]).to(dtype=dtype), constraint[1]
+                )
+                self.assertEqual(constraint[2], -1.0)
+            # test failure on invalid d
+            constraint = (
+                torch.tensor([[0, 3]]),
+                torch.tensor([-1.0, -1.0], dtype=dtype),
+                0,
+            )
+            with self.assertRaises(ValueError):
+                transform_vertical_constraint(constraint=constraint, d=3)
+
+    def test_gen_batch_intial_conditions_transform_vertical_constraint(self):
+        for dtype in (torch.float, torch.double):
+            constraint = (
+                torch.tensor([[0, 1], [1, 1]]),
+                torch.tensor([1.0, -1.0], dtype=dtype),
+                0,
+            )
+            transformed = transform_vertical_constraint(constraint=constraint, d=3)
+            self.assertAllClose(transformed[0], torch.tensor([1, 4]))
+            self.assertAllClose(
+                transformed[1], torch.tensor([1.0, -1.0]).to(dtype=dtype)
+            )
+            self.assertEqual(constraint[2], 0.0)
+            # test failure on invalid d
+            constraint = (
+                torch.tensor([[0, 1], [1, 3]]),
+                torch.tensor([1.0, -1.0], dtype=dtype),
+                0,
+            )
+            with self.assertRaises(ValueError):
+                transform_vertical_constraint(constraint=constraint, d=3)
+
+    def test_gen_batch_initial_conditions_transform_constraints(self):
+        for dtype in (torch.float, torch.double):
+            constraints = [
+                (
+                    torch.tensor([0, 1], dtype=torch.int64),
+                    torch.tensor([-1.0, -1.0]).to(dtype=dtype),
+                    -1.0,
+                ),
+                (
+                    torch.tensor([[0, 1], [1, 1]]),
+                    torch.tensor([1.0, -1.0], dtype=dtype),
+                    0,
+                ),
+            ]
+            transformed = transform_constraints(constraints=constraints, d=3, q=3)
+            self.assertEqual(len(transformed), 4)
+            self.assertAllClose(
+                transformed[0][0], torch.tensor([0, 1], dtype=torch.int64)
+            )
+            self.assertAllClose(
+                transformed[1][0], torch.tensor([3, 4], dtype=torch.int64)
+            )
+            self.assertAllClose(
+                transformed[2][0], torch.tensor([6, 7], dtype=torch.int64)
+            )
+            for constraint in transformed[:3]:
+                self.assertAllClose(
+                    torch.tensor([-1, -1]).to(dtype=dtype), constraint[1]
+                )
+                self.assertEqual(constraint[2], -1.0)
+            self.assertAllClose(transformed[-1][0], torch.tensor([1, 4]))
+            self.assertAllClose(
+                transformed[-1][1], torch.tensor([1.0, -1.0]).to(dtype=dtype)
+            )
+            self.assertEqual(transformed[-1][2], 0.0)
 
     def test_gen_batch_initial_conditions_constraints(self):
         for dtype in (torch.float, torch.double):
