@@ -97,6 +97,22 @@ class OptimizeAcqfInputs:
                 "bounds should be a `2 x d` tensor, current shape: "
                 f"{list(self.bounds.shape)}."
             )
+        # validate that linear constraints across the q-dim and
+        # self.sequential are not present together
+        if self.inequality_constraints is not None and self.sequential is True:
+            for constraint in self.inequality_constraints:
+                if len(constraint[0].shape) > 1:
+                    raise UnsupportedError(
+                        "Linear inequality constraints across the q-dimension are not "
+                        "supported for sequential optimization."
+                    )
+        if self.equality_constraints is not None and self.sequential is True:
+            for constraint in self.equality_constraints:
+                if len(constraint[0].shape) > 1:
+                    raise UnsupportedError(
+                        "Linear equality constraints across the q-dimension are not "
+                        "supported for sequential optimization."
+                    )
 
         # TODO: Validate constraints if provided:
         # https://github.com/pytorch/botorch/pull/1231
