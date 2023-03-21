@@ -20,7 +20,6 @@ from memory_profiler import memory_usage
 
 
 IGNORE_ALWAYS = {  # ignored in smoke tests and full runs
-    "vae_mnist.ipynb",  # requires setting paths to local data
     "bope.ipynb",  # flaky, keeps failing the workflows
     "preference_bo.ipynb",  # failing. Fix planned
 }
