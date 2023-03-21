@@ -551,11 +551,13 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             data_dict = model.construct_inputs(
                 datasets,
                 task_feature=task_feature,
+                output_tasks=[0],
                 prior_config={"use_LKJ_prior": True, "eta": 0.6},
             )
+            self.assertEqual(data_dict["output_tasks"], [0])
+            self.assertEqual(data_dict["task_feature"], task_feature)
             self.assertTrue(torch.equal(data_dict["train_X"], train_X))
             self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
-            self.assertEqual(data_dict["task_feature"], task_feature)
             self.assertIsInstance(data_dict["task_covar_prior"], LKJCovariancePrior)
 
     def test_FixedNoiseMultiTaskGP_construct_inputs(self):
