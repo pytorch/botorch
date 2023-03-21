@@ -236,10 +236,18 @@ def gen_batch_initial_conditions(
             else:
                 X_rnd = (
                     get_polytope_samples(
-                        n=n * q,
-                        bounds=bounds,
-                        inequality_constraints=inequality_constraints,
-                        equality_constraints=equality_constraints,
+                        n=n,
+                        bounds=torch.hstack([bounds for _ in range(q)]),
+                        inequality_constraints=transform_constraints(
+                            constraints=inequality_constraints, q=q, d=bounds.shape[1]
+                        )
+                        if inequality_constraints is not None
+                        else None,
+                        equality_constraints=transform_constraints(
+                            constraints=equality_constraints, q=q, d=bounds.shape[1]
+                        )
+                        if equality_constraints is not None
+                        else None,
                         seed=seed,
                         n_burnin=options.get("n_burnin", 10000),
                         thinning=options.get("thinning", 32),
