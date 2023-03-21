@@ -28,15 +28,15 @@ from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import SingleTaskGP
 from botorch.optim import initialize_q_batch, initialize_q_batch_nonneg
 from botorch.optim.initializers import (
-    transform_constraints,
-    transform_horizontal_constraint,
-    transform_vertical_constraint,
     gen_batch_initial_conditions,
     gen_one_shot_kg_initial_conditions,
     gen_value_function_initial_conditions,
     sample_perturbed_subset_dims,
     sample_points_around_best,
     sample_truncated_normal_perturbations,
+    transform_constraints,
+    transform_horizontal_constraint,
+    transform_vertical_constraint,
 )
 from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.sampling import draw_sobol_samples
