@@ -341,7 +341,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
             constraints = [
                 (
                     torch.tensor([0, 1], dtype=torch.int64, device=self.device),
-                    torch.tensor([-1.0, -1.0]).to(dtype=dtype, device=self.device),
+                    torch.tensor([-1.0, -1.0], dtype=dtype, device=self.device),
                     -1.0,
                 ),
                 (
