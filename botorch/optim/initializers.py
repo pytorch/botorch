@@ -64,18 +64,20 @@ TGenInitialConditions = Callable[
 
 
 def transform_constraints(
-    constraints: List[Tuple[Tensor, Tensor, float]], q: int, d: int
+    constraints: Union[List[Tuple[Tensor, Tensor, float]], None], q: int, d: int
 ) -> List[Tuple[Tensor, Tensor, float]]:
+    if constraints is None:
+        return None
     transformed = []
     for constraint in constraints:
         if len(constraint[0].shape) == 1:
-            transformed += transform_horizontal_constraint(constraint, d, q)
+            transformed += transform_intra_point_constraint(constraint, d, q)
         else:
-            transformed.append(transform_vertical_constraint(constraint, d))
+            transformed.append(transform_inter_point_constraint(constraint, d))
     return transformed
 
 
-def transform_horizontal_constraint(
+def transform_intra_point_constraint(
     constraint: Tuple[Tensor, Tensor, float], d: int, q: int
 ) -> List[Tuple[Tensor, Tensor, float]]:
     """_summary_
@@ -104,7 +106,7 @@ def transform_horizontal_constraint(
     ]
 
 
-def transform_vertical_constraint(
+def transform_inter_point_constraint(
     constraint: Tuple[Tensor, Tensor, float], d: int
 ) -> Tuple[Tensor, Tensor, float]:
     """_summary_
@@ -240,17 +242,13 @@ def gen_batch_initial_conditions(
                         bounds=torch.hstack([bounds for _ in range(q)]),
                         inequality_constraints=transform_constraints(
                             constraints=inequality_constraints, q=q, d=bounds.shape[1]
-                        )
-                        if inequality_constraints is not None
-                        else None,
+                        ),
                         equality_constraints=transform_constraints(
                             constraints=equality_constraints, q=q, d=bounds.shape[1]
-                        )
-                        if equality_constraints is not None
-                        else None,
+                        ),
                         seed=seed,
                         n_burnin=options.get("n_burnin", 10000),
-                        thinning=options.get("thinning", 32),
+                        thinning=options.get("thinning", 32) * q,
                     )
                     .view(n, q, -1)
                     .cpu()

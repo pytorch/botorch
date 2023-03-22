@@ -35,8 +35,8 @@ from botorch.optim.initializers import (
     sample_points_around_best,
     sample_truncated_normal_perturbations,
     transform_constraints,
-    transform_horizontal_constraint,
-    transform_vertical_constraint,
+    transform_inter_point_constraint,
+    transform_intra_point_constraint,
 )
 from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.sampling import draw_sobol_samples
@@ -273,14 +273,14 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                     )
                 )
 
-    def test_gen_batch_initial_conditions_transform_horizontal_constraint(self):
+    def test_gen_batch_initial_conditions_transform_intra_point_constraint(self):
         for dtype in (torch.float, torch.double):
             constraint = (
                 torch.tensor([0, 1], dtype=torch.int64, device=self.device),
                 torch.tensor([-1, -1]).to(dtype=dtype, device=self.device),
                 -1.0,
             )
-            constraints = transform_horizontal_constraint(
+            constraints = transform_intra_point_constraint(
                 constraint=constraint, d=3, q=3
             )
             self.assertEqual(len(constraints), 3)
@@ -308,16 +308,16 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 0,
             )
             with self.assertRaises(ValueError):
-                transform_vertical_constraint(constraint=constraint, d=3)
+                transform_intra_point_constraint(constraint=constraint, d=3, q=2)
 
-    def test_gen_batch_intial_conditions_transform_vertical_constraint(self):
+    def test_gen_batch_intial_conditions_transform_inter_point_constraint(self):
         for dtype in (torch.float, torch.double):
             constraint = (
                 torch.tensor([[0, 1], [1, 1]], dtype=torch.int64, device=self.device),
                 torch.tensor([1.0, -1.0], dtype=dtype, device=self.device),
                 0,
             )
-            transformed = transform_vertical_constraint(constraint=constraint, d=3)
+            transformed = transform_inter_point_constraint(constraint=constraint, d=3)
             self.assertAllClose(
                 transformed[0],
                 torch.tensor([1, 4], dtype=torch.int64, device=self.device),
@@ -334,10 +334,12 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 0,
             )
             with self.assertRaises(ValueError):
-                transform_vertical_constraint(constraint=constraint, d=3)
+                transform_inter_point_constraint(constraint=constraint, d=3)
 
     def test_gen_batch_initial_conditions_transform_constraints(self):
         for dtype in (torch.float, torch.double):
+            # test with None
+            self.assertTrue(transform_constraints(constraints=None, d=3, q=3) is None)
             constraints = [
                 (
                     torch.tensor([0, 1], dtype=torch.int64, device=self.device),
