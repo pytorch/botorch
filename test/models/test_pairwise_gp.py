@@ -15,7 +15,11 @@ from botorch.models.likelihoods.pairwise import (
     PairwiseLogitLikelihood,
     PairwiseProbitLikelihood,
 )
-from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
+from botorch.models.pairwise_gp import (
+    _ensure_psd_with_jitter,
+    PairwiseGP,
+    PairwiseLaplaceMarginalLogLikelihood,
+)
 from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.pairwise_samplers import PairwiseSobolQMCNormalSampler
@@ -24,6 +28,7 @@ from gpytorch.kernels import RBFKernel, ScaleKernel
 from gpytorch.kernels.linear_kernel import LinearKernel
 from gpytorch.means import ConstantMean
 from gpytorch.priors import GammaPrior, SmoothedBoxPrior
+from linear_operator.utils.errors import NotPSDError
 
 
 class TestPairwiseGP(BotorchTestCase):
@@ -346,3 +351,21 @@ class TestPairwiseGP(BotorchTestCase):
         _ = model.load_state_dict(sd)
         for buffer_name in model._buffer_names:
             self.assertIsNone(model.get_buffer(buffer_name))
+
+    def test_helper_functions(self):
+        for batch_shape, dtype in itertools.product(
+            (torch.Size(), torch.Size([2])), (torch.float, torch.double)
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            # M is borderline PSD
+            M = torch.ones((*batch_shape, 2, 2), **tkwargs)
+            with self.assertRaises(torch._C._LinAlgError):
+                torch.cholesky(M)
+            # This should work fine
+            _ensure_psd_with_jitter(M)
+
+            bad_M = torch.tensor([[1.0, 2.0], [2.0, 1.0]], **tkwargs).expand(
+                (*batch_shape, 2, 2)
+            )
+            with self.assertRaises(NotPSDError):
+                _ensure_psd_with_jitter(bad_M)
