@@ -10,6 +10,8 @@ from botorch.models.utils.assorted import (
     check_min_max_scaling,
     check_no_nans,
     check_standardization,
+    consolidate_duplicates,
+    detect_duplicates,
     fantasize,
     gpt_posterior_settings,
     mod_batch_shape,
@@ -32,4 +34,6 @@ __all__ = [
     "multioutput_to_batch_mode_transform",
     "mod_batch_shape",
     "validate_input_scaling",
+    "detect_duplicates",
+    "consolidate_duplicates",
 ]

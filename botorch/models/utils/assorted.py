@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import warnings
 from contextlib import contextmanager, ExitStack
-from typing import List, Optional, Tuple
+from typing import Iterator, List, Optional, Tuple
 
 import torch
 from botorch import settings
@@ -280,6 +280,96 @@ def gpt_posterior_settings():
             gpt_settings.detach_test_caches(settings.propagate_grads.off())
         )
         yield
+
+
+def detect_duplicates(
+    X: Tensor,
+    rtol: float = 0,
+    atol: float = 1e-8,
+) -> Iterator[Tuple[int, int]]:
+    """Returns an iterator over index pairs `(duplicate index, original index)` for all
+    duplicate entries of `X`. Supporting 2-d Tensor only.
+
+    Args:
+        X: the datapoints tensor with potential duplicated entries
+        rtol: relative tolerance
+        atol: absolute tolerance
+    """
+    if len(X.shape) != 2:
+        raise ValueError("X must have 2 dimensions.")
+
+    tols = atol
+    if rtol:
+        rval = X.abs().max(dim=-1, keepdim=True).values
+        tols = tols + rtol * rval.max(rval.transpose(-1, -2))
+
+    n = X.shape[-2]
+    dist = torch.full((n, n), float("inf"), device=X.device, dtype=X.dtype)
+    dist[torch.triu_indices(n, n, offset=1).unbind()] = torch.nn.functional.pdist(
+        X, p=float("inf")
+    )
+    return (
+        (i, int(j))
+        # pyre-fixme[19]: Expected 1 positional argument.
+        for diff, j, i in zip(*(dist - tols).min(dim=-2), range(n))
+        if diff < 0
+    )
+
+
+def consolidate_duplicates(
+    X: Tensor, Y: Tensor, rtol: float = 0, atol: float = 1e-8
+) -> Tuple[Tensor, Tensor, Tensor]:
+    """Drop duplicated Xs and update the indices tensor Y accordingly.
+    Supporting 2d Tensor only as in batch mode block design is not guaranteed.
+
+    Args:
+        X: the datapoints tensor
+        Y: the index tensor to be updated (e.g., pairwise comparisons)
+        rtol: relative tolerance
+        atol: absolute tolerance
+
+    Returns:
+        consolidated_X: the consolidated X
+        consolidated_Y: the consolidated Y (e.g., pairwise comparisons indices)
+        new_indices: new index of each original item in X, a tensor of size X.shape[-2]
+    """
+    if len(X.shape) != 2:
+        raise ValueError("X must have 2 dimensions.")
+
+    n = X.shape[-2]
+    dup_map = dict(detect_duplicates(X=X, rtol=rtol, atol=atol))
+
+    # Handle edge cases conservatively
+    # If a item is in both dup set and kept set, do not remove it
+    common_set = set(dup_map.keys()).intersection(dup_map.values())
+    for k in list(dup_map.keys()):
+        if k in common_set or dup_map[k] in common_set:
+            del dup_map[k]
+
+    if dup_map:
+        dup_indices, kept_indices = zip(*dup_map.items())
+
+        unique_indices = sorted(set(range(n)) - set(dup_indices))
+
+        # After dropping the duplicates,
+        # the kept ones' indices may also change by being shifted up
+        new_idx_map = dict(zip(unique_indices, range(len(unique_indices))))
+        new_indices_for_dup = (new_idx_map[idx] for idx in kept_indices)
+        new_idx_map.update(dict(zip(dup_indices, new_indices_for_dup)))
+        consolidated_X = X[list(unique_indices), :]
+        consolidated_Y = torch.tensor(
+            [[new_idx_map[item.item()] for item in row] for row in Y.unbind()],
+            dtype=torch.long,
+            device=Y.device,
+        )
+        new_indices = (
+            torch.arange(n, dtype=torch.long)
+            .apply_(lambda x: new_idx_map[x])
+            .to(Y.device)
+        )
+        return consolidated_X, consolidated_Y, new_indices
+    else:
+        return X, Y, torch.arange(n, device=Y.device, dtype=Y.dtype)
 
 
 class fantasize(_Flag):
