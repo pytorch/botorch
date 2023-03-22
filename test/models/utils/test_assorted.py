@@ -19,6 +19,8 @@ from botorch.models.utils import (
     multioutput_to_batch_mode_transform,
     validate_input_scaling,
 )
+
+from botorch.models.utils.assorted import consolidate_duplicates, detect_duplicates
 from botorch.utils.testing import BotorchTestCase
 from gpytorch import settings as gpt_settings
 
@@ -226,3 +228,101 @@ class TestFantasize(BotorchTestCase):
         with fantasize(False):
             self.assertFalse(fantasize.on())
             self.assertTrue(fantasize.off())
+
+
+class TestConsolidation(BotorchTestCase):
+    def test_consolidation(self):
+        X = torch.tensor(
+            [
+                [1.0, 2.0, 3.0],
+                [2.0, 3.0, 4.0],
+                [1.0, 2.0, 3.0],
+                [3.0, 4.0, 5.0],
+            ]
+        )
+        Y = torch.tensor([[0, 1], [2, 3]])
+        expected_X = torch.tensor(
+            [
+                [1.0, 2.0, 3.0],
+                [2.0, 3.0, 4.0],
+                [3.0, 4.0, 5.0],
+            ]
+        )
+        expected_Y = torch.tensor([[0, 1], [0, 2]])
+        expected_new_indices = torch.tensor([0, 1, 0, 2])
+
+        # deduped case
+        consolidated_X, consolidated_Y, new_indices = consolidate_duplicates(X=X, Y=Y)
+        self.assertTrue(torch.equal(consolidated_X, expected_X))
+        self.assertTrue(torch.equal(consolidated_Y, expected_Y))
+        self.assertTrue(torch.equal(new_indices, expected_new_indices))
+
+        # test rtol
+        big_X = torch.tensor(
+            [
+                [10000.0, 20000.0, 30000.0],
+                [20000.0, 30000.0, 40000.0],
+                [10000.0, 20000.0, 30001.0],
+                [30000.0, 40000.0, 50000.0],
+            ]
+        )
+        expected_big_X = torch.tensor(
+            [
+                [10000.0, 20000.0, 30000.0],
+                [20000.0, 30000.0, 40000.0],
+                [30000.0, 40000.0, 50000.0],
+            ]
+        )
+        # rtol is not used by default
+        consolidated_X, consolidated_Y, new_indices = consolidate_duplicates(
+            X=big_X, Y=Y
+        )
+        self.assertTrue(torch.equal(consolidated_X, big_X))
+        self.assertTrue(torch.equal(consolidated_Y, Y))
+        self.assertTrue(torch.equal(new_indices, torch.tensor([0, 1, 2, 3])))
+        # when rtol is used
+        consolidated_X, consolidated_Y, new_indices = consolidate_duplicates(
+            X=big_X, Y=Y, rtol=1e-4, atol=0
+        )
+        self.assertTrue(torch.equal(consolidated_X, expected_big_X))
+        self.assertTrue(torch.equal(consolidated_Y, expected_Y))
+        self.assertTrue(torch.equal(new_indices, expected_new_indices))
+
+        # not deduped case
+        no_dup_X = torch.tensor(
+            [
+                [1.0, 2.0, 3.0],
+                [2.0, 3.0, 4.0],
+                [3.0, 4.0, 5.0],
+                [4.0, 5.0, 6.0],
+            ]
+        )
+        consolidated_X, consolidated_Y, new_indices = consolidate_duplicates(
+            X=no_dup_X, Y=Y
+        )
+        self.assertTrue(torch.equal(consolidated_X, no_dup_X))
+        self.assertTrue(torch.equal(consolidated_Y, Y))
+        self.assertTrue(torch.equal(new_indices, torch.tensor([0, 1, 2, 3])))
+
+        # test batch shape
+        with self.assertRaises(ValueError):
+            consolidate_duplicates(X=X.repeat(2, 1, 1), Y=Y.repeat(2, 1, 1))
+
+        with self.assertRaises(ValueError):
+            detect_duplicates(X=X.repeat(2, 1, 1))
+
+        # test chain link edge case
+        close_X = torch.tensor(
+            [
+                [1.0, 2.0, 3.0],
+                [1.0, 2.0, 3.4],
+                [1.0, 2.0, 3.8],
+                [1.0, 2.0, 4.2],
+            ]
+        )
+        consolidated_X, consolidated_Y, new_indices = consolidate_duplicates(
+            X=close_X, Y=Y, rtol=0, atol=0.5
+        )
+        self.assertTrue(torch.equal(consolidated_X, close_X))
+        self.assertTrue(torch.equal(consolidated_Y, Y))
+        self.assertTrue(torch.equal(new_indices, torch.tensor([0, 1, 2, 3])))

@@ -175,6 +175,32 @@ class TestPairwiseGP(BotorchTestCase):
             with self.assertRaises(RuntimeError):
                 model.set_train_data(train_X, changed_train_comp, strict=True)
 
+            # Test consolidation
+            i1, i2 = train_X.shape[-2], train_X.shape[-2] + 1
+            dup_comp = torch.cat(
+                [
+                    train_comp,
+                    torch.tensor(
+                        [[i1, i2]], dtype=train_comp.dtype, device=train_comp.device
+                    ).expand(*batch_shape, 1, 2),
+                ],
+                dim=-2,
+            )
+            dup_X = torch.cat([train_X, train_X[..., :2, :]], dim=-2)
+            model = PairwiseGP(datapoints=dup_X, comparisons=dup_comp)
+            self.assertTrue(dup_X is model.unconsolidated_datapoints)
+            self.assertTrue(dup_comp is model.unconsolidated_comparisons)
+            if batch_shape:
+                self.assertTrue(dup_X is model.consolidated_datapoints)
+                self.assertTrue(dup_comp is model.consolidated_comparisons)
+                self.assertTrue(model.utility is model.unconsolidated_utility)
+            else:
+                self.assertFalse(torch.equal(dup_X, model.consolidated_datapoints))
+                self.assertFalse(torch.equal(dup_comp, model.consolidated_comparisons))
+                self.assertFalse(
+                    torch.equal(model.utility, model.unconsolidated_utility)
+                )
+
     def test_condition_on_observations(self):
         for batch_shape, dtype, likelihood_cls in itertools.product(
             (torch.Size(), torch.Size([2])),
