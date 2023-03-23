@@ -307,7 +307,10 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 torch.tensor([-1.0, -1.0], dtype=dtype),
                 0,
             )
-            with self.assertRaises(ValueError):
+            with self.assertRaisesRegex(
+                ValueError,
+                "d has to be larger than the largest index in the constraint.",
+            ):
                 transform_intra_point_constraint(constraint=constraint, d=3, q=2)
 
     def test_gen_batch_intial_conditions_transform_inter_point_constraint(self):
@@ -333,7 +336,10 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 torch.tensor([1.0, -1.0], dtype=dtype, device=self.device),
                 0,
             )
-            with self.assertRaises(ValueError):
+            with self.assertRaisesRegex(
+                ValueError,
+                "d has to be larger than the largest index in the constraint.",
+            ):
                 transform_inter_point_constraint(constraint=constraint, d=3)
 
     def test_gen_batch_initial_conditions_transform_constraints(self):

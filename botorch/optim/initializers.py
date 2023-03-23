@@ -266,7 +266,7 @@ def gen_batch_initial_conditions(
                         ),
                         seed=seed,
                         n_burnin=options.get("n_burnin", 10000),
-                        thinning=options.get("thinning", 32) * q,
+                        thinning=options.get("thinning", 32 * q),
                     )
                     .view(n, q, -1)
                     .cpu()
