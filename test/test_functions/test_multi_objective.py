@@ -50,6 +50,7 @@ class DummyMOProblem(MultiObjectiveTestProblem):
     _ref_point = [0.0, 0.0]
     _num_objectives = 2
     _bounds = [(0.0, 1.0)] * 2
+    dim = 2
 
     def evaluate_true(self, X):
         f_X = X + 2

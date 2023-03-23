@@ -38,12 +38,11 @@ class SyntheticTestFunction(BaseTestProblem):
             negate: If True, negate the function.
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
+        if bounds is not None:
+            self._bounds = bounds
         super().__init__(noise_std=noise_std, negate=negate)
         if self._optimizers is not None:
             if bounds is not None:
-                if len(bounds) != self.dim:
-                    raise ValueError("Custom bounds does not match function dim.")
-
                 # Ensure at least one optimizer lies within the custom bounds
                 def in_bounds(
                     optimizer: Tuple[float, ...], bounds: List[Tuple[float, float]]
@@ -64,9 +63,6 @@ class SyntheticTestFunction(BaseTestProblem):
                         "bounds which include at least one point in "
                         f"`{self.__class__.__name__}._optimizers`."
                     )
-
-                self._bounds = bounds
-
             self.register_buffer(
                 "optimizers", torch.tensor(self._optimizers, dtype=torch.float)
             )
@@ -107,7 +103,8 @@ class Ackley(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(-32.768, 32.768) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-32.768, 32.768) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
         self.a = 20
@@ -232,7 +229,8 @@ class DixonPrice(SyntheticTestFunction):
             negate: If True, negate the function.
         """
         self.dim = dim
-        self._bounds = [(-10.0, 10.0) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-10.0, 10.0) for _ in range(self.dim)]
         self._optimizers = [
             tuple(
                 math.pow(2.0, -(1.0 - 2.0 ** (-(i - 1))))
@@ -291,7 +289,8 @@ class Griewank(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(-600.0, 600.0) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-600.0, 600.0) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
@@ -334,7 +333,8 @@ class Hartmann(SyntheticTestFunction):
         if dim not in (3, 4, 6):
             raise ValueError(f"Hartmann with dim {dim} not defined")
         self.dim = dim
-        self._bounds = [(0.0, 1.0) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(0.0, 1.0) for _ in range(self.dim)]
         # optimizers and optimal values for dim=4 not implemented
         optvals = {3: -3.86278, 6: -3.32237}
         optimizers = {
@@ -467,7 +467,8 @@ class Levy(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(-10.0, 10.0) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-10.0, 10.0) for _ in range(self.dim)]
         self._optimizers = [tuple(1.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
@@ -508,7 +509,8 @@ class Michalewicz(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(0.0, math.pi) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(0.0, math.pi) for _ in range(self.dim)]
         optvals = {2: -1.80130341, 5: -4.687658, 10: -9.66015}
         optimizers = {2: [(2.20290552, 1.57079633)]}
         self._optimal_value = optvals.get(self.dim)
@@ -553,7 +555,8 @@ class Powell(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(-4.0, 5.0) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-4.0, 5.0) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
@@ -588,7 +591,8 @@ class Rastrigin(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(-5.12, 5.12) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-5.12, 5.12) for _ in range(self.dim)]
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
@@ -626,7 +630,8 @@ class Rosenbrock(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(-5.0, 10.0) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-5.0, 10.0) for _ in range(self.dim)]
         self._optimizers = [tuple(1.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
 
@@ -736,7 +741,8 @@ class StyblinskiTang(SyntheticTestFunction):
             bounds: Custom bounds for the function specified as (lower, upper) pairs.
         """
         self.dim = dim
-        self._bounds = [(-5.0, 5.0) for _ in range(self.dim)]
+        if bounds is None:
+            bounds = [(-5.0, 5.0) for _ in range(self.dim)]
         self._optimal_value = -39.166166 * self.dim
         self._optimizers = [tuple(-2.903534 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
