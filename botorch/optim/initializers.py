@@ -66,6 +66,18 @@ TGenInitialConditions = Callable[
 def transform_constraints(
     constraints: Union[List[Tuple[Tensor, Tensor, float]], None], q: int, d: int
 ) -> List[Tuple[Tensor, Tensor, float]]:
+    """Transform constraints to sample from a d*q dimensional space instead of a
+    d dimensional state.
+
+    Args:
+        constraints (Union[List[Tuple[Tensor, Tensor, float]], None]): Constraints
+            to transform.
+        q (int): Size of the q-batch.
+        d (int): Dimensionality of the problem.
+
+    Returns:
+        List[Tuple[Tensor, Tensor, float]]: List of transformed constraints.
+    """
     if constraints is None:
         return None
     transformed = []
@@ -80,22 +92,25 @@ def transform_constraints(
 def transform_intra_point_constraint(
     constraint: Tuple[Tensor, Tensor, float], d: int, q: int
 ) -> List[Tuple[Tensor, Tensor, float]]:
-    """_summary_
+    """Transforms an intra-point/pointwise constraint from
+    d-dimensional space to a d*q dimesional space.
 
     Args:
-        constraint (Tuple[Tensor, Tensor, float]): _description_
-        d (int): _description_
-        q (int): _description_
+        constraint (Tuple[Tensor, Tensor, float]): Constraints
+            to transform.
+        d (int): Size of the q-batch.
+        q (int): Dimensionality of the problem.
 
     Raises:
-        ValueError: _description_
+        ValueError: If indices in the constraints are larger than the
+            dimensionality d of the problem.
 
     Returns:
-        List[Tuple[Tensor, Tensor, float]]: _description_
+        List[Tuple[Tensor, Tensor, float]]: List of transformed constraints.
     """
     indices, coefficients, rhs = constraint
     if indices.max() >= d:
-        raise ValueError()
+        raise ValueError("d has to be larger than the largest index in the constraint.")
     return [
         (
             torch.tensor([i * d + j for j in indices], dtype=torch.int64),
@@ -109,22 +124,25 @@ def transform_intra_point_constraint(
 def transform_inter_point_constraint(
     constraint: Tuple[Tensor, Tensor, float], d: int
 ) -> Tuple[Tensor, Tensor, float]:
-    """_summary_
+    """Transforms an inter-point constraint from
+    d-dimensional space to a d*q dimesional space.
 
     Args:
-        constraint (Tuple[Tensor, Tensor, float]): _description_
-        d (int): _description_
+        constraint (Tuple[Tensor, Tensor, float]): Constraint
+            to transform.
+        d (int): Size of the q-batch.
+        q (int): Dimensionality of the problem.
 
     Raises:
-        ValueError: _description_
-        ValueError: _description_
+        ValueError: If indices in the constraints are larger than the
+            dimensionality d of the problem.
 
     Returns:
-        Tuple[Tensor, Tensor, float]: _description_
+        List[Tuple[Tensor, Tensor, float]]: Transformed constraint.
     """
     indices, coefficients, rhs = constraint
     if indices[:, 1].max() >= d:
-        raise ValueError()
+        raise ValueError("d has to be larger than the largest index in the constraint.")
     return (
         torch.tensor([r[0] * d + r[1] for r in indices], dtype=torch.int64),
         coefficients,
