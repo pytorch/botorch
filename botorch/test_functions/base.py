@@ -14,6 +14,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
 
 import torch
+from botorch.exceptions.errors import InputDataError
 from torch import Tensor
 from torch.nn import Module
 
@@ -35,6 +36,11 @@ class BaseTestProblem(Module, ABC):
         super().__init__()
         self.noise_std = noise_std
         self.negate = negate
+        if len(self._bounds) != self.dim:
+            raise InputDataError(
+                "Expected the bounds to match the dimensionality of the domain. "
+                f"Got {self.dim=} and {len(self._bounds)=}."
+            )
         self.register_buffer(
             "bounds", torch.tensor(self._bounds, dtype=torch.float).transpose(-1, -2)
         )

@@ -4,6 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import torch
+from botorch.exceptions.errors import InputDataError
 from botorch.test_functions.synthetic import (
     Ackley,
     Beale,
@@ -45,8 +47,34 @@ class DummySyntheticTestFunctionWithOptimizers(DummySyntheticTestFunction):
 
 
 class TestSyntheticTestFunction(BotorchTestCase):
+    functions_with_custom_bounds = [  # Function name and the default dimension.
+        (Ackley, 2),
+        (Beale, 2),
+        (Branin, 2),
+        (Bukin, 2),
+        (Cosine8, 8),
+        (DropWave, 2),
+        (DixonPrice, 2),
+        (EggHolder, 2),
+        (Griewank, 2),
+        (Hartmann, 6),
+        (HolderTable, 2),
+        (Levy, 2),
+        (Michalewicz, 2),
+        (Powell, 4),
+        (Rastrigin, 2),
+        (Rosenbrock, 2),
+        (Shekel, 4),
+        (SixHumpCamel, 2),
+        (StyblinskiTang, 2),
+        (ThreeHumpCamel, 2),
+    ]
+
     def test_custom_bounds(self):
-        with self.assertRaisesRegex(ValueError, "not match function dim"):
+        with self.assertRaisesRegex(
+            InputDataError,
+            "Expected the bounds to match the dimensionality of the domain. ",
+        ):
             DummySyntheticTestFunctionWithOptimizers(bounds=[(0, 0)])
 
         with self.assertRaisesRegex(
@@ -57,6 +85,19 @@ class TestSyntheticTestFunction(BotorchTestCase):
         dummy = DummySyntheticTestFunctionWithOptimizers(bounds=[(-2, 2), (-3, 3)])
         self.assertEqual(dummy._bounds[0], (-2, 2))
         self.assertEqual(dummy._bounds[1], (-3, 3))
+        self.assertTrue(
+            torch.allclose(
+                dummy.bounds, torch.tensor([[-2, -3], [2, 3]], dtype=torch.float)
+            )
+        )
+
+        # Test each function with custom bounds.
+        for func_class, dim in self.functions_with_custom_bounds:
+            bounds = [(-1e5, 1e5) for _ in range(dim)]
+            bounds_tensor = torch.tensor(bounds).T
+            func = func_class(bounds=bounds)
+            self.assertEqual(func._bounds, bounds)
+            self.assertTrue(torch.allclose(func.bounds, bounds_tensor))
 
 
 class TestAckley(SyntheticTestFunctionBaseTestCase, BotorchTestCase):
