@@ -49,6 +49,7 @@ from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
 from linear_operator.operators import LinearOperator, RootLinearOperator
 from linear_operator.utils.cholesky import psd_safe_cholesky
+from linear_operator.utils.errors import NotPSDError
 from scipy import optimize
 from torch import float32, float64, Tensor
 from torch.nn.modules.module import _IncompatibleKeys
@@ -77,13 +78,43 @@ def _check_strict_input(
 
 
 def _scaled_psd_safe_cholesky(
-    M: Tensor, scale: Union[float, Tensor], jitter: Optional[float] = None
+    matrix: Tensor, scale: Union[float, Tensor], jitter: Optional[float] = None
 ) -> Tensor:
-    r"""scale M by 1/outputscale before cholesky for better numerical stability"""
-    M = M / scale
-    chol = psd_safe_cholesky(M, jitter=jitter)
+    r"""scale matrix by 1/outputscale before cholesky for better numerical stability"""
+    matrix = matrix / scale
+    chol = psd_safe_cholesky(matrix, jitter=jitter)
     chol = chol * scale.sqrt()
     return chol
+
+
+def _ensure_psd_with_jitter(
+    matrix: Tensor,
+    scale: Union[float, Tensor] = 1.0,
+    jitter: float = 1e-8,
+    max_tries: int = 3,
+) -> Tensor:
+    scaled_matrix = matrix / scale
+    new_jitter = 0
+    for i in range(max_tries):
+        scaled_matrix = scaled_matrix + new_jitter * torch.diag_embed(
+            torch.ones(
+                scaled_matrix.shape[:-1],
+                device=scaled_matrix.device,
+                dtype=scaled_matrix.dtype,
+            )
+        )
+        _, info = torch.linalg.cholesky_ex(scaled_matrix)
+        psd = (info == 0).all()
+        if psd:
+            break
+        else:
+            new_jitter = jitter * (10**i) - new_jitter
+    if not psd:
+        raise NotPSDError(
+            "Matrix not positive definite after repeatedly adding jitter "
+            f"up to {jitter * (10**i):.1e}."
+        )
+    return scaled_matrix * scale
 
 
 # Why we subclass GP even though it provides no functionality:
@@ -218,7 +249,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
         # at 0 or 1
         if covar_module is None:
             os_lb, os_ub = 1e-2, 1e2
-            ls_prior = GammaPrior(1.2, 0.5)
+            ls_prior = GammaPrior(concentration=2.4, rate=2.7)
             ls_prior_mode = (ls_prior.concentration - 1) / ls_prior.rate
             covar_module = ScaleKernel(
                 RBFKernel(
@@ -228,6 +259,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
                     lengthscale_constraint=GreaterThan(
                         lower_bound=1e-4, transform=None, initial_value=ls_prior_mode
                     ),
+                    dtype=torch.float64,
                 ),
                 outputscale_prior=SmoothedBoxPrior(a=os_lb, b=os_ub),
                 # make sure we won't get extreme values for the output scale
@@ -236,6 +268,7 @@ class PairwiseGP(Model, GP, FantasizeMixin):
                     upper_bound=os_ub * 2.0,
                     initial_value=1.0,
                 ),
+                dtype=torch.float64,
             )
         if not isinstance(covar_module, ScaleKernel):
             raise UnsupportedError("PairwiseGP must be used with a ScaleKernel.")
@@ -294,8 +327,16 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
     def _calc_covar(self, X1: Tensor, X2: Tensor) -> Union[Tensor, LinearOperator]:
         r"""Calculate the covariance matrix given two sets of datapoints"""
-        covar = self.covar_module(X1, X2)
-        return covar.to_dense()
+        covar = self.covar_module(X1, X2).to_dense()
+        # making sure covar is PSD when it's a covariance matrix
+        if X1 is X2:
+            scale = self.covar_module.outputscale.unsqueeze(-1).unsqueeze(-1).detach()
+            covar = _ensure_psd_with_jitter(
+                matrix=covar,
+                scale=scale,
+                jitter=self._jitter,
+            )
+        return covar
 
     def _update_covar(self, datapoints: Tensor) -> None:
         r"""Update values derived from the data and hyperparameters
@@ -306,9 +347,10 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             datapoints: (Transformed) datapoints for finding f_max
         """
         self.covar = self._calc_covar(datapoints, datapoints)
+        scale = self.covar_module.outputscale.unsqueeze(-1).unsqueeze(-1).detach()
         self.covar_chol = _scaled_psd_safe_cholesky(
-            M=self.covar,
-            scale=self.covar_module.outputscale.unsqueeze(-1).unsqueeze(-1),
+            matrix=self.covar,
+            scale=scale,
             jitter=self._jitter,
         )
         self.covar_inv = torch.cholesky_inverse(self.covar_chol)
@@ -469,8 +511,16 @@ class PairwiseGP(Model, GP, FantasizeMixin):
                     .cpu()
                     .numpy()
                 )
-                # initialize x0 using std normal but clip by 3 std to keep it bounded
-                x0 = np.random.standard_normal(init_x0_size).clip(min=-3, max=3)
+                # Heuristic intialization using winning count with perturbation
+                # to avoid extreme or unprobable likelihood values
+                win_count = self.D.sum(dim=-2).detach().cpu().numpy()
+                wc_mean, wc_std = (
+                    win_count.mean(axis=-1, keepdims=True),
+                    win_count.std(axis=-1, keepdims=True).clip(min=1e-6),
+                )
+                x0 = (win_count - wc_mean) / wc_std
+                # adding random perturbation to in case get stuck at strange init values
+                x0 = x0 + 0.05 * np.random.standard_normal(init_x0_size)
                 # scale x0 to be on roughly the right scale
                 x0 = x0 * sqrt_scale
             else:
@@ -928,14 +978,15 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
             output_mean, output_covar = pred_mean, pred_covar
 
+        scale = self.covar_module.outputscale.unsqueeze(-1).unsqueeze(-1).detach()
         post = MultivariateNormal(
             mean=output_mean,
             # output_covar is sometimes non-PSD
             # perform a cholesky decomposition to check and amend
             covariance_matrix=RootLinearOperator(
                 _scaled_psd_safe_cholesky(
-                    output_covar,
-                    scale=self.covar_module.outputscale.unsqueeze(-1).unsqueeze(-1),
+                    matrix=output_covar,
+                    scale=scale,
                     jitter=self._jitter,
                 )
             ),
