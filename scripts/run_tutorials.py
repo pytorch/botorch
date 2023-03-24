@@ -19,10 +19,7 @@ import pandas as pd
 from memory_profiler import memory_usage
 
 
-IGNORE_ALWAYS = {  # ignored in smoke tests and full runs
-    "bope.ipynb",  # flaky, keeps failing the workflows
-    "preference_bo.ipynb",  # failing. Fix planned
-}
+IGNORE_ALWAYS = set()  # ignored in smoke tests and full runs
 RUN_IF_SMOKE_TEST_IGNORE_IF_STANDARD = set()  # only used in smoke tests
 
 
