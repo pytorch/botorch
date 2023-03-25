@@ -65,8 +65,11 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Get reference point for hypervolume computations.</span>
 
-<span class="sd">    This sets the reference point to be `ref_point = nadir - 0.1 * range`</span>
-<span class="sd">    when there is no pareto_Y that is better than the reference point.</span>
+<span class="sd">    This sets the reference point to be `ref_point = nadir - scale * range`</span>
+<span class="sd">    when there is no `pareto_Y` that is better than `max_ref_point`.</span>
+<span class="sd">    If there's `pareto_Y` better than `max_ref_point`, the reference point</span>
+<span class="sd">    will be set to `max_ref_point - scale * range` if `scale_max_ref_point`</span>
+<span class="sd">    is true and to `max_ref_point` otherwise.</span>
 
 <span class="sd">    [Ishibuchi2011]_ find 0.1 to be a robust multiplier for scaling the</span>
 <span class="sd">    nadir point.</span>
@@ -76,6 +79,9 @@
 <span class="sd">    Args:</span>
 <span class="sd">        pareto_Y: A `n x m`-dim tensor of Pareto-optimal points.</span>
 <span class="sd">        max_ref_point: A `m` dim tensor indicating the maximum reference point.</span>
+<span class="sd">            Some elements can be NaN, except when `pareto_Y` is empty,</span>
+<span class="sd">            in which case these dimensions will be treated as if no</span>
+<span class="sd">            `max_ref_point` was provided and set to `nadir - scale * range`.</span>
 <span class="sd">        scale: A multiplier used to scale back the reference point based on the</span>
 <span class="sd">            range of each objective.</span>
 <span class="sd">        scale_max_ref_point: A boolean indicating whether to apply scaling to</span>
@@ -84,20 +90,28 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        A `m`-dim tensor containing the reference point.</span>
 <span class="sd">    """</span>
-
     <span class="k">if</span> <span class="n">pareto_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">max_ref_point</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">BotorchError</span><span class="p">(</span><span class="s2">"Empty pareto set and no max ref point provided"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_ref_point</span><span class="o">.</span><span class="n">isnan</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">BotorchError</span><span class="p">(</span><span class="s2">"Empty pareto set and max ref point includes NaN."</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">scale_max_ref_point</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">max_ref_point</span> <span class="o">-</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">max_ref_point</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">max_ref_point</span>
     <span class="k">if</span> <span class="n">max_ref_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">better_than_ref</span> <span class="o">=</span> <span class="p">(</span><span class="n">pareto_Y</span> <span class="o">&gt;</span> <span class="n">max_ref_point</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">better_than_ref</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
-            <span class="n">pareto_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">pareto_Y</span><span class="o">.</span><span class="n">device</span>
+        <span class="n">non_nan_idx</span> <span class="o">=</span> <span class="o">~</span><span class="n">max_ref_point</span><span class="o">.</span><span class="n">isnan</span><span class="p">()</span>
+        <span class="c1"># Count all points exceeding non-NaN reference point as being better.</span>
+        <span class="n">better_than_ref</span> <span class="o">=</span> <span class="p">(</span><span class="n">pareto_Y</span><span class="p">[:,</span> <span class="n">non_nan_idx</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">max_ref_point</span><span class="p">[</span><span class="n">non_nan_idx</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">(</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="n">max_ref_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">better_than_ref</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">non_nan_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+            <span class="n">pareto_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">pareto_Y</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span>
+        <span class="n">better_than_ref</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+            <span class="n">pareto_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">pareto_Y</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">max_ref_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">better_than_ref</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">and</span> <span class="n">non_nan_idx</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
         <span class="n">Y_range</span> <span class="o">=</span> <span class="n">pareto_Y</span><span class="p">[</span><span class="n">better_than_ref</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="n">max_ref_point</span>
         <span class="k">if</span> <span class="n">scale_max_ref_point</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">max_ref_point</span> <span class="o">-</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">Y_range</span>
@@ -106,17 +120,28 @@
         <span class="c1"># no points better than max_ref_point and only a single observation</span>
         <span class="c1"># subtract MIN_Y_RANGE to handle the case that pareto_Y is a singleton</span>
         <span class="c1"># with objective value of 0.</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">pareto_Y</span> <span class="o">-</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">pareto_Y</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">MIN_Y_RANGE</span><span class="p">))</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="c1"># no points better than max_ref_point and multiple observations</span>
-    <span class="c1"># make sure that each dimension of the nadir point is no greater than</span>
-    <span class="c1"># the max_ref_point</span>
-    <span class="n">nadir</span> <span class="o">=</span> <span class="n">pareto_Y</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
-    <span class="k">if</span> <span class="n">max_ref_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">nadir</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">nadir</span><span class="p">,</span> <span class="n">max_ref_point</span><span class="p">)</span>
-    <span class="n">ideal</span> <span class="o">=</span> <span class="n">pareto_Y</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
-    <span class="c1"># handle case where all values for one objective are the same</span>
-    <span class="n">Y_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">ideal</span> <span class="o">-</span> <span class="n">nadir</span><span class="p">)</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">MIN_Y_RANGE</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">nadir</span> <span class="o">-</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">Y_range</span></div>
+        <span class="n">Y_range</span> <span class="o">=</span> <span class="n">pareto_Y</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">MIN_Y_RANGE</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">pareto_Y</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">Y_range</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># no points better than max_ref_point and multiple observations</span>
+        <span class="c1"># make sure that each dimension of the nadir point is no greater than</span>
+        <span class="c1"># the max_ref_point</span>
+        <span class="n">nadir</span> <span class="o">=</span> <span class="n">pareto_Y</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">if</span> <span class="n">max_ref_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">nadir</span><span class="p">[</span><span class="n">non_nan_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
+                <span class="n">nadir</span><span class="p">[</span><span class="n">non_nan_idx</span><span class="p">],</span> <span class="n">max_ref_point</span><span class="p">[</span><span class="n">non_nan_idx</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="n">ideal</span> <span class="o">=</span> <span class="n">pareto_Y</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="c1"># handle case where all values for one objective are the same</span>
+        <span class="n">Y_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">ideal</span> <span class="o">-</span> <span class="n">nadir</span><span class="p">)</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">MIN_Y_RANGE</span><span class="p">)</span>
+        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">nadir</span> <span class="o">-</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">Y_range</span>
+    <span class="c1"># Set not-nan indices - if any - to max_ref_point.</span>
+    <span class="k">if</span> <span class="n">non_nan_idx</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">non_nan_idx</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="ow">and</span> <span class="n">better_than_ref</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">scale_max_ref_point</span><span class="p">:</span>
+            <span class="n">ref_point</span><span class="p">[</span><span class="n">non_nan_idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_ref_point</span> <span class="o">-</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">Y_range</span><span class="p">)[</span><span class="n">non_nan_idx</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ref_point</span><span class="p">[</span><span class="n">non_nan_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_ref_point</span><span class="p">[</span><span class="n">non_nan_idx</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">ref_point</span></div>
 
 
 <div class="viewcode-block" id="Hypervolume"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.Hypervolume">[docs]</a><span class="k">class</span> <span class="nc">Hypervolume</span><span class="p">:</span>

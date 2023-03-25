@@ -40,7 +40,7 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.utils.common</span> <span class="kn">import</span> <span class="n">TNone</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.types</span> <span class="kn">import</span> <span class="n">NoneType</span>
 <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">ndarray</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
@@ -163,7 +163,9 @@
 
 <div class="viewcode-block" id="get_bounds_as_ndarray"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.numpy_utils.get_bounds_as_ndarray">[docs]</a><span class="k">def</span> <span class="nf">get_bounds_as_ndarray</span><span class="p">(</span>
     <span class="n">parameters</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
-    <span class="n">bounds</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">TNone</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">TNone</span><span class="p">]]],</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span>
+        <span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]]</span>
+    <span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
     <span class="sa">r</span><span class="sd">"""Helper method for converting bounds into an ndarray.</span>
 

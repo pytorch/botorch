@@ -98,6 +98,33 @@
         <span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">.</span><span class="n">expm1</span><span class="p">())</span><span class="o">.</span><span class="n">log</span><span class="p">(),</span>
         <span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">.</span><span class="n">exp</span><span class="p">())</span><span class="o">.</span><span class="n">log1p</span><span class="p">(),</span>
     <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="logdiffexp"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.logdiffexp">[docs]</a><span class="k">def</span> <span class="nf">logdiffexp</span><span class="p">(</span><span class="n">log_a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">log_b</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">"""Computes log(b - a) accurately given log(a) and log(b).</span>
+<span class="sd">    Assumes, log_b &gt; log_a, i.e. b &gt; a &gt; 0.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        log_a (Tensor): The logarithm of a, assumed to be less than log_b.</span>
+<span class="sd">        log_b (Tensor): The logarithm of b, assumed to be larger than log_a.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A Tensor of values corresponding to log(b - a).</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">log_b</span> <span class="o">+</span> <span class="n">log1mexp</span><span class="p">(</span><span class="n">log_a</span> <span class="o">-</span> <span class="n">log_b</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="logmeanexp"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.logmeanexp">[docs]</a><span class="k">def</span> <span class="nf">logmeanexp</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">"""Computes log(mean(exp(X), dim=dim)).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X (Tensor): The logarithm of a, assumed to be less than log_b.</span>
+<span class="sd">        dim (int): The dimension over which to compute the mean. Default is -1.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A Tensor of values corresponding to log(mean(exp(X), dim=dim)).</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">)</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">dim</span><span class="p">])</span></div>
 </pre></div>
 </div>
 </div>

@@ -36,19 +36,21 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.logging</span> <span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.deterministic</span> <span class="kn">import</span> <span class="n">DeterministicPosterior</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.ensemble</span> <span class="kn">import</span> <span class="n">EnsemblePosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior_list</span> <span class="kn">import</span> <span class="n">PosteriorList</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.torch</span> <span class="kn">import</span> <span class="n">TorchPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.transformed</span> <span class="kn">import</span> <span class="n">TransformedPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.deterministic</span> <span class="kn">import</span> <span class="n">DeterministicSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.index_sampler</span> <span class="kn">import</span> <span class="n">IndexSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.list_sampler</span> <span class="kn">import</span> <span class="n">ListSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">IIDNormalSampler</span><span class="p">,</span>
     <span class="n">NormalMCSampler</span><span class="p">,</span>
     <span class="n">SobolQMCNormalSampler</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.stochastic_samplers</span> <span class="kn">import</span> <span class="n">StochasticSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.dispatcher</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Distribution</span>
@@ -137,8 +139,16 @@
 <span class="k">def</span> <span class="nf">_get_sampler_deterministic</span><span class="p">(</span>
     <span class="n">posterior</span><span class="p">:</span> <span class="n">DeterministicPosterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Get the dummy `StochasticSampler` for the `DeterministicPosterior`."""</span>
-    <span class="k">return</span> <span class="n">StochasticSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="sa">r</span><span class="sd">"""Get the dummy `DeterministicSampler` for the `DeterministicPosterior`."""</span>
+    <span class="k">return</span> <span class="n">DeterministicSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="nd">@GetSampler</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">EnsemblePosterior</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_get_sampler_ensemble</span><span class="p">(</span>
+    <span class="n">posterior</span><span class="p">:</span> <span class="n">EnsemblePosterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Get the `IndexSampler` for the `EnsemblePosterior`."""</span>
+    <span class="k">return</span> <span class="n">IndexSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
 <span class="nd">@GetSampler</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>

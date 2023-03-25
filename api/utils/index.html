@@ -169,8 +169,8 @@ taken from the leading dimension of an n-dimensional source tensor.</p>
 </dd></dl>
 </dd></dl>
 <dl class="py function">
-<dt class="sig sig-object py" id="botorch.utils.context_managers.del_attribute_ctx">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.context_managers.</span></span><span class="sig-name descname"><span class="pre">del_attribute_ctx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enforce_hasattr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/context_managers.html#del_attribute_ctx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.context_managers.del_attribute_ctx" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.utils.context_managers.delattr_ctx">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.context_managers.</span></span><span class="sig-name descname"><span class="pre">delattr_ctx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enforce_hasattr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/context_managers.html#delattr_ctx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.context_managers.delattr_ctx" title="Permalink to this definition">¶</a></dt>
 <dd><p>Contextmanager for temporarily deleting attributes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1514,6 +1514,32 @@ not have a method with the specified name.</p>
 <span class="sig-name descname"><span class="pre">setUp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#BotorchTestCase.setUp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.BotorchTestCase.setUp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Hook method for setting up the test fixture before exercising it.</p>
 </dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.testing.BotorchTestCase.assertAllClose">
+<span class="sig-name descname"><span class="pre">assertAllClose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equal_nan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#BotorchTestCase.assertAllClose"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.BotorchTestCase.assertAllClose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls torch.testing.assert_close, using the signature and default behavior
+of torch.allclose.</p>
+<dl>
+<dt>Example output:</dt><dd><p>AssertionError: Scalars are not close!</p>
+<p>Absolute difference: 1.0000034868717194 (up to 0.0001 allowed)
+Relative difference: 0.8348668001940709 (up to 1e-05 allowed)</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>other</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – </p></li>
+<li><p><strong>rtol</strong> (<em>float</em>) – </p></li>
+<li><p><strong>atol</strong> (<em>float</em>) – </p></li>
+<li><p><strong>equal_nan</strong> (<em>bool</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.testing.BaseTestProblemBaseTestCase">
@@ -2317,6 +2343,14 @@ with probability above the given threshold.</p>
 </dl>
 </dd></dl>
 </section>
+<section id="module-botorch.utils.types">
+<span id="types-and-type-hints"></span><h2>Types and Type Hints<a class="headerlink" href="#module-botorch.utils.types" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.types.DEFAULT">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.types.</span></span><span class="sig-name descname"><span class="pre">DEFAULT</span></span><a class="headerlink" href="#botorch.utils.types.DEFAULT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+</section>
 <section id="module-botorch.utils.constants">
 <span id="constants"></span><h2>Constants<a class="headerlink" href="#module-botorch.utils.constants" title="Permalink to this heading">¶</a></h2>
 <dl class="py function">
@@ -2465,6 +2499,45 @@ See <a class="reference internal" href="#maechler2012accurate" id="id4"><span>[M
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.logdiffexp">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">logdiffexp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#logdiffexp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.logdiffexp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes log(b - a) accurately given log(a) and log(b).
+Assumes, log_b &gt; log_a, i.e. b &gt; a &gt; 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>log_a</strong> (<em>Tensor</em>) – The logarithm of a, assumed to be less than log_b.</p></li>
+<li><p><strong>log_b</strong> (<em>Tensor</em>) – The logarithm of b, assumed to be larger than log_a.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Tensor of values corresponding to log(b - a).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.safe_math.logmeanexp">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.safe_math.</span></span><span class="sig-name descname"><span class="pre">logmeanexp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/safe_math.html#logmeanexp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.safe_math.logmeanexp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes log(mean(exp(X), dim=dim)).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – The logarithm of a, assumed to be less than log_b.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – The dimension over which to compute the mean. Default is -1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Tensor of values corresponding to log(mean(exp(X), dim=dim)).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2763,8 +2836,11 @@ space. Proc. 13th Annual Conf. Genetic Evol. Comput., 2011.</p>
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.hypervolume.infer_reference_point">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.hypervolume.</span></span><span class="sig-name descname"><span class="pre">infer_reference_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pareto_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_ref_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_max_ref_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#infer_reference_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.infer_reference_point" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get reference point for hypervolume computations.</p>
-<p>This sets the reference point to be <cite>ref_point = nadir - 0.1 * range</cite>
-when there is no pareto_Y that is better than the reference point.</p>
+<p>This sets the reference point to be <cite>ref_point = nadir - scale * range</cite>
+when there is no <cite>pareto_Y</cite> that is better than <cite>max_ref_point</cite>.
+If there’s <cite>pareto_Y</cite> better than <cite>max_ref_point</cite>, the reference point
+will be set to <cite>max_ref_point - scale * range</cite> if <cite>scale_max_ref_point</cite>
+is true and to <cite>max_ref_point</cite> otherwise.</p>
 <p><a class="reference internal" href="#ishibuchi2011" id="id8"><span>[Ishibuchi2011]</span></a> find 0.1 to be a robust multiplier for scaling the
 nadir point.</p>
 <p>Note: this assumes maximization of all objectives.</p>
@@ -2772,7 +2848,10 @@ nadir point.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pareto_Y</strong> (<em>Tensor</em>) – A <cite>n x m</cite>-dim tensor of Pareto-optimal points.</p></li>
-<li><p><strong>max_ref_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m</cite> dim tensor indicating the maximum reference point.</p></li>
+<li><p><strong>max_ref_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m</cite> dim tensor indicating the maximum reference point.
+Some elements can be NaN, except when <cite>pareto_Y</cite> is empty,
+in which case these dimensions will be treated as if no
+<cite>max_ref_point</cite> was provided and set to <cite>nadir - scale * range</cite>.</p></li>
 <li><p><strong>scale</strong> (<em>float</em>) – A multiplier used to scale back the reference point based on the
 range of each objective.</p></li>
 <li><p><strong>scale_max_ref_point</strong> (<em>bool</em>) – A boolean indicating whether to apply scaling to
@@ -3117,15 +3196,17 @@ on Evolutionary Computation, vol. 10, no. 1, pp. 50-66, Feb. 2006.</p>
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.scalarization.</span></span><span class="sig-name descname"><span class="pre">get_chebyshev_scalarization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/scalarization.html#get_chebyshev_scalarization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.scalarization.get_chebyshev_scalarization" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct an augmented Chebyshev scalarization.</p>
 <dl class="simple">
-<dt>Augmented Chebyshev scalarization:</dt><dd><p>objective(y) = min(w * y) + alpha * sum(w * y)</p>
+<dt>The augmented Chebyshev scalarization is given by</dt><dd><p>g(y) = max_i(w_i * y_i) + alpha * sum_i(w_i * y_i)</p>
 </dd>
 </dl>
-<p>Outcomes are first normalized to [0,1] for maximization (or [-1,0] for minimization)
-and then an augmented Chebyshev scalarization is applied.</p>
-<p>Note: this assumes maximization of the augmented Chebyshev scalarization.
-Minimizing/Maximizing an objective is supported by passing a negative/positive
-weight for that objective. To make all w * y’s have positive sign
-such that they are comparable when computing min(w * y), outcomes of minimization
+<p>where the goal is to minimize g(y) in the setting where all objectives y_i are
+to be minimized. Since the default in BoTorch is to maximize all objectives,
+this method constructs a Chebyshev scalarization where the inputs are first
+multiplied by -1, so that all objectives are to be minimized. Then, it computes
+g(y) (which should be minimized), and returns -g(y), which should be maximized.</p>
+<p>Minimizing an objective is supported by passing a negative
+weight for that objective. To make all w * y’s have the same sign
+such that they are comparable when computing max(w * y), outcomes of minimization
 objectives are shifted from [0,1] to [-1,0].</p>
 <p>See <a class="reference internal" href="#knowles2005" id="id16"><span>[Knowles2005]</span></a> for details.</p>
 <p>This scalarization can be used with qExpectedImprovement to implement q-ParEGO
@@ -3136,7 +3217,8 @@ as proposed in <a class="reference internal" href="acquisition.html#daulton2020q
 <li><p><strong>weights</strong> (<em>Tensor</em>) – A <cite>m</cite>-dim tensor of weights.
 Positive for maximization and negative for minimization.</p></li>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>n x m</cite>-dim tensor of observed outcomes, which are used for
-scaling the outcomes to [0,1] or [-1,0].</p></li>
+scaling the outcomes to [0,1] or [-1,0]. If <cite>n=0</cite>, then outcomes
+are left unnormalized.</p></li>
 <li><p><strong>alpha</strong> (<em>float</em>) – Parameter governing the influence of the weighted sum term. The
 default value comes from <a class="reference internal" href="#knowles2005" id="id18"><span>[Knowles2005]</span></a>.</p></li>
 </ul>

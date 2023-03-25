@@ -99,7 +99,7 @@
     <span class="sa">r</span><span class="sd">"""Generate scipy constraints from torch representation.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        shapeX: The shape of the torch.Tensor to optimize over (i.e. `b x q x d`)</span>
+<span class="sd">        shapeX: The shape of the torch.Tensor to optimize over (i.e. `(b) x q x d`)</span>
 <span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
 <span class="sd">            with each tuple encoding an inequality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`, where</span>
@@ -203,6 +203,42 @@
     <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">double</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
 
 
+<span class="k">def</span> <span class="nf">_validate_linear_constraints_shape_input</span><span class="p">(</span><span class="n">shapeX</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
+    <span class="sd">"""</span>
+<span class="sd">    Validate `shapeX` input to `_make_linear_constraints`.</span>
+
+<span class="sd">    Check that it has either 2 or 3 dimensions, and add a scalar batch</span>
+<span class="sd">    dimension if it is only 2d.</span>
+<span class="sd">    """</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shapeX</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"`shapeX` must be `(b) x q x d` (at least two-dimensional). It is "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">shapeX</span><span class="si">}</span><span class="s2">."</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shapeX</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">shapeX</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">shapeX</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">shapeX</span>
+
+
+<span class="k">def</span> <span class="nf">_validate_linear_constraints_indices_input</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">indices</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="s2">"Linear constraints supported only on individual candidates and "</span>
+            <span class="s2">"across q-batches, not across general batch shapes."</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">indices</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">indices</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">q</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Index out of bounds for </span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2">-batch"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">indices</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Index out of bounds for </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">-dim parameter tensor"</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">indices</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">indices</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Index out of bounds for </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">-dim parameter tensor"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`indices` must be at least one-dimensional"</span><span class="p">)</span>
+
+
 <span class="k">def</span> <span class="nf">_make_linear_constraints</span><span class="p">(</span>
     <span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">coefficients</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -233,7 +269,7 @@
 <span class="sd">            number of elements as `indices`.</span>
 <span class="sd">        rhs: The right hand side of the constraint.</span>
 <span class="sd">        shapeX: The shape of the torch tensor to construct the constraints for</span>
-<span class="sd">            (i.e. `b x q x d`). Must have three dimensions.</span>
+<span class="sd">            (i.e. `(b) x q x d`). Must have two or three dimensions.</span>
 <span class="sd">        eq: If True, return an equality constraint, o/w return an inequality</span>
 <span class="sd">            constraint (indicated by "eq" / "ineq" value of the `type` key).</span>
 
@@ -245,34 +281,45 @@
 <span class="sd">            version of the input tensor `X`, returning a scalar.</span>
 <span class="sd">        - "jac": A callable evaluating the constraint's Jacobian on `x`, a flattened</span>
 <span class="sd">            version of the input tensor `X`, returning a numpy array.</span>
+
+<span class="sd">    &gt;&gt;&gt; shapeX = torch.Size([3, 5, 4])</span>
+<span class="sd">    &gt;&gt;&gt; constraints = _make_linear_constraints(</span>
+<span class="sd">    ...     indices=torch.tensor([1., 2.]),</span>
+<span class="sd">    ...     coefficients=torch.tensor([-0.5, 1.3]),</span>
+<span class="sd">    ...     rhs=0.49,</span>
+<span class="sd">    ...     shapeX=shapeX,</span>
+<span class="sd">    ...     eq=True</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; len(constraints)</span>
+<span class="sd">    15</span>
+<span class="sd">    &gt;&gt;&gt; constraints[0].keys()</span>
+<span class="sd">    dict_keys(['type', 'fun', 'jac'])</span>
+<span class="sd">    &gt;&gt;&gt; x = np.arange(60).reshape(shapeX)</span>
+<span class="sd">    &gt;&gt;&gt; constraints[0]["fun"](x)</span>
+<span class="sd">    1.61  # 1 * -0.5 + 2 * 1.3 - 0.49</span>
+<span class="sd">    &gt;&gt;&gt; constraints[0]["jac"](x)</span>
+<span class="sd">    [0., -0.5, 1.3, 0., 0., ...]</span>
+<span class="sd">    &gt;&gt;&gt; constraints[1]["fun"](x)  #</span>
+<span class="sd">    4.81</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shapeX</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span><span class="s2">"`shapeX` must be `b x q x d`"</span><span class="p">)</span>
-    <span class="n">q</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">shapeX</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+
+    <span class="n">shapeX</span> <span class="o">=</span> <span class="n">_validate_linear_constraints_shape_input</span><span class="p">(</span><span class="n">shapeX</span><span class="p">)</span>
+
+    <span class="n">b</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">shapeX</span>
+    <span class="n">_validate_linear_constraints_indices_input</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">shapeX</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ScipyConstraintDict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">coeffs</span> <span class="o">=</span> <span class="n">_arrayify</span><span class="p">(</span><span class="n">coefficients</span><span class="p">)</span>
     <span class="n">ctype</span> <span class="o">=</span> <span class="s2">"eq"</span> <span class="k">if</span> <span class="n">eq</span> <span class="k">else</span> <span class="s2">"ineq"</span>
-    <span class="k">if</span> <span class="n">indices</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-            <span class="s2">"Linear constraints supported only on individual candidates and "</span>
-            <span class="s2">"across q-batches, not across general batch shapes."</span>
-        <span class="p">)</span>
-    <span class="k">elif</span> <span class="n">indices</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="c1"># indices has two dimensions (potential constraints across q-batch elements)</span>
-        <span class="k">if</span> <span class="n">indices</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">q</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Index out of bounds for </span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2">-batch"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">indices</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Index out of bounds for </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">-dim parameter tensor"</span><span class="p">)</span>
 
-        <span class="n">offsets</span> <span class="o">=</span> <span class="p">[</span><span class="n">shapeX</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">shapeX</span><span class="p">))]</span>
+    <span class="n">offsets</span> <span class="o">=</span> <span class="p">[</span><span class="n">q</span> <span class="o">*</span> <span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">indices</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="c1"># indices has two dimensions (potential constraints across q-batch elements)</span>
         <span class="c1"># rule is [i, j, k] is at</span>
         <span class="c1"># i * offsets[0] + j * offsets[1] + k</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">shapeX</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-            <span class="n">idxr</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
-                <span class="n">b</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-                <span class="n">idxr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">offsets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">offsets</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+            <span class="n">list_ind</span> <span class="o">=</span> <span class="p">(</span><span class="n">idx</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">)</span>
+            <span class="n">idxr</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">offsets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">idx</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">offsets</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">idx</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">list_ind</span><span class="p">]</span>
             <span class="n">fun</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
                 <span class="n">eval_lin_constraint</span><span class="p">,</span> <span class="n">flat_idxr</span><span class="o">=</span><span class="n">idxr</span><span class="p">,</span> <span class="n">coeffs</span><span class="o">=</span><span class="n">coeffs</span><span class="p">,</span> <span class="n">rhs</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span>
             <span class="p">)</span>
@@ -280,19 +327,14 @@
             <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">ctype</span><span class="p">,</span> <span class="s2">"fun"</span><span class="p">:</span> <span class="n">fun</span><span class="p">,</span> <span class="s2">"jac"</span><span class="p">:</span> <span class="n">jac</span><span class="p">})</span>
     <span class="k">elif</span> <span class="n">indices</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="c1"># indices is one-dim - broadcast constraints across q-batches and t-batches</span>
-        <span class="k">if</span> <span class="n">indices</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Index out of bounds for </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">-dim parameter tensor"</span><span class="p">)</span>
-        <span class="n">offsets</span> <span class="o">=</span> <span class="p">[</span><span class="n">shapeX</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">shapeX</span><span class="p">))]</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">shapeX</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">shapeX</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
                 <span class="n">idxr</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">offsets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">j</span> <span class="o">*</span> <span class="n">offsets</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">indices</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
                 <span class="n">fun</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
                     <span class="n">eval_lin_constraint</span><span class="p">,</span> <span class="n">flat_idxr</span><span class="o">=</span><span class="n">idxr</span><span class="p">,</span> <span class="n">coeffs</span><span class="o">=</span><span class="n">coeffs</span><span class="p">,</span> <span class="n">rhs</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span>
                 <span class="p">)</span>
                 <span class="n">jac</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">lin_constraint_jac</span><span class="p">,</span> <span class="n">flat_idxr</span><span class="o">=</span><span class="n">idxr</span><span class="p">,</span> <span class="n">coeffs</span><span class="o">=</span><span class="n">coeffs</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
                 <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">ctype</span><span class="p">,</span> <span class="s2">"fun"</span><span class="p">:</span> <span class="n">fun</span><span class="p">,</span> <span class="s2">"jac"</span><span class="p">:</span> <span class="n">jac</span><span class="p">})</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`indices` must be at least one-dimensional"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">constraints</span>
 
 

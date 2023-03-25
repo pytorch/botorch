@@ -35,12 +35,13 @@
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">from</span> <span class="nn">unittest</span> <span class="kn">import</span> <span class="n">TestCase</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionWarning</span><span class="p">,</span> <span class="n">InputDataWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">FantasizeMixin</span><span class="p">,</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
@@ -75,6 +76,46 @@
             <span class="s2">"ignore"</span><span class="p">,</span>
             <span class="n">message</span><span class="o">=</span><span class="s2">"The model inputs are of type"</span><span class="p">,</span>
             <span class="n">category</span><span class="o">=</span><span class="ne">UserWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
+            <span class="s2">"ignore"</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">"Non-strict enforcement of botorch tensor conventions."</span><span class="p">,</span>
+            <span class="n">category</span><span class="o">=</span><span class="n">BotorchTensorDimensionWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
+            <span class="s2">"ignore"</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">"Input data is not standardized."</span><span class="p">,</span>
+            <span class="n">category</span><span class="o">=</span><span class="n">InputDataWarning</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="BotorchTestCase.assertAllClose"><a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.BotorchTestCase.assertAllClose">[docs]</a>    <span class="k">def</span> <span class="nf">assertAllClose</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-05</span><span class="p">,</span>
+        <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-08</span><span class="p">,</span>
+        <span class="n">equal_nan</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Calls torch.testing.assert_close, using the signature and default behavior</span>
+<span class="sd">        of torch.allclose.</span>
+
+<span class="sd">        Example output:</span>
+<span class="sd">            AssertionError: Scalars are not close!</span>
+
+<span class="sd">            Absolute difference: 1.0000034868717194 (up to 0.0001 allowed)</span>
+<span class="sd">            Relative difference: 0.8348668001940709 (up to 1e-05 allowed)</span>
+<span class="sd">        """</span>
+        <span class="c1"># Why not just use the signature and behavior of `torch.testing.assert_close`?</span>
+        <span class="c1"># Because we used `torch.allclose` for testing in the past, and the two don't</span>
+        <span class="c1"># behave exactly the same. In particular, `assert_close` requires both `atol`</span>
+        <span class="c1"># and `rtol` to be set if either one is.</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_close</span><span class="p">(</span>
+            <span class="nb">input</span><span class="p">,</span>
+            <span class="n">other</span><span class="p">,</span>
+            <span class="n">rtol</span><span class="o">=</span><span class="n">rtol</span><span class="p">,</span>
+            <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">,</span>
+            <span class="n">equal_nan</span><span class="o">=</span><span class="n">equal_nan</span><span class="p">,</span>
         <span class="p">)</span></div></div>
 
 
@@ -122,7 +163,7 @@
                 <span class="n">res</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">Xopt</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
                 <span class="c1"># if we have optimizers, we have the optimal value</span>
                 <span class="n">res_exp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">optimal_value</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">res_exp</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertAllClose</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">res_exp</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">_check_grad_at_opt</span><span class="p">:</span>
                     <span class="n">grad</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">([</span><span class="o">*</span><span class="n">res</span><span class="p">],</span> <span class="n">Xopt</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">assertLess</span><span class="p">(</span><span class="n">grad</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="mf">1e-3</span><span class="p">)</span></div></div>

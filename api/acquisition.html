@@ -81,6 +81,21 @@ been submitted for evaluation but have not yet been evaluated.</p>
 <span id="cached-cholesky-acquisition-function-api"></span><h3>Cached Cholesky Acquisition Function API<a class="headerlink" href="#module-botorch.acquisition.cached_cholesky" title="Permalink to this heading">¶</a></h3>
 <p>Abstract class for acquisition functions leveraging a cached Cholesky
 decomposition of the posterior covaiance over f(X_baseline).</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.acquisition.cached_cholesky.supports_cache_root">
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.cached_cholesky.</span></span><span class="sig-name descname"><span class="pre">supports_cache_root</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/cached_cholesky.html#supports_cache_root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.cached_cholesky.supports_cache_root" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if a model supports the cache_root functionality.
+The two criteria are that the model is not multi-task and the model
+produces a GPyTorchPosterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
 </section>
 <section id="monte-carlo-acquisition-function-api">
 <h3>Monte-Carlo Acquisition Function API<a class="headerlink" href="#monte-carlo-acquisition-function-api" title="Permalink to this heading">¶</a></h3>
@@ -375,6 +390,58 @@ given design points <cite>X</cite>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.analytic.ProbabilityOfImprovement.model">
 <span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#botorch.acquisition.analytic.ProbabilityOfImprovement.model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.analytic.</span></span><span class="sig-name descname"><span class="pre">qAnalyticProbabilityOfImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/analytic.html#qAnalyticProbabilityOfImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.analytic.AnalyticAcquisitionFunction" title="botorch.acquisition.analytic.AnalyticAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalyticAcquisitionFunction</span></code></a></p>
+<p>Approximate, single-outcome batch Probability of Improvement using MVNXPB.</p>
+<p>This implementation uses MVNXPB, a bivariate conditioning algorithm for
+approximating P(a &lt;= Y &lt;= b) for multivariate normal Y.
+See <a class="reference internal" href="utils.html#trinh2015bivariate" id="id1"><span>[Trinh2015bivariate]</span></a>. This (analytic) approximate q-PI is given by
+<cite>approx-qPI(X) = P(max Y &gt;= best_f) = 1 - P(Y &lt; best_f), Y ~ f(X),
+X = (x_1,…,x_q)</cite>, where <cite>P(Y &lt; best_f)</cite> is estimated using MVNXPB.</p>
+<p>qPI using an analytic approximation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted single-outcome model.</p></li>
+<li><p><strong>best_f</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – Either a scalar or a <cite>b</cite>-dim Tensor (batch mode) representing
+the best function value observed so far (assumed noiseless).</p></li>
+<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – A PosteriorTransform. If using a multi-output model,
+a PosteriorTransform that transforms the multi-output posterior into a
+single-output posterior is required.</p></li>
+<li><p><strong>maximize</strong> (<em>bool</em>) – If True, consider the problem a maximization problem.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/analytic.html#qAnalyticProbabilityOfImprovement.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate approximate qPI on the candidate set X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim design
+points each</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim Tensor of approximate Probability of Improvement values
+at the given design points <cite>X</cite>, where <cite>batch_shape’</cite> is the broadcasted
+batch shape of model and input <cite>X</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement.model" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -911,16 +978,16 @@ points <cite>X</cite>.</p>
 <section id="module-botorch.acquisition.monte_carlo">
 <span id="monte-carlo-acquisition-functions"></span><h3>Monte-Carlo Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.monte_carlo" title="Permalink to this heading">¶</a></h3>
 <p>Batch acquisition functions using the reparameterization trick in combination
-with (quasi) Monte-Carlo sampling. See <a class="reference internal" href="#rezende2014reparam" id="id1"><span>[Rezende2014reparam]</span></a>, <a class="reference internal" href="#wilson2017reparam" id="id2"><span>[Wilson2017reparam]</span></a> and
-<a class="reference internal" href="#balandat2020botorch" id="id3"><span>[Balandat2020botorch]</span></a>.</p>
+with (quasi) Monte-Carlo sampling. See <a class="reference internal" href="#rezende2014reparam" id="id2"><span>[Rezende2014reparam]</span></a>, <a class="reference internal" href="#wilson2017reparam" id="id3"><span>[Wilson2017reparam]</span></a> and
+<a class="reference internal" href="#balandat2020botorch" id="id4"><span>[Balandat2020botorch]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="rezende2014reparam" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id1" role="doc-backlink">Rezende2014reparam</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id2" role="doc-backlink">Rezende2014reparam</a><span class="fn-bracket">]</span></span>
 <p>D. J. Rezende, S. Mohamed, and D. Wierstra. Stochastic backpropagation and
 approximate inference in deep generative models. ICML 2014.</p>
 </div>
 <div class="citation" id="wilson2017reparam" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id2" role="doc-backlink">Wilson2017reparam</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id3" role="doc-backlink">Wilson2017reparam</a><span class="fn-bracket">]</span></span>
 <p>J. T. Wilson, R. Moriconi, F. Hutter, and M. P. Deisenroth.
 The reparameterization trick for acquisition functions. ArXiv 2017.</p>
 </div>
@@ -1293,7 +1360,7 @@ model and input <cite>X</cite>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="yang2019" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Yang2019<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id4" role="doc-backlink">1</a>,<a href="#id6" role="doc-backlink">2</a>,<a href="#id7" role="doc-backlink">3</a>,<a href="#id8" role="doc-backlink">4</a>,<a href="#id9" role="doc-backlink">5</a>)</span>
+<span class="backrefs">(<a href="#id5" role="doc-backlink">1</a>,<a href="#id7" role="doc-backlink">2</a>,<a href="#id8" role="doc-backlink">3</a>,<a href="#id9" role="doc-backlink">4</a>,<a href="#id10" role="doc-backlink">5</a>)</span>
 <p>Yang, K., Emmerich, M., Deutz, A. et al. Efficient computation of expected
 hypervolume improvement using box decomposition algorithms. J Glob Optim 75,
 3–34 (2019)</p>
@@ -1304,9 +1371,9 @@ hypervolume improvement using box decomposition algorithms. J Glob Optim 75,
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.analytic.</span></span><span class="sig-name descname"><span class="pre">ExpectedHypervolumeImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitioning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/analytic.html#ExpectedHypervolumeImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction" title="botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveAnalyticAcquisitionFunction</span></code></a></p>
 <p>Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</p>
-<p>This implements the computes EHVI using the algorithm from <a class="reference internal" href="#yang2019" id="id4"><span>[Yang2019]</span></a>, but
+<p>This implements the computes EHVI using the algorithm from <a class="reference internal" href="#yang2019" id="id5"><span>[Yang2019]</span></a>, but
 additionally computes gradients via auto-differentiation as proposed by
-<a class="reference internal" href="#daulton2020qehvi" id="id5"><span>[Daulton2020qehvi]</span></a>.</p>
+<a class="reference internal" href="#daulton2020qehvi" id="id6"><span>[Daulton2020qehvi]</span></a>.</p>
 <p>Note: this is currently inefficient in two ways due to the binary partitioning
 algorithm that we use for the box decomposition:</p>
 <blockquote>
@@ -1314,14 +1381,14 @@ algorithm that we use for the box decomposition:</p>
 <li><p>We have more boxes in our decomposition</p></li>
 <li><dl class="simple">
 <dt>If we used a box decomposition that used <cite>inf</cite> as the upper bound for</dt><dd><p>the last dimension <em>in all hypercells</em>, then we could reduce the number
-of terms we need to compute from 2^m to 2^(m-1). <a class="reference internal" href="#yang2019" id="id6"><span>[Yang2019]</span></a> do this
+of terms we need to compute from 2^m to 2^(m-1). <a class="reference internal" href="#yang2019" id="id7"><span>[Yang2019]</span></a> do this
 by using DKLV17 and LKF17 for the box decomposition.</p>
 </dd>
 </dl>
 </li>
 </ul>
 </div></blockquote>
-<p>TODO: Use DKLV17 and LKF17 for the box decomposition as in <a class="reference internal" href="#yang2019" id="id7"><span>[Yang2019]</span></a> for
+<p>TODO: Use DKLV17 and LKF17 for the box decomposition as in <a class="reference internal" href="#yang2019" id="id8"><span>[Yang2019]</span></a> for
 greater efficiency.</p>
 <p>TODO: Add support for outcome constraints.</p>
 <p class="rubric">Example</p>
@@ -1358,7 +1425,7 @@ mu_k - lower_{i,k}
 ) * (1 - CDF(upper_{i,k} - mu_k) / sigma_k)
 )</p>
 </div></blockquote>
-<p>See Equation 19 in <a class="reference internal" href="#yang2019" id="id8"><span>[Yang2019]</span></a> for more details.</p>
+<p>See Equation 19 in <a class="reference internal" href="#yang2019" id="id9"><span>[Yang2019]</span></a> for more details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1386,7 +1453,7 @@ mu_k - lower_{i,k}
 upper_{i,k} - lower_{i,k}
 ) * (1 - CDF((upper_{i,k} - mu_k) / sigma_k))</p>
 </div></blockquote>
-<p>See Equation 25 in <a class="reference internal" href="#yang2019" id="id9"><span>[Yang2019]</span></a> for more details.</p>
+<p>See Equation 25 in <a class="reference internal" href="#yang2019" id="id10"><span>[Yang2019]</span></a> for more details.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1436,7 +1503,7 @@ design point each, and returns a Tensor with shape <cite>batch_shape’</cite>, 
 <div class="citation-list" role="list">
 <div class="citation" id="tu2022" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Tu2022<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id10" role="doc-backlink">1</a>,<a href="#id13" role="doc-backlink">2</a>,<a href="#id26" role="doc-backlink">3</a>)</span>
+<span class="backrefs">(<a href="#id11" role="doc-backlink">1</a>,<a href="#id14" role="doc-backlink">2</a>,<a href="#id27" role="doc-backlink">3</a>)</span>
 <p>B. Tu, A. Gandy, N. Kantas and B.Shafei. Joint Entropy Search for Multi-Objective
 Bayesian Optimization. Advances in Neural Information Processing Systems, 35.
 2022.</p>
@@ -1507,7 +1574,7 @@ points <cite>X</cite>.</p>
 the batches <cite>q &gt; 1</cite> are supported through the lower bound formulation.</p>
 <p>This acquisition function computes the mutual information between the observation
 at a candidate point <cite>X</cite> and the Pareto optimal input-output pairs.</p>
-<p>See <a class="reference internal" href="#tu2022" id="id10"><span>[Tu2022]</span></a> for a discussion on the estimation procedure.</p>
+<p>See <a class="reference internal" href="#tu2022" id="id11"><span>[Tu2022]</span></a> for a discussion on the estimation procedure.</p>
 <p>NOTES:
 (i) The estimated acquisition value could be negative.</p>
 <p>(ii) The lower bound batch acquisition function might not be monotone in the
@@ -1576,7 +1643,7 @@ Bayesian optimization (MESMO).</p>
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="belakaria2019" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id11" role="doc-backlink">Belakaria2019</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id12" role="doc-backlink">Belakaria2019</a><span class="fn-bracket">]</span></span>
 <p>S. Belakaria, A. Deshwal, J. R. Doppa. Max-value Entropy Search
 for Multi-Objective Bayesian Optimization. Advances in Neural
 Information Processing Systems, 32. 2019.</p>
@@ -1588,11 +1655,11 @@ Information Processing Systems, 32. 2019.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy" title="botorch.acquisition.max_value_entropy_search.qMaxValueEntropy"><code class="xref py py-class docutils literal notranslate"><span class="pre">qMaxValueEntropy</span></code></a>, <a class="reference internal" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction" title="botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveMCAcquisitionFunction</span></code></a></p>
 <p>The acquisition function for MESMO.</p>
 <p>This acquisition function computes the mutual information of
-Pareto frontier and a candidate point. See <a class="reference internal" href="#belakaria2019" id="id11"><span>[Belakaria2019]</span></a> for
+Pareto frontier and a candidate point. See <a class="reference internal" href="#belakaria2019" id="id12"><span>[Belakaria2019]</span></a> for
 a detailed discussion.</p>
 <p>q &gt; 1 is supported through cyclic optimization and fantasies.</p>
 <p>Noisy observations are support by computing information gain with
-observation noise as in Appendix C in <a class="reference internal" href="#takeno2020mfmves" id="id12"><span>[Takeno2020mfmves]</span></a>.</p>
+observation noise as in Appendix C in <a class="reference internal" href="#takeno2020mfmves" id="id13"><span>[Takeno2020mfmves]</span></a>.</p>
 <p>Note: this only supports maximization.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy._default_sample_shape">
@@ -1674,7 +1741,7 @@ with <cite>1</cite> <cite>d</cite>-dim design points each.</p>
 where the batches <cite>q &gt; 1</cite> are supported through the lower bound formulation.</p>
 <p>This acquisition function computes the mutual information between the observation
 at a candidate point <cite>X</cite> and the Pareto optimal outputs.</p>
-<p>See <a class="reference internal" href="#tu2022" id="id13"><span>[Tu2022]</span></a> for a discussion on the estimation procedure.</p>
+<p>See <a class="reference internal" href="#tu2022" id="id14"><span>[Tu2022]</span></a> for a discussion on the estimation procedure.</p>
 <p>NOTES:
 (i) The estimated acquisition value could be negative.</p>
 <p>(ii) The lower bound batch acquisition function might not be monotone in the
@@ -1740,13 +1807,13 @@ points <cite>X</cite>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="daulton2020qehvi" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Daulton2020qehvi<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id5" role="doc-backlink">1</a>,<a href="#id14" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id6" role="doc-backlink">1</a>,<a href="#id15" role="doc-backlink">2</a>)</span>
 <p>S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume
 Improvement for Parallel Multi-Objective Bayesian Optimization. Advances in Neural
 Information Processing Systems 33, 2020.</p>
 </div>
 <div class="citation" id="daulton2021nehvi" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id15" role="doc-backlink">Daulton2021nehvi</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id16" role="doc-backlink">Daulton2021nehvi</a><span class="fn-bracket">]</span></span>
 <p>S. Daulton, M. Balandat, and E. Bakshy. Parallel Bayesian Optimization of
 Multiple Noisy Objectives with Expected Hypervolume Improvement. Advances
 in Neural Information Processing Systems 34, 2021.</p>
@@ -1757,7 +1824,7 @@ in Neural Information Processing Systems 34, 2021.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qExpectedHypervolumeImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partitioning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#qExpectedHypervolumeImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction" title="botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveMCAcquisitionFunction</span></code></a></p>
 <p>q-Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</p>
-<p>See <a class="reference internal" href="#daulton2020qehvi" id="id14"><span>[Daulton2020qehvi]</span></a> for details.</p>
+<p>See <a class="reference internal" href="#daulton2020qehvi" id="id15"><span>[Daulton2020qehvi]</span></a> for details.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
@@ -1830,7 +1897,7 @@ evaluations.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qNoisyExpectedHypervolumeImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_baseline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">incremental_nehvi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#qNoisyExpectedHypervolumeImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement" title="botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">qExpectedHypervolumeImprovement</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">CachedCholeskyMCAcquisitionFunction</span></code></p>
 <p>q-Noisy Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</p>
-<p>See <a class="reference internal" href="#daulton2021nehvi" id="id15"><span>[Daulton2021nehvi]</span></a> for details.</p>
+<p>See <a class="reference internal" href="#daulton2021nehvi" id="id16"><span>[Daulton2021nehvi]</span></a> for details.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
@@ -1946,7 +2013,7 @@ evaluations.</p>
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="irshad2021momf" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id16" role="doc-backlink">Irshad2021MOMF</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id17" role="doc-backlink">Irshad2021MOMF</a><span class="fn-bracket">]</span></span>
 <p>F. Irshad, S. Karsch, and A. Döpp. Expected hypervolume improvement for
 simultaneous multi-objective and multi-fidelity optimization.
 arXiv preprint arXiv:2112.13901, 2021.</p>
@@ -1961,7 +2028,7 @@ The model needs to have train_obj that has a fidelity
 objective appended to its end.
 In the following example we consider a 2-D output space
 but the ref_point is 3D because of fidelity objective.</p>
-<p>See <a class="reference internal" href="#irshad2021momf" id="id16"><span>[Irshad2021MOMF]</span></a> for details.</p>
+<p>See <a class="reference internal" href="#irshad2021momf" id="id17"><span>[Irshad2021MOMF]</span></a> for details.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
@@ -2049,7 +2116,7 @@ optimizing the acquisition function using finite differences.</p>
 <p>References:</p>
 <div class="citation-list" role="list">
 <div class="citation" id="garrido-merchan2019" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id17" role="doc-backlink">Garrido-Merchan2019</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id18" role="doc-backlink">Garrido-Merchan2019</a><span class="fn-bracket">]</span></span>
 <p>E. Garrido-Merchan and D. Hernandez-Lobato. Predictive Entropy Search for
 Multi-objective Bayesian Optimization with Constraints. Neurocomputing. 2019.
 The computation follows the procedure described in the supplementary material:
@@ -2065,7 +2132,7 @@ both single and multiple objectives as well as batching.</p>
 <p>This acquisition function approximates the mutual information between the
 observation at a candidate point <cite>X</cite> and the Pareto optimal input using the
 moment-matching procedure known as expectation propagation (EP).</p>
-<p>See the Appendix of <a class="reference internal" href="#garrido-merchan2019" id="id17"><span>[Garrido-Merchan2019]</span></a> for the description of the EP
+<p>See the Appendix of <a class="reference internal" href="#garrido-merchan2019" id="id18"><span>[Garrido-Merchan2019]</span></a> for the description of the EP
 procedure.</p>
 <p>IMPORTANT NOTES:
 (i) The PES acquisition function estimated using EP is sometimes not
@@ -2189,24 +2256,24 @@ the approximation log(1-z) ~ -z when z is small:</p>
 <section id="module-botorch.acquisition.knowledge_gradient">
 <span id="the-one-shot-knowledge-gradient"></span><h3>The One-Shot Knowledge Gradient<a class="headerlink" href="#module-botorch.acquisition.knowledge_gradient" title="Permalink to this heading">¶</a></h3>
 <p>Batch Knowledge Gradient (KG) via one-shot optimization as introduced in
-<a class="reference internal" href="#balandat2020botorch" id="id18"><span>[Balandat2020botorch]</span></a>. For broader discussion of KG see also <a class="reference internal" href="#frazier2008knowledge" id="id19"><span>[Frazier2008knowledge]</span></a>
-and <a class="reference internal" href="#wu2016parallelkg" id="id20"><span>[Wu2016parallelkg]</span></a>.</p>
+<a class="reference internal" href="#balandat2020botorch" id="id19"><span>[Balandat2020botorch]</span></a>. For broader discussion of KG see also <a class="reference internal" href="#frazier2008knowledge" id="id20"><span>[Frazier2008knowledge]</span></a>
+and <a class="reference internal" href="#wu2016parallelkg" id="id21"><span>[Wu2016parallelkg]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="balandat2020botorch" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Balandat2020botorch<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id3" role="doc-backlink">1</a>,<a href="#id18" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id4" role="doc-backlink">1</a>,<a href="#id19" role="doc-backlink">2</a>)</span>
 <p>M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson, and
 E. Bakshy. BoTorch: A Framework for Efficient Monte-Carlo Bayesian Optimization.
 Advances in Neural Information Processing Systems 33, 2020.</p>
 </div>
 <div class="citation" id="frazier2008knowledge" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id19" role="doc-backlink">Frazier2008knowledge</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id20" role="doc-backlink">Frazier2008knowledge</a><span class="fn-bracket">]</span></span>
 <p>P. Frazier, W. Powell, and S. Dayanik. A Knowledge-Gradient policy for
 sequential information collection. SIAM Journal on Control and Optimization,
 2008.</p>
 </div>
 <div class="citation" id="wu2016parallelkg" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id20" role="doc-backlink">Wu2016parallelkg</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id21" role="doc-backlink">Wu2016parallelkg</a><span class="fn-bracket">]</span></span>
 <p>J. Wu and P. Frazier. The parallel knowledge gradient method for batch
 bayesian optimization. NIPS 2016.</p>
 </div>
@@ -2532,10 +2599,10 @@ design points <cite>X</cite>.</p>
 <section id="module-botorch.acquisition.multi_step_lookahead">
 <span id="multi-step-lookahead-acquisition-functions"></span><h3>Multi-Step Lookahead Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_step_lookahead" title="Permalink to this heading">¶</a></h3>
 <p>A general implementation of multi-step look-ahead acquistion function with configurable
-value functions. See <a class="reference internal" href="#jiang2020multistep" id="id21"><span>[Jiang2020multistep]</span></a>.</p>
+value functions. See <a class="reference internal" href="#jiang2020multistep" id="id22"><span>[Jiang2020multistep]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="jiang2020multistep" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id21" role="doc-backlink">Jiang2020multistep</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id22" role="doc-backlink">Jiang2020multistep</a><span class="fn-bracket">]</span></span>
 <p>S. Jiang, D. R. Jiang, M. Balandat, B. Karrer, J. Gardner, and R. Garnett.
 Efficient Nonmyopic Bayesian Optimization via One-Shot Multi-Step Trees.
 In Advances in Neural Information Processing Systems 33, 2020.</p>
@@ -2777,21 +2844,21 @@ multi-fidelity MES with noisy observations and trace observations.</p>
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="moss2021gibbon" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id23" role="doc-backlink">Moss2021gibbon</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id24" role="doc-backlink">Moss2021gibbon</a><span class="fn-bracket">]</span></span>
 <p>Moss, H. B., et al.,
-GIBBON: General-purpose Information-Based Bayesian OptimisatioN
-arXiv:2102.03324, 2021</p>
+GIBBON: General-purpose Information-Based Bayesian OptimisatioN.
+Journal of Machine Learning Research, 2021.</p>
 </div>
 <div class="citation" id="takeno2020mfmves" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Takeno2020mfmves<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id12" role="doc-backlink">1</a>,<a href="#id24" role="doc-backlink">2</a>,<a href="#id25" role="doc-backlink">3</a>)</span>
+<span class="backrefs">(<a href="#id13" role="doc-backlink">1</a>,<a href="#id25" role="doc-backlink">2</a>,<a href="#id26" role="doc-backlink">3</a>)</span>
 <p>S. Takeno, H. Fukuoka, Y. Tsukada, T. Koyama, M. Shiga, I. Takeuchi,
 M. Karasuyama. Multi-fidelity Bayesian Optimization with Max-value Entropy
 Search and its Parallelization. Proceedings of the 37th International
 Conference on Machine Learning, 2020.</p>
 </div>
 <div class="citation" id="wang2017mves" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id22" role="doc-backlink">Wang2017mves</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id23" role="doc-backlink">Wang2017mves</a><span class="fn-bracket">]</span></span>
 <p>Z. Wang, S. Jegelka, Max-value Entropy Search for Efficient
 Bayesian Optimization. Proceedings of the 37th International
 Conference on Machine Learning, 2017.</p>
@@ -2837,7 +2904,7 @@ Not required if the model is an instance of a GPyTorch ExactGP model.</p></li>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.max_value_entropy_search.DiscreteMaxValueBase" title="botorch.acquisition.max_value_entropy_search.DiscreteMaxValueBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteMaxValueBase</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSamplerMixin</span></code></p>
 <p>The acquisition function for Max-value Entropy Search.</p>
 <p>This acquisition function computes the mutual information of max values and
-a candidate point X. See <a class="reference internal" href="#wang2017mves" id="id22"><span>[Wang2017mves]</span></a> for a detailed discussion.</p>
+a candidate point X. See <a class="reference internal" href="#wang2017mves" id="id23"><span>[Wang2017mves]</span></a> for a detailed discussion.</p>
 <p>The model must be single-outcome. The batch case <cite>q &gt; 1</cite> is supported
 through cyclic optimization and fantasies.</p>
 <p class="rubric">Example</p>
@@ -2908,7 +2975,7 @@ been submitted for evaluation but have not yet been evaluated.</p>
 Bayesian Optimisation (GIBBON).</p>
 <p>This acquisition function provides a computationally cheap approximation of
 the mutual information between max values and a batch of candidate points <cite>X</cite>.
-See <a class="reference internal" href="#moss2021gibbon" id="id23"><span>[Moss2021gibbon]</span></a> for a detailed discussion.</p>
+See <a class="reference internal" href="#moss2021gibbon" id="id24"><span>[Moss2021gibbon]</span></a> for a detailed discussion.</p>
 <p>The model must be single-outcome, unless using a PosteriorTransform.
 q &gt; 1 is supported through greedy batch filling.</p>
 <p class="rubric">Example</p>
@@ -2955,7 +3022,7 @@ Not required if the model is an instance of a GPyTorch ExactGP model.</p></li>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy" title="botorch.acquisition.max_value_entropy_search.qMaxValueEntropy"><code class="xref py py-class docutils literal notranslate"><span class="pre">qMaxValueEntropy</span></code></a></p>
 <p>Multi-fidelity max-value entropy.</p>
 <p>The acquisition function for multi-fidelity max-value entropy search
-with support for trace observations. See <a class="reference internal" href="#takeno2020mfmves" id="id24"><span>[Takeno2020mfmves]</span></a>
+with support for trace observations. See <a class="reference internal" href="#takeno2020mfmves" id="id25"><span>[Takeno2020mfmves]</span></a>
 for a detailed discussion of the basic ideas on multi-fidelity MES
 (note that this implementation is somewhat different).</p>
 <p>The model must be single-outcome, unless using a PosteriorTransform.
@@ -3042,7 +3109,7 @@ with <cite>1</cite> <cite>d</cite>-dim design point each.</p>
 <p>Multi-fidelity acquisition function for General-purpose Information-Based
 Bayesian optimization (GIBBON).</p>
 <p>The acquisition function for multi-fidelity max-value entropy search
-with support for trace observations. See <a class="reference internal" href="#takeno2020mfmves" id="id25"><span>[Takeno2020mfmves]</span></a>
+with support for trace observations. See <a class="reference internal" href="#takeno2020mfmves" id="id26"><span>[Takeno2020mfmves]</span></a>
 for a detailed discussion of the basic ideas on multi-fidelity MES
 (note that this implementation is somewhat different). This acquisition function
 is similar to <cite>qMultiFidelityMaxValueEntropy</cite> but computes the information gain
@@ -3116,7 +3183,7 @@ implementation designed for the multi-objective batch setting.</p>
 <cite>q &gt; 1</cite> are supported through the lower bound formulation.</p>
 <p>This acquisition function computes the mutual information between the observation
 at a candidate point <cite>X</cite> and the optimal input-output pair.</p>
-<p>See <a class="reference internal" href="#tu2022" id="id26"><span>[Tu2022]</span></a> for a discussion on the estimation procedure.</p>
+<p>See <a class="reference internal" href="#tu2022" id="id27"><span>[Tu2022]</span></a> for a discussion on the estimation procedure.</p>
 <p>NOTES:
 (i) The estimated acquisition value could be negative.</p>
 <p>(ii) The lower bound batch acquisition function might not be monotone in the
@@ -3266,17 +3333,17 @@ given design points <cite>X</cite>.</p>
 <p>Active learning acquisition functions.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="seo2014activedata" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id27" role="doc-backlink">Seo2014activedata</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id28" role="doc-backlink">Seo2014activedata</a><span class="fn-bracket">]</span></span>
 <p>S. Seo, M. Wallat, T. Graepel, and K. Obermayer. Gaussian process regression:
 Active data selection and test point rejection. IJCNN 2000.</p>
 </div>
 <div class="citation" id="chen2014seqexpdesign" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id28" role="doc-backlink">Chen2014seqexpdesign</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id29" role="doc-backlink">Chen2014seqexpdesign</a><span class="fn-bracket">]</span></span>
 <p>X. Chen and Q. Zhou. Sequential experimental designs for stochastic kriging.
 Winter Simulation Conference 2014.</p>
 </div>
 <div class="citation" id="binois2017repexp" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id29" role="doc-backlink">Binois2017repexp</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id30" role="doc-backlink">Binois2017repexp</a><span class="fn-bracket">]</span></span>
 <p>M. Binois, J. Huang, R. B. Gramacy, and M. Ludkovski. Replication or
 exploration? Sequential design for stochastic simulation experiments.
 ArXiv 2017.</p>
@@ -3292,7 +3359,7 @@ ArXiv 2017.</p>
 In that, it is a proxy for global model uncertainty, and thus purely focused on
 “exploration”, rather the “exploitation” of many of the classic Bayesian
 Optimization acquisition functions.</p>
-<p>See <a class="reference internal" href="#seo2014activedata" id="id27"><span>[Seo2014activedata]</span></a>, <a class="reference internal" href="#chen2014seqexpdesign" id="id28"><span>[Chen2014seqexpdesign]</span></a>, and <a class="reference internal" href="#binois2017repexp" id="id29"><span>[Binois2017repexp]</span></a>.</p>
+<p>See <a class="reference internal" href="#seo2014activedata" id="id28"><span>[Seo2014activedata]</span></a>, <a class="reference internal" href="#chen2014seqexpdesign" id="id29"><span>[Chen2014seqexpdesign]</span></a>, and <a class="reference internal" href="#binois2017repexp" id="id30"><span>[Binois2017repexp]</span></a>.</p>
 <p>q-Integrated Negative Posterior Variance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3397,11 +3464,11 @@ of link function at X that active learning hopes to maximize</p>
 <section id="module-botorch.acquisition.preference">
 <span id="preference-acquisition-functions"></span><h3>Preference Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.preference" title="Permalink to this heading">¶</a></h3>
 <p>Preference acquisition functions. This includes:
-Analytical EUBO acquisition function as introduced in <a class="reference internal" href="#lin2022preference" id="id30"><span>[Lin2022preference]</span></a>.</p>
+Analytical EUBO acquisition function as introduced in <a class="reference internal" href="#lin2022preference" id="id31"><span>[Lin2022preference]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="lin2022preference" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Lin2022preference<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id30" role="doc-backlink">1</a>,<a href="#id31" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id31" role="doc-backlink">1</a>,<a href="#id32" role="doc-backlink">2</a>)</span>
 <p>Lin, Z.J., Astudillo, R., Frazier, P.I. and Bakshy, E. Preference Exploration
 for Efficient Bayesian Optimization with Multiple Outcomes. International
 Conference on Artificial Intelligence and Statistics (AISTATS), 2022.</p>
@@ -3414,7 +3481,7 @@ Conference on Artificial Intelligence and Statistics (AISTATS), 2022.</p>
 <p>Analytic Prefential Expected Utility of Best Options, i.e., Analytical EUBO</p>
 <p>Analytic implementation of Expected Utility of the Best Option under the
 Laplace model (assumes a PairwiseGP is used as the preference model) as
-proposed in <a class="reference internal" href="#lin2022preference" id="id31"><span>[Lin2022preference]</span></a>.</p>
+proposed in <a class="reference internal" href="#lin2022preference" id="id32"><span>[Lin2022preference]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -4351,17 +4418,17 @@ model (required if <cite>use_mean=False</cite>, ignored if <cite>use_mean=True</
 <section id="module-botorch.acquisition.risk_measures">
 <span id="risk-measures"></span><h3>Risk Measures<a class="headerlink" href="#module-botorch.acquisition.risk_measures" title="Permalink to this heading">¶</a></h3>
 <p>Risk Measures implemented as Monte-Carlo objectives, based on Bayesian
-optimization of risk measures as introduced in <a class="reference internal" href="#cakmak2020risk" id="id32"><span>[Cakmak2020risk]</span></a>. For a
+optimization of risk measures as introduced in <a class="reference internal" href="#cakmak2020risk" id="id33"><span>[Cakmak2020risk]</span></a>. For a
 broader discussion of Monte-Carlo methods for VaR and CVaR risk measures,
-see also <a class="reference internal" href="#hong2014review" id="id33"><span>[Hong2014review]</span></a>.</p>
+see also <a class="reference internal" href="#hong2014review" id="id34"><span>[Hong2014review]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="cakmak2020risk" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id32" role="doc-backlink">Cakmak2020risk</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id33" role="doc-backlink">Cakmak2020risk</a><span class="fn-bracket">]</span></span>
 <p>S. Cakmak, R. Astudillo, P. Frazier, and E. Zhou. Bayesian Optimization of
 Risk Measures. Advances in Neural Information Processing Systems 33, 2020.</p>
 </div>
 <div class="citation" id="hong2014review" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id33" role="doc-backlink">Hong2014review</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id34" role="doc-backlink">Hong2014review</a><span class="fn-bracket">]</span></span>
 <p>L. J. Hong, Z. Hu, and G. Liu. Monte carlo methods for value-at-risk and
 conditional value-at-risk: a review. ACM Transactions on Modeling and
 Computer Simulation, 2014.</p>
@@ -4577,18 +4644,18 @@ joint distribution of the outputs, and provides more accurate risk estimates.</p
 <div class="citation-list" role="list">
 <div class="citation" id="prekopa2012mvar" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Prekopa2012MVaR<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id34" role="doc-backlink">1</a>,<a href="#id37" role="doc-backlink">2</a>,<a href="#id38" role="doc-backlink">3</a>,<a href="#id39" role="doc-backlink">4</a>)</span>
+<span class="backrefs">(<a href="#id35" role="doc-backlink">1</a>,<a href="#id38" role="doc-backlink">2</a>,<a href="#id39" role="doc-backlink">3</a>,<a href="#id40" role="doc-backlink">4</a>)</span>
 <p>A. Prekopa. Multivariate value at risk and related topics.
 Annals of Operations Research, 2012.</p>
 </div>
 <div class="citation" id="cousin2013mvar" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Cousin2013MVaR<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id35" role="doc-backlink">1</a>,<a href="#id36" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id36" role="doc-backlink">1</a>,<a href="#id37" role="doc-backlink">2</a>)</span>
 <p>A. Cousin and E. Di Bernardino. On multivariate extensions of Value-at-Risk.
 Journal of Multivariate Analysis, 2013.</p>
 </div>
 <div class="citation" id="daulton2022mars" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id40" role="doc-backlink">Daulton2022MARS</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id41" role="doc-backlink">Daulton2022MARS</a><span class="fn-bracket">]</span></span>
 <p>S. Daulton, S, Cakmak, M. Balandat, M. Osborne, E. Zhou, and E. Bakshy.
 Robust multi-objective Bayesian optimization under input noise.
 Proceedings of the 39th International Conference on Machine Learning, 2022.</p>
@@ -4801,11 +4868,11 @@ posterior samples. The q-batches should be ordered so that each
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">MVaR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expectation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocessing_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad_to_n_w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_dominated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MultiOutputRiskMeasureMCObjective</span></code></p>
-<p>The multivariate Value-at-Risk as introduced in <a class="reference internal" href="#prekopa2012mvar" id="id34"><span>[Prekopa2012MVaR]</span></a>.</p>
+<p>The multivariate Value-at-Risk as introduced in <a class="reference internal" href="#prekopa2012mvar" id="id35"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>MVaR is defined as the non-dominated set of points in the extended domain
 of the random variable that have multivariate CDF greater than or equal to
 <cite>alpha</cite>. Note that MVaR is set valued and the size of the set depends on the
-particular realizations of the random variable. <a class="reference internal" href="#cousin2013mvar" id="id35"><span>[Cousin2013MVaR]</span></a> instead
+particular realizations of the random variable. <a class="reference internal" href="#cousin2013mvar" id="id36"><span>[Cousin2013MVaR]</span></a> instead
 propose to use the expectation of the set-valued MVaR as the multivariate
 VaR. We support this alternative with an <cite>expectation</cite> flag.</p>
 <p>The multivariate Value-at-Risk.</p>
@@ -4816,7 +4883,7 @@ VaR. We support this alternative with an <cite>expectation</cite> flag.</p>
 <li><p><strong>alpha</strong> (<em>float</em>) – The risk level of MVaR, float in <cite>(0.0, 1.0]</cite>. Each MVaR value
 dominates <cite>alpha</cite> fraction of all observations.</p></li>
 <li><p><strong>expectation</strong> (<em>bool</em>) – If True, returns the expectation of the MVaR set as is
-done in <a class="reference internal" href="#cousin2013mvar" id="id36"><span>[Cousin2013MVaR]</span></a>. Otherwise, it returns the union of all
+done in <a class="reference internal" href="#cousin2013mvar" id="id37"><span>[Cousin2013MVaR]</span></a>. Otherwise, it returns the union of all
 values in the MVaR set. Default: False.</p></li>
 <li><p><strong>preprocessing_function</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A preprocessing function to apply to the
 samples before computing the risk measure. This can be used to
@@ -4834,7 +4901,7 @@ in general be much larger than the alternative. See <cite>forward</cite> for
 more details on the return shape.
 NOTE: this is only relevant if <cite>expectation=False</cite>.</p></li>
 <li><p><strong>filter_dominated</strong> (<em>bool</em>) – If True, returns the non-dominated subset of
-alpha level points (this is MVaR as defined by <a class="reference internal" href="#prekopa2012mvar" id="id37"><span>[Prekopa2012MVaR]</span></a>).
+alpha level points (this is MVaR as defined by <a class="reference internal" href="#prekopa2012mvar" id="id38"><span>[Prekopa2012MVaR]</span></a>).
 Disabling this will make it faster, and may be preferable if
 the dominated points will be filtered out later, e.g., while
 calculating the hypervolume. Disabling this is not recommended
@@ -4845,7 +4912,7 @@ if <cite>expectation=True</cite>.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_cpu">
 <span class="sig-name descname"><span class="pre">get_mvar_set_cpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR.get_mvar_set_cpu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_cpu" title="Permalink to this definition">¶</a></dt>
-<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id38"><span>[Prekopa2012MVaR]</span></a>.</p>
+<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id39"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>NOTE: This is much faster on CPU for large <cite>n_w</cite> than the alternative but it
 is significantly slower on GPU. Based on empirical evidence, this is recommended
 when running on CPU with <cite>n_w &gt; 64</cite>.</p>
@@ -4872,7 +4939,7 @@ are not in-sample points.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_gpu">
 <span class="sig-name descname"><span class="pre">get_mvar_set_gpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR.get_mvar_set_gpu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_gpu" title="Permalink to this definition">¶</a></dt>
-<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id39"><span>[Prekopa2012MVaR]</span></a>.</p>
+<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id40"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>NOTE: This is much faster on GPU than the alternative but it scales very poorly
 on CPU as <cite>n_w</cite> increases. This should be preferred if a GPU is available or
 when <cite>n_w &lt;= 64</cite>. In addition, this supports <cite>m &gt;= 2</cite> outcomes (vs <cite>m = 2</cite> for
@@ -4929,7 +4996,7 @@ a deterministic return shape.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">MARS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chebyshev_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_Y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocessing_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MARS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MARS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.risk_measures.VaR" title="botorch.acquisition.risk_measures.VaR"><code class="xref py py-class docutils literal notranslate"><span class="pre">VaR</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MultiOutputRiskMeasureMCObjective</span></code></p>
 <p>MVaR Approximation based on Random Scalarizations as introduced
-in <a class="reference internal" href="#daulton2022mars" id="id40"><span>[Daulton2022MARS]</span></a>.</p>
+in <a class="reference internal" href="#daulton2022mars" id="id41"><span>[Daulton2022MARS]</span></a>.</p>
 <p>This approximates MVaR via VaR of Chebyshev scalarizations, where each
 scalarization corresponds to a point in the MVaR set. As implemented,
 this uses one set of scalarization weights to approximate a single MVaR value.

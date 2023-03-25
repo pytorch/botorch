@@ -52,18 +52,16 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.models.ensemble</span> <span class="kn">import</span> <span class="n">EnsembleModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.deterministic</span> <span class="kn">import</span> <span class="n">DeterministicPosterior</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<span class="k">class</span> <span class="nc">DeterministicModel</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">DeterministicModel</span><span class="p">(</span><span class="n">EnsembleModel</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Abstract base class for deterministic models.</span>
 
@@ -83,55 +81,9 @@
 <span class="sd">        """</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The number of outputs of the model."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span>
-
-    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">output_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeterministicPosterior</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute the (deterministic) posterior at X.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            X: A `batch_shape x n x d`-dim input tensor `X`.</span>
-<span class="sd">            output_indices: A list of indices, corresponding to the outputs over</span>
-<span class="sd">                which to compute the posterior. If omitted, computes the posterior</span>
-<span class="sd">                over all model outputs.</span>
-<span class="sd">            posterior_transform: An optional PosteriorTransform.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            A `DeterministicPosterior` object, representing `batch_shape` joint</span>
-<span class="sd">            posteriors over `n` points and the outputs selected by `output_indices`.</span>
-<span class="sd">        """</span>
-        <span class="c1"># Apply the input transforms in `eval` mode.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="c1"># Note: we use a Tensor instance check so that `observation_noise = True`</span>
-        <span class="c1"># just gets ignored. This avoids having to do a bunch of case distinctions</span>
-        <span class="c1"># when using a ModelList.</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"observation_noise"</span><span class="p">),</span> <span class="n">Tensor</span><span class="p">):</span>
-            <span class="c1"># TODO: Consider returning an MVN here instead</span>
-            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-                <span class="s2">"Deterministic models do not support observation noise."</span>
-            <span class="p">)</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="c1"># NOTE: The `outcome_transform` `untransform`s the predictions rather than the</span>
-        <span class="c1"># `posterior` (as is done in GP models). This is more general since it works</span>
-        <span class="c1"># even if the transform doesn't support `untransform_posterior`.</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
-            <span class="n">values</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">output_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">output_indices</span><span class="p">]</span>
-        <span class="n">posterior</span> <span class="o">=</span> <span class="n">DeterministicPosterior</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">posterior_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">posterior_transform</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">posterior</span>
+    <span class="k">def</span> <span class="nf">_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Compatibilizes the `DeterministicModel` with `EnsemblePosterior`"""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="GenericDeterministicModel"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.GenericDeterministicModel">[docs]</a><span class="k">class</span> <span class="nc">GenericDeterministicModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>

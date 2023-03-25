@@ -39,22 +39,25 @@
 <span class="sd">    Journal of Machine Learning Research, 2020,</span>
 <span class="sd">    http://jmlr.org/papers/v21/19-1015.html.</span>
 
-<span class="sd">.. [chen2018dpp]</span>
-<span class="sd">    Laming Chen and Guoxin Zhang and Hanning Zhou, Fast greedy MAP inference</span>
-<span class="sd">    for determinantal point process to improve recommendation diversity,</span>
-<span class="sd">    Proceedings of the 32nd International Conference on Neural Information</span>
-<span class="sd">    Processing Systems, 2018, https://arxiv.org/abs/1709.05135.</span>
-
 <span class="sd">.. [hensman2013svgp]</span>
 <span class="sd">    James Hensman and Nicolo Fusi and Neil D. Lawrence, Gaussian Processes</span>
 <span class="sd">    for Big Data, Proceedings of the 29th Conference on Uncertainty in</span>
 <span class="sd">    Artificial Intelligence, 2013, https://arxiv.org/abs/1309.6835.</span>
+
+<span class="sd">.. [moss2023ipa]</span>
+<span class="sd">    Henry B. Moss and Sebastian W. Ober and Victor Picheny,</span>
+<span class="sd">    Inducing Point Allocation for Sparse Gaussian Processes</span>
+<span class="sd">    in High-Throughput Bayesian Optimization,Proceedings of</span>
+<span class="sd">    the 25th International Conference on Artificial Intelligence</span>
+<span class="sd">    and Statistics, 2023, https://arxiv.org/pdf/2301.10123.pdf.</span>
 
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -62,6 +65,10 @@
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">validate_input_scaling</span>
+<span class="kn">from</span> <span class="nn">botorch.models.utils.inducing_point_allocators</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GreedyVarianceReduction</span><span class="p">,</span>
+    <span class="n">InducingPointAllocator</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
@@ -73,7 +80,6 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">gpytorch.means</span> <span class="kn">import</span> <span class="n">ConstantMean</span><span class="p">,</span> <span class="n">Mean</span>
 <span class="kn">from</span> <span class="nn">gpytorch.models</span> <span class="kn">import</span> <span class="n">ApproximateGP</span>
-<span class="kn">from</span> <span class="nn">gpytorch.module</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.utils.memoize</span> <span class="kn">import</span> <span class="n">clear_cache_hook</span>
 <span class="kn">from</span> <span class="nn">gpytorch.variational</span> <span class="kn">import</span> <span class="p">(</span>
@@ -83,12 +89,10 @@
     <span class="n">IndependentMultitaskVariationalStrategy</span><span class="p">,</span>
     <span class="n">VariationalStrategy</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">LinearOperator</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <span class="n">MIN_INFERRED_NOISE_LEVEL</span> <span class="o">=</span> <span class="mf">1e-4</span>
-<span class="n">NEG_INF</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)))</span>
 
 
 <div class="viewcode-block" id="ApproximateGPyTorchModel"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel">[docs]</a><span class="k">class</span> <span class="nc">ApproximateGPyTorchModel</span><span class="p">(</span><span class="n">GPyTorchModel</span><span class="p">):</span>
@@ -174,7 +178,8 @@
 <span class="sd">    Base class wrapper for a stochastic variational Gaussian Process (SVGP)</span>
 <span class="sd">    model [hensman2013svgp]_.</span>
 
-<span class="sd">    Uses pivoted Cholesky initialization for the inducing points.</span>
+<span class="sd">    Uses by default pivoted Cholesky initialization for allocating inducing points,</span>
+<span class="sd">    however, custom inducing point allocators can be provided.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -188,6 +193,7 @@
         <span class="n">variational_distribution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_VariationalDistribution</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">variational_strategy</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">_VariationalStrategy</span><span class="p">]</span> <span class="o">=</span> <span class="n">VariationalStrategy</span><span class="p">,</span>
         <span class="n">inducing_points</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">inducing_point_allocator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InducingPointAllocator</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
@@ -205,6 +211,9 @@
 <span class="sd">                VariationalStrategy). The default setting uses "whitening" of the</span>
 <span class="sd">                variational distribution to make training easier.</span>
 <span class="sd">            inducing_points: The number or specific locations of the inducing points.</span>
+<span class="sd">            inducing_point_allocator: The `InducingPointAllocator` used to</span>
+<span class="sd">                initialize the inducing point locations. If omitted,</span>
+<span class="sd">                uses `GreedyVarianceReduction`.</span>
 <span class="sd">        """</span>
         <span class="c1"># We use the model subclass wrapper to deal with input / outcome transforms.</span>
         <span class="c1"># The number of outputs will be correct here due to the check in</span>
@@ -235,14 +244,17 @@
                 <span class="s2">"covar_module.base_kernel.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
             <span class="p">}</span>
 
-        <span class="c1"># initialize inducing points with a pivoted cholesky init if they are not given</span>
+        <span class="k">if</span> <span class="n">inducing_point_allocator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">inducing_point_allocator</span> <span class="o">=</span> <span class="n">GreedyVarianceReduction</span><span class="p">()</span>
+
+        <span class="c1"># initialize inducing points if they are not given</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inducing_points</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">inducing_points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="c1"># number of inducing points is 25% the number of data points</span>
                 <span class="c1"># as a heuristic</span>
                 <span class="n">inducing_points</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.25</span> <span class="o">*</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
 
-            <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">_select_inducing_points</span><span class="p">(</span>
+            <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">inducing_point_allocator</span><span class="o">.</span><span class="n">allocate_inducing_points</span><span class="p">(</span>
                 <span class="n">inputs</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
                 <span class="n">covar_module</span><span class="o">=</span><span class="n">covar_module</span><span class="p">,</span>
                 <span class="n">num_inducing</span><span class="o">=</span><span class="n">inducing_points</span><span class="p">,</span>
@@ -281,8 +293,14 @@
 
 
 <div class="viewcode-block" id="SingleTaskVariationalGP"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.SingleTaskVariationalGP">[docs]</a><span class="k">class</span> <span class="nc">SingleTaskVariationalGP</span><span class="p">(</span><span class="n">ApproximateGPyTorchModel</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A single-task variational GP model following [hensman2013svgp]_ with pivoted</span>
-<span class="sd">    Cholesky initialization following [chen2018dpp]_ and [burt2020svgp]_.</span>
+    <span class="sa">r</span><span class="sd">"""A single-task variational GP model following [hensman2013svgp]_.</span>
+
+<span class="sd">    By default, the inducing points are initialized though the</span>
+<span class="sd">    `GreedyVarianceReduction` of [burt2020svgp]_, which is known to be</span>
+<span class="sd">    effective for building globally accurate models. However, custom</span>
+<span class="sd">    inducing point allocators designed for specific down-stream tasks can also be</span>
+<span class="sd">    provided (see [moss2023ipa]_ for details), e.g. `GreedyImprovementReduction`</span>
+<span class="sd">    when the goal is to build a model suitable for standard BO.</span>
 
 <span class="sd">    A single-task variational GP using relatively strong priors on the Kernel</span>
 <span class="sd">    hyperparameters, which work best when covariates are normalized to the unit</span>
@@ -325,6 +343,7 @@
         <span class="n">inducing_points</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">inducing_point_allocator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InducingPointAllocator</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
@@ -345,6 +364,9 @@
 <span class="sd">                VariationalStrategy). The default setting uses "whitening" of the</span>
 <span class="sd">                variational distribution to make training easier.</span>
 <span class="sd">            inducing_points: The number or specific locations of the inducing points.</span>
+<span class="sd">            inducing_point_allocator: The `InducingPointAllocator` used to</span>
+<span class="sd">                initialize the inducing point locations. If omitted,</span>
+<span class="sd">                uses `GreedyVarianceReduction`.</span>
 <span class="sd">        """</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span>
@@ -383,6 +405,19 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_is_custom_likelihood</span> <span class="o">=</span> <span class="kc">True</span>
 
+        <span class="k">if</span> <span class="n">learn_inducing_points</span> <span class="ow">and</span> <span class="p">(</span><span class="n">inducing_point_allocator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"After all the effort of specifying an inducing point allocator, "</span>
+                <span class="s2">"you probably want to stop the inducing point locations "</span>
+                <span class="s2">"being further optimized during the model fit. If so "</span>
+                <span class="s2">"then set `learn_inducing_points` to False."</span><span class="p">,</span>
+                <span class="ne">UserWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">inducing_point_allocator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">inducing_point_allocator</span> <span class="o">=</span> <span class="n">GreedyVarianceReduction</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inducing_point_allocator</span> <span class="o">=</span> <span class="n">inducing_point_allocator</span>
+
         <span class="n">model</span> <span class="o">=</span> <span class="n">_SingleTaskVariationalGP</span><span class="p">(</span>
             <span class="n">train_X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span>
             <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
@@ -393,6 +428,7 @@
             <span class="n">variational_distribution</span><span class="o">=</span><span class="n">variational_distribution</span><span class="p">,</span>
             <span class="n">variational_strategy</span><span class="o">=</span><span class="n">variational_strategy</span><span class="p">,</span>
             <span class="n">inducing_points</span><span class="o">=</span><span class="n">inducing_points</span><span class="p">,</span>
+            <span class="n">inducing_point_allocator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_inducing_point_allocator</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">num_outputs</span><span class="o">=</span><span class="n">num_outputs</span><span class="p">)</span>
@@ -416,7 +452,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Reinitialize the inducing point locations in-place with the current kernel</span>
-<span class="sd">        applied to `inputs`.</span>
+<span class="sd">        applied to `inputs` through the model's inducing point allocation strategy.</span>
 <span class="sd">        The variational distribution and variational strategy caches are reset.</span>
 
 <span class="sd">        Args:</span>
@@ -433,7 +469,7 @@
 
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="n">num_inducing</span> <span class="o">=</span> <span class="n">var_strat</span><span class="o">.</span><span class="n">inducing_points</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
-            <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">_select_inducing_points</span><span class="p">(</span>
+            <span class="n">inducing_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inducing_point_allocator</span><span class="o">.</span><span class="n">allocate_inducing_points</span><span class="p">(</span>
                 <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
                 <span class="n">covar_module</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">covar_module</span><span class="p">,</span>
                 <span class="n">num_inducing</span><span class="o">=</span><span class="n">num_inducing</span><span class="p">,</span>
@@ -443,134 +479,6 @@
             <span class="n">var_strat</span><span class="o">.</span><span class="n">variational_params_initialized</span><span class="o">.</span><span class="n">fill_</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">inducing_points</span></div></div>
-
-
-<span class="k">def</span> <span class="nf">_select_inducing_points</span><span class="p">(</span>
-    <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-    <span class="n">covar_module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
-    <span class="n">num_inducing</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">input_batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">    Utility function that evaluates a kernel at given inputs and selects inducing point</span>
-<span class="sd">    locations based on the pivoted Cholesky heuristic.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        inputs: A (*batch_shape, n, d)-dim input data tensor.</span>
-<span class="sd">        covar_module: GPyTorch Module returning a LinearOperator kernel matrix.</span>
-<span class="sd">        num_inducing: The maximun number (m) of inducing points (m &lt;= n).</span>
-<span class="sd">        input_batch_shape: The non-task-related batch shape.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        A (*batch_shape, m, d)-dim tensor of inducing point locations.</span>
-<span class="sd">    """</span>
-
-    <span class="n">train_train_kernel</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate_kernel</span><span class="p">()</span>
-
-    <span class="c1"># base case</span>
-    <span class="k">if</span> <span class="n">train_train_kernel</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">_pivoted_cholesky_init</span><span class="p">(</span>
-            <span class="n">train_inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
-            <span class="n">kernel_matrix</span><span class="o">=</span><span class="n">train_train_kernel</span><span class="p">,</span>
-            <span class="n">max_length</span><span class="o">=</span><span class="n">num_inducing</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="c1"># multi-task case</span>
-    <span class="k">elif</span> <span class="n">train_train_kernel</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_batch_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">input_element</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">inputs</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span> <span class="k">else</span> <span class="n">inputs</span>
-        <span class="n">kernel_element</span> <span class="o">=</span> <span class="n">train_train_kernel</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">_pivoted_cholesky_init</span><span class="p">(</span>
-            <span class="n">train_inputs</span><span class="o">=</span><span class="n">input_element</span><span class="p">,</span>
-            <span class="n">kernel_matrix</span><span class="o">=</span><span class="n">kernel_element</span><span class="p">,</span>
-            <span class="n">max_length</span><span class="o">=</span><span class="n">num_inducing</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="c1"># batched input cases</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">batched_inputs</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">inputs</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">input_batch_shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">inputs</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span>
-            <span class="k">else</span> <span class="n">inputs</span>
-        <span class="p">)</span>
-        <span class="n">reshaped_inputs</span> <span class="o">=</span> <span class="n">batched_inputs</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">end_dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span>
-        <span class="n">inducing_points</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">input_element</span> <span class="ow">in</span> <span class="n">reshaped_inputs</span><span class="p">:</span>
-            <span class="c1"># the extra kernel evals are a little wasteful but make it</span>
-            <span class="c1"># easier to infer the task batch size</span>
-            <span class="n">kernel_element</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">input_element</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate_kernel</span><span class="p">()</span>
-            <span class="c1"># handle extra task batch dimension</span>
-            <span class="n">kernel_element</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">kernel_element</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="k">if</span> <span class="n">kernel_element</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span>
-                <span class="k">else</span> <span class="n">kernel_element</span>
-            <span class="p">)</span>
-            <span class="n">inducing_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">_pivoted_cholesky_init</span><span class="p">(</span>
-                    <span class="n">train_inputs</span><span class="o">=</span><span class="n">input_element</span><span class="p">,</span>
-                    <span class="n">kernel_matrix</span><span class="o">=</span><span class="n">kernel_element</span><span class="p">,</span>
-                    <span class="n">max_length</span><span class="o">=</span><span class="n">num_inducing</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="n">inducing_points</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">inducing_points</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
-            <span class="o">*</span><span class="n">input_batch_shape</span><span class="p">,</span> <span class="n">num_inducing</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">inducing_points</span>
-
-
-<span class="k">def</span> <span class="nf">_pivoted_cholesky_init</span><span class="p">(</span>
-    <span class="n">train_inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-    <span class="n">kernel_matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">],</span>
-    <span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">epsilon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">    A pivoted cholesky initialization method for the inducing points,</span>
-<span class="sd">    originally proposed in [burt2020svgp]_ with the algorithm itself coming from</span>
-<span class="sd">    [chen2018dpp]_. Code is a PyTorch version from [chen2018dpp]_, copied from</span>
-<span class="sd">    https://github.com/laming-chen/fast-map-dpp/blob/master/dpp.py.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        train_inputs: training inputs (of shape n x d)</span>
-<span class="sd">        kernel_matrix: kernel matrix on the training</span>
-<span class="sd">            inputs</span>
-<span class="sd">        max_length: number of inducing points to initialize</span>
-<span class="sd">        epsilon: numerical jitter for stability.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        max_length x d tensor of the training inputs corresponding to the top</span>
-<span class="sd">        max_length pivots of the training kernel matrix</span>
-<span class="sd">    """</span>
-
-    <span class="c1"># this is numerically equivalent to iteratively performing a pivoted cholesky</span>
-    <span class="c1"># while storing the diagonal pivots at each iteration</span>
-    <span class="c1"># TODO: use gpytorch's pivoted cholesky instead once that gets an exposed list</span>
-    <span class="c1"># TODO: ensure this works in batch mode, which it does not currently.</span>
-
-    <span class="n">item_size</span> <span class="o">=</span> <span class="n">kernel_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-    <span class="n">cis</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
-        <span class="p">(</span><span class="n">max_length</span><span class="p">,</span> <span class="n">item_size</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">kernel_matrix</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">kernel_matrix</span><span class="o">.</span><span class="n">dtype</span>
-    <span class="p">)</span>
-    <span class="n">di2s</span> <span class="o">=</span> <span class="n">kernel_matrix</span><span class="o">.</span><span class="n">diag</span><span class="p">()</span>
-    <span class="n">selected_items</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">selected_item</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">di2s</span><span class="p">)</span>
-    <span class="n">selected_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">selected_item</span><span class="p">)</span>
-
-    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">selected_items</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">max_length</span><span class="p">:</span>
-        <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">selected_items</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="n">ci_optimal</span> <span class="o">=</span> <span class="n">cis</span><span class="p">[:</span><span class="n">k</span><span class="p">,</span> <span class="n">selected_item</span><span class="p">]</span>
-        <span class="n">di_optimal</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">di2s</span><span class="p">[</span><span class="n">selected_item</span><span class="p">])</span>
-        <span class="n">elements</span> <span class="o">=</span> <span class="n">kernel_matrix</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">selected_item</span><span class="p">,</span> <span class="p">:]</span>
-        <span class="n">eis</span> <span class="o">=</span> <span class="p">(</span><span class="n">elements</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">ci_optimal</span><span class="p">,</span> <span class="n">cis</span><span class="p">[:</span><span class="n">k</span><span class="p">,</span> <span class="p">:]))</span> <span class="o">/</span> <span class="n">di_optimal</span>
-        <span class="n">cis</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">eis</span>
-        <span class="n">di2s</span> <span class="o">=</span> <span class="n">di2s</span> <span class="o">-</span> <span class="n">eis</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
-        <span class="n">di2s</span><span class="p">[</span><span class="n">selected_item</span><span class="p">]</span> <span class="o">=</span> <span class="n">NEG_INF</span>
-        <span class="n">selected_item</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">di2s</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">di2s</span><span class="p">[</span><span class="n">selected_item</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">epsilon</span><span class="p">:</span>
-            <span class="k">break</span>
-        <span class="n">selected_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">selected_item</span><span class="p">)</span>
-
-    <span class="n">ind_points</span> <span class="o">=</span> <span class="n">train_inputs</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">selected_items</span><span class="p">)]</span>
-
-    <span class="k">return</span> <span class="n">ind_points</span>
 </pre></div>
 </div>
 </div>

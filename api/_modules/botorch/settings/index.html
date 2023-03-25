@@ -36,10 +36,6 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">typing</span>  <span class="c1"># noqa F401</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-
-<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">BotorchWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.logging</span> <span class="kn">import</span> <span class="n">LOG_LEVEL_DEFAULT</span><span class="p">,</span> <span class="n">logger</span>
 
 
@@ -81,30 +77,19 @@
     <span class="n">_state</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
 
 
-<div class="viewcode-block" id="suppress_botorch_warnings"><a class="viewcode-back" href="../../settings.html#botorch.settings.suppress_botorch_warnings">[docs]</a><span class="k">def</span> <span class="nf">suppress_botorch_warnings</span><span class="p">(</span><span class="n">suppress</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Set botorch warning filter.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        state: A boolean indicating whether warnings should be prints</span>
-<span class="sd">    """</span>
-    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"ignore"</span> <span class="k">if</span> <span class="n">suppress</span> <span class="k">else</span> <span class="s2">"default"</span><span class="p">,</span> <span class="n">BotorchWarning</span><span class="p">)</span></div>
-
-
 <div class="viewcode-block" id="debug"><a class="viewcode-back" href="../../settings.html#botorch.settings.debug">[docs]</a><span class="k">class</span> <span class="nc">debug</span><span class="p">(</span><span class="n">_Flag</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Flag for printing verbose BotorchWarnings.</span>
+    <span class="sa">r</span><span class="sd">"""Flag for printing verbose warnings.</span>
 
-<span class="sd">    When set to `True`, verbose `BotorchWarning`s will be printed for debuggability.</span>
-<span class="sd">    Warnings that are not subclasses of `BotorchWarning` will not be affected by</span>
-<span class="sd">    this context_manager.</span>
+<span class="sd">    To make sure a warning is only raised in debug mode:</span>
+<span class="sd">        &gt;&gt;&gt; if debug.on():</span>
+<span class="sd">        &gt;&gt;&gt;     warnings.warn(&lt;some warning&gt;)</span>
 <span class="sd">    """</span>
 
     <span class="n">_state</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">suppress_botorch_warnings</span><span class="p">(</span><span class="n">suppress</span><span class="o">=</span><span class="ow">not</span> <span class="n">_state</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_set_state</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">cls</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">state</span>
-        <span class="n">suppress_botorch_warnings</span><span class="p">(</span><span class="n">suppress</span><span class="o">=</span><span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_state</span><span class="p">)</span></div>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">state</span></div>
 
 
 <div class="viewcode-block" id="validate_input_scaling"><a class="viewcode-back" href="../../settings.html#botorch.settings.validate_input_scaling">[docs]</a><span class="k">class</span> <span class="nc">validate_input_scaling</span><span class="p">(</span><span class="n">_Flag</span><span class="p">):</span>

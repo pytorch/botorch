@@ -1,0 +1,82 @@
+<!DOCTYPE html><html lang=""><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.8.2/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.8.2/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.8.2/img/botorch.png"/><link rel="shortcut icon" href="/v/0.8.2/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.8.2/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.8.2/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.8.2/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.8.2/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.8.2/css/main.css"/><script src="/v/0.8.2/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.8.2/"><img class="logo" src="/v/0.8.2/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.8.2/versions"><h3>0.8.2</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.8.2/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.8.2/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.8.2/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.8.2/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span></span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Tutorials</h3><ul class=""><li class="navListItem navListItemActive"><a class="navItem" href="/v/0.8.2/tutorials/">Overview</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Using BoTorch with Ax</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/custom_botorch_model_in_ax">Using a custom BoTorch model</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/custom_acquisition">Writing a custom acquisition function</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Full Optimization Loops</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/closed_loop_botorch_only">q-Noisy Constrained EI</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/preference_bo">Bayesian optimization with pairwise comparison data</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/bope">Bayesian optimization with preference exploration (BOPE)</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/turbo_1">Trust Region Bayesian Optimization (TuRBO)</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/scalable_constrained_bo">Scalable Constrained Bayesian Optimization (SCBO)</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/saasbo">High-dimensional Bayesian optimization with SAASBO</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/Multi_objective_multi_fidelity_BO">Multi-Objective-Multi-Fidelity optimization with MOMF</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/bo_with_warped_gp">Bayesian optimization with input warping</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/thompson_sampling">Bayesian optimization with large-scale Thompson sampling</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Multi-Objective Bayesian Optimization</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/multi_objective_bo">Multi-objective optimization with qEHVI, qNEHVI, and qNParEGO</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/constrained_multi_objective_bo">Constrained multi-objective optimization with qNEHVI and qParEGO</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/robust_multi_objective_bo">Robust multi-objective Bayesian optimization under input noise</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Bite-Sized Tutorials</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/fit_model_with_torch_optimizer">Fitting a model using torch.optim</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/compare_mc_analytic_acquisition">Comparing analytic and MC Expected Improvement</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/optimize_with_cmaes">Acquisition function optimization with CMA-ES</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/optimize_stochastic">Acquisition function optimization with torch.optim</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/batch_mode_cross_validation">Using batch evaluation for fast cross-validation</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/one_shot_kg">The one-shot Knowledge Gradient acquisition function</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/max_value_entropy">The max-value entropy search acquisition function</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/GIBBON_for_efficient_batch_entropy_search">The GIBBON acquisition function for efficient batch entropy search</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/risk_averse_bo_with_environmental_variables">Risk averse Bayesian optimization with environmental variables</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/risk_averse_bo_with_input_perturbations">Risk averse Bayesian optimization with input perturbations</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/constraint_active_search">Constraint Active Search for Multiobjective Experimental Design</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/information_theoretic_acquisition_functions">Information-theoretic acquisition functions</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Advanced Usage</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/meta_learning_with_rgpe">Meta-learning with RGPE</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/vae_mnist">High-dimensional optimization with VAEs</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/multi_fidelity_bo">Multi-fidelity Bayesian optimization using KG</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/discrete_multi_fidelity_bo">Multi-fidelity Bayesian optimization with discrete fidelities using KG</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/composite_bo_with_hogp">Composite Bayesian optimization with the High Order Gaussian Process</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.2/tutorials/composite_mtbo">Composite Bayesian Optimization with Multi-Task Gaussian Processes</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer documentContainer postContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 class="postHeaderTitle">BoTorch Tutorials</h1></header><body><p>The tutorials here will help you understand and use BoTorch in your own work. They assume that you are familiar with both Bayesian optimization (BO) and PyTorch.</p><p>If you are new to BO, we recommend you start with the <a href="https://ax.dev/docs/bayesopt">Ax docs</a> and the following <a href="https://arxiv.org/abs/1807.02811">tutorial paper</a>.</p><p>If you are new to PyTorch, the easiest way to get started is with the <a href="https://pytorch.org/tutorials/beginner/blitz/tensor_tutorial.html#sphx-glr-beginner-blitz-tensor-tutorial-py">What is PyTorch?</a> tutorial.</p><p>The BoTorch tutorials are grouped into the following four areas.</p><p><h4>Using BoTorch with Ax</h4>These tutorials give you an overview of how to leverage <a href="https://ax.dev">Ax</a>, a platform for sequential experimentation, in order to simplify the management of your BO loop. Doing so can help you focus on the main aspects of BO (models, acquisition functions, optimization of acquisition functions), rather than tedious loop control. See our <a href="https://botorch.org/docs/botorch_and_ax">Documentation</a> for additional information.<h4>Full Optimization Loops</h4>In some situations (e.g. when working in a non-standard setting, or if you want to understand and control various details of the BO loop), then you may also consider working purely in BoTorch. The tutorials in this section illustrate this approach.<h4>Bite-Sized Tutorials</h4>Rather than guiding you through full end-to-end BO loops, the tutorials in this section focus on specific tasks that you will encounter in customizing your BO algorithms. For instance, you may want to <a href="https://botorch.org/tutorials/custom_acquisition">write a custom acquisition function</a> and then <a href="https://botorch.org/tutorials/optimize_with_cmaes">use a custom zero-th order optimizer</a> to optimize it.<h4>Advanced Usage</h4>Tutorials in this section showcase more advanced ways of using BoTorch. For instance, <a href="https://botorch.org/tutorials/vae_mnist">this tutorial</a> shows how to perform BO if your objective function is an image, by optimizing in the latent space of a variational auto-encoder (VAE).</p></body></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.8.2/" class="nav-home"><img src="/v/0.8.2/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.8.2/docs/introduction">Introduction</a><a href="/v/0.8.2/docs/getting_started">Getting Started</a><a href="/v/0.8.2/tutorials/">Tutorials</a><a href="/v/0.8.2/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.8.2/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.8.2/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

@@ -43,6 +43,7 @@
 
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">nullcontext</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -53,6 +54,7 @@
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.constants</span> <span class="kn">import</span> <span class="n">get_constants_like</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.probability</span> <span class="kn">import</span> <span class="n">MVNXPB</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.probability.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">log_ndtr</span> <span class="k">as</span> <span class="n">log_Phi</span><span class="p">,</span>
     <span class="n">log_phi</span><span class="p">,</span>
@@ -60,9 +62,10 @@
     <span class="n">ndtr</span> <span class="k">as</span> <span class="n">Phi</span><span class="p">,</span>
     <span class="n">phi</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.safe_math</span> <span class="kn">import</span> <span class="n">log1mexp</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.safe_math</span> <span class="kn">import</span> <span class="n">log1mexp</span><span class="p">,</span> <span class="n">logmeanexp</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">convert_to_target_pre_hook</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.nn.functional</span> <span class="kn">import</span> <span class="n">pad</span>
 
 <span class="n">_sqrt_2pi</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
 <span class="c1"># the following two numbers are needed for _log_ei_helper</span>
@@ -255,6 +258,70 @@
         <span class="n">mean</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean_and_sigma</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">u</span> <span class="o">=</span> <span class="n">_scaled_improvement</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Phi</span><span class="p">(</span><span class="n">u</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="qAnalyticProbabilityOfImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement">[docs]</a><span class="k">class</span> <span class="nc">qAnalyticProbabilityOfImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Approximate, single-outcome batch Probability of Improvement using MVNXPB.</span>
+
+<span class="sd">    This implementation uses MVNXPB, a bivariate conditioning algorithm for</span>
+<span class="sd">    approximating P(a &lt;= Y &lt;= b) for multivariate normal Y.</span>
+<span class="sd">    See [Trinh2015bivariate]_. This (analytic) approximate q-PI is given by</span>
+<span class="sd">    `approx-qPI(X) = P(max Y &gt;= best_f) = 1 - P(Y &lt; best_f), Y ~ f(X),</span>
+<span class="sd">    X = (x_1,...,x_q)`, where `P(Y &lt; best_f)` is estimated using MVNXPB.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">best_f</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">"""qPI using an analytic approximation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A fitted single-outcome model.</span>
+<span class="sd">            best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing</span>
+<span class="sd">                the best function value observed so far (assumed noiseless).</span>
+<span class="sd">            posterior_transform: A PosteriorTransform. If using a multi-output model,</span>
+<span class="sd">                a PosteriorTransform that transforms the multi-output posterior into a</span>
+<span class="sd">                single-output posterior is required.</span>
+<span class="sd">            maximize: If True, consider the problem a maximization problem.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="o">=</span> <span class="n">maximize</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">best_f</span><span class="p">):</span>
+            <span class="n">best_f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">best_f</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"best_f"</span><span class="p">,</span> <span class="n">best_f</span><span class="p">)</span>
+
+<div class="viewcode-block" id="qAnalyticProbabilityOfImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">"""Evaluate approximate qPI on the candidate set X.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design</span>
+<span class="sd">                points each</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape`-dim Tensor of approximate Probability of Improvement values</span>
+<span class="sd">            at the given design points `X`, where `batch_shape'` is the broadcasted</span>
+<span class="sd">            batch shape of model and input `X`.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
+        <span class="p">)</span>
+
+        <span class="n">covariance</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">covariance_matrix</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">pad</span><span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">best_f</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">pad</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="k">else</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">value</span><span class="o">=-</span><span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="c1"># 1 - P(no improvement over best_f)</span>
+        <span class="n">solver</span> <span class="o">=</span> <span class="n">MVNXPB</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="o">=</span><span class="n">covariance</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span><span class="o">.</span><span class="n">expm1</span><span class="p">()</span></div></div>
 
 
 <div class="viewcode-block" id="ExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">ExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
@@ -613,7 +680,7 @@
         <span class="n">u</span> <span class="o">=</span> <span class="n">_scaled_improvement</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">)</span>
         <span class="n">log_ei</span> <span class="o">=</span> <span class="n">_log_ei_helper</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">+</span> <span class="n">sigma</span><span class="o">.</span><span class="n">log</span><span class="p">()</span>
         <span class="c1"># this is mathematically - though not numerically - equivalent to log(mean(ei))</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">log_ei</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log_ei</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></div></div>
+        <span class="k">return</span> <span class="n">logmeanexp</span><span class="p">(</span><span class="n">log_ei</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="NoisyExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.NoisyExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">NoisyExpectedImprovement</span><span class="p">(</span><span class="n">ExpectedImprovement</span><span class="p">):</span>

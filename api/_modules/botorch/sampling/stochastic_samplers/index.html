@@ -39,7 +39,6 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">Posterior</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.deterministic</span> <span class="kn">import</span> <span class="n">DeterministicPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
@@ -89,22 +88,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            The samples drawn from the posterior.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">)</span></div>
-
-    <span class="k">def</span> <span class="nf">_update_base_samples</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">base_sampler</span><span class="p">:</span> <span class="n">StochasticSampler</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Update the sampler to use the original base samples for X_baseline.</span>
-
-<span class="sd">        This is used in CachedCholeskyAcquisitionFunctions to ensure consistency.</span>
-<span class="sd">        This is a no-op for DeterministicPosterior and errors out otherwise.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            posterior: The posterior for which the base samples are constructed.</span>
-<span class="sd">            base_sampler: The base sampler to retrieve the base samples from.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">DeterministicPosterior</span><span class="p">):</span>
-            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_update_base_samples</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span> <span class="n">base_sampler</span><span class="o">=</span><span class="n">base_sampler</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>

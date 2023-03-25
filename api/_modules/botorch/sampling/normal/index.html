@@ -44,6 +44,7 @@
 <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">Posterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.higher_order</span> <span class="kn">import</span> <span class="n">HigherOrderGPPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.multitask</span> <span class="kn">import</span> <span class="n">MultitaskGPPosterior</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.transformed</span> <span class="kn">import</span> <span class="n">TransformedPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">draw_sobol_normal_samples</span><span class="p">,</span> <span class="n">manual_seed</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -138,8 +139,13 @@
                     <span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">n_train_samples</span><span class="p">:</span>
                 <span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
+                <span class="n">batch_shape</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">posterior</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">batch_shape</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">TransformedPosterior</span><span class="p">)</span>
+                    <span class="k">else</span> <span class="n">posterior</span><span class="o">.</span><span class="n">batch_shape</span>
+                <span class="p">)</span>
                 <span class="n">single_output</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="nb">len</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">base_sample_shape</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">base_sample_shape</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span>
                 <span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
                 <span class="k">if</span> <span class="n">single_output</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="p">[</span>

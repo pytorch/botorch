@@ -49,8 +49,8 @@
     <span class="n">dtype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dtype</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
-<div class="viewcode-block" id="del_attribute_ctx"><a class="viewcode-back" href="../../../utils.html#botorch.utils.context_managers.del_attribute_ctx">[docs]</a><span class="nd">@contextmanager</span>
-<span class="k">def</span> <span class="nf">del_attribute_ctx</span><span class="p">(</span>
+<div class="viewcode-block" id="delattr_ctx"><a class="viewcode-back" href="../../../utils.html#botorch.utils.context_managers.delattr_ctx">[docs]</a><span class="nd">@contextmanager</span>
+<span class="k">def</span> <span class="nf">delattr_ctx</span><span class="p">(</span>
     <span class="n">instance</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">*</span><span class="n">attrs</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">enforce_hasattr</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
     <span class="sa">r</span><span class="sd">"""Contextmanager for temporarily deleting attributes."""</span>

@@ -416,6 +416,7 @@ models.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.deterministic.</span></span><span class="sig-name descname"><span class="pre">DeterministicPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/deterministic.html#DeterministicPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></p>
 <p>Deterministic posterior.</p>
+<p>[DEPRECATED] Use <cite>EnsemblePosterior</cite> instead.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – Values of the samples produced by this posterior.</p>
@@ -453,6 +454,105 @@ to the requested shape.</p>
 <dd class="field-odd"><p><strong>sample_shape</strong> (<em>Optional</em><em>[</em><em>Size</em><em>]</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
 draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
 of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Samples from the posterior, a tensor of shape
+<cite>self._extended_shape(sample_shape=sample_shape)</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</section>
+<section id="module-botorch.posteriors.ensemble">
+<span id="ensemble-posterior"></span><h3>Ensemble Posterior<a class="headerlink" href="#module-botorch.posteriors.ensemble" title="Permalink to this heading">¶</a></h3>
+<p>Ensemble posteriors. Used in conjunction with ensemble models.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.posteriors.ensemble.EnsemblePosterior">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.ensemble.</span></span><span class="sig-name descname"><span class="pre">EnsemblePosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/ensemble.html#EnsemblePosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.ensemble.EnsemblePosterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></p>
+<p>Ensemble posterior, that should be used for ensemble models that compute
+eagerly a finite number of samples per X value as for example a deep ensemble
+or a random forest.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – Values of the samples produced by this posterior as
+a <cite>(b) x s x q x m</cite> tensor where <cite>m</cite> is the output size of the
+model and <cite>s</cite> is the ensemble size.</p>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.posteriors.ensemble.EnsemblePosterior.ensemble_size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ensemble_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.posteriors.ensemble.EnsemblePosterior.ensemble_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>The size of the ensemble</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.posteriors.ensemble.EnsemblePosterior.weights">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">weights</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.posteriors.ensemble.EnsemblePosterior.weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>The weights of the individual models in the ensemble.
+Equally weighted by default.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.posteriors.ensemble.EnsemblePosterior.device">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">device</span></em><a class="headerlink" href="#botorch.posteriors.ensemble.EnsemblePosterior.device" title="Permalink to this definition">¶</a></dt>
+<dd><p>The torch device of the posterior.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.posteriors.ensemble.EnsemblePosterior.dtype">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dtype</span></em><a class="headerlink" href="#botorch.posteriors.ensemble.EnsemblePosterior.dtype" title="Permalink to this definition">¶</a></dt>
+<dd><p>The torch dtype of the posterior.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.posteriors.ensemble.EnsemblePosterior.mean">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mean</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.posteriors.ensemble.EnsemblePosterior.mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>The mean of the posterior as a <cite>(b) x n x m</cite>-dim Tensor.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.posteriors.ensemble.EnsemblePosterior.variance">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">variance</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.posteriors.ensemble.EnsemblePosterior.variance" title="Permalink to this definition">¶</a></dt>
+<dd><p>The variance of the posterior as a <cite>(b) x n x m</cite>-dim Tensor.</p>
+<p>Computed as the sample variance across the ensemble outputs.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.posteriors.ensemble.EnsemblePosterior.rsample">
+<span class="sig-name descname"><span class="pre">rsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/ensemble.html#EnsemblePosterior.rsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.ensemble.EnsemblePosterior.rsample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample from the posterior (with gradients).</p>
+<p>Based on the sample shape, base samples are generated and passed to
+<cite>rsample_from_base_samples</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sample_shape</strong> (<em>Optional</em><em>[</em><em>Size</em><em>]</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
+draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
+of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Samples from the posterior, a tensor of shape
+<cite>self._extended_shape(sample_shape=sample_shape)</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.posteriors.ensemble.EnsemblePosterior.rsample_from_base_samples">
+<span class="sig-name descname"><span class="pre">rsample_from_base_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_samples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/ensemble.html#EnsemblePosterior.rsample_from_base_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.ensemble.EnsemblePosterior.rsample_from_base_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample from the posterior (with gradients) using base samples.</p>
+<p>This is intended to be used with a sampler that produces the corresponding base
+samples, and enables acquisition optimization via Sample Average Approximation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>Size</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
+draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
+of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p></li>
+<li><p><strong>base_samples</strong> (<em>Tensor</em>) – A Tensor of indices as base samples of shape
+<cite>sample_shape</cite>, typically obtained from <cite>IndexSampler</cite>.
+This is used for deterministic optimization. The predictions of
+the ensemble corresponding to the indices are then sampled.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Samples from the posterior, a tensor of shape

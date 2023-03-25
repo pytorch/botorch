@@ -63,6 +63,8 @@
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">_get_logger</span><span class="p">()</span>
 
+<span class="n">TGenCandidates</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span>
+
 
 <div class="viewcode-block" id="gen_candidates_scipy"><a class="viewcode-back" href="../../../generation.html#botorch.generation.gen.gen_candidates_scipy">[docs]</a><span class="k">def</span> <span class="nf">gen_candidates_scipy</span><span class="p">(</span>
     <span class="n">initial_conditions</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -82,7 +84,8 @@
 <span class="sd">    using `scipy.optimize.minimize` via a numpy converter.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        initial_conditions: Starting points for optimization.</span>
+<span class="sd">        initial_conditions: Starting points for optimization, with shape</span>
+<span class="sd">            (b) x q x d.</span>
 <span class="sd">        acquisition_function: Acquisition function to be used.</span>
 <span class="sd">        lower_bounds: Minimum values for each column of initial_conditions.</span>
 <span class="sd">        upper_bounds: Maximum values for each column of initial_conditions.</span>
@@ -177,7 +180,6 @@
             <span class="n">clamped_candidates</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">batch_acquisition</span>
-
     <span class="n">clamped_candidates</span> <span class="o">=</span> <span class="n">columnwise_clamp</span><span class="p">(</span>
         <span class="n">X</span><span class="o">=</span><span class="n">initial_conditions</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">upper_bounds</span>
     <span class="p">)</span>
@@ -188,7 +190,7 @@
         <span class="n">X</span><span class="o">=</span><span class="n">initial_conditions</span><span class="p">,</span> <span class="n">lower_bounds</span><span class="o">=</span><span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper_bounds</span><span class="o">=</span><span class="n">upper_bounds</span>
     <span class="p">)</span>
     <span class="n">constraints</span> <span class="o">=</span> <span class="n">make_scipy_linear_constraints</span><span class="p">(</span>
-        <span class="n">shapeX</span><span class="o">=</span><span class="n">clamped_candidates</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+        <span class="n">shapeX</span><span class="o">=</span><span class="n">shapeX</span><span class="p">,</span>
         <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
         <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
     <span class="p">)</span>
@@ -385,7 +387,6 @@
             <span class="n">clamped_candidates</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">batch_acquisition</span>
-
     <span class="n">_clamp</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">columnwise_clamp</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">upper_bounds</span><span class="p">)</span>
     <span class="n">clamped_candidates</span> <span class="o">=</span> <span class="n">_clamp</span><span class="p">(</span><span class="n">initial_conditions</span><span class="p">)</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">_optimizer</span> <span class="o">=</span> <span class="n">optimizer</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">[</span><span class="n">clamped_candidates</span><span class="p">],</span> <span class="n">lr</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"lr"</span><span class="p">,</span> <span class="mf">0.025</span><span class="p">))</span>

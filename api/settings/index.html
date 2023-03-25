@@ -39,30 +39,18 @@ This is useful in particular for propating gradients through fantasy models.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.settings.suppress_botorch_warnings">
-<span class="sig-prename descclassname"><span class="pre">botorch.settings.</span></span><span class="sig-name descname"><span class="pre">suppress_botorch_warnings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suppress</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#suppress_botorch_warnings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.settings.suppress_botorch_warnings" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set botorch warning filter.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>state</strong> – A boolean indicating whether warnings should be prints</p></li>
-<li><p><strong>suppress</strong> (<em>bool</em>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.settings.debug">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.settings.</span></span><span class="sig-name descname"><span class="pre">debug</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#debug"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.settings.debug" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_Flag</span></code></p>
-<p>Flag for printing verbose BotorchWarnings.</p>
-<p>When set to <cite>True</cite>, verbose <cite>BotorchWarning`s will be printed for debuggability.
-Warnings that are not subclasses of `BotorchWarning</cite> will not be affected by
-this context_manager.</p>
+<p>Flag for printing verbose warnings.</p>
+<dl>
+<dt>To make sure a warning is only raised in debug mode:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="n">debug</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="o">&lt;</span><span class="n">some</span> <span class="n">warning</span><span class="o">&gt;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>state</strong> (<em>bool</em>) – </p>

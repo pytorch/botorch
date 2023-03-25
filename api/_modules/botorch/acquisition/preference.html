@@ -52,6 +52,8 @@
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">match_batch_shape</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
+<span class="n">SIGMA_JITTER</span> <span class="o">=</span> <span class="mf">1e-8</span>
+
 
 <div class="viewcode-block" id="AnalyticExpectedUtilityOfBestOption"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption">[docs]</a><span class="k">class</span> <span class="nc">AnalyticExpectedUtilityOfBestOption</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Analytic Prefential Expected Utility of Best Options, i.e., Analytical EUBO"""</span>
@@ -128,7 +130,9 @@
             <span class="o">+</span> <span class="n">pref_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
             <span class="o">-</span> <span class="n">pref_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
             <span class="o">-</span> <span class="n">pref_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">SIGMA_JITTER</span>
         <span class="p">)</span>
+
         <span class="n">u</span> <span class="o">=</span> <span class="n">delta</span> <span class="o">/</span> <span class="n">sigma</span>
 
         <span class="n">ucdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
