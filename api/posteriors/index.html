@@ -197,12 +197,16 @@ the marginal distributions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>distribution</strong> (<em>Optional</em><em>[</em><em>MultivariateNormal</em><em>]</em>) – A GPyTorch MultivariateNormal (single-output case) or
+<li><p><strong>distribution</strong> (<em>MultivariateNormal</em>) – A GPyTorch MultivariateNormal (single-output case) or
 MultitaskMultivariateNormal (multi-output case).</p></li>
 <li><p><strong>mvn</strong> (<em>Optional</em><em>[</em><em>MultivariateNormal</em><em>]</em>) – Deprecated.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.posteriors.gpytorch.GPyTorchPosterior.distribution">
+<span class="sig-name descname"><span class="pre">distribution</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MultivariateNormal</span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.distribution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.gpytorch.GPyTorchPosterior.mvn">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mvn</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MultivariateNormal</span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.mvn" title="Permalink to this definition">¶</a></dt>
@@ -329,9 +333,12 @@ of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p>
 </dd></dl>
 </dd></dl>
 <dl class="py function">
-<dt class="sig sig-object py" id="botorch.posteriors.gpytorch.scalarize_posterior">
-<span class="sig-prename descclassname"><span class="pre">botorch.posteriors.gpytorch.</span></span><span class="sig-name descname"><span class="pre">scalarize_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/gpytorch.html#scalarize_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.gpytorch.scalarize_posterior" title="Permalink to this definition">¶</a></dt>
-<dd><p>Affine transformation of a multi-output posterior.</p>
+<dt class="sig sig-object py" id="botorch.posteriors.gpytorch.scalarize_posterior_gpytorch">
+<span class="sig-prename descclassname"><span class="pre">botorch.posteriors.gpytorch.</span></span><span class="sig-name descname"><span class="pre">scalarize_posterior_gpytorch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/gpytorch.html#scalarize_posterior_gpytorch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.gpytorch.scalarize_posterior_gpytorch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function for <cite>scalarize_posterior</cite>, producing a mean and
+variance.</p>
+<p>This mean and variance are consumed by <cite>scalarize_posterior</cite> to produce
+a <cite>GPyTorchPosterior</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -350,7 +357,44 @@ Supports <cite>t</cite>-batching.</p></li>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>GPyTorchPosterior</em></a></p>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Union</em>[<em>Tensor</em>, <em>LinearOperator</em>]]</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>Example for a model with two outcomes:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mean</span><span class="p">,</span> <span class="n">cov</span> <span class="o">=</span> <span class="n">scalarize_posterior_gpytorch</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">cov</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_posterior</span> <span class="o">=</span> <span class="n">GPyTorchPosterior</span>
+</pre></div>
+</div>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.posteriors.gpytorch.scalarize_posterior">
+<span class="sig-prename descclassname"><span class="pre">botorch.posteriors.gpytorch.</span></span><span class="sig-name descname"><span class="pre">scalarize_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/gpytorch.html#scalarize_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.gpytorch.scalarize_posterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Affine transformation of a multi-output posterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>GPyTorchPosterior</em></a><em>, </em><a class="reference internal" href="#botorch.posteriors.posterior_list.PosteriorList" title="botorch.posteriors.posterior_list.PosteriorList"><em>PosteriorList</em></a><em>]</em>) – The posterior over <cite>m</cite> outcomes to be scalarized.
+Supports <cite>t</cite>-batching. Can be either a <cite>GPyTorchPosterior</cite>,
+or a <cite>PosteriorList</cite> that contains GPyTorchPosteriors all with q=1.</p></li>
+<li><p><strong>weights</strong> (<em>Tensor</em>) – A tensor of weights of size <cite>m</cite>.</p></li>
+<li><p><strong>offset</strong> (<em>float</em>) – The offset of the affine transformation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>The transformed (single-output) posterior. If the input posterior has</dt><dd><p>mean <cite>mu</cite> and covariance matrix <cite>Sigma</cite>, this posterior has mean
+<cite>weights^T * mu</cite> and variance <cite>weights^T Sigma w</cite>.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior">GPyTorchPosterior</a></p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -519,6 +563,10 @@ of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.posteriors.higher_order.HigherOrderGPPosterior.distribution">
+<span class="sig-name descname"><span class="pre">distribution</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MultivariateNormal</span></em><a class="headerlink" href="#botorch.posteriors.higher_order.HigherOrderGPPosterior.distribution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.posteriors.multitask">
@@ -610,6 +658,10 @@ of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.posteriors.multitask.MultitaskGPPosterior.distribution">
+<span class="sig-name descname"><span class="pre">distribution</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MultivariateNormal</span></em><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior.distribution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.posteriors.transformed">
@@ -786,6 +838,10 @@ mixture of Gaussian distributions.</p>
 provide consistency in the acquisition values, i.e., to ensure that a
 candidate produces same value regardless of its position on the t-batch.</p>
 </dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.posteriors.fully_bayesian.FullyBayesianPosterior.distribution">
+<span class="sig-name descname"><span class="pre">distribution</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MultivariateNormal</span></em><a class="headerlink" href="#botorch.posteriors.fully_bayesian.FullyBayesianPosterior.distribution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </section>
 </section>
@@ -841,7 +897,7 @@ candidate produces same value regardless of its position on the t-batch.</p>
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

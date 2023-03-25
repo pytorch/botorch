@@ -34,7 +34,7 @@
 and <cite>ModelList</cite>, a container for a list of Models.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.model.Model">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.model.</span></span><span class="sig-name descname"><span class="pre">Model</span></span><a class="reference internal" href="_modules/botorch/models/model.html#Model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.Model" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.model.</span></span><span class="sig-name descname"><span class="pre">Model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#Model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.Model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Abstract base class for BoTorch models.</p>
 <p>The <cite>Model</cite> base class cannot be used directly; it only defines an API for other
@@ -81,7 +81,7 @@ Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add observation noise to the posterior.</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Posterior</em><em>]</em><em>, </em><em>Posterior</em><em>]</em><em>]</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -90,7 +90,7 @@ computes the posterior over all model outputs.</p></li>
 over <cite>q</cite> points and <cite>m</cite> outputs each.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Posterior</em></p>
+<dd class="field-odd"><p>Posterior</p>
 </dd>
 </dl>
 </dd></dl>
@@ -329,8 +329,7 @@ batch shape of the model).</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.model.</span></span><span class="sig-name descname"><span class="pre">ModelList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">models</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></p>
 <p>A multi-output Model represented by a list of independent models.</p>
-<p>All
-BoTorch models are acceptable as inputs. The cost of this flexibility is
+<p>All BoTorch models are acceptable as inputs. The cost of this flexibility is
 that <cite>ModelList</cite> does not support all methods that may be implemented by its
 component models. One use case for <cite>ModelList</cite> is combining a regression
 model and a deterministic model in one multi-output container model, e.g.
@@ -345,7 +344,7 @@ a deterministic function of the inputs.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m_1</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">m_2</span> <span class="o">=</span> <span class="n">GenericDeterministicModel</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">m_12</span> <span class="o">=</span> <span class="n">ModelList</span><span class="p">(</span><span class="n">m_1</span><span class="p">,</span> <span class="n">m_2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">m_12</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m_12</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="py method">
@@ -369,7 +368,7 @@ Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add observation noise to the posterior.</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Posterior</em><em>]</em><em>, </em><em>Posterior</em><em>]</em><em>]</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior_list.PosteriorList" title="botorch.posteriors.posterior_list.PosteriorList"><em>PosteriorList</em></a><em>]</em><em>, </em><em>Posterior</em><em>]</em><em>]</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -456,6 +455,19 @@ the model `m1</cite> subset to its second output.</p>
 </dd>
 </dl>
 </dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.models.model.ModelDict">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.model.</span></span><span class="sig-name descname"><span class="pre">ModelDict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">models</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModuleDict</span></code></p>
+<p>A lightweight container mapping model names to models.</p>
+<p>Initialize a <cite>ModelDict</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>models</strong> (<a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – An arbitrary number of models. Each model can be any type
+of BoTorch <cite>Model</cite>, including multi-output models and <cite>ModelList</cite>.</p>
+</dd>
+</dl>
 </dd></dl>
 </section>
 <section id="module-botorch.models.gpytorch">
@@ -1233,9 +1245,9 @@ discrete optimization variables. We recommend using <cite>optimize_acqf_mixed.</
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
 <li><p><strong>cat_dims</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – A list of indices corresponding to the columns of
 the input <cite>X</cite> that should be considered categorical features.</p></li>
-<li><p><strong>cont_kernel_factory</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>int</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em><em>, </em><em>Kernel</em><em>]</em><em>]</em>) – A method that accepts <cite>ard_num_dims</cite> and
-<cite>active_dims</cite> arguments and returns an instantiated GPyTorch
-<cite>Kernel</cite> object to be used as the ase kernel for the continuous
+<li><p><strong>cont_kernel_factory</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Size</em><em>, </em><em>int</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em><em>, </em><em>Kernel</em><em>]</em><em>]</em>) – A method that accepts  <cite>batch_shape</cite>, <cite>ard_num_dims</cite>,
+and <cite>active_dims</cite> arguments and returns an instantiated GPyTorch
+<cite>Kernel</cite> object to be used as the base kernel for the continuous
 dimensions. If omitted, this model uses a Matern-2.5 kernel as
 the kernel for the ordinal parameters.</p></li>
 <li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – A likelihood. If omitted, use a standard
@@ -1246,8 +1258,10 @@ inference (that is, the <cite>Posterior</cite> obtained by calling
 <cite>.posterior</cite> on the model will be on the original scale).</p></li>
 <li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – An input transform that is applied in the model’s
 forward pass. Only input transforms are allowed which do not
-transform the categorical dimensions. This can be achieved
-by using the <cite>indices</cite> argument when constructing the transform.</p></li>
+transform the categorical dimensions. If you want to use it
+for example in combination with a <cite>OneHotToNumeric</cite> input transform
+one has to instantiate the transform with <cite>transform_on_train</cite> == False
+and pass in the already transformed input.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1354,6 +1368,10 @@ been added and all test-time caches have been updated.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.model_list_gp_regression.ModelListGP.likelihood">
+<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.model_list_gp_regression.ModelListGP.likelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.models.multitask">
@@ -1481,6 +1499,10 @@ contain <cite>use_LKJ_prior</cite> indicator and should contain float value <cit
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.multitask.MultiTaskGP.likelihood">
+<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP.likelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.multitask.FixedNoiseMultiTaskGP">
@@ -1532,6 +1554,14 @@ inference (that is, the <cite>Posterior</cite> obtained by calling
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">FixedNoiseMultiTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.multitask.FixedNoiseMultiTaskGP.likelihood">
+<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP.likelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.multitask.FixedNoiseMultiTaskGP.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.multitask.KroneckerMultiTaskGP">
@@ -1661,6 +1691,10 @@ If <cite>False</cite>, model is put in <cite>eval</cite> mode.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.multitask.KroneckerMultiTaskGP.likelihood">
+<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.multitask.KroneckerMultiTaskGP.likelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.models.higher_order_gp">
@@ -1751,8 +1785,9 @@ noises associated with the targets (if applicable).</p></li>
 <dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior" title="botorch.posteriors.higher_order.HigherOrderGPPosterior"><em>HigherOrderGPPosterior</em></a>) – A posterior in the standardized space.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The un-standardized posterior. If the input posterior is a MVN,
-the transformed posterior is again an MVN.</p>
+<dd class="field-even"><p>The un-standardized posterior. If the input posterior is a
+<cite>GPyTorchPosterior</cite>, return a <cite>GPyTorchPosterior</cite>. Otherwise, return a
+<cite>TransformedPosterior</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior"><em>TransformedPosterior</em></a></p>
@@ -2282,6 +2317,14 @@ registered hooks while the latter silently ignores them.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.contextual_multioutput.LCEMGP.likelihood">
+<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.contextual_multioutput.LCEMGP.likelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.contextual_multioutput.LCEMGP.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.contextual_multioutput.LCEMGP.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.contextual_multioutput.FixedNoiseLCEMGP">
@@ -2310,6 +2353,14 @@ outputs for. If omitted, return outputs for all task indices.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.contextual_multioutput.FixedNoiseLCEMGP.likelihood">
+<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.contextual_multioutput.FixedNoiseLCEMGP.likelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.contextual_multioutput.FixedNoiseLCEMGP.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.contextual_multioutput.FixedNoiseLCEMGP.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.models.approximate_gp">
@@ -2361,6 +2412,10 @@ either a <cite>GaussianLikelihood</cite> (if <cite>num_outputs=1</cite>) or a
 </ul>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.likelihood">
+<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.likelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.num_outputs">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_outputs</span></span><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.num_outputs" title="Permalink to this definition">¶</a></dt>
@@ -2484,6 +2539,14 @@ The variational distribution and variational strategy caches are reset.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP.likelihood">
+<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP.likelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.models.fully_bayesian">
@@ -2957,6 +3020,10 @@ If omitted, set it to be 1.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.likelihood">
+<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.likelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.train">
 <span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.train" title="Permalink to this definition">¶</a></dt>
@@ -3094,6 +3161,10 @@ see <cite>parse_training_data</cite>.</p></li>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </section>
 </section>
@@ -3103,7 +3174,7 @@ see <cite>parse_training_data</cite>.</p></li>
 <span id="kernels"></span><h3>Kernels<a class="headerlink" href="#module-botorch.models.kernels.categorical" title="Permalink to this heading">¶</a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.kernels.categorical.CategoricalKernel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.kernels.categorical.</span></span><span class="sig-name descname"><span class="pre">CategoricalKernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ard_num_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.Size([])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lengthscale_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lengthscale_constraint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/kernels/categorical.html#CategoricalKernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.kernels.categorical.CategoricalKernel" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.kernels.categorical.</span></span><span class="sig-name descname"><span class="pre">CategoricalKernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ard_num_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lengthscale_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lengthscale_constraint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/kernels/categorical.html#CategoricalKernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.kernels.categorical.CategoricalKernel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code></p>
 <p>A Kernel for categorical features.</p>
 <p>Computes <cite>exp(-dist(x1, x2) / lengthscale)</cite>, where
@@ -3116,11 +3187,11 @@ mean is considered.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ard_num_dims</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
-<li><p><strong>batch_shape</strong> (<em>Optional</em><em>[</em><em>Size</em><em>]</em>) – </p></li>
+<li><p><strong>batch_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – </p></li>
 <li><p><strong>active_dims</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em><em>]</em>) – </p></li>
 <li><p><strong>lengthscale_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – </p></li>
 <li><p><strong>lengthscale_constraint</strong> (<em>Optional</em><em>[</em><em>Interval</em><em>]</em>) – </p></li>
-<li><p><strong>eps</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – </p></li>
+<li><p><strong>eps</strong> (<em>float</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -3425,10 +3496,6 @@ respect to each item.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.likelihoods.pairwise.PairwiseProbitLikelihood.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.likelihoods.pairwise.PairwiseProbitLikelihood.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.likelihoods.pairwise.PairwiseLogitLikelihood">
@@ -3533,10 +3600,6 @@ respect to each item.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.likelihoods.pairwise.PairwiseLogitLikelihood.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.likelihoods.pairwise.PairwiseLogitLikelihood.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 </section>
@@ -3751,11 +3814,12 @@ noises associated with the targets (if applicable).</p></li>
 <dd class="field-odd"><p><strong>posterior</strong> (<em>Posterior</em>) – A posterior in the standardized space.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The un-standardized posterior. If the input posterior is a MVN,
-the transformed posterior is again an MVN.</p>
+<dd class="field-even"><p>The un-standardized posterior. If the input posterior is a
+<cite>GPyTorchPosterior</cite>, return a <cite>GPyTorchPosterior</cite>. Otherwise, return a
+<cite>TransformedPosterior</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Posterior</em></p>
+<dd class="field-odd"><p><em>Union</em>[<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>GPyTorchPosterior</em></a>, <a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior"><em>TransformedPosterior</em></a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3856,7 +3920,7 @@ observation noises associated with the training targets
 <dd class="field-even"><p>The un-transformed posterior.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Posterior</em></p>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior"><em>TransformedPosterior</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3960,7 +4024,7 @@ observation noises associated with the training targets
 <dd class="field-even"><p>The un-transformed posterior.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Posterior</em></p>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior"><em>TransformedPosterior</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -4060,7 +4124,7 @@ observation noises associated with the training targets
 <dd class="field-even"><p>The un-transformed posterior.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Posterior</em></p>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior"><em>TransformedPosterior</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -5230,7 +5294,7 @@ attribute.</p></li>
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

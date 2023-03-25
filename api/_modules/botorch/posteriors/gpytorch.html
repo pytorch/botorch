@@ -39,7 +39,7 @@
 <span class="kn">import</span> <span class="nn">warnings</span>
 
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">ExitStack</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
@@ -55,9 +55,13 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Normal</span>
 
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior_list</span> <span class="kn">import</span> <span class="n">PosteriorList</span>  <span class="c1"># pragma: no cover</span>
+
 
 <div class="viewcode-block" id="GPyTorchPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior">[docs]</a><span class="k">class</span> <span class="nc">GPyTorchPosterior</span><span class="p">(</span><span class="n">TorchPosterior</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""A posterior based on GPyTorch's multi-variate Normal distributions."""</span>
+    <span class="n">distribution</span><span class="p">:</span> <span class="n">MultivariateNormal</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -259,10 +263,26 @@
         <span class="k">return</span> <span class="n">marginal</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span></div></div>
 
 
-<div class="viewcode-block" id="scalarize_posterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.scalarize_posterior">[docs]</a><span class="k">def</span> <span class="nf">scalarize_posterior</span><span class="p">(</span>
-    <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Affine transformation of a multi-output posterior.</span>
+<span class="k">def</span> <span class="nf">_validate_scalarize_inputs</span><span class="p">(</span><span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">weights</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span><span class="s2">"`weights` must be one-dimensional"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="o">!=</span> <span class="n">weights</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Output shape not equal to that of weights. Output shape is </span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2"> and "</span>
+            <span class="sa">f</span><span class="s2">"weights are </span><span class="si">{</span><span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="scalarize_posterior_gpytorch"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.scalarize_posterior_gpytorch">[docs]</a><span class="k">def</span> <span class="nf">scalarize_posterior_gpytorch</span><span class="p">(</span>
+    <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">]]:</span>
+    <span class="sa">r</span><span class="sd">"""Helper function for `scalarize_posterior`, producing a mean and</span>
+<span class="sd">    variance.</span>
+
+<span class="sd">    This mean and variance are consumed by `scalarize_posterior` to produce</span>
+<span class="sd">    a `GPyTorchPosterior`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        posterior: The posterior over `m` outcomes to be scalarized.</span>
@@ -281,23 +301,21 @@
 <span class="sd">        &gt;&gt;&gt; X = torch.rand(1, 2)</span>
 <span class="sd">        &gt;&gt;&gt; posterior = model.posterior(X)</span>
 <span class="sd">        &gt;&gt;&gt; weights = torch.tensor([0.5, 0.25])</span>
-<span class="sd">        &gt;&gt;&gt; new_posterior = scalarize_posterior(posterior, weights=weights)</span>
+<span class="sd">        &gt;&gt;&gt; mean, cov = scalarize_posterior_gpytorch(posterior, weights=weights)</span>
+<span class="sd">        &gt;&gt;&gt; mvn = MultivariateNormal(mean, cov)</span>
+<span class="sd">        &gt;&gt;&gt; new_posterior = GPyTorchPosterior</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="n">weights</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span><span class="s2">"`weights` must be one-dimensional"</span><span class="p">)</span>
     <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span>
     <span class="n">q</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="n">_validate_scalarize_inputs</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
     <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">m</span> <span class="o">!=</span> <span class="n">weights</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Output shape not equal to that of weights"</span><span class="p">)</span>
     <span class="n">mvn</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span>
     <span class="n">cov</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span> <span class="k">if</span> <span class="n">mvn</span><span class="o">.</span><span class="n">islazy</span> <span class="k">else</span> <span class="n">mvn</span><span class="o">.</span><span class="n">covariance_matrix</span>
 
     <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># just scaling, no scalarization necessary</span>
         <span class="n">new_mean</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">+</span> <span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">mean</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
         <span class="n">new_cov</span> <span class="o">=</span> <span class="n">weights</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">cov</span>
-        <span class="n">new_mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">new_mean</span><span class="p">,</span> <span class="n">new_cov</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">new_mvn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_mean</span><span class="p">,</span> <span class="n">new_cov</span>
 
     <span class="n">new_mean</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">+</span> <span class="p">(</span><span class="n">mean</span> <span class="o">@</span> <span class="n">weights</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
 
@@ -318,8 +336,7 @@
                         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cov</span><span class="o">.</span><span class="n">base_linear_op</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">))</span>
                     <span class="p">]</span>
                 <span class="p">)</span>
-                <span class="n">new_mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">new_mean</span><span class="p">,</span> <span class="n">new_cov</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">new_mvn</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">new_mean</span><span class="p">,</span> <span class="n">new_cov</span>
 
             <span class="n">w_cov</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">repeat_interleave</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="n">sum_shape</span> <span class="o">=</span> <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">m</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">q</span><span class="p">])</span>
@@ -333,8 +350,73 @@
             <span class="n">cov_scaled</span> <span class="o">=</span> <span class="n">cov_scaled</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
         <span class="n">new_cov</span> <span class="o">=</span> <span class="n">cov_scaled</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">sum_shape</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">sum_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">sum_dims</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
-    <span class="n">new_mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">new_mean</span><span class="p">,</span> <span class="n">new_cov</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">new_mvn</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">new_mean</span><span class="p">,</span> <span class="n">new_cov</span></div>
+
+
+<div class="viewcode-block" id="scalarize_posterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.scalarize_posterior">[docs]</a><span class="k">def</span> <span class="nf">scalarize_posterior</span><span class="p">(</span>
+    <span class="n">posterior</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">PosteriorList</span><span class="p">],</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Affine transformation of a multi-output posterior.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        posterior: The posterior over `m` outcomes to be scalarized.</span>
+<span class="sd">            Supports `t`-batching. Can be either a `GPyTorchPosterior`,</span>
+<span class="sd">            or a `PosteriorList` that contains GPyTorchPosteriors all with q=1.</span>
+<span class="sd">        weights: A tensor of weights of size `m`.</span>
+<span class="sd">        offset: The offset of the affine transformation.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The transformed (single-output) posterior. If the input posterior has</span>
+<span class="sd">            mean `mu` and covariance matrix `Sigma`, this posterior has mean</span>
+<span class="sd">            `weights^T * mu` and variance `weights^T Sigma w`.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        Example for a model with two outcomes:</span>
+
+<span class="sd">        &gt;&gt;&gt; X = torch.rand(1, 2)</span>
+<span class="sd">        &gt;&gt;&gt; posterior = model.posterior(X)</span>
+<span class="sd">        &gt;&gt;&gt; weights = torch.tensor([0.5, 0.25])</span>
+<span class="sd">        &gt;&gt;&gt; new_posterior = scalarize_posterior(posterior, weights=weights)</span>
+<span class="sd">    """</span>
+    <span class="c1"># GPyTorchPosterior case</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="s2">"distribution"</span><span class="p">):</span>
+        <span class="n">mean</span><span class="p">,</span> <span class="n">cov</span> <span class="o">=</span> <span class="n">scalarize_posterior_gpytorch</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+        <span class="n">mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">cov</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="p">)</span>
+
+    <span class="c1"># PosteriorList case</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="s2">"posteriors"</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"scalarize_posterior only works with a posterior that has an attribute "</span>
+            <span class="s2">"`distribution`, such as a GPyTorchPosterior, or a posterior that contains "</span>
+            <span class="s2">"sub-posteriors in an attribute `posteriors`, as in a PosteriorList."</span>
+        <span class="p">)</span>
+
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span>
+    <span class="n">q</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+
+    <span class="n">_validate_scalarize_inputs</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+    <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">q</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"scalarize_posterior only works with a PosteriorList if each sub-posterior "</span>
+            <span class="s2">"has q=1."</span>
+        <span class="p">)</span>
+
+    <span class="n">means</span> <span class="o">=</span> <span class="p">[</span><span class="n">post</span><span class="o">.</span><span class="n">mean</span> <span class="k">for</span> <span class="n">post</span> <span class="ow">in</span> <span class="n">posterior</span><span class="o">.</span><span class="n">posteriors</span><span class="p">]</span>
+    <span class="k">if</span> <span class="p">{</span><span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">mean</span> <span class="ow">in</span> <span class="n">means</span><span class="p">}</span> <span class="o">!=</span> <span class="p">{</span><span class="mi">1</span><span class="p">}:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"scalarize_posterior only works with a PosteriorList if each sub-posterior "</span>
+            <span class="s2">"has one outcome."</span>
+        <span class="p">)</span>
+
+    <span class="n">new_mean</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">+</span> <span class="p">(</span><span class="n">mean</span> <span class="o">@</span> <span class="n">weights</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+    <span class="n">new_cov</span> <span class="o">=</span> <span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">variance</span> <span class="o">@</span> <span class="p">(</span><span class="n">weights</span><span class="o">**</span><span class="mi">2</span><span class="p">))[:,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">new_mean</span><span class="p">,</span> <span class="n">new_cov</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="p">)</span></div>
 </pre></div>
 </div>
 </div>
@@ -381,7 +463,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

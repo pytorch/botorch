@@ -30,6 +30,15 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Special implementations of mathematical functions that</span>
+<span class="sd">solve numerical issues of naive implementations.</span>
+
+<span class="sd">.. [Maechler2012accurate]</span>
+<span class="sd">    M. Mächler. Accurately Computing log (1 - exp (-| a|))</span>
+<span class="sd">        Assessed by the Rmpfr package. Technical report, 2012.</span>
+<span class="sd">"""</span>
+
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
@@ -37,6 +46,8 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.constants</span> <span class="kn">import</span> <span class="n">get_constants_like</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">finfo</span><span class="p">,</span> <span class="n">Tensor</span>
+
+<span class="n">_log2</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 
 
 <span class="c1"># Unary ops</span>
@@ -74,6 +85,19 @@
     <span class="n">_0</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">a</span><span class="p">)</span>
     <span class="n">case</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">isinf</span><span class="p">()</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">b</span> <span class="o">==</span> <span class="n">_0</span><span class="p">))</span> <span class="o">|</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">isinf</span><span class="p">()</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">a</span> <span class="o">==</span> <span class="n">_0</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">_0</span><span class="p">,</span> <span class="n">a</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">_0</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="log1mexp"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.log1mexp">[docs]</a><span class="k">def</span> <span class="nf">log1mexp</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">"""Numerically accurate evaluation of log(1 - exp(x)) for x &lt; 0.</span>
+<span class="sd">    See [Maechler2012accurate]_ for details.</span>
+<span class="sd">    """</span>
+    <span class="n">log2</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">_log2</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">is_small</span> <span class="o">=</span> <span class="o">-</span><span class="n">log2</span> <span class="o">&lt;</span> <span class="n">x</span>  <span class="c1"># x &lt; 0</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">is_small</span><span class="p">,</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">.</span><span class="n">expm1</span><span class="p">())</span><span class="o">.</span><span class="n">log</span><span class="p">(),</span>
+        <span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">.</span><span class="n">exp</span><span class="p">())</span><span class="o">.</span><span class="n">log1p</span><span class="p">(),</span>
+    <span class="p">)</span></div>
 </pre></div>
 </div>
 </div>
@@ -120,7 +144,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

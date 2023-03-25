@@ -37,7 +37,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">analytic</span><span class="p">,</span> <span class="n">monte_carlo</span><span class="p">,</span> <span class="n">multi_objective</span>  <span class="c1"># noqa F401</span>
@@ -69,6 +69,7 @@
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">eta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
     <span class="n">mc_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
@@ -87,8 +88,13 @@
 <span class="sd">        constraints: A list of callables, each mapping a Tensor of dimension</span>
 <span class="sd">            `sample_shape x batch-shape x q x m` to a Tensor of dimension</span>
 <span class="sd">            `sample_shape x batch-shape x q`, where negative values imply</span>
-<span class="sd">            feasibility. Used when constraint_transforms are not passed</span>
-<span class="sd">            as part of the objective.</span>
+<span class="sd">            feasibility. Used only for qEHVI and qNEHVI.</span>
+<span class="sd">        eta: The temperature parameter for the sigmoid function used for the</span>
+<span class="sd">            differentiable approximation of the constraints. In case of a float the</span>
+<span class="sd">            same eta is used for every constraint in constraints. In case of a</span>
+<span class="sd">            tensor the length of the tensor must match the number of provided</span>
+<span class="sd">            constraints. The i-th constraint is then estimated with the i-th</span>
+<span class="sd">            eta value. Used only for qEHVI and qNEHVI.</span>
 <span class="sd">        mc_samples: The number of samples to use for (q)MC evaluation of the</span>
 <span class="sd">            acquisition function.</span>
 <span class="sd">        seed: If provided, perform deterministic optimization (i.e. the</span>
@@ -151,6 +157,7 @@
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
             <span class="n">prune_baseline</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prune_baseline"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
             <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"marginalize_dim"</span><span class="p">),</span>
+            <span class="n">cache_root</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cache_root"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qSR"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qSimpleRegret</span><span class="p">(</span>
@@ -205,6 +212,7 @@
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qNEHVI"</span><span class="p">:</span>
@@ -217,6 +225,7 @@
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
             <span class="n">prune_baseline</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prune_baseline"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
             <span class="n">alpha</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"alpha"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
@@ -536,7 +545,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

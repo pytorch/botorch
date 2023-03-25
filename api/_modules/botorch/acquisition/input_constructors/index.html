@@ -58,6 +58,10 @@
 <span class="kn">from</span> <span class="nn">botorch.acquisition.analytic</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ConstrainedExpectedImprovement</span><span class="p">,</span>
     <span class="n">ExpectedImprovement</span><span class="p">,</span>
+    <span class="n">LogConstrainedExpectedImprovement</span><span class="p">,</span>
+    <span class="n">LogExpectedImprovement</span><span class="p">,</span>
+    <span class="n">LogNoisyExpectedImprovement</span><span class="p">,</span>
+    <span class="n">LogProbabilityOfImprovement</span><span class="p">,</span>
     <span class="n">NoisyExpectedImprovement</span><span class="p">,</span>
     <span class="n">PosteriorMean</span><span class="p">,</span>
     <span class="n">ProbabilityOfImprovement</span><span class="p">,</span>
@@ -297,7 +301,12 @@
     <span class="p">}</span></div>
 
 
-<div class="viewcode-block" id="construct_inputs_best_f"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_best_f">[docs]</a><span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">ExpectedImprovement</span><span class="p">,</span> <span class="n">ProbabilityOfImprovement</span><span class="p">)</span>
+<div class="viewcode-block" id="construct_inputs_best_f"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_best_f">[docs]</a><span class="nd">@acqf_input_constructor</span><span class="p">(</span>
+    <span class="n">ExpectedImprovement</span><span class="p">,</span>
+    <span class="n">LogExpectedImprovement</span><span class="p">,</span>
+    <span class="n">ProbabilityOfImprovement</span><span class="p">,</span>
+    <span class="n">LogProbabilityOfImprovement</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="k">def</span> <span class="nf">construct_inputs_best_f</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
@@ -368,7 +377,9 @@
     <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">base_inputs</span><span class="p">,</span> <span class="s2">"beta"</span><span class="p">:</span> <span class="n">beta</span><span class="p">,</span> <span class="s2">"maximize"</span><span class="p">:</span> <span class="n">maximize</span><span class="p">}</span></div>
 
 
-<div class="viewcode-block" id="construct_inputs_constrained_ei"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_constrained_ei">[docs]</a><span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">ConstrainedExpectedImprovement</span><span class="p">)</span>
+<div class="viewcode-block" id="construct_inputs_constrained_ei"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_constrained_ei">[docs]</a><span class="nd">@acqf_input_constructor</span><span class="p">(</span>
+    <span class="n">ConstrainedExpectedImprovement</span><span class="p">,</span> <span class="n">LogConstrainedExpectedImprovement</span>
+<span class="p">)</span>
 <span class="k">def</span> <span class="nf">construct_inputs_constrained_ei</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
@@ -403,7 +414,7 @@
     <span class="k">raise</span> <span class="ne">NotImplementedError</span>  <span class="c1"># pragma: nocover</span></div>
 
 
-<div class="viewcode-block" id="construct_inputs_noisy_ei"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_noisy_ei">[docs]</a><span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">NoisyExpectedImprovement</span><span class="p">)</span>
+<div class="viewcode-block" id="construct_inputs_noisy_ei"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_noisy_ei">[docs]</a><span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">NoisyExpectedImprovement</span><span class="p">,</span> <span class="n">LogNoisyExpectedImprovement</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">construct_inputs_noisy_ei</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
@@ -1299,7 +1310,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

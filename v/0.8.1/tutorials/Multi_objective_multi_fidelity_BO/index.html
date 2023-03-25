@@ -1,0 +1,1294 @@
+<!DOCTYPE html><html lang=""><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.8.1/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.8.1/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.8.1/img/botorch.png"/><link rel="shortcut icon" href="/v/0.8.1/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.8.1/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.8.1/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.8.1/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.8.1/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.8.1/css/main.css"/><script src="/v/0.8.1/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.8.1/"><img class="logo" src="/v/0.8.1/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.8.1/versions"><h3>0.8.1</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.8.1/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.8.1/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.8.1/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.8.1/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span></span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Tutorials</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/">Overview</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Using BoTorch with Ax</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/custom_botorch_model_in_ax">Using a custom BoTorch model</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/custom_acquisition">Writing a custom acquisition function</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Full Optimization Loops</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/closed_loop_botorch_only">q-Noisy Constrained EI</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/preference_bo">Bayesian optimization with pairwise comparison data</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/bope">Bayesian optimization with preference exploration (BOPE)</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/turbo_1">Trust Region Bayesian Optimization (TuRBO)</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/scalable_constrained_bo">Scalable Constrained Bayesian Optimization (SCBO)</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/saasbo">High-dimensional Bayesian optimization with SAASBO</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/v/0.8.1/tutorials/Multi_objective_multi_fidelity_BO">Multi-Objective-Multi-Fidelity optimization with MOMF</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/bo_with_warped_gp">Bayesian optimization with input warping</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/thompson_sampling">Bayesian optimization with large-scale Thompson sampling</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Multi-Objective Bayesian Optimization</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/multi_objective_bo">Multi-objective optimization with qEHVI, qNEHVI, and qNParEGO</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/constrained_multi_objective_bo">Constrained multi-objective optimization with qNEHVI and qParEGO</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/robust_multi_objective_bo">Robust multi-objective Bayesian optimization under input noise</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Bite-Sized Tutorials</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/fit_model_with_torch_optimizer">Fitting a model using torch.optim</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/compare_mc_analytic_acquisition">Comparing analytic and MC Expected Improvement</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/optimize_with_cmaes">Acquisition function optimization with CMA-ES</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/optimize_stochastic">Acquisition function optimization with torch.optim</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/batch_mode_cross_validation">Using batch evaluation for fast cross-validation</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/one_shot_kg">The one-shot Knowledge Gradient acquisition function</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/max_value_entropy">The max-value entropy search acquisition function</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/GIBBON_for_efficient_batch_entropy_search">The GIBBON acquisition function for efficient batch entropy search</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/risk_averse_bo_with_environmental_variables">Risk averse Bayesian optimization with environmental variables</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/risk_averse_bo_with_input_perturbations">Risk averse Bayesian optimization with input perturbations</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/constraint_active_search">Constraint Active Search for Multiobjective Experimental Design</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/information_theoretic_acquisition_functions">Information-theoretic acquisition functions</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Advanced Usage</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/meta_learning_with_rgpe">Meta-learning with RGPE</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/vae_mnist">High-dimensional optimization with VAEs</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/multi_fidelity_bo">Multi-fidelity Bayesian optimization using KG</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/discrete_multi_fidelity_bo">Multi-fidelity Bayesian optimization with discrete fidelities using KG</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/composite_bo_with_hogp">Composite Bayesian optimization with the High Order Gaussian Process</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.1/tutorials/composite_mtbo">Composite Bayesian Optimization with Multi-Task Gaussian Processes</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="tutorialBody">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<div class="notebook">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Simultaneous-multi-objective-multi-fidelity-optimization">Simultaneous multi-objective multi-fidelity optimization<a class="anchor-link" href="#Simultaneous-multi-objective-multi-fidelity-optimization">¶</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In this tutorial notebook we demonstrate how to perform multi-objective multi-fidelity (MOMF) optimization in BoTORCH as described in [1]. The main concept in MOMF is introducing a 'fidelity objective' that is optimized along with the problem objectives. This fidelity objective can be thought of as a trust objective that rewards the optimization when going to higher fidelity. This emulates a real world scenario where high fidelity data may sometime yield similar values for other objectives but is still considered more trustworthy. Thus the MOMF explicitly optimizes for getting more trustworthy data while taking into account the higher computational costs associated with it.</p>
+<p>We will optimize a synthetic function that is a modified multi-fidelity Branin-Currin. This is a 3 x 2 dimensional problem with one of the input dimension being the fidelity. For the MOMF this results in a 3 x 3 optimization since it also takes into account the fidelity objective. In this case the fidelity objective is taken to be a linear function of fidelity, $ f(s)=s$, where $s$ is the fidelity. The MOMF algorithm can accept any discrete or continuous cost functions as an input. In this example, we choose an exponential dependency of the form $C(s)=\exp(s)$. The goal of the optimization is to find the Pareto front, which is a trade-off solution set for Multi-objective problems, at the highest fidelity.</p>
+<p>In the second part of this tutorial we compare the method with a multi-objective only optimization using qEHVI [2] with q set to 1 (note that MOMF also supports q&gt;1 if the underlying MO acquisition function supports it). The MO-only optimization runs only at the highest fidelity while MOMF makes use of lower fidelity data to estimate the Pareto front at the highest fidelity.</p>
+<p>[1] <a href="https://arxiv.org/abs/2112.13901">Irshad, Faran, Stefan Karsch, and Andreas Döpp. "Expected hypervolume improvement for simultaneous multi-objective and multi-fidelity optimization." arXiv preprint arXiv:2112.13901 (2021).</a></p>
+<p>[2] <a href="https://arxiv.org/abs/2006.05078">S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization. Advances in Neural Information Processing Systems 33, 2020.</a></p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [1]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>I1116 175450.046 _utils_internal.py:179] NCCL_DEBUG env var is set to None
+I1116 175450.047 _utils_internal.py:188] NCCL_DEBUG is INFO from /etc/nccl.conf
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Set-dtype-and-device">Set dtype and device<a class="anchor-link" href="#Set-dtype-and-device">¶</a></h3><p>Setting up the global variable that determine the device to run the optimization. The optimization is much faster when it runs on GPU.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [2]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">tkwargs</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">{</span>  <span class="c1"># Tkwargs is a dictionary contaning data about data type and data device</span>
+        <span class="s2">"dtype"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">,</span>
+        <span class="s2">"device"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">),</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">SMOKE_TEST</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"SMOKE_TEST"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Here-we-define-different-variables-that-define-the-problem-setting-and-optimization-settings">Here we define different variables that define the problem setting and optimization settings<a class="anchor-link" href="#Here-we-define-different-variables-that-define-the-problem-setting-and-optimization-settings">¶</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [3]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1">##############################-----------------------------------------------------##############################################</span>
+
+<span class="kn">from</span> <span class="nn">botorch.test_functions.multi_objective_multi_fidelity</span> <span class="kn">import</span> <span class="n">MOMFBraninCurrin</span>
+
+<span class="c1">##############################-----------------------------------------------------##############################################</span>
+<span class="n">BC</span> <span class="o">=</span> <span class="n">MOMFBraninCurrin</span><span class="p">(</span><span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">dim_x</span> <span class="o">=</span> <span class="n">BC</span><span class="o">.</span><span class="n">dim</span>  <span class="c1"># Input Dimension for MO only optimization</span>
+<span class="n">dim_yMO</span> <span class="o">=</span> <span class="n">BC</span><span class="o">.</span><span class="n">num_objectives</span>  <span class="c1"># Output Dimension for MO only optimization</span>
+<span class="n">dim_xMO</span> <span class="o">=</span> <span class="n">dim_x</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># Input Dimension for MOMF optimization</span>
+<span class="n">dim_y</span> <span class="o">=</span> <span class="n">dim_yMO</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># Output Dimesnion for MOMF optimization</span>
+
+<span class="n">ref_pointMO</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">dim_xMO</span>  <span class="c1"># Reference point for MO only Hypervolume calculation</span>
+<span class="n">ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">dim_x</span>  <span class="c1"># Reference point for MOMF Hypervolume calculation</span>
+
+<span class="n">n_TRIALS</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># For Batch-optimization BATCH_SIZE should be greater than 1</span>
+<span class="n">n_BATCH</span> <span class="o">=</span> <span class="mi">5</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">30</span>  <span class="c1"># Number of iterations within one optimization loop</span>
+<span class="n">n_INIT</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># Number of initial points for MOMF</span>
+<span class="n">n_INITMO</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Number of initial points for MO only optimization</span>
+<span class="n">MC_SAMPLES</span> <span class="o">=</span> <span class="mi">8</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">128</span>  <span class="c1"># Number of Monte Carlo samples</span>
+<span class="n">NUM_RESTARTS</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">10</span>  <span class="c1"># Number of restart points for multi-start optimization</span>
+<span class="n">RAW_SAMPLES</span> <span class="o">=</span> <span class="mi">4</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">512</span>  <span class="c1"># Number of raw samples for initial point selection heuristic</span>
+
+<span class="n">standard_boundsMO</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+    <span class="p">[[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">dim_xMO</span><span class="p">,</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">dim_xMO</span><span class="p">],</span> <span class="o">**</span><span class="n">tkwargs</span>
+<span class="p">)</span>  <span class="c1"># Bounds for MO only optimization</span>
+<span class="n">standard_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+    <span class="p">[[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">dim_x</span><span class="p">,</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">dim_x</span><span class="p">],</span> <span class="o">**</span><span class="n">tkwargs</span>
+<span class="p">)</span>  <span class="c1"># Bounds for MOMF optimization</span>
+<span class="n">verbose</span> <span class="o">=</span> <span class="kc">True</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Problem-Setup">Problem Setup<a class="anchor-link" href="#Problem-Setup">¶</a></h3><p>The problem as described before is a modified multi-fidelity version of Branin-Currin (BC) function that results in a 3 x 2 problem. A simple fidelity objective is also defined here which is a linear function of the input fidelity. We also design a wrapper function around the BC that takes care of interfacing torch with numpy and appends the fidelity objective with the BC functions.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [4]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">fid_obj</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+    <span class="c1"># A Fidelity Objective that can be thought of as a trust objective. Higher Fidelity simulations are rewarded as being more</span>
+    <span class="c1"># trustworthy. Here we consider just a linear fidelity objective.</span>
+    <span class="n">fid_obj</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">fid_obj</span>
+
+
+<span class="k">def</span> <span class="nf">problem</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim_y</span><span class="p">):</span>
+    <span class="c1"># Wrapper around the Objective function to take care of fid_obj stacking</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">BC</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># The Branin-Currin is called</span>
+    <span class="n">fid</span> <span class="o">=</span> <span class="n">fid_obj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># Getting the fidelity objective values</span>
+    <span class="n">fid_out</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">y_out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">fid_out</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="p">)</span>  <span class="c1"># Concatenating objective values with fid_objective</span>
+    <span class="k">return</span> <span class="n">y_out</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Helper-functions-to-define-Cost">Helper functions to define Cost<a class="anchor-link" href="#Helper-functions-to-define-Cost">¶</a></h3><p>The cost_func function returns an exponential cost from the fidelity. The cost_callable is a wrapper around it that takes care of the input output shapes. This is given as a callable function to MOMF that internally divides the hypervolume by cost.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [5]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">exp_arg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">cost_func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
+    <span class="c1"># A simple exponential cost function.</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">A</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">val</span>
+
+
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">"Min Cost:"</span><span class="p">,</span> <span class="n">cost_func</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">exp_arg</span><span class="p">)</span>
+<span class="p">)</span>  <span class="c1"># Displaying the min cost for this optimization</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">"Max Cost:"</span><span class="p">,</span> <span class="n">cost_func</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">exp_arg</span><span class="p">)</span>
+<span class="p">)</span>  <span class="c1"># Displaying the max cost for this optimization</span>
+
+
+<span class="k">def</span> <span class="nf">cost_callable</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Wrapper for the cost function that takes care of shaping input and output arrays for interfacing with cost_func.</span>
+<span class="sd">    This is passed as a callable function to MOMF.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A `batch_shape x q x d`-dim Tensor</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Cost `batch_shape x q x m`-dim Tensor of cost generated from fidelity dimension using cost_func.</span>
+<span class="sd">    """</span>
+
+    <span class="n">cost</span> <span class="o">=</span> <span class="n">cost_func</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">exp_arg</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">cost</span> <span class="o">=</span> <span class="n">cost</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">cost</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Min Cost: tensor(1., device='cuda:0', dtype=torch.float64)
+Max Cost: tensor(54.5982, device='cuda:0', dtype=torch.float64)
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Model-Initialization">Model Initialization<a class="anchor-link" href="#Model-Initialization">¶</a></h3><p>We use a multi-output SingleTaskGP to model the problem with a homoskedastic Gaussian likelihood with an inferred noise level. 
+The model is initialized with 5 random points where the fidelity dimension of the initial points is sampled from a probability distribution : $p(s)=C(s)^{-1}$</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [6]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Standardize</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls.exact_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+
+
+<span class="k">def</span> <span class="nf">gen_init_data</span><span class="p">(</span><span class="n">dim_x</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">dim_y</span><span class="p">):</span>
+    <span class="c1"># Generates training data with Fidelity dimension sampled from a probability distribution that depends on Cost function</span>
+    <span class="n">train_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">dim_x</span><span class="p">,</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+    <span class="n">fid_samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span>
+        <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">101</span><span class="p">,</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span> <span class="c1"># Array from which fidelity values are sampled  </span>
+    <span class="n">prob</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">cost_func</span><span class="p">(</span>
+        <span class="n">fid_samples</span><span class="p">,</span> <span class="n">exp_arg</span><span class="p">)</span>  <span class="c1"># Probability calculated from the Cost function</span>
+    <span class="n">prob</span> <span class="o">=</span> <span class="n">prob</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">prob</span><span class="p">)</span>  <span class="c1"># Normalizing</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span>
+        <span class="n">num_samples</span><span class="o">=</span><span class="n">points</span><span class="p">,</span>
+        <span class="n">replacement</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Generating indices to choose fidelity samples</span>
+    <span class="n">train_x</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">fid_samples</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="n">train_obj</span> <span class="o">=</span> <span class="n">problem</span><span class="p">(</span>
+        <span class="n">train_x</span><span class="p">,</span> <span class="n">dim_y</span><span class="p">)</span>  <span class="c1"># Calls the Problem wrapper to generate train_obj</span>
+    <span class="k">return</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span>
+
+
+<span class="k">def</span> <span class="nf">initialize_model</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">):</span>
+    <span class="c1"># Initializes a SingleTaskGP with Matern 5/2 Kernel and returns the model and its MLL</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
+        <span class="n">train_x</span><span class="p">,</span>
+        <span class="n">train_obj</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="o">=</span><span class="n">Standardize</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="n">train_obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="p">)</span>
+    <span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mll</span><span class="p">,</span> <span class="n">model</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Helper-function-to-optimize-acquisition-function">Helper function to optimize acquisition function<a class="anchor-link" href="#Helper-function-to-optimize-acquisition-function">¶</a></h3><p>This is a helper function that initializes, optimizes the acquisition function MOMF and returns the new_x and new_obj. The problem is called from within this helper function.</p>
+<p>A simple initialization heuristic is used to select the 20 restart initial locations from a set of 1024 random points. Multi-start optimization of the acquisition function is performed using LBFGS-B with exact gradients computed via auto-differentiation.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [7]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FastNondominatedPartitioning</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.multi_fidelity</span> <span class="kn">import</span> <span class="n">MOMF</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">unnormalize</span>
+
+
+<span class="k">def</span> <span class="nf">optimize_MOMF_and_get_obs</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="n">train_obj</span><span class="p">,</span>
+    <span class="n">sampler</span><span class="p">,</span>
+    <span class="n">dim_y</span><span class="p">,</span>
+    <span class="n">ref_point</span><span class="p">,</span>
+    <span class="n">standard_bounds</span><span class="p">,</span>
+    <span class="n">BATCH_SIZE</span><span class="p">,</span>
+    <span class="n">cost_call</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">"""Wrapper to call MOMF and optimizes it in a sequential greedy fashion returning a new candidate and evaluation"""</span>
+    <span class="n">partitioning</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span><span class="p">(</span>
+        <span class="n">ref_point</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_obj</span>
+    <span class="p">)</span>
+    <span class="n">acq_func</span> <span class="o">=</span> <span class="n">MOMF</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>  <span class="c1"># use known reference point</span>
+        <span class="n">partitioning</span><span class="o">=</span><span class="n">partitioning</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+        <span class="n">cost_call</span><span class="o">=</span><span class="n">cost_call</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Optimization</span>
+    <span class="n">candidates</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+        <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_func</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">standard_bounds</span><span class="p">,</span>
+        <span class="n">q</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>
+        <span class="n">num_restarts</span><span class="o">=</span><span class="n">NUM_RESTARTS</span><span class="p">,</span>
+        <span class="n">raw_samples</span><span class="o">=</span><span class="n">RAW_SAMPLES</span><span class="p">,</span>  <span class="c1"># used for intialization heuristic</span>
+        <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">"batch_limit"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">"nonnegative"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+        <span class="n">sequential</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># observe new values</span>
+    <span class="n">new_x</span> <span class="o">=</span> <span class="n">unnormalize</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">detach</span><span class="p">(),</span> <span class="n">bounds</span><span class="o">=</span><span class="n">standard_bounds</span><span class="p">)</span>
+    <span class="n">new_obj</span> <span class="o">=</span> <span class="n">problem</span><span class="p">(</span><span class="n">new_x</span><span class="p">,</span> <span class="n">dim_y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_x</span><span class="p">,</span> <span class="n">new_obj</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Running-MOMF-optimization">Running MOMF optimization<a class="anchor-link" href="#Running-MOMF-optimization">¶</a></h3><p>We run a single trial of 30 iterations to optimize the multi-fidelity versions of the Branin-Currin functions. The optimization loop works in the following sequence.</p>
+<ol>
+<li>At the start an initial data of 5 random points is generated and a model initialized using this data.</li>
+<li>The models are used to generate an acquisition function that is optimized to select new input parameters</li>
+<li>The objective function is evaluated at the suggested new_x and returns a new_obj.</li>
+<li>The models are updated with the new points and then are used again to make the next prediction.</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [8]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># MOMF Opt run</span>
+<span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
+
+<span class="n">verbose</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">train_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_INIT</span> <span class="o">+</span> <span class="n">n_BATCH</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="n">dim_x</span><span class="p">,</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>  <span class="c1"># Intializing train_x to zero</span>
+<span class="n">train_obj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_INIT</span> <span class="o">+</span> <span class="n">n_BATCH</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="n">dim_y</span><span class="p">,</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>  <span class="c1"># Intializing train_obj to zero</span>
+<span class="n">train_x</span><span class="p">[:</span><span class="n">n_INIT</span><span class="p">,</span> <span class="p">:],</span> <span class="n">train_obj</span><span class="p">[:</span><span class="n">n_INIT</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">gen_init_data</span><span class="p">(</span><span class="n">dim_x</span><span class="p">,</span> <span class="n">n_INIT</span><span class="p">,</span> <span class="n">dim_y</span><span class="p">)</span>  <span class="c1"># Generate Initial Data</span>
+<span class="n">mll</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span><span class="n">train_x</span><span class="p">[:</span><span class="n">n_INIT</span><span class="p">,</span> <span class="p">:],</span> <span class="n">train_obj</span><span class="p">[:</span><span class="n">n_INIT</span><span class="p">,</span> <span class="p">:])</span>  <span class="c1"># Initialize Model</span>
+<span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_BATCH</span><span class="p">):</span>
+    <span class="c1"># run N_BATCH rounds of BayesOpt after the initial random batch</span>
+    <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>  <span class="c1"># Fit the model</span>
+    <span class="n">momf_sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">MC_SAMPLES</span><span class="p">]))</span>  <span class="c1"># Generate Sampler</span>
+    <span class="c1"># Updating indices used to store new observations</span>
+    <span class="n">lower_index</span> <span class="o">=</span> <span class="n">n_INIT</span> <span class="o">+</span> <span class="n">iteration</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span>
+    <span class="n">upper_index</span> <span class="o">=</span> <span class="n">n_INIT</span> <span class="o">+</span> <span class="n">iteration</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span> <span class="o">+</span> <span class="n">BATCH_SIZE</span>
+    <span class="c1"># optimize acquisition functions and get new observations</span>
+    <span class="n">new_x</span><span class="p">,</span> <span class="n">new_obj</span> <span class="o">=</span> <span class="n">optimize_MOMF_and_get_obs</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span>
+        <span class="n">train_obj</span><span class="p">[:</span> <span class="n">upper_index</span><span class="p">,</span> <span class="p">:],</span>
+        <span class="n">momf_sampler</span><span class="p">,</span>
+        <span class="n">dim_y</span><span class="p">,</span>
+        <span class="n">ref_point</span><span class="p">,</span>
+        <span class="n">standard_bounds</span><span class="p">,</span>
+        <span class="n">BATCH_SIZE</span><span class="p">,</span>
+        <span class="n">cost_call</span><span class="o">=</span><span class="n">cost_callable</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Iteration: </span><span class="si">{</span><span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="c1"># Updating train_x and train_obj</span>
+    <span class="n">train_x</span><span class="p">[</span><span class="n">lower_index</span> <span class="p">:</span> <span class="n">upper_index</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">new_x</span>
+    <span class="n">train_obj</span><span class="p">[</span><span class="n">lower_index</span> <span class="p">:</span> <span class="n">upper_index</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">new_obj</span>
+    <span class="c1"># reinitialize the models so they are ready for fitting on next iteration</span>
+    <span class="n">mll</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span>
+        <span class="n">train_x</span><span class="p">[:</span> <span class="n">upper_index</span><span class="p">,</span> <span class="p">:],</span> <span class="n">train_obj</span><span class="p">[:</span> <span class="n">upper_index</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Iteration: 1
+Iteration: 2
+Iteration: 3
+Iteration: 4
+Iteration: 5
+Iteration: 6
+Iteration: 7
+Iteration: 8
+Iteration: 9
+Iteration: 10
+Iteration: 11
+Iteration: 12
+Iteration: 13
+Iteration: 14
+Iteration: 15
+Iteration: 16
+Iteration: 17
+Iteration: 18
+Iteration: 19
+Iteration: 20
+Iteration: 21
+Iteration: 22
+Iteration: 23
+Iteration: 24
+Iteration: 25
+Iteration: 26
+Iteration: 27
+Iteration: 28
+Iteration: 29
+Iteration: 30
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Result:--Evaluating-the-Pareto-front-at-the-highest-fidelity-from-MOMF">Result:  Evaluating the Pareto front at the highest fidelity from MOMF<a class="anchor-link" href="#Result:--Evaluating-the-Pareto-front-at-the-highest-fidelity-from-MOMF">¶</a></h3><p>After the optimization we are interested in evaluating the final Pareto front. For this we train a GP model with the data acquired by the MOMF optimization. After this we generate $10^4$ random test points between between [0,1] with the fidelity dimension set to 1 to approximate the Pareto front. Two helper functions are defined to achieve this objective where one function generates the test data and the other extracts the Pareto front at the highest fidelity for a given training and testing data.</p>
+<p><strong>Note: This works reasonably well only for lower dimensional search spaces</strong></p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [9]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.pareto</span> <span class="kn">import</span> <span class="n">is_non_dominated</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions</span> <span class="kn">import</span> <span class="n">DominatedPartitioning</span>
+
+
+<span class="k">def</span> <span class="nf">gen_test_points</span><span class="p">(</span><span class="n">n_points</span><span class="p">,</span> <span class="n">dim_x</span><span class="p">):</span>
+    <span class="c1"># Function to generate random points with fidelity dimension set to 1. Used to evaluate Pareto front from MOMF</span>
+    <span class="n">test_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_points</span><span class="p">,</span> <span class="n">dim_x</span><span class="p">),</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+    <span class="n">test_x</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">test_x</span>
+
+
+<span class="k">def</span> <span class="nf">get_pareto</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">test_x</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">):</span>
+    <span class="c1"># Function that takes in training and testing data with a reference point. It initializes a model and takes out the</span>
+    <span class="c1"># Posterior mean at the testing points. From these points the non-dominated set is calculated and used to computer</span>
+    <span class="c1"># the hypervolume.</span>
+    <span class="n">mll</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">)</span>
+    <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="c1"># Compute posterior mean over outputs at testing data</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">test_x</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span>
+    <span class="n">pareto_mask</span> <span class="o">=</span> <span class="n">is_non_dominated</span><span class="p">(</span><span class="n">means</span><span class="p">)</span>  <span class="c1"># Calculating Non-dominated points</span>
+    <span class="n">pareto_f</span> <span class="o">=</span> <span class="n">means</span><span class="p">[</span><span class="n">pareto_mask</span><span class="p">]</span>  <span class="c1"># Saving the Pareto front</span>
+    <span class="c1"># Computing Hypervolume</span>
+    <span class="n">box_decomp</span> <span class="o">=</span> <span class="n">DominatedPartitioning</span><span class="p">(</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">ref_pointMO</span><span class="p">,</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span> <span class="n">pareto_f</span>
+    <span class="p">)</span>
+    <span class="n">hyper_volume</span> <span class="o">=</span> <span class="n">box_decomp</span><span class="o">.</span><span class="n">compute_hypervolume</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">hyper_volume</span><span class="p">,</span> <span class="n">pareto_f</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [10]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Using the above two functions to generate the final Pareto front.</span>
+<span class="n">n_points</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="mi">4</span>
+<span class="n">test_x</span> <span class="o">=</span> <span class="n">gen_test_points</span><span class="p">(</span><span class="n">n_points</span><span class="p">,</span> <span class="n">dim_x</span><span class="p">)</span>
+<span class="n">_hv</span><span class="p">,</span> <span class="n">final_PF</span> <span class="o">=</span> <span class="n">get_pareto</span><span class="p">(</span><span class="n">train_x</span><span class="p">[:,</span> <span class="p">:],</span> <span class="n">train_obj</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">test_x</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Plotting the final Pareto front.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [11]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">final_PF</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
+    <span class="n">final_PF</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
+    <span class="s2">"o"</span><span class="p">,</span>
+    <span class="n">markersize</span><span class="o">=</span><span class="mf">3.5</span><span class="p">,</span>
+    <span class="n">label</span><span class="o">=</span><span class="s2">"MOMF"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Branin-Currin_Pareto Front"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">"12"</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Branin"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">"10"</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Currin"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">"10"</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"lower right"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">"7"</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_png output_subarea">
+<img src="data:image/png;base64,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
+"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Comparison-of-MOMF-with-single-fidelity-multi-objective-optimization-using-qEHVI">Comparison of MOMF with single-fidelity multi-objective optimization using qEHVI<a class="anchor-link" href="#Comparison-of-MOMF-with-single-fidelity-multi-objective-optimization-using-qEHVI">¶</a></h1><p>In this section we draw a comparison of the MOMF with qEHVI. For this purpose we will now run 3 trials of the MOMF and qEHVI with 80 iterations for both. For this we define some helper functions for qEHVI similar to what was done for MOMF.</p>
+<p><strong>Note: Most of the material for qEHVI example has been taken from [3]</strong></p>
+<p>[3] <a href="https://botorch.org/tutorials/constrained_multi_objective_bo">Constrained, Parallel, Multi-Objective BO in BoTorch with qNEHVI, and qParEGO</a></p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Here we define a wrapper function for single-fidelity multi-objective qEHVI optimization that appends a column of ones (representing highest fidelity) around the Branin-Currin function.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [12]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">problem_MO</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim_y</span><span class="p">):</span>
+    <span class="c1"># Since MO-only optimization only evaluates at highest fidelity so a column of ones is added to the input to be consistent</span>
+    <span class="c1"># with the same objective function definition.</span>
+    <span class="n">h_fid</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">h_fid</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">BC</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Data-Initialization-qEHVI">Data Initialization qEHVI<a class="anchor-link" href="#Data-Initialization-qEHVI">¶</a></h3><p>For qEHVI we initialize with 1 point to keep the initial cost low. We do not aim to make the initial costs the same but for all cases the initial costs of the MOMF are lower when the fidelity is drawn in a probabilistic fashion.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [13]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">gen_init_data_MO</span><span class="p">(</span><span class="n">dim_x</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">dim_y</span><span class="p">):</span>
+    <span class="c1"># generates random training data.</span>
+    <span class="n">train_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">dim_x</span><span class="p">),</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+    <span class="n">train_obj</span> <span class="o">=</span> <span class="n">problem_MO</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">dim_y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Helper-function-to-optimize-acquisition-function">Helper function to optimize acquisition function<a class="anchor-link" href="#Helper-function-to-optimize-acquisition-function">¶</a></h3><p>This is a helper function that initializes and optimizes the acquisition function qEHVI and returns the new_x and new_obj. The problem is called from within this helper function.</p>
+<p>A simple initialization heuristic is used to select the 20 restart initial locations from a set of 1024 random points. Multi-start optimization of the acquisition function is performed using LBFGS-B with exact gradients computed via auto-differentiation.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [14]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.monte_carlo</span> <span class="kn">import</span> <span class="n">qExpectedHypervolumeImprovement</span>
+
+
+<span class="k">def</span> <span class="nf">optimize_MO_and_get_obs</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">sampler</span><span class="p">,</span> <span class="n">dim_y</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">,</span> <span class="n">standard_bounds</span><span class="p">,</span> <span class="n">BATCH_SIZE_MO</span>
+<span class="p">):</span>
+    <span class="sd">"""Optimizes the qEHVI acquisition function, and returns a new candidate and observation."""</span>
+    <span class="c1"># partition non-dominated space into disjoint rectangles</span>
+    <span class="n">partitioning</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span><span class="p">(</span>
+        <span class="n">ref_point</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_obj</span>
+    <span class="p">)</span>
+    <span class="n">acq_func</span> <span class="o">=</span> <span class="n">qExpectedHypervolumeImprovement</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>  <span class="c1"># use a known reference point</span>
+        <span class="n">partitioning</span><span class="o">=</span><span class="n">partitioning</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># optimize</span>
+    <span class="n">candidates</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+        <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_func</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">standard_bounds</span><span class="p">,</span>
+        <span class="n">q</span><span class="o">=</span><span class="n">BATCH_SIZE_MO</span><span class="p">,</span>
+        <span class="n">num_restarts</span><span class="o">=</span><span class="n">NUM_RESTARTS</span><span class="p">,</span>
+        <span class="n">raw_samples</span><span class="o">=</span><span class="n">RAW_SAMPLES</span><span class="p">,</span>  <span class="c1"># used for intialization heuristic</span>
+        <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">"batch_limit"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">"nonnegative"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+        <span class="n">sequential</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># observe new values</span>
+    <span class="n">new_x</span> <span class="o">=</span> <span class="n">unnormalize</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">detach</span><span class="p">(),</span> <span class="n">bounds</span><span class="o">=</span><span class="n">standard_bounds</span><span class="p">)</span>
+    <span class="n">new_obj</span> <span class="o">=</span> <span class="n">problem_MO</span><span class="p">(</span><span class="n">new_x</span><span class="p">,</span> <span class="n">dim_y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_x</span><span class="p">,</span> <span class="n">new_obj</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Running-MOMF-and-qEHVI-optimization-for-multiple-Trials">Running MOMF and qEHVI optimization for multiple Trials<a class="anchor-link" href="#Running-MOMF-and-qEHVI-optimization-for-multiple-Trials">¶</a></h3><p>We run 5 trials of 30 iterations each to optimize the multi-fidelity versions of the Brannin-Currin functions using MOMF and qEHVI. The Bayesian loop works in the following sequence.</p>
+<ol>
+<li>At the start of each trial an initial data is generated and a model initialized using this data.</li>
+<li>The models are used to generated an acquisition function that gives us a suggestion for new input parameters</li>
+<li>The objective function is evaluated at the suggested new_x and returns a new_obj.</li>
+<li>The models are updated with the new points and then are used again to make the next prediction.</li>
+</ol>
+<p><strong>Note: The following code cell would take some time to run</strong></p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [15]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># MOMF and qEHVI</span>
+<span class="n">verbose</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">train_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_INIT</span> <span class="o">+</span> <span class="n">n_BATCH</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="n">dim_x</span><span class="p">,</span> <span class="n">n_TRIALS</span><span class="p">,</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>          <span class="c1"># Intializing train_x to zero</span>
+<span class="n">train_obj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_INIT</span> <span class="o">+</span> <span class="n">n_BATCH</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="n">dim_y</span><span class="p">,</span> <span class="n">n_TRIALS</span><span class="p">,</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>        <span class="c1"># Intializing train_obj to zero</span>
+
+<span class="n">train_xMO</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_INITMO</span> <span class="o">+</span> <span class="n">n_BATCH</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="n">dim_xMO</span><span class="p">,</span> <span class="n">n_TRIALS</span><span class="p">,</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>    <span class="c1"># Intializing train_xMO to zero</span>
+<span class="n">train_objMO</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_INITMO</span> <span class="o">+</span> <span class="n">n_BATCH</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="n">dim_yMO</span><span class="p">,</span> <span class="n">n_TRIALS</span><span class="p">,</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>  <span class="c1"># Intializing train_objMO to zero</span>
+
+<span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_TRIALS</span><span class="p">):</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">trial</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"***************************************************************************"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Trial is "</span><span class="p">,</span> <span class="n">trial</span><span class="p">)</span>
+    <span class="c1"># Generate Data and initialize model</span>
+    <span class="n">train_x</span><span class="p">[:</span><span class="n">n_INIT</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">],</span> <span class="n">train_obj</span><span class="p">[:</span><span class="n">n_INIT</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">]</span> <span class="o">=</span> <span class="n">gen_init_data</span><span class="p">(</span><span class="n">dim_x</span><span class="p">,</span> <span class="n">n_INIT</span><span class="p">,</span> <span class="n">dim_y</span><span class="p">)</span>
+    <span class="n">mll</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span><span class="n">train_x</span><span class="p">[:</span><span class="n">n_INIT</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">],</span> <span class="n">train_obj</span><span class="p">[:</span><span class="n">n_INIT</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">])</span>
+
+    <span class="n">train_xMO</span><span class="p">[:</span><span class="n">n_INITMO</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">],</span> <span class="n">train_objMO</span><span class="p">[:</span><span class="n">n_INITMO</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">]</span> <span class="o">=</span> <span class="n">gen_init_data_MO</span><span class="p">(</span><span class="n">dim_xMO</span><span class="p">,</span> <span class="n">n_INITMO</span><span class="p">,</span> <span class="n">dim_yMO</span><span class="p">)</span>
+    <span class="n">mll_MO</span><span class="p">,</span> <span class="n">model_MO</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span><span class="n">train_xMO</span><span class="p">[:</span><span class="n">n_INITMO</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">],</span> <span class="n">train_objMO</span><span class="p">[:</span><span class="n">n_INITMO</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_BATCH</span><span class="p">):</span>
+        <span class="c1"># run N_BATCH rounds of BayesOpt after the initial random batch</span>
+        <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+
+        <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll_MO</span><span class="p">)</span>  <span class="c1"># fit the models</span>
+        <span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">MC_SAMPLES</span><span class="p">]))</span>
+        <span class="c1"># Updating indices used to store new observations</span>
+        <span class="n">lower_index</span> <span class="o">=</span> <span class="n">n_INIT</span> <span class="o">+</span> <span class="n">_iter</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span>
+        <span class="n">upper_index</span> <span class="o">=</span> <span class="n">n_INIT</span> <span class="o">+</span> <span class="n">_iter</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span> <span class="o">+</span> <span class="n">BATCH_SIZE</span>
+        
+        <span class="n">lower_indexMO</span> <span class="o">=</span> <span class="n">n_INITMO</span> <span class="o">+</span> <span class="n">_iter</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span>
+        <span class="n">upper_indexMO</span> <span class="o">=</span> <span class="n">n_INITMO</span> <span class="o">+</span> <span class="n">_iter</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span> <span class="o">+</span> <span class="n">BATCH_SIZE</span>
+        <span class="c1"># optimize acquisition function and get new observations</span>
+        <span class="n">new_x</span><span class="p">,</span> <span class="n">new_obj</span> <span class="o">=</span> <span class="n">optimize_MOMF_and_get_obs</span><span class="p">(</span>
+            <span class="n">model</span><span class="p">,</span>
+            <span class="n">train_obj</span><span class="p">[:</span> <span class="n">upper_index</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">],</span>
+            <span class="n">sampler</span><span class="p">,</span>
+            <span class="n">dim_y</span><span class="p">,</span>
+            <span class="n">ref_point</span><span class="p">,</span>
+            <span class="n">standard_bounds</span><span class="p">,</span>
+            <span class="n">BATCH_SIZE</span><span class="p">,</span>
+            <span class="n">cost_call</span><span class="o">=</span><span class="n">cost_callable</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">new_x_MO</span><span class="p">,</span> <span class="n">new_obj_MO</span> <span class="o">=</span> <span class="n">optimize_MO_and_get_obs</span><span class="p">(</span>
+            <span class="n">model_MO</span><span class="p">,</span>
+            <span class="n">train_objMO</span><span class="p">[:</span> <span class="n">upper_indexMO</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">],</span>
+            <span class="n">sampler</span><span class="p">,</span>
+            <span class="n">dim_yMO</span><span class="p">,</span>
+            <span class="n">ref_pointMO</span><span class="p">,</span>
+            <span class="n">standard_boundsMO</span><span class="p">,</span>
+            <span class="n">BATCH_SIZE</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Updating train_x and train_obj</span>
+        <span class="n">train_x</span><span class="p">[</span><span class="n">lower_index</span> <span class="p">:</span> <span class="n">upper_index</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_x</span>
+        <span class="n">train_obj</span><span class="p">[</span><span class="n">lower_index</span> <span class="p">:</span> <span class="n">upper_index</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_obj</span>
+        
+        <span class="n">train_xMO</span><span class="p">[</span><span class="n">lower_indexMO</span> <span class="p">:</span> <span class="n">upper_indexMO</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_x_MO</span>
+        <span class="n">train_objMO</span><span class="p">[</span><span class="n">lower_indexMO</span> <span class="p">:</span> <span class="n">upper_indexMO</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_obj_MO</span>
+        <span class="c1"># reinitialize the models so they are ready for fitting on next _iter</span>
+        <span class="n">mll</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span>
+            <span class="n">train_x</span><span class="p">[:</span> <span class="n">upper_index</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">],</span>
+            <span class="n">train_obj</span><span class="p">[:</span> <span class="n">upper_index</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="n">mll_MO</span><span class="p">,</span> <span class="n">model_MO</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span>
+            <span class="n">train_xMO</span><span class="p">[:</span> <span class="n">upper_indexMO</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">],</span>
+            <span class="n">train_objMO</span><span class="p">[:</span> <span class="n">upper_indexMO</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Iteration: </span><span class="si">{</span><span class="n">_iter</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>***************************************************************************
+Trial is  0
+Iteration: 1
+Iteration: 2
+Iteration: 3
+Iteration: 4
+Iteration: 5
+Iteration: 6
+Iteration: 7
+Iteration: 8
+Iteration: 9
+Iteration: 10
+Iteration: 11
+Iteration: 12
+Iteration: 13
+Iteration: 14
+Iteration: 15
+Iteration: 16
+Iteration: 17
+Iteration: 18
+Iteration: 19
+Iteration: 20
+Iteration: 21
+Iteration: 22
+Iteration: 23
+Iteration: 24
+Iteration: 25
+Iteration: 26
+Iteration: 27
+Iteration: 28
+Iteration: 29
+Iteration: 30
+***************************************************************************
+Trial is  1
+Iteration: 1
+Iteration: 2
+Iteration: 3
+Iteration: 4
+Iteration: 5
+Iteration: 6
+Iteration: 7
+Iteration: 8
+Iteration: 9
+Iteration: 10
+Iteration: 11
+Iteration: 12
+Iteration: 13
+Iteration: 14
+Iteration: 15
+Iteration: 16
+Iteration: 17
+Iteration: 18
+Iteration: 19
+Iteration: 20
+Iteration: 21
+Iteration: 22
+Iteration: 23
+Iteration: 24
+Iteration: 25
+Iteration: 26
+Iteration: 27
+Iteration: 28
+Iteration: 29
+Iteration: 30
+***************************************************************************
+Trial is  2
+Iteration: 1
+Iteration: 2
+Iteration: 3
+Iteration: 4
+Iteration: 5
+Iteration: 6
+Iteration: 7
+Iteration: 8
+Iteration: 9
+Iteration: 10
+Iteration: 11
+Iteration: 12
+Iteration: 13
+Iteration: 14
+Iteration: 15
+Iteration: 16
+Iteration: 17
+Iteration: 18
+Iteration: 19
+Iteration: 20
+Iteration: 21
+Iteration: 22
+Iteration: 23
+Iteration: 24
+Iteration: 25
+Iteration: 26
+Iteration: 27
+Iteration: 28
+Iteration: 29
+Iteration: 30
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Evaluating-the-hypervolume-for-each-iteration-for-MOMF">Evaluating the hypervolume for each iteration for MOMF<a class="anchor-link" href="#Evaluating-the-hypervolume-for-each-iteration-for-MOMF">¶</a></h3><p>As before we are interested in the Pareto front at the highest fidelity after the MOMF. In this section we only show the evolution of the mean hypervolume for both MOMF and qEHVI. The calculation for the MOMF is done in a similar fashion as before but now for each trial and iteration to get the evolution of hypervolume.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The following code loops over the number of trials and the number of iterations within a single trial. It works in the following steps:</p>
+<ol>
+<li>At the start of each iteration a model is trained on the MOMF data.</li>
+<li>We generate a posterior mean from the model and calculated the dominated set from these 10000 points.</li>
+<li>This dominated set is used to estimate the hypervolume and then the next iteration is started where the model now takes n+1 data points</li>
+</ol>
+<p><strong>The test points used here are already generated before for evaluation of the single trial of MOMF</strong></p>
+<p><strong>Note: The following cell would take some time</strong></p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [16]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Generating the final Pareto front by fitting a GP to MOMF data and evaluating the</span>
+<span class="c1"># GP posterior at the highest fidelity with 10000 random points</span>
+<span class="n">verbose</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">hv_MOMF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">train_obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n_TRIALS</span><span class="p">)</span>
+<span class="p">)</span>  <span class="c1"># Array that contains hypervolume for n_TRIALS</span>
+<span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_TRIALS</span><span class="p">):</span>
+    <span class="c1"># Loop to run over all trials</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"***************************************************************************"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Trial is "</span><span class="p">,</span> <span class="n">trial</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">num</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_INIT</span><span class="p">,</span> <span class="n">train_obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">)):</span>
+        <span class="c1"># Loop to get evolution of hypervolume during a single trial of MOMF optimization.</span>
+        <span class="n">hv_MOMF</span><span class="p">[</span><span class="n">num</span><span class="p">,</span> <span class="n">trial</span><span class="p">],</span> <span class="n">_</span> <span class="o">=</span> <span class="n">get_pareto</span><span class="p">(</span>
+            <span class="n">train_x</span><span class="p">[:</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">],</span> <span class="n">train_obj</span><span class="p">[:</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">trial</span><span class="p">],</span> <span class="n">test_x</span><span class="p">,</span> <span class="n">ref_point</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Iteration: </span><span class="si">{</span><span class="n">num</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>***************************************************************************
+Trial is  0
+Iteration: 1
+Iteration: 2
+Iteration: 3
+Iteration: 4
+Iteration: 5
+Iteration: 6
+Iteration: 7
+Iteration: 8
+Iteration: 9
+Iteration: 10
+Iteration: 11
+Iteration: 12
+Iteration: 13
+Iteration: 14
+Iteration: 15
+Iteration: 16
+Iteration: 17
+Iteration: 18
+Iteration: 19
+Iteration: 20
+Iteration: 21
+Iteration: 22
+Iteration: 23
+Iteration: 24
+Iteration: 25
+Iteration: 26
+Iteration: 27
+Iteration: 28
+Iteration: 29
+Iteration: 30
+Iteration: 31
+Iteration: 32
+Iteration: 33
+Iteration: 34
+Iteration: 35
+Iteration: 36
+Iteration: 37
+Iteration: 38
+Iteration: 39
+Iteration: 40
+Iteration: 41
+Iteration: 42
+Iteration: 43
+Iteration: 44
+Iteration: 45
+Iteration: 46
+Iteration: 47
+Iteration: 48
+Iteration: 49
+Iteration: 50
+Iteration: 51
+Iteration: 52
+Iteration: 53
+Iteration: 54
+Iteration: 55
+Iteration: 56
+Iteration: 57
+Iteration: 58
+Iteration: 59
+Iteration: 60
+***************************************************************************
+Trial is  1
+Iteration: 1
+Iteration: 2
+Iteration: 3
+Iteration: 4
+Iteration: 5
+Iteration: 6
+Iteration: 7
+Iteration: 8
+Iteration: 9
+Iteration: 10
+Iteration: 11
+Iteration: 12
+Iteration: 13
+Iteration: 14
+Iteration: 15
+Iteration: 16
+Iteration: 17
+Iteration: 18
+Iteration: 19
+Iteration: 20
+Iteration: 21
+Iteration: 22
+Iteration: 23
+Iteration: 24
+Iteration: 25
+Iteration: 26
+Iteration: 27
+Iteration: 28
+Iteration: 29
+Iteration: 30
+Iteration: 31
+Iteration: 32
+Iteration: 33
+Iteration: 34
+Iteration: 35
+Iteration: 36
+Iteration: 37
+Iteration: 38
+Iteration: 39
+Iteration: 40
+Iteration: 41
+Iteration: 42
+Iteration: 43
+Iteration: 44
+Iteration: 45
+Iteration: 46
+Iteration: 47
+Iteration: 48
+Iteration: 49
+Iteration: 50
+Iteration: 51
+Iteration: 52
+Iteration: 53
+Iteration: 54
+Iteration: 55
+Iteration: 56
+Iteration: 57
+Iteration: 58
+Iteration: 59
+Iteration: 60
+***************************************************************************
+Trial is  2
+Iteration: 1
+Iteration: 2
+Iteration: 3
+Iteration: 4
+Iteration: 5
+Iteration: 6
+Iteration: 7
+Iteration: 8
+Iteration: 9
+Iteration: 10
+Iteration: 11
+Iteration: 12
+Iteration: 13
+Iteration: 14
+Iteration: 15
+Iteration: 16
+Iteration: 17
+Iteration: 18
+Iteration: 19
+Iteration: 20
+Iteration: 21
+Iteration: 22
+Iteration: 23
+Iteration: 24
+Iteration: 25
+Iteration: 26
+Iteration: 27
+Iteration: 28
+Iteration: 29
+Iteration: 30
+Iteration: 31
+Iteration: 32
+Iteration: 33
+Iteration: 34
+Iteration: 35
+Iteration: 36
+Iteration: 37
+Iteration: 38
+Iteration: 39
+Iteration: 40
+Iteration: 41
+Iteration: 42
+Iteration: 43
+Iteration: 44
+Iteration: 45
+Iteration: 46
+Iteration: 47
+Iteration: 48
+Iteration: 49
+Iteration: 50
+Iteration: 51
+Iteration: 52
+Iteration: 53
+Iteration: 54
+Iteration: 55
+Iteration: 56
+Iteration: 57
+Iteration: 58
+Iteration: 59
+Iteration: 60
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>For the qEHVI the hypervolume calculation is more straightforward. We calculated at each iteration the set of non-dominated points from the training data and use that to estimate the hypervolume.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [17]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Since the MO data is already at highest fidelity we can calculate the evolution of hypervolume directly from data</span>
+<span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">hv_MO</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">train_objMO</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n_TRIALS</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_TRIALS</span><span class="p">):</span>
+    <span class="c1"># Loop to run over all the trials</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"***************************************************************************"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Trial is "</span><span class="p">,</span> <span class="n">trial</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">num</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">train_objMO</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">)):</span>
+        <span class="c1"># Loop to get evolution of hypervolume within a single trial</span>
+        <span class="n">pareto_maskMO</span> <span class="o">=</span> <span class="n">is_non_dominated</span><span class="p">(</span>
+            <span class="n">train_objMO</span><span class="p">[:</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">]</span>
+        <span class="p">)</span>  <span class="c1"># Calculating Non-dominated points</span>
+        <span class="n">box_decomp</span> <span class="o">=</span> <span class="n">DominatedPartitioning</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">ref_pointMO</span><span class="p">,</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+            <span class="n">train_objMO</span><span class="p">[:</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="n">trial</span><span class="p">][</span><span class="n">pareto_maskMO</span><span class="p">],</span>
+        <span class="p">)</span>  <span class="c1"># Used to calculate hypervolume</span>
+        <span class="n">hv_MO</span><span class="p">[</span><span class="n">num</span><span class="p">,</span> <span class="n">trial</span><span class="p">]</span> <span class="o">=</span> <span class="n">box_decomp</span><span class="o">.</span><span class="n">compute_hypervolume</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Iteration"</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>***************************************************************************
+Trial is  0
+***************************************************************************
+Trial is  1
+***************************************************************************
+Trial is  2
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [18]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Cost calculation MOMF and MO</span>
+<span class="n">cost_single</span> <span class="o">=</span> <span class="n">cost_func</span><span class="p">(</span><span class="n">train_x</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">exp_arg</span><span class="p">)</span>
+<span class="n">cost_MOMF</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">cost_single</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="c1"># Generating ones equal to number of iterations for MO only-optimization</span>
+<span class="n">ones</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">train_objMO</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+<span class="n">cost_singleMO</span> <span class="o">=</span> <span class="n">cost_func</span><span class="p">(</span><span class="n">ones</span><span class="p">,</span> <span class="n">exp_arg</span><span class="p">)</span>
+<span class="n">cost_MO</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">cost_singleMO</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [19]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Converting to Numpy arrays for plotting</span>
+<span class="n">cost_MOMF</span> <span class="o">=</span> <span class="n">cost_MOMF</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+<span class="n">cost_MO</span> <span class="o">=</span> <span class="n">cost_MO</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+<span class="n">true_hv</span> <span class="o">=</span> <span class="mf">0.5235514158034145</span>  <span class="c1"># The approximate max hypervolume taken by evaluating the BC function offline with random 50000 points</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>For plotting purposes we calculate the cost of both MOMF and MO using the last dimension of the training input data.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Results">Results<a class="anchor-link" href="#Results">¶</a></h3><p>The following plot shows the hypervolume as a percetage of the true hypervolume for both MOMF and qEHVI. The hypervolume is plotted at each iteration on a log scale. We also plot the confidence intervals derived from running multiple trials for the MOMF and MO.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [20]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">MOMF_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">hv_MOMF</span><span class="p">[</span><span class="n">n_INIT</span> <span class="p">:</span> <span class="n">n_BATCH</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="p">:]</span> <span class="o">/</span> <span class="n">true_hv</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">MOMF_CI</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="mf">1.96</span>
+    <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">hv_MOMF</span><span class="p">[</span><span class="n">n_INIT</span> <span class="p">:</span> <span class="n">n_BATCH</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="p">:]</span> <span class="o">/</span> <span class="n">true_hv</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_TRIALS</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">mean_costMOMF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cost_MOMF</span><span class="p">[</span><span class="n">n_INIT</span> <span class="p">:</span> <span class="n">n_BATCH</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">MO_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">hv_MO</span><span class="p">[</span><span class="n">n_INITMO</span><span class="p">:,</span> <span class="p">:]</span> <span class="o">/</span> <span class="n">true_hv</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">MO_CI</span> <span class="o">=</span> <span class="mf">1.96</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">hv_MO</span><span class="p">[</span><span class="n">n_INITMO</span><span class="p">:,</span> <span class="p">:]</span> <span class="o">/</span> <span class="n">true_hv</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n_TRIALS</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">mean_costMOMF</span><span class="p">,</span> <span class="n">MOMF_mean</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="n">MOMF_CI</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mf">3.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"MOMF"</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">cost_MO</span><span class="p">[</span><span class="n">n_INITMO</span><span class="p">:],</span> <span class="n">MO_mean</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="n">MO_CI</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mf">3.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"EHVI"</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Branin-Currin"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">"12"</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Total Cost Log Scale"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">"10"</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Hypervolume (%)"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">"10"</span><span class="p">)</span>
+<span class="c1"># axes.set_xlim(1,5000)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">axes</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"lower right"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s2">"7"</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_png output_subarea">
+<img src="data:image/png;base64,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
+"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div><div class="tutorialButtonWrapper buttonWrapper"><a class="tutorialButton button" download="" href="/v/0.8.1/files/Multi_objective_multi_fidelity_BO.ipynb" target="_blank"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-download" class="svg-inline--fa fa-file-download fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm76.45 211.36l-96.42 95.7c-6.65 6.61-17.39 6.61-24.04 0l-96.42-95.7C73.42 337.29 80.54 320 94.82 320H160v-80c0-8.84 7.16-16 16-16h32c8.84 0 16 7.16 16 16v80h65.18c14.28 0 21.4 17.29 11.27 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>Download Tutorial Jupyter Notebook</a></div><div class="tutorialButtonWrapper buttonWrapper"><a class="tutorialButton button" download="" href="/v/0.8.1/files/Multi_objective_multi_fidelity_BO.py" target="_blank"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-download" class="svg-inline--fa fa-file-download fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm76.45 211.36l-96.42 95.7c-6.65 6.61-17.39 6.61-24.04 0l-96.42-95.7C73.42 337.29 80.54 320 94.82 320H160v-80c0-8.84 7.16-16 16-16h32c8.84 0 16 7.16 16 16v80h65.18c14.28 0 21.4 17.29 11.27 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>Download Tutorial Source Code</a></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.8.1/" class="nav-home"><img src="/v/0.8.1/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.8.1/docs/introduction">Introduction</a><a href="/v/0.8.1/docs/getting_started">Getting Started</a><a href="/v/0.8.1/tutorials/">Tutorials</a><a href="/v/0.8.1/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.8.1/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.8.1/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

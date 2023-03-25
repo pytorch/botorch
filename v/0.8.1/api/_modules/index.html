@@ -1,0 +1,206 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.8.1/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.8.1/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.8.1/img/botorch.png"/><link rel="shortcut icon" href="/v/0.8.1/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.8.1/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.8.1/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.8.1/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.8.1/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.8.1/css/main.css"/><script src="/v/0.8.1/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.8.1/"><img class="logo" src="/v/0.8.1/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.8.1/versions"><h3>0.8.1</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.8.1/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.8.1/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.8.1/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.8.1/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>All modules for which code is available</h1>
+<ul><li><a href="botorch/acquisition/active_learning.html">botorch.acquisition.active_learning</a></li>
+<li><a href="botorch/acquisition/analytic.html">botorch.acquisition.analytic</a></li>
+<li><a href="botorch/acquisition/cost_aware.html">botorch.acquisition.cost_aware</a></li>
+<li><a href="botorch/acquisition/fixed_feature.html">botorch.acquisition.fixed_feature</a></li>
+<li><a href="botorch/acquisition/input_constructors.html">botorch.acquisition.input_constructors</a></li>
+<li><a href="botorch/acquisition/joint_entropy_search.html">botorch.acquisition.joint_entropy_search</a></li>
+<li><a href="botorch/acquisition/knowledge_gradient.html">botorch.acquisition.knowledge_gradient</a></li>
+<li><a href="botorch/acquisition/max_value_entropy_search.html">botorch.acquisition.max_value_entropy_search</a></li>
+<li><a href="botorch/acquisition/monte_carlo.html">botorch.acquisition.monte_carlo</a></li>
+<li><a href="botorch/acquisition/multi_objective/analytic.html">botorch.acquisition.multi_objective.analytic</a></li>
+<li><a href="botorch/acquisition/multi_objective/joint_entropy_search.html">botorch.acquisition.multi_objective.joint_entropy_search</a></li>
+<li><a href="botorch/acquisition/multi_objective/max_value_entropy_search.html">botorch.acquisition.multi_objective.max_value_entropy_search</a></li>
+<li><a href="botorch/acquisition/multi_objective/monte_carlo.html">botorch.acquisition.multi_objective.monte_carlo</a></li>
+<li><a href="botorch/acquisition/multi_objective/multi_fidelity.html">botorch.acquisition.multi_objective.multi_fidelity</a></li>
+<li><a href="botorch/acquisition/multi_objective/multi_output_risk_measures.html">botorch.acquisition.multi_objective.multi_output_risk_measures</a></li>
+<li><a href="botorch/acquisition/multi_objective/objective.html">botorch.acquisition.multi_objective.objective</a></li>
+<li><a href="botorch/acquisition/multi_objective/predictive_entropy_search.html">botorch.acquisition.multi_objective.predictive_entropy_search</a></li>
+<li><a href="botorch/acquisition/multi_objective/utils.html">botorch.acquisition.multi_objective.utils</a></li>
+<li><a href="botorch/acquisition/multi_step_lookahead.html">botorch.acquisition.multi_step_lookahead</a></li>
+<li><a href="botorch/acquisition/objective.html">botorch.acquisition.objective</a></li>
+<li><a href="botorch/acquisition/penalized.html">botorch.acquisition.penalized</a></li>
+<li><a href="botorch/acquisition/predictive_entropy_search.html">botorch.acquisition.predictive_entropy_search</a></li>
+<li><a href="botorch/acquisition/preference.html">botorch.acquisition.preference</a></li>
+<li><a href="botorch/acquisition/proximal.html">botorch.acquisition.proximal</a></li>
+<li><a href="botorch/acquisition/risk_measures.html">botorch.acquisition.risk_measures</a></li>
+<li><a href="botorch/acquisition/utils.html">botorch.acquisition.utils</a></li>
+<li><a href="botorch/cross_validation.html">botorch.cross_validation</a></li>
+<li><a href="botorch/exceptions/errors.html">botorch.exceptions.errors</a></li>
+<li><a href="botorch/exceptions/warnings.html">botorch.exceptions.warnings</a></li>
+<li><a href="botorch/fit.html">botorch.fit</a></li>
+<li><a href="botorch/generation/gen.html">botorch.generation.gen</a></li>
+<li><a href="botorch/generation/sampling.html">botorch.generation.sampling</a></li>
+<li><a href="botorch/models/approximate_gp.html">botorch.models.approximate_gp</a></li>
+<li><a href="botorch/models/contextual.html">botorch.models.contextual</a></li>
+<li><a href="botorch/models/contextual_multioutput.html">botorch.models.contextual_multioutput</a></li>
+<li><a href="botorch/models/converter.html">botorch.models.converter</a></li>
+<li><a href="botorch/models/cost.html">botorch.models.cost</a></li>
+<li><a href="botorch/models/deterministic.html">botorch.models.deterministic</a></li>
+<li><a href="botorch/models/fully_bayesian.html">botorch.models.fully_bayesian</a></li>
+<li><a href="botorch/models/fully_bayesian_multitask.html">botorch.models.fully_bayesian_multitask</a></li>
+<li><a href="botorch/models/gp_regression.html">botorch.models.gp_regression</a></li>
+<li><a href="botorch/models/gp_regression_fidelity.html">botorch.models.gp_regression_fidelity</a></li>
+<li><a href="botorch/models/gp_regression_mixed.html">botorch.models.gp_regression_mixed</a></li>
+<li><a href="botorch/models/higher_order_gp.html">botorch.models.higher_order_gp</a></li>
+<li><a href="botorch/models/kernels/categorical.html">botorch.models.kernels.categorical</a></li>
+<li><a href="botorch/models/kernels/contextual_lcea.html">botorch.models.kernels.contextual_lcea</a></li>
+<li><a href="botorch/models/kernels/contextual_sac.html">botorch.models.kernels.contextual_sac</a></li>
+<li><a href="botorch/models/kernels/downsampling.html">botorch.models.kernels.downsampling</a></li>
+<li><a href="botorch/models/kernels/exponential_decay.html">botorch.models.kernels.exponential_decay</a></li>
+<li><a href="botorch/models/kernels/linear_truncated_fidelity.html">botorch.models.kernels.linear_truncated_fidelity</a></li>
+<li><a href="botorch/models/likelihoods/pairwise.html">botorch.models.likelihoods.pairwise</a></li>
+<li><a href="botorch/models/model.html">botorch.models.model</a></li>
+<li><a href="botorch/models/model_list_gp_regression.html">botorch.models.model_list_gp_regression</a></li>
+<li><a href="botorch/models/multitask.html">botorch.models.multitask</a></li>
+<li><a href="botorch/models/pairwise_gp.html">botorch.models.pairwise_gp</a></li>
+<li><a href="botorch/models/transforms/input.html">botorch.models.transforms.input</a></li>
+<li><a href="botorch/models/transforms/outcome.html">botorch.models.transforms.outcome</a></li>
+<li><a href="botorch/models/transforms/utils.html">botorch.models.transforms.utils</a></li>
+<li><a href="botorch/models/utils/assorted.html">botorch.models.utils.assorted</a></li>
+<li><a href="botorch/models/utils/parse_training_data.html">botorch.models.utils.parse_training_data</a></li>
+<li><a href="botorch/optim/closures/core.html">botorch.optim.closures.core</a></li>
+<li><a href="botorch/optim/closures/model_closures.html">botorch.optim.closures.model_closures</a></li>
+<li><a href="botorch/optim/core.html">botorch.optim.core</a></li>
+<li><a href="botorch/optim/fit.html">botorch.optim.fit</a></li>
+<li><a href="botorch/optim/initializers.html">botorch.optim.initializers</a></li>
+<li><a href="botorch/optim/numpy_converter.html">botorch.optim.numpy_converter</a></li>
+<li><a href="botorch/optim/optimize.html">botorch.optim.optimize</a></li>
+<li><a href="botorch/optim/parameter_constraints.html">botorch.optim.parameter_constraints</a></li>
+<li><a href="botorch/optim/stopping.html">botorch.optim.stopping</a></li>
+<li><a href="botorch/optim/utils/acquisition_utils.html">botorch.optim.utils.acquisition_utils</a></li>
+<li><a href="botorch/optim/utils/model_utils.html">botorch.optim.utils.model_utils</a></li>
+<li><a href="botorch/optim/utils/numpy_utils.html">botorch.optim.utils.numpy_utils</a></li>
+<li><a href="botorch/optim/utils/timeout.html">botorch.optim.utils.timeout</a></li>
+<li><a href="botorch/posteriors/deterministic.html">botorch.posteriors.deterministic</a></li>
+<li><a href="botorch/posteriors/fully_bayesian.html">botorch.posteriors.fully_bayesian</a></li>
+<li><a href="botorch/posteriors/gpytorch.html">botorch.posteriors.gpytorch</a></li>
+<li><a href="botorch/posteriors/higher_order.html">botorch.posteriors.higher_order</a></li>
+<li><a href="botorch/posteriors/multitask.html">botorch.posteriors.multitask</a></li>
+<li><a href="botorch/posteriors/posterior_list.html">botorch.posteriors.posterior_list</a></li>
+<li><a href="botorch/posteriors/torch.html">botorch.posteriors.torch</a></li>
+<li><a href="botorch/posteriors/transformed.html">botorch.posteriors.transformed</a></li>
+<li><a href="botorch/sampling/get_sampler.html">botorch.sampling.get_sampler</a></li>
+<li><a href="botorch/sampling/normal.html">botorch.sampling.normal</a></li>
+<li><a href="botorch/sampling/pairwise_samplers.html">botorch.sampling.pairwise_samplers</a></li>
+<li><a href="botorch/sampling/qmc.html">botorch.sampling.qmc</a></li>
+<li><a href="botorch/sampling/stochastic_samplers.html">botorch.sampling.stochastic_samplers</a></li>
+<li><a href="botorch/settings.html">botorch.settings</a></li>
+<li><a href="botorch/test_functions/base.html">botorch.test_functions.base</a></li>
+<li><a href="botorch/test_functions/multi_fidelity.html">botorch.test_functions.multi_fidelity</a></li>
+<li><a href="botorch/test_functions/multi_objective.html">botorch.test_functions.multi_objective</a></li>
+<li><a href="botorch/test_functions/multi_objective_multi_fidelity.html">botorch.test_functions.multi_objective_multi_fidelity</a></li>
+<li><a href="botorch/test_functions/sensitivity_analysis.html">botorch.test_functions.sensitivity_analysis</a></li>
+<li><a href="botorch/test_functions/synthetic.html">botorch.test_functions.synthetic</a></li>
+<li><a href="botorch/utils/constants.html">botorch.utils.constants</a></li>
+<li><a href="botorch/utils/constraints.html">botorch.utils.constraints</a></li>
+<li><a href="botorch/utils/containers.html">botorch.utils.containers</a></li>
+<li><a href="botorch/utils/context_managers.html">botorch.utils.context_managers</a></li>
+<li><a href="botorch/utils/datasets.html">botorch.utils.datasets</a></li>
+<li><a href="botorch/utils/dispatcher.html">botorch.utils.dispatcher</a></li>
+<li><a href="botorch/utils/feasible_volume.html">botorch.utils.feasible_volume</a></li>
+<li><a href="botorch/utils/gp_sampling.html">botorch.utils.gp_sampling</a></li>
+<li><a href="botorch/utils/low_rank.html">botorch.utils.low_rank</a></li>
+<li><a href="botorch/utils/multi_objective/box_decompositions/box_decomposition_list.html">botorch.utils.multi_objective.box_decompositions.box_decomposition_list</a></li>
+<li><a href="botorch/utils/multi_objective/box_decompositions/dominated.html">botorch.utils.multi_objective.box_decompositions.dominated</a></li>
+<li><a href="botorch/utils/multi_objective/box_decompositions/non_dominated.html">botorch.utils.multi_objective.box_decompositions.non_dominated</a></li>
+<li><a href="botorch/utils/multi_objective/box_decompositions/utils.html">botorch.utils.multi_objective.box_decompositions.utils</a></li>
+<li><a href="botorch/utils/multi_objective/hypervolume.html">botorch.utils.multi_objective.hypervolume</a></li>
+<li><a href="botorch/utils/multi_objective/pareto.html">botorch.utils.multi_objective.pareto</a></li>
+<li><a href="botorch/utils/multi_objective/scalarization.html">botorch.utils.multi_objective.scalarization</a></li>
+<li><a href="botorch/utils/objective.html">botorch.utils.objective</a></li>
+<li><a href="botorch/utils/probability/bvn.html">botorch.utils.probability.bvn</a></li>
+<li><a href="botorch/utils/probability/lin_ess.html">botorch.utils.probability.lin_ess</a></li>
+<li><a href="botorch/utils/probability/linalg.html">botorch.utils.probability.linalg</a></li>
+<li><a href="botorch/utils/probability/mvnxpb.html">botorch.utils.probability.mvnxpb</a></li>
+<li><a href="botorch/utils/probability/truncated_multivariate_normal.html">botorch.utils.probability.truncated_multivariate_normal</a></li>
+<li><a href="botorch/utils/probability/unified_skew_normal.html">botorch.utils.probability.unified_skew_normal</a></li>
+<li><a href="botorch/utils/probability/utils.html">botorch.utils.probability.utils</a></li>
+<li><a href="botorch/utils/rounding.html">botorch.utils.rounding</a></li>
+<li><a href="botorch/utils/safe_math.html">botorch.utils.safe_math</a></li>
+<li><a href="botorch/utils/sampling.html">botorch.utils.sampling</a></li>
+<li><a href="botorch/utils/testing.html">botorch.utils.testing</a></li>
+<li><a href="botorch/utils/torch.html">botorch.utils.torch</a></li>
+<li><a href="botorch/utils/transforms.html">botorch.utils.transforms</a></li>
+<li><a href="torch/distributions/utils.html">torch.distributions.utils</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../index.html">Documentation overview</a><ul>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.8.1/" class="nav-home"><img src="/v/0.8.1/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.8.1/docs/introduction">Introduction</a><a href="/v/0.8.1/docs/getting_started">Getting Started</a><a href="/v/0.8.1/tutorials/">Tutorials</a><a href="/v/0.8.1/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.8.1/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.8.1/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

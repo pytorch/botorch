@@ -88,7 +88,9 @@
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">cat_dims</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
-        <span class="n">cont_kernel_factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">Kernel</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cont_kernel_factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="n">Callable</span><span class="p">[[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">Kernel</span><span class="p">]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">likelihood</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Likelihood</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># TODO</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># TODO</span>
@@ -100,9 +102,9 @@
 <span class="sd">            train_Y: A `batch_shape x n x m` tensor of training observations.</span>
 <span class="sd">            cat_dims: A list of indices corresponding to the columns of</span>
 <span class="sd">                the input `X` that should be considered categorical features.</span>
-<span class="sd">            cont_kernel_factory: A method that accepts `ard_num_dims` and</span>
-<span class="sd">                `active_dims` arguments and returns an instantiated GPyTorch</span>
-<span class="sd">                `Kernel` object to be used as the ase kernel for the continuous</span>
+<span class="sd">            cont_kernel_factory: A method that accepts  `batch_shape`, `ard_num_dims`,</span>
+<span class="sd">                and `active_dims` arguments and returns an instantiated GPyTorch</span>
+<span class="sd">                `Kernel` object to be used as the base kernel for the continuous</span>
 <span class="sd">                dimensions. If omitted, this model uses a Matern-2.5 kernel as</span>
 <span class="sd">                the kernel for the ordinal parameters.</span>
 <span class="sd">            likelihood: A likelihood. If omitted, use a standard</span>
@@ -113,29 +115,17 @@
 <span class="sd">                `.posterior` on the model will be on the original scale).</span>
 <span class="sd">            input_transform: An input transform that is applied in the model's</span>
 <span class="sd">                forward pass. Only input transforms are allowed which do not</span>
-<span class="sd">                transform the categorical dimensions. This can be achieved</span>
-<span class="sd">                by using the `indices` argument when constructing the transform.</span>
+<span class="sd">                transform the categorical dimensions. If you want to use it</span>
+<span class="sd">                for example in combination with a `OneHotToNumeric` input transform</span>
+<span class="sd">                one has to instantiate the transform with `transform_on_train` == False</span>
+<span class="sd">                and pass in the already transformed input.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">input_transform</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">"Only continuous inputs can be transformed. "</span>
-                    <span class="s2">"Please use `indices` in the `input_transform`."</span>
-                <span class="p">)</span>
-            <span class="c1"># check that no cat dim is in indices</span>
-            <span class="k">elif</span> <span class="nb">any</span><span class="p">(</span><span class="n">idx</span> <span class="ow">in</span> <span class="n">input_transform</span><span class="o">.</span><span class="n">indices</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">cat_dims</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">"Only continuous inputs can be transformed. "</span>
-                    <span class="s2">"Categorical index found in `indices` of the `input_transform`."</span>
-                <span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cat_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"Must specify categorical dimensions for MixedSingleTaskGP"</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ignore_X_dims_scaling_check</span> <span class="o">=</span> <span class="n">cat_dims</span>
-        <span class="n">input_batch_shape</span><span class="p">,</span> <span class="n">aug_batch_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_batch_dimensions</span><span class="p">(</span>
-            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span>
-        <span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">aug_batch_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_batch_dimensions</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">cont_kernel_factory</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 
@@ -279,7 +269,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2022 Meta Platforms, Inc</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {
