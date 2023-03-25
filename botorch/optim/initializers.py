@@ -70,10 +70,13 @@ def transform_constraints(
     d dimensional state.
 
     Args:
-        constraints (Union[List[Tuple[Tensor, Tensor, float]], None]): Constraints
-            to transform.
-        q (int): Size of the q-batch.
-        d (int): Dimensionality of the problem.
+        constraints: A list of tuples (indices, coefficients, rhs), with each tuple encoding an
+            (in-)equality constraint of the form `\sum_i (X[indices[i]] * coefficients[i]) (>)= rhs`.
+            If `indices` is a 2-d Tensor, this supports specifying constraints across the points
+            in the `q`-batch (inter-point constraints). If `None`, this function is a nullop and
+            simply returns `None`.
+        q: Size of the `q`-batch.
+        d: Dimensionality of the problem.
 
     Returns:
         List[Tuple[Tensor, Tensor, float]]: List of transformed constraints.
