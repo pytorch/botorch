@@ -96,7 +96,7 @@ def transform_intra_point_constraint(
     constraint: Tuple[Tensor, Tensor, float], d: int, q: int
 ) -> List[Tuple[Tensor, Tensor, float]]:
     """Transforms an intra-point/pointwise constraint from
-    d-dimensional space to a d*q dimesional space.
+    d-dimensional space to a d*q-dimesional space.
 
     Args:
         constraint (Tuple[Tensor, Tensor, float]): Constraints
