@@ -49,6 +49,7 @@
 <span class="kn">from</span> <span class="nn">linear_operator</span> <span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">linop_settings</span>
 <span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">BlockDiagLinearOperator</span><span class="p">,</span>
+    <span class="n">DenseLinearOperator</span><span class="p">,</span>
     <span class="n">LinearOperator</span><span class="p">,</span>
     <span class="n">SumLinearOperator</span><span class="p">,</span>
 <span class="p">)</span>
@@ -349,6 +350,7 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cov_scaled</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">):</span>
             <span class="n">cov_scaled</span> <span class="o">=</span> <span class="n">cov_scaled</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
         <span class="n">new_cov</span> <span class="o">=</span> <span class="n">cov_scaled</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">sum_shape</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">sum_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">sum_dims</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">new_cov</span> <span class="o">=</span> <span class="n">DenseLinearOperator</span><span class="p">(</span><span class="n">new_cov</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">new_mean</span><span class="p">,</span> <span class="n">new_cov</span></div>
 

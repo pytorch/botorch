@@ -1,0 +1,1265 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.8.3/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.8.3/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.8.3/img/botorch.png"/><link rel="shortcut icon" href="/v/0.8.3/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.8.3/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.8.3/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.8.3/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.8.3/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.8.3/css/main.css"/><script src="/v/0.8.3/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.8.3/"><img class="logo" src="/v/0.8.3/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.8.3/versions"><h3>0.8.3</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.8.3/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.8.3/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.8.3/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.8.3/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.acquisition.multi_objective.predictive_entropy_search</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Acquisition function for predictive entropy search for multi-objective Bayesian</span>
+<span class="sd">optimization (PES). The code does not support constraint handling.</span>
+
+<span class="sd">NOTE: The PES acquisition might not be differentiable. As a result, we recommend</span>
+<span class="sd">optimizing the acquisition function using finite differences.</span>
+
+<span class="sd">References:</span>
+
+<span class="sd">.. [Garrido-Merchan2019]</span>
+<span class="sd">    E. Garrido-Merchan and D. Hernandez-Lobato. Predictive Entropy Search for</span>
+<span class="sd">    Multi-objective Bayesian Optimization with Constraints. Neurocomputing. 2019.</span>
+<span class="sd">    The computation follows the procedure described in the supplementary material:</span>
+<span class="sd">    https://www.sciencedirect.com/science/article/abs/pii/S0925231219308525</span>
+
+<span class="sd">"""</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">InputDataError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">check_no_nans</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">concatenate_pending_points</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Normal</span>
+
+
+<div class="viewcode-block" id="qMultiObjectivePredictiveEntropySearch"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch">[docs]</a><span class="k">class</span> <span class="nc">qMultiObjectivePredictiveEntropySearch</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""The acquisition function for Predictive Entropy Search. The code supports</span>
+<span class="sd">    both single and multiple objectives as well as batching.</span>
+
+<span class="sd">    This acquisition function approximates the mutual information between the</span>
+<span class="sd">    observation at a candidate point `X` and the Pareto optimal input using the</span>
+<span class="sd">    moment-matching procedure known as expectation propagation (EP).</span>
+
+<span class="sd">    See the Appendix of [Garrido-Merchan2019]_ for the description of the EP</span>
+<span class="sd">    procedure.</span>
+
+<span class="sd">    IMPORTANT NOTES:</span>
+<span class="sd">    (i) The PES acquisition function estimated using EP is sometimes not</span>
+<span class="sd">    differentiable, and therefore we advise using a finite-difference estimate of</span>
+<span class="sd">    the gradient as opposed to the gradients identified using automatic</span>
+<span class="sd">    differentiation, which occasionally outputs `nan` values.</span>
+
+<span class="sd">    The source of this differentiability is in the `_update_damping` function, which</span>
+<span class="sd">    finds the damping factor `a` that is used to update the EP parameters</span>
+<span class="sd">    `a * param_new + (1 - a) * param_old`. The damping factor has to ensure</span>
+<span class="sd">    that the updated covariance matrices, `a * cov_f_new + (1 - a) cov_f_old`, is</span>
+<span class="sd">    positive semi-definiteness. We follow the original paper, which identifies</span>
+<span class="sd">    `a` via a successive halving scheme i.e. we check `a=1` then `a=0.5` etc. This</span>
+<span class="sd">    procedure means `a` is a function of the test input `X`. This function is not</span>
+<span class="sd">    differentiable  in `X`.</span>
+
+<span class="sd">    (ii) EP could potentially fail for a number of reasons:</span>
+
+<span class="sd">        (a) When the sampled Pareto optimal points `x_p` is poor compared to the</span>
+<span class="sd">        training or testing data `x_n`.</span>
+
+<span class="sd">        (b) When the training or testing data `x_n` is close the Pareto optimal</span>
+<span class="sd">        points `x_p`.</span>
+
+<span class="sd">        (c) When the convergence threshold is set too small.</span>
+
+
+<span class="sd">        Problem (a) occurs because we have to compute the variable:</span>
+<span class="sd">        `alpha = (mean(x_n) - mean(x_p)) / std(x_n - x_p)`, which becomes very</span>
+<span class="sd">        large when `x_n` is better than `x_p` with high-probability. This leads to a</span>
+<span class="sd">        log(0) error when we compute `log(1 - cdf(alpha))`. We have pre-emptively</span>
+<span class="sd">        clamped some values depending on `1`alpha` in order to mitigate this.</span>
+
+<span class="sd">        Problem (b) occurs because we have to compute matrix inverses for the</span>
+<span class="sd">        two-dimensional marginals (x_n, x_p). To address this we manually add jitter</span>
+<span class="sd">        to the diagonal of the covariance matrix i.e. `ep_jitter` when training and</span>
+<span class="sd">        `test_jitter` when testing. The default choice is not always appropriate</span>
+<span class="sd">        because the same jitter is used for the inversion of the covariance</span>
+<span class="sd">        and precision matrix, which are on different scales.</span>
+
+<span class="sd">        TODO: come up with strategy to adaptively update the jitter.</span>
+
+<span class="sd">        Problem (c) occurs because a smaller threshold usually means that more EP</span>
+<span class="sd">        iterations are required. Running too many EP iterations could lead to</span>
+<span class="sd">        invertibility problems such as in problem (b). Setting a larger threshold</span>
+<span class="sd">        or reducing the number of EP iterations could alleviate this.</span>
+
+<span class="sd">    (iii) The estimated acquisition value could be negative.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">pareto_sets</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_ep_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">250</span><span class="p">,</span>
+        <span class="n">ep_jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+        <span class="n">test_jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Multi-objective predictive entropy search acquisition function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A fitted batched model with `M` number of outputs.</span>
+<span class="sd">            pareto_sets: A `num_pareto_samples x P x d`-dim tensor containing the</span>
+<span class="sd">                Pareto optimal set of inputs, where `P` is the number of pareto</span>
+<span class="sd">                optimal points. The points in each sample have to be discrete</span>
+<span class="sd">                otherwise expectation propagation will fail.</span>
+<span class="sd">            maximize: If true, we consider a maximization problem.</span>
+<span class="sd">            X_pending: A `m x d`-dim Tensor of `m` design points that have been</span>
+<span class="sd">                submitted for function evaluation, but have not yet been evaluated.</span>
+<span class="sd">            max_ep_iterations: The maximum number of expectation propagation</span>
+<span class="sd">                iterations. (The minimum number of iterations is set at 3.)</span>
+<span class="sd">            ep_jitter: The amount of jitter added for the matrix inversion that</span>
+<span class="sd">                occurs during the expectation propagation update during the training</span>
+<span class="sd">                phase.</span>
+<span class="sd">            test_jitter: The amount of jitter added for the matrix inversion that</span>
+<span class="sd">                occurs during the expectation propagation update in the testing</span>
+<span class="sd">                phase.</span>
+<span class="sd">            threshold: The convergence threshold for expectation propagation. This</span>
+<span class="sd">                assesses the relative change in the mean and covariance. We default</span>
+<span class="sd">                to one percent change i.e. `threshold = 1e-2`.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="o">=</span> <span class="n">maximize</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">X_pending</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelListGP</span><span class="p">):</span>
+            <span class="n">train_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">train_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Batch GP models (e.g. fantasized models) are not currently supported</span>
+        <span class="k">if</span> <span class="n">train_X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Batch GP models (e.g. fantasized models) are not supported."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">pareto_sets</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">3</span> <span class="ow">or</span> <span class="n">pareto_sets</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"The Pareto set should have a shape of "</span>
+                <span class="s2">"`num_pareto_samples x num_pareto_points x input_dim`."</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pareto_sets</span> <span class="o">=</span> <span class="n">pareto_sets</span>
+
+        <span class="c1"># add the pareto set to the existing training data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_pareto_samples</span> <span class="o">=</span> <span class="n">pareto_sets</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">augmented_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">train_X</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_pareto_samples</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">pareto_sets</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_ep_iterations</span> <span class="o">=</span> <span class="n">max_ep_iterations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ep_jitter</span> <span class="o">=</span> <span class="n">ep_jitter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_jitter</span> <span class="o">=</span> <span class="n">test_jitter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_expectation_propagation</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_expectation_propagation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Perform expectation propagation to obtain the covariance factors that</span>
+<span class="sd">        depend on the Pareto sets.</span>
+
+<span class="sd">        The updates are performed in the natural parameter space. For a multivariate</span>
+<span class="sd">        normal distribution with mean mu and covariance Sigma, we call Sigma^{-1}</span>
+<span class="sd">        the natural covariance and Sigma^{-1} mu the natural mean.</span>
+<span class="sd">        """</span>
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># INITIALIZATION</span>
+        <span class="c1">###########################################################################</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelListGP</span><span class="p">):</span>
+            <span class="n">train_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">train_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">train_X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">train_X</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
+        <span class="n">num_pareto_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_pareto_samples</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pareto_sets</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="c1"># initialize the predictive natural mean and variances</span>
+        <span class="p">(</span>
+            <span class="n">pred_nat_mean</span><span class="p">,</span>
+            <span class="n">pred_nat_cov</span><span class="p">,</span>
+            <span class="n">pred_mean</span><span class="p">,</span>
+            <span class="n">pred_cov</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">_initialize_predictive_matrices</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">augmented_X</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">observation_noise</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">jitter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ep_jitter</span><span class="p">,</span>
+            <span class="n">natural</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">pred_f_mean</span> <span class="o">=</span> <span class="n">pred_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">M</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">pred_f_nat_mean</span> <span class="o">=</span> <span class="n">pred_nat_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">M</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">pred_f_cov</span> <span class="o">=</span> <span class="n">pred_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">M</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+        <span class="n">pred_f_nat_cov</span> <span class="o">=</span> <span class="n">pred_nat_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">M</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+
+        <span class="c1"># initialize the marginals</span>
+        <span class="c1"># `num_pareto_samples x M x (N + P)`</span>
+        <span class="n">mean_f</span> <span class="o">=</span> <span class="n">pred_f_mean</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="n">nat_mean_f</span> <span class="o">=</span> <span class="n">pred_f_nat_mean</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="c1"># `num_pareto_samples x M x (N + P) x (N + P)`</span>
+        <span class="n">cov_f</span> <span class="o">=</span> <span class="n">pred_f_cov</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="n">nat_cov_f</span> <span class="o">=</span> <span class="n">pred_f_nat_cov</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+
+        <span class="c1"># initialize omega the function which encodes the fact that the pareto points</span>
+        <span class="c1"># are optimal in the feasible space i.e. any point in the feasible space</span>
+        <span class="c1"># should not dominate the Pareto efficient points.</span>
+
+        <span class="c1"># `num_pareto_samples x M x (N + P) x P x 2`</span>
+        <span class="n">omega_f_nat_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_pareto_samples</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="c1"># `num_pareto_samples x M x (N + P) x P x 2 x 2`</span>
+        <span class="n">omega_f_nat_cov</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">num_pareto_samples</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="o">**</span><span class="n">tkwargs</span>
+        <span class="p">)</span>
+
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># EXPECTATION PROPAGATION</span>
+        <span class="c1">###########################################################################</span>
+        <span class="n">damping</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_pareto_samples</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+
+        <span class="n">iteration</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">damping</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">iteration</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_ep_iterations</span><span class="p">):</span>
+            <span class="c1"># Compute the new natural mean and covariance</span>
+            <span class="c1">####################################################################</span>
+            <span class="c1"># OBJECTIVE FUNCTION: OMEGA UPDATE</span>
+            <span class="c1">####################################################################</span>
+            <span class="n">omega_f_nat_mean_new</span><span class="p">,</span> <span class="n">omega_f_nat_cov_new</span> <span class="o">=</span> <span class="n">_safe_update_omega</span><span class="p">(</span>
+                <span class="n">mean_f</span><span class="o">=</span><span class="n">mean_f</span><span class="p">,</span>
+                <span class="n">cov_f</span><span class="o">=</span><span class="n">cov_f</span><span class="p">,</span>
+                <span class="n">omega_f_nat_mean</span><span class="o">=</span><span class="n">omega_f_nat_mean</span><span class="p">,</span>
+                <span class="n">omega_f_nat_cov</span><span class="o">=</span><span class="n">omega_f_nat_cov</span><span class="p">,</span>
+                <span class="n">N</span><span class="o">=</span><span class="n">N</span><span class="p">,</span>
+                <span class="n">P</span><span class="o">=</span><span class="n">P</span><span class="p">,</span>
+                <span class="n">M</span><span class="o">=</span><span class="n">M</span><span class="p">,</span>
+                <span class="n">maximize</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">,</span>
+                <span class="n">jitter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ep_jitter</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1">####################################################################</span>
+            <span class="c1"># OBJECTIVE FUNCTION: MARGINAL UPDATE</span>
+            <span class="c1">####################################################################</span>
+            <span class="n">nat_mean_f_new</span><span class="p">,</span> <span class="n">nat_cov_f_new</span> <span class="o">=</span> <span class="n">_update_marginals</span><span class="p">(</span>
+                <span class="n">pred_f_nat_mean</span><span class="o">=</span><span class="n">pred_f_nat_mean</span><span class="p">,</span>
+                <span class="n">pred_f_nat_cov</span><span class="o">=</span><span class="n">pred_f_nat_cov</span><span class="p">,</span>
+                <span class="n">omega_f_nat_mean</span><span class="o">=</span><span class="n">omega_f_nat_mean_new</span><span class="p">,</span>
+                <span class="n">omega_f_nat_cov</span><span class="o">=</span><span class="n">omega_f_nat_cov_new</span><span class="p">,</span>
+                <span class="n">N</span><span class="o">=</span><span class="n">N</span><span class="p">,</span>
+                <span class="n">P</span><span class="o">=</span><span class="n">P</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1">########################################################################</span>
+            <span class="c1"># OBJECTIVE FUNCTION: DAMPING UPDATE</span>
+            <span class="c1">########################################################################</span>
+            <span class="c1"># update damping of objectives</span>
+            <span class="n">damping</span><span class="p">,</span> <span class="n">cholesky_nat_cov_f</span> <span class="o">=</span> <span class="n">_update_damping</span><span class="p">(</span>
+                <span class="n">nat_cov</span><span class="o">=</span><span class="n">nat_cov_f</span><span class="p">,</span>
+                <span class="n">nat_cov_new</span><span class="o">=</span><span class="n">nat_cov_f_new</span><span class="p">,</span>
+                <span class="n">damping_factor</span><span class="o">=</span><span class="n">damping</span><span class="p">,</span>
+                <span class="n">jitter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ep_jitter</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">check_no_nans</span><span class="p">(</span><span class="n">cholesky_nat_cov_f</span><span class="p">)</span>
+            <span class="c1">########################################################################</span>
+            <span class="c1"># OBJECTIVE FUNCTION: DAMPED UPDATE</span>
+            <span class="c1">########################################################################</span>
+            <span class="c1"># Damp update of omega</span>
+            <span class="n">omega_f_nat_mean</span> <span class="o">=</span> <span class="n">_damped_update</span><span class="p">(</span>
+                <span class="n">old_factor</span><span class="o">=</span><span class="n">omega_f_nat_mean</span><span class="p">,</span>
+                <span class="n">new_factor</span><span class="o">=</span><span class="n">omega_f_nat_mean_new</span><span class="p">,</span>
+                <span class="n">damping_factor</span><span class="o">=</span><span class="n">damping</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">omega_f_nat_cov</span> <span class="o">=</span> <span class="n">_damped_update</span><span class="p">(</span>
+                <span class="n">old_factor</span><span class="o">=</span><span class="n">omega_f_nat_cov</span><span class="p">,</span>
+                <span class="n">new_factor</span><span class="o">=</span><span class="n">omega_f_nat_cov_new</span><span class="p">,</span>
+                <span class="n">damping_factor</span><span class="o">=</span><span class="n">damping</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1"># update the mean and covariance</span>
+            <span class="n">nat_mean_f</span> <span class="o">=</span> <span class="n">_damped_update</span><span class="p">(</span>
+                <span class="n">old_factor</span><span class="o">=</span><span class="n">nat_mean_f</span><span class="p">,</span> <span class="n">new_factor</span><span class="o">=</span><span class="n">nat_mean_f_new</span><span class="p">,</span> <span class="n">damping_factor</span><span class="o">=</span><span class="n">damping</span>
+            <span class="p">)</span>
+            <span class="n">nat_cov_f</span> <span class="o">=</span> <span class="n">_damped_update</span><span class="p">(</span>
+                <span class="n">old_factor</span><span class="o">=</span><span class="n">nat_cov_f</span><span class="p">,</span> <span class="n">new_factor</span><span class="o">=</span><span class="n">nat_cov_f_new</span><span class="p">,</span> <span class="n">damping_factor</span><span class="o">=</span><span class="n">damping</span>
+            <span class="p">)</span>
+
+            <span class="c1"># compute cholesky inverse</span>
+            <span class="n">cov_f_new</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cholesky_inverse</span><span class="p">(</span><span class="n">cholesky_nat_cov_f</span><span class="p">)</span>
+            <span class="n">mean_f_new</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"...ij,...j-&gt;...i"</span><span class="p">,</span> <span class="n">cov_f_new</span><span class="p">,</span> <span class="n">nat_mean_f</span><span class="p">)</span>
+            <span class="n">check_no_nans</span><span class="p">(</span><span class="n">cov_f_new</span><span class="p">)</span>
+            <span class="c1">########################################################################</span>
+            <span class="c1"># OBJECTIVE FUNCTION: CONVERGENCE UPDATE</span>
+            <span class="c1">########################################################################</span>
+            <span class="c1"># Set the damping to zero when the change in the mean and</span>
+            <span class="c1"># covariance is less than the threshold</span>
+            <span class="n">damping</span><span class="p">,</span> <span class="n">delta_mean_f</span><span class="p">,</span> <span class="n">delta_cov_f</span> <span class="o">=</span> <span class="n">_update_damping_when_converged</span><span class="p">(</span>
+                <span class="n">mean_old</span><span class="o">=</span><span class="n">mean_f</span><span class="p">,</span>
+                <span class="n">mean_new</span><span class="o">=</span><span class="n">mean_f_new</span><span class="p">,</span>
+                <span class="n">cov_old</span><span class="o">=</span><span class="n">cov_f</span><span class="p">,</span>
+                <span class="n">cov_new</span><span class="o">=</span><span class="n">cov_f_new</span><span class="p">,</span>
+                <span class="n">damping_factor</span><span class="o">=</span><span class="n">damping</span><span class="p">,</span>
+                <span class="n">threshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span>
+                <span class="n">iteration</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">cov_f</span> <span class="o">=</span> <span class="n">cov_f_new</span>
+            <span class="n">mean_f</span> <span class="o">=</span> <span class="n">mean_f_new</span>
+            <span class="n">iteration</span> <span class="o">=</span> <span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="c1">############################################################################</span>
+        <span class="c1"># SAVE OMEGA AND PHI FACTORS</span>
+        <span class="c1">############################################################################</span>
+        <span class="n">check_no_nans</span><span class="p">(</span><span class="n">omega_f_nat_mean</span><span class="p">)</span>
+        <span class="n">check_no_nans</span><span class="p">(</span><span class="n">omega_f_nat_cov</span><span class="p">)</span>
+        <span class="c1"># save phi and omega for the forward</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_omega_f_nat_mean</span> <span class="o">=</span> <span class="n">omega_f_nat_mean</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_omega_f_nat_cov</span> <span class="o">=</span> <span class="n">omega_f_nat_cov</span>
+
+    <span class="k">def</span> <span class="nf">_compute_information_gain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate qMultiObjectivePredictiveEntropySearch on the candidate set `X`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim</span>
+<span class="sd">                design points each.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape'`-dim Tensor of Predictive Entropy Search values at the</span>
+<span class="sd">            given design points `X`.</span>
+<span class="sd">        """</span>
+        <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span>
+
+        <span class="k">if</span> <span class="n">M</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelListGP</span><span class="p">):</span>
+            <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pareto_sets</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">num_pareto_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_pareto_samples</span>
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># AUGMENT X WITH THE SAMPLED PARETO SET</span>
+        <span class="c1">###########################################################################</span>
+        <span class="n">new_shape</span> <span class="o">=</span> <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_pareto_samples</span><span class="p">])</span> <span class="o">+</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+        <span class="n">expanded_X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">new_shape</span><span class="p">)</span>
+        <span class="n">expanded_ps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pareto_sets</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pareto_sets</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="c1"># `batch_shape x num_pareto_samples x (q + P) x d`</span>
+        <span class="n">aug_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">expanded_X</span><span class="p">,</span> <span class="n">expanded_ps</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># COMPUTE THE POSTERIORS AND OBSERVATION NOISE</span>
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># compute predictive distribution without observation noise</span>
+        <span class="p">(</span>
+            <span class="n">pred_nat_mean</span><span class="p">,</span>
+            <span class="n">pred_nat_cov</span><span class="p">,</span>
+            <span class="n">pred_mean</span><span class="p">,</span>
+            <span class="n">pred_cov</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">_initialize_predictive_matrices</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">aug_X</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">jitter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">test_jitter</span><span class="p">,</span>
+            <span class="n">natural</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">pred_f_mean</span> <span class="o">=</span> <span class="n">pred_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">M</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">pred_f_nat_mean</span> <span class="o">=</span> <span class="n">pred_nat_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">M</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">pred_f_cov</span> <span class="o">=</span> <span class="n">pred_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">M</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+        <span class="n">pred_f_nat_cov</span> <span class="o">=</span> <span class="n">pred_nat_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">M</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+
+        <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">pred_cov_noise</span><span class="p">)</span> <span class="o">=</span> <span class="n">_initialize_predictive_matrices</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">aug_X</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">jitter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">test_jitter</span><span class="p">,</span>
+            <span class="n">natural</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">pred_f_cov_noise</span> <span class="o">=</span> <span class="n">pred_cov_noise</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">M</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+        <span class="n">observation_noise</span> <span class="o">=</span> <span class="n">pred_f_cov_noise</span> <span class="o">-</span> <span class="n">pred_f_cov</span>
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># INITIALIZE THE EP FACTORS</span>
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># `batch_shape x num_pareto_samples x M x (q + P) x P x 2`</span>
+        <span class="n">omega_f_nat_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_pareto_samples</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">q</span> <span class="o">+</span> <span class="n">P</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="o">**</span><span class="n">tkwargs</span>
+        <span class="p">)</span>
+        <span class="c1"># `batch_shape x num_pareto_samples x M x (q + P) x P x 2 x 2`</span>
+        <span class="n">omega_f_nat_cov</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_pareto_samples</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">q</span> <span class="o">+</span> <span class="n">P</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="o">**</span><span class="n">tkwargs</span>
+        <span class="p">)</span>
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># RUN EP ONCE</span>
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># run update omega once</span>
+        <span class="n">omega_f_nat_mean</span><span class="p">,</span> <span class="n">omega_f_nat_cov</span> <span class="o">=</span> <span class="n">_safe_update_omega</span><span class="p">(</span>
+            <span class="n">mean_f</span><span class="o">=</span><span class="n">pred_f_mean</span><span class="p">,</span>
+            <span class="n">cov_f</span><span class="o">=</span><span class="n">pred_f_cov</span><span class="p">,</span>
+            <span class="n">omega_f_nat_mean</span><span class="o">=</span><span class="n">omega_f_nat_mean</span><span class="p">,</span>
+            <span class="n">omega_f_nat_cov</span><span class="o">=</span><span class="n">omega_f_nat_cov</span><span class="p">,</span>
+            <span class="n">N</span><span class="o">=</span><span class="n">q</span><span class="p">,</span>
+            <span class="n">P</span><span class="o">=</span><span class="n">P</span><span class="p">,</span>
+            <span class="n">M</span><span class="o">=</span><span class="n">M</span><span class="p">,</span>
+            <span class="n">maximize</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">,</span>
+            <span class="n">jitter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">test_jitter</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># ADD THE CACHE FACTORS BACK</span>
+        <span class="c1">###########################################################################</span>
+        <span class="n">omega_f_nat_mean</span><span class="p">,</span> <span class="n">omega_f_nat_cov</span> <span class="o">=</span> <span class="n">_augment_factors_with_cached_factors</span><span class="p">(</span>
+            <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span>
+            <span class="n">N</span><span class="o">=</span><span class="n">N</span><span class="p">,</span>
+            <span class="n">omega_f_nat_mean</span><span class="o">=</span><span class="n">omega_f_nat_mean</span><span class="p">,</span>
+            <span class="n">cached_omega_f_nat_mean</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega_f_nat_mean</span><span class="p">,</span>
+            <span class="n">omega_f_nat_cov</span><span class="o">=</span><span class="n">omega_f_nat_cov</span><span class="p">,</span>
+            <span class="n">cached_omega_f_nat_cov</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_omega_f_nat_cov</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># COMPUTE THE MARGINAL</span>
+        <span class="c1">###########################################################################</span>
+        <span class="n">nat_mean_f</span><span class="p">,</span> <span class="n">nat_cov_f</span> <span class="o">=</span> <span class="n">_update_marginals</span><span class="p">(</span>
+            <span class="n">pred_f_nat_mean</span><span class="o">=</span><span class="n">pred_f_nat_mean</span><span class="p">,</span>
+            <span class="n">pred_f_nat_cov</span><span class="o">=</span><span class="n">pred_f_nat_cov</span><span class="p">,</span>
+            <span class="n">omega_f_nat_mean</span><span class="o">=</span><span class="n">omega_f_nat_mean</span><span class="p">,</span>
+            <span class="n">omega_f_nat_cov</span><span class="o">=</span><span class="n">omega_f_nat_cov</span><span class="p">,</span>
+            <span class="n">N</span><span class="o">=</span><span class="n">q</span><span class="p">,</span>
+            <span class="n">P</span><span class="o">=</span><span class="n">P</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># COMPUTE THE DAMPED UPDATE</span>
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># # update damping of objectives</span>
+        <span class="n">damping</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+            <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_pareto_samples</span><span class="p">,</span> <span class="n">M</span><span class="p">]),</span> <span class="o">**</span><span class="n">tkwargs</span>
+        <span class="p">)</span>
+        <span class="n">damping</span><span class="p">,</span> <span class="n">cholesky_nat_cov_f_new</span> <span class="o">=</span> <span class="n">_update_damping</span><span class="p">(</span>
+            <span class="n">nat_cov</span><span class="o">=</span><span class="n">pred_f_nat_cov</span><span class="p">,</span>
+            <span class="n">nat_cov_new</span><span class="o">=</span><span class="n">nat_cov_f</span><span class="p">,</span>
+            <span class="n">damping_factor</span><span class="o">=</span><span class="n">damping</span><span class="p">,</span>
+            <span class="n">jitter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">test_jitter</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># invert matrix</span>
+        <span class="n">cov_f_new</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cholesky_inverse</span><span class="p">(</span><span class="n">cholesky_nat_cov_f_new</span><span class="p">)</span>
+        <span class="n">check_no_nans</span><span class="p">(</span><span class="n">cov_f_new</span><span class="p">)</span>
+
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># COMPUTE THE LOG DETERMINANTS</span>
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># compute the initial log determinant term</span>
+        <span class="n">log_det_pred_f_cov_noise</span> <span class="o">=</span> <span class="n">_compute_log_determinant</span><span class="p">(</span><span class="n">cov</span><span class="o">=</span><span class="n">pred_f_cov_noise</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
+        <span class="c1"># compute the post log determinant term</span>
+        <span class="n">log_det_cov_f</span> <span class="o">=</span> <span class="n">_compute_log_determinant</span><span class="p">(</span><span class="n">cov</span><span class="o">=</span><span class="n">cov_f_new</span> <span class="o">+</span> <span class="n">observation_noise</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
+
+        <span class="c1">###########################################################################</span>
+        <span class="c1"># COMPUTE THE ACQUISITION FUNCTION</span>
+        <span class="c1">###########################################################################</span>
+        <span class="n">q_pes_f</span> <span class="o">=</span> <span class="n">log_det_pred_f_cov_noise</span> <span class="o">-</span> <span class="n">log_det_cov_f</span>
+        <span class="n">check_no_nans</span><span class="p">(</span><span class="n">q_pes_f</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">q_pes_f</span>
+
+<div class="viewcode-block" id="qMultiObjectivePredictiveEntropySearch.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
+    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate qMultiObjectivePredictiveEntropySearch on the candidate set `X`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim</span>
+<span class="sd">                design points each.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape'`-dim Tensor of acquisition values at the given design</span>
+<span class="sd">            points `X`.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_information_gain</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="log_cdf_robust"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.log_cdf_robust">[docs]</a><span class="k">def</span> <span class="nf">log_cdf_robust</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Computes the logarithm of the normal cumulative density robustly. This uses</span>
+<span class="sd">    the approximation log(1-z) ~ -z when z is small:</span>
+
+<span class="sd">    if x &gt; 5:</span>
+<span class="sd">        log(cdf(x)) = log(1-cdf(-x)) approx -cdf(-x)</span>
+<span class="sd">    else:</span>
+<span class="sd">        log(cdf(x)).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x: a `x_shape`-dim Tensor.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">        A `x_shape`-dim Tensor.</span>
+<span class="sd">    """</span>
+    <span class="n">CLAMP_LB</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span>
+    <span class="n">NEG_INF</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">min</span>
+    <span class="n">normal</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="n">cdf_x</span> <span class="o">=</span> <span class="n">normal</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">neg_cdf_neg_x</span> <span class="o">=</span> <span class="o">-</span><span class="n">normal</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">log_cdf_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">cdf_x</span><span class="p">),</span> <span class="n">neg_cdf_neg_x</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">log_cdf_x</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">NEG_INF</span><span class="p">,</span> <span class="o">-</span><span class="n">CLAMP_LB</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_initialize_predictive_matrices</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+    <span class="n">natural</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Initializes the natural predictive mean and covariance matrix. For a</span>
+<span class="sd">    multivariate normal distribution with mean mu and covariance Sigma, the natural</span>
+<span class="sd">    mean is Sigma^{-1} mu and the natural covariance is Sigma^{-1}.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A `batch_shape x R x d`-dim Tensor.</span>
+<span class="sd">        model: The fitted model.</span>
+<span class="sd">        observation_noise: If true, the posterior is computed with observation noise.</span>
+<span class="sd">        jitter: The jitter added to the covariance matrix.</span>
+<span class="sd">        natural: If true, we compute the natural statistics as well.</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        A four-element tuple containing</span>
+
+<span class="sd">        - pred_nat_mean: A `batch_shape x num_outputs x R `-dim Tensor containing the</span>
+<span class="sd">            predictive natural mean vectors.</span>
+<span class="sd">        - pred_nat_cov: A `batch_shape x num_outputs x R x R`-dim Tensor containing</span>
+<span class="sd">            the predictive natural covariance matrices.</span>
+<span class="sd">        - pred_mean: A `batch_shape x num_outputs x R`-dim Tensor containing the</span>
+<span class="sd">            predictive mean vectors.</span>
+<span class="sd">        - pred_cov: A `batch_shape x num_outputs x R x R`-dim Tensor containing the</span>
+<span class="sd">            predictive covariance matrices.</span>
+<span class="sd">    """</span>
+    <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+    <span class="c1"># compute the predictive mean and covariances at X</span>
+    <span class="n">posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">)</span>
+
+    <span class="c1"># `batch_shape x (R * num_outputs) x (R * num_outputs)`</span>
+    <span class="n">init_pred_cov</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">covariance_matrix</span>
+    <span class="n">num_outputs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">init_pred_cov</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">num_outputs</span><span class="p">)</span>
+    <span class="n">pred_cov</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">init_pred_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">(</span><span class="n">m</span> <span class="o">*</span> <span class="n">R</span><span class="p">)</span> <span class="p">:</span> <span class="p">((</span><span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">R</span><span class="p">),</span> <span class="p">(</span><span class="n">m</span> <span class="o">*</span> <span class="n">R</span><span class="p">)</span> <span class="p">:</span> <span class="p">((</span><span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">R</span><span class="p">)]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span>
+            <span class="o">-</span><span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="c1"># `batch_shape x R x R x num_outputs` (before swap axes)</span>
+    <span class="c1"># `batch_shape x num_outputs x R * R`</span>
+    <span class="n">pred_cov</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">pred_cov</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">identity</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">pred_cov</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">))</span>
+    <span class="n">pred_cov</span> <span class="o">=</span> <span class="n">pred_cov</span> <span class="o">+</span> <span class="n">jitter</span> <span class="o">*</span> <span class="n">identity</span>
+
+    <span class="c1"># `batch_shape x num_outputs x R`</span>
+    <span class="n">pred_mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1">#############################################################</span>
+    <span class="k">if</span> <span class="n">natural</span><span class="p">:</span>
+        <span class="c1"># natural parameters</span>
+        <span class="c1"># `batch_shape x num_outputs x R x R`</span>
+        <span class="n">cholesky_pred_cov</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky_ex</span><span class="p">(</span><span class="n">pred_cov</span><span class="p">)</span>
+        <span class="n">pred_nat_cov</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cholesky_inverse</span><span class="p">(</span><span class="n">cholesky_pred_cov</span><span class="p">)</span>
+
+        <span class="c1"># `batch_shape x num_outputs x R`</span>
+        <span class="n">pred_nat_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"...ij,...j-&gt;...i"</span><span class="p">,</span> <span class="n">pred_nat_cov</span><span class="p">,</span> <span class="n">pred_mean</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pred_nat_mean</span><span class="p">,</span> <span class="n">pred_nat_cov</span><span class="p">,</span> <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span>
+
+
+<span class="k">def</span> <span class="nf">_get_omega_f_contribution</span><span class="p">(</span>
+    <span class="n">mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">M</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Extract the mean vector and covariance matrix corresponding to the `2 x 2`</span>
+<span class="sd">    multivariate normal blocks in the objective model between the points in `X` and</span>
+<span class="sd">    the Pareto optimal set.</span>
+
+<span class="sd">    [There is likely a more efficient way to do this.]</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mean: A `batch_shape x M x (N + P)`-dim Tensor containing the natural</span>
+<span class="sd">            mean matrix for the objectives.</span>
+<span class="sd">        cov: A `batch_shape x M x (N + P) x (N + P)`-dim Tensor containing</span>
+<span class="sd">            the natural mean matrix for the objectives.</span>
+<span class="sd">        N: The number of design points.</span>
+<span class="sd">        P: The number of Pareto optimal points.</span>
+<span class="sd">        M: The number of objectives.</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        A two-element tuple containing</span>
+
+<span class="sd">        - mean_fX_fS: A `batch_shape x M x (N + P) x P x 2`-dim Tensor containing the</span>
+<span class="sd">            means of the inputs and Pareto optimal points.</span>
+<span class="sd">        - cov_fX_fS: A `batch_shape x M x (N + P) x P x 2 x 2`-dim Tensor containing</span>
+<span class="sd">            the covariances between the inputs and Pareto optimal points.</span>
+<span class="sd">    """</span>
+    <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">mean</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">mean</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+    <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="c1"># `batch_shape x M x (N + P) x P x 2 x 2`</span>
+    <span class="n">cov_fX_fS</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">M</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+    <span class="c1"># `batch_shape x M x (N + P) x P x 2`</span>
+    <span class="n">mean_fX_fS</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">M</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+
+    <span class="c1"># `batch_shape x M x (N + P) x P`</span>
+    <span class="n">mean_fX_fS</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">mean</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">P</span><span class="p">]))</span>
+    <span class="c1"># `batch_shape x M x (N + P) x P`</span>
+    <span class="n">mean_fX_fS</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">N</span><span class="p">:]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">mean</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">P</span><span class="p">]))</span>
+    <span class="p">)</span>
+    <span class="c1"># `batch_shape x M x (N + P) x P`</span>
+    <span class="n">cov_fX_fS</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">)]</span>
+        <span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">M</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">,</span> <span class="n">P</span><span class="p">]))</span>
+    <span class="p">)</span>
+    <span class="c1"># `batch_shape x M x (N + P) x P`</span>
+    <span class="n">cov_fX_fS</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">)]</span>
+        <span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">M</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">,</span> <span class="n">P</span><span class="p">]))</span>
+    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">P</span><span class="p">):</span>
+        <span class="c1"># `batch_shape x M x (N + P)`</span>
+        <span class="n">cov_p</span> <span class="o">=</span> <span class="n">cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">),</span> <span class="n">N</span> <span class="o">+</span> <span class="n">p</span><span class="p">]</span>
+        <span class="n">cov_fX_fS</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">cov_p</span>
+        <span class="n">cov_fX_fS</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">cov_p</span>
+
+    <span class="k">return</span> <span class="n">mean_fX_fS</span><span class="p">,</span> <span class="n">cov_fX_fS</span>
+
+
+<span class="k">def</span> <span class="nf">_replace_pareto_diagonal</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">"""Replace the pareto diagonal with identity matricx.</span>
+
+<span class="sd">    The Pareto diagonal of the omega factor shouldn't be updated because does not</span>
+<span class="sd">    contribute anything: `omega(x_p, x_p) = 1` for any pareto optimal input `x_p`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        A: a `batch_shape x M x (N + P) x P x 2 x 2`-dim Tensor.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `batch_shape x M x (N + P) x P x 2 x 2`-dim Tensor, where the Pareto</span>
+<span class="sd">        diagonal is padded with identity matrices.</span>
+<span class="sd">    """</span>
+    <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">A</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">A</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+    <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">5</span><span class="p">]</span>
+    <span class="n">P</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">-</span> <span class="n">P</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">]</span>
+    <span class="n">identity</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">M</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">P</span><span class="p">):</span>
+        <span class="n">A</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">identity</span>
+
+    <span class="k">return</span> <span class="n">A</span>
+
+
+<span class="k">def</span> <span class="nf">_update_omega</span><span class="p">(</span>
+    <span class="n">mean_f</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">cov_f</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">omega_f_nat_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">omega_f_nat_cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">P</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">M</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Computes the new omega factors by matching the moments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mean_f: A `batch_shape x M x (N + P)`-dim Tensor containing the mean vector</span>
+<span class="sd">            for the objectives.</span>
+<span class="sd">        cov_f: A `batch_shape x M x (N + P) x (N + P)`-dim Tensor containing the</span>
+<span class="sd">            covariance matrix for the objectives.</span>
+<span class="sd">        omega_f_nat_mean: A `batch_shape x M x (N + P) x P x 2`-dim Tensor containing</span>
+<span class="sd">            the omega natural mean factors for the objective matrix.</span>
+<span class="sd">        omega_f_nat_cov: A `batch_shape x M x (N + P) x P x 2 x 2`-dim Tensor</span>
+<span class="sd">            containing the omega natural covariance factors for the objective matrix.</span>
+<span class="sd">        N: The number of design points.</span>
+<span class="sd">        M: The number of Pareto optimal points.</span>
+<span class="sd">        M: The number of objectives.</span>
+<span class="sd">        maximize: If true, we consider the Pareto maximum domination relation.</span>
+<span class="sd">        jitter: The jitter for the matrix inverse.</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        A two-element tuple containing</span>
+
+<span class="sd">        - omega_f_nat_mean_new: A `batch_shape x M x (N + P) x P x 2` containing the</span>
+<span class="sd">            new omega natural mean factors for the objective matrix.</span>
+<span class="sd">        - omega_f_nat_cov_new: A `batch_shape x M x (N + P) x P x 2 x 2` containing</span>
+<span class="sd">            the new omega natural covariance factors for the objective matrix.</span>
+<span class="sd">    """</span>
+    <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">mean_f</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">mean_f</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+    <span class="n">CLAMP_LB</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">tkwargs</span><span class="p">[</span><span class="s2">"dtype"</span><span class="p">])</span><span class="o">.</span><span class="n">eps</span>
+    <span class="n">NEG_INF</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">tkwargs</span><span class="p">[</span><span class="s2">"dtype"</span><span class="p">])</span><span class="o">.</span><span class="n">min</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="n">maximize</span> <span class="k">else</span> <span class="o">-</span><span class="mf">1.0</span>
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># EXTRACT THE NECESSARY COMPONENTS</span>
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># `batch_shape x M x (N + P) x P x 2`-dim mean</span>
+    <span class="c1"># `batch_shape x M x (N + P) x P x 2 x 2`-dim covariance</span>
+    <span class="n">mean_fX_fS</span><span class="p">,</span> <span class="n">cov_fX_fS</span> <span class="o">=</span> <span class="n">_get_omega_f_contribution</span><span class="p">(</span><span class="n">mean_f</span><span class="p">,</span> <span class="n">cov_f</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+    <span class="n">identity</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">cov_fX_fS</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">))</span>
+    <span class="c1"># remove the Pareto diagonal</span>
+    <span class="n">cov_fX_fS</span> <span class="o">=</span> <span class="n">_replace_pareto_diagonal</span><span class="p">(</span><span class="n">cov_fX_fS</span> <span class="o">+</span> <span class="n">jitter</span> <span class="o">*</span> <span class="n">identity</span><span class="p">)</span>
+    <span class="n">nat_cov_fX_fS</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">cov_fX_fS</span><span class="p">)</span>
+    <span class="n">nat_mean_fX_fS</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"...ij,...j-&gt;...i"</span><span class="p">,</span> <span class="n">nat_cov_fX_fS</span><span class="p">,</span> <span class="n">mean_fX_fS</span><span class="p">)</span>
+
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># COMPUTE THE CAVITIES</span>
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># cavity distribution</span>
+    <span class="c1"># natural parameters</span>
+    <span class="n">cav_nat_mean_f</span> <span class="o">=</span> <span class="n">nat_mean_fX_fS</span> <span class="o">-</span> <span class="n">omega_f_nat_mean</span>
+    <span class="n">cav_nat_cov_f</span> <span class="o">=</span> <span class="n">nat_cov_fX_fS</span> <span class="o">-</span> <span class="n">omega_f_nat_cov</span>
+
+    <span class="c1"># transform to standard parameters</span>
+    <span class="c1"># remove the Pareto diagonal</span>
+    <span class="n">cav_nat_cov_f</span> <span class="o">=</span> <span class="n">_replace_pareto_diagonal</span><span class="p">(</span><span class="n">cav_nat_cov_f</span><span class="p">)</span>
+    <span class="n">identity</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">cav_nat_cov_f</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">))</span>
+    <span class="n">cav_cov_f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">cav_nat_cov_f</span> <span class="o">+</span> <span class="n">jitter</span> <span class="o">*</span> <span class="n">identity</span><span class="p">)</span>
+
+    <span class="n">cav_mean_f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"...ij,...j-&gt;...i"</span><span class="p">,</span> <span class="n">cav_cov_f</span><span class="p">,</span> <span class="n">cav_nat_mean_f</span><span class="p">)</span>
+
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># COMPUTE THE NORMALIZATION CONSTANT</span>
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># `batch_shape x M x (N + P) x P`</span>
+    <span class="c1"># Equation 29</span>
+    <span class="n">cav_var_fX_minus_fS</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">cav_cov_f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">cav_cov_f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">cav_cov_f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">CLAMP_LB</span><span class="p">)</span>
+    <span class="n">cav_std_fX_minus_fS</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">cav_var_fX_minus_fS</span><span class="p">)</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">CLAMP_LB</span><span class="p">)</span>
+
+    <span class="c1"># `batch_shape x M x (N + P) x P`</span>
+    <span class="n">cav_mean_fX_minus_fS</span> <span class="o">=</span> <span class="n">weight</span> <span class="o">*</span> <span class="p">(</span><span class="n">cav_mean_f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">cav_mean_f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Equation 30</span>
+    <span class="n">cav_alpha</span> <span class="o">=</span> <span class="n">cav_mean_fX_minus_fS</span> <span class="o">/</span> <span class="n">cav_std_fX_minus_fS</span>
+    <span class="c1"># compute alpha pdf and cdf</span>
+    <span class="n">normal_alpha</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">cav_alpha</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">cav_alpha</span><span class="p">))</span>
+    <span class="c1"># `batch_shape x M x (N + P) x P`</span>
+    <span class="n">cav_alpha_log_cdf</span> <span class="o">=</span> <span class="n">log_cdf_robust</span><span class="p">(</span><span class="n">cav_alpha</span><span class="p">)</span>
+    <span class="c1"># `batch_shape x M x (N + P) x P`</span>
+    <span class="n">cav_alpha_log_pdf</span> <span class="o">=</span> <span class="n">normal_alpha</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">cav_alpha</span><span class="p">)</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">NEG_INF</span><span class="p">)</span>
+    <span class="c1"># `batch_shape x (N + P) x P`</span>
+    <span class="n">cav_sum_alpha_log_cdf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">cav_alpha_log_cdf</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">NEG_INF</span><span class="p">)</span>
+
+    <span class="c1"># compute normalization constant Z</span>
+    <span class="c1"># Equation 35</span>
+    <span class="n">cav_log_zeta</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">cav_sum_alpha_log_cdf</span><span class="p">))</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">NEG_INF</span><span class="p">)</span>
+
+    <span class="c1"># Need to clamp log values to prevent `exp(-inf) = nan`</span>
+    <span class="n">cav_logZ</span> <span class="o">=</span> <span class="n">cav_log_zeta</span>
+
+    <span class="c1"># Equation 40 [first bit]</span>
+    <span class="c1"># `batch_shape x (N + P) x P`</span>
+    <span class="n">cav_log_rho</span> <span class="o">=</span> <span class="o">-</span><span class="n">cav_logZ</span> <span class="o">+</span> <span class="n">cav_sum_alpha_log_cdf</span>
+
+    <span class="c1"># Equation 40 [second bit]</span>
+    <span class="c1"># `batch_shape x M x (N + P) x P`</span>
+    <span class="n">cav_log_rho</span> <span class="o">=</span> <span class="n">cav_log_rho</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span> <span class="o">-</span> <span class="n">cav_alpha_log_cdf</span> <span class="o">+</span> <span class="n">cav_alpha_log_pdf</span>
+    <span class="n">cav_rho</span> <span class="o">=</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">cav_log_rho</span><span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">NEG_INF</span><span class="p">,</span> <span class="o">-</span><span class="n">NEG_INF</span><span class="p">)</span>
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># COMPUTE THE PARTIAL DERIVATIVES</span>
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># `batch_shape x M x (N + P) x P x 2`</span>
+    <span class="c1"># Final vector: `[1, -1]`</span>
+    <span class="n">ones_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">cav_mean_f</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+    <span class="n">ones_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">ones_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># `batch_shape x M x (N + P) x P x 2 x 2`</span>
+    <span class="c1"># Final matrix: `[[1, -1], [-1, 1]]`</span>
+    <span class="n">ones_cov</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">cav_cov_f</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+    <span class="n">ones_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">ones_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">ones_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">ones_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># first partial derivation of the log Z with respect to the mean</span>
+    <span class="c1"># assuming maximization (this is also where the sign will change)</span>
+    <span class="c1"># Equation 41</span>
+    <span class="n">cav_dlogZ_dm</span> <span class="o">=</span> <span class="n">cav_rho</span> <span class="o">/</span> <span class="n">cav_std_fX_minus_fS</span>
+    <span class="n">cav_dlogZ_dm</span> <span class="o">=</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">cav_dlogZ_dm</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">ones_mean</span>
+
+    <span class="c1"># second partial derivation of the log Z with respect to the mean</span>
+    <span class="c1"># Equation 42</span>
+    <span class="n">cav_d2logZ_dm2</span> <span class="o">=</span> <span class="o">-</span><span class="n">cav_rho</span> <span class="o">*</span> <span class="p">(</span><span class="n">cav_rho</span> <span class="o">+</span> <span class="n">cav_alpha</span><span class="p">)</span> <span class="o">/</span> <span class="n">cav_var_fX_minus_fS</span>
+    <span class="n">cav_d2logZ_dm2</span> <span class="o">=</span> <span class="n">cav_d2logZ_dm2</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">ones_cov</span>
+
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># COMPUTE THE NEW MEAN AND COVARIANCE</span>
+    <span class="c1">###############################################################################</span>
+    <span class="c1"># compute the new mean and covariance</span>
+    <span class="n">cav_updated_mean_f</span> <span class="o">=</span> <span class="n">cav_mean_f</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+        <span class="s2">"...ij,...j-&gt;...i"</span><span class="p">,</span> <span class="n">cav_cov_f</span><span class="p">,</span> <span class="n">cav_dlogZ_dm</span>
+    <span class="p">)</span>
+    <span class="n">cav_updated_cov_f</span> <span class="o">=</span> <span class="n">cav_cov_f</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+        <span class="s2">"...ij,...jk,...kl-&gt;...il"</span><span class="p">,</span> <span class="n">cav_cov_f</span><span class="p">,</span> <span class="n">cav_d2logZ_dm2</span><span class="p">,</span> <span class="n">cav_cov_f</span>
+    <span class="p">)</span>
+    <span class="c1"># transform to natural parameters</span>
+    <span class="c1"># remove the Pareto diagonal</span>
+    <span class="n">cav_updated_cov_f</span> <span class="o">=</span> <span class="n">_replace_pareto_diagonal</span><span class="p">(</span><span class="n">cav_updated_cov_f</span><span class="p">)</span>
+
+    <span class="n">identity</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">cav_updated_cov_f</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">))</span>
+    <span class="n">cav_updated_nat_cov_f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">cav_updated_cov_f</span> <span class="o">+</span> <span class="n">jitter</span> <span class="o">*</span> <span class="n">identity</span><span class="p">)</span>
+
+    <span class="n">cav_updated_nat_mean_f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+        <span class="s2">"...ij,...j-&gt;...i"</span><span class="p">,</span> <span class="n">cav_updated_nat_cov_f</span><span class="p">,</span> <span class="n">cav_updated_mean_f</span>
+    <span class="p">)</span>
+
+    <span class="c1"># match the moments to compute the gain</span>
+    <span class="n">omega_f_nat_mean_new</span> <span class="o">=</span> <span class="n">cav_updated_nat_mean_f</span> <span class="o">-</span> <span class="n">cav_nat_mean_f</span>
+    <span class="n">omega_f_nat_cov_new</span> <span class="o">=</span> <span class="n">cav_updated_nat_cov_f</span> <span class="o">-</span> <span class="n">cav_nat_cov_f</span>
+
+    <span class="c1"># it is also possible to calculate the update directly as in the original paper:</span>
+    <span class="c1"># identity = torch.diag_embed(torch.ones(cav_d2logZ_dm2.shape[:-1], **tkwargs))</span>
+    <span class="c1"># denominator = torch.inverse(cav_cov_f @ cav_d2logZ_dm2 + identity)</span>
+    <span class="c1"># omega_f_nat_cov_new = - cav_d2logZ_dm2 @ denominator</span>
+    <span class="c1"># omega_f_nat_mean_new = torch.einsum(</span>
+    <span class="c1">#     '...ij,...j-&gt;...i', denominator,</span>
+    <span class="c1">#     cav_dlogZ_dm - torch.einsum('...ij,...j-&gt;...i', cav_d2logZ_dm2, cav_mean_f)</span>
+    <span class="c1"># )</span>
+
+    <span class="k">return</span> <span class="n">omega_f_nat_mean_new</span><span class="p">,</span> <span class="n">omega_f_nat_cov_new</span>
+
+
+<span class="k">def</span> <span class="nf">_safe_update_omega</span><span class="p">(</span>
+    <span class="n">mean_f</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">cov_f</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">omega_f_nat_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">omega_f_nat_cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">P</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">M</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Try to update the new omega factors by matching the moments. If the update</span>
+<span class="sd">    is not possible then this returns the initial omega factors.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mean_f: A `batch_shape x M x (N + P)`-dim Tensor containing the mean vector</span>
+<span class="sd">            for the objectives.</span>
+<span class="sd">        cov_f: A `batch_shape x M x (N + P) x (N + P)`-dim Tensor containing the</span>
+<span class="sd">            covariance matrix for the objectives.</span>
+<span class="sd">        omega_f_nat_mean: A `batch_shape x M x (N + P) x P x 2`-dim Tensor containing</span>
+<span class="sd">            the omega natural mean factors for the objective matrix.</span>
+<span class="sd">        omega_f_nat_cov: A `batch_shape x M x (N + P) x P x 2 x 2`-dim Tensor</span>
+<span class="sd">            containing the omega natural covariance factors for the objective</span>
+<span class="sd">            matrix.</span>
+<span class="sd">        N: The number of design points.</span>
+<span class="sd">        M: The number of Pareto optimal points.</span>
+<span class="sd">        M: The number of objectives.</span>
+<span class="sd">        maximize: If true, we consider the Pareto maximum domination relation.</span>
+<span class="sd">        jitter: The jitter for the matrix inverse.</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        A two-element tuple containing</span>
+
+<span class="sd">        - omega_f_nat_mean_new: A `batch_shape x M x (N + P) x P x 2` containing the</span>
+<span class="sd">            new omega natural mean factors for the objective matrix.</span>
+<span class="sd">        - omega_f_nat_cov_new: A `batch_shape x M x (N + P) x P x 2 x 2` containing</span>
+<span class="sd">            the new omega natural covariance factors for the objective matrix.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">omega_f_nat_mean_new</span><span class="p">,</span> <span class="n">omega_f_nat_cov_new</span> <span class="o">=</span> <span class="n">_update_omega</span><span class="p">(</span>
+            <span class="n">mean_f</span><span class="o">=</span><span class="n">mean_f</span><span class="p">,</span>
+            <span class="n">cov_f</span><span class="o">=</span><span class="n">cov_f</span><span class="p">,</span>
+            <span class="n">omega_f_nat_mean</span><span class="o">=</span><span class="n">omega_f_nat_mean</span><span class="p">,</span>
+            <span class="n">omega_f_nat_cov</span><span class="o">=</span><span class="n">omega_f_nat_cov</span><span class="p">,</span>
+            <span class="n">N</span><span class="o">=</span><span class="n">N</span><span class="p">,</span>
+            <span class="n">P</span><span class="o">=</span><span class="n">P</span><span class="p">,</span>
+            <span class="n">M</span><span class="o">=</span><span class="n">M</span><span class="p">,</span>
+            <span class="n">maximize</span><span class="o">=</span><span class="n">maximize</span><span class="p">,</span>
+            <span class="n">jitter</span><span class="o">=</span><span class="n">jitter</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">check_no_nans</span><span class="p">(</span><span class="n">omega_f_nat_mean_new</span><span class="p">)</span>
+        <span class="n">check_no_nans</span><span class="p">(</span><span class="n">omega_f_nat_cov_new</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">omega_f_nat_mean_new</span><span class="p">,</span> <span class="n">omega_f_nat_cov_new</span>
+
+    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="ow">or</span> <span class="n">InputDataError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">omega_f_nat_mean</span><span class="p">,</span> <span class="n">omega_f_nat_cov</span>
+
+
+<span class="k">def</span> <span class="nf">_update_marginals</span><span class="p">(</span>
+    <span class="n">pred_f_nat_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">pred_f_nat_cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">omega_f_nat_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">omega_f_nat_cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">P</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Computes the new marginal by summing up all the natural factors.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        pred_f_nat_mean: A `batch_shape x M x (N + P)`-dim Tensor containing the</span>
+<span class="sd">            natural predictive mean matrix for the objectives.</span>
+<span class="sd">        pred_f_nat_cov: A `batch_shape x M x (N + P) x (N + P)`-dim Tensor containing</span>
+<span class="sd">            the natural predictive covariance matrix for the objectives.</span>
+<span class="sd">        omega_f_nat_mean: A `batch_shape x M x (N + P) x P x 2`-dim Tensor containing</span>
+<span class="sd">            the omega natural mean factors for the objective matrix.</span>
+<span class="sd">        omega_f_nat_cov: A `batch_shape x M x (N + P) x P x 2 x 2`-dim Tensor</span>
+<span class="sd">            containing the omega natural covariance factors for the objective matrix.</span>
+<span class="sd">        N: The number of design points.</span>
+<span class="sd">        P: The number of Pareto optimal points.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A two-element tuple containing</span>
+
+<span class="sd">        - nat_mean_f: A `batch_shape x M x (N + P)`-dim Tensor containing the updated</span>
+<span class="sd">            natural mean matrix for the objectives.</span>
+<span class="sd">        - nat_cov_f: A `batch_shape x M x (N + P) x (N + P)`-dim Tensor containing</span>
+<span class="sd">            the updated natural predictive covariance matrix for the objectives.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># `batch_shape x M x (N + P)`</span>
+    <span class="n">nat_mean_f</span> <span class="o">=</span> <span class="n">pred_f_nat_mean</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+    <span class="c1"># `batch_shape x M x (N + P) x (N + P)</span>
+    <span class="n">nat_cov_f</span> <span class="o">=</span> <span class="n">pred_f_nat_cov</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+
+    <span class="c1">################################################################################</span>
+    <span class="c1"># UPDATE THE OBJECTIVES</span>
+    <span class="c1">################################################################################</span>
+    <span class="c1"># remove Pareto diagonal</span>
+    <span class="c1"># zero out the diagonal</span>
+    <span class="n">omega_f_nat_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="n">P</span><span class="p">),</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">omega_f_nat_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="n">P</span><span class="p">),</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># `batch_shape x M x (N + P)`</span>
+    <span class="c1"># sum over the pareto dim</span>
+    <span class="n">nat_mean_f</span> <span class="o">=</span> <span class="n">nat_mean_f</span> <span class="o">+</span> <span class="n">omega_f_nat_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># `batch_shape x M x P`</span>
+    <span class="c1"># sum over the data dim</span>
+    <span class="n">nat_mean_f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">N</span><span class="p">:]</span> <span class="o">=</span> <span class="n">nat_mean_f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">N</span><span class="p">:]</span> <span class="o">+</span> <span class="n">omega_f_nat_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># `batch_shape x M x (N + P)`</span>
+    <span class="n">nat_cov_f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">)]</span> <span class="o">=</span> <span class="n">nat_cov_f</span><span class="p">[</span>
+        <span class="o">...</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">)</span>
+    <span class="p">]</span> <span class="o">+</span> <span class="n">omega_f_nat_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># `batch_shape x M x P`</span>
+    <span class="n">nat_cov_f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">)]</span> <span class="o">=</span> <span class="n">nat_cov_f</span><span class="p">[</span>
+        <span class="o">...</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">)</span>
+    <span class="p">]</span> <span class="o">+</span> <span class="n">omega_f_nat_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">P</span><span class="p">):</span>
+        <span class="c1"># `batch_shape x M x (N + P)`</span>
+        <span class="n">nat_cov_f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">),</span> <span class="n">N</span> <span class="o">+</span> <span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">nat_cov_f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">),</span> <span class="n">N</span> <span class="o">+</span> <span class="n">p</span><span class="p">]</span> <span class="o">+</span> <span class="n">omega_f_nat_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># `batch_shape x M x (N + P)`</span>
+        <span class="n">nat_cov_f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">p</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">nat_cov_f</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">p</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="n">P</span><span class="p">)]</span> <span class="o">+</span> <span class="n">omega_f_nat_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">nat_mean_f</span><span class="p">,</span> <span class="n">nat_cov_f</span>
+
+
+<span class="k">def</span> <span class="nf">_damped_update</span><span class="p">(</span>
+    <span class="n">old_factor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">new_factor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">damping_factor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Computes the damped updated for natural factor.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        old_factor: A `batch_shape x param_shape`-dim Tensor containing the old</span>
+<span class="sd">            natural factor.</span>
+<span class="sd">        new_factor: A `batch_shape x param_shape`-dim Tensor containing the new</span>
+<span class="sd">            natural factor.</span>
+<span class="sd">        damping_factor: A `batch_shape`-dim Tensor containing the damping factor.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `batch_shape x param_shape`-dim Tensor containing the updated natural</span>
+<span class="sd">        factor.</span>
+<span class="sd">    """</span>
+    <span class="n">bs</span> <span class="o">=</span> <span class="n">damping_factor</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">fs</span> <span class="o">=</span> <span class="n">old_factor</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">damping_factor</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fs</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">bs</span><span class="p">)</span> <span class="p">:])):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df</span> <span class="o">*</span> <span class="n">new_factor</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">df</span><span class="p">)</span> <span class="o">*</span> <span class="n">old_factor</span>
+
+
+<span class="k">def</span> <span class="nf">_update_damping</span><span class="p">(</span>
+    <span class="n">nat_cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">nat_cov_new</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">damping_factor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">jitter</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Updates the damping factor whilst ensuring the covariance matrix is positive</span>
+<span class="sd">    definite by trying a Cholesky decomposition.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        nat_cov: A `batch_shape x R x R`-dim Tensor containing the old natural</span>
+<span class="sd">            covariance matrix.</span>
+<span class="sd">        nat_cov_new: A `batch_shape x R x R`-dim Tensor containing the new natural</span>
+<span class="sd">            covariance matrix.</span>
+<span class="sd">        damping_factor: A`batch_shape`-dim Tensor containing the damping factor.</span>
+<span class="sd">        jitter: The amount of jitter added before matrix inversion.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A two-element tuple containing</span>
+
+<span class="sd">        - A `batch_shape x param_shape`-dim Tensor containing the updated damping</span>
+<span class="sd">            factor.</span>
+<span class="sd">        - A `batch_shape x R x R`-dim Tensor containing the Cholesky factor.</span>
+<span class="sd">    """</span>
+    <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">nat_cov</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="n">nat_cov</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">damping_factor</span>
+    <span class="n">jitter</span> <span class="o">=</span> <span class="n">jitter</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">nat_cov</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">))</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky_ex</span><span class="p">(</span><span class="n">nat_cov</span> <span class="o">+</span> <span class="n">jitter</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"The previous covariance is not positive semi-definite. "</span>
+            <span class="s2">"This usually happens if the predictive covariance is "</span>
+            <span class="s2">"ill-conditioned and the added jitter is insufficient."</span>
+        <span class="p">)</span>
+
+    <span class="n">damped_nat_cov</span> <span class="o">=</span> <span class="n">_damped_update</span><span class="p">(</span>
+        <span class="n">old_factor</span><span class="o">=</span><span class="n">nat_cov</span><span class="p">,</span> <span class="n">new_factor</span><span class="o">=</span><span class="n">nat_cov_new</span><span class="p">,</span> <span class="n">damping_factor</span><span class="o">=</span><span class="n">df</span>
+    <span class="p">)</span>
+    <span class="n">cholesky_factor</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky_ex</span><span class="p">(</span><span class="n">damped_nat_cov</span><span class="p">)</span>
+    <span class="n">contains_nans</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">cholesky_factor</span><span class="p">))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+    <span class="n">run</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">contains_nans</span><span class="p">:</span>
+        <span class="c1"># propose an alternate damping factor which is half the original</span>
+        <span class="n">df_alt</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">df</span>
+        <span class="c1"># hard threshold at 1e-3</span>
+        <span class="n">df_alt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">df_alt</span> <span class="o">&gt;</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="n">df_alt</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">df_alt</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1"># only change the damping factor where psd failure occurs</span>
+        <span class="n">df_new</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">info</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">df_alt</span><span class="p">)</span>
+
+        <span class="c1"># new damped covariance</span>
+        <span class="n">damped_nat_cov</span> <span class="o">=</span> <span class="n">_damped_update</span><span class="p">(</span><span class="n">nat_cov</span><span class="p">,</span> <span class="n">nat_cov_new</span><span class="p">,</span> <span class="n">df_new</span><span class="p">)</span>
+
+        <span class="c1"># try cholesky decomposition</span>
+        <span class="n">cholesky_factor</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky_ex</span><span class="p">(</span><span class="n">damped_nat_cov</span> <span class="o">+</span> <span class="n">jitter</span><span class="p">)</span>
+        <span class="n">contains_nans</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">cholesky_factor</span><span class="p">))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df_new</span>
+        <span class="n">run</span> <span class="o">=</span> <span class="n">run</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">df</span><span class="p">,</span> <span class="n">cholesky_factor</span>
+
+
+<span class="k">def</span> <span class="nf">_update_damping_when_converged</span><span class="p">(</span>
+    <span class="n">mean_old</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">mean_new</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">cov_old</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">cov_new</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">damping_factor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">iteration</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Set the damping factor to 0 once converged. Convergence is determined by the</span>
+<span class="sd">    relative change in the entries of the mean and covariance matrix.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mean_old: A `batch_shape x R`-dim Tensor containing the old natural mean</span>
+<span class="sd">            matrix for the objective.</span>
+<span class="sd">        mean_new: A `batch_shape x R`-dim Tensor containing the new natural mean</span>
+<span class="sd">            matrix for the objective.</span>
+<span class="sd">        cov_old: A `batch_shape x R x R`-dim Tensor containing the old natural</span>
+<span class="sd">            covariance matrix for the objective.</span>
+<span class="sd">        cov_new: A `batch_shape x R x R`-dim Tensor containing the new natural</span>
+<span class="sd">            covariance matrix for the objective.</span>
+<span class="sd">        iteration: The current iteration number</span>
+<span class="sd">        damping_factor: A `batch_shape`-dim Tensor containing the damping factor.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `batch_shape x param_shape`-dim Tensor containing the updated damping</span>
+<span class="sd">        factor.</span>
+<span class="sd">    """</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">damping_factor</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+    <span class="n">delta_mean</span> <span class="o">=</span> <span class="n">mean_new</span> <span class="o">-</span> <span class="n">mean_old</span>
+    <span class="n">delta_cov</span> <span class="o">=</span> <span class="n">cov_new</span> <span class="o">-</span> <span class="n">cov_old</span>
+    <span class="n">am</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">mean_old</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ac</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">cov_old</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">iteration</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">mask_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">delta_mean</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">threshold</span> <span class="o">*</span> <span class="n">am</span>
+        <span class="n">mask_cov</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">delta_cov</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">threshold</span> <span class="o">*</span> <span class="n">ac</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">mask_mean</span><span class="p">,</span> <span class="n">mask_cov</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">return</span> <span class="n">df</span><span class="p">,</span> <span class="n">delta_mean</span><span class="p">,</span> <span class="n">delta_cov</span>
+
+
+<span class="k">def</span> <span class="nf">_augment_factors_with_cached_factors</span><span class="p">(</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">omega_f_nat_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">cached_omega_f_nat_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">omega_f_nat_cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">cached_omega_f_nat_cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Incorporate the cached Pareto updated factors in the forward call and</span>
+<span class="sd">    augment them with the previously computed factors.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        q: The batch size.</span>
+<span class="sd">        N: The number of training points.</span>
+<span class="sd">        omega_f_nat_mean: A `batch_shape x num_pareto_samples x M x (q + P) x P x 2`</span>
+<span class="sd">            -dim Tensor containing the omega natural mean for the objective at `X`.</span>
+<span class="sd">        cached_omega_f_nat_mean: A `num_pareto_samples x M x (N + P) x P x 2`-dim</span>
+<span class="sd">            Tensor containing the omega natural mean for the objective at `X`.</span>
+<span class="sd">        omega_f_nat_cov: A `batch_shape x num_pareto_samples x M x (q + P) x P x 2</span>
+<span class="sd">            x 2` -dim Tensor containing the omega natural covariance for the</span>
+<span class="sd">            objective at `X`.</span>
+<span class="sd">        cached_omega_f_nat_cov: A `num_pareto_samples x M x (N + P) x P x 2 x 2`-dim</span>
+<span class="sd">            Tensor containing the omega covariance mean for the objective at `X`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A two-element tuple containing</span>
+
+<span class="sd">        - omega_f_nat_mean_new: A `batch_shape x num_pareto_samples x M x (q + P)</span>
+<span class="sd">            x P x 2`-dim Tensor containing the omega natural mean for the objective</span>
+<span class="sd">            at `X`.</span>
+<span class="sd">        - omega_f_nat_cov_new: A `batch_shape x num_pareto_samples x M x (q + P) x</span>
+<span class="sd">            P x 2 x 2`-dim Tensor containing the omega natural covariance for the</span>
+<span class="sd">            objective at `X`.</span>
+<span class="sd">    """</span>
+    <span class="c1">##############################################################################</span>
+    <span class="c1"># omega_f_nat_mean</span>
+    <span class="c1">##############################################################################</span>
+    <span class="c1"># retrieve the natural mean contribution of the Pareto block omega(x_p, x_p) for</span>
+    <span class="c1"># the objective</span>
+    <span class="n">exp_cached_omega_f_nat_mean</span> <span class="o">=</span> <span class="n">cached_omega_f_nat_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">N</span><span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+        <span class="n">omega_f_nat_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">q</span><span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">shape</span>
+    <span class="p">)</span>
+    <span class="n">omega_f_nat_mean</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">q</span><span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">exp_cached_omega_f_nat_mean</span>
+    <span class="c1">##############################################################################</span>
+    <span class="c1"># omega_f_nat_cov</span>
+    <span class="c1">##############################################################################</span>
+    <span class="c1"># retrieve the natural covariance contribution of the Pareto block</span>
+    <span class="c1"># omega(x_p, x_p) for the objective</span>
+    <span class="n">exp_omega_f_nat_cov</span> <span class="o">=</span> <span class="n">cached_omega_f_nat_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">N</span><span class="p">:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+        <span class="n">omega_f_nat_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">q</span><span class="p">:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">shape</span>
+    <span class="p">)</span>
+    <span class="n">omega_f_nat_cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">q</span><span class="p">:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">exp_omega_f_nat_cov</span>
+
+    <span class="k">return</span> <span class="n">omega_f_nat_mean</span><span class="p">,</span> <span class="n">omega_f_nat_cov</span>
+
+
+<span class="k">def</span> <span class="nf">_compute_log_determinant</span><span class="p">(</span><span class="n">cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Computes the sum of the log determinants of a block diagonal covariance</span>
+<span class="sd">    matrices averaged over the Pareto samples.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cov: A `batch_shape x num_pareto_samples x num_outputs x (q + P) x (q + P)`</span>
+<span class="sd">            -dim Tensor containing the covariance matrices.</span>
+<span class="sd">        q: The batch size.</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        log_det_cov: A `batch_shape`-dim Tensor containing the sum of the</span>
+<span class="sd">            determinants for each output.</span>
+<span class="sd">    """</span>
+    <span class="n">log_det_cov</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">logdet</span><span class="p">(</span><span class="n">cov</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">q</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">q</span><span class="p">])</span>
+    <span class="n">check_no_nans</span><span class="p">(</span><span class="n">log_det_cov</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">log_det_cov</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../../index.html">Documentation overview</a><ul>
+<li><a href="../../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.8.3/" class="nav-home"><img src="/v/0.8.3/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.8.3/docs/introduction">Introduction</a><a href="/v/0.8.3/docs/getting_started">Getting Started</a><a href="/v/0.8.3/tutorials/">Tutorials</a><a href="/v/0.8.3/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.8.3/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.8.3/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

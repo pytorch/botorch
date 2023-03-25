@@ -178,16 +178,27 @@
 <span class="sd">        True if `output` has the correct shape, False otherwise.</span>
 <span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="n">output</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-            <span class="ow">or</span> <span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span> <span class="ow">and</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">]))</span>
-            <span class="ow">or</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">acqf</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">batch_shape</span>
-            <span class="c1"># for a batched model, we may unsqueeze a batch dimension in X</span>
-            <span class="c1"># corresponding to the model's batch dim. In that case the</span>
-            <span class="c1"># acquisition function output should replace the right-most</span>
-            <span class="c1"># batch dim of X with the model's batch shape.</span>
-            <span class="ow">or</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">acqf</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">batch_shape</span>
-        <span class="p">)</span>
+        <span class="n">X_batch_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">X_batch_shape</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span> <span class="ow">and</span> <span class="n">X_batch_shape</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="c1"># X has a batch shape of [1] which gets squeezed.</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="c1"># Cases with model batch shape involved.</span>
+        <span class="n">model_b_shape</span> <span class="o">=</span> <span class="n">acqf</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">batch_shape</span>
+        <span class="k">if</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">model_b_shape</span><span class="p">:</span>
+            <span class="c1"># Simple inputs with batched model.</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="n">model_b_dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">model_b_shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">X_batch_shape</span><span class="p">[:</span><span class="o">-</span><span class="n">model_b_dim</span><span class="p">]</span> <span class="o">+</span> <span class="n">model_b_shape</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="n">xs</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">ms</span><span class="p">]</span> <span class="k">for</span> <span class="n">xs</span><span class="p">,</span> <span class="n">ms</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">X_batch_shape</span><span class="p">[</span><span class="o">-</span><span class="n">model_b_dim</span><span class="p">:],</span> <span class="n">model_b_shape</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="c1"># X has additional batch dimensions beyond the model batch shape.</span>
+            <span class="c1"># For a batched model, some of the input dimensions might get broadcasted</span>
+            <span class="c1"># to the model batch shape. In that case the acquisition function output</span>
+            <span class="c1"># should replace the right-most batch dim of X with the model's batch shape.</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">NotImplementedError</span><span class="p">):</span>
         <span class="c1"># acqf does not have model or acqf.model does not define `batch_shape`</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>

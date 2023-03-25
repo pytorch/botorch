@@ -632,7 +632,7 @@ dimension <cite>m</cite> must be explicit if <cite>m=1</cite>).</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.deterministic.FixedSingleSampleModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.deterministic.</span></span><span class="sig-name descname"><span class="pre">FixedSingleSampleModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/deterministic.html#FixedSingleSampleModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.deterministic.FixedSingleSampleModel" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.deterministic.</span></span><span class="sig-name descname"><span class="pre">FixedSingleSampleModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/deterministic.html#FixedSingleSampleModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.deterministic.FixedSingleSampleModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">DeterministicModel</span></code></p>
 <p>A deterministic model defined by a single sample <cite>w</cite>.</p>
 <p>Given a base model <cite>f</cite> and a fixed sample <cite>w</cite>, the model always outputs</p>
@@ -646,6 +646,11 @@ dimension <cite>m</cite> must be explicit if <cite>m=1</cite>).</p>
 <li><p><strong>model</strong> (<a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The base model.</p></li>
 <li><p><strong>w</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A 1-d tensor with length model.num_outputs.
 If None, draw it from a standard normal distribution.</p></li>
+<li><p><strong>dim</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – dimensionality of w.
+If None and w is not provided, draw w samples of size model.num_outputs.</p></li>
+<li><p><strong>jitter</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – jitter value to be added for numerical stability, 1e-8 by default.</p></li>
+<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>torch.dtype</em><em>]</em>) – dtype for w if specified</p></li>
+<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>torch.dtype</em><em>]</em>) – device for w if specified</p></li>
 </ul>
 </dd>
 </dl>
@@ -2550,6 +2555,14 @@ uses <cite>GreedyVarianceReduction</cite>.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP.likelihood">
+<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP.likelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP.init_inducing_points">
 <span class="sig-name descname"><span class="pre">init_inducing_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#SingleTaskVariationalGP.init_inducing_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP.init_inducing_points" title="Permalink to this definition">¶</a></dt>
@@ -2568,14 +2581,6 @@ The variational distribution and variational strategy caches are reset.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP.likelihood">
-<span class="sig-name descname"><span class="pre">likelihood</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Likelihood</span></em><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP.likelihood" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.models.fully_bayesian">
@@ -4279,7 +4284,7 @@ same transformations as the cached training inputs.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.Normalize">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">Normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.Size([])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">Normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.Size([])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learn_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AffineInputTransform</span></code></p>
 <p>Normalize the inputs to the unit cube.</p>
 <p>If no explicit bounds are provided this module is stateful: If in train mode,
@@ -4308,6 +4313,8 @@ transform when called from within a <cite>fantasize</cite> call. Default: True.<
 the inputs.</p></li>
 <li><p><strong>min_range</strong> (<em>float</em>) – Amount of noise to add to the range to ensure no division by
 zero errors.</p></li>
+<li><p><strong>learn_bounds</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – Whether to learn the bounds in train mode. Defaults
+to False if bounds are provided, otherwise defaults to True.</p></li>
 </ul>
 </dd>
 </dl>
@@ -4328,6 +4335,16 @@ zero errors.</p></li>
 <dt class="sig sig-object py" id="botorch.models.transforms.input.Normalize.learn_bounds">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">learn_bounds</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.Normalize.learn_bounds" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.transforms.input.Normalize.get_init_args">
+<span class="sig-name descname"><span class="pre">get_init_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize.get_init_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize.get_init_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the arguments necessary to construct an exact copy of the transform.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.Normalize.reverse">
 <span class="sig-name descname"><span class="pre">reverse</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.Normalize.reverse" title="Permalink to this definition">¶</a></dt>
@@ -4422,7 +4439,7 @@ tangent function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>integer_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – The indices of the integer inputs.</p></li>
+<li><p><strong>integer_indices</strong> (<em>Union</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>LongTensor</em><em>, </em><em>None</em><em>]</em>) – The indices of the integer inputs.</p></li>
 <li><p><strong>categorical_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – A dictionary mapping the starting index of each
 categorical feature to its cardinality. This assumes that categoricals
 are one-hot encoded.</p></li>
@@ -4479,6 +4496,16 @@ rounding should be used. Default: False.</p></li>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.transforms.input.Round.get_init_args">
+<span class="sig-name descname"><span class="pre">get_init_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Round.get_init_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.Round.get_init_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the arguments necessary to construct an exact copy of the transform.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>Any</em>]</p>
 </dd>
 </dl>
 </dd></dl>

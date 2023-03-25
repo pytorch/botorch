@@ -77,8 +77,6 @@
 <span class="sd">            A quality function.</span>
 <span class="sd">        """</span>
 
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
-
 <div class="viewcode-block" id="InducingPointAllocator.allocate_inducing_points"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.InducingPointAllocator.allocate_inducing_points">[docs]</a>    <span class="k">def</span> <span class="nf">allocate_inducing_points</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -115,7 +113,6 @@
             <span class="p">)</span>
         <span class="c1"># multi-task case</span>
         <span class="k">elif</span> <span class="n">train_train_kernel</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_batch_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">quality_scores</span> <span class="o">=</span> <span class="n">quality_function</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
             <span class="n">input_element</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">inputs</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span> <span class="k">else</span> <span class="n">inputs</span>
             <span class="n">kernel_element</span> <span class="o">=</span> <span class="n">train_train_kernel</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">quality_scores</span> <span class="o">=</span> <span class="n">quality_function</span><span class="p">(</span><span class="n">input_element</span><span class="p">)</span>
@@ -172,9 +169,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A tensor of quality scores for each input, of shape [n]</span>
-<span class="sd">        """</span>
-
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+<span class="sd">        """</span></div>
 
 
 <div class="viewcode-block" id="UnitQualityFunction"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.UnitQualityFunction">[docs]</a><span class="k">class</span> <span class="nc">UnitQualityFunction</span><span class="p">(</span><span class="n">QualityFunction</span><span class="p">):</span>
@@ -340,7 +335,7 @@
         <span class="p">(</span><span class="n">max_length</span><span class="p">,</span> <span class="n">item_size</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">kernel_matrix</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">kernel_matrix</span><span class="o">.</span><span class="n">dtype</span>
     <span class="p">)</span>
     <span class="n">di2s</span> <span class="o">=</span> <span class="n">kernel_matrix</span><span class="o">.</span><span class="n">diag</span><span class="p">()</span>
-    <span class="n">scores</span> <span class="o">=</span> <span class="n">di2s</span> <span class="o">*</span> <span class="p">(</span><span class="n">quality_scores</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">di2s</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">quality_scores</span><span class="p">)</span>
     <span class="n">selected_items</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">selected_item</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
     <span class="n">selected_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">selected_item</span><span class="p">)</span>
@@ -354,7 +349,7 @@
         <span class="n">cis</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">eis</span>
         <span class="n">di2s</span> <span class="o">=</span> <span class="n">di2s</span> <span class="o">-</span> <span class="n">eis</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
         <span class="n">di2s</span><span class="p">[</span><span class="n">selected_item</span><span class="p">]</span> <span class="o">=</span> <span class="n">NEG_INF</span>
-        <span class="n">scores</span> <span class="o">=</span> <span class="n">di2s</span> <span class="o">*</span> <span class="p">(</span><span class="n">quality_scores</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">di2s</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">quality_scores</span><span class="p">)</span>
         <span class="n">selected_item</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">di2s</span><span class="p">[</span><span class="n">selected_item</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">epsilon</span><span class="p">:</span>
             <span class="k">break</span>

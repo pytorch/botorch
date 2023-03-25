@@ -108,7 +108,6 @@
         <span class="sa">r</span><span class="sd">"""Initialize Objective.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            weights: `m'`-dim tensor of outcome weights.</span>
 <span class="sd">            outcomes: A list of the `m'` indices that the weights should be</span>
 <span class="sd">                applied to.</span>
 <span class="sd">            num_outcomes: The total number of outcomes `m`</span>
@@ -214,7 +213,7 @@
             <span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="n">get_infeasible_cost</span>
 
             <span class="n">inf_cost</span> <span class="o">=</span> <span class="n">get_infeasible_cost</span><span class="p">(</span>
-                <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="k">lambda</span> <span class="n">y</span><span class="p">:</span> <span class="n">y</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="k">lambda</span> <span class="n">y</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">y</span>
             <span class="p">)[</span><span class="n">objective_idcs</span><span class="p">]</span>
 
             <span class="k">def</span> <span class="nf">apply_feasibility_weights</span><span class="p">(</span>
