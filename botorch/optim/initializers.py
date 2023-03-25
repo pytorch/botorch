@@ -149,7 +149,7 @@ def transform_inter_point_constraint(
     """
     indices, coefficients, rhs = constraint
     if indices[:, 1].max() >= d:
-        raise ValueError("d has to be larger than the largest index in the constraint.")
+        raise ValueError(f"Constraint indices cannot exceed the problem dimension {d=}.")
     return (
         torch.tensor([r[0] * d + r[1] for r in indices], dtype=torch.int64),
         coefficients,
