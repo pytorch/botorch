@@ -66,8 +66,11 @@ TGenInitialConditions = Callable[
 def transform_constraints(
     constraints: Union[List[Tuple[Tensor, Tensor, float]], None], q: int, d: int
 ) -> List[Tuple[Tensor, Tensor, float]]:
-    """Transform constraints to sample from a d*q dimensional space instead of a
-    d dimensional state.
+    """Transform constraints to sample from a d*q-dimensional space instead of a
+    d-dimensional state.
+    
+    This function assumes that constraints are the same for each input batch,
+    and broadcasts the constraints accordingly to the input batch shape.
 
     Args:
         constraints: A list of tuples (indices, coefficients, rhs), with each tuple encoding an
