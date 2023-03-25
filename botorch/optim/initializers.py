@@ -99,10 +99,11 @@ def transform_intra_point_constraint(
     d-dimensional space to a d*q-dimesional space.
 
     Args:
-        constraint (Tuple[Tensor, Tensor, float]): Constraints
-            to transform.
-        d (int): Size of the q-batch.
-        q (int): Dimensionality of the problem.
+        constraints: A list of tuples (indices, coefficients, rhs), with each tuple encoding an
+            (in-)equality constraint of the form `\sum_i (X[indices[i]] * coefficients[i]) (>)= rhs`.
+            Here `indices` must be one-dimensional, and the constraint is applied to all points
+            within the `q`-batch.
+        d: Dimensionality of the problem.
 
     Raises:
         ValueError: If indices in the constraints are larger than the
