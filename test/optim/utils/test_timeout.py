@@ -30,14 +30,14 @@ class TestMinimizeWithTimeout(BotorchTestCase):
             res = minimize_with_timeout(**base_kwargs)
             self.assertTrue(res.success)
             self.assertAlmostEqual(res.fun, 0.0)
-            self.assertAlmostEqual(res.x, 0.0)
+            self.assertAlmostEqual(res.x.item(), 0.0)
             self.assertEqual(res.nit, 2)  # quadratic approx. is exact
 
         with self.subTest("test w/ non-binding timeout"):
             res = minimize_with_timeout(**base_kwargs, timeout_sec=1.0)
             self.assertTrue(res.success)
             self.assertAlmostEqual(res.fun, 0.0)
-            self.assertAlmostEqual(res.x, 0.0)
+            self.assertAlmostEqual(res.x.item(), 0.0)
             self.assertEqual(res.nit, 2)  # quadratic approx. is exact
 
         with self.subTest("test w/ binding timeout"):
