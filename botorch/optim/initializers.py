@@ -68,16 +68,17 @@ def transform_constraints(
 ) -> List[Tuple[Tensor, Tensor, float]]:
     """Transform constraints to sample from a d*q-dimensional space instead of a
     d-dimensional state.
-    
+
     This function assumes that constraints are the same for each input batch,
     and broadcasts the constraints accordingly to the input batch shape.
 
     Args:
-        constraints: A list of tuples (indices, coefficients, rhs), with each tuple encoding an
-            (in-)equality constraint of the form `\sum_i (X[indices[i]] * coefficients[i]) (>)= rhs`.
-            If `indices` is a 2-d Tensor, this supports specifying constraints across the points
-            in the `q`-batch (inter-point constraints). If `None`, this function is a nullop and
-            simply returns `None`.
+        constraints: A list of tuples (indices, coefficients, rhs), with each tuple
+            encoding an (in-)equality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) (>)= rhs`.
+            If `indices` is a 2-d Tensor, this supports specifying constraints across
+            the points in the `q`-batch (inter-point constraints). If `None`, this
+            function is a nullop and simply returns `None`.
         q: Size of the `q`-batch.
         d: Dimensionality of the problem.
 
@@ -102,10 +103,11 @@ def transform_intra_point_constraint(
     d-dimensional space to a d*q-dimesional space.
 
     Args:
-        constraints: A list of tuples (indices, coefficients, rhs), with each tuple encoding an
-            (in-)equality constraint of the form `\sum_i (X[indices[i]] * coefficients[i]) (>)= rhs`.
-            Here `indices` must be one-dimensional, and the constraint is applied to all points
-            within the `q`-batch.
+        constraints: A list of tuples (indices, coefficients, rhs), with each tuple
+            encoding an (in-)equality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) (>)= rhs`. Here `indices` must
+            be one-dimensional, and the constraint is applied to all points within the
+            `q`-batch.
         d: Dimensionality of the problem.
 
     Raises:
@@ -117,7 +119,9 @@ def transform_intra_point_constraint(
     """
     indices, coefficients, rhs = constraint
     if indices.max() >= d:
-        raise ValueError(f"Constraint indices cannot exceed the problem dimension {d=}.")
+        raise ValueError(
+            f"Constraint indices cannot exceed the problem dimension {d=}."
+        )
     return [
         (
             torch.tensor([i * d + j for j in indices], dtype=torch.int64),
@@ -149,7 +153,9 @@ def transform_inter_point_constraint(
     """
     indices, coefficients, rhs = constraint
     if indices[:, 1].max() >= d:
-        raise ValueError(f"Constraint indices cannot exceed the problem dimension {d=}.")
+        raise ValueError(
+            f"Constraint indices cannot exceed the problem dimension {d=}."
+        )
     return (
         torch.tensor([r[0] * d + r[1] for r in indices], dtype=torch.int64),
         coefficients,
