@@ -309,7 +309,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
             )
             with self.assertRaisesRegex(
                 ValueError,
-                "d has to be larger than the largest index in the constraint.",
+                "Constraint indices cannot exceed the problem dimension d=3.",
             ):
                 transform_intra_point_constraint(constraint=constraint, d=3, q=2)
 
@@ -338,7 +338,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
             )
             with self.assertRaisesRegex(
                 ValueError,
-                "d has to be larger than the largest index in the constraint.",
+                "Constraint indices cannot exceed the problem dimension d=3.",
             ):
                 transform_inter_point_constraint(constraint=constraint, d=3)
 
