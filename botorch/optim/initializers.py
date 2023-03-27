@@ -139,10 +139,11 @@ def transform_inter_point_constraint(
     d-dimensional space to a d*q dimesional space.
 
     Args:
-        constraint (Tuple[Tensor, Tensor, float]): Constraint
-            to transform.
-        d (int): Size of the q-batch.
-        q (int): Dimensionality of the problem.
+        constraints: A list of tuples (indices, coefficients, rhs), with each tuple encoding an
+            (in-)equality constraint of the form `\sum_i (X[indices[i]] * coefficients[i]) (>)= rhs`.
+            `indices` must be a 2-d Tensor, where in each row `indices[i] = (k_i, l_i)` the first index
+            `k_i` corresponds to the `k_i`-th element of the `q`-batch and the second index `l_i`
+            corresponds to the `l_i`-th feature of that element.
 
     Raises:
         ValueError: If indices in the constraints are larger than the
