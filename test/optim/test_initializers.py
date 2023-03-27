@@ -33,6 +33,7 @@ from botorch.optim.initializers import (
     gen_value_function_initial_conditions,
     sample_perturbed_subset_dims,
     sample_points_around_best,
+    sample_q_batches_from_polytope,
     sample_truncated_normal_perturbations,
     transform_constraints,
     transform_inter_point_constraint,
@@ -390,6 +391,69 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
             )
             self.assertEqual(transformed[-1][2], 0.0)
 
+    def test_gen_batch_initial_conditions_sample_q_batches_from_polytope(self):
+        for dtype in (torch.float, torch.double):
+            bounds = torch.tensor(
+                [[0, 0, 0], [1, 1, 1]], device=self.device, dtype=dtype
+            )
+            inequality_constraints = [
+                (
+                    torch.tensor([0, 1], device=self.device, dtype=torch.int64),
+                    torch.tensor([-1, 1], device=self.device, dtype=dtype),
+                    torch.tensor(-0.5, device=self.device, dtype=dtype),
+                )
+            ]
+            inter_point_inequality_constraints = [
+                (
+                    torch.tensor([0, 1], device=self.device, dtype=torch.int64),
+                    torch.tensor([-1, 1], device=self.device, dtype=dtype),
+                    torch.tensor(-0.5, device=self.device, dtype=dtype),
+                ),
+                (
+                    torch.tensor(
+                        [[0, 1], [1, 1]], device=self.device, dtype=torch.int64
+                    ),
+                    torch.tensor([1, 1], device=self.device, dtype=dtype),
+                    torch.tensor(0.3, device=self.device, dtype=dtype),
+                ),
+            ]
+            equality_constraints = [
+                (
+                    torch.tensor([0, 1, 2], device=self.device, dtype=torch.int64),
+                    torch.tensor([1, 1, 1], device=self.device, dtype=dtype),
+                    torch.tensor(1, device=self.device, dtype=dtype),
+                )
+            ]
+            inter_point_equality_constraints = [
+                (
+                    torch.tensor([0, 1, 2], device=self.device, dtype=torch.int64),
+                    torch.tensor([1, 1, 1], device=self.device, dtype=dtype),
+                    torch.tensor(1, device=self.device, dtype=dtype),
+                ),
+                (
+                    torch.tensor(
+                        [[0, 0], [1, 0]], device=self.device, dtype=torch.int64
+                    ),
+                    torch.tensor([1.0, -1.0], device=self.device, dtype=dtype),
+                    0,
+                ),
+            ]
+            for equalities, inequalities in product(
+                [None, equality_constraints, inter_point_equality_constraints],
+                [None, inequality_constraints, inter_point_inequality_constraints],
+            ):
+                samples = sample_q_batches_from_polytope(
+                    n=5,
+                    q=3,
+                    bounds=bounds,
+                    n_burnin=10000,
+                    thinning=32,
+                    seed=42,
+                    inequality_constraints=inequalities,
+                    equality_constraints=equalities,
+                )
+                self.assertEqual(samples.shape, torch.Size((5, 3, 3)))
+
     def test_gen_batch_initial_conditions_constraints(self):
         for dtype in (torch.float, torch.double):
             bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
@@ -459,7 +523,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                                 torch.all(batch_initial_conditions[..., idx] == val)
                             )
 
-    def test_gen_batch_initial_conditions_vertical_constraints(self):
+    def test_gen_batch_initial_conditions_interpoint_constraints(self):
         for dtype in (torch.float, torch.double):
             bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
             inequality_constraints = [
