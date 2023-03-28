@@ -346,7 +346,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
     def test_gen_batch_initial_conditions_transform_constraints(self):
         for dtype in (torch.float, torch.double):
             # test with None
-            self.assertTrue(transform_constraints(constraints=None, d=3, q=3) is None)
+            self.assertIsNone(transform_constraints(constraints=None, d=3, q=3))
             constraints = [
                 (
                     torch.tensor([0, 1], dtype=torch.int64, device=self.device),
