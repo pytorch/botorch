@@ -90,6 +90,8 @@ jobs:
         python scripts/run_tutorials.py -p "$(pwd)"
     - if: ${{ inputs.upload_artifact }}
       name: Upload performance data to artifacts branch
+      # Sometimes pushing to this branch doesn't work -- fix planned
+      continue-on-error: true
       # 1) Switch to artifacts branch
       # 2) Add the new CSV file
       # 3) Get .py and .ipynb files needed for analyzing tutorials data from main
