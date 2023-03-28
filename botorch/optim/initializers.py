@@ -159,7 +159,7 @@ def transform_inter_point_constraint(
             f"Constraint indices cannot exceed the problem dimension {d=}."
         )
     return (
-        torch.tensor([r[0] * d + r[1] for r in indices], dtype=torch.int64),
+        torch.tensor([r[0] * d + r[1] for r in indices], dtype=torch.int64, device=indices.device),
         coefficients,
         rhs,
     )
