@@ -203,25 +203,21 @@ def sample_q_batches_from_polytope(
     )
 
     if inter_point:
-        return (
-            get_polytope_samples(
-                n=n,
-                bounds=torch.hstack([bounds for _ in range(q)]),
-                inequality_constraints=transform_constraints(
-                    constraints=inequality_constraints, q=q, d=bounds.shape[1]
-                ),
-                equality_constraints=transform_constraints(
-                    constraints=equality_constraints, q=q, d=bounds.shape[1]
-                ),
-                seed=seed,
-                n_burnin=n_burnin,
-                thinning=thinning * q,
-            )
-            .view(n, q, -1)
-            .cpu()
+        samples = get_polytope_samples(
+            n=n,
+            bounds=torch.hstack([bounds for _ in range(q)]),
+            inequality_constraints=transform_constraints(
+                constraints=inequality_constraints, q=q, d=bounds.shape[1]
+            ),
+            equality_constraints=transform_constraints(
+                constraints=equality_constraints, q=q, d=bounds.shape[1]
+            ),
+            seed=seed,
+            n_burnin=n_burnin,
+            thinning=thinning * q,
         )
-    return (
-        get_polytope_samples(
+    else:
+        samples = get_polytope_samples(
             n=n * q,
             bounds=bounds,
             inequality_constraints=inequality_constraints,
@@ -230,9 +226,7 @@ def sample_q_batches_from_polytope(
             n_burnin=n_burnin,
             thinning=thinning,
         )
-        .view(n, q, -1)
-        .cpu()
-    )
+    return samples.view(n, q, -1).cpu()
 
 
 def gen_batch_initial_conditions(
