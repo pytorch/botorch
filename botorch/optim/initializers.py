@@ -182,7 +182,8 @@ def sample_q_batches_from_polytope(
         q: Number of samples per q-batch
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         n_burnin: The number of burn-in samples for the Markov chain sampler.
-        thinning: The amount of thinning (number of steps to take between returning samples).
+            thinning: The amount of thinning (number of steps to take between
+            returning samples).
         seed: The random seed.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
@@ -197,7 +198,7 @@ def sample_q_batches_from_polytope(
 
     # check if inter-point constraints are present
     inter_point = any(
-        indices.shape > 1
+        len(indices.shape) > 1
         for constraints in (inequality_constraints or [], equality_constraints or [])
         for indices, _, _ in constraints
     )
