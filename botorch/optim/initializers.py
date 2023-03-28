@@ -124,7 +124,7 @@ def transform_intra_point_constraint(
         )
     return [
         (
-            torch.tensor([i * d + j for j in indices], dtype=torch.int64),
+            torch.tensor([i * d + j for j in indices], dtype=torch.int64, device=indices.device),
             coefficients,
             rhs,
         )
