@@ -196,17 +196,11 @@ def sample_q_batches_from_polytope(
     """
 
     # check if inter-point constraints are present
-    inter_point = False
-    if inequality_constraints is not None:
-        for c in inequality_constraints:
-            if len(c[0].shape) > 1:
-                inter_point = True
-                break
-    if inter_point is False and equality_constraints is not None:
-        for c in equality_constraints:
-            if len(c[0].shape) > 1:
-                inter_point = True
-                break
+    inter_point = any(
+        indices.shape > 1
+        for constraints in (inequality_constraints or [], equality_constraints or [])
+        for indices, _, _ in constraints
+    )
 
     if inter_point:
         return (
