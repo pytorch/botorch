@@ -379,6 +379,51 @@ class TestOptimizeAcqf(BotorchTestCase):
                 sequential=True,
             )
 
+    def test_optimize_acqf_sequential_q_constraint_notimplemented(self):
+        # Sequential acquisition function not supported with q-constraints
+        with self.assertRaises(UnsupportedError):
+            optimize_acqf(
+                acq_function=MockAcquisitionFunction(),
+                bounds=torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
+                equality_constraints=[
+                    (
+                        torch.tensor(
+                            [[0, 0], [1, 0]], device=self.device, dtype=torch.int64
+                        ),
+                        torch.tensor(
+                            [1.0, -1.0], device=self.device, dtype=torch.float64
+                        ),
+                        0,
+                    ),
+                ],
+                q=3,
+                num_restarts=2,
+                raw_samples=10,
+                return_best_only=True,
+                sequential=True,
+            )
+        with self.assertRaises(UnsupportedError):
+            optimize_acqf(
+                acq_function=MockAcquisitionFunction(),
+                bounds=torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
+                inequality_constraints=[
+                    (
+                        torch.tensor(
+                            [[0, 0], [1, 0]], device=self.device, dtype=torch.int64
+                        ),
+                        torch.tensor(
+                            [1.0, -1.0], device=self.device, dtype=torch.float64
+                        ),
+                        0,
+                    ),
+                ],
+                q=3,
+                num_restarts=2,
+                raw_samples=10,
+                return_best_only=True,
+                sequential=True,
+            )
+
     def test_optimize_acqf_batch_limit(self) -> None:
         num_restarts = 3
         raw_samples = 5

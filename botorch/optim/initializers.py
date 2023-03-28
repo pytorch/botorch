@@ -63,6 +63,177 @@ TGenInitialConditions = Callable[
 ]
 
 
+def transform_constraints(
+    constraints: Union[List[Tuple[Tensor, Tensor, float]], None], q: int, d: int
+) -> List[Tuple[Tensor, Tensor, float]]:
+    r"""Transform constraints to sample from a d*q-dimensional space instead of a
+    d-dimensional state.
+
+    This function assumes that constraints are the same for each input batch,
+    and broadcasts the constraints accordingly to the input batch shape.
+
+    Args:
+        constraints: A list of tuples (indices, coefficients, rhs), with each tuple
+            encoding an (in-)equality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) (>)= rhs`.
+            If `indices` is a 2-d Tensor, this supports specifying constraints across
+            the points in the `q`-batch (inter-point constraints). If `None`, this
+            function is a nullop and simply returns `None`.
+        q: Size of the `q`-batch.
+        d: Dimensionality of the problem.
+
+    Returns:
+        List[Tuple[Tensor, Tensor, float]]: List of transformed constraints.
+    """
+    if constraints is None:
+        return None
+    transformed = []
+    for constraint in constraints:
+        if len(constraint[0].shape) == 1:
+            transformed += transform_intra_point_constraint(constraint, d, q)
+        else:
+            transformed.append(transform_inter_point_constraint(constraint, d))
+    return transformed
+
+
+def transform_intra_point_constraint(
+    constraint: Tuple[Tensor, Tensor, float], d: int, q: int
+) -> List[Tuple[Tensor, Tensor, float]]:
+    r"""Transforms an intra-point/pointwise constraint from
+    d-dimensional space to a d*q-dimesional space.
+
+    Args:
+        constraints: A list of tuples (indices, coefficients, rhs), with each tuple
+            encoding an (in-)equality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) (>)= rhs`. Here `indices` must
+            be one-dimensional, and the constraint is applied to all points within the
+            `q`-batch.
+        d: Dimensionality of the problem.
+
+    Raises:
+        ValueError: If indices in the constraints are larger than the
+            dimensionality d of the problem.
+
+    Returns:
+        List[Tuple[Tensor, Tensor, float]]: List of transformed constraints.
+    """
+    indices, coefficients, rhs = constraint
+    if indices.max() >= d:
+        raise ValueError(
+            f"Constraint indices cannot exceed the problem dimension {d=}."
+        )
+    return [
+        (
+            torch.tensor(
+                [i * d + j for j in indices], dtype=torch.int64, device=indices.device
+            ),
+            coefficients,
+            rhs,
+        )
+        for i in range(q)
+    ]
+
+
+def transform_inter_point_constraint(
+    constraint: Tuple[Tensor, Tensor, float], d: int
+) -> Tuple[Tensor, Tensor, float]:
+    r"""Transforms an inter-point constraint from
+    d-dimensional space to a d*q dimesional space.
+
+    Args:
+        constraints: A list of tuples (indices, coefficients, rhs), with each tuple
+            encoding an (in-)equality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) (>)= rhs`. `indices` must be a
+            2-d Tensor, where in each row `indices[i] = (k_i, l_i)` the first index
+            `k_i` corresponds to the `k_i`-th element of the `q`-batch and the second
+            index `l_i` corresponds to the `l_i`-th feature of that element.
+
+    Raises:
+        ValueError: If indices in the constraints are larger than the
+            dimensionality d of the problem.
+
+    Returns:
+        List[Tuple[Tensor, Tensor, float]]: Transformed constraint.
+    """
+    indices, coefficients, rhs = constraint
+    if indices[:, 1].max() >= d:
+        raise ValueError(
+            f"Constraint indices cannot exceed the problem dimension {d=}."
+        )
+    return (
+        torch.tensor(
+            [r[0] * d + r[1] for r in indices], dtype=torch.int64, device=indices.device
+        ),
+        coefficients,
+        rhs,
+    )
+
+
+def sample_q_batches_from_polytope(
+    n: int,
+    q: int,
+    bounds: Tensor,
+    n_burnin: int,
+    thinning: int,
+    seed: int,
+    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+) -> Tensor:
+    r"""Samples `n` q-baches from a polytope of dimension `d`.
+
+    Args:
+        n: Number of q-batches to sample.
+        q: Number of samples per q-batch
+        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
+        n_burnin: The number of burn-in samples for the Markov chain sampler.
+            thinning: The amount of thinning (number of steps to take between
+            returning samples).
+        seed: The random seed.
+        inequality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`.
+        equality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
+
+    Returns:
+        A `n x q x d`-dim tensor of samples.
+    """
+
+    # check if inter-point constraints are present
+    inter_point = any(
+        len(indices.shape) > 1
+        for constraints in (inequality_constraints or [], equality_constraints or [])
+        for indices, _, _ in constraints
+    )
+
+    if inter_point:
+        samples = get_polytope_samples(
+            n=n,
+            bounds=torch.hstack([bounds for _ in range(q)]),
+            inequality_constraints=transform_constraints(
+                constraints=inequality_constraints, q=q, d=bounds.shape[1]
+            ),
+            equality_constraints=transform_constraints(
+                constraints=equality_constraints, q=q, d=bounds.shape[1]
+            ),
+            seed=seed,
+            n_burnin=n_burnin,
+            thinning=thinning * q,
+        )
+    else:
+        samples = get_polytope_samples(
+            n=n * q,
+            bounds=bounds,
+            inequality_constraints=inequality_constraints,
+            equality_constraints=equality_constraints,
+            seed=seed,
+            n_burnin=n_burnin,
+            thinning=thinning,
+        )
+    return samples.view(n, q, -1).cpu()
+
+
 def gen_batch_initial_conditions(
     acq_function: AcquisitionFunction,
     bounds: Tensor,
@@ -167,18 +338,15 @@ def gen_batch_initial_conditions(
                         )
                     X_rnd = bounds_cpu[0] + (bounds_cpu[1] - bounds_cpu[0]) * X_rnd_nlzd
             else:
-                X_rnd = (
-                    get_polytope_samples(
-                        n=n * q,
-                        bounds=bounds,
-                        inequality_constraints=inequality_constraints,
-                        equality_constraints=equality_constraints,
-                        seed=seed,
-                        n_burnin=options.get("n_burnin", 10000),
-                        thinning=options.get("thinning", 32),
-                    )
-                    .view(n, q, -1)
-                    .cpu()
+                X_rnd = sample_q_batches_from_polytope(
+                    n=n,
+                    q=q,
+                    bounds=bounds,
+                    n_burnin=options.get("n_burnin", 10000),
+                    thinning=options.get("thinning", 32),
+                    seed=seed,
+                    equality_constraints=equality_constraints,
+                    inequality_constraints=inequality_constraints,
                 )
             # sample points around best
             if sample_around_best:
