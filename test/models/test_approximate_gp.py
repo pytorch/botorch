@@ -83,19 +83,20 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
         train_Y = torch.randn(3, 10, 2, device=self.device)
         test_X = torch.rand(3, 5, 1, device=self.device)
 
-        non_batched = [train_X[0], train_Y[0, :, 0].unsqueeze(-1), test_X[0]]
-        non_batched_mo = [train_X[0], train_Y[0], test_X[0]]
-        batched = [train_X, train_Y[..., 0].unsqueeze(-1), test_X]
-        # batched multi-output is not supported at this time
-        # batched_mo = [train_X, train_Y, test_X]
-        non_batched_to_batched = [train_X[0], train_Y[0], test_X]
-        all_test_lists = [non_batched, non_batched_mo, batched, non_batched_to_batched]
+        all_tests = {
+            "non_batched": [train_X[0], train_Y[0, :, :1], test_X[0]],
+            "non_batched_mo": [train_X[0], train_Y[0], test_X[0]],
+            "batched": [train_X, train_Y[..., :1], test_X],
+            # batched multi-output is not supported at this time
+            # "batched_mo": [train_X, train_Y, test_X],
+            "non_batched_to_batched": [train_X[0], train_Y[0], test_X],
+        }
 
-        for [tx, ty, test] in all_test_lists:
-            print(tx.shape, ty.shape, test.shape)
-            model = SingleTaskVariationalGP(tx, ty, inducing_points=tx)
-            posterior = model.posterior(test)
-            self.assertIsInstance(posterior, GPyTorchPosterior)
+        for test_name, [tx, ty, test] in all_tests.items():
+            with self.subTest(test_name=test_name):
+                model = SingleTaskVariationalGP(tx, ty, inducing_points=tx)
+                posterior = model.posterior(test)
+                self.assertIsInstance(posterior, GPyTorchPosterior)
 
     def test_variational_setUp(self):
         for dtype in [torch.float, torch.double]:
