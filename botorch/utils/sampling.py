@@ -896,6 +896,7 @@ def optimize_posterior_samples(
         raw_samples: The number of samples with which to query the samples initially.
         num_restarts: The number of points selected for gradient-based optimization.
         maximize: Boolean indicating whether to maimize or minimize
+    
     Returns:
         A two-element tuple containing:
             - X_opt: A `num_optima x [batch_size] x d`-dim tensor of optimal inputs x*.

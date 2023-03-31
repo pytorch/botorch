@@ -1259,7 +1259,10 @@ def construct_inputs_qJES(
 ):
     dtype = model.train_targets.dtype
     optimal_inputs, optimal_outputs = get_optimal_samples(
-        model, Tensor(bounds).to(dtype).T, num_optima=num_optima, maximize=maximize
+        model=model,
+        bounds=torch.as_tensor(bounds, dtype=dtype).T,
+        num_optima=num_optima,
+        maximize=maximize,
     )
 
     inputs = {

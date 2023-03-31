@@ -540,9 +540,9 @@ class TestOptimizePosteriorSamples(BotorchTestCase):
         nums_optima = (1, 7)
         batch_shapes = ((), (3,), (5, 2))
         for num_optima, batch_shape in itertools.product(nums_optima, batch_shapes):
-            bounds = torch.Tensor([[0, 1]] * dims).T.to(dtype)
-            X = torch.rand(*batch_shape, 52, dims).to(dtype)
-            Y = torch.pow(X - 0.5, 2).sum(dim=-1, keepdim=True).to(dtype)
+            bounds = torch.Tensor([[0, 1]] * dims, dtype=dtype).T
+            X = torch.rand(*batch_shape, 52, dims, dtype=dtype)
+            Y = torch.pow(X - 0.5, 2).sum(dim=-1, keepdim=True)
 
             # having a noiseless model all but guarantees that the found optima
             # will be better than the observations
