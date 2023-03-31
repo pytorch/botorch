@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 import warnings
-from math import pi
+from math import log, pi
 import torch.distributions as dist
 
 import torch
@@ -25,6 +25,7 @@ from torch.distributions import Normal
 from botorch.models.utils import check_no_nans
 from botorch import settings
 from botorch.models.utils import fantasize as fantasize_flag
+from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.model import Model
 from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
@@ -36,6 +37,16 @@ from botorch.exceptions.warnings import BotorchTensorDimensionWarning
 
 MCMC_DIM = -3  # Only relevant if you do Fully Bayesian GPs.
 ESTIMATION_TYPES = ["MC", "LB"]
+MC_ADD_TERM = 0.5 * (1 + log(2 * pi))
+
+# The CDF query cannot be strictly zero in the division
+# and this clamping helps assure that it is always positive.
+CLAMP_LB = torch.finfo(torch.float32).eps
+FULLY_BAYESIAN_ERROR_MSG = """JES is not yet available with Fully Bayesian GPs. Track the issue,
+which regards conditioning on a number of optima on a collecion of models,
+in detail at https://github.com/pytorch/botorch/issues/1680.
+"""
+
 """
 References
 .. [Hvarfner2022joint]
@@ -72,7 +83,7 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
         X_pending: Optional[Tensor] = None,
         estimation_type: str = "LB",
         maximize: bool = True,
-        num_samples: int = 256,
+        num_samples: int = 64,
         **kwargs: Any,
     ) -> None:
         r"""Joint entropy search acquisition function.
@@ -95,7 +106,7 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
                 of the MC estimator.
             maximize: If true, we consider a maximization problem.
             X_pending: A `m x d`-dim Tensor of `m` design points that have been
-                submitted for function evaluation, but have not yet been evaluated
+                submitted for function evaluation, but have not yet been evaluated.
             num_samples: The number of Monte Carlo samples used for the Monte Carlo
                 estimate.
         """
@@ -119,7 +130,7 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
         # want to consider MAX-values. As such, we need to flip them if
         # we want to minimize.
         if not self.maximize:
-            optimal_outputs = (-1) * optimal_outputs
+            optimal_outputs = -optimal_outputs
         self.num_samples = optimal_inputs.shape[0]
         self.condition_noiseless = condition_noiseless
         self.initial_model = model
@@ -129,6 +140,9 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
         # and the optimal outputs have shapes num_optima x [num_models if FB] x 1 x 1
         # The third dimension equaling 1 is required to get one optimum per model,
         # which raises a BotorchTensorDimensionWarning.
+        if isinstance(model, SaasFullyBayesianSingleTaskGP):
+
+            raise NotImplementedError(FULLY_BAYESIAN_ERROR_MSG)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
             with fantasize_flag():
@@ -143,14 +157,16 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
                     opt_noise = torch.full_like(
                         self.optimal_outputs, MIN_INFERRED_NOISE_LEVEL)
                     # conditional (batch) model of shape (num_models) x num_optima_per_model
+                    self.conditional_model = self.initial_model.condition_on_observations(
+                        X=self.initial_model.transform_inputs(self.optimal_inputs),
+                        Y=self.optimal_outputs,
+                        noise=opt_noise
+                    )
                 else:
-                    opt_noise = None
-
-                self.conditional_model = self.initial_model.condition_on_observations(
-                    X=self.initial_model.transform_inputs(self.optimal_inputs),
-                    Y=self.optimal_outputs,
-                    noise=opt_noise,
-                )
+                    self.conditional_model = self.initial_model.condition_on_observations(
+                        X=self.initial_model.transform_inputs(self.optimal_inputs),
+                        Y=self.optimal_outputs,
+                    )
 
         self.estimation_type = estimation_type
         self.set_X_pending(X_pending)
@@ -158,7 +174,8 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
     @concatenate_pending_points
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
-        r"""Evaluates qLowerBoundJointEntropySearch at the design points `X`.
+        r"""Evaluates qJointEntropySearch at the design points `X`.
+
         Args:
             X: A `batch_shape x q x d`-dim Tensor of `batch_shape` t-batches with `q`
             `d`-dim design points each.
@@ -173,7 +190,7 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
             res = self._compute_monte_carlo_information_gain(X)
         else:
             raise ValueError(
-                f"Estimation type {self.estimation_type} is not valid."
+                f"Estimation type {self.estimation_type} is not valid. "
                 f"Please specify any of {ESTIMATION_TYPES}"
             )
         return res
@@ -201,7 +218,8 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
         batch_shape = X.shape[:-2]
         sample_dim = len(batch_shape)
         # We DISREGARD the additional constant term.
-        initial_entropy = 0.5 * torch.logdet(initial_posterior.mvn.covariance_matrix)
+        initial_entropy = 0.5 * \
+            torch.logdet(initial_posterior.mvn.lazy_covariance_matrix)
 
         # initial_entropy of shape batch_size or batch_size x num_models if FBGP
         # first need to unsqueeze the sample dim (first after batch dim) and then the two last
@@ -209,7 +227,6 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
             initial_entropy.unsqueeze(sample_dim).unsqueeze(-1).unsqueeze(-1)
         )
 
-        CLAMP_LB = torch.finfo(tkwargs["dtype"]).eps
         # Compute the mixture mean and variance
         posterior_m = self.conditional_model.posterior(
             X.unsqueeze(MCMC_DIM), observation_noise=True
@@ -290,11 +307,11 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
 
         initial_posterior = self.initial_model.posterior(X, observation_noise=True)
 
-        add_term = 0.5 * (1 + torch.log(torch.ones(1, **tkwargs) * 2 * pi))
         batch_shape = X.shape[:-2]
         sample_dim = len(batch_shape)
         # We DISREGARD the additional constant term.
-        initial_entropy = 0.5 * torch.logdet(initial_posterior.mvn.covariance_matrix)
+        initial_entropy = MC_ADD_TERM + 0.5 * \
+            torch.logdet(initial_posterior.mvn.lazy_covariance_matrix)
 
         # initial_entropy of shape batch_size or batch_size x num_models if FBGP
         # first need to unsqueeze the sample dim (first after batch dim) and then the two last
@@ -302,7 +319,6 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
             initial_entropy.unsqueeze(sample_dim).unsqueeze(-1).unsqueeze(-1)
         )
 
-        CLAMP_LB = torch.finfo(tkwargs["dtype"]).eps
         # Compute the mixture mean and variance
         posterior_m = self.conditional_model.posterior(
             X.unsqueeze(MCMC_DIM), observation_noise=True
