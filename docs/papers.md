@@ -22,7 +22,7 @@ Here is an incomplete selection of peer-reviewed Bayesian optimization papers th
 
 - [Inducing Point Allocation for Sparse Gaussian Processes in High-Throughput Bayesian Optimisation](https://arxiv.org/pdf/2301.10123.pdf). Henry B. Moss, Sebastian W. Ober, Victor Picheny. AISTATS 2023.
 
-- [The Impact of Expertise in the Loop for Exploring Machine Rationality](https://arxiv.org/pdf/2302.05665.pdf).
+- [The Impact of Expertise in the Loop for Exploring Machine Rationality](https://arxiv.org/pdf/2302.05665.pdf). Changkun Ou, Sven Mayer, Andreas Martin Butz. IUI 2023.
 
 - [Joint Entropy Search for Multi-objective Bayesian Optimization](https://arxiv.org/pdf/2210.02905.pdf). Ben Tu, Axel Gandy, Nikolas Kantas, Behrang Shafei. NeurIPS 2022.
 
