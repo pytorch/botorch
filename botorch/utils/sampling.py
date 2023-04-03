@@ -923,9 +923,9 @@ def optimize_posterior_samples(
     X_top_k = candidate_set[argtop_k, :]
 
     # to avoid circular import, the import occurs here
-    from botorch.generation.gen import gen_candidates_scipy
+    from botorch.generation.gen import gen_candidates_torch
 
-    X_top_k, f_top_k = gen_candidates_scipy(
+    X_top_k, f_top_k = gen_candidates_torch(
         X_top_k, path_func, lower_bounds=bounds[0], upper_bounds=bounds[1], **kwargs
     )
     f_opt, arg_opt = f_top_k.max(dim=-1, keepdim=True)
