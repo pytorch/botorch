@@ -32,6 +32,8 @@ Here is an incomplete selection of peer-reviewed Bayesian optimization papers th
 
 - [Inducing Point Allocation for Sparse Gaussian Processes in High-Throughput Bayesian Optimisation](https://arxiv.org/pdf/2301.10123.pdf). Henry B. Moss, Sebastian W. Ober, Victor Picheny. AISTATS 2023.
 
+- [Scalable Bayesian Optimization Using Vecchia Approximations of Gaussian Processes](https://arxiv.org/pdf/2203.01459.pdf). Felix Jimenez, Matthias Katzfuss. AISTATS 2023.
+
 - [Active Bayesian Causal Inference](https://proceedings.neurips.cc/paper_files/paper/2022/hash/675e371eeeea99551ce47797ed6ed33e-Abstract-Conference.html). Christian Toth, Lars Lorch, Christian Knoll, Andreas Krause, Franz Pernkopf, Robert Peharz, Julius von Kügelgen. NeurIPS 2022.
 
 - [Joint Entropy Search for Multi-objective Bayesian Optimization](https://arxiv.org/pdf/2210.02905.pdf). Ben Tu, Axel Gandy, Nikolas Kantas, Behrang Shafei. NeurIPS 2022.
@@ -79,8 +81,6 @@ Samuel Daulton, Max Balandat, Eytan Bakshy. NeurIPS 2021.
 - [Combining Latent Space and Structured Kernels for Bayesian Optimization over Combinatorial Spaces](https://papers.nips.cc/paper/2021/hash/44e76e99b5e194377e955b13fb12f630-Abstract.html). Aryan Deshwal, Jana Doppa. NeurIPS 2021.
 
 - [Improving Black-box Optimization in VAE Latent Space Using Decoder Uncertainty](https://papers.nips.cc/paper/2021/hash/06fe1c234519f6812fc4c1baae25d6af-Abstract.html). Pascal Notin, José Miguel Hernández-Lobato, Yarin Gal. NeurIPS 2021
-
-- [Parallel Bayesian Optimization of Multiple Noisy Objectives with Expected Hypervolume Improvement](https://papers.nips.cc/paper/2021/hash/11704817e347269b7254e744b5e22dac-Abstract.html). Samuel Daulton, Maximilian Balandat, Eytan Bakshy. NeurIPS 2021.
 
 - [Risk-averse Heteroscedastic Bayesian Optimization](https://papers.nips.cc/paper/2021/hash/8f97d1d7e02158a83ceb2c14ff5372cd-Abstract.html). Anastasia Makarova, Ilnura Usmanova, Ilija Bogunovic, Andreas Krause. NeurIPS 2021.
 
