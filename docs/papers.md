@@ -18,13 +18,25 @@ The main reference for BoTorch is
 
 Here is an incomplete selection of peer-reviewed Bayesian optimization papers that build off of BoTorch:
 
+- [Sparse Bayesian Optimization](https://arxiv.org/pdf/2203.01900.pdf). Sulin Liu, Qing Feng, David Eriksson, Ben Letham, Eytan Bakshy. AISTATS 2023.
+
+- [Bayesian Optimization over High-Dimensional Combinatorial Spaces via Dictionary-based Embeddings](https://arxiv.org/abs/2303.01774). Aryan Deshwal, Sebastian Ament, Maximilian Balandat, Eytan Bakshy, Janardhan Rao Doppa, David Eriksson. AISTATS 2023.
+
+- [qEUBO: A Decision-Theoretic Acquisition Function for Preferential Bayesian Optimization](https://arxiv.org/pdf/2303.15746.pdf). Raul Astudillo, Zhiyuan Jerry Lin, Eytan Bakshy, Peter I. Frazier. AISTATS 2023.
+
 - [Discovering Many Diverse Solutions with Bayesian Optimization](https://arxiv.org/pdf/2210.10953.pdf). Natalie Maus, Kaiwen Wu, David Eriksson, Jacob Gardner. AISTATS 2023.
+
+- [Multi-Fidelity Bayesian Optimization with Unreliable Information Sources](https://arxiv.org/pdf/2210.13937.pdf). Petrus Mikkola, Julien Martinelli, Louis Filstroff, Samuel Kaski. AISTATS 2023.
+
+- [Bayesian Optimization with Conformal Coverage Guarantees](https://arxiv.org/pdf/2210.12496.pdf). Samuel Stanton, Wesley Maddox, Andrew Gordon Wilson. AISTATS 2023.
 
 - [Inducing Point Allocation for Sparse Gaussian Processes in High-Throughput Bayesian Optimisation](https://arxiv.org/pdf/2301.10123.pdf). Henry B. Moss, Sebastian W. Ober, Victor Picheny. AISTATS 2023.
 
-- [The Impact of Expertise in the Loop for Exploring Machine Rationality](https://arxiv.org/pdf/2302.05665.pdf). Changkun Ou, Sven Mayer, Andreas Martin Butz. IUI 2023.
+- [Active Bayesian Causal Inference](https://proceedings.neurips.cc/paper_files/paper/2022/hash/675e371eeeea99551ce47797ed6ed33e-Abstract-Conference.html). Christian Toth, Lars Lorch, Christian Knoll, Andreas Krause, Franz Pernkopf, Robert Peharz, Julius von Kügelgen.
 
 - [Joint Entropy Search for Multi-objective Bayesian Optimization](https://arxiv.org/pdf/2210.02905.pdf). Ben Tu, Axel Gandy, Nikolas Kantas, Behrang Shafei. NeurIPS 2022.
+
+- [Local Bayesian Optimization via Maximizing Probability of Descent](https://arxiv.org/pdf/2210.11662.pdf). Quan Nguyen, Kaiwen Wu, Jacob R. Gardner, Roman Garnett. NeurIPS 2022.
 
 - [Local Latent Space Bayesian Optimization over Structured Inputs](https://proceedings.neurips.cc/paper_files/paper/2022/hash/ded98d28f82342a39f371c013dfb3058-Abstract-Conference.html). Natalie Maus, Haydn Jones, Juston Moore, Matt J. Kusner, John Bradshaw, Jacob Gardner. NeurIPS 2022.
 
@@ -49,6 +61,14 @@ Jerry Lin, Raul Astudillo, Peter Frazier, Eytan Bakshy. AISTATS 2022.
 Benjamin Letham, Eytan Bakshy, Michael Shvartsman. AISTATS 2022.
 
 - [GIBBON: General-purpose Information-Based Bayesian OptimisatioN](https://jmlr.org/papers/volume22/21-0120/21-0120.pdf). Henry B. Moss, David S. Leslie, Javier Gonzalez, Paul Rayson. JMLR 2021.
+
+- [Improving black-box optimization in VAE latent space using decoder uncertainty](https://proceedings.neurips.cc/paper/2021/hash/06fe1c234519f6812fc4c1baae25d6af-Abstract.html). Pascal Notin, José Miguel Hernández-Lobato, Yarin Gal. NeurIPS 2021.
+
+- [Bayesian Optimization of Function Networks
+](https://proceedings.neurips.cc/paper/2021/hash/792c7b5aae4a79e78aaeda80516ae2ac-Abstract.html). Raul Astudillo, Peter Frazier. NeurIPS 2021.
+
+- [Combining Latent Space and Structured Kernels for Bayesian Optimization over Combinatorial Spaces
+](https://proceedings.neurips.cc/paper/2021/hash/44e76e99b5e194377e955b13fb12f630-Abstract.html). Aryan Deshwal, Jana Doppa. NeurIPS 2021.
 
 - [Conditioning Sparse Variational Gaussian Processes
 for Online Decision-making](https://proceedings.neurips.cc/paper/2021/file/325eaeac5bef34937cfdc1bd73034d17-Paper.pdf). Wesley J. Maddox, Samuel Stanton, and Andrew G. Wilson. NeurIPS 2021.
