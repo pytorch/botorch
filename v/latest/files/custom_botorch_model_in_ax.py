@@ -19,6 +19,7 @@ from contextlib import contextmanager
 
 from ax.utils.testing.mock import fast_botorch_optimize_context_manager
 import plotly.io as pio
+
 # Ax uses Plotly to produce interactive plots. These are great for viewing and analysis,
 # though they also lead to large file sizes, which is not ideal for files living in GH.
 # Changing the default to `png` strips the interactive components to get around this.
@@ -323,7 +324,9 @@ class BraninMetric(Metric):
                     "metric_name": self.name,
                     "trial_index": trial.index,
                     "mean": branin_func(tensor_params),
-                    "sem": float("nan"),  # SEM (observation noise) - NaN indicates unknown
+                    "sem": float(
+                        "nan"
+                    ),  # SEM (observation noise) - NaN indicates unknown
                 }
             )
         return Ok(value=Data(df=pd.DataFrame.from_records(records)))
@@ -332,8 +335,12 @@ class BraninMetric(Metric):
 # Search space defines the parameters, their types, and acceptable values.
 search_space = SearchSpace(
     parameters=[
-        RangeParameter(name="x1", parameter_type=ParameterType.FLOAT, lower=-5, upper=10),
-        RangeParameter(name="x2", parameter_type=ParameterType.FLOAT, lower=0, upper=15),
+        RangeParameter(
+            name="x1", parameter_type=ParameterType.FLOAT, lower=-5, upper=10
+        ),
+        RangeParameter(
+            name="x2", parameter_type=ParameterType.FLOAT, lower=0, upper=15
+        ),
     ]
 )
 

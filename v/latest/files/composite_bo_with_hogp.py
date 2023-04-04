@@ -13,52 +13,49 @@
 # 
 # Recently, [Maddox et al, '21](https://arxiv.org/abs/2106.12997) proposed a method for computing posterior samples from the HOGP by exploiting structure in the posterior distribution, thereby enabling its usage in BO settings. While they show that this approach allows to use composite BO on problems with tens or thousands of outputs, for scalability we consider a much smaller example here (that does not require GPU acceleration).
 
-# In[1]:
+# In[5]:
 
 
-import torch
-import os
-import logging
 import math
-import matplotlib.pyplot as plt
+import os
 import time
+from functools import partial
 
 import gpytorch.settings as gpt_settings
-
+import matplotlib.pyplot as plt
+import torch
 from botorch.acquisition import qExpectedImprovement
 from botorch.acquisition.objective import GenericMCObjective
 from botorch.models import HigherOrderGP, SingleTaskGP
 from botorch.models.higher_order_gp import FlattenedStandardize
 from botorch.models.transforms import Normalize, Standardize
 from botorch.optim import optimize_acqf
+from botorch.optim.fit import fit_gpytorch_mll_torch
 from botorch.sampling.normal import IIDNormalSampler
-
 from gpytorch.mlls import ExactMarginalLogLikelihood
+from linear_operator.settings import _fast_solves
+from torch.optim import Adam
 
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
-# In[2]:
-
-
-from botorch.optim.fit import fit_gpytorch_torch
-
-
 # #### Set Device and dtype
 
-# In[3]:
+# In[6]:
 
 
 torch.manual_seed(0)
-device = torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:4")
+device = (
+    torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:4")
+)
 dtype = torch.float
 
 print("Using ", device)
 
 
-# In[4]:
+# In[7]:
 
 
 models_used = (
@@ -74,12 +71,12 @@ models_used = (
 # $$ f(s,t | M, D, L, \tau) := \frac{M}{\sqrt{4 \pi D t}}  \exp\{-\frac{s^2}{4Dt}\} + \frac{1_{t > \tau} M}{\sqrt{4 \pi D(t - \tau)}} \exp\{- \frac{(s - L)^2}{4 D (t - \tau)}\}, $$
 # with the cheap to evaluate, differentiable function given by $g(y):= \sum_{(s,t) \in S \times T} \left(c(s, t|x_{\text{true}}) - y\right)^2.$ As the objective function itself is going to be implemented in Pytorch, we will be able to differentiate through it, enabling the usage of gradient-based optimization to optimize the objectives with respect to the inputs.
 
-# In[5]:
+# In[8]:
 
 
 def env_cfun(s, t, M, D, L, tau):
     c1 = M / torch.sqrt(4 * math.pi * D * t)
-    exp1 = torch.exp(-(s ** 2) / 4 / D / t)
+    exp1 = torch.exp(-(s**2) / 4 / D / t)
     term1 = c1 * exp1
     c2 = M / torch.sqrt(4 * math.pi * D * (t - tau))
     exp2 = torch.exp(-((s - L) ** 2) / 4 / D / (t - tau))
@@ -92,25 +89,22 @@ def env_cfun(s, t, M, D, L, tau):
 
 # These are helper functions for us to maximize the acquisition function and to get random points.
 
-# In[6]:
+# In[9]:
 
 
 def gen_rand_points(bounds, num_samples):
     points_nlzd = torch.rand(num_samples, bounds.shape[-1]).to(bounds)
     return bounds[0] + (bounds[1] - bounds[0]) * points_nlzd
-    
+
 
 def optimize_ei(qEI, bounds, **options):
-    with gpt_settings.fast_computations(covar_root_decomposition=False):
-        cands_nlzd, _ = optimize_acqf(
-                qEI, bounds, **options, 
-        )
+    cands_nlzd, _ = optimize_acqf(qEI, bounds, **options)
     return cands_nlzd
 
 
 # Below is a wrapped function to help us define bounds on the parameter space, we can also vary the size of the grid if we'd like to.
 
-# In[7]:
+# In[10]:
 
 
 def prepare_data(s_size=3, t_size=4, device=device, dtype=dtype):
@@ -148,9 +142,7 @@ def prepare_data(s_size=3, t_size=4, device=device, dtype=dtype):
     def neq_sum_quared_diff(samples):
         # unsqueeze
         if samples.shape[-1] == (s_size * t_size):
-            samples = samples.unsqueeze(-1).reshape(
-                *samples.shape[:-1], s_size, t_size
-            )
+            samples = samples.unsqueeze(-1).reshape(*samples.shape[:-1], s_size, t_size)
 
         sq_diffs = (samples - c_true).pow(2)
         return sq_diffs.sum(dim=(-1, -2)).mul(-1.0)
@@ -165,31 +157,27 @@ def prepare_data(s_size=3, t_size=4, device=device, dtype=dtype):
 
 # ## BO Loop
 
-# Finally, we run the BO loop over three trials for $15$ batches each. This loop might take a while.
+# Finally, we run the BO loop for 10 iterations, generating 3 candidates in each iteration. This loop might take a while.
 # 
-# We will be comparing to both random selection and batch expected improvment on the aggregated metric.
+# We will be comparing to both random selection and batch expected improvement on the aggregated metric.
 
-# In[8]:
+# In[11]:
 
 
-n_init = 30
+n_init = 20
 
 if SMOKE_TEST:
     n_batches = 1
     batch_size = 2
-    n_trials = 1
 else:
-    n_batches = 15
-    batch_size = 4
-    n_trials = 3
+    n_batches = 10
+    batch_size = 3
 
 
 # As a word of caution, we've found that when fitting the HOGP model, using first-order optimizers (e.g. Adam) as is used in `fit_gpytorch_torch` tends to outperform second-order optimizers such as L-BFGS-B due to the large number of free parameters in the HOGP. L-BFGS-B tends to overfit in practice here.
 
-# In[9]:
+# In[12]:
 
-
-all_objective_vals = []
 
 with gpt_settings.cholesky_jitter(1e-4):
     c_batched, objective, bounds, num_samples = prepare_data(device=device, dtype=dtype)
@@ -208,7 +196,7 @@ with gpt_settings.cholesky_jitter(1e-4):
         # get best observations, log status
         best_f = {k: objective(v).max().detach() for k, v in train_Y.items()}
 
-        logging.info(
+        print(
             f"It {i+1:>2}/{n_batches}, best obs.: "
             ", ".join([f"{k}: {v:.3f}" for k, v in best_f.items()])
         )
@@ -233,7 +221,7 @@ with gpt_settings.cholesky_jitter(1e-4):
         )
 
         mll = ExactMarginalLogLikelihood(model_ei.likelihood, model_ei)
-        fit_gpytorch_torch(mll, options={"lr": 0.01, "maxiter": 3000, "disp": False})
+        fit_gpytorch_mll_torch(mll, step_limit=1000, optimizer=partial(Adam, lr=0.01))
 
         # generate qEI candidate (single output modeling)
         qEI = qExpectedImprovement(model_ei, best_f=best_f["ei"], sampler=sampler)
@@ -248,7 +236,10 @@ with gpt_settings.cholesky_jitter(1e-4):
         )
 
         mll = ExactMarginalLogLikelihood(model_ei_hogp_cf.likelihood, model_ei_hogp_cf)
-        fit_gpytorch_torch(mll, options={"lr": 0.01, "maxiter": 3000, "disp": False})
+        with _fast_solves(True):
+            fit_gpytorch_mll_torch(
+                mll, step_limit=1000, optimizer=partial(Adam, lr=0.01)
+            )
 
         # generate qEI candidate (multi-output modeling)
         qEI_hogp_cf = qExpectedImprovement(
@@ -266,12 +257,12 @@ with gpt_settings.cholesky_jitter(1e-4):
                 train_X[k] = torch.cat([Xold, Xnew])
                 train_Y[k] = torch.cat([train_Y[k], c_batched(Xnew)])
 
-        logging.info(f"Wall time: {time.monotonic() - tic:1f}")
+        print(f"Wall time: {time.monotonic() - tic:1f}")
 
     objective_dict = {k: objective(train_Y[k]) for k in train_Y}
 
 
-# In[10]:
+# In[13]:
 
 
 methods_dict = {k: objective_dict[k].cpu().cummax(0)[0] for k in models_used}
@@ -280,18 +271,18 @@ mean_results = {k: -methods_dict[k][n_init:] for k in models_used}
 
 # Finally, we plot the results, showing that the HOGP performs well on this task, and converges to a closer parameter value than a batch GP on the composite metric itself.
 
-# In[11]:
+# In[14]:
 
 
-plt.figure(figsize = (8,6))
+plt.figure(figsize=(8, 6))
 labels_dict = {"rnd": "Random", "ei": "EI", "ei_hogp_cf": "Composite EI"}
 for k in models_used:
     plt.plot(
         torch.arange(n_batches * batch_size),
         mean_results[k],
-        label = labels_dict[k],
+        label=labels_dict[k],
     )
-plt.legend(fontsize = 20)
+plt.legend(fontsize=20)
 plt.semilogy()
 plt.xlabel("Number of Function Queries")
 plt.ylabel("Difference from True Parameter")

@@ -158,7 +158,9 @@ fit_gpytorch_mll(mll);
 
 from botorch.acquisition.max_value_entropy_search import qMaxValueEntropy
 
-candidate_set = torch.rand(1000, bounds.size(1), device=bounds.device, dtype=bounds.dtype)
+candidate_set = torch.rand(
+    1000, bounds.size(1), device=bounds.device, dtype=bounds.dtype
+)
 candidate_set = bounds[0] + (bounds[1] - bounds[0]) * candidate_set
 qMES = qMaxValueEntropy(model, candidate_set)
 
@@ -173,7 +175,7 @@ from botorch.optim import optimize_acqf
 
 # for q = 1
 candidates, acq_value = optimize_acqf(
-    acq_function=qMES, 
+    acq_function=qMES,
     bounds=bounds,
     q=1,
     num_restarts=10,
@@ -187,7 +189,7 @@ candidates, acq_value
 
 # for q = 2, sequential optimization
 candidates_q2, acq_value_q2 = optimize_acqf(
-    acq_function=qMES, 
+    acq_function=qMES,
     bounds=bounds,
     q=2,
     num_restarts=10,
@@ -204,12 +206,12 @@ from botorch.optim import optimize_acqf_cyclic
 
 # for q = 2, cyclic optimization
 candidates_q2_cyclic, acq_value_q2_cyclic = optimize_acqf_cyclic(
-    acq_function=qMES, 
+    acq_function=qMES,
     bounds=bounds,
     q=2,
     num_restarts=10,
     raw_samples=512,
-    cyclic_options={"maxiter": 2}
+    cyclic_options={"maxiter": 2},
 )
 candidates_q2_cyclic, acq_value_q2_cyclic
 

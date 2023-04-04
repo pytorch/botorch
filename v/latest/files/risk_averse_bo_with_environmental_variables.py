@@ -79,6 +79,7 @@ tkwargs = {"device": "cpu", "dtype": torch.double}
 test_function = Branin(negate=True)
 dim = test_function.dim
 
+
 def evaluate_function(X: Tensor) -> Tensor:
     return test_function(unnormalize(X, test_function.bounds)).view(*X.shape[:-1], 1)
 
@@ -94,15 +95,22 @@ bounds = torch.stack([torch.zeros(dim), torch.ones(dim)]).to(**tkwargs)
 train_X = draw_sobol_samples(bounds=bounds, n=8, q=1).squeeze(-2).to(**tkwargs)
 train_Y = evaluate_function(train_X)
 
+
 def train_model(train_X: Tensor, train_Y: Tensor) -> SingleTaskGP:
     r"""Returns a `SingleTaskGP` model trained on the inputs"""
-    w_set = draw_sobol_samples(n=N_W, q=1, bounds=bounds[:, -1:]).squeeze(-2).to(**tkwargs)
+    w_set = (
+        draw_sobol_samples(n=N_W, q=1, bounds=bounds[:, -1:]).squeeze(-2).to(**tkwargs)
+    )
     model = SingleTaskGP(
-        train_X, train_Y, input_transform=AppendFeatures(feature_set=w_set), outcome_transform=Standardize(m=1)
+        train_X,
+        train_Y,
+        input_transform=AppendFeatures(feature_set=w_set),
+        outcome_transform=Standardize(m=1),
     )
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     fit_gpytorch_mll(mll)
     return model
+
 
 model = train_model(train_X, train_Y)
 
@@ -116,9 +124,11 @@ model = train_model(train_X, train_Y)
 
 risk_measure = CVaR(alpha=0.7, n_w=N_W)
 
+
 def ignore_w(X: Tensor) -> Tensor:
     r"""Remove `w` from the input."""
     return X[..., :-1]
+
 
 def optimize_rho_kg_and_get_observation():
     r"""Optimizes the rhoKG acquisition function, and returns a new candidate and observation."""

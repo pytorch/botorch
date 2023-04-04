@@ -53,13 +53,13 @@ fontdict = {"fontsize": 15}
 torch.manual_seed(1234567890)
 c1 = torch.rand(6, dtype=dtype, device=device) * 3 + 0.1
 c0 = torch.rand(6, dtype=dtype, device=device) * 3 + 0.1
-x = torch.linspace(0,1,101, dtype=dtype, device=device)
+x = torch.linspace(0, 1, 101, dtype=dtype, device=device)
 k = Kumaraswamy(concentration1=c1, concentration0=c0)
 k_icdfs = k.icdf(x.unsqueeze(1).expand(101, 6))
-fig, ax = plt.subplots(1,1, figsize=(5,5))
+fig, ax = plt.subplots(1, 1, figsize=(5, 5))
 
 for i in range(6):
-    ax.plot(x.cpu(), k_icdfs[:,i].cpu())
+    ax.plot(x.cpu(), k_icdfs[:, i].cpu())
 ax.set_xlabel("Raw Value", **fontdict)
 ax.set_ylabel("Transformed Value", **fontdict)
 
@@ -71,10 +71,10 @@ from botorch.test_functions import Hartmann
 
 neg_hartmann6 = Hartmann(negate=True)
 
+
 def obj(X):
     X_warp = k.icdf(X)
     return neg_hartmann6(X_warp)
-    
 
 
 # #### Initial design
@@ -98,11 +98,13 @@ bounds = torch.tensor([[0.0] * 6, [1.0] * 6], device=device, dtype=dtype)
 
 def generate_initial_data(n=14):
     # generate training data
-    train_x = draw_sobol_samples(bounds=bounds, n=n, q=1, seed=torch.randint(0,10000,(1,)).item()).squeeze(1)
+    train_x = draw_sobol_samples(
+        bounds=bounds, n=n, q=1, seed=torch.randint(0, 10000, (1,)).item()
+    ).squeeze(1)
     exact_obj = obj(train_x).unsqueeze(-1)  # add output dimension
-    
+
     best_observed_value = exact_obj.max().item()
-    train_obj = exact_obj +  NOISE_SE * torch.randn_like(exact_obj)
+    train_obj = exact_obj + NOISE_SE * torch.randn_like(exact_obj)
     return train_x, train_obj, best_observed_value
 
 
@@ -124,17 +126,17 @@ def initialize_model(train_x, train_obj, use_input_warping):
             indices=list(range(train_x.shape[-1])),
             # use a prior with median at 1.
             # when a=1 and b=1, the Kumaraswamy CDF is the identity function
-            concentration1_prior=LogNormalPrior(0.0, 0.75 ** 0.5),
-            concentration0_prior=LogNormalPrior(0.0, 0.75 ** 0.5),
+            concentration1_prior=LogNormalPrior(0.0, 0.75**0.5),
+            concentration0_prior=LogNormalPrior(0.0, 0.75**0.5),
         )
     else:
         warp_tf = None
-    # define the model for objective 
+    # define the model for objective
     model = FixedNoiseGP(
         train_x,
         standardize(train_obj),
         train_yvar.expand_as(train_obj),
-        input_transform=warp_tf
+        input_transform=warp_tf,
     ).to(train_x)
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     return mll, model
@@ -164,7 +166,7 @@ def optimize_acqf_and_get_observation(acq_func):
         raw_samples=raw_samples,  # used for intialization heuristic
         options={"batch_limit": 5, "maxiter": 200},
     )
-    # observe new values 
+    # observe new values
     new_x = candidates.detach()
     exact_obj = obj(new_x).unsqueeze(-1)  # add output dimension
     train_obj = exact_obj + NOISE_SE * torch.randn_like(exact_obj)
@@ -177,7 +179,7 @@ def update_random_observations(best_random):
     """
     rand_x = draw_sobol_samples(bounds=bounds, n=1, q=1).squeeze(1)
     next_random_best = obj(rand_x).max().item()
-    best_random.append(max(best_random[-1], next_random_best))       
+    best_random.append(max(best_random[-1], next_random_best))
     return best_random
 
 
@@ -192,8 +194,8 @@ import time
 import warnings
 
 
-warnings.filterwarnings('ignore', category=BadInitialCandidatesWarning)
-warnings.filterwarnings('ignore', category=RuntimeWarning)
+warnings.filterwarnings("ignore", category=BadInitialCandidatesWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
 N_TRIALS = 3 if not SMOKE_TEST else 2
@@ -208,46 +210,53 @@ torch.manual_seed(0)
 
 # average over multiple trials
 for trial in range(1, N_TRIALS + 1):
-    
+
     print(f"\nTrial {trial:>2} of {N_TRIALS} ", end="")
     best_observed_ei, best_observed_warp, best_random = [], [], []
-    
+
     # call helper functions to generate initial training data and initialize model
     train_x_ei, train_obj_ei, best_observed_value_ei = generate_initial_data(n=14)
-    mll_ei, model_ei = initialize_model(train_x_ei, train_obj_ei, use_input_warping=False)
-    
-    train_x_warp, train_obj_warp,  = train_x_ei, train_obj_ei
+    mll_ei, model_ei = initialize_model(
+        train_x_ei, train_obj_ei, use_input_warping=False
+    )
+
+    train_x_warp, train_obj_warp, = (
+        train_x_ei,
+        train_obj_ei,
+    )
     best_observed_value_warp = best_observed_value_ei
     # use input warping
-    mll_warp, model_warp = initialize_model(train_x_warp, train_obj_warp, use_input_warping=True)
-    
+    mll_warp, model_warp = initialize_model(
+        train_x_warp, train_obj_warp, use_input_warping=True
+    )
+
     best_observed_ei.append(best_observed_value_ei)
     best_observed_warp.append(best_observed_value_warp)
     best_random.append(best_observed_value_ei)
-    
+
     # run N_BATCH rounds of BayesOpt after the initial random batch
-    for iteration in range(1, N_BATCH + 1):    
-        
+    for iteration in range(1, N_BATCH + 1):
+
         t0 = time.monotonic()
-        
+
         # fit the models
         fit_gpytorch_mll(mll_ei)
         fit_gpytorch_mll(mll_warp)
-        
+
         ei = qNoisyExpectedImprovement(
-            model=model_ei, 
+            model=model_ei,
             X_baseline=train_x_ei,
         )
-        
+
         ei_warp = qNoisyExpectedImprovement(
-            model=model_warp, 
+            model=model_warp,
             X_baseline=train_x_warp,
         )
-        
+
         # optimize and get new observation
         new_x_ei, new_obj_ei = optimize_acqf_and_get_observation(ei)
         new_x_warp, new_obj_warp = optimize_acqf_and_get_observation(ei_warp)
-                
+
         # update training points
         train_x_ei = torch.cat([train_x_ei, new_x_ei])
         train_obj_ei = torch.cat([train_obj_ei, new_obj_ei])
@@ -262,20 +271,25 @@ for trial in range(1, N_TRIALS + 1):
         best_observed_ei.append(best_value_ei)
         best_observed_warp.append(best_value_warp)
 
-        mll_ei, model_ei = initialize_model(train_x_ei, train_obj_ei, use_input_warping=False)
-        mll_warp, model_warp = initialize_model(train_x_warp, train_obj_warp, use_input_warping=True)
-        
+        mll_ei, model_ei = initialize_model(
+            train_x_ei, train_obj_ei, use_input_warping=False
+        )
+        mll_warp, model_warp = initialize_model(
+            train_x_warp, train_obj_warp, use_input_warping=True
+        )
+
         t1 = time.monotonic()
-        
+
         if verbose:
             print(
                 f"\nBatch {iteration:>2}: best_value (random, ei, ei_warp) = "
                 f"({max(best_random):>4.2f}, {best_value_ei:>4.2f}, {best_value_warp:>4.2f}), "
-                f"time = {t1-t0:>4.2f}.", end=""
+                f"time = {t1-t0:>4.2f}.",
+                end="",
             )
         else:
             print(".", end="")
-   
+
     best_observed_all_ei.append(best_observed_ei)
     best_observed_all_warp.append(best_observed_warp)
     best_random_all.append(best_random)
@@ -313,20 +327,37 @@ GLOBAL_MAXIMUM = neg_hartmann6.optimal_value
 
 iters = np.arange(N_BATCH + 1)
 y_ei = np.log10(GLOBAL_MAXIMUM - np.asarray(best_observed_all_ei))
-y_ei_warp =  np.log10(GLOBAL_MAXIMUM - np.asarray(best_observed_all_warp))
-y_rnd =  np.log10(GLOBAL_MAXIMUM - np.asarray(best_random_all))
+y_ei_warp = np.log10(GLOBAL_MAXIMUM - np.asarray(best_observed_all_warp))
+y_rnd = np.log10(GLOBAL_MAXIMUM - np.asarray(best_random_all))
 
 fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 ax.errorbar(
-    iters, y_rnd.mean(axis=0), yerr=ci(y_rnd), label="Sobol", linewidth=1.5, capsize=3, alpha=0.6
+    iters,
+    y_rnd.mean(axis=0),
+    yerr=ci(y_rnd),
+    label="Sobol",
+    linewidth=1.5,
+    capsize=3,
+    alpha=0.6,
 )
 ax.errorbar(
-    iters, y_ei.mean(axis=0), yerr=ci(y_ei), label="NEI", linewidth=1.5, capsize=3, alpha=0.6,
+    iters,
+    y_ei.mean(axis=0),
+    yerr=ci(y_ei),
+    label="NEI",
+    linewidth=1.5,
+    capsize=3,
+    alpha=0.6,
 )
 ax.errorbar(
-    iters, y_ei_warp.mean(axis=0), yerr=ci(y_ei_warp), label="NEI + Input Warping",
-    linewidth=1.5, capsize=3, alpha=0.6,
+    iters,
+    y_ei_warp.mean(axis=0),
+    yerr=ci(y_ei_warp),
+    label="NEI + Input Warping",
+    linewidth=1.5,
+    capsize=3,
+    alpha=0.6,
 )
-ax.set(xlabel='number of observations (beyond initial points)', ylabel='Log10 Regret')
+ax.set(xlabel="number of observations (beyond initial points)", ylabel="Log10 Regret")
 ax.legend(loc="lower left")
 

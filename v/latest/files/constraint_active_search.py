@@ -21,7 +21,6 @@
 
 import os
 
-import matplotlib.pyplot as plt
 import torch
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.acquisition.objective import IdentityMCObjective
@@ -37,7 +36,6 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 from torch.quasirandom import SobolEngine
 
 
-get_ipython().run_line_magic('matplotlib', 'inline')
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
@@ -71,6 +69,11 @@ def smooth_box_mask(x, a, b, eps=2e-3):
 # In[4]:
 
 
+import matplotlib.pyplot as plt
+
+get_ipython().run_line_magic('matplotlib', 'inline')
+
+
 x = torch.linspace(-2, 2, 500, **tkwargs)
 
 fig, ax = plt.subplots(1, 2, figsize=(8, 4))
@@ -97,7 +100,7 @@ class ExpectedCoverageImprovement(MCAcquisitionFunction):
         constraints,
         punchout_radius,
         bounds,
-        num_samples=512,
+        num_samples=128,
         **kwargs,
     ):
         """Expected Coverage Improvement (q=1 required, analytic)
@@ -201,9 +204,9 @@ def get_and_fit_gp(X, Y):
     """
     assert Y.ndim == 2 and Y.shape[-1] == 1
     likelihood = GaussianLikelihood(noise_constraint=Interval(1e-6, 1e-3))  # Noise-free
-    octf = Standardize(m=Y.shape[-1])
+    octf = Standardize(m=1)
     gp = SingleTaskGP(X, Y, likelihood=likelihood, outcome_transform=octf)
-    mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+    mll = ExactMarginalLogLikelihood(model=gp, likelihood=gp.likelihood)
     fit_gpytorch_mll(mll)
     return gp
 
@@ -241,7 +244,7 @@ eci = ExpectedCoverageImprovement(
     constraints=constraints,
     punchout_radius=punchout_radius,
     bounds=bounds,
-    num_samples=512 if not SMOKE_TEST else 4,
+    num_samples=128 if not SMOKE_TEST else 4,
 )
 
 
@@ -277,11 +280,11 @@ fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 ax = axes[0]
 ax.plot(xx[:, 0].cpu(), ymean[:, 0].cpu(), "b")
 ax.fill_between(
-    xx[:, 0].cpu(), 
-    ymean[:, 0].cpu() - 1.96 * yvar[:, 0].sqrt().cpu(), 
-    ymean[:, 0].cpu() + 1.96 * yvar[:, 0].sqrt().cpu(), 
-    alpha=0.1, 
-    color="b"
+    xx[:, 0].cpu(),
+    ymean[:, 0].cpu() - 1.96 * yvar[:, 0].sqrt().cpu(),
+    ymean[:, 0].cpu() + 1.96 * yvar[:, 0].sqrt().cpu(),
+    alpha=0.1,
+    color="b",
 )
 ax.plot(x[:, 0].cpu(), y[:, 0].cpu(), "or")
 ax.axhline(0.05, 0, 1)
@@ -324,7 +327,7 @@ punchout_radius = 0.1
 
 
 num_init_points = 5
-num_total_points = 20 if not SMOKE_TEST else 6
+num_total_points = 15 if not SMOKE_TEST else 5
 
 X = lb + (ub - lb) * SobolEngine(dim, scramble=True).draw(num_init_points).to(**tkwargs)
 Y = yf2d(X)
@@ -339,7 +342,7 @@ while len(X) < num_total_points:
         constraints=constraints,
         punchout_radius=punchout_radius,
         bounds=bounds,
-        num_samples=512 if not SMOKE_TEST else 4,
+        num_samples=128 if not SMOKE_TEST else 4,
     )
     x_next, _ = optimize_acqf(
         acq_function=eci,
@@ -359,7 +362,7 @@ while len(X) < num_total_points:
 # In[13]:
 
 
-N1, N2 = 50, 50
+N1, N2 = 30, 30
 Xplt, Yplt = torch.meshgrid(
     torch.linspace(0, 1, N1, **tkwargs), torch.linspace(0, 1, N2, **tkwargs)
 )

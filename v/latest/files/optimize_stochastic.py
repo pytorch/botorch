@@ -114,22 +114,22 @@ X_traj = []  # we'll store the results
 for i in range(75):
     optimizer.zero_grad()
     # this performs batch evaluation, so this is an N-dim tensor
-    losses = - qEI(X)  # torch.optim minimizes
+    losses = -qEI(X)  # torch.optim minimizes
     loss = losses.sum()
-    
+
     loss.backward()  # perform backward pass
     optimizer.step()  # take a step
-    
+
     # clamp values to the feasible set
     for j, (lb, ub) in enumerate(zip(*bounds)):
-        X.data[..., j].clamp_(lb, ub) # need to do this on the data not X itself
-    
+        X.data[..., j].clamp_(lb, ub)  # need to do this on the data not X itself
+
     # store the optimization trajecatory
     X_traj.append(X.detach().clone())
-    
+
     if (i + 1) % 15 == 0:
         print(f"Iteration {i+1:>3}/75 - Loss: {loss.item():>4.3f}")
-    
+
     # use your favorite convergence criterion here...
 
 

@@ -15,6 +15,7 @@
 
 
 import plotly.io as pio
+
 # Ax uses Plotly to produce interactive plots. These are great for viewing and analysis,
 # though they also lead to large file sizes, which is not ideal for files living in GH.
 # Changing the default to `png` strips the interactive components to get around this.
@@ -144,7 +145,7 @@ class ScalarizedUpperConfidenceBound(AnalyticAcquisitionFunction):
         weights: Tensor,
         maximize: bool = True,
     ) -> None:
-        # we use the AcquisitionFunction constructor, since that of 
+        # we use the AcquisitionFunction constructor, since that of
         # AnalyticAcquisitionFunction performs some validity checks that we don't want here
         super(AnalyticAcquisitionFunction, self).__init__(model)
         self.maximize = maximize
@@ -169,12 +170,16 @@ class ScalarizedUpperConfidenceBound(AnalyticAcquisitionFunction):
         means = posterior.mean.squeeze(dim=-2)  # b x o
         scalarized_mean = means.matmul(self.weights)  # b
         covs = posterior.mvn.covariance_matrix  # b x o x o
-        weights = self.weights.view(1, -1, 1)  # 1 x o x 1 (assume single batch dimension)
+        weights = self.weights.view(
+            1, -1, 1
+        )  # 1 x o x 1 (assume single batch dimension)
         weights = weights.expand(batch_shape + weights.shape[1:])  # b x o x 1
         weights_transpose = weights.permute(0, 2, 1)  # b x 1 x o
         scalarized_variance = torch.bmm(
             weights_transpose, torch.bmm(covs, weights)
-        ).view(batch_shape)  # b
+        ).view(
+            batch_shape
+        )  # b
         delta = (self.beta.expand_as(scalarized_mean) * scalarized_variance).sqrt()
         if self.maximize:
             return scalarized_mean + delta
@@ -294,7 +299,7 @@ ax_client.create_experiment(
             "name": f"x{i+1}",
             "type": "range",
             # It is crucial to use floats for the bounds, i.e., 0.0 rather than 0.
-            # Otherwise, the parameter would 
+            # Otherwise, the parameter would
             "bounds": [0.0, 1.0],
         }
         for i in range(2)

@@ -32,7 +32,8 @@
 # In[1]:
 
 
-import os 
+import os
+
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
@@ -54,7 +55,7 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 torch.manual_seed(123456)
 
 bounds = torch.tensor(SixHumpCamel._bounds).T
-bounds_norm = torch.tensor([[0.,0.],[1.,1.]])
+bounds_norm = torch.tensor([[0.0, 0.0], [1.0, 1.0]])
 train_X = bounds[0] + (bounds[1] - bounds[0]) * torch.rand(5, 2)
 train_Y = SixHumpCamel(negate=True)(train_X).unsqueeze(-1)
 
@@ -77,9 +78,10 @@ fit_gpytorch_mll(mll, max_attempts=10);
 from botorch.acquisition.max_value_entropy_search import qLowerBoundMaxValueEntropy
 
 candidate_set_size = 1000 if not SMOKE_TEST else 5
-candidate_set = torch.rand(candidate_set_size, bounds_norm.size(1), device=bounds.device, dtype=bounds.dtype)
+candidate_set = torch.rand(
+    candidate_set_size, bounds_norm.size(1), device=bounds.device, dtype=bounds.dtype
+)
 qGIBBON = qLowerBoundMaxValueEntropy(model, candidate_set)
-     
 
 
 # ### 3. Optimizing the GIBBON acquisition function to get the next candidate points
@@ -97,7 +99,7 @@ RAW_SAMPLES = 512 if not SMOKE_TEST else 4
 
 # for q = 1
 candidates, acq_value = optimize_acqf(
-    acq_function=qGIBBON, 
+    acq_function=qGIBBON,
     bounds=bounds,
     q=1,
     num_restarts=NUM_RESTARTS,
@@ -113,7 +115,7 @@ from botorch.optim import optimize_acqf
 
 # for q = 2, sequential optimsiation
 candidates, acq_value = optimize_acqf(
-    acq_function=qGIBBON, 
+    acq_function=qGIBBON,
     bounds=bounds,
     q=2,
     num_restarts=NUM_RESTARTS,
@@ -136,53 +138,57 @@ candidates, acq_value
 # In[6]:
 
 
-from botorch.acquisition import ExpectedImprovement, ProbabilityOfImprovement, qMaxValueEntropy
+from botorch.acquisition import (
+    ExpectedImprovement,
+    ProbabilityOfImprovement,
+    qMaxValueEntropy,
+)
 import matplotlib.pyplot as plt
 
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 # prep different acqusition functions
 acqs = {}
-candidate_set = torch.rand(10000, bounds.size(1), device=bounds.device, dtype=bounds.dtype)
-acqs['GIBBON'] = qLowerBoundMaxValueEntropy(model, candidate_set)
-acqs['MES'] = qMaxValueEntropy(model, candidate_set)
-acqs['EI'] = ExpectedImprovement(model,best_f=train_Y.max())
-acqs['PI'] = ProbabilityOfImprovement(model,best_f=train_Y.max())
+candidate_set = torch.rand(
+    10000, bounds.size(1), device=bounds.device, dtype=bounds.dtype
+)
+acqs["GIBBON"] = qLowerBoundMaxValueEntropy(model, candidate_set)
+acqs["MES"] = qMaxValueEntropy(model, candidate_set)
+acqs["EI"] = ExpectedImprovement(model, best_f=train_Y.max())
+acqs["PI"] = ProbabilityOfImprovement(model, best_f=train_Y.max())
 
 # prep grid to evaluate acq functions
 n = 100 if not SMOKE_TEST else 2
 xv, yv = torch.meshgrid([torch.linspace(0, 1, n), torch.linspace(0, 1, n)])
-test_x = torch.stack([xv.reshape(n*n, 1), yv.reshape(n*n, 1)], -1)
+test_x = torch.stack([xv.reshape(n * n, 1), yv.reshape(n * n, 1)], -1)
 
 # eval and maximise acq functions
 evals = {}
 candidates = {}
 for acq in acqs.keys():
     evals[acq] = acqs[acq](test_x).detach().reshape(n, n)
-    candidates[acq],_ = optimize_acqf(
-        acq_function=acqs[acq], 
-        bounds=bounds_norm,
-        q=1,
-        num_restarts=5,
-        raw_samples=100
+    candidates[acq], _ = optimize_acqf(
+        acq_function=acqs[acq], bounds=bounds_norm, q=1, num_restarts=5, raw_samples=100
     )
-    
+
 # plot acqusition function values and chosen points
-fig, (ax1, ax2, ax3, ax4) = plt.subplots(nrows=1, ncols=4, sharex=True, sharey=True, figsize=(10,5))
-ax1.contourf(xv,yv,evals['GIBBON'],levels=20)
-ax1.scatter(candidates['GIBBON'][:,0],candidates['GIBBON'][:,1],marker="X",c="r")
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(
+    nrows=1, ncols=4, sharex=True, sharey=True, figsize=(10, 5)
+)
+ax1.contourf(xv, yv, evals["GIBBON"], levels=20)
+ax1.scatter(candidates["GIBBON"][:, 0], candidates["GIBBON"][:, 1], marker="X", c="r")
 ax1.set_title("GIBBON")
-ax2.contourf(xv,yv,evals['MES'],levels=20)
-ax2.scatter(candidates['MES'][:,0],candidates['MES'][:,1],marker="X",c="r")
+ax2.contourf(xv, yv, evals["MES"], levels=20)
+ax2.scatter(candidates["MES"][:, 0], candidates["MES"][:, 1], marker="X", c="r")
 ax2.set_title("MES")
-ax3.contourf(xv,yv,evals['EI'],levels=20)
-ax3.scatter(candidates['EI'][:,0],candidates['EI'][:,1],marker="X",c="r")
+ax3.contourf(xv, yv, evals["EI"], levels=20)
+ax3.scatter(candidates["EI"][:, 0], candidates["EI"][:, 1], marker="X", c="r")
 ax3.set_title("EI")
-ax4.contourf(xv,yv,evals['PI'],levels=20)
-ax4.scatter(candidates['PI'][:,0],candidates['PI'][:,1],marker="X",c="r")
+ax4.contourf(xv, yv, evals["PI"], levels=20)
+ax4.scatter(candidates["PI"][:, 0], candidates["PI"][:, 1], marker="X", c="r")
 ax4.set_title("PI")
-fig.text(0.5, -0.1, 'x_1', ha='center')
-fig.text(-0.1, 0.5, 'x_2', va='center')
+fig.text(0.5, -0.1, "x_1", ha="center")
+fig.text(-0.1, 0.5, "x_2", va="center")
 
 
 # #### Batch BO (q=3)
@@ -197,16 +203,18 @@ from time import time
 
 # prep different acqusition functions
 acqs = {}
-candidate_set = torch.rand(10000, bounds.size(1), device=bounds.device, dtype=bounds.dtype)
-acqs['GIBBON'] = qLowerBoundMaxValueEntropy(model, candidate_set)
-acqs['MES'] = qMaxValueEntropy(model, candidate_set)
-acqs['EI'] = qNoisyExpectedImprovement(model, train_X)
-acqs['PI'] = qProbabilityOfImprovement(model, best_f=train_Y.max())
+candidate_set = torch.rand(
+    10000, bounds.size(1), device=bounds.device, dtype=bounds.dtype
+)
+acqs["GIBBON"] = qLowerBoundMaxValueEntropy(model, candidate_set)
+acqs["MES"] = qMaxValueEntropy(model, candidate_set)
+acqs["EI"] = qNoisyExpectedImprovement(model, train_X)
+acqs["PI"] = qProbabilityOfImprovement(model, best_f=train_Y.max())
 
 # prep grid to evaluate acq functions
 n = 100 if not SMOKE_TEST else 2
 xv, yv = torch.meshgrid([torch.linspace(0, 1, n), torch.linspace(0, 1, n)])
-test_x = torch.stack([xv.reshape(n*n, 1), yv.reshape(n*n, 1)], -1)
+test_x = torch.stack([xv.reshape(n * n, 1), yv.reshape(n * n, 1)], -1)
 
 # eval and maximise acq functions
 evals = {}
@@ -215,32 +223,34 @@ times = {}
 for acq in acqs.keys():
     evals[acq] = acqs[acq](test_x).detach().reshape(n, n)
     t_0 = time()
-    candidates[acq],_ = optimize_acqf(
+    candidates[acq], _ = optimize_acqf(
         acq_function=acqs[acq],
-        bounds=bounds_norm, 
+        bounds=bounds_norm,
         q=3,
-        num_restarts=5, 
-        raw_samples=100, 
-        sequential=True
+        num_restarts=5,
+        raw_samples=100,
+        sequential=True,
     )
     times[acq] = time() - t_0
-    
+
 # plot acqusition function values and chosen points
-fig, (ax1, ax2, ax3, ax4) = plt.subplots(nrows=1, ncols=4, sharex=True, sharey=True, figsize=(10,5))
-ax1.contourf(xv,yv,evals['GIBBON'],levels=20)
-ax1.scatter(candidates['GIBBON'][:,0],candidates['GIBBON'][:,1],marker="X",c="r")
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(
+    nrows=1, ncols=4, sharex=True, sharey=True, figsize=(10, 5)
+)
+ax1.contourf(xv, yv, evals["GIBBON"], levels=20)
+ax1.scatter(candidates["GIBBON"][:, 0], candidates["GIBBON"][:, 1], marker="X", c="r")
 ax1.set_title("GIBBON")
-ax2.contourf(xv,yv,evals['MES'],levels=20)
-ax2.scatter(candidates['MES'][:,0],candidates['MES'][:,1],marker="X",c="r")
+ax2.contourf(xv, yv, evals["MES"], levels=20)
+ax2.scatter(candidates["MES"][:, 0], candidates["MES"][:, 1], marker="X", c="r")
 ax2.set_title("MES")
-ax3.contourf(xv,yv,evals['EI'],levels=20)
-ax3.scatter(candidates['EI'][:,0],candidates['EI'][:,1],marker="X",c="r")
+ax3.contourf(xv, yv, evals["EI"], levels=20)
+ax3.scatter(candidates["EI"][:, 0], candidates["EI"][:, 1], marker="X", c="r")
 ax3.set_title("EI")
-ax4.contourf(xv,yv,evals['PI'],levels=20)
-ax4.scatter(candidates['PI'][:,0],candidates['PI'][:,1],marker="X",c="r")
+ax4.contourf(xv, yv, evals["PI"], levels=20)
+ax4.scatter(candidates["PI"][:, 0], candidates["PI"][:, 1], marker="X", c="r")
 ax4.set_title("PI")
-fig.text(0.5, -0.1, 'x_1', ha='center')
-fig.text(-0.1, 0.5, 'x_2', va='center')
+fig.text(0.5, -0.1, "x_1", ha="center")
+fig.text(-0.1, 0.5, "x_2", va="center")
 
 # plot computational overheads
 plt.figure()

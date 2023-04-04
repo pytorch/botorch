@@ -177,12 +177,14 @@ from botorch.fit import fit_gpytorch_mll
 
 tkwargs = {"dtype": torch.double, "device": "cpu"}
 
+
 def f(x):
-    p1 = torch.cos(torch.pi*x) 
-    p2 = 10 * torch.sin(torch.pi*x)
-    p3 = 2 * torch.sin(2 * torch.pi*x)
-    p4 = 2 * torch.sin(6 * torch.pi*x)
+    p1 = torch.cos(torch.pi * x)
+    p2 = 10 * torch.sin(torch.pi * x)
+    p3 = 2 * torch.sin(2 * torch.pi * x)
+    p4 = 2 * torch.sin(6 * torch.pi * x)
     return p1 + p2 + p3 + p4
+
 
 bounds = torch.tensor([[0.0], [1.0]], **tkwargs)
 
@@ -198,11 +200,13 @@ n = 5
 train_X = draw_sobol_samples(bounds=bounds, n=n, q=1, seed=123).squeeze(-2)
 train_Y = f(train_X)
 
+
 def fit_model(train_X, train_Y, num_outputs):
     model = SingleTaskGP(train_X, train_Y, outcome_transform=Standardize(m=num_outputs))
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     fit_gpytorch_mll(mll)
     return model
+
 
 model = fit_model(train_X=train_X, train_Y=train_Y, num_outputs=1)
 
@@ -213,6 +217,7 @@ model = fit_model(train_X=train_X, train_Y=train_Y, num_outputs=1)
 
 
 import matplotlib.pyplot as plt
+
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 X = torch.linspace(bounds[0, 0], bounds[1, 0], 1000, **tkwargs)
@@ -223,10 +228,7 @@ plt.scatter(train_X, train_Y, color="k", label="Observations")
 plt.plot(X, f(X), color="k", linewidth=2, label="Objective function")
 plt.plot(X, mean_fX, color="dodgerblue", linewidth=3, label="Posterior model")
 plt.fill_between(
-    X, 
-    (mean_fX + 3*std_fX), 
-    (mean_fX - 3*std_fX), 
-    alpha=0.2, color="dodgerblue"
+    X, (mean_fX + 3 * std_fX), (mean_fX - 3 * std_fX), alpha=0.2, color="dodgerblue"
 )
 plt.xlabel("x", fontsize=15)
 plt.ylabel("y", fontsize=15)
@@ -239,15 +241,18 @@ plt.show()
 # In[4]:
 
 
-from botorch.acquisition.multi_objective.utils import sample_optimal_points, random_search_optimizer
+from botorch.acquisition.multi_objective.utils import (
+    sample_optimal_points,
+    random_search_optimizer,
+)
 
 num_samples = 10
 num_points = 1
 
 optimal_inputs, optimal_outputs = sample_optimal_points(
-    model=model, 
+    model=model,
     bounds=bounds,
-    num_samples=num_samples, 
+    num_samples=num_samples,
     num_points=num_points,
     optimizer=random_search_optimizer,
 )
@@ -261,14 +266,13 @@ optimal_inputs, optimal_outputs = sample_optimal_points(
 
 
 from botorch.acquisition.predictive_entropy_search import qPredictiveEntropySearch
-from botorch.acquisition.multi_objective.max_value_entropy_search import qLowerBoundMultiObjectiveMaxValueEntropySearch
+from botorch.acquisition.multi_objective.max_value_entropy_search import (
+    qLowerBoundMultiObjectiveMaxValueEntropySearch,
+)
 from botorch.acquisition.joint_entropy_search import qLowerBoundJointEntropySearch
 from botorch.acquisition.multi_objective.utils import compute_sample_box_decomposition
 
-pes = qPredictiveEntropySearch(
-    model=model,
-    optimal_inputs=optimal_inputs.squeeze(-2)
-)
+pes = qPredictiveEntropySearch(model=model, optimal_inputs=optimal_inputs.squeeze(-2))
 
 # Compute the box-decomposition
 hypercell_bounds = compute_sample_box_decomposition(optimal_outputs)
@@ -315,19 +319,20 @@ plt.show()
 
 
 from botorch.optim import optimize_acqf
+
 # Use finite difference for PES
 candidate, acq_value = optimize_acqf(
-    acq_function=pes, 
+    acq_function=pes,
     bounds=bounds,
     q=1,
     num_restarts=10,
     raw_samples=512,
-    options={"with_grad": False}
+    options={"with_grad": False},
 )
 print("PES: candidate={}, acq_value={}".format(candidate, acq_value))
 
 candidate, acq_value = optimize_acqf(
-    acq_function=mes_lb, 
+    acq_function=mes_lb,
     bounds=bounds,
     q=1,
     num_restarts=10,
@@ -336,7 +341,7 @@ candidate, acq_value = optimize_acqf(
 print("MES-LB: candidate={}, acq_value={}".format(candidate, acq_value))
 
 candidate, acq_value = optimize_acqf(
-    acq_function=jes_lb, 
+    acq_function=jes_lb,
     bounds=bounds,
     q=1,
     num_restarts=10,
@@ -382,9 +387,9 @@ optimizer_kwargs = {
 }
 
 ps, pf = sample_optimal_points(
-    model=model, 
+    model=model,
     bounds=bounds,
-    num_samples=num_pareto_samples, 
+    num_samples=num_pareto_samples,
     num_points=num_pareto_points,
     optimizer=random_search_optimizer,
     optimizer_kwargs=optimizer_kwargs,
@@ -396,13 +401,14 @@ ps, pf = sample_optimal_points(
 # In[10]:
 
 
-from botorch.acquisition.multi_objective.predictive_entropy_search import qMultiObjectivePredictiveEntropySearch
-from botorch.acquisition.multi_objective.joint_entropy_search import qLowerBoundMultiObjectiveJointEntropySearch
-
-pes = qMultiObjectivePredictiveEntropySearch(
-    model=model,
-    pareto_sets=ps
+from botorch.acquisition.multi_objective.predictive_entropy_search import (
+    qMultiObjectivePredictiveEntropySearch,
 )
+from botorch.acquisition.multi_objective.joint_entropy_search import (
+    qLowerBoundMultiObjectiveJointEntropySearch,
+)
+
+pes = qMultiObjectivePredictiveEntropySearch(model=model, pareto_sets=ps)
 
 # Compute the box-decomposition
 hypercell_bounds = compute_sample_box_decomposition(pf)
@@ -433,18 +439,18 @@ q = 4
 
 # Use finite difference for PES
 candidates, acq_values = optimize_acqf(
-    acq_function=pes, 
+    acq_function=pes,
     bounds=bounds,
     q=q,
     num_restarts=5,
     raw_samples=512,
-    options={"with_grad": False}
+    options={"with_grad": False},
 )
 print("PES: \ncandidates={}".format(candidates))
 
 # Sequentially greedy optimization
 candidates, acq_values = optimize_acqf(
-    acq_function=mes_lb, 
+    acq_function=mes_lb,
     bounds=bounds,
     q=q,
     num_restarts=5,
@@ -455,7 +461,7 @@ print("MES-LB: \ncandidates={}".format(candidates))
 
 # Sequentially greedy optimization
 candidates, acq_values = optimize_acqf(
-    acq_function=jes_lb, 
+    acq_function=jes_lb,
     bounds=bounds,
     q=q,
     num_restarts=5,

@@ -41,7 +41,10 @@ import torch
 import numpy as np
 import os
 
-tkwargs = {"dtype": torch.double, "device": torch.device("cuda:2" if torch.cuda.is_available() else "cpu")}
+tkwargs = {
+    "dtype": torch.double,
+    "device": torch.device("cuda:2" if torch.cuda.is_available() else "cpu"),
+}
 seed = 0
 torch.manual_seed(seed)
 np.random.seed(seed)
@@ -57,18 +60,23 @@ from botorch.test_functions.multi_objective import ToyRobust
 
 base_function = ToyRobust(negate=True).to(**tkwargs)  # define test function
 bounds = base_function.bounds
-n_w = 2 if SMOKE_TEST else 32  # number of MC samples for approximating input noise distribution
+n_w = (
+    2 if SMOKE_TEST else 32
+)  # number of MC samples for approximating input noise distribution
 alpha = 0.9  # probability level
-std_dev = 0.1 # zero-mean quasi-Normal input noise, with a standard deviation of 0.1
+std_dev = 0.1  # zero-mean quasi-Normal input noise, with a standard deviation of 0.1
 search_space_range = bounds[1] - bounds[0]
 # scale the specified std_dev to a unit cube search space
 scaled_std_dev = (
-    torch.tensor(std_dev, dtype=bounds.dtype, device=bounds.device)
-    / search_space_range
+    torch.tensor(std_dev, dtype=bounds.dtype, device=bounds.device) / search_space_range
 )
-mc_samples= 2 if SMOKE_TEST else 256  # number of samples for MC acquisition functions
-hv_n_w = 2 if SMOKE_TEST else 512  # number of MC samples for approximating input noise distribution for omniscient evaluation
-mvar_ref_point = torch.tensor([-14.1951,  -3.1887], **tkwargs)  # reference point for the MVaR frontier
+mc_samples = 2 if SMOKE_TEST else 256  # number of samples for MC acquisition functions
+hv_n_w = (
+    2 if SMOKE_TEST else 512
+)  # number of MC samples for approximating input noise distribution for omniscient evaluation
+mvar_ref_point = torch.tensor(
+    [-14.1951, -3.1887], **tkwargs
+)  # reference point for the MVaR frontier
 # options for acquisition optimization
 options = {
     "batch_limit": 5,  # number of starting points to jointly optimize in L-BFGS-B
@@ -76,11 +84,12 @@ options = {
 }
 optimization_kwargs = {
     "num_restarts": 2 if SMOKE_TEST else 20,  # number of random restarts for L-BFGS-B
-    "raw_samples": 10 if SMOKE_TEST else 1024,  # number of random samples for initialization heuristic
+    "raw_samples": 10
+    if SMOKE_TEST
+    else 1024,  # number of random samples for initialization heuristic
     "options": options,
-    
 }
-iterations = 1 if SMOKE_TEST else 5 # number of BO iterations
+iterations = 1 if SMOKE_TEST else 5  # number of BO iterations
 verbose = True
 n_initial_points = 4  # number of initial sobol points
 
@@ -92,6 +101,7 @@ n_initial_points = 4  # number of initial sobol points
 
 
 from botorch.utils.transforms import unnormalize
+
 # define function for evaluation
 def eval_problem(X):
     X = unnormalize(X, base_function.bounds)
@@ -107,6 +117,7 @@ from botorch.utils.sampling import draw_sobol_samples
 
 standard_bounds = torch.ones(2, base_function.dim, **tkwargs)
 standard_bounds[0] = 0
+
 
 def generate_initial_data(
     n,
@@ -137,8 +148,12 @@ def generate_initial_data(
 
 
 from botorch.acquisition.multi_objective.multi_output_risk_measures import MVaR
-from botorch.utils.multi_objective.box_decompositions.dominated import DominatedPartitioning
+from botorch.utils.multi_objective.box_decompositions.dominated import (
+    DominatedPartitioning,
+)
 from botorch.models.transforms.input import InputPerturbation
+
+
 class MVaRHV(torch.nn.Module):
     r"""A helper class that calculates the HV of the MVaR set."""
 
@@ -183,7 +198,8 @@ class MVaRHV(torch.nn.Module):
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from gpytorch.mlls import SumMarginalLogLikelihood
-from botorch.models.transforms.outcome import Standardize 
+from botorch.models.transforms.outcome import Standardize
+
 
 def initialize_model(train_x, train_y, perturbation_set):
     r"""Constructs the model and its MLL.
@@ -200,7 +216,7 @@ def initialize_model(train_x, train_y, perturbation_set):
         models.append(
             FixedNoiseGP(
                 train_X=train_x,
-                train_Y=train_y[..., i : i + 1], 
+                train_Y=train_y[..., i : i + 1],
                 train_Yvar=train_Yvar[..., i : i + 1],
                 outcome_transform=Standardize(m=1),
                 input_transform=InputPerturbation(perturbation_set=perturbation_set),
@@ -208,7 +224,7 @@ def initialize_model(train_x, train_y, perturbation_set):
         )
     model = ModelListGP(*models)
     mll = SumMarginalLogLikelihood(model.likelihood, model)
-    
+
     return mll, model
 
 
@@ -222,6 +238,7 @@ def initialize_model(train_x, train_y, perturbation_set):
 from botorch.acquisition.multi_objective.multi_output_risk_measures import MARS
 from botorch.acquisition.monte_carlo import qNoisyExpectedImprovement
 from botorch.utils.sampling import sample_simplex
+
 
 def get_MARS_NEI(
     model,
@@ -291,7 +308,9 @@ from botorch.utils.sampling import draw_sobol_normal_samples
 # MVaR calculations are also moved to CPU.
 old_state = torch.random.get_rng_state()
 torch.manual_seed(0)
-perturbations = draw_sobol_normal_samples(d=base_function.dim, n=hv_n_w, **tkwargs) * scaled_std_dev
+perturbations = (
+    draw_sobol_normal_samples(d=base_function.dim, n=hv_n_w, **tkwargs) * scaled_std_dev
+)
 mvar_hv = MVaRHV(
     alpha=alpha,
     eval_problem=eval_problem,
@@ -334,13 +353,17 @@ for i in range(iterations):
             f"Starting iteration {i}, "
             f"time: {time()-start}, current MVaR HV: {all_mvar_hvs[-1]}."
         )
-    
-    # Generate the perturbations for evaluation
-    perturbation_set = draw_sobol_normal_samples(d=base_function.dim, n=n_w, **tkwargs) * scaled_std_dev
-    # Fit the model.
-    mll, model = initialize_model(train_x=X, train_y=Y, perturbation_set=perturbation_set)
-    fit_gpytorch_mll(mll)
 
+    # Generate the perturbations for evaluation
+    perturbation_set = (
+        draw_sobol_normal_samples(d=base_function.dim, n=n_w, **tkwargs)
+        * scaled_std_dev
+    )
+    # Fit the model.
+    mll, model = initialize_model(
+        train_x=X, train_y=Y, perturbation_set=perturbation_set
+    )
+    fit_gpytorch_mll(mll)
 
     with gpt_settings.cholesky_max_tries(6):
         # Construct the acqf.
@@ -399,6 +422,7 @@ for i in range(iterations):
 
 
 import matplotlib.pyplot as plt
+
 get_ipython().run_line_magic('matplotlib', 'inline')
 plt.plot(torch.arange(all_mvar_hvs.shape[0]), all_mvar_hvs)
 plt.ylabel("MVaR HV")
@@ -411,6 +435,7 @@ plt.xlabel("BO Iterations")
 
 
 from botorch.utils.multi_objective.pareto import is_non_dominated
+
 # Evaluate true MVaR
 # Perturb X
 perturbed_X = mvar_hv.perturbation(X)
@@ -425,7 +450,9 @@ mvar_frontier = mvar_points[is_non_dominated(mvar_points)].cpu()
 # In[16]:
 
 
-plt.plot(mvar_frontier[:,0], mvar_frontier[:,1], '.', alpha=0.4, label="MVaR Frontier")
+plt.plot(
+    mvar_frontier[:, 0], mvar_frontier[:, 1], ".", alpha=0.4, label="MVaR Frontier"
+)
 plt.xlabel("Objective 1")
 plt.ylabel("Objective 2")
 plt.legend()
@@ -437,7 +464,7 @@ plt.legend()
 
 
 for i, y in enumerate(true_Y_under_noise.view(X.shape[0], hv_n_w, -1).cpu()):
-    plt.plot(y[:,0],y[:,1],'.', color=f"C{i}", label=f"x_{i}", alpha=0.3)
+    plt.plot(y[:, 0], y[:, 1], ".", color=f"C{i}", label=f"x_{i}", alpha=0.3)
 plt.xlabel("Objective 1")
 plt.ylabel("Objective 2")
 plt.legend()

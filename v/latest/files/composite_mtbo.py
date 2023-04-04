@@ -29,6 +29,9 @@ from botorch.sampling.normal import IIDNormalSampler
 from botorch.test_functions import Hartmann
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
+import warnings
+warnings.filterwarnings("ignore")
+
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
@@ -37,7 +40,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 # In[2]:
 
 
-torch.random.manual_seed(2010)
+torch.random.manual_seed(10)
 
 tkwargs = {
     "dtype": torch.double,
@@ -47,7 +50,7 @@ tkwargs = {
 
 # ### Problem Definition
 # 
-# The function that we wish to optimize is based off of a contextual version of the Hartmann-6 test function, where following [Feng et al, NeurIPS, '20](https://proceedings.neurips.cc/paper/2020/hash/faff959d885ec0ecf70741a846c34d1d-Abstract.html) we convert the sixth task dimension into a task indicator. We assume that we evaluate all $20$ contexts at once.
+# The function that we wish to optimize is based off of a contextual version of the Hartmann-6 test function, where following [Feng et al, NeurIPS, '20](https://proceedings.neurips.cc/paper/2020/hash/faff959d885ec0ecf70741a846c34d1d-Abstract.html) we convert the sixth task dimension into a task indicator. Here we assume that we evaluate all contexts at once.
 
 # In[3]:
 
@@ -55,23 +58,28 @@ tkwargs = {
 from botorch.test_functions import Hartmann
 from torch import Tensor
 
+
 class ContextualHartmann6(Hartmann):
-    def __init__(self, num_tasks: int = 20, noise_std = None, negate = False):
-        super().__init__(dim=6, noise_std = noise_std, negate = negate)
+    def __init__(self, num_tasks: int = 20, noise_std=None, negate=False):
+        super().__init__(dim=6, noise_std=noise_std, negate=negate)
         self.task_range = torch.linspace(0, 1, num_tasks).unsqueeze(-1)
         self._bounds = [(0.0, 1.0) for _ in range(self.dim - 1)]
         self.bounds = torch.tensor(self._bounds).t()
-        
+
     def evaluate_true(self, X: Tensor) -> Tensor:
         batch_X = X.unsqueeze(-2)
         batch_dims = X.ndim - 1
-        
+
         expanded_task_range = self.task_range
         for _ in range(batch_dims):
             expanded_task_range = expanded_task_range.unsqueeze(0)
         task_range = expanded_task_range.repeat(*X.shape[:-1], 1, 1).to(X)
         concatenated_X = torch.cat(
-            (batch_X.repeat(*[1]*batch_dims, self.task_range.shape[0], 1), task_range), dim=-1
+            (
+                batch_X.repeat(*[1] * batch_dims, self.task_range.shape[0], 1),
+                task_range,
+            ),
+            dim=-1,
         )
         return super().evaluate_true(concatenated_X)
 
@@ -80,19 +88,22 @@ class ContextualHartmann6(Hartmann):
 # $$g(f) = \sum_{i=1}^T \cos(f_i^2 + f_i w_i)$$
 # where $w$ is a weight vector (drawn randomly once at the start of the optimization). As this function is a non-linear function of the outputs $f,$ we cannot compute acquisition functions via computation of the posterior mean and variance, but rather have to compute posterior samples and evaluate acquisitions with Monte Carlo sampling. 
 # 
-# For greater than $10$ or so tasks, it is computationally challenging to sample the posterior over all tasks jointly using conventional approaches, except that [Maddox et al, '21](https://arxiv.org/abs/2106.12997) have devised an efficient method for exploiting the structure in the posterior distribution of the MTGP, enabling efficient MC based optimization of objectives using MTGPs.
+# For greater than $10$ or so tasks, it is computationally challenging to sample the posterior over all tasks jointly using conventional approaches, except that [Maddox et al, '21](https://arxiv.org/abs/2106.12997) have devised an efficient method for exploiting the structure in the posterior distribution of the MTGP, enabling efficient MC based optimization of objectives using MTGPs. In this tutorial, we choose 6  contexts/tasks for demostration. 
 
 # In[4]:
 
 
-problem = ContextualHartmann6(noise_std = 0.001, negate=True).to(**tkwargs)
+num_tasks = 6
+problem = ContextualHartmann6(num_tasks= num_tasks, noise_std=0.001, negate=True).to(**tkwargs)
 
-# we choose 20 random weights
-weights = torch.randn(20, **tkwargs)
+# we choose num_tasks random weights
+weights = torch.randn(num_tasks, **tkwargs)
+
 
 def callable_func(samples, X=None):
     res = -torch.cos((samples**2) + samples * weights)
     return res.sum(dim=-1)
+
 
 objective = GenericMCObjective(callable_func)
 
@@ -121,7 +132,7 @@ def optimize_acqf_and_get_candidate(acq_func, bounds, batch_size):
         raw_samples=512,  # used for intialization heuristic
         options={"batch_limit": 5, "maxiter": 200, "init_batch_limit": 5},
     )
-    # observe new values 
+    # observe new values
     new_x = candidates.detach()
     return new_x
 
@@ -132,9 +143,9 @@ def optimize_acqf_and_get_candidate(acq_func, bounds, batch_size):
 def construct_acqf(model, objective, num_samples, best_f):
     sampler = IIDNormalSampler(sample_shape=torch.Size([num_samples]))
     qEI = qExpectedImprovement(
-        model=model, 
+        model=model,
         best_f=best_f,
-        sampler=sampler, 
+        sampler=sampler,
         objective=objective,
     )
     return qEI
@@ -153,10 +164,10 @@ if SMOKE_TEST:
     n_trials = 4
     verbose = False
 else:
-    n_init = 20
-    n_steps = 20
+    n_init = 10
+    n_steps = 10
     batch_size = 3
-    num_samples = 128
+    num_samples = 64
     n_trials = 3
     verbose = True
 
@@ -173,7 +184,9 @@ batch_trial_objectives = []
 rand_trial_objectives = []
 
 for trial in range(n_trials):
-    init_x = (bounds[1] - bounds[0]) * torch.rand(n_init, bounds.shape[1], **tkwargs) + bounds[0]
+    init_x = (bounds[1] - bounds[0]) * torch.rand(
+        n_init, bounds.shape[1], **tkwargs
+    ) + bounds[0]
 
     init_y = problem(init_x)
 
@@ -184,29 +197,33 @@ for trial in range(n_trials):
     best_value_mtgp = objective(init_y).max()
     best_value_batch = best_value_mtgp
     best_random = best_value_mtgp
-    
+
     for iteration in range(n_steps):
         # we empty the cache to clear memory out
         torch.cuda.empty_cache()
 
         mtgp_t0 = time.monotonic()
         mtgp = KroneckerMultiTaskGP(
-            mtgp_train_x, 
-            mtgp_train_y, 
+            mtgp_train_x,
+            mtgp_train_y,
         )
         mtgp_mll = ExactMarginalLogLikelihood(mtgp.likelihood, mtgp)
-        fit_gpytorch_torch(mtgp_mll, options={"maxiter": 3000, "lr": 0.01, "disp": False})
+        fit_gpytorch_torch(
+            mtgp_mll, options={"maxiter": 3000, "lr": 0.01, "disp": False}
+        )
         mtgp_acqf = construct_acqf(mtgp, objective, num_samples, best_value_mtgp)
         new_mtgp_x = optimize_acqf_and_get_candidate(mtgp_acqf, bounds, batch_size)
         mtgp_t1 = time.monotonic()
 
         batch_t0 = time.monotonic()
         batchgp = SingleTaskGP(
-            batch_train_x, 
-            batch_train_y, 
+            batch_train_x,
+            batch_train_y,
         )
         batch_mll = ExactMarginalLogLikelihood(batchgp.likelihood, batchgp)
-        fit_gpytorch_torch(batch_mll, options={"maxiter": 3000, "lr": 0.01, "disp": False})
+        fit_gpytorch_torch(
+            batch_mll, options={"maxiter": 3000, "lr": 0.01, "disp": False}
+        )
         batch_acqf = construct_acqf(batchgp, objective, num_samples, best_value_batch)
         new_batch_x = optimize_acqf_and_get_candidate(batch_acqf, bounds, batch_size)
         batch_t1 = time.monotonic()
@@ -219,8 +236,10 @@ for trial in range(n_trials):
 
         best_value_mtgp = objective(mtgp_train_y).max()
         best_value_batch = objective(batch_train_y).max()
-        
-        new_rand_x = (bounds[1] - bounds[0]) * torch.rand(batch_size, bounds.shape[1], **tkwargs) + bounds[0]
+
+        new_rand_x = (bounds[1] - bounds[0]) * torch.rand(
+            batch_size, bounds.shape[1], **tkwargs
+        ) + bounds[0]
         rand_x = torch.cat((rand_x, new_rand_x))
         rand_y = torch.cat((rand_y, problem(new_rand_x)))
         best_random = objective(rand_y).max()
@@ -229,11 +248,12 @@ for trial in range(n_trials):
             print(
                 f"\nBatch {iteration:>2}: best_value (random, mtgp, batch) = "
                 f"({best_random:>4.2f}, {best_value_mtgp:>4.2f}, {best_value_batch:>4.2f}), "
-                f"batch time = {batch_t1-batch_t0:>4.2f}, mtgp time = {mtgp_t1-mtgp_t0:>4.2f}", end=""
+                f"batch time = {batch_t1-batch_t0:>4.2f}, mtgp time = {mtgp_t1-mtgp_t0:>4.2f}",
+                end="",
             )
         else:
             print(".", end="")
-            
+
     mtgp_trial_objectives.append(objective(mtgp_train_y).detach().cpu())
     batch_trial_objectives.append(objective(batch_train_y).detach().cpu())
     rand_trial_objectives.append(objective(rand_y).detach().cpu())
@@ -259,39 +279,78 @@ batch_results = torch.stack(batch_trial_objectives)[:, n_init:].cummax(1).values
 random_results = torch.stack(rand_trial_objectives)[:, n_init:].cummax(1).values
 
 
+# In[15]:
+
+
+plt.plot(mtgp_results.mean(0))
+plt.fill_between(
+    torch.arange(n_steps * batch_size),
+    mtgp_results.mean(0) - 2.0 * mtgp_results.std(0) / (n_trials**0.5),
+    mtgp_results.mean(0) + 2.0 * mtgp_results.std(0) / (n_trials**0.5),
+    alpha=0.3,
+    label="MTGP",
+)
+
+plt.plot(batch_results.mean(0))
+plt.fill_between(
+    torch.arange(n_steps * batch_size),
+    batch_results.mean(0) - 2.0 * batch_results.std(0) / (n_trials**0.5),
+    batch_results.mean(0) + 2.0 * batch_results.std(0) / (n_trials**0.5),
+    alpha=0.3,
+    label="Batch",
+)
+
+plt.plot(random_results.mean(0))
+plt.fill_between(
+    torch.arange(n_steps * batch_size),
+    random_results.mean(0) - 2.0 * random_results.std(0) / (n_trials**0.5),
+    random_results.mean(0) + 2.0 * random_results.std(0) / (n_trials**0.5),
+    alpha=0.3,
+    label="Random",
+)
+
+plt.legend(loc="lower right", fontsize=15)
+plt.xlabel("Number of Function Queries")
+plt.ylabel("Best Objective Achieved")
+
+
 # In[12]:
 
 
 plt.plot(mtgp_results.mean(0))
 plt.fill_between(
-    torch.arange(n_steps * batch_size), 
-    mtgp_results.mean(0) - 2. * mtgp_results.std(0) / (n_trials ** 0.5),
-    mtgp_results.mean(0) + 2. * mtgp_results.std(0) / (n_trials ** 0.5),
-    alpha = 0.3, label = "MTGP",
+    torch.arange(n_steps * batch_size),
+    mtgp_results.mean(0) - 2.0 * mtgp_results.std(0) / (n_trials**0.5),
+    mtgp_results.mean(0) + 2.0 * mtgp_results.std(0) / (n_trials**0.5),
+    alpha=0.3,
+    label="MTGP",
 )
 
 plt.plot(batch_results.mean(0))
 plt.fill_between(
-    torch.arange(n_steps * batch_size), 
-    batch_results.mean(0) - 2. * batch_results.std(0) / (n_trials ** 0.5),
-    batch_results.mean(0) + 2. * batch_results.std(0) / (n_trials ** 0.5),
-    alpha = 0.3, label = "Batch"
+    torch.arange(n_steps * batch_size),
+    batch_results.mean(0) - 2.0 * batch_results.std(0) / (n_trials**0.5),
+    batch_results.mean(0) + 2.0 * batch_results.std(0) / (n_trials**0.5),
+    alpha=0.3,
+    label="Batch",
 )
 
 plt.plot(random_results.mean(0))
 plt.fill_between(
-    torch.arange(n_steps * batch_size), 
-    random_results.mean(0) - 2. * random_results.std(0) / (n_trials ** 0.5),
-    random_results.mean(0) + 2. * random_results.std(0) / (n_trials ** 0.5),
-    alpha = 0.3, label = "Random"
+    torch.arange(n_steps * batch_size),
+    random_results.mean(0) - 2.0 * random_results.std(0) / (n_trials**0.5),
+    random_results.mean(0) + 2.0 * random_results.std(0) / (n_trials**0.5),
+    alpha=0.3,
+    label="Random",
 )
 
-plt.legend(loc = "lower right", fontsize = 15)
+plt.legend(loc="lower right", fontsize=15)
 plt.xlabel("Number of Function Queries")
 plt.ylabel("Best Objective Achieved")
+plt.show()
 
 
-# In[13]:
+# In[ ]:
 
 
 

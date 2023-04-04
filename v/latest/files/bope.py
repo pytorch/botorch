@@ -26,7 +26,7 @@
 # 
 # [1] [Z.J. Lin, R. Astudillo, P.I. Frazier, and E. Bakshy, Preference Exploration for Efficient Bayesian Optimization with Multiple Outcomes. AISTATS, 2022.](https://arxiv.org/abs/2203.11382)
 
-# In[1]:
+# In[ ]:
 
 
 import os
@@ -44,15 +44,16 @@ from botorch.fit import fit_gpytorch_mll
 from botorch.models.deterministic import FixedSingleSampleModel
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
+from botorch.models.transforms.input import Normalize
+from botorch.models.transforms.outcome import Standardize
 from botorch.optim.optimize import optimize_acqf
-from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.sampling import SobolQMCNormalSampler
 from botorch.test_functions.multi_objective import DTLZ2
 from botorch.utils.sampling import draw_sobol_samples
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
 
 get_ipython().run_line_magic('matplotlib', 'inline')
-
 # Suppress potential optimization warnings for cleaner notebook
 warnings.filterwarnings("ignore")
 
@@ -70,14 +71,16 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 # For the utility function $g_\mathrm{true}$, we use the negative L1 distance from a Pareto-optimal point the outcome space:
 # $Y^* = f(X^*)$ where $X^* = [0.5, 0.5, 0.5, 0.5, 0.5]$. 
 
-# In[2]:
+# In[3]:
 
 
 def neg_l1_dist(Y):
     """Negative L1 distance from a Pareto optimal points"""
     if len(Y.shape) == 1:
         Y = Y.unsqueeze(0)
-    dist = torch.cdist(Y, torch.full(Y.shape[-1:], fill_value=0.5).unsqueeze(0), p=1).squeeze(-1)
+    dist = torch.cdist(
+        Y, torch.full(Y.shape[-1:], fill_value=0.5).unsqueeze(0), p=1
+    ).squeeze(-1)
     return -dist
 
 
@@ -102,12 +105,17 @@ util_func = neg_l1_dist
 
 # Here we define a collection of helper functions for BOPE:
 
-# In[3]:
+# In[4]:
 
 
 def fit_outcome_model(X, Y, X_bounds):
     """Fit the outcome model f"""
-    outcome_model = SingleTaskGP(train_X=X, train_Y=Y)
+    outcome_model = SingleTaskGP(
+        train_X=X,
+        train_Y=Y,
+        input_transform=Normalize(d=X.shape[-1]),
+        outcome_transform=Standardize(m=Y.shape[-1]),
+    )
     mll = ExactMarginalLogLikelihood(outcome_model.likelihood, outcome_model)
     fit_gpytorch_mll(mll)
     return outcome_model
@@ -115,7 +123,7 @@ def fit_outcome_model(X, Y, X_bounds):
 
 def fit_pref_model(Y, comps):
     """Fit the preference model g"""
-    model = PairwiseGP(Y, comps, jitter=1e-4)
+    model = PairwiseGP(Y, comps, input_transform=Normalize(d=Y.shape[-1]))
     mll = PairwiseLaplaceMarginalLogLikelihood(model.likelihood, model)
     fit_gpytorch_mll(mll)
     return model
@@ -152,7 +160,9 @@ def gen_comps(util):
     return comps
 
 
-def run_pref_learn(outcome_model, train_Y, train_comps, n_comps, pe_strategy, verbose=False):
+def run_pref_learn(
+    outcome_model, train_Y, train_comps, n_comps, pe_strategy, verbose=False
+):
     """Perform preference exploration with a given PE strategy for n_comps rounds"""
     for i in range(n_comps):
         if verbose:
@@ -161,7 +171,9 @@ def run_pref_learn(outcome_model, train_Y, train_comps, n_comps, pe_strategy, ve
         if pe_strategy == "EUBO-zeta":
             # EUBO-zeta
             one_sample_outcome_model = FixedSingleSampleModel(model=outcome_model)
-            acqf = AnalyticExpectedUtilityOfBestOption(pref_model=pref_model, outcome_model=one_sample_outcome_model)
+            acqf = AnalyticExpectedUtilityOfBestOption(
+                pref_model=pref_model, outcome_model=one_sample_outcome_model
+            )
             cand_X, acqf_val = optimize_acqf(
                 acq_function=acqf,
                 q=2,
@@ -190,7 +202,7 @@ def run_pref_learn(outcome_model, train_Y, train_comps, n_comps, pe_strategy, ve
 def gen_exp_cand(outcome_model, objective, q, acqf_name):
     """Given an outcome model and an objective, generate q experimental candidates
     using specified acquisition function."""
-    sampler = SobolQMCNormalSampler(num_samples=NUM_OUTCOME_SAMPLES)
+    sampler = SobolQMCNormalSampler(sample_shape=torch.Size([NUM_OUTCOME_SAMPLES]))
     if acqf_name == "qNEI":
         # generate experimental candidates with qNEI/qNEIUU
         acq_func = qNoisyExpectedImprovement(
@@ -227,9 +239,11 @@ def find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=False):
     """Helper function that find the max posterior mean under current outcome and
     preference model"""
     pref_model = fit_pref_model(train_Y, train_comps)
-    sampler = SobolQMCNormalSampler(num_samples=NUM_PREF_SAMPLES)
+    sampler = SobolQMCNormalSampler(sample_shape=torch.Size([NUM_PREF_SAMPLES]))
     pref_obj = LearnedObjective(pref_model=pref_model, sampler=sampler)
-    post_mean_cand_X = gen_exp_cand(outcome_model, pref_obj, q=1, acqf_name="posterior_mean")
+    post_mean_cand_X = gen_exp_cand(
+        outcome_model, pref_obj, q=1, acqf_name="posterior_mean"
+    )
 
     post_mean_util = util_func(problem(post_mean_cand_X)).item()
     if verbose:
@@ -268,14 +282,14 @@ def find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=False):
 # This represents the performance upper bound of PE strategies.
 # For the second experiment canadidate generation strategy, we use random design points to generate new candidates.
 
-# In[4]:
+# In[5]:
 
 
 verbose = False
 # Number of pairwise comparisons performed before checking posterior mean
 every_n_comps = 3
 # Total number of checking the maximum posterior mean
-n_check_post_mean = 3
+n_check_post_mean = 5
 n_reps = 1
 within_session_results = []
 exp_candidate_results = []
@@ -285,7 +299,7 @@ for i in range(n_reps):
     # Experimentation stage: initial exploration batch
     torch.manual_seed(i)
     np.random.seed(i)
-    X, Y = generate_random_exp_data(problem, 16)
+    X, Y = generate_random_exp_data(problem, 8)
     outcome_model = fit_outcome_model(X, Y, problem.bounds)
 
     # Preference exploration stage: initialize the preference model with comparsions
@@ -301,18 +315,27 @@ for i in range(n_reps):
 
         for j in range(n_check_post_mean):
             train_Y, train_comps = run_pref_learn(
-                outcome_model, train_Y, train_comps, n_comps=every_n_comps, pe_strategy=pe_strategy, verbose=verbose
+                outcome_model,
+                train_Y,
+                train_comps,
+                n_comps=every_n_comps,
+                pe_strategy=pe_strategy,
+                verbose=verbose,
             )
             if verbose:
-                print(f"Checking posterior mean after {(j+1) * every_n_comps} comps using PE strategy {pe_strategy}")
-            within_result = find_max_posterior_mean(outcome_model, train_Y, train_comps, verbose=verbose)
+                print(
+                    f"Checking posterior mean after {(j+1) * every_n_comps} comps using PE strategy {pe_strategy}"
+                )
+            within_result = find_max_posterior_mean(
+                outcome_model, train_Y, train_comps, verbose=verbose
+            )
             within_result.update({"run_id": i, "pe_strategy": pe_strategy})
             within_session_results.append(within_result)
 
         # Going back to the experimentation stage: generate an additional batch of experimental evaluations
         # with the learned preference model and qNEIUU
         pref_model = fit_pref_model(train_Y, train_comps)
-        sampler = SobolQMCNormalSampler(num_samples=NUM_PREF_SAMPLES)
+        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([NUM_PREF_SAMPLES]))
         pref_obj = LearnedObjective(pref_model=pref_model, sampler=sampler)
         exp_cand_X = gen_exp_cand(outcome_model, pref_obj, q=1, acqf_name="qNEI")
         qneiuu_util = util_func(problem(exp_cand_X)).item()
@@ -361,12 +384,14 @@ for i in range(n_reps):
 # with increasing number of pairwise comparisons.
 # As we can see in this plot, the preference model learned using $\text{EUBO}\mathrm{-}\zeta$ is able to identify the maximum utility more efficiently.
 
-# In[5]:
+# In[6]:
 
 
 # Prepare PE data for plots
 within_df = pd.DataFrame(within_session_results)
-within_df["pe_strategy"] = within_df["pe_strategy"].str.replace("EUBO-zeta", r"$EUBO-\\zeta$")
+within_df["pe_strategy"] = within_df["pe_strategy"].str.replace(
+    "EUBO-zeta", r"$EUBO-\\zeta$"
+)
 within_df = (
     within_df.groupby(["n_comps", "pe_strategy"])
     .agg({"util": ["mean", "sem"]})
@@ -378,11 +403,17 @@ within_df
 # Plotting
 plt.figure(figsize=(8, 6))
 for name, group in within_df.groupby("pe_strategy", sort=True):
-    yerr=1.96 * group["sem"]
+    yerr = 1.96 * group["sem"]
     if np.any(np.isnan(yerr)):
         yerr = None
     plt.errorbar(
-        x=group["n_comps"], y=group["mean"], yerr=yerr, label=name, linewidth=1.5, capsize=3, alpha=0.6
+        x=group["n_comps"],
+        y=group["mean"],
+        yerr=yerr,
+        label=name,
+        linewidth=1.5,
+        capsize=3,
+        alpha=0.6,
     )
 plt.xlabel("Number of comparisons")
 plt.ylabel("Max value identified")
@@ -396,21 +427,27 @@ plt.legend(title="PE Strategy")
 # On the other hand, despite that $\text{Random}\mathrm{-}f$ is a relatively straightforward PE strategy,
 # it is still able to suggest experimental candidates with generally higher utility values than the random experiment baseline.
 
-# In[6]:
+# In[7]:
 
 
 # Prepare the 2nd experimentation batch data for plot
 exp_df = pd.DataFrame(exp_candidate_results)
 exp_df["strategy"] = exp_df["strategy"].str.replace("EUBO-zeta", r"$EUBO-\\zeta$")
 exp_df["strategy"] = pd.Categorical(
-    exp_df["strategy"], ["True Utility", "$EUBO-\zeta$", "Random-f", "Random Experiment"]
+    exp_df["strategy"],
+    ["True Utility", "$EUBO-\zeta$", "Random-f", "Random Experiment"],
 )
-exp_df = exp_df.groupby(["strategy"]).agg({"util": ["mean", "sem"]}).droplevel(level=0, axis=1).reset_index()
+exp_df = (
+    exp_df.groupby(["strategy"])
+    .agg({"util": ["mean", "sem"]})
+    .droplevel(level=0, axis=1)
+    .reset_index()
+)
 
 # Plotting
 plt.figure(figsize=(8, 6))
 for name, group in exp_df.groupby("strategy", sort=True):
-    yerr=1.96 * group["sem"]
+    yerr = 1.96 * group["sem"]
     if np.any(np.isnan(yerr)):
         yerr = None
     plt.errorbar(

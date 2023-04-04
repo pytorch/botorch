@@ -65,7 +65,9 @@ def generate_initial_data(n=16):
 def initialize_model(train_x, train_obj):
     # define a surrogate model suited for a "training data"-like fidelity parameter
     # in dimension 6, as in [2]
-    model = SingleTaskMultiFidelityGP(train_x, train_obj, outcome_transform=Standardize(m=1), data_fidelity=6)
+    model = SingleTaskMultiFidelityGP(
+        train_x, train_obj, outcome_transform=Standardize(m=1), data_fidelity=6
+    )
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     return mll, model
 
@@ -99,24 +101,25 @@ cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_model)
 def project(X):
     return project_to_target_fidelity(X=X, target_fidelities=target_fidelities)
 
+
 def get_mfkg(model):
-    
+
     curr_val_acqf = FixedFeatureAcquisitionFunction(
         acq_function=PosteriorMean(model),
         d=7,
         columns=[6],
         values=[1],
     )
-    
+
     _, current_value = optimize_acqf(
         acq_function=curr_val_acqf,
-        bounds=bounds[:,:-1],
+        bounds=bounds[:, :-1],
         q=1,
         num_restarts=10 if not SMOKE_TEST else 2,
         raw_samples=1024 if not SMOKE_TEST else 4,
         options={"batch_limit": 10, "maxiter": 200},
     )
-        
+
     return qMultiFidelityKnowledgeGradient(
         model=model,
         num_fantasies=128 if not SMOKE_TEST else 2,
@@ -209,15 +212,15 @@ def get_recommendation(model):
 
     final_rec, _ = optimize_acqf(
         acq_function=rec_acqf,
-        bounds=bounds[:,:-1],
+        bounds=bounds[:, :-1],
         q=1,
         num_restarts=10,
         raw_samples=512,
         options={"batch_limit": 5, "maxiter": 200},
     )
-    
+
     final_rec = rec_acqf._construct_X_full(final_rec)
-    
+
     objective_value = problem(final_rec)
     print(f"recommended point:\n{final_rec}\n\nobjective value:\n{objective_value}")
     return final_rec

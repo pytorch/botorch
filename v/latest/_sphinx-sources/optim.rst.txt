@@ -73,6 +73,11 @@ Numpy - Torch Conversion Tools
 .. automodule:: botorch.optim.utils.numpy_utils
     :members:
 
+Optimization with Timeouts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.utils.timeout
+    :members:
+
 Numpy - Torch Conversion Tools (OLD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.optim.numpy_converter

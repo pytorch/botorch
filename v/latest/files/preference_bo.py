@@ -26,7 +26,13 @@
 # 
 # We generate the data using following code:
 
-# In[ ]:
+# In[1]:
+
+
+get_ipython().run_line_magic('local-changes', '')
+
+
+# In[2]:
 
 
 import os
@@ -42,7 +48,7 @@ warnings.filterwarnings("ignore")
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
-# In[2]:
+# In[3]:
 
 
 # data generating helper functions
@@ -69,7 +75,9 @@ def generate_comparisons(y, n_comp, noise=0.1, replace=False):
     # generate all possible pairs of elements in y
     all_pairs = np.array(list(combinations(range(y.shape[0]), 2)))
     # randomly select n_comp pairs from all_pairs
-    comp_pairs = all_pairs[np.random.choice(range(len(all_pairs)), n_comp, replace=replace)]
+    comp_pairs = all_pairs[
+        np.random.choice(range(len(all_pairs)), n_comp, replace=replace)
+    ]
     # add gaussian noise to the latent y values
     c0 = y[comp_pairs[:, 0]] + np.random.standard_normal(len(comp_pairs)) * noise
     c1 = y[comp_pairs[:, 1]] + np.random.standard_normal(len(comp_pairs)) * noise
@@ -80,9 +88,10 @@ def generate_comparisons(y, n_comp, noise=0.1, replace=False):
     return comp_pairs
 
 
+torch.manual_seed(123)
 n = 50 if not SMOKE_TEST else 5
 m = 100 if not SMOKE_TEST else 10
-dim = 2
+dim = 4
 noise = 0.1
 train_X, train_y = generate_data(n, dim=dim)
 train_comp = generate_comparisons(train_y, m, noise=noise)
@@ -105,13 +114,19 @@ train_comp = generate_comparisons(train_y, m, noise=noise)
 # `PairwiseGP` from BoTorch is designed to work with such pairwise comparison input.
 # We use `PairwiseLaplaceMarginalLogLikelihood` as the marginal log likelihood that we aim to maximize for optimizing the hyperparameters.
 
-# In[3]:
+# In[ ]:
 
 
-from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
 from botorch.fit import fit_gpytorch_mll
+from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
+from botorch.models.transforms.input import Normalize
 
-model = PairwiseGP(train_X, train_comp)
+
+model = PairwiseGP(
+    train_X,
+    train_comp,
+    input_transform=Normalize(d=train_X.shape[-1]),
+)
 mll = PairwiseLaplaceMarginalLogLikelihood(model.likelihood, model)
 mll = fit_gpytorch_mll(mll)
 
@@ -119,7 +134,7 @@ mll = fit_gpytorch_mll(mll)
 # Because the we never observe the latent function value, output values from the model are only meaningful on a relative scale.
 # Hence, given a test pair (`test_X`, `test_y`), we can evaluate the model using Kendall-Tau rank correlation.
 
-# In[4]:
+# In[5]:
 
 
 from scipy.stats import kendalltau
@@ -129,6 +144,7 @@ from scipy.stats import kendalltau
 def eval_kt_cor(model, test_X, test_y):
     pred_y = model.posterior(test_X).mean.squeeze().detach().numpy()
     return kendalltau(pred_y, test_y).correlation
+
 
 n_kendall = 1000 if not SMOKE_TEST else 10
 
@@ -140,7 +156,7 @@ print(f"Test Kendall-Tau rank correlation: {kt_correlation:.4f}")
 
 # ### Perform Bayesian Optimization loop with EUBO
 # 
-# Now, we demonstrate how to implement a full Bayesian optimization with `AnalyticExpectedUtilityOfBestOption` (EUBO) acquisition function [4].
+# Now, we demonstrate how to implement a full Bayesian optimization with `AnalyticExpectedUtilityOfBestOption` (EUBO) acquisition function [4, 5].
 # 
 # The Bayesian optimization loop for a batch size of `q` simply iterates the following steps:
 # 1. given a surrogate model, choose a batch of points $X_{next} = \{x_1, x_2, ..., x_q\}$
@@ -149,16 +165,20 @@ print(f"Test Kendall-Tau rank correlation: {kt_correlation:.4f}")
 # 
 # We start off by defining a few helper functions.
 
-# In[5]:
+# In[6]:
 
 
 from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
 from botorch.optim import optimize_acqf
 
 
-def init_and_fit_model(X, comp, state_dict=None):
+def init_and_fit_model(X, comp):
     """Model fitting helper function"""
-    model = PairwiseGP(X, comp)
+    model = PairwiseGP(
+        X,
+        comp,
+        input_transform=Normalize(d=X.shape[-1]),
+    )
     mll = PairwiseLaplaceMarginalLogLikelihood(model.likelihood, model)
     fit_gpytorch_mll(mll)
     return mll, model
@@ -180,17 +200,17 @@ def make_new_data(X, next_X, comps, q_comp):
 
 # The Bayesian optimization loop is as follows (running the code may take a while).
 
-# In[6]:
+# In[7]:
 
 
 algos = ["EUBO", "rand"]
 
-NUM_TRIALS = 5 if not SMOKE_TEST else 2
+NUM_TRIALS = 3 if not SMOKE_TEST else 2
 NUM_BATCHES = 30 if not SMOKE_TEST else 2
 
-dim = 5
+dim = 4
 NUM_RESTARTS = 3
-RAW_SAMPLES = 256 if not SMOKE_TEST else 8
+RAW_SAMPLES = 512 if not SMOKE_TEST else 8
 q = 2  # number of points per query
 q_comp = 1  # number of comparisons per query
 
@@ -209,7 +229,6 @@ for i in range(NUM_TRIALS):
     # Create initial data
     init_X, init_y = generate_data(q, dim=dim)
     comparisons = generate_comparisons(init_y, q_comp, noise=noise)
-    test_X, test_y = generate_data(1000, dim=dim)
     # X are within the unit cube
     bounds = torch.stack([torch.zeros(dim), torch.ones(dim)])
 
@@ -217,7 +236,6 @@ for i in range(NUM_TRIALS):
         best_vals[algo].append([])
         data[algo] = (init_X, comparisons)
         _, models[algo] = init_and_fit_model(init_X, comparisons)
-        model = models[algo]
 
         best_next_y = utility(init_X).max().item()
         best_vals[algo][-1].append(best_next_y)
@@ -225,6 +243,7 @@ for i in range(NUM_TRIALS):
     # we make additional NUM_BATCHES comparison queries after the initial observation
     for j in range(1, NUM_BATCHES + 1):
         for algo in algos:
+            model = models[algo]
             if algo == "EUBO":
                 # create the acquisition function object
                 acq_func = AnalyticExpectedUtilityOfBestOption(pref_model=model)
@@ -246,9 +265,7 @@ for i in range(NUM_TRIALS):
             data[algo] = (X, comps)
 
             # refit models
-            model = models[algo]
-            _, model = init_and_fit_model(X, comps, model.state_dict())
-            models[algo] = model
+            _, models[algo] = init_and_fit_model(X, comps)
 
             # record the best observed values so far
             max_val = utility(X).max().item()
@@ -259,7 +276,7 @@ for i in range(NUM_TRIALS):
 # 
 # The plot below shows the best objective value observed at each step of the optimization for each of the acquisition functions. The error bars represent the 95% confidence intervals for the sample mean at that step in the optimization across the trial runs.
 
-# In[7]:
+# In[8]:
 
 
 from matplotlib import pyplot as plt
@@ -285,12 +302,20 @@ iters = list(range(NUM_BATCHES + 1))
 
 fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 # plot the optimal value
-ax.plot(iters, [optimal_val] * len(iters), label="Optimal Function Value", color="black", linewidth=1.5)
+ax.plot(
+    iters,
+    [optimal_val] * len(iters),
+    label="Optimal Function Value",
+    color="black",
+    linewidth=1.5,
+)
 
 # plot the the best observed value from each algorithm
 for algo in algos:
     ys = np.vstack(best_vals[algo])
-    ax.errorbar(iters, ys.mean(axis=0), yerr=ci(ys), label=algo_labels[algo], linewidth=1.5)
+    ax.errorbar(
+        iters, ys.mean(axis=0), yerr=ci(ys), label=algo_labels[algo], linewidth=1.5
+    )
 
 ax.set(
     xlabel=f"Number of queries (q = {q}, num_comparisons = {q_comp})",
@@ -302,12 +327,13 @@ ax.legend(loc="best")
 
 # ### References
 # 
-# [1] Chu, Wei, and Zoubin Ghahramani. 2005. “Preference Learning with Gaussian Processes.” In Proceedings of the 22Nd International Conference on Machine Learning, 137–44. ICML ’05. New York, NY, USA: ACM.
+# [1] Wei Chu, and Zoubin Ghahramani. 2005. “Preference Learning with Gaussian Processes.” In Proceedings of the 22Nd International Conference on Machine Learning, 137–44. ICML ’05. New York, NY, USA: ACM.
 # 
-# [2] Brochu, Eric, Vlad M. Cora, and Nando de Freitas. 2010. “A Tutorial on Bayesian Optimization of Expensive Cost Functions, with Application to Active User Modeling and Hierarchical Reinforcement Learning.” arXiv [cs.LG]. arXiv.
+# [2] Eric Brochu, Vlad M. Cora, and Nando de Freitas. 2010. “A Tutorial on Bayesian Optimization of Expensive Cost Functions, with Application to Active User Modeling and Hierarchical Reinforcement Learning.” arXiv [cs.LG]. arXiv.
 # 
-# [3] González, Javier, Zhenwen Dai, Andreas Damianou, and Neil D. Lawrence. 2017. “Preferential Bayesian Optimization.” In Proceedings of the 34th International Conference on Machine Learning, edited by Doina Precup and Yee Whye Teh, 70:1282–91. Proceedings of Machine Learning Research. International Convention Centre, Sydney, Australia: PMLR.
+# [3] Javier González, Zhenwen Dai, Andreas Damianou, and Neil D. Lawrence. 2017. “Preferential Bayesian Optimization.” In Proceedings of the 34th International Conference on Machine Learning, edited by Doina Precup and Yee Whye Teh, 70:1282–91. Proceedings of Machine Learning Research. International Convention Centre, Sydney, Australia: PMLR.
 # 
-# [4] Lin, Zhiyuan Jerry, Raul Astudillo, Peter I. Frazier, and Eytan Bakshy, Preference Exploration for Efficient Bayesian Optimization with Multiple Outcomes. AISTATS, 2022. https://arxiv.org/abs/2203.11382
+# [4] Zhiyuan Jerry Lin, Raul Astudillo, Peter I. Frazier, and Eytan Bakshy, Preference Exploration for Efficient Bayesian Optimization with Multiple Outcomes. AISTATS, 2022. https://arxiv.org/abs/2203.11382
 # 
+# [5] Raul Astudillo, Zhiyuan Jerry Lin, Eytan Bakshy, and Peter I. Frazier, qEUBO: A Decision-Theoretic Acquisition Function for Preferential Bayesian Optimization. AISTATS, 2023.
 # 

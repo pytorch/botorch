@@ -76,6 +76,7 @@ tkwargs = {"device": "cpu", "dtype": torch.double}
 test_function = SixHumpCamel(negate=True)
 dim = test_function.dim
 
+
 def evaluate_function(X: Tensor) -> Tensor:
     return test_function(unnormalize(X, test_function.bounds)).view(*X.shape[:-1], 1)
 
@@ -91,10 +92,12 @@ bounds = torch.stack([torch.zeros(dim), torch.ones(dim)]).to(**tkwargs)
 train_X = draw_sobol_samples(bounds=bounds, n=8, q=1).squeeze(-2).to(**tkwargs)
 train_Y = evaluate_function(train_X)
 
+
 def train_model(train_X: Tensor, train_Y: Tensor) -> SingleTaskGP:
     r"""Returns a `SingleTaskGP` model trained on the inputs"""
     intf = InputPerturbation(
-        perturbation_set=draw_sobol_normal_samples(d=dim, n=N_W, **tkwargs) * STD_DEV, bounds=bounds
+        perturbation_set=draw_sobol_normal_samples(d=dim, n=N_W, **tkwargs) * STD_DEV,
+        bounds=bounds,
     )
     model = SingleTaskGP(
         train_X, train_Y, input_transform=intf, outcome_transform=Standardize(m=1)
@@ -102,6 +105,7 @@ def train_model(train_X: Tensor, train_Y: Tensor) -> SingleTaskGP:
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     fit_gpytorch_mll(mll)
     return model
+
 
 model = train_model(train_X, train_Y)
 
@@ -113,6 +117,7 @@ model = train_model(train_X, train_Y)
 
 
 risk_measure = VaR(alpha=ALPHA, n_w=N_W)
+
 
 def optimize_acqf_and_get_observation():
     r"""Optimizes the acquisition function, and returns a new candidate and observation."""
@@ -168,7 +173,8 @@ for i in range(NUM_ITERATIONS):
 
 # update the input transform of the already trained model
 new_intf = InputPerturbation(
-    perturbation_set=draw_sobol_normal_samples(d=dim, n=128, **tkwargs) * STD_DEV, bounds=bounds
+    perturbation_set=draw_sobol_normal_samples(d=dim, n=128, **tkwargs) * STD_DEV,
+    bounds=bounds,
 ).eval()
 model.input_transform = new_intf
 
@@ -189,9 +195,9 @@ final_candidate = train_X[max_idx]
 
 best_observed = torch.zeros(NUM_ITERATIONS + 1, **tkwargs)
 for i in range(NUM_ITERATIONS + 1):
-    best_observed[i] = expected_rm_values[:6 + i * BATCH_SIZE].max()
+    best_observed[i] = expected_rm_values[: 6 + i * BATCH_SIZE].max()
 
-fig, ax = plt.subplots(figsize = (12, 8))
+fig, ax = plt.subplots(figsize=(12, 8))
 ax.plot(best_observed)
 ax.set_xlabel("iterations")
 ax.set_ylabel("risk measure")

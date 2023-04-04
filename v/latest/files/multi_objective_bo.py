@@ -64,9 +64,10 @@ from botorch.utils.sampling import draw_sobol_samples
 
 NOISE_SE = torch.tensor([15.19, 0.63], **tkwargs)
 
+
 def generate_initial_data(n=6):
     # generate training data
-    train_x = draw_sobol_samples(bounds=problem.bounds,n=n, q=1).squeeze(1)
+    train_x = draw_sobol_samples(bounds=problem.bounds, n=n, q=1).squeeze(1)
     train_obj_true = problem(train_x)
     train_obj = train_obj_true + torch.randn_like(train_obj_true) * NOISE_SE
     return train_x, train_obj, train_obj_true
@@ -77,10 +78,12 @@ def initialize_model(train_x, train_obj):
     train_x = normalize(train_x, problem.bounds)
     models = []
     for i in range(train_obj.shape[-1]):
-        train_y = train_obj[..., i:i+1]
+        train_y = train_obj[..., i : i + 1]
         train_yvar = torch.full_like(train_y, NOISE_SE[i] ** 2)
         models.append(
-            FixedNoiseGP(train_x, train_y, train_yvar, outcome_transform=Standardize(m=1))
+            FixedNoiseGP(
+                train_x, train_y, train_yvar, outcome_transform=Standardize(m=1)
+            )
         )
     model = ModelListGP(*models)
     mll = SumMarginalLogLikelihood(model.likelihood, model)
@@ -108,8 +111,13 @@ def initialize_model(train_x, train_obj):
 from botorch.optim.optimize import optimize_acqf, optimize_acqf_list
 from botorch.acquisition.objective import GenericMCObjective
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
-from botorch.utils.multi_objective.box_decompositions.non_dominated import FastNondominatedPartitioning
-from botorch.acquisition.multi_objective.monte_carlo import qExpectedHypervolumeImprovement, qNoisyExpectedHypervolumeImprovement
+from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    FastNondominatedPartitioning,
+)
+from botorch.acquisition.multi_objective.monte_carlo import (
+    qExpectedHypervolumeImprovement,
+    qNoisyExpectedHypervolumeImprovement,
+)
 from botorch.utils.sampling import sample_simplex
 
 
@@ -127,7 +135,7 @@ def optimize_qehvi_and_get_observation(model, train_x, train_obj, sampler):
     with torch.no_grad():
         pred = model.posterior(normalize(train_x, problem.bounds)).mean
     partitioning = FastNondominatedPartitioning(
-        ref_point=problem.ref_point, 
+        ref_point=problem.ref_point,
         Y=pred,
     )
     acq_func = qExpectedHypervolumeImprovement(
@@ -146,8 +154,8 @@ def optimize_qehvi_and_get_observation(model, train_x, train_obj, sampler):
         options={"batch_limit": 5, "maxiter": 200},
         sequential=True,
     )
-    # observe new values 
-    new_x =  unnormalize(candidates.detach(), bounds=problem.bounds)
+    # observe new values
+    new_x = unnormalize(candidates.detach(), bounds=problem.bounds)
     new_obj_true = problem(new_x)
     new_obj = new_obj_true + torch.randn_like(new_obj_true) * NOISE_SE
     return new_x, new_obj, new_obj_true
@@ -172,7 +180,7 @@ def optimize_qnehvi_and_get_observation(model, train_x, train_obj, sampler):
     # partition non-dominated space into disjoint rectangles
     acq_func = qNoisyExpectedHypervolumeImprovement(
         model=model,
-        ref_point=problem.ref_point.tolist(),  # use known reference point 
+        ref_point=problem.ref_point.tolist(),  # use known reference point
         X_baseline=normalize(train_x, problem.bounds),
         prune_baseline=True,  # prune baseline points that have estimated zero probability of being Pareto optimal
         sampler=sampler,
@@ -187,8 +195,8 @@ def optimize_qnehvi_and_get_observation(model, train_x, train_obj, sampler):
         options={"batch_limit": 5, "maxiter": 200},
         sequential=True,
     )
-    # observe new values 
-    new_x =  unnormalize(candidates.detach(), bounds=problem.bounds)
+    # observe new values
+    new_x = unnormalize(candidates.detach(), bounds=problem.bounds)
     new_obj_true = problem(new_x)
     new_obj = new_obj_true + torch.randn_like(new_obj_true) * NOISE_SE
     return new_x, new_obj, new_obj_true
@@ -208,7 +216,7 @@ from botorch.acquisition.monte_carlo import qNoisyExpectedImprovement
 
 
 def optimize_qnparego_and_get_observation(model, train_x, train_obj, sampler):
-    """Samples a set of random weights for each candidate in the batch, performs sequential greedy optimization 
+    """Samples a set of random weights for each candidate in the batch, performs sequential greedy optimization
     of the qNParEGO acquisition function, and returns a new candidate and observation."""
     train_x = normalize(train_x, problem.bounds)
     with torch.no_grad():
@@ -216,7 +224,9 @@ def optimize_qnparego_and_get_observation(model, train_x, train_obj, sampler):
     acq_func_list = []
     for _ in range(BATCH_SIZE):
         weights = sample_simplex(problem.num_objectives, **tkwargs).squeeze()
-        objective = GenericMCObjective(get_chebyshev_scalarization(weights=weights, Y=pred))
+        objective = GenericMCObjective(
+            get_chebyshev_scalarization(weights=weights, Y=pred)
+        )
         acq_func = qNoisyExpectedImprovement(  # pyre-ignore: [28]
             model=model,
             objective=objective,
@@ -233,8 +243,8 @@ def optimize_qnparego_and_get_observation(model, train_x, train_obj, sampler):
         raw_samples=RAW_SAMPLES,  # used for intialization heuristic
         options={"batch_limit": 5, "maxiter": 200},
     )
-    # observe new values 
-    new_x =  unnormalize(candidates.detach(), bounds=problem.bounds)
+    # observe new values
+    new_x = unnormalize(candidates.detach(), bounds=problem.bounds)
     new_obj_true = problem(new_x)
     new_obj = new_obj_true + torch.randn_like(new_obj_true) * NOISE_SE
     return new_x, new_obj, new_obj_true
@@ -420,18 +430,33 @@ log_hv_difference_rnd = np.log10(problem.max_hv - np.asarray(hvs_random))
 
 fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 ax.errorbar(
-    iters, log_hv_difference_rnd, label="Sobol", linewidth=1.5,
+    iters,
+    log_hv_difference_rnd,
+    label="Sobol",
+    linewidth=1.5,
 )
 ax.errorbar(
-    iters, log_hv_difference_qparego, label="qNParEGO", linewidth=1.5,
+    iters,
+    log_hv_difference_qparego,
+    label="qNParEGO",
+    linewidth=1.5,
 )
 ax.errorbar(
-    iters, log_hv_difference_qehvi, label="qEHVI", linewidth=1.5,
+    iters,
+    log_hv_difference_qehvi,
+    label="qEHVI",
+    linewidth=1.5,
 )
 ax.errorbar(
-    iters, log_hv_difference_qnehvi, label="qNEHVI", linewidth=1.5,
+    iters,
+    log_hv_difference_qnehvi,
+    label="qNEHVI",
+    linewidth=1.5,
 )
-ax.set(xlabel='number of observations (beyond initial points)', ylabel='Log Hypervolume Difference')
+ax.set(
+    xlabel="number of observations (beyond initial points)",
+    ylabel="Log Hypervolume Difference",
+)
 ax.legend(loc="lower left")
 
 
@@ -447,20 +472,33 @@ from matplotlib.cm import ScalarMappable
 
 fig, axes = plt.subplots(1, 4, figsize=(23, 7), sharex=True, sharey=True)
 algos = ["Sobol", "qNParEGO", "qEHVI", "qNEHVI"]
-cm = plt.cm.get_cmap('viridis')
+cm = plt.cm.get_cmap("viridis")
 
 batch_number = torch.cat(
-    [torch.zeros(2*(problem.dim+1)), torch.arange(1, N_BATCH+1).repeat(BATCH_SIZE, 1).t().reshape(-1)]
+    [
+        torch.zeros(2 * (problem.dim + 1)),
+        torch.arange(1, N_BATCH + 1).repeat(BATCH_SIZE, 1).t().reshape(-1),
+    ]
 ).numpy()
-for i, train_obj in enumerate((train_obj_true_random, train_obj_true_qparego, train_obj_true_qehvi, train_obj_true_qnehvi)):
+for i, train_obj in enumerate(
+    (
+        train_obj_true_random,
+        train_obj_true_qparego,
+        train_obj_true_qehvi,
+        train_obj_true_qnehvi,
+    )
+):
     sc = axes[i].scatter(
-        train_obj[:, 0].cpu().numpy(), train_obj[:,1].cpu().numpy(), c=batch_number, alpha=0.8,
+        train_obj[:, 0].cpu().numpy(),
+        train_obj[:, 1].cpu().numpy(),
+        c=batch_number,
+        alpha=0.8,
     )
     axes[i].set_title(algos[i])
     axes[i].set_xlabel("Objective 1")
 axes[0].set_ylabel("Objective 2")
 norm = plt.Normalize(batch_number.min(), batch_number.max())
-sm =  ScalarMappable(norm=norm, cmap=cm)
+sm = ScalarMappable(norm=norm, cmap=cm)
 sm.set_array([])
 fig.subplots_adjust(right=0.9)
 cbar_ax = fig.add_axes([0.93, 0.15, 0.01, 0.7])

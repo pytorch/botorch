@@ -55,7 +55,7 @@ from botorch.utils.sampling import draw_sobol_samples
 def generate_initial_data(n=16):
     # generate training data
     train_x = torch.rand(n, 7, **tkwargs)
-    train_obj = problem(train_x).unsqueeze(-1) # add output dimension
+    train_obj = problem(train_x).unsqueeze(-1)  # add output dimension
     return train_x, train_obj
 
 
@@ -63,11 +63,8 @@ def initialize_model(train_x, train_obj):
     # define a surrogate model suited for a "training data"-like fidelity parameter
     # in dimension 6, as in [2]
     model = SingleTaskMultiFidelityGP(
-        train_x, 
-        train_obj, 
-        outcome_transform=Standardize(m=1),
-        data_fidelity=6
-    )   
+        train_x, train_obj, outcome_transform=Standardize(m=1), data_fidelity=6
+    )
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     return mll, model
 
@@ -104,23 +101,23 @@ def project(X):
 
 
 def get_mfkg(model):
-    
+
     curr_val_acqf = FixedFeatureAcquisitionFunction(
         acq_function=PosteriorMean(model),
         d=7,
         columns=[6],
         values=[1],
     )
-    
+
     _, current_value = optimize_acqf(
         acq_function=curr_val_acqf,
-        bounds=bounds[:,:-1],
+        bounds=bounds[:, :-1],
         q=1,
         num_restarts=10 if not SMOKE_TEST else 2,
         raw_samples=1024 if not SMOKE_TEST else 4,
         options={"batch_limit": 10, "maxiter": 200},
     )
-        
+
     return qMultiFidelityKnowledgeGradient(
         model=model,
         num_fantasies=128 if not SMOKE_TEST else 2,
@@ -137,6 +134,7 @@ def get_mfkg(model):
 
 
 from botorch.optim.initializers import gen_one_shot_kg_initial_conditions
+
 torch.set_printoptions(precision=3, sci_mode=False)
 
 NUM_RESTARTS = 10 if not SMOKE_TEST else 2
@@ -145,9 +143,9 @@ RAW_SAMPLES = 512 if not SMOKE_TEST else 4
 
 def optimize_mfkg_and_get_observation(mfkg_acqf):
     """Optimizes MFKG and returns a new candidate, observation, and cost."""
-    
+
     X_init = gen_one_shot_kg_initial_conditions(
-        acq_function = mfkg_acqf,
+        acq_function=mfkg_acqf,
         bounds=bounds,
         q=4,
         num_restarts=NUM_RESTARTS,
@@ -215,15 +213,15 @@ def get_recommendation(model):
 
     final_rec, _ = optimize_acqf(
         acq_function=rec_acqf,
-        bounds=bounds[:,:-1],
+        bounds=bounds[:, :-1],
         q=1,
         num_restarts=NUM_RESTARTS,
         raw_samples=RAW_SAMPLES,
         options={"batch_limit": 5, "maxiter": 200},
     )
-    
+
     final_rec = rec_acqf._construct_X_full(final_rec)
-    
+
     objective_value = problem(final_rec)
     print(f"recommended point:\n{final_rec}\n\nobjective value:\n{objective_value}")
     return final_rec
@@ -246,30 +244,30 @@ from botorch.acquisition import qExpectedImprovement
 
 
 def get_ei(model, best_f):
-           
+
     return FixedFeatureAcquisitionFunction(
         acq_function=qExpectedImprovement(model=model, best_f=best_f),
         d=7,
         columns=[6],
         values=[1],
-    ) 
+    )
 
 
 def optimize_ei_and_get_observation(ei_acqf):
     """Optimizes EI and returns a new candidate, observation, and cost."""
-    
+
     candidates, _ = optimize_acqf(
         acq_function=ei_acqf,
-        bounds=bounds[:,:-1],
+        bounds=bounds[:, :-1],
         q=4,
         num_restarts=NUM_RESTARTS,
         raw_samples=RAW_SAMPLES,
         options={"batch_limit": 5, "maxiter": 200},
     )
-    
+
     # add the fidelity parameter
     candidates = ei_acqf._construct_X_full(candidates)
-    
+
     # observe new values
     cost = cost_model(candidates).sum()
     new_x = candidates.detach()

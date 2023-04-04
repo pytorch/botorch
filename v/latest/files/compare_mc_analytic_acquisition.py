@@ -76,11 +76,9 @@ from botorch.acquisition import qExpectedImprovement
 from botorch.sampling import SobolQMCNormalSampler
 
 
-sampler = SobolQMCNormalSampler(sample_shape=torch.Size([512]), seed=0)        
-MC_EI = qExpectedImprovement(
-    model, best_f=best_value, sampler=sampler
-)
-torch.manual_seed(seed=0) # to keep the restart conditions the same
+sampler = SobolQMCNormalSampler(sample_shape=torch.Size([512]), seed=0)
+MC_EI = qExpectedImprovement(model, best_f=best_value, sampler=sampler)
+torch.manual_seed(seed=0)  # to keep the restart conditions the same
 new_point_mc, _ = optimize_acqf(
     acq_function=MC_EI,
     bounds=torch.tensor([[0.0] * 6, [1.0] * 6]),
@@ -119,9 +117,7 @@ from botorch.generation import get_best_candidates, gen_candidates_torch
 from botorch.optim import gen_batch_initial_conditions
 
 resampler = StochasticSampler(sample_shape=torch.Size([512]))
-MC_EI_resample = qExpectedImprovement(
-    model, best_f=best_value, sampler=resampler
-)
+MC_EI_resample = qExpectedImprovement(model, best_f=best_value, sampler=resampler)
 bounds = torch.tensor([[0.0] * 6, [1.0] * 6])
 
 batch_initial_conditions = gen_batch_initial_conditions(

@@ -86,7 +86,7 @@ class TurboState:
     dim: int
     batch_size: int
     length: float = 0.8
-    length_min: float = 0.5 ** 7
+    length_min: float = 0.5**7
     length_max: float = 1.6
     failure_counter: int = 0
     failure_tolerance: int = float("nan")  # Note: Post-initialized
@@ -185,14 +185,11 @@ def generate_batch(
 
         # Create a perturbation mask
         prob_perturb = min(20.0 / dim, 1.0)
-        mask = (
-            torch.rand(n_candidates, dim, dtype=dtype, device=device)
-            <= prob_perturb
-        )
+        mask = torch.rand(n_candidates, dim, dtype=dtype, device=device) <= prob_perturb
         ind = torch.where(mask.sum(dim=1) == 0)[0]
         mask[ind, torch.randint(0, dim - 1, size=(len(ind),), device=device)] = 1
 
-        # Create candidate points from the perturbations and the mask        
+        # Create candidate points from the perturbations and the mask
         X_cand = x_center.expand(n_candidates, dim).clone()
         X_cand[mask] = pert[mask]
 
@@ -235,22 +232,27 @@ NUM_RESTARTS = 10 if not SMOKE_TEST else 2
 RAW_SAMPLES = 512 if not SMOKE_TEST else 4
 N_CANDIDATES = min(5000, max(2000, 200 * dim)) if not SMOKE_TEST else 4
 
+torch.manual_seed(0)
 
 while not state.restart_triggered:  # Run until TuRBO converges
     # Fit a GP model
     train_Y = (Y_turbo - Y_turbo.mean()) / Y_turbo.std()
     likelihood = GaussianLikelihood(noise_constraint=Interval(1e-8, 1e-3))
     covar_module = ScaleKernel(  # Use the same lengthscale prior as in the TuRBO paper
-        MaternKernel(nu=2.5, ard_num_dims=dim, lengthscale_constraint=Interval(0.005, 4.0))
+        MaternKernel(
+            nu=2.5, ard_num_dims=dim, lengthscale_constraint=Interval(0.005, 4.0)
+        )
     )
-    model = SingleTaskGP(X_turbo, train_Y, covar_module=covar_module, likelihood=likelihood)
+    model = SingleTaskGP(
+        X_turbo, train_Y, covar_module=covar_module, likelihood=likelihood
+    )
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
 
     # Do the fitting and acquisition function optimization inside the Cholesky context
     with gpytorch.settings.max_cholesky_size(max_cholesky_size):
         # Fit the model
         fit_gpytorch_mll(mll)
-    
+
         # Create a batch
         X_next = generate_batch(
             state=state,
@@ -286,6 +288,8 @@ while not state.restart_triggered:  # Run until TuRBO converges
 
 # In[8]:
 
+
+torch.manual_seed(0)
 
 X_ei = get_initial_points(dim, n_init)
 Y_ei = torch.tensor(
@@ -330,8 +334,14 @@ while len(Y_ei) < len(Y_turbo):
 # In[9]:
 
 
-X_Sobol = SobolEngine(dim, scramble=True, seed=0).draw(len(X_turbo)).to(dtype=dtype, device=device)
-Y_Sobol = torch.tensor([eval_objective(x) for x in X_Sobol], dtype=dtype, device=device).unsqueeze(-1)
+X_Sobol = (
+    SobolEngine(dim, scramble=True, seed=0)
+    .draw(len(X_turbo))
+    .to(dtype=dtype, device=device)
+)
+Y_Sobol = torch.tensor(
+    [eval_objective(x) for x in X_Sobol], dtype=dtype, device=device
+).unsqueeze(-1)
 
 
 # ## Compare the methods
@@ -375,7 +385,7 @@ plt.legend(
 plt.show()
 
 
-# In[ ]:
+# In[11]:
 
 
 

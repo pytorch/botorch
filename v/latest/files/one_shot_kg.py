@@ -63,7 +63,9 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 bounds = torch.stack([torch.zeros(2), torch.ones(2)])
 
 train_X = bounds[0] + (bounds[1] - bounds[0]) * torch.rand(20, 2)
-train_Y = torch.sin(2 * math.pi * train_X[:, [0]]) * torch.cos(2 * math.pi * train_X[:, [1]])
+train_Y = torch.sin(2 * math.pi * train_X[:, [0]]) * torch.cos(
+    2 * math.pi * train_X[:, [1]]
+)
 
 train_Y = standardize(train_Y + 0.05 * torch.randn_like(train_Y))
 
@@ -109,7 +111,7 @@ RAW_SAMPLES = 512 if not SMOKE_TEST else 4
 
 with manual_seed(1234):
     candidates, acq_value = optimize_acqf(
-        acq_function=qKG, 
+        acq_function=qKG,
         bounds=bounds,
         q=2,
         num_restarts=NUM_RESTARTS,
@@ -143,7 +145,7 @@ RAW_SAMPLES = 2048 if not SMOKE_TEST else 4
 
 
 argmax_pmean, max_pmean = optimize_acqf(
-    acq_function=PosteriorMean(model), 
+    acq_function=PosteriorMean(model),
     bounds=bounds,
     q=1,
     num_restarts=20 if not SMOKE_TEST else 2,
@@ -165,7 +167,7 @@ qKG_proper = qKnowledgeGradient(
 
 with manual_seed(1234):
     candidates_proper, acq_value_proper = optimize_acqf(
-        acq_function=qKG_proper, 
+        acq_function=qKG_proper,
         bounds=bounds,
         q=2,
         num_restarts=NUM_RESTARTS,

@@ -86,6 +86,7 @@ cv_results = batch_cross_validation(
 
 
 from matplotlib import pyplot as plt
+
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 posterior = cv_results.posterior
@@ -98,17 +99,17 @@ lower, upper = posterior.mvn.confidence_region()
 
 # scatterplot of predicted versus test
 _, axes = plt.subplots(1, 1, figsize=(6, 4))
-plt.plot([-1.5, 1.5], [-1.5, 1.5], 'k', label="true objective", linewidth=2)
+plt.plot([-1.5, 1.5], [-1.5, 1.5], "k", label="true objective", linewidth=2)
 
 axes.set_xlabel("Actual")
 axes.set_ylabel("Predicted")
 
 axes.errorbar(
-    x=cv_folds.test_Y.numpy().flatten(), 
-    y=mean.numpy().flatten(), 
-    xerr=1.96*sigma,
-    yerr=((upper-lower)/2).numpy().flatten(),
-    fmt='*'
+    x=cv_folds.test_Y.numpy().flatten(),
+    y=mean.numpy().flatten(),
+    xerr=1.96 * sigma,
+    yerr=((upper - lower) / 2).numpy().flatten(),
+    fmt="*",
 );
 
 
@@ -119,11 +120,13 @@ axes.errorbar(
 
 model = cv_results.model
 with torch.no_grad():
-    # evaluate the models at a series of points for plotting 
-    plot_x = torch.linspace(0, 1, 101).view(1, -1, 1).repeat(cv_folds.train_X.shape[0], 1, 1)
+    # evaluate the models at a series of points for plotting
+    plot_x = (
+        torch.linspace(0, 1, 101).view(1, -1, 1).repeat(cv_folds.train_X.shape[0], 1, 1)
+    )
     posterior = model.posterior(plot_x)
     mean = posterior.mean
-    
+
     # get lower and upper confidence bounds
     lower, upper = posterior.mvn.confidence_region()
     plot_x.squeeze_()
@@ -137,31 +140,28 @@ with torch.no_grad():
 _, axes = plt.subplots(1, 1, figsize=(6, 4))
 
 # plot the 12th CV fold
-num = 12 
+num = 12
 
 # plot the training data in black
 axes.plot(
-    cv_folds.train_X[num - 1].detach().numpy(), 
-    cv_folds.train_Y[num - 1].detach().numpy(), 
-    'k*'
+    cv_folds.train_X[num - 1].detach().numpy(),
+    cv_folds.train_Y[num - 1].detach().numpy(),
+    "k*",
 )
 
 # plot the test data in red
 axes.plot(
-    cv_folds.test_X[num - 1].detach().numpy(), 
-    cv_folds.test_Y[num - 1].detach().numpy(), 
-    'r*'
+    cv_folds.test_X[num - 1].detach().numpy(),
+    cv_folds.test_Y[num - 1].detach().numpy(),
+    "r*",
 )
 
 # plot posterior means as blue line
-axes.plot(plot_x[num - 1].numpy(), mean[num-1].numpy(), 'b')
+axes.plot(plot_x[num - 1].numpy(), mean[num - 1].numpy(), "b")
 
 # shade between the lower and upper confidence bounds
 axes.fill_between(
-    plot_x[num - 1].numpy(), 
-    lower[num - 1].numpy(), 
-    upper[num - 1].numpy(), 
-    alpha=0.5
+    plot_x[num - 1].numpy(), lower[num - 1].numpy(), upper[num - 1].numpy(), alpha=0.5
 );
 
 

@@ -87,7 +87,11 @@ def initialize_model(train_x, train_obj, train_con):
     train_y = torch.cat([train_obj, train_con], dim=-1)
     models = []
     for i in range(train_y.shape[-1]):
-        models.append(SingleTaskGP(train_x, train_y[..., i : i + 1], outcome_transform=Standardize(m=1)))
+        models.append(
+            SingleTaskGP(
+                train_x, train_y[..., i : i + 1], outcome_transform=Standardize(m=1)
+            )
+        )
     model = ModelListGP(*models)
     mll = SumMarginalLogLikelihood(model.likelihood, model)
     return mll, model
@@ -112,7 +116,9 @@ def initialize_model(train_x, train_obj, train_con):
 # In[4]:
 
 
-from botorch.acquisition.multi_objective.monte_carlo import qNoisyExpectedHypervolumeImprovement
+from botorch.acquisition.multi_objective.monte_carlo import (
+    qNoisyExpectedHypervolumeImprovement,
+)
 from botorch.acquisition.multi_objective.objective import IdentityMCMultiOutputObjective
 from botorch.optim.optimize import optimize_acqf, optimize_acqf_list
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
@@ -270,13 +276,27 @@ hv = Hypervolume(ref_point=problem.ref_point)
 hvs_qparego, hvs_qnehvi, hvs_random = [], [], []
 
 # call helper functions to generate initial training data and initialize model
-train_x_qparego, train_obj_qparego, train_con_qparego = generate_initial_data(n=2 * (d + 1))
-mll_qparego, model_qparego = initialize_model(train_x_qparego, train_obj_qparego, train_con_qparego)
+train_x_qparego, train_obj_qparego, train_con_qparego = generate_initial_data(
+    n=2 * (d + 1)
+)
+mll_qparego, model_qparego = initialize_model(
+    train_x_qparego, train_obj_qparego, train_con_qparego
+)
 
-train_x_qnehvi, train_obj_qnehvi, train_con_qnehvi = train_x_qparego, train_obj_qparego, train_con_qparego
-train_x_random, train_obj_random, train_con_random = train_x_qparego, train_obj_qparego, train_con_qparego
+train_x_qnehvi, train_obj_qnehvi, train_con_qnehvi = (
+    train_x_qparego,
+    train_obj_qparego,
+    train_con_qparego,
+)
+train_x_random, train_obj_random, train_con_random = (
+    train_x_qparego,
+    train_obj_qparego,
+    train_con_qparego,
+)
 
-mll_qnehvi, model_qnehvi = initialize_model(train_x_qnehvi, train_obj_qnehvi, train_con_qnehvi)
+mll_qnehvi, model_qnehvi = initialize_model(
+    train_x_qnehvi, train_obj_qnehvi, train_con_qnehvi
+)
 
 # compute pareto front
 is_feas = (train_con_qparego <= 0).all(dim=-1)
@@ -306,7 +326,11 @@ for iteration in range(1, N_BATCH + 1):
     qnehvi_sampler = SobolQMCNormalSampler(sample_shape=torch.Size([MC_SAMPLES]))
 
     # optimize acquisition functions and get new observations
-    new_x_qparego, new_obj_qparego, new_con_qparego = optimize_qparego_and_get_observation(
+    (
+        new_x_qparego,
+        new_obj_qparego,
+        new_con_qparego,
+    ) = optimize_qparego_and_get_observation(
         model_qparego, train_obj_qparego, train_con_qparego, qparego_sampler
     )
     new_x_qnehvi, new_obj_qnehvi, new_con_qnehvi = optimize_qnehvi_and_get_observation(
@@ -348,8 +372,12 @@ for iteration in range(1, N_BATCH + 1):
     # reinitialize the models so they are ready for fitting on next iteration
     # Note: we find improved performance from not warm starting the model hyperparameters
     # using the hyperparameters from the previous iteration
-    mll_qparego, model_qparego = initialize_model(train_x_qparego, train_obj_qparego, train_con_qparego)
-    mll_qnehvi, model_qnehvi = initialize_model(train_x_qnehvi, train_obj_qnehvi, train_con_qnehvi)
+    mll_qparego, model_qparego = initialize_model(
+        train_x_qparego, train_obj_qparego, train_con_qparego
+    )
+    mll_qnehvi, model_qnehvi = initialize_model(
+        train_x_qnehvi, train_obj_qnehvi, train_con_qnehvi
+    )
 
     t1 = time.monotonic()
 
@@ -406,7 +434,10 @@ ax.plot(
     linewidth=1.5,
     color="blue",
 )
-ax.set(xlabel="number of observations (beyond initial points)", ylabel="Log Hypervolume Difference")
+ax.set(
+    xlabel="number of observations (beyond initial points)",
+    ylabel="Log Hypervolume Difference",
+)
 ax.legend(loc="lower right")
 
 
@@ -422,21 +453,29 @@ from matplotlib.cm import ScalarMappable
 
 fig, axes = plt.subplots(1, 3, figsize=(17, 5))
 algos = ["Sobol", "qParEGO", "qNEHVI"]
-cm = plt.cm.get_cmap('viridis')
+cm = plt.cm.get_cmap("viridis")
 
 batch_number = torch.cat(
-    [torch.zeros(2*(d+1)), torch.arange(1, N_BATCH+1).repeat(BATCH_SIZE, 1).t().reshape(-1)]
+    [
+        torch.zeros(2 * (d + 1)),
+        torch.arange(1, N_BATCH + 1).repeat(BATCH_SIZE, 1).t().reshape(-1),
+    ]
 ).numpy()
 
 for i, train_obj in enumerate((train_obj_random, train_obj_qparego, train_obj_qnehvi)):
-    sc = axes[i].scatter(train_obj[:, 0].cpu().numpy(), train_obj[:,1].cpu().numpy(), c=batch_number, alpha=0.8)
+    sc = axes[i].scatter(
+        train_obj[:, 0].cpu().numpy(),
+        train_obj[:, 1].cpu().numpy(),
+        c=batch_number,
+        alpha=0.8,
+    )
     axes[i].set_title(algos[i])
     axes[i].set_xlabel("Objective 1")
     axes[i].set_xlim(-2.5, 0)
     axes[i].set_ylim(-2.5, 0)
 axes[0].set_ylabel("Objective 2")
 norm = plt.Normalize(batch_number.min(), batch_number.max())
-sm =  ScalarMappable(norm=norm, cmap=cm)
+sm = ScalarMappable(norm=norm, cmap=cm)
 sm.set_array([])
 fig.subplots_adjust(right=0.9)
 cbar_ax = fig.add_axes([0.93, 0.15, 0.01, 0.7])

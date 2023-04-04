@@ -25,6 +25,11 @@ Deterministic Model API
 .. automodule:: botorch.models.deterministic
     :members:
 
+Ensemble Model API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.ensemble
+    :members:
+
 
 Models
 -------------------------------------------
@@ -136,6 +141,11 @@ Input Transforms
 .. automodule:: botorch.models.transforms.input
     :members:
 
+Transform Factory Methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.transforms.factory
+    :members:
+
 Transform Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.transforms.utils
@@ -154,6 +164,12 @@ Model Conversion
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.converter
     :members:
+
+Inducing Point Allocators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.utils.inducing_point_allocators
+    :members:
+    :private-members: _pivoted_cholesky_init
 
 Other Utilties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

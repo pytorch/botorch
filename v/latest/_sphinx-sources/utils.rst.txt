@@ -78,6 +78,11 @@ Feasible Volume
 .. automodule:: botorch.utils.feasible_volume
 		:members:
 
+Types and Type Hints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.types
+		:members:
+
 Constants
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.constants
