@@ -74,15 +74,11 @@ Raul Astudillo, Daniel Jiang, Maximilian Balandat, Eytan Bakshy, Peter Frazier. 
 - [Parallel Bayesian Optimization of Multiple Noisy Objectives with Expected Hypervolume Improvement](https://arxiv.org/pdf/2105.08195.pdf).
 Samuel Daulton, Max Balandat, Eytan Bakshy. NeurIPS 2021.
 
-- [Bayesian Optimization of Function Networks](https://papers.nips.cc/paper/2021/hash/792c7b5aae4a79e78aaeda80516ae2ac-Abstract.html). Raul Astudillo, Peter Frazier. NeurIPS 2021.
-
 - [Bayesian Optimization with High-Dimensional Outputs](https://papers.nips.cc/paper/2021/hash/a0d3973ad100ad83a64c304bb58677dd-Abstract.html). Wesley J. Maddox, Maximilian Balandat, Andrew G. Wilson, Eytan Bakshy. NeurIPS 2021.
 
 - [Combining Latent Space and Structured Kernels for Bayesian Optimization over Combinatorial Spaces](https://papers.nips.cc/paper/2021/hash/44e76e99b5e194377e955b13fb12f630-Abstract.html). Aryan Deshwal, Jana Doppa. NeurIPS 2021.
 
 - [Improving Black-box Optimization in VAE Latent Space Using Decoder Uncertainty](https://papers.nips.cc/paper/2021/hash/06fe1c234519f6812fc4c1baae25d6af-Abstract.html). Pascal Notin, José Miguel Hernández-Lobato, Yarin Gal. NeurIPS 2021
-
-- [Multi-Step Budgeted Bayesian Optimization with Unknown Evaluation Costs](https://papers.nips.cc/paper/2021/hash/a8ecbabae151abacba7dbde04f761c37-Abstract.html). Raul Astudillo, Daniel Jiang, Maximilian Balandat, Eytan Bakshy, Peter Frazier. NeurIPS 2021.
 
 - [Parallel Bayesian Optimization of Multiple Noisy Objectives with Expected Hypervolume Improvement](https://papers.nips.cc/paper/2021/hash/11704817e347269b7254e744b5e22dac-Abstract.html). Samuel Daulton, Maximilian Balandat, Eytan Bakshy. NeurIPS 2021.
 
