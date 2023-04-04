@@ -74,10 +74,6 @@ Raul Astudillo, Daniel Jiang, Maximilian Balandat, Eytan Bakshy, Peter Frazier. 
 - [Parallel Bayesian Optimization of Multiple Noisy Objectives with Expected Hypervolume Improvement](https://arxiv.org/pdf/2105.08195.pdf).
 Samuel Daulton, Max Balandat, Eytan Bakshy. NeurIPS 2021.
 
-- [High-Dimensional Bayesian Optimization with Sparse Axis-Aligned Subspaces](https://proceedings.mlr.press/v161/eriksson21a.html). David Eriksson, Martin Jankowiak. UAI 2021.
-
-- [Bayesian Optimization over Permutation Spaces](https://arxiv.org/abs/2112.01049). Aryan Deshwal, Syrine Belakaria, Janardhan Rao Doppa, Dae Hyun Kim. AAAI 2021.
-
 - [Bayesian Optimization of Function Networks](https://papers.nips.cc/paper/2021/hash/792c7b5aae4a79e78aaeda80516ae2ac-Abstract.html). Raul Astudillo, Peter Frazier. NeurIPS 2021.
 
 - [Bayesian Optimization with High-Dimensional Outputs](https://papers.nips.cc/paper/2021/hash/a0d3973ad100ad83a64c304bb58677dd-Abstract.html). Wesley J. Maddox, Maximilian Balandat, Andrew G. Wilson, Eytan Bakshy. NeurIPS 2021.
@@ -91,6 +87,10 @@ Samuel Daulton, Max Balandat, Eytan Bakshy. NeurIPS 2021.
 - [Parallel Bayesian Optimization of Multiple Noisy Objectives with Expected Hypervolume Improvement](https://papers.nips.cc/paper/2021/hash/11704817e347269b7254e744b5e22dac-Abstract.html). Samuel Daulton, Maximilian Balandat, Eytan Bakshy. NeurIPS 2021.
 
 - [Risk-averse Heteroscedastic Bayesian Optimization](https://papers.nips.cc/paper/2021/hash/8f97d1d7e02158a83ceb2c14ff5372cd-Abstract.html). Anastasia Makarova, Ilnura Usmanova, Ilija Bogunovic, Andreas Krause. NeurIPS 2021.
+
+- [High-Dimensional Bayesian Optimization with Sparse Axis-Aligned Subspaces](https://proceedings.mlr.press/v161/eriksson21a.html). David Eriksson, Martin Jankowiak. UAI 2021.
+
+- [Bayesian Optimization over Permutation Spaces](https://arxiv.org/abs/2112.01049). Aryan Deshwal, Syrine Belakaria, Janardhan Rao Doppa, Dae Hyun Kim. AAAI 2021.
 
 - [Bayesian Optimization of Risk Measures](https://proceedings.neurips.cc/paper/2020/hash/e8f2779682fd11fa2067beffc27a9192-Abstract.html). Sait Cakmak, Raul Astudillo Marban, Peter Frazier, Enlu Zhou. NeurIPS 2020.
 
