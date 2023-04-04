@@ -80,7 +80,9 @@ Samuel Daulton, Max Balandat, Eytan Bakshy. NeurIPS 2021.
 
 - [Combining Latent Space and Structured Kernels for Bayesian Optimization over Combinatorial Spaces](https://papers.nips.cc/paper/2021/hash/44e76e99b5e194377e955b13fb12f630-Abstract.html). Aryan Deshwal, Jana Doppa. NeurIPS 2021.
 
-- [Improving Black-box Optimization in VAE Latent Space Using Decoder Uncertainty](https://papers.nips.cc/paper/2021/hash/06fe1c234519f6812fc4c1baae25d6af-Abstract.html). Pascal Notin, José Miguel Hernández-Lobato, Yarin Gal. NeurIPS 2021
+- [Improving Black-box Optimization in VAE Latent Space Using Decoder Uncertainty](https://papers.nips.cc/paper/2021/hash/06fe1c234519f6812fc4c1baae25d6af-Abstract.html). Pascal Notin, José Miguel Hernández-Lobato, Yarin Gal. NeurIPS 2021.
+
+- [Local Policy Search with Bayesian Optimization](https://papers.nips.cc/paper_files/paper/2021/hash/ad0f7a25211abc3889cb0f420c85e671-Abstract.html). Sarah Müller, Alexander von Rohr, Sebastian Trimpe. NeurIPS 2021.
 
 - [Risk-averse Heteroscedastic Bayesian Optimization](https://papers.nips.cc/paper/2021/hash/8f97d1d7e02158a83ceb2c14ff5372cd-Abstract.html). Anastasia Makarova, Ilnura Usmanova, Ilija Bogunovic, Andreas Krause. NeurIPS 2021.
 
