@@ -32,7 +32,7 @@ Here is an incomplete selection of peer-reviewed Bayesian optimization papers th
 
 - [Inducing Point Allocation for Sparse Gaussian Processes in High-Throughput Bayesian Optimisation](https://arxiv.org/pdf/2301.10123.pdf). Henry B. Moss, Sebastian W. Ober, Victor Picheny. AISTATS 2023.
 
-- [Active Bayesian Causal Inference](https://proceedings.neurips.cc/paper_files/paper/2022/hash/675e371eeeea99551ce47797ed6ed33e-Abstract-Conference.html). Christian Toth, Lars Lorch, Christian Knoll, Andreas Krause, Franz Pernkopf, Robert Peharz, Julius von Kügelgen.
+- [Active Bayesian Causal Inference](https://proceedings.neurips.cc/paper_files/paper/2022/hash/675e371eeeea99551ce47797ed6ed33e-Abstract-Conference.html). Christian Toth, Lars Lorch, Christian Knoll, Andreas Krause, Franz Pernkopf, Robert Peharz, Julius von Kügelgen. NeurIPS 2022.
 
 - [Joint Entropy Search for Multi-objective Bayesian Optimization](https://arxiv.org/pdf/2210.02905.pdf). Ben Tu, Axel Gandy, Nikolas Kantas, Behrang Shafei. NeurIPS 2022.
 
