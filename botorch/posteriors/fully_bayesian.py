@@ -138,6 +138,6 @@ class FullyBayesianPosterior(GPyTorchPosterior):
         candidate produces same value regardless of its position on the t-batch.
         """
         if self._is_mt:
-            return (0, -3)
-        else:
             return (0, -2)
+        else:
+            return (0, -1)
