@@ -192,21 +192,6 @@ class GPyTorchPosterior(TorchPosterior):
             samples = samples.unsqueeze(-1)
         return samples
 
-    def sample(self, sample_shape: Optional[torch.Size] = None) -> Tensor:
-        r"""Sample from the posterior without gradients.
-
-        Args:
-            sample_shape: A `torch.Size` object specifying the sample shape. To
-                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
-                of `n` samples each, set to `torch.Size([b, n])`.
-
-        Returns:
-            Samples from the posterior, a tensor of shape
-            `self._extended_shape(sample_shape=sample_shape)`.
-        """
-        with torch.no_grad():
-            return self.rsample(sample_shape=sample_shape)
-
     @property
     def mean(self) -> Tensor:
         r"""The posterior mean."""
