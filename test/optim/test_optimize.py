@@ -1360,6 +1360,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 "batch_initial_conditions": None,
                 "return_best_only": True,
                 "sequential": False,
+                "ic_generator": None,
             }
             for i in range(len(call_args_list)):
                 expected_call_args["fixed_features"] = fixed_features_list[i]

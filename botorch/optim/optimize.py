@@ -719,6 +719,8 @@ def optimize_acqf_list(
     fixed_features: Optional[Dict[int, float]] = None,
     fixed_features_list: Optional[List[Dict[int, float]]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
+    ic_generator: Optional[TGenInitialConditions] = None,
+    ic_gen_kwargs: Optional[Dict] = None,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a list of candidates from a list of acquisition functions.
 
@@ -749,6 +751,13 @@ def optimize_acqf_list(
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
+        ic_generator: Function for generating initial conditions. Not needed when
+            `batch_initial_conditions` are provided. Defaults to
+            `gen_one_shot_kg_initial_conditions` for `qKnowledgeGradient` acquisition
+            functions and `gen_batch_initial_conditions` otherwise. Must be specified
+            for nonlinear inequality constraints.
+        ic_gen_kwargs: Additional keyword arguments passed to function specified by
+            `ic_generator`
 
     Returns:
         A two-element tuple containing
@@ -786,8 +795,11 @@ def optimize_acqf_list(
                 equality_constraints=equality_constraints,
                 fixed_features_list=fixed_features_list,
                 post_processing_func=post_processing_func,
+                ic_generator=ic_generator,
+                ic_gen_kwargs=ic_gen_kwargs,
             )
         else:
+            ic_gen_kwargs = ic_gen_kwargs or {}
             candidate, acq_value = optimize_acqf(
                 acq_function=acq_function,
                 bounds=bounds,
@@ -801,6 +813,8 @@ def optimize_acqf_list(
                 post_processing_func=post_processing_func,
                 return_best_only=True,
                 sequential=False,
+                ic_generator=ic_generator,
+                **ic_gen_kwargs,
             )
         candidate_list.append(candidate)
         acq_value_list.append(acq_value)
@@ -820,6 +834,8 @@ def optimize_acqf_mixed(
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
+    ic_generator: Optional[TGenInitialConditions] = None,
+    ic_gen_kwargs: Optional[Dict] = None,
     **kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
     r"""Optimize over a list of fixed_features and returns the best solution.
@@ -852,6 +868,13 @@ def optimize_acqf_mixed(
             transformations).
         batch_initial_conditions: A tensor to specify the initial conditions. Set
             this if you do not want to use default initialization strategy.
+        ic_generator: Function for generating initial conditions. Not needed when
+            `batch_initial_conditions` are provided. Defaults to
+            `gen_one_shot_kg_initial_conditions` for `qKnowledgeGradient` acquisition
+            functions and `gen_batch_initial_conditions` otherwise. Must be specified
+            for nonlinear inequality constraints.
+        ic_gen_kwargs: Additional keyword arguments passed to function specified by
+            `ic_generator`
         kwargs: kwargs do nothing. This is provided so that the same arguments can
             be passed to different acquisition functions without raising an error.
 
@@ -873,6 +896,8 @@ def optimize_acqf_mixed(
             )
     _raise_deprecation_warning_if_kwargs("optimize_acqf_mixed", kwargs)
 
+    ic_gen_kwargs = ic_gen_kwargs or {}
+
     if q == 1:
         ff_candidate_list, ff_acq_value_list = [], []
         for fixed_features in fixed_features_list:
@@ -888,7 +913,9 @@ def optimize_acqf_mixed(
                 fixed_features=fixed_features,
                 post_processing_func=post_processing_func,
                 batch_initial_conditions=batch_initial_conditions,
+                ic_generator=ic_generator,
                 return_best_only=True,
+                **ic_gen_kwargs,
             )
             ff_candidate_list.append(candidate)
             ff_acq_value_list.append(acq_value)
@@ -916,6 +943,8 @@ def optimize_acqf_mixed(
             equality_constraints=equality_constraints,
             post_processing_func=post_processing_func,
             batch_initial_conditions=batch_initial_conditions,
+            ic_generator=ic_generator,
+            ic_gen_kwargs=ic_gen_kwargs,
         )
         candidates = torch.cat([candidates, candidate], dim=-2)
         acq_function.set_X_pending(
