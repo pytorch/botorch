@@ -244,6 +244,7 @@ def gen_batch_initial_conditions(
     options: Optional[Dict[str, Union[bool, float, int]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    generator: Optional[Callable[[int, int, int], Tensor]] = None,
 ) -> Tensor:
     r"""Generate a batch of initial conditions for random-restart optimziation.
 
@@ -274,6 +275,9 @@ def gen_batch_initial_conditions(
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
+        generator: Callable for generating samples that are then further
+            processed. It receives `n`, `q` and `seed` as arguments and  returns
+            a tensor of shape `n x q x d`.
 
     Returns:
         A `num_restarts x q x d` tensor of initial conditions.
@@ -296,6 +300,11 @@ def gen_batch_initial_conditions(
         raise UnsupportedError(
             "Option 'sample_around_best' is not supported when equality"
             "constraints are present."
+        )
+    if sample_around_best and generator:
+        raise UnsupportedError(
+            "Option 'sample_around_best' is not supported when custom"
+            "generator should be used."
         )
     seed: Optional[int] = options.get("seed")
     batch_limit: Optional[int] = options.get(
@@ -327,7 +336,9 @@ def gen_batch_initial_conditions(
     while factor < max_factor:
         with warnings.catch_warnings(record=True) as ws:
             n = raw_samples * factor
-            if inequality_constraints is None and equality_constraints is None:
+            if generator:
+                X_rnd = generator(n, q, seed)
+            elif inequality_constraints is None and equality_constraints is None:
                 if effective_dim <= SobolEngine.MAXDIM:
                     X_rnd = draw_sobol_samples(bounds=bounds_cpu, n=n, q=q, seed=seed)
                 else:
