@@ -716,6 +716,7 @@ def optimize_acqf_list(
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    nonlinear_inequality_constraints: Optional[List[Callable]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
     fixed_features_list: Optional[List[Dict[int, float]]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
@@ -743,6 +744,14 @@ def optimize_acqf_list(
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
+        nonlinear_inequality_constraints: A list of callables with that represent
+            non-linear inequality constraints of the form `callable(x) >= 0`. Each
+            callable is expected to take a `(num_restarts) x q x d`-dim tensor as an
+            input and return a `(num_restarts) x q`-dim tensor with the constraint
+            values. The constraints will later be passed to SLSQP. You need to pass in
+            `batch_initial_conditions` in this case. Using non-linear inequality
+            constraints also requires that `batch_limit` is set to 1, which will be
+            done automatically if not specified in `options`.
         fixed_features: A map `{feature_index: value}` for features that
             should be fixed to a particular value during generation.
         fixed_features_list: A list of maps `{feature_index: value}`. The i-th
@@ -793,6 +802,7 @@ def optimize_acqf_list(
                 options=options or {},
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints,
+                nonlinear_inequality_constraints=nonlinear_inequality_constraints,
                 fixed_features_list=fixed_features_list,
                 post_processing_func=post_processing_func,
                 ic_generator=ic_generator,
@@ -809,6 +819,7 @@ def optimize_acqf_list(
                 options=options or {},
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints,
+                nonlinear_inequality_constraints=nonlinear_inequality_constraints,
                 fixed_features=fixed_features,
                 post_processing_func=post_processing_func,
                 return_best_only=True,
@@ -832,6 +843,7 @@ def optimize_acqf_mixed(
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    nonlinear_inequality_constraints: Optional[List[Callable]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
     ic_generator: Optional[TGenInitialConditions] = None,
@@ -863,6 +875,14 @@ def optimize_acqf_mixed(
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
+        nonlinear_inequality_constraints: A list of callables with that represent
+            non-linear inequality constraints of the form `callable(x) >= 0`. Each
+            callable is expected to take a `(num_restarts) x q x d`-dim tensor as an
+            input and return a `(num_restarts) x q`-dim tensor with the constraint
+            values. The constraints will later be passed to SLSQP. You need to pass in
+            `batch_initial_conditions` in this case. Using non-linear inequality
+            constraints also requires that `batch_limit` is set to 1, which will be
+            done automatically if not specified in `options`.
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
@@ -910,6 +930,7 @@ def optimize_acqf_mixed(
                 options=options or {},
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints,
+                nonlinear_inequality_constraints=nonlinear_inequality_constraints,
                 fixed_features=fixed_features,
                 post_processing_func=post_processing_func,
                 batch_initial_conditions=batch_initial_conditions,
@@ -941,6 +962,7 @@ def optimize_acqf_mixed(
             options=options or {},
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
+            nonlinear_inequality_constraints=nonlinear_inequality_constraints,
             post_processing_func=post_processing_func,
             batch_initial_conditions=batch_initial_conditions,
             ic_generator=ic_generator,
