@@ -336,7 +336,7 @@ def gen_batch_initial_conditions(
     while factor < max_factor:
         with warnings.catch_warnings(record=True) as ws:
             n = raw_samples * factor
-            if generator:
+            if generator is not None:
                 X_rnd = generator(n, q, seed)
             elif inequality_constraints is None and equality_constraints is None:
                 if effective_dim <= SobolEngine.MAXDIM:
