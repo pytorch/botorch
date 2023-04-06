@@ -10,16 +10,15 @@ from botorch.acquisition.multi_objective.analytic import (
     ExpectedHypervolumeImprovement,
     MultiObjectiveAnalyticAcquisitionFunction,
 )
-from botorch.acquisition.multi_objective.objective import (
-    AnalyticMultiOutputObjective,
-    IdentityAnalyticMultiOutputObjective,
-    IdentityMCMultiOutputObjective,
-)
+from botorch.acquisition.multi_objective.objective import IdentityMCMultiOutputObjective
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import BotorchError, UnsupportedError
+from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
+from torch import Tensor
 
 
 class DummyMultiObjectiveAnalyticAcquisitionFunction(
@@ -29,8 +28,11 @@ class DummyMultiObjectiveAnalyticAcquisitionFunction(
         pass
 
 
-class DummyAnalyticMultiOutputObjective(AnalyticMultiOutputObjective):
-    def forward(self, samples):
+class DummyPosteriorTransform(PosteriorTransform):
+    def evaluate(self, Y: Tensor) -> Tensor:
+        pass
+
+    def forward(self, posterior: GPyTorchPosterior) -> GPyTorchPosterior:
         pass
 
 
@@ -43,17 +45,17 @@ class TestMultiObjectiveAnalyticAcquisitionFunction(BotorchTestCase):
         mm = MockModel(MockPosterior(mean=torch.rand(2, 1)))
         # test default init
         acqf = DummyMultiObjectiveAnalyticAcquisitionFunction(model=mm)
-        self.assertIsInstance(acqf.objective, IdentityAnalyticMultiOutputObjective)
+        self.assertTrue(acqf.posterior_transform is None)  # is None by default
         # test custom init
-        objective = DummyAnalyticMultiOutputObjective()
+        posterior_transform = DummyPosteriorTransform()
         acqf = DummyMultiObjectiveAnalyticAcquisitionFunction(
-            model=mm, objective=objective
+            model=mm, posterior_transform=posterior_transform
         )
-        self.assertEqual(acqf.objective, objective)
+        self.assertEqual(acqf.posterior_transform, posterior_transform)
         # test unsupported objective
         with self.assertRaises(UnsupportedError):
             DummyMultiObjectiveAnalyticAcquisitionFunction(
-                model=mm, objective=IdentityMCMultiOutputObjective()
+                model=mm, posterior_transform=IdentityMCMultiOutputObjective()
             )
         acqf = DummyMultiObjectiveAnalyticAcquisitionFunction(model=mm)
         # test set_X_pending

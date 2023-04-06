@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import warnings
+
 from abc import abstractmethod
 from typing import List, Optional
 
@@ -14,10 +16,10 @@ from botorch.acquisition.objective import (
     AcquisitionObjective,
     GenericMCObjective,
     MCAcquisitionObjective,
+    UnstandardizePosteriorTransform,
 )
 from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
 from botorch.models.model import Model
-from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.utils import apply_constraints
 from botorch.utils.transforms import normalize_indices
@@ -261,35 +263,36 @@ class UnstandardizeMCMultiOutputObjective(IdentityMCMultiOutputObjective):
 
 
 class AnalyticMultiOutputObjective(AcquisitionObjective):
-    r"""Abstract base class for multi-output analyic objectives."""
-    # TODO: Refactor these as PosteriorTransform as well.
+    r"""Abstract base class for multi-output analyic objectives.
 
-    @abstractmethod
-    def forward(self, posterior: GPyTorchPosterior) -> GPyTorchPosterior:
-        r"""Transform the posterior
+    DEPRECATED - This will be removed in the next version.
 
-        Args:
-            posterior: A posterior.
-
-        Returns:
-            A transformed posterior.
-        """
-        pass  # pragma: no cover
+    """
+    pass  # pragma: no cover
 
 
 class IdentityAnalyticMultiOutputObjective(AnalyticMultiOutputObjective):
+    """DEPRECATED - This will be removed in the next version."""
+
+    def __init__(self):
+        """Initialize objective."""
+        warnings.warn(
+            "IdentityAnalyticMultiOutputObjective is deprecated. "
+            "Use IdentityPosteriorTransform instead.",
+            DeprecationWarning,
+        )
+        super().__init__()
+
     def forward(self, posterior: GPyTorchPosterior) -> GPyTorchPosterior:
         return posterior
 
 
-class UnstandardizeAnalyticMultiOutputObjective(AnalyticMultiOutputObjective):
+class UnstandardizeAnalyticMultiOutputObjective(
+    UnstandardizePosteriorTransform, AnalyticMultiOutputObjective
+):
     r"""Objective that unstandardizes the posterior.
 
-    TODO: remove this when MultiTask models support outcome transforms.
-
-    Example:
-        >>> unstd_objective = UnstandardizeAnalyticMultiOutputObjective(Y_mean, Y_std)
-        >>> unstd_posterior = unstd_objective(posterior)
+    DEPRECATED - This will be removed in the next version.
     """
 
     def __init__(self, Y_mean: Tensor, Y_std: Tensor) -> None:
@@ -300,18 +303,12 @@ class UnstandardizeAnalyticMultiOutputObjective(AnalyticMultiOutputObjective):
             Y_std: `m`-dim tensor of outcome standard deviations
 
         """
-        if Y_mean.ndim > 1 or Y_std.ndim > 1:
-            raise BotorchTensorDimensionError(
-                "Y_mean and Y_std must both be 1-dimensional, but got "
-                f"{Y_mean.ndim} and {Y_std.ndim}"
-            )
-        super().__init__()
-        self.outcome_transform = Standardize(m=Y_mean.shape[0]).to(Y_mean)
-        Y_std_unsqueezed = Y_std.unsqueeze(0)
-        self.outcome_transform.means = Y_mean.unsqueeze(0)
-        self.outcome_transform.stdvs = Y_std_unsqueezed
-        self.outcome_transform._stdvs_sq = Y_std_unsqueezed.pow(2)
-        self.outcome_transform.eval()
+        warnings.warn(
+            "UnstandardizeAnalyticMultiOutputObjective is deprecated. "
+            "Use UnstandardizePosteriorTransform instead.",
+            DeprecationWarning,
+        )
+        super().__init__(Y_mean=Y_mean, Y_std=Y_std)
 
     def forward(self, posterior: GPyTorchPosterior) -> Tensor:
         return self.outcome_transform.untransform_posterior(posterior)
