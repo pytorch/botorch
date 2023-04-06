@@ -303,8 +303,8 @@ def gen_batch_initial_conditions(
         )
     if sample_around_best and generator:
         raise UnsupportedError(
-            "Option 'sample_around_best' is not supported when custom"
-            "generator should be used."
+            "Option 'sample_around_best' is not supported when custom "
+            "generator is be used."
         )
     seed: Optional[int] = options.get("seed")
     batch_limit: Optional[int] = options.get(
