@@ -654,7 +654,11 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
         def generator(n: int, q: int, seed: int):
             return torch.rand(n, q, 3).to(**tkwargs)
 
-        with self.assertRaises(UnsupportedError) as e:
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "Option 'sample_around_best' is not supported when custom "
+            "generator is be used.",
+        ):
             gen_batch_initial_conditions(
                 MockAcquisitionFunction(),
                 bounds=torch.tensor([[0, 0], [1, 1]], **tkwargs),
@@ -664,17 +668,17 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 generator=generator,
                 options={"sample_around_best": True},
             )
-            self.assertTrue(
-                "Option 'sample_around_best' is not supported when custom"
-                "generator should be used." in str(e.exception)
-            )
 
     def test_error_equality_constraints_with_sample_around_best(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
         # this will give something that does not respect the constraints
         # TODO: it would be good to have a utils function to check if the
         # constraints are obeyed
-        with self.assertRaises(UnsupportedError) as e:
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "Option 'sample_around_best' is not supported when equality"
+            "constraints are present.",
+        ):
             gen_batch_initial_conditions(
                 MockAcquisitionFunction(),
                 bounds=torch.tensor([[0, 0], [1, 1]], **tkwargs),
@@ -690,10 +694,6 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 ],
                 options={"sample_around_best": True},
             )
-        self.assertTrue(
-            "Option 'sample_around_best' is not supported when equality"
-            "constraints are present." in str(e.exception)
-        )
 
 
 class TestGenOneShotKGInitialConditions(BotorchTestCase):
