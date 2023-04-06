@@ -276,8 +276,8 @@ def gen_batch_initial_conditions(
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
         generator: Callable for generating samples that are then further
-            processed. It receives `n`, `q` and `seed` as arguments and  returns
-            a tensor of shape `n x q x d`.
+            processed. It receives `n`, `q` and `seed` as arguments and
+            returns a tensor of shape `n x q x d`.
 
     Returns:
         A `num_restarts x q x d` tensor of initial conditions.
