@@ -14,8 +14,9 @@ from abc import ABC, abstractmethod
 from typing import Callable, List, Optional, TYPE_CHECKING, Union
 
 import torch
-from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.models.model import Model
+from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
 from botorch.sampling import IIDNormalSampler, MCSampler
 from botorch.utils import apply_constraints
@@ -256,6 +257,44 @@ class ExpectationPosteriorTransform(PosteriorTransform):
                 new_loc, to_linear_operator(new_cov), interleaved=False
             )
         return GPyTorchPosterior(distribution=new_mvn)
+
+
+class UnstandardizePosteriorTransform(PosteriorTransform):
+    r"""Posterior transform that unstandardizes the posterior.
+
+    TODO: remove this when MultiTask models support outcome transforms.
+
+    Example:
+        >>> unstd_transform = UnstandardizePosteriorTransform(Y_mean, Y_std)
+        >>> unstd_posterior = unstd_transform(posterior)
+    """
+
+    def __init__(self, Y_mean: Tensor, Y_std: Tensor) -> None:
+        r"""Initialize objective.
+
+        Args:
+            Y_mean: `m`-dim tensor of outcome means
+            Y_std: `m`-dim tensor of outcome standard deviations
+
+        """
+        if Y_mean.ndim > 1 or Y_std.ndim > 1:
+            raise BotorchTensorDimensionError(
+                "Y_mean and Y_std must both be 1-dimensional, but got "
+                f"{Y_mean.ndim} and {Y_std.ndim}"
+            )
+        super().__init__()
+        self.outcome_transform = Standardize(m=Y_mean.shape[0]).to(Y_mean)
+        Y_std_unsqueezed = Y_std.unsqueeze(0)
+        self.outcome_transform.means = Y_mean.unsqueeze(0)
+        self.outcome_transform.stdvs = Y_std_unsqueezed
+        self.outcome_transform._stdvs_sq = Y_std_unsqueezed.pow(2)
+        self.outcome_transform.eval()
+
+    def evaluate(self, Y: Tensor) -> Tensor:
+        return self.outcome_transform(Y)
+
+    def forward(self, posterior: GPyTorchPosterior) -> Tensor:
+        return self.outcome_transform.untransform_posterior(posterior)
 
 
 class MCAcquisitionObjective(Module, ABC):
