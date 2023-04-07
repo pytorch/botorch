@@ -291,7 +291,7 @@ class UnstandardizePosteriorTransform(PosteriorTransform):
         self.outcome_transform.eval()
 
     def evaluate(self, Y: Tensor) -> Tensor:
-        return self.outcome_transform(Y)
+        return self.outcome_transform.untransform(Y)[0]
 
     def forward(self, posterior: GPyTorchPosterior) -> Tensor:
         return self.outcome_transform.untransform_posterior(posterior)
