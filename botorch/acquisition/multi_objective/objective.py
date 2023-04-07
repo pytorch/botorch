@@ -309,6 +309,3 @@ class UnstandardizeAnalyticMultiOutputObjective(
             DeprecationWarning,
         )
         super().__init__(Y_mean=Y_mean, Y_std=Y_std)
-
-    def forward(self, posterior: GPyTorchPosterior) -> Tensor:
-        return self.outcome_transform.untransform_posterior(posterior)

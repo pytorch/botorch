@@ -16,6 +16,7 @@ from botorch.acquisition.multi_objective.objective import (
     MCMultiOutputObjective,
     UnstandardizeAnalyticMultiOutputObjective,
     UnstandardizeMCMultiOutputObjective,
+    UnstandardizePosteriorTransform,
     WeightedMCMultiOutputObjective,
 )
 from botorch.acquisition.objective import IdentityMCObjective
@@ -144,6 +145,7 @@ class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
         for objective_class in (
             UnstandardizeMCMultiOutputObjective,
             UnstandardizeAnalyticMultiOutputObjective,
+            UnstandardizePosteriorTransform,
         ):
             with self.assertRaises(BotorchTensorDimensionError):
                 objective_class(Y_mean=Y_mean.unsqueeze(0), Y_std=Y_std)
@@ -159,7 +161,11 @@ class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
                 if objective_class == UnstandardizeMCMultiOutputObjective:
                     kwargs["outcomes"] = outcomes
                 objective = objective_class(Y_mean=Y_mean, Y_std=Y_std, **kwargs)
-                if objective_class == UnstandardizeAnalyticMultiOutputObjective:
+                if (
+                    objective_class == UnstandardizeAnalyticMultiOutputObjective
+                    or objective_class == UnstandardizePosteriorTransform
+                ):
+                    objective = objective_class(Y_mean=Y_mean, Y_std=Y_std)
                     if outcomes is None:
                         # passing outcomes is not currently supported
                         mean = torch.rand(2, m, dtype=dtype, device=self.device)
@@ -182,6 +188,12 @@ class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
                                 tf_posterior.variance, expected_posterior.variance
                             )
                         )
+                        # testing evaluate specifically
+                        if objective_class == UnstandardizePosteriorTransform:
+                            Y = torch.randn_like(Y_mean) + Y_mean
+                            val = objective.evaluate(Y)
+                            val_expected = Y_mean + Y * Y_std
+                            self.assertTrue(torch.allclose(val, val_expected))
                 else:
 
                     samples = torch.rand(
