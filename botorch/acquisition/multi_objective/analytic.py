@@ -25,10 +25,7 @@ from typing import List, Optional
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.multi_objective.objective import (
-    AnalyticMultiOutputObjective,
-    IdentityAnalyticMultiOutputObjective,
-)
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
@@ -43,23 +40,31 @@ class MultiObjectiveAnalyticAcquisitionFunction(AcquisitionFunction):
     r"""Abstract base class for Multi-Objective batch acquisition functions."""
 
     def __init__(
-        self, model: Model, objective: Optional[AnalyticMultiOutputObjective] = None
+        self,
+        model: Model,
+        posterior_transform: Optional[PosteriorTransform] = None,
+        **kwargs,
     ) -> None:
         r"""Constructor for the MultiObjectiveAnalyticAcquisitionFunction base class.
 
         Args:
             model: A fitted model.
-            objective: An AnalyticMultiOutputObjective (optional).
+            posterior_transform: A PosteriorTransform (optional).
         """
         super().__init__(model=model)
-        if objective is None:
-            objective = IdentityAnalyticMultiOutputObjective()
-        elif not isinstance(objective, AnalyticMultiOutputObjective):
+        posterior_transform = self._deprecate_acqf_objective(
+            posterior_transform=posterior_transform,
+            objective=kwargs.get("objective"),
+        )
+        if posterior_transform is None or isinstance(
+            posterior_transform, PosteriorTransform
+        ):
+            self.posterior_transform = posterior_transform
+        else:
             raise UnsupportedError(
-                "Only objectives of type AnalyticMultiOutputObjective are supported "
-                "for Multi-Objective analytic acquisition functions."
+                "Only a posterior_transform of type PosteriorTransform is "
+                "supported for Multi-Objective analytic acquisition functions."
             )
-        self.objective = objective
 
     @abstractmethod
     def forward(self, X: Tensor) -> Tensor:
@@ -81,7 +86,8 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
         model: Model,
         ref_point: List[float],
         partitioning: NondominatedPartitioning,
-        objective: Optional[AnalyticMultiOutputObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
+        **kwargs,
     ) -> None:
         r"""Expected Hypervolume Improvement supporting m>=2 outcomes.
 
@@ -118,7 +124,7 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
             partitioning: A `NondominatedPartitioning` module that provides the non-
                 dominated front and a partitioning of the non-dominated space in hyper-
                 rectangles.
-            objective: An `AnalyticMultiOutputObjective`.
+            posterior_transform: A `PosteriorTransform`.
         """
         # TODO: we could refactor this __init__ logic into a
         # HypervolumeAcquisitionFunction Mixin
@@ -138,7 +144,7 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
             raise ValueError(
                 "At least one pareto point must be better than the reference point."
             )
-        super().__init__(model=model, objective=objective)
+        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
         self.register_buffer("ref_point", ref_point)
         self.partitioning = partitioning
         cell_bounds = self.partitioning.get_hypercell_bounds()
@@ -203,7 +209,9 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
 
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
-        posterior = self.objective(self.model.posterior(X))
+        posterior = self.model.posterior(
+            X, posterior_transform=self.posterior_transform
+        )
         mu = posterior.mean
         sigma = posterior.variance.clamp_min(1e-9).sqrt()
         # clamp here, since upper_bounds will contain `inf`s, which
