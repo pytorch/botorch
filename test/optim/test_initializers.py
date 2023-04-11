@@ -609,7 +609,11 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 def generator(n: int, q: int, seed: int):
                     with manual_seed(seed):
                         X_rnd_nlzd = torch.rand(
-                            n, q, bounds.shape[-1], dtype=bounds.dtype
+                            n,
+                            q,
+                            bounds.shape[-1],
+                            dtype=bounds.dtype,
+                            device=self.device,
                         )
                         X_rnd = bounds[0] + (bounds[1] - bounds[0]) * X_rnd_nlzd
                         X_rnd[..., -1] = 0.42
