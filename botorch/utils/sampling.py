@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from typing import Any, Generator, Iterable, List, Optional, Tuple
+from typing import Any, Generator, Iterable, List, Optional, Tuple, TYPE_CHECKING
 
 import numpy as np
 import scipy
