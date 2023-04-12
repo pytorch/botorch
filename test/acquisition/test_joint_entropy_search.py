@@ -7,9 +7,7 @@
 from itertools import product
 
 import torch
-from botorch.acquisition.joint_entropy_search import (
-    qJointEntropySearch,
-)
+from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
@@ -56,7 +54,6 @@ class TestQJointEntropySearch(BotorchTestCase):
         tkwargs = {"device": self.device}
         estimation_types = ("LB", "MC")
 
-
         num_objectives = 1
         for (
             dtype,
@@ -98,7 +95,7 @@ class TestQJointEntropySearch(BotorchTestCase):
                     num_samples=64,
                     X_pending=X_pending,
                     condition_noiseless=condition_noiseless,
-                    maximize=maximize
+                    maximize=maximize,
                 )
                 self.assertIsInstance(acq.sampler, SobolQMCNormalSampler)
 
@@ -119,10 +116,10 @@ class TestQJointEntropySearch(BotorchTestCase):
                 model=model,
                 optimal_inputs=optimal_inputs,
                 optimal_outputs=optimal_outputs,
-                estimation_type='NO_EST',
+                estimation_type="NO_EST",
                 num_samples=64,
                 X_pending=X_pending,
                 condition_noiseless=condition_noiseless,
-                maximize=maximize
+                maximize=maximize,
             )
             acq_X = acq(test_Xs[j])

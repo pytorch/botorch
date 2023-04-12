@@ -11,7 +11,7 @@ Utilities for acquisition functions.
 from __future__ import annotations
 
 import math
-from typing import Callable, Dict, List, Optional, Union, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from botorch.acquisition import analytic, monte_carlo, multi_objective  # noqa F401
@@ -27,12 +27,12 @@ from botorch.models.fully_bayesian import MCMC_DIM
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 from botorch.sampling.get_sampler import get_sampler
+from botorch.sampling.pathwise import draw_matheron_paths
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
     NondominatedPartitioning,
 )
 from botorch.utils.sampling import optimize_posterior_samples
-from botorch.sampling.pathwise import draw_matheron_paths
 from botorch.utils.transforms import is_fully_bayesian
 from torch import Tensor
 
@@ -489,14 +489,13 @@ def get_optimal_samples(
 
     Args:
         model (Model): The model from which samples are drawn.
-        bounds: (Tensor): The bounds of the search space. If the model inputs are normalized,
-            the bounds should be normalized as well.
+        bounds: (Tensor): Bounds of the search space. If the model inputs are
+            normalized, the bounds should be normalized as well.
         num_optima (int): The number of paths to be drawn and optimized.
-        raw_samples (int, optional): The number of candidates randomly sample. Defaults to 512.
-        num_restarts (int, optional): The number of candidates to do gradient-based optimization on.
-        Defaults to 20.
-        maxiter (int, optional): The maximal number of iterations of gradient-based optimization.
-        Defaults to 100.
+        raw_samples (int, optional): The number of candidates randomly sample.
+            Defaults to 1024.
+        num_restarts (int, optional): The number of candidates to do gradient-based
+            optimization on. Defaults to 20.
         maximize: Whether to maximize or minimize the samples.
     Returns:
         Tuple[Tensor, Tensor]: The optimal input locations and corresponding

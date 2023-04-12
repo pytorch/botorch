@@ -22,10 +22,10 @@ from botorch.acquisition.utils import (
     expand_trace_observations,
     get_acquisition_function,
     get_infeasible_cost,
+    get_optimal_samples,
     project_to_sample_points,
     project_to_target_fidelity,
     prune_inferior_points,
-    get_optimal_samples,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP

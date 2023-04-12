@@ -43,11 +43,11 @@ from botorch.acquisition.analytic import (
 )
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
+from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
 )
-from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 from botorch.acquisition.max_value_entropy_search import (
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
@@ -83,9 +83,9 @@ from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
 from botorch.acquisition.risk_measures import RiskMeasureMCObjective
 from botorch.acquisition.utils import (
     expand_trace_observations,
+    get_optimal_samples,
     project_to_target_fidelity,
 )
-from botorch.acquisition.utils import get_optimal_samples
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.deterministic import FixedSingleSampleModel
@@ -1243,7 +1243,6 @@ def optimize_objective(
     )
 
 
-# TODO make single-objective with pairwise and multi-objective with pareto
 @acqf_input_constructor(qJointEntropySearch)
 def construct_inputs_qJES(
     model: Model,
