@@ -31,6 +31,10 @@ from torch import LongTensor, Tensor
 from torch.quasirandom import SobolEngine
 
 
+if TYPE_CHECKING:
+    from botorch.sampling.pathwise.path import SamplePath
+
+
 @contextmanager
 def manual_seed(seed: Optional[int] = None) -> Generator[None, None, None]:
     r"""Contextmanager for manual setting the torch.random seed.
