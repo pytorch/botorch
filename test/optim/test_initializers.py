@@ -40,7 +40,7 @@ from botorch.optim.initializers import (
     transform_intra_point_constraint,
 )
 from botorch.sampling.normal import IIDNormalSampler
-from botorch.utils.sampling import draw_sobol_samples
+from botorch.utils.sampling import draw_sobol_samples, manual_seed
 from botorch.utils.testing import (
     BotorchTestCase,
     MockAcquisitionFunction,
@@ -595,12 +595,94 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                         batch_initial_conditions[1, 2, 0],
                     )
 
+    def test_gen_batch_initial_conditions_generator(self):
+        mock_acqf = MockAcquisitionFunction()
+        mock_acqf.objective = lambda y: y.squeeze(-1)
+        for dtype in (torch.float, torch.double):
+            bounds = torch.tensor(
+                [[0, 0, 0], [1, 1, 1]], device=self.device, dtype=dtype
+            )
+            for nonnegative, seed, init_batch_limit, ffs in product(
+                [True, False], [None, 1234], [None, 1], [None, {0: 0.5}]
+            ):
+
+                def generator(n: int, q: int, seed: int):
+                    with manual_seed(seed):
+                        X_rnd_nlzd = torch.rand(
+                            n,
+                            q,
+                            bounds.shape[-1],
+                            dtype=bounds.dtype,
+                            device=self.device,
+                        )
+                        X_rnd = bounds[0] + (bounds[1] - bounds[0]) * X_rnd_nlzd
+                        X_rnd[..., -1] = 0.42
+                        return X_rnd
+
+                mock_acqf = MockAcquisitionFunction()
+                with mock.patch.object(
+                    MockAcquisitionFunction,
+                    "__call__",
+                    wraps=mock_acqf.__call__,
+                ):
+                    batch_initial_conditions = gen_batch_initial_conditions(
+                        acq_function=mock_acqf,
+                        bounds=bounds,
+                        q=2,
+                        num_restarts=4,
+                        raw_samples=10,
+                        generator=generator,
+                        fixed_features=ffs,
+                        options={
+                            "nonnegative": nonnegative,
+                            "eta": 0.01,
+                            "alpha": 0.1,
+                            "seed": seed,
+                            "init_batch_limit": init_batch_limit,
+                        },
+                    )
+                    expected_shape = torch.Size([4, 2, 3])
+                    self.assertEqual(batch_initial_conditions.shape, expected_shape)
+                    self.assertEqual(batch_initial_conditions.device, bounds.device)
+                    self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+                    self.assertTrue((batch_initial_conditions[..., -1] == 0.42).all())
+                    if ffs is not None:
+                        for idx, val in ffs.items():
+                            self.assertTrue(
+                                torch.all(batch_initial_conditions[..., idx] == val)
+                            )
+
+    def test_error_generator_with_sample_around_best(self):
+        tkwargs = {"device": self.device, "dtype": torch.double}
+
+        def generator(n: int, q: int, seed: int):
+            return torch.rand(n, q, 3).to(**tkwargs)
+
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "Option 'sample_around_best' is not supported when custom "
+            "generator is be used.",
+        ):
+            gen_batch_initial_conditions(
+                MockAcquisitionFunction(),
+                bounds=torch.tensor([[0, 0], [1, 1]], **tkwargs),
+                q=1,
+                num_restarts=1,
+                raw_samples=1,
+                generator=generator,
+                options={"sample_around_best": True},
+            )
+
     def test_error_equality_constraints_with_sample_around_best(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
         # this will give something that does not respect the constraints
         # TODO: it would be good to have a utils function to check if the
         # constraints are obeyed
-        with self.assertRaises(UnsupportedError) as e:
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "Option 'sample_around_best' is not supported when equality"
+            "constraints are present.",
+        ):
             gen_batch_initial_conditions(
                 MockAcquisitionFunction(),
                 bounds=torch.tensor([[0, 0], [1, 1]], **tkwargs),
@@ -616,10 +698,6 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 ],
                 options={"sample_around_best": True},
             )
-        self.assertTrue(
-            "Option 'sample_around_best' is not supported when equality"
-            "constraints are present." in str(e.exception)
-        )
 
 
 class TestGenOneShotKGInitialConditions(BotorchTestCase):
