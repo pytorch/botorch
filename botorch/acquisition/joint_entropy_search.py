@@ -40,10 +40,11 @@ MC_ADD_TERM = 0.5 * (1 + log(2 * pi))
 # The CDF query cannot be strictly zero in the division
 # and this clamping helps assure that it is always positive.
 CLAMP_LB = torch.finfo(torch.float32).eps
-FULLY_BAYESIAN_ERROR_MSG = """JES is not yet available with Fully Bayesian GPs.
-Track the issue, which regards conditioning on a number of optima on a collecion
- of models, in detail at https://github.com/pytorch/botorch/issues/1680.
-"""
+FULLY_BAYESIAN_ERROR_MSG = (
+    "JES is not yet available with Fully Bayesian GPs. Track the issue, "
+    "which regards conditioning on a number of optima on a collection "
+    "of models, in detail at https://github.com/pytorch/botorch/issues/1680".
+)
 
 """
 References
