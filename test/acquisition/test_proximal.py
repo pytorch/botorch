@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from typing import List
+import warnings
 
 import torch
 from botorch.acquisition import LinearMCObjective, ScalarizedPosteriorTransform
@@ -14,7 +15,7 @@ from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import ModelListGP, SingleTaskGP
-from botorch.models.gpytorch import GPyTorchModel
+from botorch.models.gpytorch import GPyTorchModel, _get_single_precision_warning
 from botorch.models.model import Model
 from botorch.models.transforms.input import Normalize
 from botorch.utils.testing import BotorchTestCase
@@ -41,6 +42,7 @@ class NegativeAcquisitionFunction(AcquisitionFunction):
         return torch.ones(*X.shape[:-1]) * -1.0
 
 
+# TODO: parametrize
 class TestProximalAcquisitionFunction(BotorchTestCase):
     def test_proximal(self):
         for dtype in (torch.float, torch.double):
@@ -56,11 +58,25 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                 # test with and without transformed weights
                 for transformed_weighting in [True, False]:
                     # test with single outcome model
-                    model = (
-                        SingleTaskGP(train_X, train_Y, input_transform=input_transform)
-                        .to(device=self.device, dtype=dtype)
-                        .eval()
-                    )
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings(
+                            "ignore",
+                            message=_get_single_precision_warning(torch.float32),
+                        )
+                        warnings.filterwarnings(
+                            "ignore",
+                            message=(
+                                "Input data is not contained to the unit cube. "
+                                "Please consider min-max scaling the input "
+                                "data.",
+                            ),
+                        )
+
+                        model = SingleTaskGP(
+                            train_X, train_Y, input_transform=input_transform
+                        )
+
+                    model = model.to(device=self.device, dtype=dtype).eval()
 
                     EI = ExpectedImprovement(model, best_f=0.0)
 

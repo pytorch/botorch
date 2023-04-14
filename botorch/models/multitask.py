@@ -549,7 +549,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
             train_noise = train_noise.detach()
 
         train_diff = self.train_targets - self.mean_module(train_x)
-        train_solve = (self.train_full_covar + train_noise).inv_matmul(
+        train_solve = (self.train_full_covar + train_noise).solve(
             train_diff.reshape(*train_diff.shape[:-2], -1)
         )
         if detach_test_caches.on():
@@ -673,7 +673,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
         # next the predictive variance, assume diagonal noise
         test_var_term = KroneckerProductLinearOperator(
             test_test_covar, task_covar
-        ).diag()
+        ).diagonal()
 
         if diagonal_noise:
             task_evals, task_evecs = self._task_covar_matrix.diagonalization()

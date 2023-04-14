@@ -308,7 +308,7 @@ def _pivoted_cholesky_init(
     cis = torch.zeros(
         (max_length, item_size), device=kernel_matrix.device, dtype=kernel_matrix.dtype
     )
-    di2s = kernel_matrix.diag()
+    di2s = kernel_matrix.diagonal()
     scores = di2s * torch.square(quality_scores)
     selected_items = []
     selected_item = torch.argmax(scores)
