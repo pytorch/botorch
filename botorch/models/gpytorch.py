@@ -44,6 +44,16 @@ if TYPE_CHECKING:
     from gpytorch.likelihoods import Likelihood  # pragma: no cover
 
 
+def _get_single_precision_warning(dtype: torch.dtype) -> str:
+    msg = (
+        f"The model inputs are of type {dtype}. It is strongly recommended "
+        "to use double precision in BoTorch, as this improves both "
+        "precision and stability and can help avoid numerical errors. "
+        "See https://github.com/pytorch/botorch/discussions/1444"
+    )
+    return msg
+
+
 class GPyTorchModel(Model, ABC):
     r"""Abstract base class for models based on GPyTorch models.
 
@@ -116,13 +126,7 @@ class GPyTorchModel(Model, ABC):
             )
         if X.dtype != torch.float64:
             # NOTE: Not using a BotorchWarning since those get ignored.
-            warnings.warn(
-                f"The model inputs are of type {X.dtype}. It is strongly recommended "
-                "to use double precision in BoTorch, as this improves both "
-                "precision and stability and can help avoid numerical errors. "
-                "See https://github.com/pytorch/botorch/discussions/1444",
-                UserWarning,
-            )
+            warnings.warn(_get_single_precision_warning(X.dtype), UserWarning)
 
     @property
     def batch_shape(self) -> torch.Size:

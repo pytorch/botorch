@@ -4,8 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import List
 import warnings
+from typing import List
 
 import torch
 from botorch.acquisition import LinearMCObjective, ScalarizedPosteriorTransform
@@ -15,7 +15,7 @@ from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import ModelListGP, SingleTaskGP
-from botorch.models.gpytorch import GPyTorchModel, _get_single_precision_warning
+from botorch.models.gpytorch import _get_single_precision_warning, GPyTorchModel
 from botorch.models.model import Model
 from botorch.models.transforms.input import Normalize
 from botorch.utils.testing import BotorchTestCase

@@ -26,8 +26,8 @@ from botorch.utils.context_managers import delattr_ctx
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
 from gpytorch.likelihoods import BernoulliLikelihood
-from linear_operator.utils.cholesky import psd_safe_cholesky
 from linear_operator.operators import ZeroLinearOperator
+from linear_operator.utils.cholesky import psd_safe_cholesky
 from torch import Size
 from torch.nn.functional import pad
 
