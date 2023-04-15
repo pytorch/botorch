@@ -44,23 +44,22 @@ class NegativeAcquisitionFunction(AcquisitionFunction):
 class TestProximalAcquisitionFunction(BotorchTestCase):
     def test_proximal(self):
         for dtype in (torch.float, torch.double):
-            train_X = torch.rand(5, 3, device=self.device, dtype=dtype) * 2.0
-            train_Y = train_X.norm(dim=-1, keepdim=True)
-
             # test single point evaluation with and without input transform
             normalize = Normalize(
                 3, bounds=torch.tensor(((0.0, 0.0, 0.0), (2.0, 2.0, 2.0)))
             )
-            for input_transform in [None, normalize]:
+            for input_transform, x_scale in [(None, 1), (normalize, 2)]:
+                train_X = torch.rand(5, 3, device=self.device, dtype=dtype) * x_scale
+                train_Y = train_X.norm(dim=-1, keepdim=True)
 
                 # test with and without transformed weights
                 for transformed_weighting in [True, False]:
                     # test with single outcome model
-                    model = (
-                        SingleTaskGP(train_X, train_Y, input_transform=input_transform)
-                        .to(device=self.device, dtype=dtype)
-                        .eval()
+                    model = SingleTaskGP(
+                        train_X, train_Y, input_transform=input_transform
                     )
+
+                    model = model.to(device=self.device, dtype=dtype).eval()
 
                     EI = ExpectedImprovement(model, best_f=0.0)
 

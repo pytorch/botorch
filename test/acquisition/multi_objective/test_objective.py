@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import warnings
 
 import torch
 from botorch.acquisition.multi_objective.multi_output_risk_measures import (
@@ -93,7 +94,12 @@ class TestFeasibilityWeightedMCMultiOutputObjective(BotorchTestCase):
             self.assertTrue(feas_obj._verify_output_shape)
 
             # With an objective.
-            dummy_obj = MultiOutputExpectation(n_w=1, weights=[2.0])
+            preprocessing_function = WeightedMCMultiOutputObjective(
+                weights=torch.tensor([2.0])
+            )
+            dummy_obj = MultiOutputExpectation(
+                n_w=1, preprocessing_function=preprocessing_function
+            )
             dummy_obj._verify_output_shape = False  # for testing
             feas_obj = FeasibilityWeightedMCMultiOutputObjective(
                 model=mm,
@@ -136,6 +142,13 @@ class TestFeasibilityWeightedMCMultiOutputObjective(BotorchTestCase):
 
 class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
     def test_unstandardize_mo_objective(self):
+        warnings.filterwarnings(
+            "ignore",
+            message=(
+                "UnstandardizeAnalyticMultiOutputObjective is deprecated. "
+                "Use UnstandardizePosteriorTransform instead."
+            ),
+        )
         Y_mean = torch.ones(2)
         Y_std = torch.ones(2)
         with self.assertRaises(BotorchTensorDimensionError):

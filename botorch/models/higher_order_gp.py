@@ -487,7 +487,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             # we now compute the data covariances for the training data, the testing
             # data, the joint covariances, and the test train cross-covariance
             train_train_covar = self.prediction_strategy.lik_train_train_covar.detach()
-            base_train_train_covar = train_train_covar.lazy_tensor
+            base_train_train_covar = train_train_covar.linear_op
 
             data_train_covar = base_train_train_covar.linear_ops[0]
             data_covar = self.covar_modules[0]
@@ -571,7 +571,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         )
         full_test_train_covar_tuple = (test_train_covar,) + jcm_linops
 
-        train_evals, train_evecs = full_train_train_covar.symeig(eigenvectors=True)
+        train_evals, train_evecs = full_train_train_covar.eigh()
         # (\kron \Lambda_i + \sigma^2 I)^{-1}
         train_inv_evals = DiagLinearOperator(
             1.0 / (train_evals + self.likelihood.noise)
@@ -589,5 +589,5 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         #  (\kron K_i S_i * K_i S_i) \tilde{\Lambda}^{-1}
         test_train_pred_covar = test_train_hadamard.matmul(train_inv_evals).sum(dim=-1)
 
-        pred_variances = full_test_test_covar.diag() - test_train_pred_covar
+        pred_variances = full_test_test_covar.diagonal() - test_train_pred_covar
         return pred_variances
