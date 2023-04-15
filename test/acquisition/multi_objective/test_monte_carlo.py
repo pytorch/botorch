@@ -36,7 +36,6 @@ from botorch.models import (
     MultiTaskGP,
 )
 from botorch.models.gp_regression import SingleTaskGP
-from botorch.models.gpytorch import _get_single_precision_warning
 from botorch.models.transforms.input import InputPerturbation
 from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors.posterior_list import PosteriorList
