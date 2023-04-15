@@ -42,18 +42,16 @@ class NegativeAcquisitionFunction(AcquisitionFunction):
         return torch.ones(*X.shape[:-1]) * -1.0
 
 
-# TODO: parametrize
 class TestProximalAcquisitionFunction(BotorchTestCase):
     def test_proximal(self):
         for dtype in (torch.float, torch.double):
-            train_X = torch.rand(5, 3, device=self.device, dtype=dtype) * 2.0
-            train_Y = train_X.norm(dim=-1, keepdim=True)
-
             # test single point evaluation with and without input transform
             normalize = Normalize(
                 3, bounds=torch.tensor(((0.0, 0.0, 0.0), (2.0, 2.0, 2.0)))
             )
-            for input_transform in [None, normalize]:
+            for input_transform, x_scale in [(None, 1), (normalize, 2)]:
+                train_X = torch.rand(5, 3, device=self.device, dtype=dtype) * x_scale
+                train_Y = train_X.norm(dim=-1, keepdim=True)
 
                 # test with and without transformed weights
                 for transformed_weighting in [True, False]:
@@ -62,14 +60,6 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                         warnings.filterwarnings(
                             "ignore",
                             message=_get_single_precision_warning(torch.float32),
-                        )
-                        warnings.filterwarnings(
-                            "ignore",
-                            message=(
-                                "Input data is not contained to the unit cube. "
-                                "Please consider min-max scaling the input "
-                                "data.",
-                            ),
                         )
 
                         model = SingleTaskGP(
