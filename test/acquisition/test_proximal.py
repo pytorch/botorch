@@ -4,7 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import warnings
 from typing import List
 
 import torch
@@ -15,7 +14,7 @@ from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import ModelListGP, SingleTaskGP
-from botorch.models.gpytorch import _get_single_precision_warning, GPyTorchModel
+from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.models.transforms.input import Normalize
 from botorch.utils.testing import BotorchTestCase
@@ -56,15 +55,9 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                 # test with and without transformed weights
                 for transformed_weighting in [True, False]:
                     # test with single outcome model
-                    with warnings.catch_warnings():
-                        warnings.filterwarnings(
-                            "ignore",
-                            message=_get_single_precision_warning(torch.float32),
-                        )
-
-                        model = SingleTaskGP(
-                            train_X, train_Y, input_transform=input_transform
-                        )
+                    model = SingleTaskGP(
+                        train_X, train_Y, input_transform=input_transform
+                    )
 
                     model = model.to(device=self.device, dtype=dtype).eval()
 

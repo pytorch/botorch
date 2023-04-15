@@ -619,6 +619,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             ],
             device=self.device,
         )
+        super().setUp()
 
     def test_q_noisy_expected_hypervolume_improvement(self):
         tkwargs = {"device": self.device}
@@ -1400,11 +1401,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     *train_batch_shape, 3, 2, **tkwargs
                 )
                 train_Y = standardize(train_Y)
-                with warnings.catch_warnings():
-                    warnings.filterwarnings(
-                        "ignore", message=_get_single_precision_warning(torch.float32)
-                    )
-                    model = SingleTaskGP(train_X, train_Y)
+                model = SingleTaskGP(train_X, train_Y)
                 if len(train_batch_shape) > 0:
                     X_baseline = train_X[0]
                 else:
