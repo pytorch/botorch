@@ -381,7 +381,7 @@ def _make_f_and_grad_nonlinear_inequality_constraints(
     """
     Create callables for objective + grad for the nonlinear inequality constraints.
     The Scipy interface requires specifying separate callables and we use caching to
-    avoid evaluating the same input twice. This caching onlh works if
+    avoid evaluating the same input twice. This caching only works if
     the returned functions are evaluated on the same input in immediate
     sequence (i.e., calling `f_obj(X_1)`, `f_grad(X_1)` will result in a
     single forward pass, while `f_obj(X_1)`, `f_grad(X_2)`, `f_obj(X_1)`
