@@ -5,9 +5,20 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Acquisition function for joint entropy search (JES). The code utilizes the
-implementation designed for the multi-objective batch setting.
+Acquisition function for joint entropy search (JES). 
 
+References
+.. [Hvarfner2022joint]
+    C. Hvarfner, F. Hutter, L. Nardi,
+    Joint Entropy Search for Maximally-informed Bayesian Optimization.
+    In Proceedings of the Annual Conference on Neural Information
+    Processing Systems (NeurIPS), 2022.
+
+.. [Tu2022joint]
+    B. Tu, A. Gandy, N. Kantas, B. Shafei,
+    Joint Entropy Search for Multi-objective Bayesian Optimization.
+    In Proceedings of the Annual Conference on Neural Information
+    Processing Systems (NeurIPS), 2022.
 """
 
 from __future__ import annotations
@@ -45,21 +56,6 @@ FULLY_BAYESIAN_ERROR_MSG = (
     "which regards conditioning on a number of optima on a collection "
     "of models, in detail at https://github.com/pytorch/botorch/issues/1680"
 )
-
-"""
-References
-.. [Hvarfner2022joint]
-    C. Hvarfner, F. Hutter, L. Nardi,
-    Joint Entropy Search for Maximally-informed Bayesian Optimization.
-    In Proceedings of the Annual Conference on Neural Information
-    Processing Systems (NeurIPS), 2022.
-
-.. [Tu2022joint]
-    B. Tu, A. Gandy, N. Kantas, B. Shafei,
-    Joint Entropy Search for Multi-objective Bayesian Optimization.
-    In Proceedings of the Annual Conference on Neural Information
-    Processing Systems (NeurIPS), 2022.
-"""
 
 
 class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
