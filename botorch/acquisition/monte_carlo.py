@@ -213,7 +213,7 @@ class qNoisyExpectedImprovement(
         objective: Optional[MCAcquisitionObjective] = None,
         posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
-        prune_baseline: bool = False,
+        prune_baseline: bool = True,
         cache_root: bool = True,
         **kwargs: Any,
     ) -> None:
