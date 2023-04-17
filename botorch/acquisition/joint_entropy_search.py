@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Acquisition function for joint entropy search (JES). 
+Acquisition function for joint entropy search (JES).
 
 References
 .. [Hvarfner2022joint]
