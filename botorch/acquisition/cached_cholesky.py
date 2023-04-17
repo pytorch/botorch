@@ -48,6 +48,16 @@ def supports_cache_root(model: Model) -> bool:
     return True
 
 
+def _get_cache_root_not_supported_message(model_cls: type) -> str:
+    msg = (
+        "`cache_root` is only supported for GPyTorchModels that "
+        "are not MultiTask models and don't produce a "
+        f"TransformedPosterior. Got a model of type {model_cls}. Setting "
+        "`cache_root = False`."
+    )
+    return msg
+
+
 class CachedCholeskyMCAcquisitionFunction(ABC):
     r"""Abstract class for acquisition functions using a cached Cholesky.
 
@@ -72,10 +82,7 @@ class CachedCholeskyMCAcquisitionFunction(ABC):
         """
         if cache_root and not supports_cache_root(model):
             warnings.warn(
-                "`cache_root` is only supported for GPyTorchModels (with "
-                "the exception of MultiTask models & models producing a "
-                f"TransformedPosterior). Got model={model}. Setting "
-                "`cache_root = False",
+                _get_cache_root_not_supported_message(type(model)),
                 RuntimeWarning,
             )
             cache_root = False

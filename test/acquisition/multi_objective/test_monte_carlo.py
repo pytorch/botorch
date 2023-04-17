@@ -12,6 +12,7 @@ from unittest import mock
 
 import torch
 from botorch import settings
+from botorch.acquisition.cached_cholesky import _get_cache_root_not_supported_message
 from botorch.acquisition.multi_objective.monte_carlo import (
     MultiObjectiveMCAcquisitionFunction,
     qExpectedHypervolumeImprovement,
@@ -617,6 +618,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             ],
             device=self.device,
         )
+        super().setUp()
 
     def test_q_noisy_expected_hypervolume_improvement(self):
         tkwargs = {"device": self.device}
@@ -1364,8 +1366,8 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             "likelihood.noise_covar.raw_noise": torch.tensor(
                 [[0.0895], [0.2594]], dtype=torch.float64
             ),
-            "mean_module.constant": torch.tensor(
-                [[-0.4545], [-0.1285]], dtype=torch.float64
+            "mean_module.raw_constant": torch.tensor(
+                [-0.4545, -0.1285], dtype=torch.float64
             ),
             "covar_module.raw_outputscale": torch.tensor(
                 [1.4876, 1.4897], dtype=torch.float64
@@ -1374,6 +1376,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 [[[-0.7202, -0.2868]], [[-0.8794, -1.2877]]], dtype=torch.float64
             ),
         }
+
         # test batched models (e.g. for MCMC)
         for train_batch_shape in (torch.Size([]), torch.Size([3])):
             if len(train_batch_shape) > 0:
@@ -1397,10 +1400,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     *train_batch_shape, 3, 2, **tkwargs
                 )
                 train_Y = standardize(train_Y)
-                model = SingleTaskGP(
-                    train_X,
-                    train_Y,
-                )
+                model = SingleTaskGP(train_X, train_Y)
                 if len(train_batch_shape) > 0:
                     X_baseline = train_X[0]
                 else:
@@ -1478,8 +1478,8 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
 
     def test_cache_root_w_standardize(self):
         # Test caching with standardize transform.
-        train_x = torch.rand(3, 2)
-        train_y = torch.randn(3, 2)
+        train_x = torch.rand(3, 2, dtype=torch.float64)
+        train_y = torch.randn(3, 2, dtype=torch.float64)
         model = SingleTaskGP(train_x, train_y, outcome_transform=Standardize(m=2))
         acqf = qNoisyExpectedHypervolumeImprovement(
             model=model,
@@ -1538,13 +1538,17 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
         for dtype, prune in ((torch.float, False), (torch.double, True)):
             tkwargs = {"device": self.device, "dtype": dtype}
             model = GenericDeterministicModel(f=lambda x: x, num_outputs=2)
-            acqf = qNoisyExpectedHypervolumeImprovement(
-                model=model,
-                ref_point=torch.tensor([0.0, 0.0], **tkwargs),
-                X_baseline=torch.rand(5, 2, **tkwargs),
-                prune_baseline=prune,
-                cache_root=True,
-            )
+            with self.assertWarnsRegex(
+                RuntimeWarning,
+                _get_cache_root_not_supported_message(GenericDeterministicModel),
+            ):
+                acqf = qNoisyExpectedHypervolumeImprovement(
+                    model=model,
+                    ref_point=torch.tensor([0.0, 0.0], **tkwargs),
+                    X_baseline=torch.rand(5, 2, **tkwargs),
+                    prune_baseline=prune,
+                    cache_root=True,
+                )
             self.assertFalse(acqf._cache_root)
             self.assertEqual(
                 acqf(torch.rand(3, 2, 2, **tkwargs)).shape, torch.Size([3])
@@ -1566,7 +1570,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
         hogp_obj = GenericMCMultiOutputObjective(lambda Y, X: Y.mean(dim=-2))
         test_x = torch.rand(2, 3, 2, **tkwargs)
 
-        def get_acqf(model, matheron):
+        def get_acqf(model):
             return qNoisyExpectedHypervolumeImprovement(
                 model=model,
                 ref_point=torch.tensor([0.0, 0.0], **tkwargs),
@@ -1574,12 +1578,11 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 sampler=IIDNormalSampler(sample_shape=torch.Size([2])),
                 objective=hogp_obj if isinstance(model, HigherOrderGP) else None,
                 prune_baseline=True,
-                cache_root=True,
+                cache_root=False,
             )
 
         for model in [mtgp, kmtgp, hogp]:
-            matheron = isinstance(model, (KroneckerMultiTaskGP, HigherOrderGP))
-            acqf = get_acqf(model, matheron)
+            acqf = get_acqf(model)
             posterior = model.posterior(acqf.X_baseline)
             base_evals = acqf.base_sampler(posterior)
             base_samples = acqf.base_sampler.base_samples
