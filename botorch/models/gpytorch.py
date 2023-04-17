@@ -88,27 +88,27 @@ class GPyTorchModel(Model, ABC):
             strict: A boolean indicating whether to check that `Y` and `Yvar`
                 have an explicit output dimension.
         """
-        if strict:
-            if X.dim() != Y.dim():
-                if (X.dim() - Y.dim() == 1) and (X.shape[:-1] == Y.shape):
-                    message = (
-                        "An explicit output dimension is required for targets."
-                        f" Expected Y with dimension: {Y.dim()} (got {X.dim()})."
-                    )
-                else:
-                    message = (
-                        "Expected X and Y to have the same number of dimensions"
-                        f" (got X with dimension {X.dim()} and Y with dimension"
-                        f" {Y.dim()}."
-                    )
+        if X.dim() != Y.dim():
+            if (X.dim() - Y.dim() == 1) and (X.shape[:-1] == Y.shape):
+                message = (
+                    "An explicit output dimension is required for targets."
+                    f" Expected Y with dimension {X.dim()} (got {Y.dim()=})."
+                )
+            else:
+                message = (
+                    "Expected X and Y to have the same number of dimensions"
+                    f" (got X with dimension {X.dim()} and Y with dimension"
+                    f" {Y.dim()})."
+                )
+            if strict:
                 raise BotorchTensorDimensionError(message)
-        else:
-            warnings.warn(
-                "Non-strict enforcement of botorch tensor conventions. Ensure that "
-                f"target tensors Y{' and Yvar have' if Yvar is not None else ' has an'}"
-                f" explicit output dimension{'s' if Yvar is not None else ''}.",
-                BotorchTensorDimensionWarning,
-            )
+            else:
+                warnings.warn(
+                    "Non-strict enforcement of botorch tensor conventions. The "
+                    "following error would have been raised with strict enforcement: "
+                    f"{message}",
+                    BotorchTensorDimensionWarning,
+                )
         # Yvar may not have the same batch dimensions, but the trailing dimensions
         # of Yvar should be the same as the trailing dimensions of Y.
         if Yvar is not None and Y.shape[-(Yvar.dim()) :] != Yvar.shape:
