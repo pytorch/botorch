@@ -5,8 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Acquisition function for joint entropy search (JES). The code utilizes the
-implementation designed for the multi-objective batch setting.
+Acquisition function for joint entropy search (JES).
 
 """
 
