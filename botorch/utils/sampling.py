@@ -909,12 +909,12 @@ def optimize_posterior_samples(
     if maximize:
 
         def path_func(x):
-            return paths.forward(x)
+            return paths(x)
 
     else:
 
         def path_func(x):
-            return -paths.forward(x)
+            return -paths(x)
 
     candidate_set = unnormalize(
         SobolEngine(dimension=bounds.shape[1], scramble=True).draw(raw_samples), bounds
