@@ -48,7 +48,7 @@
 
 
 <span class="k">def</span> <span class="nf">_make_X_full</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">output_indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">tf</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Helper to construct input tensor with task indices.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Helper to construct input tensor with task indices.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: The raw input tensor (without task information).</span>
@@ -76,7 +76,7 @@
     <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
-    <span class="sa">r</span><span class="sd">"""Transforms training inputs for a multi-output model.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Transforms training inputs for a multi-output model.</span>
 
 <span class="sd">    Used for multi-output models that internally are represented by a</span>
 <span class="sd">    batched single output model, where each output is modeled as an</span>
@@ -111,7 +111,7 @@
 
 
 <div class="viewcode-block" id="add_output_dim"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.add_output_dim">[docs]</a><span class="k">def</span> <span class="nf">add_output_dim</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">original_batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Insert the output dimension at the correct location.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Insert the output dimension at the correct location.</span>
 
 <span class="sd">    The trailing batch dimensions of X must match the original batch dimensions</span>
 <span class="sd">    of the training inputs, but can also include extra batch dimensions.</span>
@@ -146,7 +146,7 @@
 
 
 <div class="viewcode-block" id="check_no_nans"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.check_no_nans">[docs]</a><span class="k">def</span> <span class="nf">check_no_nans</span><span class="p">(</span><span class="n">Z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Check that tensor does not contain NaN values.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Check that tensor does not contain NaN values.</span>
 
 <span class="sd">    Raises an InputDataError if `Z` contains NaN values.</span>
 
@@ -164,7 +164,7 @@
     <span class="n">raise_on_fail</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">ignore_dims</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Check that tensor is normalized to the unit cube.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Check that tensor is normalized to the unit cube.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: A `batch_shape x n x d` input tensor. Typically the training inputs</span>
@@ -205,7 +205,7 @@
     <span class="n">atol_std</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
     <span class="n">raise_on_fail</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Check that tensor is standardized (zero mean, unit variance).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Check that tensor is standardized (zero mean, unit variance).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        Y: The input tensor of shape `batch_shape x n x m`. Typically the</span>
@@ -234,7 +234,7 @@
     <span class="n">raise_on_fail</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">ignore_X_dims</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Helper function to validate input data to models.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Helper function to validate input data to models.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of</span>
@@ -273,7 +273,7 @@
 
 
 <div class="viewcode-block" id="mod_batch_shape"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.mod_batch_shape">[docs]</a><span class="k">def</span> <span class="nf">mod_batch_shape</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Recursive helper to modify gpytorch modules' batch shape attribute.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Recursive helper to modify gpytorch modules' batch shape attribute.</span>
 
 <span class="sd">    Modifies the module in-place.</span>
 
@@ -296,7 +296,7 @@
 
 <div class="viewcode-block" id="gpt_posterior_settings"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.gpt_posterior_settings">[docs]</a><span class="nd">@contextmanager</span>
 <span class="k">def</span> <span class="nf">gpt_posterior_settings</span><span class="p">():</span>
-    <span class="sa">r</span><span class="sd">"""Context manager for settings used for computing model posteriors."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Context manager for settings used for computing model posteriors."""</span>
     <span class="k">with</span> <span class="n">ExitStack</span><span class="p">()</span> <span class="k">as</span> <span class="n">es</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">gpt_settings</span><span class="o">.</span><span class="n">debug</span><span class="o">.</span><span class="n">is_default</span><span class="p">():</span>
             <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">gpt_settings</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span>
@@ -313,7 +313,7 @@
     <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-    <span class="sd">"""Returns an iterator over index pairs `(duplicate index, original index)` for all</span>
+<span class="w">    </span><span class="sd">"""Returns an iterator over index pairs `(duplicate index, original index)` for all</span>
 <span class="sd">    duplicate entries of `X`. Supporting 2-d Tensor only.</span>
 
 <span class="sd">    Args:</span>
@@ -345,7 +345,7 @@
 <div class="viewcode-block" id="consolidate_duplicates"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.consolidate_duplicates">[docs]</a><span class="k">def</span> <span class="nf">consolidate_duplicates</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sd">"""Drop duplicated Xs and update the indices tensor Y accordingly.</span>
+<span class="w">    </span><span class="sd">"""Drop duplicated Xs and update the indices tensor Y accordingly.</span>
 <span class="sd">    Supporting 2d Tensor only as in batch mode block design is not guaranteed.</span>
 
 <span class="sd">    Args:</span>
@@ -399,7 +399,7 @@
 
 
 <div class="viewcode-block" id="fantasize"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.fantasize">[docs]</a><span class="k">class</span> <span class="nc">fantasize</span><span class="p">(</span><span class="n">_Flag</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A flag denoting whether we are currently in a `fantasize` context."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A flag denoting whether we are currently in a `fantasize` context."""</span>
     <span class="n">_state</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
 </pre></div>
 </div>

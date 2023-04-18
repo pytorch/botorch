@@ -46,7 +46,7 @@
     <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">dtype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
-    <span class="sa">r</span><span class="sd">"""Returns scalar-valued Tensors containing each of the given constants.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Returns scalar-valued Tensors containing each of the given constants.</span>
 <span class="sd">    Used to expedite tensor operations involving scalar arithmetic. Note that</span>
 <span class="sd">    the returned Tensors should not be modified in-place."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>

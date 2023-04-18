@@ -53,7 +53,7 @@
 <span class="k">def</span> <span class="nf">delattr_ctx</span><span class="p">(</span>
     <span class="n">instance</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">*</span><span class="n">attrs</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">enforce_hasattr</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Contextmanager for temporarily deleting attributes."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Contextmanager for temporarily deleting attributes."""</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
@@ -74,7 +74,7 @@
 <span class="k">def</span> <span class="nf">requires_grad_ctx</span><span class="p">(</span>
     <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">assignments</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Contextmanager for temporarily setting the requires_grad field of a module's</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Contextmanager for temporarily setting the requires_grad field of a module's</span>
 <span class="sd">    parameters."""</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
@@ -94,7 +94,7 @@
     <span class="n">checkpoint</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TensorCheckpoint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TensorCheckpoint</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Contextmanager that exits by rolling back a module's state_dict.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Contextmanager that exits by rolling back a module's state_dict.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        module: Module instance.</span>
@@ -138,7 +138,7 @@
     <span class="n">checkpoint</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TensorCheckpoint</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TensorCheckpoint</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Contextmanager that exits by rolling back a module's state_dict.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Contextmanager that exits by rolling back a module's state_dict.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        module: Module instance.</span>

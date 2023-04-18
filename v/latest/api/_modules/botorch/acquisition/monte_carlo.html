@@ -73,7 +73,7 @@
 
 
 <div class="viewcode-block" id="MCAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">MCAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Abstract base class for Monte-Carlo based batch acquisition functions.</span>
 
 <span class="sd">    :meta private:</span>
@@ -87,7 +87,7 @@
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
 <span class="sd">            sampler: The sampler used to draw base samples. If not given,</span>
@@ -123,7 +123,7 @@
 
 <div class="viewcode-block" id="MCAcquisitionFunction.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Takes in a `batch_shape x q x d` X Tensor of t-batches with `q` `d`-dim</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Takes in a `batch_shape x q x d` X Tensor of t-batches with `q` `d`-dim</span>
 <span class="sd">        design points each, and returns a Tensor with shape `batch_shape'`, where</span>
 <span class="sd">        `batch_shape'` is the broadcasted batch shape of model and input `X`. Should</span>
 <span class="sd">        utilize the result of `set_X_pending` as needed to account for pending function</span>
@@ -133,7 +133,7 @@
 
 
 <div class="viewcode-block" id="qExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">qExpectedImprovement</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""MC-based batch Expected Improvement.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Expected Improvement.</span>
 
 <span class="sd">    This computes qEI by</span>
 <span class="sd">    (1) sampling the joint posterior over q points</span>
@@ -161,7 +161,7 @@
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""q-Expected Improvement.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Expected Improvement.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
@@ -190,7 +190,7 @@
 <div class="viewcode-block" id="qExpectedImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qExpectedImprovement.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate qExpectedImprovement on the candidate set `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qExpectedImprovement on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design</span>
@@ -214,7 +214,7 @@
 <div class="viewcode-block" id="qNoisyExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">qNoisyExpectedImprovement</span><span class="p">(</span>
     <span class="n">MCAcquisitionFunction</span><span class="p">,</span> <span class="n">CachedCholeskyMCAcquisitionFunction</span>
 <span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""MC-based batch Noisy Expected Improvement.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Noisy Expected Improvement.</span>
 
 <span class="sd">    This function does not assume a `best_f` is known (which would require</span>
 <span class="sd">    noiseless observations). Instead, it uses samples from the joint posterior</span>
@@ -239,11 +239,11 @@
         <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">prune_baseline</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">prune_baseline</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""q-Noisy Expected Improvement.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Noisy Expected Improvement.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
@@ -320,7 +320,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_root_decomposition</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_forward_cached</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">X_full</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute difference objective using cached root decomposition.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute difference objective using cached root decomposition.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: The posterior.</span>
@@ -351,7 +351,7 @@
 <div class="viewcode-block" id="qNoisyExpectedImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate qNoisyExpectedImprovement on the candidate set `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qNoisyExpectedImprovement on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design</span>
@@ -380,7 +380,7 @@
 
 
 <div class="viewcode-block" id="qProbabilityOfImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qProbabilityOfImprovement">[docs]</a><span class="k">class</span> <span class="nc">qProbabilityOfImprovement</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""MC-based batch Probability of Improvement.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Probability of Improvement.</span>
 
 <span class="sd">    Estimates the probability of improvement over the current best observed</span>
 <span class="sd">    value by sampling from the joint posterior distribution of the q-batch.</span>
@@ -408,7 +408,7 @@
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">tau</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""q-Probability of Improvement.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Probability of Improvement.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
@@ -442,7 +442,7 @@
 <div class="viewcode-block" id="qProbabilityOfImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qProbabilityOfImprovement.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate qProbabilityOfImprovement on the candidate set `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qProbabilityOfImprovement on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design</span>
@@ -465,7 +465,7 @@
 
 
 <div class="viewcode-block" id="qSimpleRegret"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qSimpleRegret">[docs]</a><span class="k">class</span> <span class="nc">qSimpleRegret</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""MC-based batch Simple Regret.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Simple Regret.</span>
 
 <span class="sd">    Samples from the joint posterior over the q-batch and computes the simple regret.</span>
 
@@ -481,7 +481,7 @@
 <div class="viewcode-block" id="qSimpleRegret.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qSimpleRegret.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate qSimpleRegret on the candidate set `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qSimpleRegret on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design</span>
@@ -502,7 +502,7 @@
 
 
 <div class="viewcode-block" id="qUpperConfidenceBound"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qUpperConfidenceBound">[docs]</a><span class="k">class</span> <span class="nc">qUpperConfidenceBound</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""MC-based batch Upper Confidence Bound.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Upper Confidence Bound.</span>
 
 <span class="sd">    Uses a reparameterization to extend UCB to qUCB for q &gt; 1 (See Appendix A</span>
 <span class="sd">    of [Wilson2017reparam].)</span>
@@ -526,7 +526,7 @@
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""q-Upper Confidence Bound.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Upper Confidence Bound.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
@@ -553,7 +553,7 @@
 <div class="viewcode-block" id="qUpperConfidenceBound.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qUpperConfidenceBound.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate qUpperConfidenceBound on the candidate set `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qUpperConfidenceBound on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_sahpe x q x d`-dim Tensor of t-batches with `q` `d`-dim design</span>

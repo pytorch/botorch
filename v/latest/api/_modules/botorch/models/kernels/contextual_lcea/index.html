@@ -43,7 +43,7 @@
 
 
 <div class="viewcode-block" id="LCEAKernel"><a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.contextual_lcea.LCEAKernel">[docs]</a><span class="k">class</span> <span class="nc">LCEAKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The Latent Context Embedding Additive (LCE-A) Kernel.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The Latent Context Embedding Additive (LCE-A) Kernel.</span>
 
 <span class="sd">    This kernel is similar to the SACKernel, and is used when context breakdowns are</span>
 <span class="sd">    unbserverable. It assumes the same additive structure and a spatial kernel shared</span>
@@ -63,7 +63,7 @@
         <span class="n">context_weight_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            decomposition: Keys index context names. Values are the indexes of</span>
 <span class="sd">                parameters belong to the context. The parameter indexes are in the same</span>
@@ -181,7 +181,7 @@
         <span class="n">embs_feature_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">embs_dim_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">"""Set context categorical features and continuous embedding features.</span>
+<span class="w">        </span><span class="sd">"""Set context categorical features and continuous embedding features.</span>
 <span class="sd">        If cat_feature_dict is None, context indices will be used; If embs_dim_list</span>
 <span class="sd">        is None, we use 1-d embedding for each categorical features.</span>
 <span class="sd">        """</span>
@@ -212,7 +212,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">n_embs</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_emb_feature</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_set_emb_layers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">"""Construct embedding layers.</span>
+<span class="w">        </span><span class="sd">"""Construct embedding layers.</span>
 <span class="sd">        If model is non-batch, we use nn.Embedding to learn emb weights. If model is</span>
 <span class="sd">        batched (sef.batch_shape is non-empty), we load emb weights posterior samples</span>
 <span class="sd">        and construct a parameter list that each parameter is the emb weight of each</span>
@@ -239,7 +239,7 @@
             <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_eval_context_covar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""Compute context covariance matrix.</span>
+<span class="w">        </span><span class="sd">"""Compute context covariance matrix.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A (ns) x num_contexts x num_contexts tensor.</span>
@@ -263,7 +263,7 @@
         <span class="k">return</span> <span class="n">context_covar</span>
 
     <span class="k">def</span> <span class="nf">_task_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""Generate embedding features of contexts when model is non-batch.</span>
+<span class="w">        </span><span class="sd">"""Generate embedding features of contexts when model is non-batch.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            a (num_contexts x n_embs) tensor. n_embs is the sum of embedding</span>
@@ -285,7 +285,7 @@
         <span class="k">return</span> <span class="n">embeddings</span>
 
     <span class="k">def</span> <span class="nf">_task_embeddings_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""Generate embedding features of contexts when model has multiple batches.</span>
+<span class="w">        </span><span class="sd">"""Generate embedding features of contexts when model has multiple batches.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            a (ns) x num_contexts x n_embs tensor. ns is the batch size i.e num of</span>
@@ -337,7 +337,7 @@
         <span class="n">last_dim_is_batch</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">params</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""Iterate across each partition of parameter space and sum the</span>
+<span class="w">        </span><span class="sd">"""Iterate across each partition of parameter space and sum the</span>
 <span class="sd">        covariance matrices together</span>
 <span class="sd">        """</span>
         <span class="c1"># context covar matrix</span>

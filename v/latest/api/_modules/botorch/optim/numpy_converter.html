@@ -62,7 +62,7 @@
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TorchAttr</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
-    <span class="sa">r</span><span class="sd">"""Extract named parameters from a module into a numpy array.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Extract named parameters from a module into a numpy array.</span>
 
 <span class="sd">    Only extracts parameters with requires_grad, since it is meant for optimizing.</span>
 
@@ -140,7 +140,7 @@
 <div class="viewcode-block" id="set_params_with_array"><a class="viewcode-back" href="../../../optim.html#botorch.optim.numpy_converter.set_params_with_array">[docs]</a><span class="k">def</span> <span class="nf">set_params_with_array</span><span class="p">(</span>
     <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">property_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TorchAttr</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Module</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Set module parameters with values from numpy array.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Set module parameters with values from numpy array.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        module: Module with parameters to be set</span>
@@ -187,7 +187,7 @@
 <span class="k">def</span> <span class="nf">_scipy_objective_and_grad</span><span class="p">(</span>
     <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">mll</span><span class="p">:</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span> <span class="n">property_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TorchAttr</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Get objective and gradient in format that scipy expects.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Get objective and gradient in format that scipy expects.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        x: The (flattened) input parameters.</span>

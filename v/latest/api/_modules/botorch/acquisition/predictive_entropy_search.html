@@ -52,7 +52,7 @@
 
 
 <div class="viewcode-block" id="qPredictiveEntropySearch"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch">[docs]</a><span class="k">class</span> <span class="nc">qPredictiveEntropySearch</span><span class="p">(</span><span class="n">qMultiObjectivePredictiveEntropySearch</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The acquisition function for Predictive Entropy Search.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The acquisition function for Predictive Entropy Search.</span>
 
 <span class="sd">    This acquisition function approximates the mutual information between the</span>
 <span class="sd">    observation at a candidate point `X` and the optimal set of inputs using</span>
@@ -81,7 +81,7 @@
         <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Predictive entropy search acquisition function.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Predictive entropy search acquisition function.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
@@ -117,7 +117,7 @@
 <div class="viewcode-block" id="qPredictiveEntropySearch.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate qPredictiveEntropySearch on the candidate set `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qPredictiveEntropySearch on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim</span>

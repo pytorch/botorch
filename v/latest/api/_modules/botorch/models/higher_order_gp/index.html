@@ -79,7 +79,7 @@
 
 
 <div class="viewcode-block" id="FlattenedStandardize"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.FlattenedStandardize">[docs]</a><span class="k">class</span> <span class="nc">FlattenedStandardize</span><span class="p">(</span><span class="n">Standardize</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Standardize outcomes in a structured multi-output settings by reshaping the</span>
 <span class="sd">    batched output dimensions to be a vector. Specifically, an output dimension</span>
 <span class="sd">    of [a x b x c] will be squeezed to be a vector of [a * b * c].</span>
@@ -91,7 +91,7 @@
         <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">min_stdv</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            output_shape: A `n x output_shape`-dim tensor of training targets.</span>
 <span class="sd">            batch_shape: The batch_shape of the training targets.</span>
@@ -167,7 +167,7 @@
 
 
 <div class="viewcode-block" id="HigherOrderGP"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP">[docs]</a><span class="k">class</span> <span class="nc">HigherOrderGP</span><span class="p">(</span><span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    A model for high-dimensional output regression.</span>
 
 <span class="sd">    As described in [Zhe2019hogp]_. “Higher-order” means that the predictions</span>
@@ -212,7 +212,7 @@
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: A `batch_shape x n x d`-dim tensor of training inputs.</span>
 <span class="sd">            train_Y: A `batch_shape x n x output_shape`-dim tensor of training targets.</span>
@@ -241,7 +241,7 @@
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                     <span class="s2">"HigherOrderGP does not support the outcome_transform "</span>
                     <span class="s2">"`Standardize`! Using `FlattenedStandardize` with `output_shape="</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span> <span class="n">num_output_dims</span><span class="p">:]</span><span class="si">}</span><span class="s2"> and batch_shape="</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="w"> </span><span class="n">num_output_dims</span><span class="p">:]</span><span class="si">}</span><span class="s2"> and batch_shape="</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">batch_shape</span><span class="si">}</span><span class="s2"> instead."</span><span class="p">,</span>
                     <span class="ne">RuntimeWarning</span><span class="p">,</span>
                 <span class="p">)</span>
@@ -423,7 +423,7 @@
 <div class="viewcode-block" id="HigherOrderGP.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HigherOrderGP</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of</span>
@@ -513,7 +513,7 @@
             <span class="c1"># we now compute the data covariances for the training data, the testing</span>
             <span class="c1"># data, the joint covariances, and the test train cross-covariance</span>
             <span class="n">train_train_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction_strategy</span><span class="o">.</span><span class="n">lik_train_train_covar</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
-            <span class="n">base_train_train_covar</span> <span class="o">=</span> <span class="n">train_train_covar</span><span class="o">.</span><span class="n">lazy_tensor</span>
+            <span class="n">base_train_train_covar</span> <span class="o">=</span> <span class="n">train_train_covar</span><span class="o">.</span><span class="n">linear_op</span>
 
             <span class="n">data_train_covar</span> <span class="o">=</span> <span class="n">base_train_train_covar</span><span class="o">.</span><span class="n">linear_ops</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">data_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_modules</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -576,7 +576,7 @@
 <div class="viewcode-block" id="HigherOrderGP.make_posterior_variances"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.make_posterior_variances">[docs]</a>    <span class="k">def</span> <span class="nf">make_posterior_variances</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">joint_covariance_matrix</span><span class="p">:</span> <span class="n">LinearOperator</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Computes the posterior variances given the data points X. As currently</span>
 <span class="sd">        implemented, it computes another forwards call with the stacked data to get out</span>
 <span class="sd">        the joint covariance across all data points.</span>
@@ -597,7 +597,7 @@
         <span class="p">)</span>
         <span class="n">full_test_train_covar_tuple</span> <span class="o">=</span> <span class="p">(</span><span class="n">test_train_covar</span><span class="p">,)</span> <span class="o">+</span> <span class="n">jcm_linops</span>
 
-        <span class="n">train_evals</span><span class="p">,</span> <span class="n">train_evecs</span> <span class="o">=</span> <span class="n">full_train_train_covar</span><span class="o">.</span><span class="n">symeig</span><span class="p">(</span><span class="n">eigenvectors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">train_evals</span><span class="p">,</span> <span class="n">train_evecs</span> <span class="o">=</span> <span class="n">full_train_train_covar</span><span class="o">.</span><span class="n">eigh</span><span class="p">()</span>
         <span class="c1"># (\kron \Lambda_i + \sigma^2 I)^{-1}</span>
         <span class="n">train_inv_evals</span> <span class="o">=</span> <span class="n">DiagLinearOperator</span><span class="p">(</span>
             <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">train_evals</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span><span class="p">)</span>
@@ -615,7 +615,7 @@
         <span class="c1">#  (\kron K_i S_i * K_i S_i) \tilde{\Lambda}^{-1}</span>
         <span class="n">test_train_pred_covar</span> <span class="o">=</span> <span class="n">test_train_hadamard</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">train_inv_evals</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="n">pred_variances</span> <span class="o">=</span> <span class="n">full_test_test_covar</span><span class="o">.</span><span class="n">diag</span><span class="p">()</span> <span class="o">-</span> <span class="n">test_train_pred_covar</span>
+        <span class="n">pred_variances</span> <span class="o">=</span> <span class="n">full_test_test_covar</span><span class="o">.</span><span class="n">diagonal</span><span class="p">()</span> <span class="o">-</span> <span class="n">test_train_pred_covar</span>
         <span class="k">return</span> <span class="n">pred_variances</span></div></div>
 </pre></div>
 </div>

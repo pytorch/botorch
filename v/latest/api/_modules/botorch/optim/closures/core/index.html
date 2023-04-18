@@ -50,7 +50,7 @@
 
 
 <div class="viewcode-block" id="ForwardBackwardClosure"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.closures.core.ForwardBackwardClosure">[docs]</a><span class="k">class</span> <span class="nc">ForwardBackwardClosure</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Wrapper for fused forward and backward closures."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Wrapper for fused forward and backward closures."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -61,7 +61,7 @@
         <span class="n">callback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">context_manager</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># pyre-ignore [9]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initializes a ForwardBackwardClosure instance.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes a ForwardBackwardClosure instance.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            closure: Callable that returns a tensor.</span>
@@ -99,7 +99,7 @@
 
 
 <div class="viewcode-block" id="NdarrayOptimizationClosure"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.closures.core.NdarrayOptimizationClosure">[docs]</a><span class="k">class</span> <span class="nc">NdarrayOptimizationClosure</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Adds stateful behavior and a numpy.ndarray-typed API to a closure with an</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Adds stateful behavior and a numpy.ndarray-typed API to a closure with an</span>
 <span class="sd">    expected return type Tuple[Tensor, Union[Tensor, Sequence[Optional[Tensor]]]]."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -113,7 +113,7 @@
         <span class="n">fill_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
         <span class="n">persistent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initializes a NdarrayOptimizationClosure instance.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes a NdarrayOptimizationClosure instance.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            closure: A ForwardBackwardClosure instance.</span>

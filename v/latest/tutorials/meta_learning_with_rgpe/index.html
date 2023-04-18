@@ -105,12 +105,12 @@
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Toy-Problem">Toy Problem<a class="anchor-link" href="#Toy-Problem">¶</a></h3><ul>
-<li><p>We consider optimizing the following 1-D synthetic function
-$$f(x, s_i) = \frac{1}{10}\bigg(x-1\bigg)\bigg(\sin(x+s_i)+\frac{1}{10}\bigg)$$
-where
+<li>We consider optimizing the following 1-D synthetic function</li>
+</ul>
+$$f(x, s_i) = \frac{1}{10}\bigg(x-1\bigg)\bigg(\sin(x+s_i)+\frac{1}{10}\bigg)$$<p>where
 $$s_i = \frac{(i+9)\pi}{8}$$
 is a task-dependent shift parameter and $i$ is the task index $i \in [1, t]$.</p>
-</li>
+<ul>
 <li><p>In this tutorial, we will consider the scenario where we have collected data from 5 prior tasks (referred to as base tasks), which with a different task dependent shift parameter $s_i$.</p>
 </li>
 <li><p>The goal now is use meta-learning to improve sample efficiency when optimizing a 6th task.</p>
@@ -135,7 +135,7 @@ is a task-dependent shift parameter and $i$ is the task index $i \in [1, t]$.</p
 
 
 <span class="k">def</span> <span class="nf">task_shift</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
-    <span class="sd">"""</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Fetch shift amount for task.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">task</span> <span class="o">/</span> <span class="mf">12.0</span>
@@ -165,7 +165,7 @@ is a task-dependent shift parameter and $i$ is the task index $i \in [1, t]$.</p
 
 
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="n">TARGET_SHIFT</span><span class="p">):</span>
-    <span class="sd">"""</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Torch-compatible objective function for the target_task</span>
 <span class="sd">    """</span>
     <span class="n">f_X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">X</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">+</span> <span class="n">shift</span><span class="p">)</span> <span class="o">+</span> <span class="n">X</span> <span class="o">/</span> <span class="mf">10.0</span>
@@ -311,7 +311,7 @@ is a task-dependent shift parameter and $i$ is the task index $i \in [1, t]$.</p
 
 
 <span class="k">def</span> <span class="nf">get_fitted_model</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">,</span> <span class="n">state_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">"""</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Get a single task GP. The model will be fit unless a state_dict with model</span>
 <span class="sd">        hyperparameters is provided.</span>
 <span class="sd">    """</span>
@@ -398,7 +398,7 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">roll_col</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">shift</span><span class="p">):</span>
-    <span class="sd">"""</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Rotate columns to right by shift.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">shift</span><span class="p">:],</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="n">shift</span><span class="p">]),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
@@ -413,7 +413,7 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">compute_ranking_loss</span><span class="p">(</span><span class="n">f_samps</span><span class="p">,</span> <span class="n">target_y</span><span class="p">):</span>
-    <span class="sd">"""</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Compute ranking loss for each sample from the posterior over target points.</span>
 
 <span class="sd">    Args:</span>
@@ -474,7 +474,7 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">get_target_model_loocv_sample_preds</span><span class="p">(</span>
     <span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="p">,</span> <span class="n">train_yvar</span><span class="p">,</span> <span class="n">target_model</span><span class="p">,</span> <span class="n">num_samples</span>
 <span class="p">):</span>
-    <span class="sd">"""</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Create a batch-mode LOOCV GP and draw a joint sample across all points from the target task.</span>
 
 <span class="sd">    Args:</span>
@@ -518,7 +518,7 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">compute_rank_weights</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="p">,</span> <span class="n">base_models</span><span class="p">,</span> <span class="n">target_model</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
-    <span class="sd">"""</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Compute ranking weights for each base model and the target model (using</span>
 <span class="sd">        LOOCV for the target model). Note: This implementation does not currently</span>
 <span class="sd">        address weight dilution, since we only have a small number of base models.</span>
@@ -581,7 +581,7 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
 
 
 <span class="k">class</span> <span class="nc">RGPE</span><span class="p">(</span><span class="n">GP</span><span class="p">,</span> <span class="n">GPyTorchModel</span><span class="p">):</span>
-    <span class="sd">"""</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Rank-weighted GP ensemble. Note: this class inherits from GPyTorchModel which provides an</span>
 <span class="sd">        interface for GPyTorch models in botorch.</span>
 <span class="sd">    """</span>
@@ -669,7 +669,7 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
 
 <span class="c1"># Average over multiple trials</span>
 <span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_TRIALS</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Trial </span><span class="si">{</span><span class="n">trial</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">N_TRIALS</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Trial </span><span class="si">{</span><span class="n">trial</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">N_TRIALS</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">best_rgpe</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">best_random</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">best_vanilla_nei</span> <span class="o">=</span> <span class="p">[]</span>
@@ -710,6 +710,7 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
             <span class="n">model</span><span class="o">=</span><span class="n">rgpe_model</span><span class="p">,</span>
             <span class="n">X_baseline</span><span class="o">=</span><span class="n">train_x</span><span class="p">,</span>
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler_qnei</span><span class="p">,</span>
+            <span class="n">prune_baseline</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># optimize</span>

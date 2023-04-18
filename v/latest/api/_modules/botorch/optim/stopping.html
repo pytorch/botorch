@@ -40,7 +40,7 @@
 
 
 <span class="k">class</span> <span class="nc">StoppingCriterion</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Base class for evaluating optimization convergence.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for evaluating optimization convergence.</span>
 
 <span class="sd">    Stopping criteria are implemented as a objects rather than a function, so that they</span>
 <span class="sd">    can keep track of past function values between optimization steps.</span>
@@ -50,7 +50,7 @@
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fvals</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate the stopping criterion.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the stopping criterion.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            fvals: tensor containing function values for the current iteration. If</span>
@@ -68,7 +68,7 @@
 
 
 <div class="viewcode-block" id="ExpMAStoppingCriterion"><a class="viewcode-back" href="../../../optim.html#botorch.optim.stopping.ExpMAStoppingCriterion">[docs]</a><span class="k">class</span> <span class="nc">ExpMAStoppingCriterion</span><span class="p">(</span><span class="n">StoppingCriterion</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Exponential moving average stopping criterion.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Exponential moving average stopping criterion.</span>
 
 <span class="sd">    Computes an exponentially weighted moving average over window length `n_window`</span>
 <span class="sd">    and checks whether the relative decrease in this moving average between steps</span>
@@ -91,7 +91,7 @@
         <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
         <span class="n">rel_tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Exponential moving average stopping criterion.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Exponential moving average stopping criterion.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            maxiter: Maximum number of iterations.</span>
@@ -110,7 +110,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_prev_fvals</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="ExpMAStoppingCriterion.evaluate"><a class="viewcode-back" href="../../../optim.html#botorch.optim.stopping.ExpMAStoppingCriterion.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fvals</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate the stopping criterion.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the stopping criterion.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            fvals: tensor containing function values for the current iteration. If</span>

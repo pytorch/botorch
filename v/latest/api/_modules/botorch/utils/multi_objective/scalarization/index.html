@@ -53,7 +53,7 @@
 <div class="viewcode-block" id="get_chebyshev_scalarization"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.scalarization.get_chebyshev_scalarization">[docs]</a><span class="k">def</span> <span class="nf">get_chebyshev_scalarization</span><span class="p">(</span>
     <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Construct an augmented Chebyshev scalarization.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct an augmented Chebyshev scalarization.</span>
 
 <span class="sd">    The augmented Chebyshev scalarization is given by</span>
 <span class="sd">        g(y) = max_i(w_i * y_i) + alpha * sum_i(w_i * y_i)</span>

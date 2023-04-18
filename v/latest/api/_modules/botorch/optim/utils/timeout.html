@@ -55,7 +55,7 @@
     <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">timeout_sec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">optimize</span><span class="o">.</span><span class="n">OptimizeResult</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Wrapper around scipy.optimize.minimize to support timeout.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Wrapper around scipy.optimize.minimize to support timeout.</span>
 
 <span class="sd">    This method calls scipy.optimize.minimize with all arguments forwarded</span>
 <span class="sd">    verbatim. The only difference is that if provided a `timeout_sec` argument,</span>
@@ -80,7 +80,7 @@
         <span class="k">if</span> <span class="n">callback</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">wrapped_callback</span> <span class="o">=</span> <span class="n">timeout_callback</span>
 
-        <span class="k">elif</span> <span class="n">callable</span><span class="p">(</span><span class="n">method</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">method</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                 <span class="s2">"Custom callable not supported for `method` argument."</span>
             <span class="p">)</span>

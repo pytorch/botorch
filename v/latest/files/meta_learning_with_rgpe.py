@@ -490,6 +490,7 @@ for trial in range(N_TRIALS):
             model=rgpe_model,
             X_baseline=train_x,
             sampler=sampler_qnei,
+            prune_baseline=False,
         )
 
         # optimize

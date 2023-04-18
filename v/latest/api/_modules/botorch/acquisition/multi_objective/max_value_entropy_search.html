@@ -73,7 +73,7 @@
 <div class="viewcode-block" id="qMultiObjectiveMaxValueEntropy"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy">[docs]</a><span class="k">class</span> <span class="nc">qMultiObjectiveMaxValueEntropy</span><span class="p">(</span>
     <span class="n">qMaxValueEntropy</span><span class="p">,</span> <span class="n">MultiObjectiveMCAcquisitionFunction</span>
 <span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The acquisition function for MESMO.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The acquisition function for MESMO.</span>
 
 <span class="sd">    This acquisition function computes the mutual information of</span>
 <span class="sd">    Pareto frontier and a candidate point. See [Belakaria2019]_ for</span>
@@ -106,7 +106,7 @@
         <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Multi-objective max-value entropy search acquisition function.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Multi-objective max-value entropy search acquisition function.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted multi-output model.</span>
@@ -140,7 +140,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">batched_multi_output_to_single_output</span><span class="p">(</span>
             <span class="n">batch_mo_model</span><span class="o">=</span><span class="n">batched_mo_model</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fantasies_sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">num_fantasies</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fantasies_sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span>
+            <span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_fantasies</span><span class="p">])</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_fantasies</span> <span class="o">=</span> <span class="n">num_fantasies</span>
         <span class="c1"># weight is used in _compute_information_gain</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="o">=</span> <span class="kc">True</span>
@@ -156,7 +158,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="qMultiObjectiveMaxValueEntropy.set_X_pending"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy.set_X_pending">[docs]</a>    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Set pending points.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Set pending points.</span>
 
 <span class="sd">        Informs the acquisition function about pending design points,</span>
 <span class="sd">        fantasizes the model on the pending points and draws max-value samples</span>
@@ -188,7 +190,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_sample_max_values</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">_sample_max_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample max values for MC approximation of the expectation in MES"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample max values for MC approximation of the expectation in MES"""</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="c1"># num_samples x (num_fantasies) x n_pareto_points x m</span>
             <span class="n">sampled_pfs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_pareto_frontiers</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mo_model</span><span class="p">)</span>
@@ -200,7 +202,7 @@
 
 <div class="viewcode-block" id="qMultiObjectiveMaxValueEntropy.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qMultiObjectiveMaxValueEntropy.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute max-value entropy at the design points `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute max-value entropy at the design points `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x 1 x d`-dim Tensor of `batch_shape` t-batches</span>
@@ -219,7 +221,7 @@
 <div class="viewcode-block" id="qLowerBoundMultiObjectiveMaxValueEntropySearch"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch">[docs]</a><span class="k">class</span> <span class="nc">qLowerBoundMultiObjectiveMaxValueEntropySearch</span><span class="p">(</span>
     <span class="n">LowerBoundMultiObjectiveEntropySearch</span>
 <span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The acquisition function for the multi-objective Max-value Entropy Search,</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The acquisition function for the multi-objective Max-value Entropy Search,</span>
 <span class="sd">    where the batches `q &gt; 1` are supported through the lower bound formulation.</span>
 
 <span class="sd">    This acquisition function computes the mutual information between the observation</span>
@@ -245,7 +247,7 @@
         <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Lower bound multi-objective max-value entropy search acquisition function.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Lower bound multi-objective max-value entropy search acquisition function.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted batch model with 'M' number of outputs.</span>
@@ -275,7 +277,7 @@
     <span class="k">def</span> <span class="nf">_compute_posterior_statistics</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]:</span>
-        <span class="sa">r</span><span class="sd">"""Compute the posterior statistics.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the posterior statistics.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of inputs.</span>
@@ -354,7 +356,7 @@
     <span class="k">def</span> <span class="nf">_compute_monte_carlo_variables</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Compute the samples and log-probability associated with a posterior</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the samples and log-probability associated with a posterior</span>
 <span class="sd">        distribution.</span>
 
 <span class="sd">        Args:</span>
@@ -402,7 +404,7 @@
 <div class="viewcode-block" id="qLowerBoundMultiObjectiveMaxValueEntropySearch.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.max_value_entropy_search.qLowerBoundMultiObjectiveMaxValueEntropySearch.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluates qLowerBoundMultiObjectiveMaxValueEntropySearch at the design</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluates qLowerBoundMultiObjectiveMaxValueEntropySearch at the design</span>
 <span class="sd">        points `X`.</span>
 
 <span class="sd">        Args:</span>

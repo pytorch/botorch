@@ -59,7 +59,7 @@
 
 
 <div class="viewcode-block" id="LinearEllipticalSliceSampler"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler">[docs]</a><span class="k">class</span> <span class="nc">LinearEllipticalSliceSampler</span><span class="p">(</span><span class="n">PolytopeSampler</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Linear Elliptical Slice Sampler.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Linear Elliptical Slice Sampler.</span>
 
 <span class="sd">    TODOs:</span>
 <span class="sd">    - clean up docstrings</span>
@@ -79,7 +79,7 @@
         <span class="n">covariance_matrix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">covariance_root</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initialize LinearEllipticalSliceSampler.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize LinearEllipticalSliceSampler.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            inequality_constraints: Tensors `(A, b)` describing inequality constraints</span>
@@ -135,7 +135,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_full_angular_range</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">_twopi</span><span class="p">],</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="LinearEllipticalSliceSampler.draw"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler.draw">[docs]</a>    <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Draw samples.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw samples.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            n: The number of samples.</span>
@@ -148,7 +148,7 @@
         <span class="k">return</span> <span class="n">samples</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="LinearEllipticalSliceSampler.step"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Take a step, return the new sample, update the internal state.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Take a step, return the new sample, update the internal state.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A `d x 1`-dim sample from the domain.</span>
@@ -159,7 +159,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span></div>
 
     <span class="k">def</span> <span class="nf">_sample_base_rv</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample a base random variable from N(mean, covariance_matrix).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample a base random variable from N(mean, covariance_matrix).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A `d x 1`-dim sample from the domain</span>
@@ -172,7 +172,7 @@
         <span class="k">return</span> <span class="n">nu</span>
 
     <span class="k">def</span> <span class="nf">_draw_angle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Draw the rotation angle.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw the rotation angle.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            nu: A `d x 1`-dim tensor (the "new" direction, drawn from N(0, I)).</span>
@@ -191,7 +191,7 @@
         <span class="k">return</span> <span class="n">rot_slices</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">rnd_angle</span> <span class="o">-</span> <span class="n">cum_lengths</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">+</span> <span class="n">rot_angle</span>
 
     <span class="k">def</span> <span class="nf">_get_cart_coords</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Determine location on ellipsoid in cartesian coordinates.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Determine location on ellipsoid in cartesian coordinates.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            nu: A `d x 1`-dim tensor (the "new" direction, drawn from N(0, I)).</span>
@@ -203,7 +203,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="n">nu</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_find_rotated_intersections</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Finds rotated intersections.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Finds rotated intersections.</span>
 
 <span class="sd">        Rotates the intersections by the rotation angle and makes sure that all</span>
 <span class="sd">        angles lie in [0, 2*pi].</span>
@@ -222,7 +222,7 @@
         <span class="k">return</span> <span class="n">rot_angle</span><span class="p">,</span> <span class="n">slices</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_find_active_intersections</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Find angles of those intersections that are at the boundary of the integration</span>
 <span class="sd">        domain by adding and subtracting a small angle and evaluating on the ellipse</span>
 <span class="sd">        to see if we are on the boundary of the integration domain.</span>
@@ -260,7 +260,7 @@
         <span class="k">return</span> <span class="n">theta_active</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_find_intersection_angles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""Compute all of the up to 2*n_ineq_con intersections of the ellipse</span>
+<span class="w">        </span><span class="sd">"""Compute all of the up to 2*n_ineq_con intersections of the ellipse</span>
 <span class="sd">        and the linear constraints.</span>
 
 <span class="sd">        For background, see equation (2) in</span>
@@ -296,7 +296,7 @@
     <span class="k">def</span> <span class="nf">_index_active</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">delta_theta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_delta_theta</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Determine active indices.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Determine active indices.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            nu: A `d x 1`-dim tensor (the "new" direction, drawn from N(0, I)).</span>
@@ -319,7 +319,7 @@
         <span class="k">return</span> <span class="n">pos_diffs</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span> <span class="o">-</span> <span class="n">neg_diffs</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_is_feasible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            points: A `M x d`-dim tensor of points.</span>

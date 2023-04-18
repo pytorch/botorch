@@ -60,7 +60,7 @@
 <span class="k">def</span> <span class="nf">_posterior_to_distribution_encoder</span><span class="p">(</span>
     <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">Distribution</span><span class="p">],</span> <span class="n">Type</span><span class="p">[</span><span class="n">Posterior</span><span class="p">]]:</span>
-    <span class="sa">r</span><span class="sd">"""An encoder returning the type of the distribution for `TorchPosterior`</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""An encoder returning the type of the distribution for `TorchPosterior`</span>
 <span class="sd">    and the type of the posterior for the rest.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">TorchPosterior</span><span class="p">):</span>
@@ -74,7 +74,7 @@
 <div class="viewcode-block" id="get_sampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.get_sampler.get_sampler">[docs]</a><span class="k">def</span> <span class="nf">get_sampler</span><span class="p">(</span>
     <span class="n">posterior</span><span class="p">:</span> <span class="n">TorchPosterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Get the sampler for the given posterior.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Get the sampler for the given posterior.</span>
 
 <span class="sd">    The sampler can be used as `sampler(posterior)` to produce samples</span>
 <span class="sd">    suitable for use in acquisition function optimization via SAA.</span>
@@ -97,7 +97,7 @@
 <span class="k">def</span> <span class="nf">_get_sampler_mvn</span><span class="p">(</span>
     <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NormalMCSampler</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""The Sobol normal sampler for the `MultivariateNormal` posterior.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The Sobol normal sampler for the `MultivariateNormal` posterior.</span>
 
 <span class="sd">    If the output dim is too large, falls back to `IIDNormalSampler`.</span>
 <span class="sd">    """</span>
@@ -117,7 +117,7 @@
 <span class="k">def</span> <span class="nf">_get_sampler_derived</span><span class="p">(</span>
     <span class="n">posterior</span><span class="p">:</span> <span class="n">TransformedPosterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Get the sampler for the underlying posterior."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Get the sampler for the underlying posterior."""</span>
     <span class="k">return</span> <span class="n">get_sampler</span><span class="p">(</span>
         <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">_posterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span>
@@ -127,7 +127,7 @@
 <span class="k">def</span> <span class="nf">_get_sampler_list</span><span class="p">(</span>
     <span class="n">posterior</span><span class="p">:</span> <span class="n">PosteriorList</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Get the `ListSampler` with the appropriate list of samplers."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Get the `ListSampler` with the appropriate list of samplers."""</span>
     <span class="n">samplers</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">get_sampler</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">posterior</span><span class="o">.</span><span class="n">posteriors</span>
@@ -139,7 +139,7 @@
 <span class="k">def</span> <span class="nf">_get_sampler_deterministic</span><span class="p">(</span>
     <span class="n">posterior</span><span class="p">:</span> <span class="n">DeterministicPosterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Get the dummy `DeterministicSampler` for the `DeterministicPosterior`."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Get the dummy `DeterministicSampler` for the `DeterministicPosterior`."""</span>
     <span class="k">return</span> <span class="n">DeterministicSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
@@ -147,7 +147,7 @@
 <span class="k">def</span> <span class="nf">_get_sampler_ensemble</span><span class="p">(</span>
     <span class="n">posterior</span><span class="p">:</span> <span class="n">EnsemblePosterior</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Get the `IndexSampler` for the `EnsemblePosterior`."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Get the `IndexSampler` for the `EnsemblePosterior`."""</span>
     <span class="k">return</span> <span class="n">IndexSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 

@@ -44,12 +44,12 @@
 
 
 <div class="viewcode-block" id="EnsemblePosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.ensemble.EnsemblePosterior">[docs]</a><span class="k">class</span> <span class="nc">EnsemblePosterior</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Ensemble posterior, that should be used for ensemble models that compute</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Ensemble posterior, that should be used for ensemble models that compute</span>
 <span class="sd">    eagerly a finite number of samples per X value as for example a deep ensemble</span>
 <span class="sd">    or a random forest."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            values: Values of the samples produced by this posterior as</span>
 <span class="sd">                a `(b) x s x q x m` tensor where `m` is the output size of the</span>
@@ -61,33 +61,33 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">ensemble_size</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The size of the ensemble"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The size of the ensemble"""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">weights</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The weights of the individual models in the ensemble.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The weights of the individual models in the ensemble.</span>
 <span class="sd">        Equally weighted by default."""</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ensemble_size</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ensemble_size</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The torch device of the posterior."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The torch device of the posterior."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">device</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The torch dtype of the posterior."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The torch dtype of the posterior."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">dtype</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The mean of the posterior as a `(b) x n x m`-dim Tensor."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The mean of the posterior as a `(b) x n x m`-dim Tensor."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">variance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The variance of the posterior as a `(b) x n x m`-dim Tensor.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The variance of the posterior as a `(b) x n x m`-dim Tensor.</span>
 
 <span class="sd">        Computed as the sample variance across the ensemble outputs.</span>
 <span class="sd">        """</span>
@@ -98,7 +98,7 @@
     <span class="k">def</span> <span class="nf">_extended_shape</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>  <span class="c1"># noqa: B008</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Returns the shape of the samples produced by the posterior with</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns the shape of the samples produced by the posterior with</span>
 <span class="sd">        the given `sample_shape`.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">sample_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
@@ -107,7 +107,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients).</span>
 
 <span class="sd">        Based on the sample shape, base samples are generated and passed to</span>
 <span class="sd">        `rsample_from_base_samples`.</span>
@@ -140,7 +140,7 @@
 <div class="viewcode-block" id="EnsemblePosterior.rsample_from_base_samples"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.ensemble.EnsemblePosterior.rsample_from_base_samples">[docs]</a>    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients) using base samples.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients) using base samples.</span>
 
 <span class="sd">        This is intended to be used with a sampler that produces the corresponding base</span>
 <span class="sd">        samples, and enables acquisition optimization via Sample Average Approximation.</span>

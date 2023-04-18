@@ -49,7 +49,7 @@
 
 
 <div class="viewcode-block" id="squeeze_last_dim"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.squeeze_last_dim">[docs]</a><span class="k">def</span> <span class="nf">squeeze_last_dim</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Squeeze the last dimension of a Tensor.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Squeeze the last dimension of a Tensor.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        Y: A `... x d`-dim Tensor.</span>
@@ -70,7 +70,7 @@
 
 
 <div class="viewcode-block" id="standardize"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.standardize">[docs]</a><span class="k">def</span> <span class="nf">standardize</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Standardizes (zero mean, unit variance) a tensor by dim=-2.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Standardizes (zero mean, unit variance) a tensor by dim=-2.</span>
 
 <span class="sd">    If the tensor is single-dimensional, simply standardizes the tensor.</span>
 <span class="sd">    If for some batch index all elements are equal (or if there is only a single</span>
@@ -93,7 +93,7 @@
 
 
 <div class="viewcode-block" id="normalize"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.normalize">[docs]</a><span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Min-max normalize X w.r.t. the provided bounds.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Min-max normalize X w.r.t. the provided bounds.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: `... x d` tensor of data</span>
@@ -115,7 +115,7 @@
 
 
 <div class="viewcode-block" id="unnormalize"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.unnormalize">[docs]</a><span class="k">def</span> <span class="nf">unnormalize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Un-normalizes X w.r.t. the provided bounds.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Un-normalizes X w.r.t. the provided bounds.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: `... x d` tensor of data</span>
@@ -137,7 +137,7 @@
 
 
 <div class="viewcode-block" id="normalize_indices"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.normalize_indices">[docs]</a><span class="k">def</span> <span class="nf">normalize_indices</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
-    <span class="sa">r</span><span class="sd">"""Normalize a list of indices to ensure that they are positive.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Normalize a list of indices to ensure that they are positive.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        indices: A list of indices (may contain negative indices for indexing</span>
@@ -161,7 +161,7 @@
 
 
 <span class="k">def</span> <span class="nf">_verify_output_shape</span><span class="p">(</span><span class="n">acqf</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Performs the output shape checks for `t_batch_mode_transform`. Output shape checks</span>
 <span class="sd">    help in catching the errors due to AcquisitionFunction arguments with erroneous</span>
 <span class="sd">    return shapes before these errors propagate further down the line.</span>
@@ -211,7 +211,7 @@
 
 
 <div class="viewcode-block" id="is_fully_bayesian"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.is_fully_bayesian">[docs]</a><span class="k">def</span> <span class="nf">is_fully_bayesian</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Check if at least one model is a SaasFullyBayesianSingleTaskGP</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Check if at least one model is a SaasFullyBayesianSingleTaskGP</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        model: A BoTorch model (may be a `ModelList` or `ModelListGP`)</span>
@@ -257,7 +257,7 @@
     <span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]],</span>
     <span class="n">Callable</span><span class="p">[[</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Factory for decorators enabling consistent t-batch behavior.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Factory for decorators enabling consistent t-batch behavior.</span>
 
 <span class="sd">    This method creates decorators for instance methods to transform an input tensor</span>
 <span class="sd">    `X` to t-batch mode (i.e. with at least 3 dimensions). This assumes the tensor</span>
@@ -334,7 +334,7 @@
 <div class="viewcode-block" id="concatenate_pending_points"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.concatenate_pending_points">[docs]</a><span class="k">def</span> <span class="nf">concatenate_pending_points</span><span class="p">(</span>
     <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Decorator concatenating X_pending into an acquisition function's argument.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Decorator concatenating X_pending into an acquisition function's argument.</span>
 
 <span class="sd">    This decorator works on the `forward` method of acquisition functions taking</span>
 <span class="sd">    a tensor `X` as the argument. If the acquisition function has an `X_pending`</span>
@@ -359,7 +359,7 @@
 
 
 <div class="viewcode-block" id="match_batch_shape"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.match_batch_shape">[docs]</a><span class="k">def</span> <span class="nf">match_batch_shape</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Matches the batch dimension of a tensor to that of another tensor.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Matches the batch dimension of a tensor to that of another tensor.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: A `batch_shape_X x q x d` tensor, whose batch dimensions that</span>
@@ -385,7 +385,7 @@
 
 
 <div class="viewcode-block" id="convert_to_target_pre_hook"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.convert_to_target_pre_hook">[docs]</a><span class="k">def</span> <span class="nf">convert_to_target_pre_hook</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Pre-hook for automatically calling `.to(X)` on module prior to `forward`"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Pre-hook for automatically calling `.to(X)` on module prior to `forward`"""</span>
     <span class="n">module</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span></div>
 </pre></div>
 </div>

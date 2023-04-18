@@ -1840,6 +1840,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.ScalarizedPosteriorTransform.evaluate">(botorch.acquisition.objective.ScalarizedPosteriorTransform method)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.objective.UnstandardizePosteriorTransform.evaluate">(botorch.acquisition.objective.UnstandardizePosteriorTransform method)</a>
+</li>
 <li><a href="optim.html#botorch.optim.stopping.ExpMAStoppingCriterion.evaluate">(botorch.optim.stopping.ExpMAStoppingCriterion method)</a>
 </li>
 </ul></li>
@@ -2174,8 +2176,6 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.forward">(botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR method)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective.forward">(botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective method)</a>
-</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.FeasibilityWeightedMCMultiOutputObjective.forward">(botorch.acquisition.multi_objective.objective.FeasibilityWeightedMCMultiOutputObjective method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective.forward">(botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective method)</a>
@@ -2183,8 +2183,6 @@
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective.forward">(botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective.forward">(botorch.acquisition.multi_objective.objective.MCMultiOutputObjective method)</a>
-</li>
-<li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.UnstandardizeAnalyticMultiOutputObjective.forward">(botorch.acquisition.multi_objective.objective.UnstandardizeAnalyticMultiOutputObjective method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective.forward">(botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective method)</a>
 </li>
@@ -2207,6 +2205,8 @@
 <li><a href="acquisition.html#botorch.acquisition.objective.LinearMCObjective.forward">(botorch.acquisition.objective.LinearMCObjective method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.ScalarizedPosteriorTransform.forward">(botorch.acquisition.objective.ScalarizedPosteriorTransform method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.objective.UnstandardizePosteriorTransform.forward">(botorch.acquisition.objective.UnstandardizePosteriorTransform method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.penalized.GaussianPenalty.forward">(botorch.acquisition.penalized.GaussianPenalty method)</a>
 </li>
@@ -3917,8 +3917,6 @@
 <ul>
 <li><a href="models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.sample">(botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel method)</a>
 </li>
-<li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.sample">(botorch.posteriors.gpytorch.GPyTorchPosterior method)</a>
-</li>
 </ul></li>
 <li><a href="optim.html#botorch.optim.utils.model_utils.sample_all_priors">sample_all_priors() (in module botorch.optim.utils.model_utils)</a>
 </li>
@@ -4010,8 +4008,6 @@
 </ul></li>
 <li><a href="utils.html#botorch.utils.testing.BotorchTestCase.setUp">setUp() (botorch.utils.testing.BotorchTestCase method)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.utils.model_utils.TorchAttr.shape">shape (botorch.optim.utils.model_utils.TorchAttr attribute)</a>
 <ul>
 <li><a href="utils.html#botorch.utils.containers.DenseContainer.shape">(botorch.utils.containers.DenseContainer property)</a>
@@ -4019,6 +4015,8 @@
 <li><a href="utils.html#botorch.utils.containers.SliceContainer.shape">(botorch.utils.containers.SliceContainer property)</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Shekel">Shekel (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.pathwise.utils.SineCosineTransform">SineCosineTransform (class in botorch.sampling.pathwise.utils)</a>
@@ -4288,6 +4286,8 @@
 <li><a href="acquisition.html#botorch.acquisition.objective.ExpectationPosteriorTransform.training">(botorch.acquisition.objective.ExpectationPosteriorTransform attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.ScalarizedObjective.training">(botorch.acquisition.objective.ScalarizedObjective attribute)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.objective.UnstandardizePosteriorTransform.training">(botorch.acquisition.objective.UnstandardizePosteriorTransform attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.penalized.GaussianPenalty.training">(botorch.acquisition.penalized.GaussianPenalty attribute)</a>
 </li>
@@ -4585,6 +4585,8 @@
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.UnstandardizeAnalyticMultiOutputObjective">UnstandardizeAnalyticMultiOutputObjective (class in botorch.acquisition.multi_objective.objective)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective">UnstandardizeMCMultiOutputObjective (class in botorch.acquisition.multi_objective.objective)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.objective.UnstandardizePosteriorTransform">UnstandardizePosteriorTransform (class in botorch.acquisition.objective)</a>
 </li>
 <li><a href="exceptions.html#botorch.exceptions.errors.UnsupportedError">UnsupportedError</a>
 </li>

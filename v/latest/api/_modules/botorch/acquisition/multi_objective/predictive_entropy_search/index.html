@@ -64,7 +64,7 @@
 
 
 <div class="viewcode-block" id="qMultiObjectivePredictiveEntropySearch"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch">[docs]</a><span class="k">class</span> <span class="nc">qMultiObjectivePredictiveEntropySearch</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The acquisition function for Predictive Entropy Search. The code supports</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The acquisition function for Predictive Entropy Search. The code supports</span>
 <span class="sd">    both single and multiple objectives as well as batching.</span>
 
 <span class="sd">    This acquisition function approximates the mutual information between the</span>
@@ -135,7 +135,7 @@
         <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Multi-objective predictive entropy search acquisition function.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Multi-objective predictive entropy search acquisition function.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted batched model with `M` number of outputs.</span>
@@ -196,7 +196,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_expectation_propagation</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_expectation_propagation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Perform expectation propagation to obtain the covariance factors that</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Perform expectation propagation to obtain the covariance factors that</span>
 <span class="sd">        depend on the Pareto sets.</span>
 
 <span class="sd">        The updates are performed in the natural parameter space. For a multivariate</span>
@@ -356,7 +356,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_omega_f_nat_cov</span> <span class="o">=</span> <span class="n">omega_f_nat_cov</span>
 
     <span class="k">def</span> <span class="nf">_compute_information_gain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate qMultiObjectivePredictiveEntropySearch on the candidate set `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qMultiObjectivePredictiveEntropySearch on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim</span>
@@ -503,7 +503,7 @@
 <div class="viewcode-block" id="qMultiObjectivePredictiveEntropySearch.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate qMultiObjectivePredictiveEntropySearch on the candidate set `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qMultiObjectivePredictiveEntropySearch on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim</span>
@@ -517,7 +517,7 @@
 
 
 <div class="viewcode-block" id="log_cdf_robust"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.log_cdf_robust">[docs]</a><span class="k">def</span> <span class="nf">log_cdf_robust</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Computes the logarithm of the normal cumulative density robustly. This uses</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the logarithm of the normal cumulative density robustly. This uses</span>
 <span class="sd">    the approximation log(1-z) ~ -z when z is small:</span>
 
 <span class="sd">    if x &gt; 5:</span>
@@ -548,7 +548,7 @@
     <span class="n">jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
     <span class="n">natural</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Initializes the natural predictive mean and covariance matrix. For a</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Initializes the natural predictive mean and covariance matrix. For a</span>
 <span class="sd">    multivariate normal distribution with mean mu and covariance Sigma, the natural</span>
 <span class="sd">    mean is Sigma^{-1} mu and the natural covariance is Sigma^{-1}.</span>
 
@@ -612,7 +612,7 @@
 <span class="k">def</span> <span class="nf">_get_omega_f_contribution</span><span class="p">(</span>
     <span class="n">mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">M</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Extract the mean vector and covariance matrix corresponding to the `2 x 2`</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Extract the mean vector and covariance matrix corresponding to the `2 x 2`</span>
 <span class="sd">    multivariate normal blocks in the objective model between the points in `X` and</span>
 <span class="sd">    the Pareto optimal set.</span>
 
@@ -671,7 +671,7 @@
 
 
 <span class="k">def</span> <span class="nf">_replace_pareto_diagonal</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">"""Replace the pareto diagonal with identity matricx.</span>
+<span class="w">    </span><span class="sd">"""Replace the pareto diagonal with identity matricx.</span>
 
 <span class="sd">    The Pareto diagonal of the omega factor shouldn't be updated because does not</span>
 <span class="sd">    contribute anything: `omega(x_p, x_p) = 1` for any pareto optimal input `x_p`.</span>
@@ -706,7 +706,7 @@
     <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Computes the new omega factors by matching the moments.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the new omega factors by matching the moments.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        mean_f: A `batch_shape x M x (N + P)`-dim Tensor containing the mean vector</span>
@@ -875,7 +875,7 @@
     <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Try to update the new omega factors by matching the moments. If the update</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Try to update the new omega factors by matching the moments. If the update</span>
 <span class="sd">    is not possible then this returns the initial omega factors.</span>
 
 <span class="sd">    Args:</span>
@@ -930,7 +930,7 @@
     <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">P</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Computes the new marginal by summing up all the natural factors.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the new marginal by summing up all the natural factors.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        pred_f_nat_mean: A `batch_shape x M x (N + P)`-dim Tensor containing the</span>
@@ -1001,7 +1001,7 @@
     <span class="n">new_factor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">damping_factor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Computes the damped updated for natural factor.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the damped updated for natural factor.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        old_factor: A `batch_shape x param_shape`-dim Tensor containing the old</span>
@@ -1030,7 +1030,7 @@
     <span class="n">damping_factor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">jitter</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Updates the damping factor whilst ensuring the covariance matrix is positive</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Updates the damping factor whilst ensuring the covariance matrix is positive</span>
 <span class="sd">    definite by trying a Cholesky decomposition.</span>
 
 <span class="sd">    Args:</span>
@@ -1098,7 +1098,7 @@
     <span class="n">iteration</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Set the damping factor to 0 once converged. Convergence is determined by the</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Set the damping factor to 0 once converged. Convergence is determined by the</span>
 <span class="sd">    relative change in the entries of the mean and covariance matrix.</span>
 
 <span class="sd">    Args:</span>
@@ -1140,7 +1140,7 @@
     <span class="n">omega_f_nat_cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">cached_omega_f_nat_cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Incorporate the cached Pareto updated factors in the forward call and</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Incorporate the cached Pareto updated factors in the forward call and</span>
 <span class="sd">    augment them with the previously computed factors.</span>
 
 <span class="sd">    Args:</span>
@@ -1189,7 +1189,7 @@
 
 
 <span class="k">def</span> <span class="nf">_compute_log_determinant</span><span class="p">(</span><span class="n">cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Computes the sum of the log determinants of a block diagonal covariance</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the sum of the log determinants of a block diagonal covariance</span>
 <span class="sd">    matrices averaged over the Pareto samples.</span>
 
 <span class="sd">    Args:</span>

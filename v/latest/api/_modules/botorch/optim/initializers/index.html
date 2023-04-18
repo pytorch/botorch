@@ -92,7 +92,7 @@
 <div class="viewcode-block" id="transform_constraints"><a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.transform_constraints">[docs]</a><span class="k">def</span> <span class="nf">transform_constraints</span><span class="p">(</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span> <span class="kc">None</span><span class="p">],</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-    <span class="sa">r</span><span class="sd">"""Transform constraints to sample from a d*q-dimensional space instead of a</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Transform constraints to sample from a d*q-dimensional space instead of a</span>
 <span class="sd">    d-dimensional state.</span>
 
 <span class="sd">    This function assumes that constraints are the same for each input batch,</span>
@@ -125,7 +125,7 @@
 <div class="viewcode-block" id="transform_intra_point_constraint"><a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.transform_intra_point_constraint">[docs]</a><span class="k">def</span> <span class="nf">transform_intra_point_constraint</span><span class="p">(</span>
     <span class="n">constraint</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-    <span class="sa">r</span><span class="sd">"""Transforms an intra-point/pointwise constraint from</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Transforms an intra-point/pointwise constraint from</span>
 <span class="sd">    d-dimensional space to a d*q-dimesional space.</span>
 
 <span class="sd">    Args:</span>
@@ -163,7 +163,7 @@
 <div class="viewcode-block" id="transform_inter_point_constraint"><a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.transform_inter_point_constraint">[docs]</a><span class="k">def</span> <span class="nf">transform_inter_point_constraint</span><span class="p">(</span>
     <span class="n">constraint</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Transforms an inter-point constraint from</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Transforms an inter-point constraint from</span>
 <span class="sd">    d-dimensional space to a d*q dimesional space.</span>
 
 <span class="sd">    Args:</span>
@@ -205,7 +205,7 @@
     <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Samples `n` q-baches from a polytope of dimension `d`.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Samples `n` q-baches from a polytope of dimension `d`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        n: Number of q-batches to sample.</span>
@@ -270,8 +270,9 @@
     <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">generator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Generate a batch of initial conditions for random-restart optimziation.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate a batch of initial conditions for random-restart optimziation.</span>
 
 <span class="sd">    TODO: Support t-batches of initial conditions.</span>
 
@@ -300,6 +301,9 @@
 <span class="sd">        equality constraints: A list of tuples (indices, coefficients, rhs),</span>
 <span class="sd">            with each tuple encoding an inequality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.</span>
+<span class="sd">        generator: Callable for generating samples that are then further</span>
+<span class="sd">            processed. It receives `n`, `q` and `seed` as arguments and</span>
+<span class="sd">            returns a tensor of shape `n x q x d`.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A `num_restarts x q x d` tensor of initial conditions.</span>
@@ -322,6 +326,11 @@
         <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
             <span class="s2">"Option 'sample_around_best' is not supported when equality"</span>
             <span class="s2">"constraints are present."</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">sample_around_best</span> <span class="ow">and</span> <span class="n">generator</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="s2">"Option 'sample_around_best' is not supported when custom "</span>
+            <span class="s2">"generator is be used."</span>
         <span class="p">)</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"seed"</span><span class="p">)</span>
     <span class="n">batch_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
@@ -353,7 +362,9 @@
     <span class="k">while</span> <span class="n">factor</span> <span class="o">&lt;</span> <span class="n">max_factor</span><span class="p">:</span>
         <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">ws</span><span class="p">:</span>
             <span class="n">n</span> <span class="o">=</span> <span class="n">raw_samples</span> <span class="o">*</span> <span class="n">factor</span>
-            <span class="k">if</span> <span class="n">inequality_constraints</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">equality_constraints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">generator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">generator</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">inequality_constraints</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">equality_constraints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">effective_dim</span> <span class="o">&lt;=</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
                     <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">draw_sobol_samples</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds_cpu</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
@@ -434,7 +445,7 @@
     <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Generate a batch of smart initializations for qKnowledgeGradient.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate a batch of smart initializations for qKnowledgeGradient.</span>
 
 <span class="sd">    This function generates initial conditions for optimizing one-shot KG using</span>
 <span class="sd">    the maximizer of the posterior objective. Intutively, the maximizer of the</span>
@@ -551,7 +562,7 @@
     <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Generate a batch of smart initializations for optimizing</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate a batch of smart initializations for optimizing</span>
 <span class="sd">    the value function of qKnowledgeGradient.</span>
 
 <span class="sd">    This function generates initial conditions for optimizing the inner problem of</span>
@@ -678,7 +689,7 @@
 
 
 <div class="viewcode-block" id="initialize_q_batch"><a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.initialize_q_batch">[docs]</a><span class="k">def</span> <span class="nf">initialize_q_batch</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Heuristic for selecting initial conditions for candidate generation.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Heuristic for selecting initial conditions for candidate generation.</span>
 
 <span class="sd">    This heuristic selects points from `X` (without replacement) with probability</span>
 <span class="sd">    proportional to `exp(eta * Z)`, where `Z = (Y - mean(Y)) / std(Y)` and `eta`</span>
@@ -755,7 +766,7 @@
 <div class="viewcode-block" id="initialize_q_batch_nonneg"><a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.initialize_q_batch_nonneg">[docs]</a><span class="k">def</span> <span class="nf">initialize_q_batch_nonneg</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Heuristic for selecting initial conditions for non-neg. acquisition functions.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Heuristic for selecting initial conditions for non-neg. acquisition functions.</span>
 
 <span class="sd">    This function is similar to `initialize_q_batch`, but designed specifically</span>
 <span class="sd">    for acquisition functions that are non-negative and possibly zero over</span>
@@ -833,7 +844,7 @@
     <span class="n">subset_sigma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-1</span><span class="p">,</span>
     <span class="n">prob_perturb</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Find best points and sample nearby points.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Find best points and sample nearby points.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        acq_function: The acquisition function.</span>
@@ -936,7 +947,7 @@
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">qmc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Sample points around `X`.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample points around `X`.</span>
 
 <span class="sd">    Sample perturbed points around `X` such that the added perturbations</span>
 <span class="sd">    are sampled from N(0, sigma^2 I) and truncated to be within [0,1]^d.</span>
@@ -988,7 +999,7 @@
     <span class="n">qmc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">prob_perturb</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Sample around `X` by perturbing a subset of the dimensions.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample around `X` by perturbing a subset of the dimensions.</span>
 
 <span class="sd">    By default, dimensions are perturbed with probability equal to</span>
 <span class="sd">    `min(20 / d, 1)`. As shown in [Regis]_, perturbing a small number</span>

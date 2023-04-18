@@ -46,7 +46,7 @@
 
 
 <div class="viewcode-block" id="SyntheticTestFunction"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.SyntheticTestFunction">[docs]</a><span class="k">class</span> <span class="nc">SyntheticTestFunction</span><span class="p">(</span><span class="n">BaseTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Base class for synthetic test functions."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for synthetic test functions."""</span>
 
     <span class="n">_optimal_value</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">_optimizers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -58,7 +58,7 @@
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
 <span class="sd">            negate: If True, negate the function.</span>
@@ -95,12 +95,12 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">optimal_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The global minimum (maximum if negate=True) of the function."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The global minimum (maximum if negate=True) of the function."""</span>
         <span class="k">return</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_optimal_value</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimal_value</span></div>
 
 
 <div class="viewcode-block" id="Ackley"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Ackley">[docs]</a><span class="k">class</span> <span class="nc">Ackley</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Ackley test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Ackley test function.</span>
 
 <span class="sd">    d-dimensional function (usually evaluated on `[-32.768, 32.768]^d`):</span>
 
@@ -121,7 +121,7 @@
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -160,7 +160,7 @@
 
 
 <div class="viewcode-block" id="Branin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Branin">[docs]</a><span class="k">class</span> <span class="nc">Branin</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Branin test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Branin test function.</span>
 
 <span class="sd">    Two-dimensional function (usually evaluated on `[-5, 10] x [0, 15]`):</span>
 
@@ -203,7 +203,7 @@
 
 
 <div class="viewcode-block" id="Cosine8"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Cosine8">[docs]</a><span class="k">class</span> <span class="nc">Cosine8</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Cosine Mixture test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Cosine Mixture test function.</span>
 
 <span class="sd">    8-dimensional function (usually evaluated on `[-1, 1]^8`):</span>
 
@@ -248,7 +248,7 @@
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -274,7 +274,7 @@
 
 
 <div class="viewcode-block" id="EggHolder"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.EggHolder">[docs]</a><span class="k">class</span> <span class="nc">EggHolder</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Eggholder test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Eggholder test function.</span>
 
 <span class="sd">    Two-dimensional function (usually evaluated on `[-512, 512]^2`):</span>
 
@@ -307,7 +307,7 @@
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -328,7 +328,7 @@
 
 
 <div class="viewcode-block" id="Hartmann"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Hartmann">[docs]</a><span class="k">class</span> <span class="nc">Hartmann</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Hartmann synthetic test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Hartmann synthetic test function.</span>
 
 <span class="sd">    Most commonly used is the six-dimensional version (typically evaluated on</span>
 <span class="sd">    `[0, 1]^6`):</span>
@@ -349,7 +349,7 @@
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -430,7 +430,7 @@
 
 
 <div class="viewcode-block" id="HolderTable"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.HolderTable">[docs]</a><span class="k">class</span> <span class="nc">HolderTable</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Holder Table synthetic test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Holder Table synthetic test function.</span>
 
 <span class="sd">    Two-dimensional function (typically evaluated on `[0, 10] x [0, 10]`):</span>
 
@@ -462,7 +462,7 @@
 
 
 <div class="viewcode-block" id="Levy"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Levy">[docs]</a><span class="k">class</span> <span class="nc">Levy</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Levy synthetic test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Levy synthetic test function.</span>
 
 <span class="sd">    d-dimensional function (usually evaluated on `[-10, 10]^d`):</span>
 
@@ -485,7 +485,7 @@
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -513,7 +513,7 @@
 
 
 <div class="viewcode-block" id="Michalewicz"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Michalewicz">[docs]</a><span class="k">class</span> <span class="nc">Michalewicz</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Michalewicz synthetic test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Michalewicz synthetic test function.</span>
 
 <span class="sd">    d-dim function (usually evaluated on hypercube [0, pi]^d):</span>
 
@@ -527,7 +527,7 @@
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -573,7 +573,7 @@
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -609,7 +609,7 @@
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -629,7 +629,7 @@
 
 
 <div class="viewcode-block" id="Rosenbrock"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Rosenbrock">[docs]</a><span class="k">class</span> <span class="nc">Rosenbrock</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Rosenbrock synthetic test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Rosenbrock synthetic test function.</span>
 
 <span class="sd">    d-dimensional function (usually evaluated on `[-5, 10]^d`):</span>
 
@@ -648,7 +648,7 @@
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -669,7 +669,7 @@
 
 
 <div class="viewcode-block" id="Shekel"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Shekel">[docs]</a><span class="k">class</span> <span class="nc">Shekel</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Shekel synthtetic test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Shekel synthtetic test function.</span>
 
 <span class="sd">    4-dimensional function (usually evaluated on `[0, 10]^4`):</span>
 
@@ -690,7 +690,7 @@
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            m: Defaults to 10.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -743,7 +743,7 @@
 
 
 <div class="viewcode-block" id="StyblinskiTang"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.StyblinskiTang">[docs]</a><span class="k">class</span> <span class="nc">StyblinskiTang</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Styblinski-Tang synthtetic test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Styblinski-Tang synthtetic test function.</span>
 
 <span class="sd">    d-dimensional function (usually evaluated on the hypercube `[-5, 5]^d`):</span>
 
@@ -759,7 +759,7 @@
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>

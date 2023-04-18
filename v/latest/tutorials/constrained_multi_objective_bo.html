@@ -224,7 +224,7 @@ To speed up integration over the function values at the previously evaluated des
 
 
 <span class="k">def</span> <span class="nf">optimize_qnehvi_and_get_observation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">train_con</span><span class="p">,</span> <span class="n">sampler</span><span class="p">):</span>
-    <span class="sd">"""Optimizes the qNEHVI acquisition function, and returns a new candidate and observation."""</span>
+<span class="w">    </span><span class="sd">"""Optimizes the qNEHVI acquisition function, and returns a new candidate and observation."""</span>
     <span class="n">train_x</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
     <span class="n">acq_func</span> <span class="o">=</span> <span class="n">qNoisyExpectedHypervolumeImprovement</span><span class="p">(</span>
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
@@ -274,7 +274,7 @@ To speed up integration over the function values at the previously evaluated des
 
 
 <span class="k">def</span> <span class="nf">get_constrained_mc_objective</span><span class="p">(</span><span class="n">train_obj</span><span class="p">,</span> <span class="n">train_con</span><span class="p">,</span> <span class="n">scalarization</span><span class="p">):</span>
-    <span class="sd">"""Initialize a ConstrainedMCObjective for qParEGO"""</span>
+<span class="w">    </span><span class="sd">"""Initialize a ConstrainedMCObjective for qParEGO"""</span>
     <span class="n">n_obj</span> <span class="o">=</span> <span class="n">train_obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="c1"># assume first outcomes of the model are the objectives, the rest constraints</span>
     <span class="k">def</span> <span class="nf">objective</span><span class="p">(</span><span class="n">Z</span><span class="p">):</span>
@@ -308,7 +308,7 @@ To speed up integration over the function values at the previously evaluated des
 
 
 <span class="k">def</span> <span class="nf">optimize_qparego_and_get_observation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">train_con</span><span class="p">,</span> <span class="n">sampler</span><span class="p">):</span>
-    <span class="sd">"""Samples a set of random weights for each candidate in the batch, performs sequential greedy optimization</span>
+<span class="w">    </span><span class="sd">"""Samples a set of random weights for each candidate in the batch, performs sequential greedy optimization</span>
 <span class="sd">    of the qParEGO acquisition function, and returns a new candidate and observation."""</span>
     <span class="n">acq_func_list</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">BATCH_SIZE</span><span class="p">):</span>
@@ -355,8 +355,8 @@ To speed up integration over the function values at the previously evaluated des
 <h3 id="Perform-Bayesian-Optimization-loop-with-$q$EHVI-and-$q$ParEGO">Perform Bayesian Optimization loop with $q$EHVI and $q$ParEGO<a class="anchor-link" href="#Perform-Bayesian-Optimization-loop-with-$q$EHVI-and-$q$ParEGO">¶</a></h3><p>The Bayesian optimization "loop" for a batch size of $q$ simply iterates the following steps:</p>
 <ol>
 <li>given a surrogate model, choose a batch of points $\{x_1, x_2, \ldots x_q\}$</li>
-<li>observe $f(x)$ for each $x$ in the batch </li>
-<li>update the surrogate model. </li>
+<li>observe $f(x)$ for each $x$ in the batch</li>
+<li>update the surrogate model.</li>
 </ol>
 <p>Just for illustration purposes, we run one trial with <code>N_BATCH=20</code> rounds of optimization. The acquisition function is approximated using <code>MC_SAMPLES=128</code> samples.</p>
 <p><em>Note</em>: Running this may take a little while.</p>

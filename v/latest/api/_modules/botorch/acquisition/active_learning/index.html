@@ -64,7 +64,7 @@
 
 
 <div class="viewcode-block" id="qNegIntegratedPosteriorVariance"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.active_learning.qNegIntegratedPosteriorVariance">[docs]</a><span class="k">class</span> <span class="nc">qNegIntegratedPosteriorVariance</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Batch Integrated Negative Posterior Variance for Active Learning.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Batch Integrated Negative Posterior Variance for Active Learning.</span>
 
 <span class="sd">    This acquisition function quantifies the (negative) integrated posterior variance</span>
 <span class="sd">    (excluding observation noise, computed using MC integration) of the model.</span>
@@ -84,7 +84,7 @@
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""q-Integrated Negative Posterior Variance.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Integrated Negative Posterior Variance.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
@@ -152,7 +152,7 @@
 
 
 <div class="viewcode-block" id="PairwiseMCPosteriorVariance"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.active_learning.PairwiseMCPosteriorVariance">[docs]</a><span class="k">class</span> <span class="nc">PairwiseMCPosteriorVariance</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Variance of difference for Active Learning</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Variance of difference for Active Learning</span>
 
 <span class="sd">    Given a model and an objective, calculate the posterior sample variance</span>
 <span class="sd">    of the objective on the difference of pairs of points. See more implementation</span>
@@ -167,7 +167,7 @@
         <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
         <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Pairwise Monte Carlo Posterior Variance</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Pairwise Monte Carlo Posterior Variance</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
@@ -182,7 +182,7 @@
 
 <div class="viewcode-block" id="PairwiseMCPosteriorVariance.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.active_learning.PairwiseMCPosteriorVariance.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate PairwiseMCPosteriorVariance on the candidate set `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate PairwiseMCPosteriorVariance on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_size x q x d`-dim Tensor. q should be a multiple of 2.</span>

@@ -211,7 +211,8 @@ model_bridge = TorchModelBridge(
     # And additional optional arguments.
 )
 # To generate a trial
-trial = model_bridge.gen(1)</code></pre>
+trial = model_bridge.gen(1)
+</code></pre>
 <p>For Modular BoTorch interface, we can combine the creation of the <code>BoTorchModel</code> and the <code>TorchModelBridge</code> into a single step as follows:</p>
 <pre><code>from ax.modelbridge.registry import Models
 model_bridge = Models.BOTORCH_MODULAR(
@@ -222,7 +223,8 @@ model_bridge = Models.BOTORCH_MODULAR(
     # botorch_acqf_class=qNoisyExpectedImprovement,  
 )
 # To generate a trial
-trial = model_bridge.gen(1)</code></pre>
+trial = model_bridge.gen(1)
+</code></pre>
 </div>
 </div>
 </div>
@@ -998,7 +1000,7 @@ Corresponding mean: {'branin': 0.39199786406546977}, covariance: {'branin': {'br
 <ul>
 <li>We generate a <code>Trial</code> using a generator run, e.g., <code>Sobol</code> below. A <code>Trial</code> specifies relevant metadata as well as the parameters to be evaluated. At this point, the <code>Trial</code> is at the <code>CANDIDATE</code> stage.</li>
 <li>We run the <code>Trial</code> using <code>Trial.run()</code>. In our example, this serves to mark the <code>Trial</code> as <code>RUNNING</code>. In an advanced application, this can be used to dispatch the <code>Trial</code> for evaluation on a remote server.</li>
-<li>Once the <code>Trial</code> is done running, we mark it as <code>COMPLETED</code>. This tells the <code>Experiment</code> that it can fetch the <code>Trial</code> data. </li>
+<li>Once the <code>Trial</code> is done running, we mark it as <code>COMPLETED</code>. This tells the <code>Experiment</code> that it can fetch the <code>Trial</code> data.</li>
 </ul>
 <p>A <code>Trial</code> supports evaluation of a single parameterization. For parallel evaluations, see <a href="https://ax.dev/docs/core.html#trial-vs-batch-trial"><code>BatchTrial</code></a>.</p>
 </div>

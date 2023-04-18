@@ -59,7 +59,7 @@
         <span class="n">cross_covariance_matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">],</span>
         <span class="n">validate_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Unified Skew Normal distribution of `Y | a &lt; X &lt; b` for jointly Gaussian</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Unified Skew Normal distribution of `Y | a &lt; X &lt; b` for jointly Gaussian</span>
 <span class="sd">        random vectors `X ∈ R^m` and `Y ∈ R^n`.</span>
 
 <span class="sd">        Batch shapes `trunc.batch_shape` and `gauss.batch_shape` must be broadcastable.</span>
@@ -118,7 +118,7 @@
                 <span class="k">raise</span> <span class="n">e</span>
 
 <div class="viewcode-block" id="UnifiedSkewNormal.log_prob"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal.log_prob">[docs]</a>    <span class="k">def</span> <span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Computes the log probability `ln p(Y = value | a &lt; X &lt; b)`."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Computes the log probability `ln p(Y = value | a &lt; X &lt; b)`."""</span>
         <span class="n">event_ndim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">event_shape</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="n">event_ndim</span> <span class="ow">or</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">event_ndim</span><span class="p">:]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_shape</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -140,7 +140,7 @@
         <span class="k">return</span> <span class="n">log_probs</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">pre_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Computes the log probability `ln p(Y = value | a &lt; X &lt; b)`."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Computes the log probability `ln p(Y = value | a &lt; X &lt; b)`."""</span>
         <span class="c1"># Center by subtracting E[X | Y = value] from `bounds`.</span>
         <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">trunc</span><span class="o">.</span><span class="n">bounds</span>
@@ -155,7 +155,7 @@
         <span class="k">return</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gauss</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">trunc</span><span class="o">.</span><span class="n">log_partition</span>
 
 <div class="viewcode-block" id="UnifiedSkewNormal.rsample"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal.rsample">[docs]</a>    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># noqa: B008</span>
-        <span class="sa">r</span><span class="sd">"""Draw samples from the Unified Skew Normal.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw samples from the Unified Skew Normal.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            sample_shape: The shape of the samples.</span>
@@ -234,7 +234,7 @@
 
     <span class="nd">@lazy_property</span>
     <span class="k">def</span> <span class="nf">_orthogonalized_gauss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Distribution of `Y ⊥ X = Y - E[Y | X]`, where `Y ~ gauss` and `X ~ untrunc`</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Distribution of `Y ⊥ X = Y - E[Y | X]`, where `Y ~ gauss` and `X ~ untrunc`</span>
 <span class="sd">        is the untruncated version of `Z ~ trunc`."""</span>
         <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gauss</span><span class="o">.</span><span class="n">loc</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"loc"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gauss</span><span class="o">.</span><span class="n">loc</span><span class="p">)}</span>
@@ -249,7 +249,7 @@
 
     <span class="nd">@lazy_property</span>
     <span class="k">def</span> <span class="nf">_iLyy_Kyx</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Cov(Y, Y)^{-1/2}Cov(Y, X)`."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Cov(Y, Y)^{-1/2}Cov(Y, X)`."""</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">gauss</span><span class="o">.</span><span class="n">scale_tril</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cross_covariance_matrix</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">),</span>
@@ -258,7 +258,7 @@
 
     <span class="nd">@lazy_property</span>
     <span class="k">def</span> <span class="nf">_iKyy_Kyx</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Cov(Y, Y)^{-1}Cov(Y, X)`."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Cov(Y, Y)^{-1}Cov(Y, X)`."""</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">gauss</span><span class="o">.</span><span class="n">scale_tril</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_iLyy_Kyx</span><span class="p">,</span>
@@ -267,14 +267,14 @@
 
     <span class="nd">@lazy_property</span>
     <span class="k">def</span> <span class="nf">_iLxx_Kxy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Cov(X, X)^{-1/2}Cov(X, Y)`."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Cov(X, X)^{-1/2}Cov(X, Y)`."""</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">trunc</span><span class="o">.</span><span class="n">scale_tril</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cross_covariance_matrix</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span>
 
     <span class="nd">@lazy_property</span>
     <span class="k">def</span> <span class="nf">_iKxx_Kxy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Cov(X, X)^{-1}Cov(X, Y)`."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Cov(X, X)^{-1}Cov(X, Y)`."""</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">trunc</span><span class="o">.</span><span class="n">scale_tril</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_iLxx_Kxy</span><span class="p">,</span>
@@ -283,7 +283,7 @@
 
     <span class="nd">@lazy_property</span>
     <span class="k">def</span> <span class="nf">_K_schur_Kyy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Cov(X, X) - Cov(X, Y)Cov(Y, Y)^{-1} Cov(Y, X)`."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Cov(X, X) - Cov(X, Y)Cov(Y, Y)^{-1} Cov(Y, X)`."""</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iLyy_Kyx</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">trunc</span><span class="o">.</span><span class="n">covariance_matrix</span> <span class="o">-</span> <span class="n">beta</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">@</span> <span class="n">beta</span></div>
 </pre></div>

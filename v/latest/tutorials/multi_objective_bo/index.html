@@ -223,7 +223,7 @@
 
 
 <span class="k">def</span> <span class="nf">optimize_qehvi_and_get_observation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">sampler</span><span class="p">):</span>
-    <span class="sd">"""Optimizes the qEHVI acquisition function, and returns a new candidate and observation."""</span>
+<span class="w">    </span><span class="sd">"""Optimizes the qEHVI acquisition function, and returns a new candidate and observation."""</span>
     <span class="c1"># partition non-dominated space into disjoint rectangles</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
         <span class="n">pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">normalize</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">bounds</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span>
@@ -275,7 +275,7 @@ To speed up integration over the function values at the previously evaluated des
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">optimize_qnehvi_and_get_observation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">sampler</span><span class="p">):</span>
-    <span class="sd">"""Optimizes the qEHVI acquisition function, and returns a new candidate and observation."""</span>
+<span class="w">    </span><span class="sd">"""Optimizes the qEHVI acquisition function, and returns a new candidate and observation."""</span>
     <span class="c1"># partition non-dominated space into disjoint rectangles</span>
     <span class="n">acq_func</span> <span class="o">=</span> <span class="n">qNoisyExpectedHypervolumeImprovement</span><span class="p">(</span>
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
@@ -322,7 +322,7 @@ To speed up integration over the function values at the previously evaluated des
 
 
 <span class="k">def</span> <span class="nf">optimize_qnparego_and_get_observation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">sampler</span><span class="p">):</span>
-    <span class="sd">"""Samples a set of random weights for each candidate in the batch, performs sequential greedy optimization</span>
+<span class="w">    </span><span class="sd">"""Samples a set of random weights for each candidate in the batch, performs sequential greedy optimization</span>
 <span class="sd">    of the qNParEGO acquisition function, and returns a new candidate and observation."""</span>
     <span class="n">train_x</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
@@ -365,8 +365,8 @@ To speed up integration over the function values at the previously evaluated des
 <h3 id="Perform-Bayesian-Optimization-loop-with-$q$NEHVI,-$q$EHVI,-and-$q$NParEGO">Perform Bayesian Optimization loop with $q$NEHVI, $q$EHVI, and $q$NParEGO<a class="anchor-link" href="#Perform-Bayesian-Optimization-loop-with-$q$NEHVI,-$q$EHVI,-and-$q$NParEGO">¶</a></h3><p>The Bayesian optimization "loop" for a batch size of $q$ simply iterates the following steps:</p>
 <ol>
 <li>given a surrogate model, choose a batch of points $\{x_1, x_2, \ldots x_q\}$</li>
-<li>observe $f(x)$ for each $x$ in the batch </li>
-<li>update the surrogate model. </li>
+<li>observe $f(x)$ for each $x$ in the batch</li>
+<li>update the surrogate model.</li>
 </ol>
 <p>Just for illustration purposes, we run one trial with <code>N_BATCH=20</code> rounds of optimization. The acquisition function is approximated using <code>MC_SAMPLES=128</code> samples.</p>
 <p><em>Note</em>: Running this may take a little while.</p>

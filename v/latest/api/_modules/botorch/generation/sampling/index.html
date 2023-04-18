@@ -65,7 +65,7 @@
 
 
 <span class="k">class</span> <span class="nc">SamplingStrategy</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Abstract base class for sampling-based generation strategies.</span>
 
 <span class="sd">    :meta private:</span>
@@ -73,7 +73,7 @@
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample according to the SamplingStrategy.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample according to the SamplingStrategy.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x N x d`-dim Tensor from which to sample (in the `N`</span>
@@ -90,7 +90,7 @@
 
 
 <div class="viewcode-block" id="MaxPosteriorSampling"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.MaxPosteriorSampling">[docs]</a><span class="k">class</span> <span class="nc">MaxPosteriorSampling</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Sample from a set of points according to their max posterior value.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample from a set of points according to their max posterior value.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; MPS = MaxPosteriorSampling(model)  # model w/ feature dim d=3</span>
@@ -105,7 +105,7 @@
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">replacement</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Constructor for the SamplingStrategy base class.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Constructor for the SamplingStrategy base class.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
@@ -138,7 +138,7 @@
 <div class="viewcode-block" id="MaxPosteriorSampling.forward"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.MaxPosteriorSampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample from the model posterior.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the model posterior.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x N x d`-dim Tensor from which to sample (in the `N`</span>
@@ -203,7 +203,7 @@
 
 
 <div class="viewcode-block" id="BoltzmannSampling"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.BoltzmannSampling">[docs]</a><span class="k">class</span> <span class="nc">BoltzmannSampling</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Sample from a set of points according to a tempered acquisition value.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample from a set of points according to a tempered acquisition value.</span>
 
 <span class="sd">    Given an acquisition function `acq_func`, this sampling strategies draws</span>
 <span class="sd">    samples from a `batch_shape x N x d`-dim tensor `X` according to a multinomial</span>
@@ -226,7 +226,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">acq_func</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">replacement</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Boltzmann Acquisition Value Sampling.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Boltzmann Acquisition Value Sampling.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            acq_func: The acquisition function; to be evaluated in batch at the</span>
@@ -241,7 +241,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">replacement</span> <span class="o">=</span> <span class="n">replacement</span>
 
 <div class="viewcode-block" id="BoltzmannSampling.forward"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.BoltzmannSampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample from a tempered value of the acquisition function value.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from a tempered value of the acquisition function value.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x N x d`-dim Tensor from which to sample (in the `N`</span>
@@ -270,7 +270,7 @@
 
 
 <div class="viewcode-block" id="ConstrainedMaxPosteriorSampling"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.ConstrainedMaxPosteriorSampling">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedMaxPosteriorSampling</span><span class="p">(</span><span class="n">MaxPosteriorSampling</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Sample from a set of points according to</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample from a set of points according to</span>
 <span class="sd">    their max posterior value,</span>
 <span class="sd">    which also likely meet a set of constraints</span>
 <span class="sd">    c1(x) &lt;= 0, c2(x) &lt;= 0, ..., cm(x) &lt;= 0</span>
@@ -298,7 +298,7 @@
         <span class="n">replacement</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">minimize_constraints_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Constructor for the SamplingStrategy base class.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Constructor for the SamplingStrategy base class.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
@@ -333,7 +333,7 @@
 <div class="viewcode-block" id="ConstrainedMaxPosteriorSampling.forward"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.ConstrainedMaxPosteriorSampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample from the model posterior.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the model posterior.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x N x d`-dim Tensor</span>

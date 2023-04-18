@@ -253,7 +253,7 @@
 
 
 <span class="k">def</span> <span class="nf">optimize_mfkg_and_get_observation</span><span class="p">(</span><span class="n">mfkg_acqf</span><span class="p">):</span>
-    <span class="sd">"""Optimizes MFKG and returns a new candidate, observation, and cost."""</span>
+<span class="w">    </span><span class="sd">"""Optimizes MFKG and returns a new candidate, observation, and cost."""</span>
 
     <span class="n">X_init</span> <span class="o">=</span> <span class="n">gen_one_shot_kg_initial_conditions</span><span class="p">(</span>
         <span class="n">acq_function</span><span class="o">=</span><span class="n">mfkg_acqf</span><span class="p">,</span>
@@ -520,7 +520,7 @@ total cost: 121.25572809899545
 
 
 <span class="k">def</span> <span class="nf">optimize_ei_and_get_observation</span><span class="p">(</span><span class="n">ei_acqf</span><span class="p">):</span>
-    <span class="sd">"""Optimizes EI and returns a new candidate, observation, and cost."""</span>
+<span class="w">    </span><span class="sd">"""Optimizes EI and returns a new candidate, observation, and cost."""</span>
 
     <span class="n">candidates</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
         <span class="n">acq_function</span><span class="o">=</span><span class="n">ei_acqf</span><span class="p">,</span>

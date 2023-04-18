@@ -47,14 +47,14 @@
 
 
 <span class="k">class</span> <span class="nc">PairwiseLikelihood</span><span class="p">(</span><span class="n">Likelihood</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sd">"""</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Pairwise likelihood base class for pairwise preference GP (e.g., PairwiseGP).</span>
 
 <span class="sd">    :meta private:</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_plate_nesting</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="sd">"""</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initialized like a `gpytorch.likelihoods.Likelihood`.</span>
 
 <span class="sd">        Args:</span>
@@ -63,7 +63,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">max_plate_nesting</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bernoulli</span><span class="p">:</span>
-        <span class="sd">"""Given the difference in (estimated) utility util_diff = f(v) - f(u),</span>
+<span class="w">        </span><span class="sd">"""Given the difference in (estimated) utility util_diff = f(v) - f(u),</span>
 <span class="sd">        return a Bernoulli distribution object representing the likelihood of</span>
 <span class="sd">        the user prefer v over u.</span>
 
@@ -73,7 +73,7 @@
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">p</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""Given the difference in (estimated) utility util_diff = f(v) - f(u),</span>
+<span class="w">        </span><span class="sd">"""Given the difference in (estimated) utility util_diff = f(v) - f(u),</span>
 <span class="sd">        return the probability of the user prefer v over u.</span>
 
 <span class="sd">        Args:</span>
@@ -85,11 +85,11 @@
 <span class="sd">        """</span>
 
     <span class="k">def</span> <span class="nf">log_p</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""return the log of p"""</span>
+<span class="w">        </span><span class="sd">"""return the log of p"""</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">(</span><span class="n">utility</span><span class="o">=</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">negative_log_gradient_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""Calculate the sum of negative log gradient with respect to each item's latent</span>
+<span class="w">        </span><span class="sd">"""Calculate the sum of negative log gradient with respect to each item's latent</span>
 <span class="sd">            utility values. Useful for models using laplace approximation.</span>
 
 <span class="sd">        Args:</span>
@@ -106,7 +106,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="k">def</span> <span class="nf">negative_log_hessian_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""Calculate the sum of negative log hessian with respect to each item's latent</span>
+<span class="w">        </span><span class="sd">"""Calculate the sum of negative log hessian with respect to each item's latent</span>
 <span class="sd">            utility values. Useful for models using laplace approximation.</span>
 
 <span class="sd">        Args:</span>
@@ -124,7 +124,7 @@
 
 
 <div class="viewcode-block" id="PairwiseProbitLikelihood"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseProbitLikelihood">[docs]</a><span class="k">class</span> <span class="nc">PairwiseProbitLikelihood</span><span class="p">(</span><span class="n">PairwiseLikelihood</span><span class="p">):</span>
-    <span class="sd">"""Pairwise likelihood using probit function</span>
+<span class="w">    </span><span class="sd">"""Pairwise likelihood using probit function</span>
 
 <span class="sd">    Given two items v and u with utilities f(v) and f(u), the probability that we</span>
 <span class="sd">    prefer v over u with probability std_normal_cdf((f(v) - f(u))/sqrt(2)). Note</span>
@@ -136,7 +136,7 @@
     <span class="n">_zlim</span> <span class="o">=</span> <span class="mi">3</span>
 
     <span class="k">def</span> <span class="nf">_calc_z</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""Calculate the z score given estimated utility values and</span>
+<span class="w">        </span><span class="sd">"""Calculate the z score given estimated utility values and</span>
 <span class="sd">        the comparison matrix D.</span>
 <span class="sd">        """</span>
         <span class="n">scaled_util</span> <span class="o">=</span> <span class="p">(</span><span class="n">utility</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
@@ -145,7 +145,7 @@
         <span class="k">return</span> <span class="n">z</span>
 
     <span class="k">def</span> <span class="nf">_calc_z_derived</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sd">"""Calculate auxiliary statistics derived from z, including log pdf,</span>
+<span class="w">        </span><span class="sd">"""Calculate auxiliary statistics derived from z, including log pdf,</span>
 <span class="sd">        log cdf, and the hazard function (pdf divided by cdf)"""</span>
         <span class="n">std_norm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">normal</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
             <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
@@ -195,7 +195,7 @@
 
 
 <div class="viewcode-block" id="PairwiseLogitLikelihood"><a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.pairwise.PairwiseLogitLikelihood">[docs]</a><span class="k">class</span> <span class="nc">PairwiseLogitLikelihood</span><span class="p">(</span><span class="n">PairwiseLikelihood</span><span class="p">):</span>
-    <span class="sd">"""Pairwise likelihood using logistic (i.e., sigmoid) function</span>
+<span class="w">    </span><span class="sd">"""Pairwise likelihood using logistic (i.e., sigmoid) function</span>
 
 <span class="sd">    Given two items v and u with utilities f(v) and f(u), the probability that we</span>
 <span class="sd">    prefer v over u with probability sigmoid(f(v) - f(u)). Note</span>

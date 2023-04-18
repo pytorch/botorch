@@ -184,7 +184,7 @@ In doing so, we will also pass in the <code>InputPerturbation</code>. We will re
 
 
 <span class="k">def</span> <span class="nf">train_model</span><span class="p">(</span><span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SingleTaskGP</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Returns a `SingleTaskGP` model trained on the inputs"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Returns a `SingleTaskGP` model trained on the inputs"""</span>
     <span class="n">intf</span> <span class="o">=</span> <span class="n">InputPerturbation</span><span class="p">(</span>
         <span class="n">perturbation_set</span><span class="o">=</span><span class="n">draw_sobol_normal_samples</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">N_W</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span> <span class="o">*</span> <span class="n">STD_DEV</span><span class="p">,</span>
         <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
@@ -219,7 +219,7 @@ In doing so, we will also pass in the <code>InputPerturbation</code>. We will re
 
 
 <span class="k">def</span> <span class="nf">optimize_acqf_and_get_observation</span><span class="p">():</span>
-    <span class="sa">r</span><span class="sd">"""Optimizes the acquisition function, and returns a new candidate and observation."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Optimizes the acquisition function, and returns a new candidate and observation."""</span>
     <span class="n">acqf</span> <span class="o">=</span> <span class="n">qNoisyExpectedImprovement</span><span class="p">(</span>
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="n">X_baseline</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
@@ -264,7 +264,7 @@ In doing so, we will also pass in the <code>InputPerturbation</code>. We will re
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
 
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_ITERATIONS</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Starting iteration </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">, total time: </span><span class="si">{</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> seconds."</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Starting iteration </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">, total time: </span><span class="si">{</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> seconds."</span><span class="p">)</span>
     <span class="c1"># optimize the acquisition function and get the observations</span>
     <span class="n">candidate</span><span class="p">,</span> <span class="n">observations</span> <span class="o">=</span> <span class="n">optimize_acqf_and_get_observation</span><span class="p">()</span>
 

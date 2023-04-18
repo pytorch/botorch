@@ -57,7 +57,7 @@
 
 
 <div class="viewcode-block" id="supports_cache_root"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cached_cholesky.supports_cache_root">[docs]</a><span class="k">def</span> <span class="nf">supports_cache_root</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Checks if a model supports the cache_root functionality.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Checks if a model supports the cache_root functionality.</span>
 <span class="sd">    The two criteria are that the model is not multi-task and the model</span>
 <span class="sd">    produces a GPyTorchPosterior.</span>
 <span class="sd">    """</span>
@@ -74,8 +74,18 @@
     <span class="k">return</span> <span class="kc">True</span></div>
 
 
+<span class="k">def</span> <span class="nf">_get_cache_root_not_supported_message</span><span class="p">(</span><span class="n">model_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"`cache_root` is only supported for GPyTorchModels that "</span>
+        <span class="s2">"are not MultiTask models and don't produce a "</span>
+        <span class="sa">f</span><span class="s2">"TransformedPosterior. Got a model of type </span><span class="si">{</span><span class="n">model_cls</span><span class="si">}</span><span class="s2">. Setting "</span>
+        <span class="s2">"`cache_root = False`."</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">msg</span>
+
+
 <span class="k">class</span> <span class="nc">CachedCholeskyMCAcquisitionFunction</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract class for acquisition functions using a cached Cholesky.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract class for acquisition functions using a cached Cholesky.</span>
 
 <span class="sd">    Specifically, this is for acquisition functions that require sampling from</span>
 <span class="sd">    the posterior P(f(X_baseline, X) | D). The Cholesky of the posterior</span>
@@ -89,7 +99,7 @@
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Set class attributes and perform compatibility checks.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Set class attributes and perform compatibility checks.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A model.</span>
@@ -98,10 +108,7 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">cache_root</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">supports_cache_root</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="s2">"`cache_root` is only supported for GPyTorchModels (with "</span>
-                <span class="s2">"the exception of MultiTask models &amp; models producing a "</span>
-                <span class="sa">f</span><span class="s2">"TransformedPosterior). Got model=</span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2">. Setting "</span>
-                <span class="s2">"`cache_root = False"</span><span class="p">,</span>
+                <span class="n">_get_cache_root_not_supported_message</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)),</span>
                 <span class="ne">RuntimeWarning</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">cache_root</span> <span class="o">=</span> <span class="kc">False</span>
@@ -111,7 +118,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Cache Cholesky of the posterior covariance over f(X_baseline).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Cache Cholesky of the posterior covariance over f(X_baseline).</span>
 
 <span class="sd">        Because `LinearOperator.root_decomposition` is decorated with LinearOperator's</span>
 <span class="sd">        @cached decorator, this function is doing a lot implicitly:</span>
@@ -136,7 +143,7 @@
         <span class="k">return</span> <span class="n">lazy_covar_root</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_get_f_X_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">q_in</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Get posterior samples at the `q_in` new points from the joint posterior.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Get posterior samples at the `q_in` new points from the joint posterior.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: The joint posterior is over (X_baseline, X).</span>
@@ -185,7 +192,7 @@
         <span class="n">q_in</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Update the sampler to use the original base samples for X_baseline.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Update the sampler to use the original base samples for X_baseline.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            q_in: The effective input batch size. This is typically equal to the</span>

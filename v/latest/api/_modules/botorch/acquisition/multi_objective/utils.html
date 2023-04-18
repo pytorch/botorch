@@ -70,7 +70,7 @@
 
 
 <div class="viewcode-block" id="get_default_partitioning_alpha"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.utils.get_default_partitioning_alpha">[docs]</a><span class="k">def</span> <span class="nf">get_default_partitioning_alpha</span><span class="p">(</span><span class="n">num_objectives</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Determines an approximation level based on the number of objectives.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Determines an approximation level based on the number of objectives.</span>
 
 <span class="sd">    If `alpha` is 0, FastNondominatedPartitioning should be used. Otherwise,</span>
 <span class="sd">    an approximate NondominatedPartitioning should be used with approximation</span>
@@ -99,7 +99,7 @@
     <span class="n">max_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
     <span class="n">marginalize_dim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Prune points from an input tensor that are unlikely to be pareto optimal.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Prune points from an input tensor that are unlikely to be pareto optimal.</span>
 
 <span class="sd">    Given a model, an objective, and an input tensor `X`, this function returns</span>
 <span class="sd">    the subset of points in `X` that have some probability of being pareto</span>
@@ -197,7 +197,7 @@
     <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">num_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Computes the box decomposition associated with some sampled optimal</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the box decomposition associated with some sampled optimal</span>
 <span class="sd">    objectives. This also supports the single-objective and constrained optimization</span>
 <span class="sd">    setting. An objective `y` is feasible if `y &lt;= 0`.</span>
 
@@ -300,7 +300,7 @@
     <span class="n">pop_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span>
     <span class="n">max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Optimize a function via random search.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Optimize a function via random search.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        model: The model.</span>
@@ -354,7 +354,7 @@
     <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Compute a collection of optimal inputs and outputs from samples of a Gaussian</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Compute a collection of optimal inputs and outputs from samples of a Gaussian</span>
 <span class="sd">    Process (GP).</span>
 
 <span class="sd">    Steps:</span>

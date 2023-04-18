@@ -121,7 +121,7 @@ print(gp.median_lengthscale.detach())
 # In the next cell we show how to make predictions with the SAAS model. You compute the mean
 # and variance for test points just like for any other BoTorch posteriors. Note that the mean 
 # and posterior will have an extra batch dimension at -3 that corresponds to the number of MCMC
-# samples (which is 16 in this tutorial).
+# samples (which is 8 in this tutorial).
 
 # In[7]:
 

@@ -45,7 +45,7 @@
 
 
 <div class="viewcode-block" id="AugmentedBranin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_fidelity.AugmentedBranin">[docs]</a><span class="k">class</span> <span class="nc">AugmentedBranin</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Augmented Branin test function for multi-fidelity optimization.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Augmented Branin test function for multi-fidelity optimization.</span>
 
 <span class="sd">    3-dimensional function with domain `[-5, 10] x [0, 15] * [0,1]`, where</span>
 <span class="sd">    the last dimension of is the fidelity parameter:</span>
@@ -81,7 +81,7 @@
 
 
 <div class="viewcode-block" id="AugmentedHartmann"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_fidelity.AugmentedHartmann">[docs]</a><span class="k">class</span> <span class="nc">AugmentedHartmann</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Augmented Hartmann synthetic test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Augmented Hartmann synthetic test function.</span>
 
 <span class="sd">    7-dimensional function (typically evaluated on `[0, 1]^7`), where the last</span>
 <span class="sd">    dimension is the fidelity parameter.</span>
@@ -102,7 +102,7 @@
     <span class="n">_check_grad_at_opt</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
 <span class="sd">            negate: If True, negate the function.</span>
@@ -138,7 +138,7 @@
 
 
 <div class="viewcode-block" id="AugmentedRosenbrock"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_fidelity.AugmentedRosenbrock">[docs]</a><span class="k">class</span> <span class="nc">AugmentedRosenbrock</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Augmented Rosenbrock synthetic test function for multi-fidelity optimization.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Augmented Rosenbrock synthetic test function for multi-fidelity optimization.</span>
 
 <span class="sd">    d-dimensional function (usually evaluated on `[-5, 10]^(d-2) * [0, 1]^2`),</span>
 <span class="sd">    where the last two dimensions are the fidelity parameters:</span>
@@ -155,7 +155,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension. Must be at least 3.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>

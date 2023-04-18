@@ -47,7 +47,7 @@
 
 
 <div class="viewcode-block" id="FixedFeatureAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">FixedFeatureAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
-    <span class="sd">"""A wrapper around AquisitionFunctions to fix a subset of features.</span>
+<span class="w">    </span><span class="sd">"""A wrapper around AquisitionFunctions to fix a subset of features.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)  # d = 5</span>
@@ -65,7 +65,7 @@
         <span class="n">columns</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
         <span class="n">values</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Derived Acquisition Function by fixing a subset of input features.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Derived Acquisition Function by fixing a subset of input features.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            acq_function: The base acquisition function, operating on input</span>
@@ -139,7 +139,7 @@
                 <span class="n">idx_X</span> <span class="o">+=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="FixedFeatureAcquisitionFunction.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate base acquisition function under the fixed features.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate base acquisition function under the fixed features.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: Input tensor of feature dimension `d' &lt; d` such that `d' + d_f = d`.</span>
@@ -154,7 +154,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Return the `X_pending` of the base acquisition function."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Return the `X_pending` of the base acquisition function."""</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">X_pending</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
@@ -165,14 +165,14 @@
 
     <span class="nd">@X_pending</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]):</span>
-        <span class="sa">r</span><span class="sd">"""Sets the `X_pending` of the base acquisition function."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sets the `X_pending` of the base acquisition function."""</span>
         <span class="k">if</span> <span class="n">X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_construct_X_full</span><span class="p">(</span><span class="n">X_pending</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="n">X_pending</span>
 
     <span class="k">def</span> <span class="nf">_construct_X_full</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Constructs the full input for the base acquisition function.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Constructs the full input for the base acquisition function.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: Input tensor with shape `batch_shape x q x d'` such that</span>
@@ -188,7 +188,7 @@
         <span class="k">if</span> <span class="n">d_prime</span> <span class="o">+</span> <span class="n">d_f</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Feature dimension d' (</span><span class="si">{</span><span class="n">d_prime</span><span class="si">}</span><span class="s2">) of input must be "</span>
-                <span class="sa">f</span><span class="s2">"d - d_f (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">-</span> <span class="n">d_f</span><span class="si">}</span><span class="s2">)."</span>
+                <span class="sa">f</span><span class="s2">"d - d_f (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">d_f</span><span class="si">}</span><span class="s2">)."</span>
             <span class="p">)</span>
         <span class="c1"># concatenate values to the end</span>
         <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">d_f</span><span class="p">)</span>

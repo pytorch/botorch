@@ -34,13 +34,13 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A GPyTorch MarginalLogLikelihood instance.</p></li>
-<li><p><strong>closure</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – Forward-backward closure for obtaining objective values and gradients.
+<li><p><strong>closure</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Tensor</em><em> | </em><em>None</em><em>]</em><em>]</em><em>] </em><em>| </em><em>None</em>) – Forward-backward closure for obtaining objective values and gradients.
 Responsible for setting parameters’ <cite>grad</cite> attributes. If no closure is
 provided, one will be obtained by calling <cite>get_loss_closure_with_grads</cite>.</p></li>
-<li><p><strong>optimizer</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – User specified optimization algorithm. When <cite>optimizer is None</cite>,
+<li><p><strong>optimizer</strong> (<em>Callable</em><em> | </em><em>None</em>) – User specified optimization algorithm. When <cite>optimizer is None</cite>,
 this keyword argument is omitted when calling the dispatcher.</p></li>
-<li><p><strong>closure_kwargs</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Keyword arguments passed when calling <cite>closure</cite>.</p></li>
-<li><p><strong>optimizer_kwargs</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – A dictionary of keyword arguments passed when
+<li><p><strong>closure_kwargs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Keyword arguments passed when calling <cite>closure</cite>.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – A dictionary of keyword arguments passed when
 calling <cite>optimizer</cite>.</p></li>
 <li><p><strong>**kwargs</strong> (<em>Any</em>) – Keyword arguments passed down through the dispatcher to
 fit subroutines. Unexpected keywords are ignored.</p></li>
@@ -64,14 +64,14 @@ details, see <cite>fit_gpytorch_mll</cite>.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A GPyTorch MarginalLogLikelihood instance.</p></li>
-<li><p><strong>optimizer</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – User specified optimization algorithm. When <cite>optimizer is None</cite>,
+<li><p><strong>optimizer</strong> (<em>Callable</em><em> | </em><em>None</em>) – User specified optimization algorithm. When <cite>optimizer is None</cite>,
 this keyword argument is omitted when calling the dispatcher from inside
 <cite>fit_gpytorch_mll</cite>.</p></li>
-<li><p><strong>optimizer_kwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Keyword arguments passed to <cite>optimizer</cite>.</p></li>
-<li><p><strong>exclude</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Legacy argument for specifying parameters <cite>x</cite> that should be held fixed
+<li><p><strong>optimizer_kwargs</strong> (<em>dict</em><em> | </em><em>None</em>) – Keyword arguments passed to <cite>optimizer</cite>.</p></li>
+<li><p><strong>exclude</strong> (<em>Iterable</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Legacy argument for specifying parameters <cite>x</cite> that should be held fixed
 during optimization. Internally, used to temporarily set <cite>x.requires_grad</cite>
 to False.</p></li>
-<li><p><strong>max_retries</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Legacy name for <cite>max_attempts</cite>. When <cite>max_retries is None</cite>,
+<li><p><strong>max_retries</strong> (<em>int</em><em> | </em><em>None</em>) – Legacy name for <cite>max_attempts</cite>. When <cite>max_retries is None</cite>,
 this keyword argument is omitted when calling <cite>fit_gpytorch_mll</cite>.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
@@ -88,7 +88,7 @@ this keyword argument is omitted when calling <cite>fit_gpytorch_mll</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>Union</em><em>[</em><a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>SaasFullyBayesianSingleTaskGP</em></a><em>, </em><a class="reference internal" href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP" title="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP"><em>SaasFullyBayesianMultiTaskGP</em></a><em>]</em>) – SaasFullyBayesianSingleTaskGP to be fitted.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>SaasFullyBayesianSingleTaskGP</em></a><em> | </em><a class="reference internal" href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP" title="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP"><em>SaasFullyBayesianMultiTaskGP</em></a>) – SaasFullyBayesianSingleTaskGP to be fitted.</p></li>
 <li><p><strong>max_tree_depth</strong> (<em>int</em>) – Maximum tree depth for NUTS</p></li>
 <li><p><strong>warmup_steps</strong> (<em>int</em>) – The number of burn-in steps for NUTS.</p></li>
 <li><p><strong>num_samples</strong> (<em>int</em>) – The number of MCMC samples. Note that with thinning,

@@ -53,7 +53,7 @@
 
 
 <span class="k">def</span> <span class="nf">_get_module</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Module</span><span class="p">:</span>
-    <span class="sd">"""Recursively get a sub-module from a module.</span>
+<span class="w">    </span><span class="sd">"""Recursively get a sub-module from a module.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        module: A `torch.nn.Module`.</span>
@@ -75,7 +75,7 @@
 
 
 <span class="k">def</span> <span class="nf">_check_compatibility</span><span class="p">(</span><span class="n">models</span><span class="p">:</span> <span class="n">ModelListGP</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">"""Check if a ModelListGP can be converted."""</span>
+<span class="w">    </span><span class="sd">"""Check if a ModelListGP can be converted."""</span>
     <span class="c1"># Check that all submodules are of the same type.</span>
     <span class="k">for</span> <span class="n">modn</span><span class="p">,</span> <span class="n">mod</span> <span class="ow">in</span> <span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">named_modules</span><span class="p">():</span>
         <span class="n">mcls</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="vm">__class__</span>
@@ -139,7 +139,7 @@
 
 
 <div class="viewcode-block" id="model_list_to_batched"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.model_list_to_batched">[docs]</a><span class="k">def</span> <span class="nf">model_list_to_batched</span><span class="p">(</span><span class="n">model_list</span><span class="p">:</span> <span class="n">ModelListGP</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">:</span>
-    <span class="sd">"""Convert a ModelListGP to a BatchedMultiOutputGPyTorchModel.</span>
+<span class="w">    </span><span class="sd">"""Convert a ModelListGP to a BatchedMultiOutputGPyTorchModel.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        model_list: The `ModelListGP` to be converted to the appropriate</span>
@@ -230,7 +230,7 @@
 
 
 <span class="k">def</span> <span class="nf">_batched_kernel</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">batch_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-    <span class="sd">"""Adds a batch dimension of size `batch_length` to all non-scalar</span>
+<span class="w">    </span><span class="sd">"""Adds a batch dimension of size `batch_length` to all non-scalar</span>
 <span class="sd">    Tensor parameters that govern the kernel function `kernel`.</span>
 <span class="sd">    NOTE: prior or constraint parameters are excluded from batching.</span>
 <span class="sd">    """</span>
@@ -249,7 +249,7 @@
 <span class="c1"># two helper functions for `batched_kernel`</span>
 <span class="c1"># like `setattr` and `getattr` for object hierarchies</span>
 <div class="viewcode-block" id="set_attribute"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.set_attribute">[docs]</a><span class="k">def</span> <span class="nf">set_attribute</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-    <span class="sd">"""Like `setattr` but works with hierarchical attribute specification.</span>
+<span class="w">    </span><span class="sd">"""Like `setattr` but works with hierarchical attribute specification.</span>
 <span class="sd">    E.g. if obj=Zoo(), and attr="tiger.age", set_attribute(obj, attr, 3),</span>
 <span class="sd">    would set the Zoo's tiger's age to three.</span>
 <span class="sd">    """</span>
@@ -259,7 +259,7 @@
 
 
 <div class="viewcode-block" id="get_attribute"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.get_attribute">[docs]</a><span class="k">def</span> <span class="nf">get_attribute</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="sd">"""Like `getattr` but works with hierarchical attribute specification.</span>
+<span class="w">    </span><span class="sd">"""Like `getattr` but works with hierarchical attribute specification.</span>
 <span class="sd">    E.g. if obj=Zoo(), and attr="tiger.age", get_attribute(obj, attr),</span>
 <span class="sd">    would return the Zoo's tiger's age.</span>
 <span class="sd">    """</span>
@@ -270,7 +270,7 @@
 
 
 <div class="viewcode-block" id="batched_to_model_list"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.batched_to_model_list">[docs]</a><span class="k">def</span> <span class="nf">batched_to_model_list</span><span class="p">(</span><span class="n">batch_model</span><span class="p">:</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelListGP</span><span class="p">:</span>
-    <span class="sd">"""Convert a BatchedMultiOutputGPyTorchModel to a ModelListGP.</span>
+<span class="w">    </span><span class="sd">"""Convert a BatchedMultiOutputGPyTorchModel to a ModelListGP.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        batch_model: The `BatchedMultiOutputGPyTorchModel` to be converted to a</span>
@@ -357,7 +357,7 @@
 <div class="viewcode-block" id="batched_multi_output_to_single_output"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.batched_multi_output_to_single_output">[docs]</a><span class="k">def</span> <span class="nf">batched_multi_output_to_single_output</span><span class="p">(</span>
     <span class="n">batch_mo_model</span><span class="p">:</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">:</span>
-    <span class="sd">"""Convert a model from batched multi-output to a batched single-output.</span>
+<span class="w">    </span><span class="sd">"""Convert a model from batched multi-output to a batched single-output.</span>
 
 <span class="sd">    Note: the underlying GPyTorch GP does not change. The GPyTorch GP's batch_shape</span>
 <span class="sd">    (referred to as `_aug_batch_shape`) is still `_input_batch_shape x num_outputs`.</span>
@@ -433,7 +433,7 @@
     <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">],</span>
     <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-    <span class="sa">r</span><span class="sd">"""Group the keys based on whether the value requires batch shape changes.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Group the keys based on whether the value requires batch shape changes.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        batch_state_dict: The state dict of the batch model.</span>

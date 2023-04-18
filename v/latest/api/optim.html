@@ -60,10 +60,10 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>step</strong> (<em>int</em>) – </p></li>
-<li><p><strong>fval</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>int</em><em>]</em>) – </p></li>
+<li><p><strong>fval</strong> (<em>float</em><em> | </em><em>int</em>) – </p></li>
 <li><p><strong>status</strong> (<a class="reference internal" href="#botorch.optim.core.OptimizationStatus" title="botorch.optim.core.OptimizationStatus"><em>OptimizationStatus</em></a>) – </p></li>
-<li><p><strong>runtime</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – </p></li>
-<li><p><strong>message</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – </p></li>
+<li><p><strong>runtime</strong> (<em>float</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>message</strong> (<em>str</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -73,7 +73,7 @@
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.core.OptimizationResult.fval">
-<span class="sig-name descname"><span class="pre">fval</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.optim.core.OptimizationResult.fval" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fval</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.optim.core.OptimizationResult.fval" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.core.OptimizationResult.status">
@@ -81,11 +81,11 @@
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.core.OptimizationResult.runtime">
-<span class="sig-name descname"><span class="pre">runtime</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.core.OptimizationResult.runtime" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">runtime</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.core.OptimizationResult.runtime" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.core.OptimizationResult.message">
-<span class="sig-name descname"><span class="pre">message</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.core.OptimizationResult.message" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">message</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.core.OptimizationResult.message" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py function">
@@ -95,15 +95,15 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>closure</strong> (<em>Union</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.closures.core.NdarrayOptimizationClosure" title="botorch.optim.closures.core.NdarrayOptimizationClosure"><em>NdarrayOptimizationClosure</em></a><em>]</em>) – Callable that returns a tensor and an iterable of gradient tensors or
+<li><p><strong>closure</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Tensor</em><em> | </em><em>None</em><em>]</em><em>]</em><em>] </em><em>| </em><a class="reference internal" href="#botorch.optim.closures.core.NdarrayOptimizationClosure" title="botorch.optim.closures.core.NdarrayOptimizationClosure"><em>NdarrayOptimizationClosure</em></a>) – Callable that returns a tensor and an iterable of gradient tensors or
 NdarrayOptimizationClosure instance.</p></li>
 <li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – A dictionary of tensors to be optimized.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A dictionary mapping parameter names to lower and upper bounds.</p></li>
-<li><p><strong>callback</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – A callable taking <cite>parameters</cite> and an OptimizationResult as arguments.</p></li>
-<li><p><strong>x0</strong> (<em>Optional</em><em>[</em><em>ndarray</em><em>]</em>) – An optional initialization vector passed to scipy.optimize.minimize.</p></li>
+<li><p><strong>bounds</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>float</em><em> | </em><em>None</em><em>, </em><em>float</em><em> | </em><em>None</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A dictionary mapping parameter names to lower and upper bounds.</p></li>
+<li><p><strong>callback</strong> (<em>Callable</em><em>[</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a><em>]</em><em>, </em><em>None</em><em>] </em><em>| </em><em>None</em>) – A callable taking <cite>parameters</cite> and an OptimizationResult as arguments.</p></li>
+<li><p><strong>x0</strong> (<em>ndarray</em><em> | </em><em>None</em>) – An optional initialization vector passed to scipy.optimize.minimize.</p></li>
 <li><p><strong>method</strong> (<em>str</em>) – Solver type, passed along to scipy.minimize.</p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Dictionary of solver options, passed along to scipy.minimize.</p></li>
-<li><p><strong>timeout_sec</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Timeout in seconds to wait before aborting the optimization loop
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Dictionary of solver options, passed along to scipy.minimize.</p></li>
+<li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Timeout in seconds to wait before aborting the optimization loop
 if not converged (will return the best found solution thus far).</p></li>
 </ul>
 </dd>
@@ -122,20 +122,20 @@ if not converged (will return the best found solution thus far).</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>closure</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em>) – Callable that returns a tensor and an iterable of gradient tensors.
+<li><p><strong>closure</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Tensor</em><em> | </em><em>None</em><em>]</em><em>]</em><em>]</em>) – Callable that returns a tensor and an iterable of gradient tensors.
 Responsible for setting relevant parameters’ <cite>grad</cite> attributes.</p></li>
 <li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – A dictionary of tensors to be optimized.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – An optional dictionary of bounds for elements of <cite>parameters</cite>.</p></li>
-<li><p><strong>callback</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – A callable taking <cite>parameters</cite> and an OptimizationResult as arguments.</p></li>
-<li><p><strong>optimizer</strong> (<em>Union</em><em>[</em><em>Optimizer</em><em>, </em><em>Callable</em><em>[</em><em>[</em><em>List</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>, </em><em>Optimizer</em><em>]</em><em>]</em>) – A <cite>torch.optim.Optimizer</cite> instance or a factory that takes
+<li><p><strong>bounds</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>float</em><em> | </em><em>None</em><em>, </em><em>float</em><em> | </em><em>None</em><em>]</em><em>] </em><em>| </em><em>None</em>) – An optional dictionary of bounds for elements of <cite>parameters</cite>.</p></li>
+<li><p><strong>callback</strong> (<em>Callable</em><em>[</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a><em>]</em><em>, </em><em>None</em><em>] </em><em>| </em><em>None</em>) – A callable taking <cite>parameters</cite> and an OptimizationResult as arguments.</p></li>
+<li><p><strong>optimizer</strong> (<em>Optimizer</em><em> | </em><em>Callable</em><em>[</em><em>[</em><em>List</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>, </em><em>Optimizer</em><em>]</em>) – A <cite>torch.optim.Optimizer</cite> instance or a factory that takes
 a list of parameters and returns an <cite>Optimizer</cite> instance.</p></li>
-<li><p><strong>scheduler</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>LRScheduler</em><em>, </em><em>Callable</em><em>[</em><em>[</em><em>Optimizer</em><em>]</em><em>, </em><em>LRScheduler</em><em>]</em><em>]</em><em>]</em>) – A <cite>torch.optim.lr_scheduler._LRScheduler</cite> instance or a factory
+<li><p><strong>scheduler</strong> (<em>LRScheduler</em><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Optimizer</em><em>]</em><em>, </em><em>LRScheduler</em><em>] </em><em>| </em><em>None</em>) – A <cite>torch.optim.lr_scheduler._LRScheduler</cite> instance or a factory
 that takes a <cite>Optimizer</cite> instance and returns a <cite>_LRSchedule</cite> instance.</p></li>
-<li><p><strong>step_limit</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Integer specifying a maximum number of optimization steps.
+<li><p><strong>step_limit</strong> (<em>int</em><em> | </em><em>None</em>) – Integer specifying a maximum number of optimization steps.
 One of <cite>step_limit</cite>, <cite>stopping_criterion</cite>, or <cite>timeout_sec</cite> must be passed.</p></li>
-<li><p><strong>timeout_sec</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Timeout in seconds before terminating the optimization loop.
+<li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Timeout in seconds before terminating the optimization loop.
 One of <cite>step_limit</cite>, <cite>stopping_criterion</cite>, or <cite>timeout_sec</cite> must be passed.</p></li>
-<li><p><strong>stopping_criterion</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>bool</em><em>]</em><em>]</em>) – A StoppingCriterion for the optimization loop.</p></li>
+<li><p><strong>stopping_criterion</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>bool</em><em>] </em><em>| </em><em>None</em>) – A StoppingCriterion for the optimization loop.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -163,19 +163,19 @@ One of <cite>step_limit</cite>, <cite>stopping_criterion</cite>, or <cite>timeou
 <li><p><strong>bounds</strong> (<em>Tensor</em>) – </p></li>
 <li><p><strong>q</strong> (<em>int</em>) – </p></li>
 <li><p><strong>num_restarts</strong> (<em>int</em>) – </p></li>
-<li><p><strong>raw_samples</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>nonlinear_inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>post_processing_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>batch_initial_conditions</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>raw_samples</strong> (<em>int</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>batch_initial_conditions</strong> (<em>Tensor</em><em> | </em><em>None</em>) – </p></li>
 <li><p><strong>return_best_only</strong> (<em>bool</em>) – </p></li>
 <li><p><strong>gen_candidates</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>AcquisitionFunction</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – </p></li>
 <li><p><strong>sequential</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>ic_generator</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>timeout_sec</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – </p></li>
+<li><p><strong>ic_generator</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>]</em><em>, </em><em>Tensor</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – </p></li>
 <li><p><strong>return_full_tree</strong> (<em>bool</em>) – </p></li>
 <li><p><strong>retry_on_optimization_warning</strong> (<em>bool</em>) – </p></li>
 <li><p><strong>ic_gen_kwargs</strong> (<em>Dict</em>) – </p></li>
@@ -200,35 +200,35 @@ One of <cite>step_limit</cite>, <cite>stopping_criterion</cite>, or <cite>timeou
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.optimize.OptimizeAcqfInputs.raw_samples">
-<span class="sig-name descname"><span class="pre">raw_samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.raw_samples" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">raw_samples</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.raw_samples" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.optimize.OptimizeAcqfInputs.options">
-<span class="sig-name descname"><span class="pre">options</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.options" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">options</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.options" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.optimize.OptimizeAcqfInputs.inequality_constraints">
-<span class="sig-name descname"><span class="pre">inequality_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.inequality_constraints" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">inequality_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.inequality_constraints" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.optimize.OptimizeAcqfInputs.equality_constraints">
-<span class="sig-name descname"><span class="pre">equality_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.equality_constraints" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">equality_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.equality_constraints" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.optimize.OptimizeAcqfInputs.nonlinear_inequality_constraints">
-<span class="sig-name descname"><span class="pre">nonlinear_inequality_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.nonlinear_inequality_constraints" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">nonlinear_inequality_constraints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.nonlinear_inequality_constraints" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.optimize.OptimizeAcqfInputs.fixed_features">
-<span class="sig-name descname"><span class="pre">fixed_features</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.fixed_features" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fixed_features</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.fixed_features" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.optimize.OptimizeAcqfInputs.post_processing_func">
-<span class="sig-name descname"><span class="pre">post_processing_func</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.post_processing_func" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">post_processing_func</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.post_processing_func" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.optimize.OptimizeAcqfInputs.batch_initial_conditions">
-<span class="sig-name descname"><span class="pre">batch_initial_conditions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.batch_initial_conditions" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">batch_initial_conditions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.batch_initial_conditions" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.optimize.OptimizeAcqfInputs.return_best_only">
@@ -244,11 +244,11 @@ One of <cite>step_limit</cite>, <cite>stopping_criterion</cite>, or <cite>timeou
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.optimize.OptimizeAcqfInputs.ic_generator">
-<span class="sig-name descname"><span class="pre">ic_generator</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><span class="pre">qKnowledgeGradient</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.ic_generator" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">ic_generator</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><span class="pre">qKnowledgeGradient</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.ic_generator" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.optimize.OptimizeAcqfInputs.timeout_sec">
-<span class="sig-name descname"><span class="pre">timeout_sec</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.timeout_sec" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">timeout_sec</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.timeout_sec" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.optim.optimize.OptimizeAcqfInputs.return_full_tree">
@@ -271,7 +271,7 @@ One of <cite>step_limit</cite>, <cite>stopping_criterion</cite>, or <cite>timeou
 <span class="sig-name descname"><span class="pre">get_ic_generator</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#OptimizeAcqfInputs.get_ic_generator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.OptimizeAcqfInputs.get_ic_generator" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Callable</em>[[<a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a>, <em>Tensor</em>, int, int, int, <em>Optional</em>[<em>Dict</em>[int, float]], <em>Optional</em>[<em>Dict</em>[str, <em>Union</em>[bool, float, int]]], <em>Optional</em>[<em>List</em>[<em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>, float]]], <em>Optional</em>[<em>List</em>[<em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>, float]]]], <em>Optional</em>[<em>Tensor</em>]]</p>
+<dd class="field-odd"><p><em>Callable</em>[[<a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a>, <em>Tensor</em>, int, int, int, <em>Dict</em>[int, float] | None, <em>Dict</em>[str, bool | float | int] | None, <em>List</em>[<em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>, float]] | None, <em>List</em>[<em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>, float]] | None], <em>Tensor</em> | None]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -290,16 +290,16 @@ One of <cite>step_limit</cite>, <cite>stopping_criterion</cite>, or <cite>timeou
 <li><p><strong>q</strong> (<em>int</em>) – The number of candidates.</p></li>
 <li><p><strong>num_restarts</strong> (<em>int</em>) – The number of starting points for multistart acquisition
 function optimization.</p></li>
-<li><p><strong>raw_samples</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The number of samples for initialization. This is required
+<li><p><strong>raw_samples</strong> (<em>int</em><em> | </em><em>None</em>) – The number of samples for initialization. This is required
 if <cite>batch_initial_conditions</cite> is not specified.</p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – Options for candidate generation.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – A list of tuples (indices, coefficients, rhs),
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options for candidate generation.</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
-<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – A list of tuples (indices, coefficients, rhs),
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an equality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
-<li><p><strong>nonlinear_inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>]</em><em>]</em>) – A list of callables with that represent
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>] </em><em>| </em><em>None</em>) – A list of callables with that represent
 non-linear inequality constraints of the form <cite>callable(x) &gt;= 0</cite>. Each
 callable is expected to take a <cite>(num_restarts) x q x d</cite>-dim tensor as an
 input and return a <cite>(num_restarts) x q</cite>-dim tensor with the constraint
@@ -307,16 +307,16 @@ values. The constraints will later be passed to SLSQP. You need to pass in
 <cite>batch_initial_conditions</cite> in this case. Using non-linear inequality
 constraints also requires that <cite>batch_limit</cite> is set to 1, which will be
 done automatically if not specified in <cite>options</cite>.</p></li>
-<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A map <cite>{feature_index: value}</cite> for features that
+<li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that
 should be fixed to a particular value during generation.</p></li>
-<li><p><strong>post_processing_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A function that post-processes an optimization
+<li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
-<li><p><strong>batch_initial_conditions</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A tensor to specify the initial conditions. Set
+<li><p><strong>batch_initial_conditions</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A tensor to specify the initial conditions. Set
 this if you do not want to use default initialization strategy.</p></li>
 <li><p><strong>return_best_only</strong> (<em>bool</em>) – If False, outputs the solutions corresponding to all
 random restart initializations of the optimization.</p></li>
-<li><p><strong>gen_candidates</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>AcquisitionFunction</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – A callable for generating candidates (and their associated
+<li><p><strong>gen_candidates</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>AcquisitionFunction</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A callable for generating candidates (and their associated
 acquisition values) given a tensor of initial conditions and an
 acquisition function. Other common inputs include lower and upper bounds
 and a dictionary of options, but refer to the documentation of specific
@@ -324,12 +324,12 @@ generation functions (e.g gen_candidates_scipy and gen_candidates_torch)
 for method-specific inputs. Default: <cite>gen_candidates_scipy</cite></p></li>
 <li><p><strong>sequential</strong> (<em>bool</em>) – If False, uses joint optimization, otherwise uses sequential
 optimization.</p></li>
-<li><p><strong>ic_generator</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – Function for generating initial conditions. Not needed when
+<li><p><strong>ic_generator</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>]</em><em>, </em><em>Tensor</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – Function for generating initial conditions. Not needed when
 <cite>batch_initial_conditions</cite> are provided. Defaults to
 <cite>gen_one_shot_kg_initial_conditions</cite> for <cite>qKnowledgeGradient</cite> acquisition
 functions and <cite>gen_batch_initial_conditions</cite> otherwise. Must be specified
 for nonlinear inequality constraints.</p></li>
-<li><p><strong>timeout_sec</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Max amount of time optimization can run for.</p></li>
+<li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Max amount of time optimization can run for.</p></li>
 <li><p><strong>return_full_tree</strong> (<em>bool</em>) – </p></li>
 <li><p><strong>retry_on_optimization_warning</strong> (<em>bool</em>) – Whether to retry candidate generation with a new
 set of initial conditions when it fails with an <cite>OptimizationWarning</cite>.</p></li>
@@ -391,37 +391,37 @@ values conditional on having observed candidates <cite>0,1,…,i-1</cite>.</p>
 <li><p><strong>q</strong> (<em>int</em>) – The number of candidates.</p></li>
 <li><p><strong>num_restarts</strong> (<em>int</em>) – Number of starting points for multistart acquisition
 function optimization.</p></li>
-<li><p><strong>raw_samples</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Number of samples for initialization. This is required
+<li><p><strong>raw_samples</strong> (<em>int</em><em> | </em><em>None</em>) – Number of samples for initialization. This is required
 if <cite>batch_initial_conditions</cite> is not specified.</p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – Options for candidate generation.</p></li>
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options for candidate generation.</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
-<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A map <cite>{feature_index: value}</cite> for features that
+<li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that
 should be fixed to a particular value during generation.</p></li>
-<li><p><strong>post_processing_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A function that post-processes an optimization
+<li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
-<li><p><strong>batch_initial_conditions</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A tensor to specify the initial conditions.
+<li><p><strong>batch_initial_conditions</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A tensor to specify the initial conditions.
 If no initial conditions are provided, the default initialization will
 be used.</p></li>
-<li><p><strong>cyclic_options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – Options for stopping criterion for outer cyclic optimization.</p></li>
-<li><p><strong>ic_generator</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – Function for generating initial conditions. Not needed when
+<li><p><strong>cyclic_options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options for stopping criterion for outer cyclic optimization.</p></li>
+<li><p><strong>ic_generator</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>]</em><em>, </em><em>Tensor</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – Function for generating initial conditions. Not needed when
 <cite>batch_initial_conditions</cite> are provided. Defaults to
 <cite>gen_one_shot_kg_initial_conditions</cite> for <cite>qKnowledgeGradient</cite> acquisition
 functions and <cite>gen_batch_initial_conditions</cite> otherwise. Must be specified
 for nonlinear inequality constraints.</p></li>
-<li><p><strong>timeout_sec</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Max amount of time optimization can run for.</p></li>
+<li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Max amount of time optimization can run for.</p></li>
 <li><p><strong>return_full_tree</strong> (<em>bool</em>) – </p></li>
 <li><p><strong>retry_on_optimization_warning</strong> (<em>bool</em>) – Whether to retry candidate generation with a new
 set of initial conditions when it fails with an <cite>OptimizationWarning</cite>.</p></li>
 <li><p><strong>ic_gen_kwargs</strong> (<em>Any</em>) – Additional keyword arguments passed to function specified by
 <cite>ic_generator</cite></p></li>
-<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -455,7 +455,7 @@ all candidates except candidate <cite>i</cite>.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.optimize.optimize_acqf_list">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf_list" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nonlinear_inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ic_generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ic_gen_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a list of candidates from a list of acquisition functions.</p>
 <p>The acquisition functions are optimized in sequence, with previous candidates
 set as <cite>X_pending</cite>. This is also known as sequential greedy optimization.</p>
@@ -468,25 +468,40 @@ set as <cite>X_pending</cite>. This is also known as sequential greedy optimizat
 +inf, respectively).</p></li>
 <li><p><strong>num_restarts</strong> (<em>int</em>) – Number of starting points for multistart acquisition
 function optimization.</p></li>
-<li><p><strong>raw_samples</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Number of samples for initialization. This is required
+<li><p><strong>raw_samples</strong> (<em>int</em><em> | </em><em>None</em>) – Number of samples for initialization. This is required
 if <cite>batch_initial_conditions</cite> is not specified.</p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – Options for candidate generation.</p></li>
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options for candidate generation.</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
-<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A map <cite>{feature_index: value}</cite> for features that
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>] </em><em>| </em><em>None</em>) – A list of callables with that represent
+non-linear inequality constraints of the form <cite>callable(x) &gt;= 0</cite>. Each
+callable is expected to take a <cite>(num_restarts) x q x d</cite>-dim tensor as an
+input and return a <cite>(num_restarts) x q</cite>-dim tensor with the constraint
+values. The constraints will later be passed to SLSQP. You need to pass in
+<cite>batch_initial_conditions</cite> in this case. Using non-linear inequality
+constraints also requires that <cite>batch_limit</cite> is set to 1, which will be
+done automatically if not specified in <cite>options</cite>.</p></li>
+<li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that
 should be fixed to a particular value during generation.</p></li>
-<li><p><strong>fixed_features_list</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – A list of maps <cite>{feature_index: value}</cite>. The i-th
+<li><p><strong>fixed_features_list</strong> (<em>List</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of maps <cite>{feature_index: value}</cite>. The i-th
 item represents the fixed_feature for the i-th optimization. If
 <cite>fixed_features_list</cite> is provided, <cite>optimize_acqf_mixed</cite> is invoked.</p></li>
-<li><p><strong>post_processing_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A function that post-processes an optimization
+<li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>ic_generator</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>]</em><em>, </em><em>Tensor</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – Function for generating initial conditions. Not needed when
+<cite>batch_initial_conditions</cite> are provided. Defaults to
+<cite>gen_one_shot_kg_initial_conditions</cite> for <cite>qKnowledgeGradient</cite> acquisition
+functions and <cite>gen_batch_initial_conditions</cite> otherwise. Must be specified
+for nonlinear inequality constraints.</p></li>
+<li><p><strong>ic_gen_kwargs</strong> (<em>Dict</em><em> | </em><em>None</em>) – Additional keyword arguments passed to function specified by
+<cite>ic_generator</cite></p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -509,7 +524,7 @@ all candidates except candidate <cite>i</cite>.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.optimize.optimize_acqf_mixed">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf_mixed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_initial_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf_mixed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf_mixed" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf_mixed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nonlinear_inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_initial_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ic_generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ic_gen_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf_mixed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf_mixed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Optimize over a list of fixed_features and returns the best solution.</p>
 <p>This is useful for optimizing over mixed continuous and discrete domains.
 For q &gt; 1 this function always performs sequential greedy optimization (with
@@ -524,26 +539,41 @@ proper conditioning on generated candidates).</p>
 <li><p><strong>q</strong> (<em>int</em>) – The number of candidates.</p></li>
 <li><p><strong>num_restarts</strong> (<em>int</em>) – Number of starting points for multistart acquisition
 function optimization.</p></li>
-<li><p><strong>raw_samples</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Number of samples for initialization. This is required
+<li><p><strong>raw_samples</strong> (<em>int</em><em> | </em><em>None</em>) – Number of samples for initialization. This is required
 if <cite>batch_initial_conditions</cite> is not specified.</p></li>
 <li><p><strong>fixed_features_list</strong> (<em>List</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A list of maps <cite>{feature_index: value}</cite>. The i-th
 item represents the fixed_feature for the i-th optimization.</p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – Options for candidate generation.</p></li>
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options for candidate generation.</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
-<li><p><strong>post_processing_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A function that post-processes an optimization
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>] </em><em>| </em><em>None</em>) – A list of callables with that represent
+non-linear inequality constraints of the form <cite>callable(x) &gt;= 0</cite>. Each
+callable is expected to take a <cite>(num_restarts) x q x d</cite>-dim tensor as an
+input and return a <cite>(num_restarts) x q</cite>-dim tensor with the constraint
+values. The constraints will later be passed to SLSQP. You need to pass in
+<cite>batch_initial_conditions</cite> in this case. Using non-linear inequality
+constraints also requires that <cite>batch_limit</cite> is set to 1, which will be
+done automatically if not specified in <cite>options</cite>.</p></li>
+<li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
-<li><p><strong>batch_initial_conditions</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A tensor to specify the initial conditions. Set
+<li><p><strong>batch_initial_conditions</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A tensor to specify the initial conditions. Set
 this if you do not want to use default initialization strategy.</p></li>
+<li><p><strong>ic_generator</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>]</em><em>, </em><em>Tensor</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – Function for generating initial conditions. Not needed when
+<cite>batch_initial_conditions</cite> are provided. Defaults to
+<cite>gen_one_shot_kg_initial_conditions</cite> for <cite>qKnowledgeGradient</cite> acquisition
+functions and <cite>gen_batch_initial_conditions</cite> otherwise. Must be specified
+for nonlinear inequality constraints.</p></li>
+<li><p><strong>ic_gen_kwargs</strong> (<em>Dict</em><em> | </em><em>None</em>) – Additional keyword arguments passed to function specified by
+<cite>ic_generator</cite></p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – kwargs do nothing. This is provided so that the same arguments can
 be passed to different acquisition functions without raising an error.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -616,11 +646,11 @@ Each element in the list is expected to be a torch tensor.</p></li>
 function optimization.</p></li>
 <li><p><strong>raw_samples</strong> (<em>int</em>) – Number of samples for initialization. This is required
 if <cite>batch_initial_conditions</cite> is not specified.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – A list of tuples (indices, coefficients, rhs),
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
-<li><p><strong>X_avoid</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An <cite>n x d</cite> tensor of candidates that we aren’t allowed to pick.</p></li>
-<li><p><strong>batch_initial_conditions</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A tensor of size <cite>n x 1 x d</cite> to specify the
+<li><p><strong>X_avoid</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An <cite>n x d</cite> tensor of candidates that we aren’t allowed to pick.</p></li>
+<li><p><strong>batch_initial_conditions</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A tensor of size <cite>n x 1 x d</cite> to specify the
 initial conditions. Set this if you do not want to use default
 initialization strategy.</p></li>
 <li><p><strong>max_batch_size</strong> (<em>int</em>) – The maximum number of choices to evaluate in batch.
@@ -658,19 +688,19 @@ be passed to different acquisition functions without raising an error.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
-<li><p><strong>parameters</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Optional dictionary of parameters to be optimized. Defaults
+<li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – Optional dictionary of parameters to be optimized. Defaults
 to all parameters of <cite>mll</cite> that require gradients.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A dictionary of user-specified bounds for <cite>parameters</cite>. Used to update
+<li><p><strong>bounds</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>float</em><em> | </em><em>None</em><em>, </em><em>float</em><em> | </em><em>None</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A dictionary of user-specified bounds for <cite>parameters</cite>. Used to update
 default parameter bounds obtained from <cite>mll</cite>.</p></li>
-<li><p><strong>closure</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – Callable that returns a tensor and an iterable of gradient tensors.
+<li><p><strong>closure</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Tensor</em><em> | </em><em>None</em><em>]</em><em>]</em><em>] </em><em>| </em><em>None</em>) – Callable that returns a tensor and an iterable of gradient tensors.
 Responsible for setting the <cite>grad</cite> attributes of <cite>parameters</cite>. If no closure
 is provided, one will be obtained by calling <cite>get_loss_closure_with_grads</cite>.</p></li>
-<li><p><strong>closure_kwargs</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Keyword arguments passed to <cite>closure</cite>.</p></li>
+<li><p><strong>closure_kwargs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Keyword arguments passed to <cite>closure</cite>.</p></li>
 <li><p><strong>method</strong> (<em>str</em>) – Solver type, passed along to scipy.minimize.</p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Dictionary of solver options, passed along to scipy.minimize.</p></li>
-<li><p><strong>callback</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – Optional callback taking <cite>parameters</cite> and an OptimizationResult as its
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Dictionary of solver options, passed along to scipy.minimize.</p></li>
+<li><p><strong>callback</strong> (<em>Callable</em><em>[</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a><em>]</em><em>, </em><em>None</em><em>] </em><em>| </em><em>None</em>) – Optional callback taking <cite>parameters</cite> and an OptimizationResult as its
 sole arguments.</p></li>
-<li><p><strong>timeout_sec</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Timeout in seconds after which to terminate the fitting loop
+<li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Timeout in seconds after which to terminate the fitting loop
 (note that timing out can result in bad fits!).</p></li>
 </ul>
 </dd>
@@ -690,23 +720,23 @@ sole arguments.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
-<li><p><strong>parameters</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Optional dictionary of parameters to be optimized. Defaults
+<li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – Optional dictionary of parameters to be optimized. Defaults
 to all parameters of <cite>mll</cite> that require gradients.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A dictionary of user-specified bounds for <cite>parameters</cite>. Used to update
+<li><p><strong>bounds</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>float</em><em> | </em><em>None</em><em>, </em><em>float</em><em> | </em><em>None</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A dictionary of user-specified bounds for <cite>parameters</cite>. Used to update
 default parameter bounds obtained from <cite>mll</cite>.</p></li>
-<li><p><strong>closure</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – Callable that returns a tensor and an iterable of gradient tensors.
+<li><p><strong>closure</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Tensor</em><em> | </em><em>None</em><em>]</em><em>]</em><em>] </em><em>| </em><em>None</em>) – Callable that returns a tensor and an iterable of gradient tensors.
 Responsible for setting the <cite>grad</cite> attributes of <cite>parameters</cite>. If no closure
 is provided, one will be obtained by calling <cite>get_loss_closure_with_grads</cite>.</p></li>
-<li><p><strong>closure_kwargs</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Keyword arguments passed to <cite>closure</cite>.</p></li>
-<li><p><strong>step_limit</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Optional upper bound on the number of optimization steps.</p></li>
-<li><p><strong>stopping_criterion</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>bool</em><em>]</em><em>]</em>) – A StoppingCriterion for the optimization loop.</p></li>
-<li><p><strong>optimizer</strong> (<em>Union</em><em>[</em><em>Optimizer</em><em>, </em><em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Optimizer</em><em>]</em><em>]</em>) – A <cite>torch.optim.Optimizer</cite> instance or a factory that takes
+<li><p><strong>closure_kwargs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Keyword arguments passed to <cite>closure</cite>.</p></li>
+<li><p><strong>step_limit</strong> (<em>int</em><em> | </em><em>None</em>) – Optional upper bound on the number of optimization steps.</p></li>
+<li><p><strong>stopping_criterion</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>bool</em><em>] </em><em>| </em><em>None</em>) – A StoppingCriterion for the optimization loop.</p></li>
+<li><p><strong>optimizer</strong> (<em>Optimizer</em><em> | </em><em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Optimizer</em><em>]</em>) – A <cite>torch.optim.Optimizer</cite> instance or a factory that takes
 a list of parameters and returns an <cite>Optimizer</cite> instance.</p></li>
-<li><p><strong>scheduler</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>_LRScheduler</em><em>, </em><em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>_LRScheduler</em><em>]</em><em>]</em><em>]</em>) – A <cite>torch.optim.lr_scheduler._LRScheduler</cite> instance or a factory
+<li><p><strong>scheduler</strong> (<em>_LRScheduler</em><em> | </em><em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>_LRScheduler</em><em>] </em><em>| </em><em>None</em>) – A <cite>torch.optim.lr_scheduler._LRScheduler</cite> instance or a factory
 that takes an <cite>Optimizer</cite> instance and returns an <cite>_LRSchedule</cite>.</p></li>
-<li><p><strong>callback</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – Optional callback taking <cite>parameters</cite> and an OptimizationResult as its
+<li><p><strong>callback</strong> (<em>Callable</em><em>[</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a><em>]</em><em>, </em><em>None</em><em>] </em><em>| </em><em>None</em>) – Optional callback taking <cite>parameters</cite> and an OptimizationResult as its
 sole arguments.</p></li>
-<li><p><strong>timeout_sec</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Timeout in seconds after which to terminate the fitting loop
+<li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Timeout in seconds after which to terminate the fitting loop
 (note that timing out can result in bad fits!).</p></li>
 </ul>
 </dd>
@@ -728,17 +758,17 @@ that the model has <cite>train_inputs</cite> and <cite>train_targets</cite>.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A dictionary mapping parameter names to tuples of lower and upper
+<li><p><strong>bounds</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>float</em><em> | </em><em>None</em><em>, </em><em>float</em><em> | </em><em>None</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A dictionary mapping parameter names to tuples of lower and upper
 bounds.</p></li>
 <li><p><strong>method</strong> (<em>str</em>) – Solver type, passed along to scipy.optimize.minimize.</p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Dictionary of solver options, passed along to scipy.optimize.minimize.</p></li>
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Dictionary of solver options, passed along to scipy.optimize.minimize.</p></li>
 <li><p><strong>approx_mll</strong> (<em>bool</em>) – If True, use gpytorch’s approximate MLL computation. This is
 disabled by default since the stochasticity is an issue for
 determistic optimizers). Enabling this is only recommended when
 working with large training data sets (n&gt;2000).</p></li>
 <li><p><strong>track_iterations</strong> (<em>bool</em>) – </p></li>
 <li><p><strong>scipy_objective</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>, </em><em>MarginalLogLikelihood</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.utils.model_utils.TorchAttr" title="botorch.optim.utils.model_utils.TorchAttr"><em>TorchAttr</em></a><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>ndarray</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>module_to_array_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Module</em><em>, </em><em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Set</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>ndarray</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.utils.model_utils.TorchAttr" title="botorch.optim.utils.model_utils.TorchAttr"><em>TorchAttr</em></a><em>]</em><em>, </em><em>Optional</em><em>[</em><em>ndarray</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>module_to_array_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Module</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>float</em><em> | </em><em>None</em><em>, </em><em>float</em><em> | </em><em>None</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>Set</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>ndarray</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.utils.model_utils.TorchAttr" title="botorch.optim.utils.model_utils.TorchAttr"><em>TorchAttr</em></a><em>]</em><em>, </em><em>ndarray</em><em> | </em><em>None</em><em>]</em><em>]</em>) – </p></li>
 <li><p><strong>module_from_array_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Module</em><em>, </em><em>ndarray</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.utils.model_utils.TorchAttr" title="botorch.optim.utils.model_utils.TorchAttr"><em>TorchAttr</em></a><em>]</em><em>]</em><em>, </em><em>Module</em><em>]</em>) – </p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
@@ -754,7 +784,7 @@ iteration. If track_iterations is False, will be empty.
 “OptimizeResult”: The result returned by <cite>scipy.optim.minimize</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>MarginalLogLikelihood</em>, <em>Dict</em>[str, <em>Union</em>[float, <em>List</em>[<a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a>]]]]</p>
+<dd class="field-odd"><p><em>Tuple</em>[<em>MarginalLogLikelihood</em>, <em>Dict</em>[str, float | <em>List</em>[<a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a>]]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -768,12 +798,12 @@ Note: this method requires that the model has <cite>train_inputs</cite> and <cit
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – An optional dictionary mapping parameter names to tuples
+<li><p><strong>bounds</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>float</em><em> | </em><em>None</em><em>, </em><em>float</em><em> | </em><em>None</em><em>]</em><em>] </em><em>| </em><em>None</em>) – An optional dictionary mapping parameter names to tuples
 of lower and upper bounds. Bounds specified here take precedence
 over bounds on the same parameters specified in the constraints
 registered with the module.</p></li>
 <li><p><strong>optimizer_cls</strong> (<em>Optimizer</em>) – Torch optimizer to use. Must not require a closure.</p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – options for model fitting. Relevant options will be passed to
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – options for model fitting. Relevant options will be passed to
 the <cite>optimizer_cls</cite>. Additionally, options can include: “disp”
 to specify whether to display model fitting diagnostics and “maxiter”
 to specify the maximum number of iterations.</p></li>
@@ -791,7 +821,7 @@ to specify the maximum number of iterations.</p></li>
 iteration. If track_iterations is False, will be empty.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>MarginalLogLikelihood</em>, <em>Dict</em>[str, <em>Union</em>[float, <em>List</em>[<a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a>]]]]</p>
+<dd class="field-odd"><p><em>Tuple</em>[<em>MarginalLogLikelihood</em>, <em>Dict</em>[str, float | <em>List</em>[<a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a>]]]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -825,7 +855,7 @@ and broadcasts the constraints accordingly to the input batch shape.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – A list of tuples (indices, coefficients, rhs), with each tuple
+<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs), with each tuple
 encoding an (in-)equality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) (&gt;)= rhs</cite>.
 If <cite>indices</cite> is a 2-d Tensor, this supports specifying constraints across
@@ -924,8 +954,8 @@ with each tuple encoding an inequality constraint of the form
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
 <li><p><strong>thinning</strong> (<em>int</em>) – </p></li>
-<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -938,7 +968,7 @@ with each tuple encoding an inequality constraint of the form
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.initializers.gen_batch_initial_conditions">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">gen_batch_initial_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#gen_batch_initial_conditions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.gen_batch_initial_conditions" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">gen_batch_initial_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#gen_batch_initial_conditions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.gen_batch_initial_conditions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a batch of initial conditions for random-restart optimziation.</p>
 <p>TODO: Support t-batches of initial conditions.</p>
 <dl class="field-list simple">
@@ -952,9 +982,9 @@ function optimization.</p></li>
 <li><p><strong>raw_samples</strong> (<em>int</em>) – The number of raw samples to consider in the initialization
 heuristic. Note: if <cite>sample_around_best</cite> is True (the default is False),
 then <cite>2 * raw_samples</cite> samples are used.</p></li>
-<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A map <cite>{feature_index: value}</cite> for features that
+<li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that
 should be fixed to a particular value during generation.</p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em><em>]</em>) – Options for initial condition generation. For valid options see
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em>) – Options for initial condition generation. For valid options see
 <cite>initialize_q_batch</cite> and <cite>initialize_q_batch_nonneg</cite>. If <cite>options</cite>
 contains a <cite>nonnegative=True</cite> entry, then <cite>acq_function</cite> is
 assumed to be non-negative (useful when using custom acquisition
@@ -968,8 +998,11 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>generator</strong> (<em>Callable</em><em>[</em><em>[</em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – Callable for generating samples that are then further
+processed. It receives <cite>n</cite>, <cite>q</cite> and <cite>seed</cite> as arguments and
+returns a tensor of shape <cite>n x q x d</cite>.</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1015,9 +1048,9 @@ task features.</p></li>
 function optimization.</p></li>
 <li><p><strong>raw_samples</strong> (<em>int</em>) – The number of raw samples to consider in the initialization
 heuristic.</p></li>
-<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A map <cite>{feature_index: value}</cite> for features that
+<li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that
 should be fixed to a particular value during generation.</p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em><em>]</em>) – Options for initial condition generation. These contain all
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em>) – Options for initial condition generation. These contain all
 settings for the standard heuristic initialization from
 <cite>gen_batch_initial_conditions</cite>. In addition, they contain
 <cite>frac_random</cite> (the fraction of fully random fantasy points),
@@ -1031,8 +1064,8 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1041,7 +1074,7 @@ for <cite>optimize_acqf()</cite>. Here <cite>q’ = q + num_fantasies</cite> is 
 of points (candidate points plus fantasy points).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Optional</em>[<em>Tensor</em>]</p>
+<dd class="field-odd"><p><em>Tensor</em> | None</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -1084,9 +1117,9 @@ function optimization.</p></li>
 heuristic.</p></li>
 <li><p><strong>current_model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The model of the KG acquisition function that was used to
 generate the fantasy model of the value function.</p></li>
-<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A map <cite>{feature_index: value}</cite> for features that
+<li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that
 should be fixed to a particular value during generation.</p></li>
-<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em><em>]</em>) – Options for initial condition generation. These contain all
+<li><p><strong>options</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em>) – Options for initial condition generation. These contain all
 settings for the standard heuristic initialization from
 <cite>gen_batch_initial_conditions</cite>. In addition, they contain
 <cite>frac_random</cite> (the fraction of fully random fantasy points),
@@ -1211,7 +1244,7 @@ perturbing the best points.</p></li>
 <li><p><strong>best_pct</strong> (<em>float</em>) – The percentage of best points to perturb.</p></li>
 <li><p><strong>subset_sigma</strong> (<em>float</em>) – The standard deviation of the additive gaussian
 noise for perturbing a subset of dimensions of the best points.</p></li>
-<li><p><strong>prob_perturb</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – The probability of perturbing each dimension.</p></li>
+<li><p><strong>prob_perturb</strong> (<em>float</em><em> | </em><em>None</em>) – The probability of perturbing each dimension.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1222,7 +1255,7 @@ noise for perturbing a subset of dimensions of the best points.</p></li>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Optional</em>[<em>Tensor</em>]</p>
+<dd class="field-odd"><p><em>Tensor</em> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1269,7 +1302,7 @@ must be normalized to be within <cite>[0, 1]^d</cite>.</p></li>
 <li><p><strong>sigma</strong> (<em>float</em>) – The standard deviation of the additive gaussian noise for
 perturbing the points.</p></li>
 <li><p><strong>qmc</strong> (<em>bool</em>) – A boolean indicating whether to use qmc.</p></li>
-<li><p><strong>prob_perturb</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – The probability of perturbing each dimension. If omitted,
+<li><p><strong>prob_perturb</strong> (<em>float</em><em> | </em><em>None</em>) – The probability of perturbing each dimension. If omitted,
 defaults to <cite>min(20 / d, 1)</cite>.</p></li>
 </ul>
 </dd>
@@ -1429,7 +1462,7 @@ training data from, e.g., <cite>mll.model</cite> should register this argument a
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A MarginalLogLikelihood instance whose negative defines the loss.</p></li>
-<li><p><strong>data_loader</strong> (<em>Optional</em><em>[</em><em>DataLoader</em><em>]</em>) – An optional DataLoader instance for cases where training
+<li><p><strong>data_loader</strong> (<em>DataLoader</em><em> | </em><em>None</em>) – An optional DataLoader instance for cases where training
 data is passed in rather than obtained from <cite>mll.model</cite>.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
@@ -1454,10 +1487,10 @@ calling <cite>get_loss_closure</cite>. For further details, see <cite>get_loss_c
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mll</strong> (<em>MarginalLogLikelihood</em>) – A MarginalLogLikelihood instance whose negative defines the loss.</p></li>
 <li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – A dictionary of tensors whose <cite>grad</cite> fields are to be returned.</p></li>
-<li><p><strong>reducer</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Optional callable used to reduce the output of the forward pass.</p></li>
-<li><p><strong>data_loader</strong> (<em>Optional</em><em>[</em><em>DataLoader</em><em>]</em>) – An optional DataLoader instance for cases where training
+<li><p><strong>reducer</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – Optional callable used to reduce the output of the forward pass.</p></li>
+<li><p><strong>data_loader</strong> (<em>DataLoader</em><em> | </em><em>None</em>) – An optional DataLoader instance for cases where training
 data is passed in rather than obtained from <cite>mll.model</cite>.</p></li>
-<li><p><strong>context_manager</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – An optional ContextManager used to wrap each forward-backward
+<li><p><strong>context_manager</strong> (<em>Callable</em><em> | </em><em>None</em>) – An optional ContextManager used to wrap each forward-backward
 pass. Defaults to a <cite>zero_grad_ctx</cite> that zeroes the gradients of
 <cite>parameters</cite> upon entry. None may be passed as an alias for <cite>nullcontext</cite>.</p></li>
 <li><p><strong>backward</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>None</em><em>]</em>) – </p></li>
@@ -1497,8 +1530,8 @@ scipy optimizer that satisfy bounds only up to numerical accuracy.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – The <cite>b x n x d</cite> input tensor. If 2-dimensional, <cite>b</cite> is assumed to be 1.</p></li>
-<li><p><strong>lower</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The column-wise lower bounds. If scalar, apply bound to all columns.</p></li>
-<li><p><strong>upper</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The column-wise upper bounds. If scalar, apply bound to all columns.</p></li>
+<li><p><strong>lower</strong> (<em>float</em><em> | </em><em>Tensor</em><em> | </em><em>None</em>) – The column-wise lower bounds. If scalar, apply bound to all columns.</p></li>
+<li><p><strong>upper</strong> (<em>float</em><em> | </em><em>Tensor</em><em> | </em><em>None</em>) – The column-wise upper bounds. If scalar, apply bound to all columns.</p></li>
 <li><p><strong>raise_on_violation</strong> (<em>bool</em>) – If <cite>True</cite>, raise an exception when the elments in <cite>X</cite>
 are out of the specified bounds (up to numerical accuracy). This is
 useful for post-processing candidates generated by optimizers that
@@ -1522,7 +1555,7 @@ satisfy imposed bounds only up to numerical accuracy.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – input Tensor with shape <cite>… x p</cite>, where <cite>p</cite> is the number of features</p></li>
-<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em>) – A dictionary with keys as column indices and values
+<li><p><strong>fixed_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – A dictionary with keys as column indices and values
 equal to what the feature should be set to in <cite>X</cite>. If the value is
 None, that column is just considered fixed. Keys should be in the
 range <cite>[0, p - 1]</cite>.</p></li>
@@ -1548,7 +1581,7 @@ then this method attempts to use the model’s <cite>train_inputs</cite> as <cit
 <dd class="field-odd"><p><strong>acq_function</strong> (<em>AcquisitionFunction</em>) – The acquisition function.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Optional</em>[<em>Tensor</em>]</p>
+<dd class="field-even"><p><em>Tensor</em> | None</p>
 </dd>
 </dl>
 <dl class="simple">
@@ -1566,7 +1599,7 @@ then this method attempts to use the model’s <cite>train_inputs</cite> as <cit
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.optim.utils.model_utils.TorchAttr">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.model_utils.</span></span><span class="sig-name descname"><span class="pre">TorchAttr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/model_utils.html#TorchAttr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.model_utils.TorchAttr" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <p>Create new instance of TorchAttr(shape, dtype, device)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1617,9 +1650,9 @@ then this method attempts to use the model’s <cite>train_inputs</cite> as <cit
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>module</strong> (<em>Module</em>) – The target module from which parameters are to be extracted.</p></li>
-<li><p><strong>requires_grad</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – Optional Boolean used to filter parameters based on whether
+<li><p><strong>requires_grad</strong> (<em>bool</em><em> | </em><em>None</em>) – Optional Boolean used to filter parameters based on whether
 or not their require_grad attribute matches the user provided value.</p></li>
-<li><p><strong>name_filter</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>bool</em><em>]</em><em>]</em>) – Optional Boolean function used to filter parameters by name.</p></li>
+<li><p><strong>name_filter</strong> (<em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>bool</em><em>] </em><em>| </em><em>None</em>) – Optional Boolean function used to filter parameters by name.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1638,8 +1671,8 @@ or not their require_grad attribute matches the user provided value.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>module</strong> (<em>Module</em>) – The target module from which parameters are to be extracted.</p></li>
-<li><p><strong>name_filter</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>bool</em><em>]</em><em>]</em>) – Optional Boolean function used to filter parameters by name.</p></li>
-<li><p><strong>requires_grad</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – Optional Boolean used to filter parameters based on whether
+<li><p><strong>name_filter</strong> (<em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>bool</em><em>] </em><em>| </em><em>None</em>) – Optional Boolean function used to filter parameters by name.</p></li>
+<li><p><strong>requires_grad</strong> (<em>bool</em><em> | </em><em>None</em>) – Optional Boolean used to filter parameters based on whether
 or not their require_grad attribute matches the user provided value.</p></li>
 <li><p><strong>default_bounds</strong> (<em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Default lower and upper bounds for constrained parameters
 with <cite>None</cite> typed bounds.</p></li>
@@ -1649,7 +1682,7 @@ with <cite>None</cite> typed bounds.</p></li>
 <dd class="field-even"><p>A dictionary of parameters and a dictionary of parameter bounds.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Tensor</em>], <em>Dict</em>[str, <em>Tuple</em>[<em>Optional</em>[float], <em>Optional</em>[float]]]]</p>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Dict</em>[str, <em>Tensor</em>], <em>Dict</em>[str, <em>Tuple</em>[float | None, float | None]]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1700,7 +1733,7 @@ define the set of names to be excluded.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>values</strong> (<em>Tensor</em>) – Tensor to be converted to ndarray.</p></li>
-<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>dtype</em><em>]</em>) – Optional numpy.dtype for the converted tensor.</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – Optional numpy.dtype for the converted tensor.</p></li>
 <li><p><strong>inplace</strong> (<em>bool</em>) – Boolean indicating whether memory should be shared if possible.</p></li>
 </ul>
 </dd>
@@ -1718,9 +1751,9 @@ define the set of names to be excluded.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>tensors</strong> (<em>Union</em><em>[</em><em>Iterator</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>out</strong> (<em>Optional</em><em>[</em><em>ndarray</em><em>]</em>) – </p></li>
-<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>dtype</em><em>, </em><em>str</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>tensors</strong> (<em>Iterator</em><em>[</em><em>Tensor</em><em>] </em><em>| </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>out</strong> (<em>ndarray</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>str</em><em> | </em><em>None</em>) – </p></li>
 <li><p><strong>as_array</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>ndarray</em><em>]</em>) – </p></li>
 </ul>
 </dd>
@@ -1736,7 +1769,7 @@ define the set of names to be excluded.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>tensors</strong> (<em>Union</em><em>[</em><em>Iterator</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>tensors</strong> (<em>Iterator</em><em>[</em><em>Tensor</em><em>] </em><em>| </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
 <li><p><strong>array</strong> (<em>ndarray</em>) – </p></li>
 <li><p><strong>as_tensor</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – </p></li>
 </ul>
@@ -1754,14 +1787,14 @@ define the set of names to be excluded.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – A dictionary of parameters.</p></li>
-<li><p><strong>bounds</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A dictionary of (optional) lower and upper bounds.</p></li>
+<li><p><strong>bounds</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>float</em><em> | </em><em>Tensor</em><em> | </em><em>None</em><em>, </em><em>float</em><em> | </em><em>Tensor</em><em> | </em><em>None</em><em>]</em><em>]</em>) – A dictionary of (optional) lower and upper bounds.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>An ndarray of bounds.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Optional</em>[<em>ndarray</em>]</p>
+<dd class="field-odd"><p><em>ndarray</em> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1816,11 +1849,11 @@ for optimizing module parameters.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>module</strong> (<em>Module</em>) – A module with parameters. May specify parameter constraints in
 a <cite>named_parameters_and_constraints</cite> method.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A dictionary mapping parameter names t lower and upper bounds.
+<li><p><strong>bounds</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>float</em><em> | </em><em>None</em><em>, </em><em>float</em><em> | </em><em>None</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A dictionary mapping parameter names t lower and upper bounds.
 of lower and upper bounds. Bounds specified here take precedence
 over bounds on the same parameters specified in the constraints
 registered with the module.</p></li>
-<li><p><strong>exclude</strong> (<em>Optional</em><em>[</em><em>Set</em><em>[</em><em>str</em><em>]</em><em>]</em>) – A list of parameter names that are to be excluded from extraction.</p></li>
+<li><p><strong>exclude</strong> (<em>Set</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – A list of parameter names that are to be excluded from extraction.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1832,7 +1865,7 @@ parameter.
 one constraint is finite, and None otherwise.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>ndarray</em>, <em>Dict</em>[str, <a class="reference internal" href="#botorch.optim.utils.model_utils.TorchAttr" title="botorch.optim.utils.model_utils.TorchAttr"><em>TorchAttr</em></a>], <em>Optional</em>[<em>ndarray</em>]]</p>
+<dd class="field-odd"><p><em>Tuple</em>[<em>ndarray</em>, <em>Dict</em>[str, <a class="reference internal" href="#botorch.optim.utils.model_utils.TorchAttr" title="botorch.optim.utils.model_utils.TorchAttr"><em>TorchAttr</em></a>], <em>ndarray</em> | None]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -1881,9 +1914,9 @@ returned by module_to_array.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – <cite>… x d</cite> tensor</p></li>
-<li><p><strong>lower_bounds</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Lower bounds on each column (last dimension) of <cite>X</cite>. If
+<li><p><strong>lower_bounds</strong> (<em>float</em><em> | </em><em>Tensor</em><em> | </em><em>None</em>) – Lower bounds on each column (last dimension) of <cite>X</cite>. If
 this is a single float, then all columns have the same bound.</p></li>
-<li><p><strong>upper_bounds</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Lower bounds on each column (last dimension) of <cite>X</cite>. If
+<li><p><strong>upper_bounds</strong> (<em>float</em><em> | </em><em>Tensor</em><em> | </em><em>None</em>) – Lower bounds on each column (last dimension) of <cite>X</cite>. If
 this is a single float, then all columns have the same bound.</p></li>
 </ul>
 </dd>
@@ -1892,7 +1925,7 @@ this is a single float, then all columns have the same bound.</p></li>
 None, and None otherwise.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Optional</em>[<em>Bounds</em>]</p>
+<dd class="field-odd"><p><em>Bounds</em> | None</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -1920,8 +1953,8 @@ rhs is a scalar.</p></li>
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) == rhs</cite> (with <cite>indices</cite>
 and <cite>coefficients</cite> of the same form as in <cite>inequality_constraints</cite>).</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1930,7 +1963,7 @@ values and Jacobians and a string indicating the associated constraint
 type (“eq”, “ineq”), as expected by <cite>scipy.minimize</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>List</em>[<em>Dict</em>[str, <em>Union</em>[str, <em>Callable</em>[[<em>ndarray</em>], float], <em>Callable</em>[[<em>ndarray</em>], <em>ndarray</em>]]]]</p>
+<dd class="field-odd"><p><em>List</em>[<em>Dict</em>[str, str | <em>Callable</em>[[<em>ndarray</em>], float] | <em>Callable</em>[[<em>ndarray</em>], <em>ndarray</em>]]]</p>
 </dd>
 </dl>
 <p>This function assumes that constraints are the same for each input batch,

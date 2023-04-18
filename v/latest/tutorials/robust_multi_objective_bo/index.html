@@ -220,7 +220,7 @@ of the sampled scalarization.</p>
     <span class="n">bounds</span><span class="p">,</span>
     <span class="n">tkwargs</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Generates the initial data for the experiments.</span>
 <span class="sd">    Args:</span>
 <span class="sd">        n: Number of training points.</span>
@@ -258,7 +258,7 @@ of the sampled scalarization.</p>
 
 
 <span class="k">class</span> <span class="nc">MVaRHV</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A helper class that calculates the HV of the MVaR set."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A helper class that calculates the HV of the MVaR set."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -277,7 +277,7 @@ of the sampled scalarization.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">eval_problem</span> <span class="o">=</span> <span class="n">eval_problem</span>
 
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_X</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Calculate the resulting HV by adding the MVaR corresponding to the new_X</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the resulting HV by adding the MVaR corresponding to the new_X</span>
 <span class="sd">        to the Pareto set.</span>
 <span class="sd">        Args:</span>
 <span class="sd">            new_X: `q x dim`-dim tensor of candidate points.</span>
@@ -315,7 +315,7 @@ of the sampled scalarization.</p>
 
 
 <span class="k">def</span> <span class="nf">initialize_model</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="p">,</span> <span class="n">perturbation_set</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Constructs the model and its MLL.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Constructs the model and its MLL.</span>
 <span class="sd">    Args:</span>
 <span class="sd">        train_x: An `n x d`-dim tensor of training inputs.</span>
 <span class="sd">        train_y: An `n x m`-dim tensor of training outcomes.</span>
@@ -368,7 +368,7 @@ of the sampled scalarization.</p>
     <span class="n">sampler</span><span class="p">,</span>
     <span class="n">mvar_ref_point</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Construct the NEI acquisition function with VaR of Chebyshev scalarizations.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct the NEI acquisition function with VaR of Chebyshev scalarizations.</span>
 <span class="sd">    Args:</span>
 <span class="sd">        model: A fitted multi-output GPyTorchModel.</span>
 <span class="sd">        n_w: the number of perturbation samples</span>

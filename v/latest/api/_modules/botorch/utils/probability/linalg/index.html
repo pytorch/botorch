@@ -62,7 +62,7 @@
     <span class="n">Lba</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">jitter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Computes the Cholesky factor of a block matrix `K = [[Kaa, Kab], [Kba, Kbb]]`</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the Cholesky factor of a block matrix `K = [[Kaa, Kab], [Kba, Kbb]]`</span>
 <span class="sd">    based on a precomputed Cholesky factor `Kaa = Laa Laa^T`.</span>
 
 <span class="sd">    Args:</span>
@@ -89,7 +89,7 @@
         <span class="k">raise</span> <span class="n">NotPSDError</span><span class="p">(</span>
             <span class="s2">"Schur complement of `K` with respect to `Kaa` not PSD for the given "</span>
             <span class="s2">"Cholesky factor `Laa`"</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'.'</span> <span class="k">if</span> <span class="n">jitter</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s1">' and nugget jitter=</span><span class="si">{</span><span class="n">jitter</span><span class="si">}</span><span class="s1">.'</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'.'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">jitter</span><span class="w"> </span><span class="ow">is</span><span class="w"> </span><span class="kc">None</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="sa">f</span><span class="s1">' and nugget jitter=</span><span class="si">{</span><span class="n">jitter</span><span class="si">}</span><span class="s1">.'</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
 
     <span class="n">n</span> <span class="o">=</span> <span class="n">Lbb</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -134,7 +134,7 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="PivotedCholesky.update_"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.linalg.PivotedCholesky.update_">[docs]</a>    <span class="k">def</span> <span class="nf">update_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Performs a single matrix decomposition step."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Performs a single matrix decomposition step."""</span>
         <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span>
         <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tril</span>
         <span class="n">Lii</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tril</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>

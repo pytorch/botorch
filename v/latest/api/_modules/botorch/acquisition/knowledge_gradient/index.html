@@ -79,7 +79,7 @@
 
 
 <div class="viewcode-block" id="qKnowledgeGradient"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient">[docs]</a><span class="k">class</span> <span class="nc">qKnowledgeGradient</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Batch Knowledge Gradient using one-shot optimization.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Batch Knowledge Gradient using one-shot optimization.</span>
 
 <span class="sd">    This computes the batch Knowledge Gradient using fantasies for the outer</span>
 <span class="sd">    expectation and either the model posterior mean or MC-sampling for the inner</span>
@@ -102,7 +102,7 @@
         <span class="n">current_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""q-Knowledge Gradient (one-shot optimization).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Knowledge Gradient (one-shot optimization).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model. Must support fantasizing.</span>
@@ -185,7 +185,7 @@
 
 <div class="viewcode-block" id="qKnowledgeGradient.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate qKnowledgeGradient on the candidate set `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qKnowledgeGradient on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `b x (q + num_fantasies) x d` Tensor with `b` t-batches of</span>
@@ -243,7 +243,7 @@
 <div class="viewcode-block" id="qKnowledgeGradient.evaluate"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.evaluate">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate qKnowledgeGradient on the candidate set `X_actual` by</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qKnowledgeGradient on the candidate set `X_actual` by</span>
 <span class="sd">        solving the inner optimization problem.</span>
 
 <span class="sd">        Args:</span>
@@ -314,7 +314,7 @@
         <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="qKnowledgeGradient.get_augmented_q_batch_size"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.get_augmented_q_batch_size">[docs]</a>    <span class="k">def</span> <span class="nf">get_augmented_q_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Get augmented q batch size for one-shot optimization.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Get augmented q batch size for one-shot optimization.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            q: The number of candidates to consider jointly.</span>
@@ -326,7 +326,7 @@
         <span class="k">return</span> <span class="n">q</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_fantasies</span></div>
 
 <div class="viewcode-block" id="qKnowledgeGradient.extract_candidates"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.extract_candidates">[docs]</a>    <span class="k">def</span> <span class="nf">extract_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_full</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""We only return X as the set of candidates post-optimization.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""We only return X as the set of candidates post-optimization.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X_full: A `b x (q + num_fantasies) x d`-dim Tensor with `b`</span>
@@ -339,7 +339,7 @@
 
 
 <div class="viewcode-block" id="qMultiFidelityKnowledgeGradient"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient">[docs]</a><span class="k">class</span> <span class="nc">qMultiFidelityKnowledgeGradient</span><span class="p">(</span><span class="n">qKnowledgeGradient</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Batch Knowledge Gradient for multi-fidelity optimization.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Batch Knowledge Gradient for multi-fidelity optimization.</span>
 
 <span class="sd">    A version of `qKnowledgeGradient` that supports multi-fidelity optimization</span>
 <span class="sd">    via a `CostAwareUtility` and the `project` and `expand` operators. If none</span>
@@ -366,7 +366,7 @@
         <span class="n">valfunc_argfac</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Model</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Multi-Fidelity q-Knowledge Gradient (one-shot optimization).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Multi-Fidelity q-Knowledge Gradient (one-shot optimization).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model. Must support fantasizing.</span>
@@ -446,7 +446,7 @@
 
 <div class="viewcode-block" id="qMultiFidelityKnowledgeGradient.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate qMultiFidelityKnowledgeGradient on the candidate set `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qMultiFidelityKnowledgeGradient on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `b x (q + num_fantasies) x d` Tensor with `b` t-batches of</span>
@@ -518,7 +518,7 @@
 
 
 <div class="viewcode-block" id="ProjectedAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.knowledge_gradient.ProjectedAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">ProjectedAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Defines a wrapper around  an `AcquisitionFunction` that incorporates the project</span>
 <span class="sd">    operator. Typically used to handle value functions in look-ahead methods.</span>
 <span class="sd">    """</span>
@@ -528,7 +528,7 @@
         <span class="n">base_value_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
         <span class="n">project</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            base_value_function: The wrapped `AcquisitionFunction`.</span>
 <span class="sd">            project: A callable mapping a `batch_shape x q x d` tensor of design</span>
@@ -556,7 +556,7 @@
     <span class="n">valfunc_cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">AcquisitionFunction</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">valfunc_argfac</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Model</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AcquisitionFunction</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Construct value function (i.e. inner acquisition function)."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct value function (i.e. inner acquisition function)."""</span>
     <span class="k">if</span> <span class="n">valfunc_cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">common_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
@@ -590,7 +590,7 @@
 
 
 <span class="k">def</span> <span class="nf">_split_fantasy_points</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">n_f</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Split a one-shot optimization input into actual and fantasy points</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Split a one-shot optimization input into actual and fantasy points</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: A `batch_shape x (q + n_f) x d`-dim tensor of actual and fantasy</span>

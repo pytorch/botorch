@@ -73,7 +73,7 @@
 
 
 <div class="viewcode-block" id="SingleTaskMultiFidelityGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP">[docs]</a><span class="k">class</span> <span class="nc">SingleTaskMultiFidelityGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A single task multi-fidelity GP model.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A single task multi-fidelity GP model.</span>
 
 <span class="sd">    A SingleTaskGP model using a DownsamplingKernel for the data fidelity</span>
 <span class="sd">    parameter (if present) and an ExponentialDecayKernel for the iteration</span>
@@ -99,7 +99,7 @@
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: A `batch_shape x n x (d + s)` tensor of training features,</span>
 <span class="sd">                where `s` is the dimension of the fidelity parameters (either one</span>
@@ -170,7 +170,7 @@
         <span class="n">fidelity_features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            training_data: Dictionary of `SupervisedDataset`.</span>
@@ -185,7 +185,7 @@
 
 
 <div class="viewcode-block" id="FixedNoiseMultiFidelityGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP">[docs]</a><span class="k">class</span> <span class="nc">FixedNoiseMultiFidelityGP</span><span class="p">(</span><span class="n">FixedNoiseGP</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A single task multi-fidelity GP model using fixed noise levels.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A single task multi-fidelity GP model using fixed noise levels.</span>
 
 <span class="sd">    A FixedNoiseGP model analogue to SingleTaskMultiFidelityGP, using a</span>
 <span class="sd">    DownsamplingKernel for the data fidelity parameter (if present) and</span>
@@ -217,7 +217,7 @@
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: A `batch_shape x n x (d + s)` tensor of training features,</span>
 <span class="sd">                where `s` is the dimension of the fidelity parameters (either one</span>
@@ -279,7 +279,7 @@
         <span class="n">fidelity_features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            training_data: Dictionary of `SupervisedDataset`.</span>
@@ -301,7 +301,7 @@
     <span class="n">linear_truncated</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">nu</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ScaleKernel</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]:</span>
-    <span class="sd">"""Helper function to get the covariance module and associated subset_batch_dict</span>
+<span class="w">    </span><span class="sd">"""Helper function to get the covariance module and associated subset_batch_dict</span>
 <span class="sd">    for the multifidelity setting.</span>
 
 <span class="sd">    Args:</span>

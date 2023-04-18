@@ -74,7 +74,7 @@
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">MCAcquisitionFunction</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Convenience function for initializing botorch acquisition functions.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Convenience function for initializing botorch acquisition functions.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        acquisition_function_name: Name of the acquisition function.</span>
@@ -155,7 +155,7 @@
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
-            <span class="n">prune_baseline</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prune_baseline"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="n">prune_baseline</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prune_baseline"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
             <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"marginalize_dim"</span><span class="p">),</span>
             <span class="n">cache_root</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cache_root"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
         <span class="p">)</span>
@@ -243,7 +243,7 @@
     <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Get infeasible cost for a model and objective.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Get infeasible cost for a model and objective.</span>
 
 <span class="sd">    For each outcome, computes an infeasible cost `M` such that</span>
 <span class="sd">    `-M &lt; min_x f(x)` almost always, so that feasible points are preferred.</span>
@@ -280,7 +280,7 @@
 
 
 <div class="viewcode-block" id="is_nonnegative"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.is_nonnegative">[docs]</a><span class="k">def</span> <span class="nf">is_nonnegative</span><span class="p">(</span><span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Determine whether a given acquisition function is non-negative.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Determine whether a given acquisition function is non-negative.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        acq_function: The `AcquisitionFunction` instance.</span>
@@ -320,7 +320,7 @@
     <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">marginalize_dim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Prune points from an input tensor that are unlikely to be the best point.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Prune points from an input tensor that are unlikely to be the best point.</span>
 
 <span class="sd">    Given a model, an objective, and an input tensor `X`, this function returns</span>
 <span class="sd">    the subset of points in `X` that have some probability of being the best</span>
@@ -397,7 +397,7 @@
 <div class="viewcode-block" id="project_to_target_fidelity"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.project_to_target_fidelity">[docs]</a><span class="k">def</span> <span class="nf">project_to_target_fidelity</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target_fidelities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Project `X` onto the target set of fidelities.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Project `X` onto the target set of fidelities.</span>
 
 <span class="sd">    This function assumes that the set of feasible fidelities is a box, so</span>
 <span class="sd">    projecting here just means setting each fidelity parameter to its target</span>
@@ -432,7 +432,7 @@
 <div class="viewcode-block" id="expand_trace_observations"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.expand_trace_observations">[docs]</a><span class="k">def</span> <span class="nf">expand_trace_observations</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">fidelity_dims</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">num_trace_obs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Expand `X` with trace observations.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Expand `X` with trace observations.</span>
 
 <span class="sd">    Expand a tensor of inputs with "trace observations" that are obtained during</span>
 <span class="sd">    the evaluation of the candidate set. This is used in multi-fidelity</span>
@@ -483,7 +483,7 @@
 
 
 <div class="viewcode-block" id="project_to_sample_points"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.project_to_sample_points">[docs]</a><span class="k">def</span> <span class="nf">project_to_sample_points</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sample_points</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Augment `X` with sample points at which to take weighted average.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Augment `X` with sample points at which to take weighted average.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: A `batch_shape x 1 x d`-dim Tensor of with one d`-dim design points</span>

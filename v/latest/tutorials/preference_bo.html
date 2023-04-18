@@ -161,7 +161,7 @@ I0320 224445.149 _utils_internal.py:197] NCCL_DEBUG is forced to WARN from None
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># data generating helper functions</span>
 <span class="k">def</span> <span class="nf">utility</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
-    <span class="sd">"""Given X, output corresponding utility (i.e., the latent function)"""</span>
+<span class="w">    </span><span class="sd">"""Given X, output corresponding utility (i.e., the latent function)"""</span>
     <span class="c1"># y is weighted sum of X, with weight sqrt(i) imposed on dimension i</span>
     <span class="n">weighted_X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weighted_X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
@@ -169,7 +169,7 @@ I0320 224445.149 _utils_internal.py:197] NCCL_DEBUG is forced to WARN from None
 
 
 <span class="k">def</span> <span class="nf">generate_data</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
-    <span class="sd">"""Generate data X and y"""</span>
+<span class="w">    </span><span class="sd">"""Generate data X and y"""</span>
     <span class="c1"># X is randomly sampled from dim-dimentional unit cube</span>
     <span class="c1"># we recommend using double as opposed to float tensor here for</span>
     <span class="c1"># better numerical stability</span>
@@ -179,7 +179,7 @@ I0320 224445.149 _utils_internal.py:197] NCCL_DEBUG is forced to WARN from None
 
 
 <span class="k">def</span> <span class="nf">generate_comparisons</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">n_comp</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">"""Create pairwise comparisons with noise"""</span>
+<span class="w">    </span><span class="sd">"""Create pairwise comparisons with noise"""</span>
     <span class="c1"># generate all possible pairs of elements in y</span>
     <span class="n">all_pairs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">combinations</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mi">2</span><span class="p">)))</span>
     <span class="c1"># randomly select n_comp pairs from all_pairs</span>
@@ -318,7 +318,7 @@ Hence, given a test pair (<code>test_X</code>, <code>test_y</code>), we can eval
 
 
 <span class="k">def</span> <span class="nf">init_and_fit_model</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">comp</span><span class="p">):</span>
-    <span class="sd">"""Model fitting helper function"""</span>
+<span class="w">    </span><span class="sd">"""Model fitting helper function"""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">PairwiseGP</span><span class="p">(</span>
         <span class="n">X</span><span class="p">,</span>
         <span class="n">comp</span><span class="p">,</span>
@@ -330,7 +330,7 @@ Hence, given a test pair (<code>test_X</code>, <code>test_y</code>), we can eval
 
 
 <span class="k">def</span> <span class="nf">make_new_data</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">next_X</span><span class="p">,</span> <span class="n">comps</span><span class="p">,</span> <span class="n">q_comp</span><span class="p">):</span>
-    <span class="sd">"""Given X and next_X,</span>
+<span class="w">    </span><span class="sd">"""Given X and next_X,</span>
 <span class="sd">    generate q_comp new comparisons between next_X</span>
 <span class="sd">    and return the concatenated X and comparisons</span>
 <span class="sd">    """</span>

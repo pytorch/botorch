@@ -48,7 +48,7 @@
 
 
 <div class="viewcode-block" id="Dispatcher"><a class="viewcode-back" href="../../../utils.html#botorch.utils.dispatcher.Dispatcher">[docs]</a><span class="k">class</span> <span class="nc">Dispatcher</span><span class="p">(</span><span class="n">MDDispatcher</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Clearing house for multiple dispatch functionality. This class extends</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Clearing house for multiple dispatch functionality. This class extends</span>
 <span class="sd">    `&lt;multipledispatch.Dispatcher&gt;` by: (i) generalizing the argument encoding</span>
 <span class="sd">    convention during method lookup, (ii) implementing `__getitem__` as a dedicated</span>
 <span class="sd">    method lookup function.</span>
@@ -60,7 +60,7 @@
         <span class="n">doc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">encoder</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Type</span><span class="p">]</span> <span class="o">=</span> <span class="nb">type</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">"""</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            name: A string identifier for the `Dispatcher` instance.</span>
 <span class="sd">            doc: A docstring for the multiply dispatched method(s).</span>
@@ -76,7 +76,7 @@
         <span class="n">args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Method lookup.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Method lookup.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            args: A set of arguments that act as identifiers for a stored method.</span>
@@ -97,13 +97,13 @@
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="n">func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">func</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: &lt;</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">types</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: &lt;</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="bp">cls</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">types</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
                 <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not find signature for </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">types</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span>
         <span class="k">return</span> <span class="n">func</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Multiply dispatches a call to a collection of methods.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Multiply dispatches a call to a collection of methods.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            args: A set of arguments that act as identifiers for a stored method.</span>
@@ -133,7 +133,7 @@
             <span class="p">)</span>
 
 <div class="viewcode-block" id="Dispatcher.dispatch"><a class="viewcode-back" href="../../../utils.html#botorch.utils.dispatcher.Dispatcher.dispatch">[docs]</a>    <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">types</span><span class="p">:</span> <span class="n">Type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Method lookup strategy. Checks for an exact match before traversing</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Method lookup strategy. Checks for an exact match before traversing</span>
 <span class="sd">        the set of registered methods according to the current ordering.</span>
 
 <span class="sd">        Args:</span>
@@ -151,26 +151,26 @@
             <span class="k">return</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="Dispatcher.encode_args"><a class="viewcode-back" href="../../../utils.html#botorch.utils.dispatcher.Dispatcher.encode_args">[docs]</a>    <span class="k">def</span> <span class="nf">encode_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Type</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Converts arguments into a tuple of types used during method lookup."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Converts arguments into a tuple of types used during method lookup."""</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="p">,</span> <span class="n">args</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">args</span><span class="p">,)))</span></div>
 
     <span class="k">def</span> <span class="nf">_help</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Returns the retrieved method's docstring."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns the retrieved method's docstring."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">encode_args</span><span class="p">(</span><span class="n">args</span><span class="p">))</span><span class="o">.</span><span class="vm">__doc__</span>
 
 <div class="viewcode-block" id="Dispatcher.help"><a class="viewcode-back" href="../../../utils.html#botorch.utils.dispatcher.Dispatcher.help">[docs]</a>    <span class="k">def</span> <span class="nf">help</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Prints the retrieved method's docstring."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Prints the retrieved method's docstring."""</span>
         <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_help</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">))</span></div>
 
     <span class="k">def</span> <span class="nf">_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Returns the retrieved method's source types as a string."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns the retrieved method's source types as a string."""</span>
         <span class="n">func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">encode_args</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">func</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"No function found"</span><span class="p">)</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"File: </span><span class="si">{</span><span class="n">getsourcefile</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="si">}</span><span class="se">\n\n</span><span class="si">{</span><span class="n">getsource</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
 
 <div class="viewcode-block" id="Dispatcher.source"><a class="viewcode-back" href="../../../utils.html#botorch.utils.dispatcher.Dispatcher.source">[docs]</a>    <span class="k">def</span> <span class="nf">source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Prints the retrieved method's source types."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Prints the retrieved method's source types."""</span>
         <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_source</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">))</span></div>
 
     <span class="nd">@property</span>

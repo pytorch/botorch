@@ -88,7 +88,7 @@
 
 
 <div class="viewcode-block" id="log1mexp"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.log1mexp">[docs]</a><span class="k">def</span> <span class="nf">log1mexp</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">"""Numerically accurate evaluation of log(1 - exp(x)) for x &lt; 0.</span>
+<span class="w">    </span><span class="sd">"""Numerically accurate evaluation of log(1 - exp(x)) for x &lt; 0.</span>
 <span class="sd">    See [Maechler2012accurate]_ for details.</span>
 <span class="sd">    """</span>
     <span class="n">log2</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">_log2</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
@@ -101,7 +101,7 @@
 
 
 <div class="viewcode-block" id="logdiffexp"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.logdiffexp">[docs]</a><span class="k">def</span> <span class="nf">logdiffexp</span><span class="p">(</span><span class="n">log_a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">log_b</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">"""Computes log(b - a) accurately given log(a) and log(b).</span>
+<span class="w">    </span><span class="sd">"""Computes log(b - a) accurately given log(a) and log(b).</span>
 <span class="sd">    Assumes, log_b &gt; log_a, i.e. b &gt; a &gt; 0.</span>
 
 <span class="sd">    Args:</span>
@@ -115,7 +115,7 @@
 
 
 <div class="viewcode-block" id="logmeanexp"><a class="viewcode-back" href="../../../utils.html#botorch.utils.safe_math.logmeanexp">[docs]</a><span class="k">def</span> <span class="nf">logmeanexp</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">"""Computes log(mean(exp(X), dim=dim)).</span>
+<span class="w">    </span><span class="sd">"""Computes log(mean(exp(X), dim=dim)).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X (Tensor): The logarithm of a, assumed to be less than log_b.</span>

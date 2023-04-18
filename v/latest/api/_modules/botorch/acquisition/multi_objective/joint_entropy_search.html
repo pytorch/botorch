@@ -63,7 +63,7 @@
 
 
 <div class="viewcode-block" id="LowerBoundMultiObjectiveEntropySearch"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch">[docs]</a><span class="k">class</span> <span class="nc">LowerBoundMultiObjectiveEntropySearch</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for the lower bound multi-objective entropy search</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for the lower bound multi-objective entropy search</span>
 <span class="sd">    acquisition functions.</span>
 <span class="sd">    """</span>
 
@@ -78,7 +78,7 @@
         <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Lower bound multi-objective entropy search acquisition function.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Lower bound multi-objective entropy search acquisition function.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted batch model with 'M' number of outputs.</span>
@@ -153,7 +153,7 @@
     <span class="k">def</span> <span class="nf">_compute_posterior_statistics</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]:</span>
-        <span class="sa">r</span><span class="sd">"""Compute the posterior statistics.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the posterior statistics.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of inputs.</span>
@@ -182,7 +182,7 @@
     <span class="k">def</span> <span class="nf">_compute_monte_carlo_variables</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Compute the samples and log-probability associated with a posterior</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the samples and log-probability associated with a posterior</span>
 <span class="sd">        distribution.</span>
 
 <span class="sd">        Args:</span>
@@ -201,7 +201,7 @@
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
     <span class="k">def</span> <span class="nf">_compute_lower_bound_information_gain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluates the lower bound information gain at the design points `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluates the lower bound information gain at the design points `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of `batch_shape` t-batches with `q`</span>
@@ -265,7 +265,7 @@
 
 <div class="viewcode-block" id="LowerBoundMultiObjectiveEntropySearch.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute lower bound multi-objective entropy search at the design points</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute lower bound multi-objective entropy search at the design points</span>
 <span class="sd">        `X`.</span>
 
 <span class="sd">        Args:</span>
@@ -283,7 +283,7 @@
 <div class="viewcode-block" id="qLowerBoundMultiObjectiveJointEntropySearch"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch">[docs]</a><span class="k">class</span> <span class="nc">qLowerBoundMultiObjectiveJointEntropySearch</span><span class="p">(</span>
     <span class="n">LowerBoundMultiObjectiveEntropySearch</span>
 <span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The acquisition function for the multi-objective joint entropy search, where</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The acquisition function for the multi-objective joint entropy search, where</span>
 <span class="sd">    the batches `q &gt; 1` are supported through the lower bound formulation.</span>
 
 <span class="sd">    This acquisition function computes the mutual information between the observation</span>
@@ -311,7 +311,7 @@
         <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Lower bound multi-objective joint entropy search acquisition function.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Lower bound multi-objective joint entropy search acquisition function.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted batch model with 'M' number of outputs.</span>
@@ -361,7 +361,7 @@
     <span class="k">def</span> <span class="nf">_compute_posterior_statistics</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">GPyTorchPosterior</span><span class="p">]]:</span>
-        <span class="sa">r</span><span class="sd">"""Compute the posterior statistics.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the posterior statistics.</span>
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of inputs.</span>
 
@@ -435,7 +435,7 @@
     <span class="k">def</span> <span class="nf">_compute_monte_carlo_variables</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Compute the samples and log-probability associated with the posterior</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the samples and log-probability associated with the posterior</span>
 <span class="sd">        distribution that conditions on the Pareto optimal points.</span>
 
 <span class="sd">        Args:</span>
@@ -470,7 +470,7 @@
 <div class="viewcode-block" id="qLowerBoundMultiObjectiveJointEntropySearch.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluates qLowerBoundMultiObjectiveJointEntropySearch at the design</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluates qLowerBoundMultiObjectiveJointEntropySearch at the design</span>
 <span class="sd">        points `X`.</span>
 
 <span class="sd">        Args:</span>
@@ -490,7 +490,7 @@
     <span class="n">variance</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">observation_noise</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Computes the entropy estimate at the design points `X` assuming noiseless</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the entropy estimate at the design points `X` assuming noiseless</span>
 <span class="sd">    observations. This is used for the JES-0 and MES-0 estimate.</span>
 
 <span class="sd">    Args:</span>
@@ -558,7 +558,7 @@
     <span class="n">observation_noise</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">only_diagonal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Computes the entropy upper bound at the design points `X`. This is used for</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the entropy upper bound at the design points `X`. This is used for</span>
 <span class="sd">    the JES-LB and MES-LB estimate. If `only_diagonal` is True, then this computes</span>
 <span class="sd">    the entropy estimate for the JES-LB2 and MES-LB2.</span>
 
@@ -681,7 +681,7 @@
     <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">samples_log_prob</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Computes the Monte Carlo entropy at the design points `X`. This is used for</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the Monte Carlo entropy at the design points `X`. This is used for</span>
 <span class="sd">    the JES-MC and MES-MC estimate.</span>
 
 <span class="sd">    Args:</span>

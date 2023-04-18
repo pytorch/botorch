@@ -151,7 +151,7 @@ $Y^* = f(X^*)$ where $X^* = [0.5, 0.5, 0.5, 0.5, 0.5]$.</p>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">neg_l1_dist</span><span class="p">(</span><span class="n">Y</span><span class="p">):</span>
-    <span class="sd">"""Negative L1 distance from a Pareto optimal points"""</span>
+<span class="w">    </span><span class="sd">"""Negative L1 distance from a Pareto optimal points"""</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">dist</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cdist</span><span class="p">(</span>
@@ -195,7 +195,7 @@ $Y^* = f(X^*)$ where $X^* = [0.5, 0.5, 0.5, 0.5, 0.5]$.</p>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">fit_outcome_model</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">X_bounds</span><span class="p">):</span>
-    <span class="sd">"""Fit the outcome model f"""</span>
+<span class="w">    </span><span class="sd">"""Fit the outcome model f"""</span>
     <span class="n">outcome_model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
         <span class="n">train_X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
@@ -208,7 +208,7 @@ $Y^* = f(X^*)$ where $X^* = [0.5, 0.5, 0.5, 0.5, 0.5]$.</p>
 
 
 <span class="k">def</span> <span class="nf">fit_pref_model</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">comps</span><span class="p">):</span>
-    <span class="sd">"""Fit the preference model g"""</span>
+<span class="w">    </span><span class="sd">"""Fit the preference model g"""</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">PairwiseGP</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">comps</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">Normalize</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
     <span class="n">mll</span> <span class="o">=</span> <span class="n">PairwiseLaplaceMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
     <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
@@ -216,19 +216,19 @@ $Y^* = f(X^*)$ where $X^* = [0.5, 0.5, 0.5, 0.5, 0.5]$.</p>
 
 
 <span class="k">def</span> <span class="nf">gen_rand_X</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
-    <span class="sd">"""Generate n quasi-random Sobol points in the design space"""</span>
+<span class="w">    </span><span class="sd">"""Generate n quasi-random Sobol points in the design space"""</span>
     <span class="k">return</span> <span class="n">draw_sobol_samples</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">generate_random_exp_data</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
-    <span class="sd">"""Generate n observations of (X, Y) Pairs"""</span>
+<span class="w">    </span><span class="sd">"""Generate n observations of (X, Y) Pairs"""</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">gen_rand_X</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
     <span class="n">Y</span> <span class="o">=</span> <span class="n">problem</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span>
 
 
 <span class="k">def</span> <span class="nf">generate_random_pref_data</span><span class="p">(</span><span class="n">outcome_model</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
-    <span class="sd">"""Generate n pairwise comparison data between 2n points"""</span>
+<span class="w">    </span><span class="sd">"""Generate n pairwise comparison data between 2n points"""</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">gen_rand_X</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span>
     <span class="n">Y</span> <span class="o">=</span> <span class="n">outcome_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">util</span> <span class="o">=</span> <span class="n">util_func</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
@@ -237,7 +237,7 @@ $Y^* = f(X^*)$ where $X^* = [0.5, 0.5, 0.5, 0.5, 0.5]$.</p>
 
 
 <span class="k">def</span> <span class="nf">gen_comps</span><span class="p">(</span><span class="n">util</span><span class="p">):</span>
-    <span class="sd">"""Given an 1-d tensor of utility, create pairwise comparisons between adjacent items"""</span>
+<span class="w">    </span><span class="sd">"""Given an 1-d tensor of utility, create pairwise comparisons between adjacent items"""</span>
     <span class="n">util</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
     <span class="n">comps</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">util</span><span class="o">.</span><span class="n">numel</span><span class="p">())</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
     <span class="n">flip</span> <span class="o">=</span> <span class="n">util</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">util</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
@@ -249,7 +249,7 @@ $Y^* = f(X^*)$ where $X^* = [0.5, 0.5, 0.5, 0.5, 0.5]$.</p>
 <span class="k">def</span> <span class="nf">run_pref_learn</span><span class="p">(</span>
     <span class="n">outcome_model</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_comps</span><span class="p">,</span> <span class="n">n_comps</span><span class="p">,</span> <span class="n">pe_strategy</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span>
 <span class="p">):</span>
-    <span class="sd">"""Perform preference exploration with a given PE strategy for n_comps rounds"""</span>
+<span class="w">    </span><span class="sd">"""Perform preference exploration with a given PE strategy for n_comps rounds"""</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_comps</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Running </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_comps</span><span class="si">}</span><span class="s2"> preference learning using </span><span class="si">{</span><span class="n">pe_strategy</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -286,7 +286,7 @@ $Y^* = f(X^*)$ where $X^* = [0.5, 0.5, 0.5, 0.5, 0.5]$.</p>
 
 
 <span class="k">def</span> <span class="nf">gen_exp_cand</span><span class="p">(</span><span class="n">outcome_model</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">acqf_name</span><span class="p">):</span>
-    <span class="sd">"""Given an outcome model and an objective, generate q experimental candidates</span>
+<span class="w">    </span><span class="sd">"""Given an outcome model and an objective, generate q experimental candidates</span>
 <span class="sd">    using specified acquisition function."""</span>
     <span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">NUM_OUTCOME_SAMPLES</span><span class="p">]))</span>
     <span class="k">if</span> <span class="n">acqf_name</span> <span class="o">==</span> <span class="s2">"qNEI"</span><span class="p">:</span>
@@ -322,7 +322,7 @@ $Y^* = f(X^*)$ where $X^* = [0.5, 0.5, 0.5, 0.5, 0.5]$.</p>
 
 
 <span class="k">def</span> <span class="nf">find_max_posterior_mean</span><span class="p">(</span><span class="n">outcome_model</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_comps</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">"""Helper function that find the max posterior mean under current outcome and</span>
+<span class="w">    </span><span class="sd">"""Helper function that find the max posterior mean under current outcome and</span>
 <span class="sd">    preference model"""</span>
     <span class="n">pref_model</span> <span class="o">=</span> <span class="n">fit_pref_model</span><span class="p">(</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_comps</span><span class="p">)</span>
     <span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">NUM_PREF_SAMPLES</span><span class="p">]))</span>
@@ -355,8 +355,8 @@ to model $f_\mathrm{true}$ and $g_\mathrm{true}$ respectively.</p>
 A straightforward strategy of performing PE is to present the decision-maker with comparisons using outcomes estimated
 by sampling from the outcome model using random design points. We refer this method as $\text{Random}\mathrm{-}f$.</p>
 <p>Alternatively, we could initialize the preference model with $\text{Random}\mathrm{-}f$,
-then perform PE using the $\text{EUBO}\mathrm{-}\zeta$ acquisition function as proposed in [1].
-<!-- \tilde{f} somehow is not rendering --></p>
+then perform PE using the $\text{EUBO}\mathrm{-}\zeta$ acquisition function as proposed in [1].</p>
+<!-- \tilde{f} somehow is not rendering -->
 <p>In this tutorial, we examine both strategies by starting with initializating the preference model with 3 comparisons using $\text{Random}\mathrm{-}f$.
 After that, we perform 3 * 4 = 12 pairwise comparisons using either $\text{EUBO}\mathrm{-}\zeta$ or $\text{Random}\mathrm{-}f$.
 Then we move on to the 2nd experimentation stage by generating a candidate using qNEIUU by
@@ -412,7 +412,7 @@ For the second experiment canadidate generation strategy, we use random design p
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Checking posterior mean after </span><span class="si">{</span><span class="p">(</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">every_n_comps</span><span class="si">}</span><span class="s2"> comps using PE strategy </span><span class="si">{</span><span class="n">pe_strategy</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="sa">f</span><span class="s2">"Checking posterior mean after </span><span class="si">{</span><span class="p">(</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">every_n_comps</span><span class="si">}</span><span class="s2"> comps using PE strategy </span><span class="si">{</span><span class="n">pe_strategy</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
             <span class="n">within_result</span> <span class="o">=</span> <span class="n">find_max_posterior_mean</span><span class="p">(</span>
                 <span class="n">outcome_model</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_comps</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span>
@@ -499,7 +499,7 @@ As we can see in this plot, the preference model learned using $\text{EUBO}\math
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Prepare PE data for plots</span>
 <span class="n">within_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">within_session_results</span><span class="p">)</span>
 <span class="n">within_df</span><span class="p">[</span><span class="s2">"pe_strategy"</span><span class="p">]</span> <span class="o">=</span> <span class="n">within_df</span><span class="p">[</span><span class="s2">"pe_strategy"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
-    <span class="s2">"EUBO-zeta"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">"$EUBO-</span><span class="se">\\</span><span class="s2">zeta$"</span>
+    <span class="s2">"EUBO-zeta"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">"$EUBO-\zeta$"</span>
 <span class="p">)</span>
 <span class="n">within_df</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">within_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"n_comps"</span><span class="p">,</span> <span class="s2">"pe_strategy"</span><span class="p">])</span>

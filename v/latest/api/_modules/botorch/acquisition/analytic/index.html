@@ -74,7 +74,7 @@
 
 
 <div class="viewcode-block" id="AnalyticAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.AnalyticAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">AnalyticAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Base class for analytic acquisition functions.</span>
 
 <span class="sd">    :meta private:</span>
@@ -86,7 +86,7 @@
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Base constructor for analytic acquisition functions.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Base constructor for analytic acquisition functions.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
@@ -120,7 +120,7 @@
     <span class="k">def</span> <span class="nf">_mean_and_sigma</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">compute_sigma</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">min_var</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
-        <span class="sd">"""Computes the first and second moments of the model posterior.</span>
+<span class="w">        </span><span class="sd">"""Computes the first and second moments of the model posterior.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: `batch_shape x q x d`-dim Tensor of model inputs.</span>
@@ -145,7 +145,7 @@
 
 
 <div class="viewcode-block" id="LogProbabilityOfImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogProbabilityOfImprovement">[docs]</a><span class="k">class</span> <span class="nc">LogProbabilityOfImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Single-outcome Log Probability of Improvement.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Log Probability of Improvement.</span>
 
 <span class="sd">    Logarithm of the probability of improvement over the current best observed value,</span>
 <span class="sd">    computed using the analytic formula under a Normal posterior distribution. Only</span>
@@ -174,7 +174,7 @@
         <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Single-outcome Probability of Improvement.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Single-outcome Probability of Improvement.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
@@ -191,7 +191,7 @@
 
 <div class="viewcode-block" id="LogProbabilityOfImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogProbabilityOfImprovement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate the Log Probability of Improvement on the candidate set X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the Log Probability of Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.</span>
@@ -206,7 +206,7 @@
 
 
 <div class="viewcode-block" id="ProbabilityOfImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ProbabilityOfImprovement">[docs]</a><span class="k">class</span> <span class="nc">ProbabilityOfImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Single-outcome Probability of Improvement.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Probability of Improvement.</span>
 
 <span class="sd">    Probability of improvement over the current best observed value, computed</span>
 <span class="sd">    using the analytic formula under a Normal posterior distribution. Only</span>
@@ -229,7 +229,7 @@
         <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Single-outcome Probability of Improvement.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Single-outcome Probability of Improvement.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
@@ -246,7 +246,7 @@
 
 <div class="viewcode-block" id="ProbabilityOfImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ProbabilityOfImprovement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate the Probability of Improvement on the candidate set X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the Probability of Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.</span>
@@ -261,7 +261,7 @@
 
 
 <div class="viewcode-block" id="qAnalyticProbabilityOfImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement">[docs]</a><span class="k">class</span> <span class="nc">qAnalyticProbabilityOfImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Approximate, single-outcome batch Probability of Improvement using MVNXPB.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Approximate, single-outcome batch Probability of Improvement using MVNXPB.</span>
 
 <span class="sd">    This implementation uses MVNXPB, a bivariate conditioning algorithm for</span>
 <span class="sd">    approximating P(a &lt;= Y &lt;= b) for multivariate normal Y.</span>
@@ -278,7 +278,7 @@
         <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">"""qPI using an analytic approximation.</span>
+<span class="w">        </span><span class="sd">"""qPI using an analytic approximation.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
@@ -297,7 +297,7 @@
 
 <div class="viewcode-block" id="qAnalyticProbabilityOfImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""Evaluate approximate qPI on the candidate set X.</span>
+<span class="w">        </span><span class="sd">"""Evaluate approximate qPI on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design</span>
@@ -325,7 +325,7 @@
 
 
 <div class="viewcode-block" id="ExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">ExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Single-outcome Expected Improvement (analytic).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Expected Improvement (analytic).</span>
 
 <span class="sd">    Computes classic Expected Improvement over the current best observed value,</span>
 <span class="sd">    using the analytic formula for a Normal posterior distribution. Unlike the</span>
@@ -356,7 +356,7 @@
         <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Single-outcome Expected Improvement (analytic).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Single-outcome Expected Improvement (analytic).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
@@ -373,7 +373,7 @@
 
 <div class="viewcode-block" id="ExpectedImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ExpectedImprovement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate Expected Improvement on the candidate set X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate Expected Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.</span>
@@ -391,7 +391,7 @@
 
 
 <div class="viewcode-block" id="LogExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">LogExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Logarithm of single-outcome Expected Improvement (analytic).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Logarithm of single-outcome Expected Improvement (analytic).</span>
 
 <span class="sd">    Computes the logarithm of the classic Expected Improvement acquisition function, in</span>
 <span class="sd">    a numerically robust manner. In particular, the implementation takes special care</span>
@@ -416,7 +416,7 @@
         <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Logarithm of single-outcome Expected Improvement (analytic).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Logarithm of single-outcome Expected Improvement (analytic).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
@@ -433,7 +433,7 @@
 
 <div class="viewcode-block" id="LogExpectedImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogExpectedImprovement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate logarithm of Expected Improvement on the candidate set X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate logarithm of Expected Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.</span>
@@ -451,7 +451,7 @@
 
 
 <div class="viewcode-block" id="LogConstrainedExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogConstrainedExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">LogConstrainedExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Log Constrained Expected Improvement (feasibility-weighted).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Log Constrained Expected Improvement (feasibility-weighted).</span>
 
 <span class="sd">    Computes the logarithm of the analytic expected improvement for a Normal posterior</span>
 <span class="sd">    distribution weighted by a probability of feasibility. The objective and</span>
@@ -481,7 +481,7 @@
         <span class="n">constraints</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]],</span>
         <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Analytic Log Constrained Expected Improvement.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Analytic Log Constrained Expected Improvement.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted multi-output model.</span>
@@ -505,7 +505,7 @@
 
 <div class="viewcode-block" id="LogConstrainedExpectedImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogConstrainedExpectedImprovement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate Constrained Log Expected Improvement on the candidate set X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate Constrained Log Expected Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design</span>
@@ -525,7 +525,7 @@
 
 
 <div class="viewcode-block" id="ConstrainedExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ConstrainedExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Constrained Expected Improvement (feasibility-weighted).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Constrained Expected Improvement (feasibility-weighted).</span>
 
 <span class="sd">    Computes the analytic expected improvement for a Normal posterior</span>
 <span class="sd">    distribution, weighted by a probability of feasibility. The objective and</span>
@@ -555,7 +555,7 @@
         <span class="n">constraints</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]],</span>
         <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Analytic Constrained Expected Improvement.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Analytic Constrained Expected Improvement.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted multi-output model.</span>
@@ -579,7 +579,7 @@
 
 <div class="viewcode-block" id="ConstrainedExpectedImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ConstrainedExpectedImprovement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate Constrained Expected Improvement on the candidate set X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate Constrained Expected Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design</span>
@@ -599,7 +599,7 @@
 
 
 <div class="viewcode-block" id="LogNoisyExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogNoisyExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">LogNoisyExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Single-outcome Log Noisy Expected Improvement (via fantasies).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Log Noisy Expected Improvement (via fantasies).</span>
 
 <span class="sd">    This computes Log Noisy Expected Improvement by averaging over the Expected</span>
 <span class="sd">    Improvement values of a number of fantasy models. Only supports the case</span>
@@ -627,7 +627,7 @@
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Single-outcome Noisy Log Expected Improvement (via fantasies).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Single-outcome Noisy Log Expected Improvement (via fantasies).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
@@ -666,7 +666,7 @@
 
 <div class="viewcode-block" id="LogNoisyExpectedImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogNoisyExpectedImprovement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate logarithm of the mean Expected Improvement on the candidate set X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate logarithm of the mean Expected Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `b1 x ... bk x 1 x d`-dim batched tensor of `d`-dim design points.</span>
@@ -684,7 +684,7 @@
 
 
 <div class="viewcode-block" id="NoisyExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.NoisyExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">NoisyExpectedImprovement</span><span class="p">(</span><span class="n">ExpectedImprovement</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Single-outcome Noisy Expected Improvement (via fantasies).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Noisy Expected Improvement (via fantasies).</span>
 
 <span class="sd">    This computes Noisy Expected Improvement by averaging over the Expected</span>
 <span class="sd">    Improvement values of a number of fantasy models. Only supports the case</span>
@@ -710,7 +710,7 @@
         <span class="n">num_fantasies</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Single-outcome Noisy Expected Improvement (via fantasies).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Single-outcome Noisy Expected Improvement (via fantasies).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
@@ -746,7 +746,7 @@
 
 <div class="viewcode-block" id="NoisyExpectedImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.NoisyExpectedImprovement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate Expected Improvement on the candidate set X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate Expected Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `b1 x ... bk x 1 x d`-dim batched tensor of `d`-dim design points.</span>
@@ -762,7 +762,7 @@
 
 
 <div class="viewcode-block" id="UpperConfidenceBound"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.UpperConfidenceBound">[docs]</a><span class="k">class</span> <span class="nc">UpperConfidenceBound</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Single-outcome Upper Confidence Bound (UCB).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Upper Confidence Bound (UCB).</span>
 
 <span class="sd">    Analytic upper confidence bound that comprises of the posterior mean plus an</span>
 <span class="sd">    additional term: the posterior standard deviation weighted by a trade-off</span>
@@ -786,7 +786,7 @@
         <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Single-outcome Upper Confidence Bound.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Single-outcome Upper Confidence Bound.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome GP model (must be in batch mode if</span>
@@ -804,7 +804,7 @@
 
 <div class="viewcode-block" id="UpperConfidenceBound.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.UpperConfidenceBound.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate the Upper Confidence Bound on the candidate set X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the Upper Confidence Bound on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.</span>
@@ -818,7 +818,7 @@
 
 
 <div class="viewcode-block" id="PosteriorMean"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.PosteriorMean">[docs]</a><span class="k">class</span> <span class="nc">PosteriorMean</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Single-outcome Posterior Mean.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Posterior Mean.</span>
 
 <span class="sd">    Only supports the case of q=1. Requires the model's posterior to have a</span>
 <span class="sd">    `mean` property. The model must be single-outcome.</span>
@@ -835,7 +835,7 @@
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Single-outcome Posterior Mean.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Single-outcome Posterior Mean.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome GP model (must be in batch mode if</span>
@@ -853,7 +853,7 @@
 
 <div class="viewcode-block" id="PosteriorMean.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.PosteriorMean.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate the posterior mean on the candidate set X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the posterior mean on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.</span>
@@ -867,7 +867,7 @@
 
 
 <div class="viewcode-block" id="ScalarizedPosteriorMean"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ScalarizedPosteriorMean">[docs]</a><span class="k">class</span> <span class="nc">ScalarizedPosteriorMean</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Scalarized Posterior Mean.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Scalarized Posterior Mean.</span>
 
 <span class="sd">    This acquisition function returns a scalarized (across the q-batch)</span>
 <span class="sd">    posterior mean given a vector of weights.</span>
@@ -880,7 +880,7 @@
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Scalarized Posterior Mean.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Scalarized Posterior Mean.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
@@ -895,7 +895,7 @@
 
 <div class="viewcode-block" id="ScalarizedPosteriorMean.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ScalarizedPosteriorMean.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate the scalarized posterior mean on the candidate set X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the scalarized posterior mean on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches of `d`-dim design</span>
@@ -914,20 +914,20 @@
 <span class="k">def</span> <span class="nf">_scaled_improvement</span><span class="p">(</span>
     <span class="n">mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">best_f</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">"""Returns `u = (mean - best_f) / sigma`, -u if maximize == True."""</span>
+<span class="w">    </span><span class="sd">"""Returns `u = (mean - best_f) / sigma`, -u if maximize == True."""</span>
     <span class="n">u</span> <span class="o">=</span> <span class="p">(</span><span class="n">mean</span> <span class="o">-</span> <span class="n">best_f</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span>
     <span class="k">return</span> <span class="n">u</span> <span class="k">if</span> <span class="n">maximize</span> <span class="k">else</span> <span class="o">-</span><span class="n">u</span>
 
 
 <span class="k">def</span> <span class="nf">_ei_helper</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">"""Computes phi(u) + u * Phi(u), where phi and Phi are the standard normal</span>
+<span class="w">    </span><span class="sd">"""Computes phi(u) + u * Phi(u), where phi and Phi are the standard normal</span>
 <span class="sd">    pdf and cdf, respectively. This is used to compute Expected Improvement.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">phi</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">+</span> <span class="n">u</span> <span class="o">*</span> <span class="n">Phi</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_log_ei_helper</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">"""Accurately computes log(phi(u) + u * Phi(u)) in a differentiable manner for u in</span>
+<span class="w">    </span><span class="sd">"""Accurately computes log(phi(u) + u * Phi(u)) in a differentiable manner for u in</span>
 <span class="sd">    [-10^100, 10^100] in double precision, and [-10^20, 10^20] in single precision.</span>
 <span class="sd">    Beyond these intervals, a basic squaring of u can lead to floating point overflow.</span>
 <span class="sd">    In contrast, the implementation in _ei_helper only yields usable gradients down to</span>
@@ -937,7 +937,7 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span> <span class="ow">or</span> <span class="n">u</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"LogExpectedImprovement only supports torch.float32 and torch.float64 "</span>
-            <span class="sa">f</span><span class="s2">"dtypes, but received </span><span class="si">{</span><span class="n">u</span><span class="o">.</span><span class="n">dtype</span> <span class="si">= }</span><span class="s2">."</span>
+            <span class="sa">f</span><span class="s2">"dtypes, but received </span><span class="si">{</span><span class="n">u</span><span class="o">.</span><span class="n">dtype</span><span class="w"> </span><span class="si">= }</span><span class="s2">."</span>
         <span class="p">)</span>
     <span class="c1"># The function has two branching decisions. The first is u &lt; bound, and in this</span>
     <span class="c1"># case, just taking the logarithm of the naive _ei_helper implementation works.</span>
@@ -978,7 +978,7 @@
 
 
 <span class="k">def</span> <span class="nf">_log_abs_u_Phi_div_phi</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">"""Computes log(abs(u) * Phi(u) / phi(u)), where phi and Phi are the normal pdf</span>
+<span class="w">    </span><span class="sd">"""Computes log(abs(u) * Phi(u) / phi(u)), where phi and Phi are the normal pdf</span>
 <span class="sd">    and cdf, respectively. The function is valid for u &lt; 0.</span>
 
 <span class="sd">    NOTE: In single precision arithmetic, the function becomes numerically unstable for</span>
@@ -1010,7 +1010,7 @@
 <span class="k">def</span> <span class="nf">_get_noiseless_fantasy_model</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">FixedNoiseGP</span><span class="p">,</span> <span class="n">batch_X_observed</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y_fantasized</span><span class="p">:</span> <span class="n">Tensor</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FixedNoiseGP</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Construct a fantasy model from a fitted model and provided fantasies.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct a fantasy model from a fitted model and provided fantasies.</span>
 
 <span class="sd">    The fantasy model uses the hyperparameters from the original fitted model and</span>
 <span class="sd">    assumes the fantasies are noiseless.</span>
@@ -1050,7 +1050,7 @@
     <span class="n">acqf</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">LogConstrainedExpectedImprovement</span><span class="p">,</span> <span class="n">ConstrainedExpectedImprovement</span><span class="p">],</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Set up constraint bounds.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Set up constraint bounds.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        constraints: A dictionary of the form `{i: [lower, upper]}`, where</span>
@@ -1096,7 +1096,7 @@
     <span class="n">means</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">sigmas</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Compute logarithm of the feasibility probability for each batch of X.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Compute logarithm of the feasibility probability for each batch of X.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design</span>

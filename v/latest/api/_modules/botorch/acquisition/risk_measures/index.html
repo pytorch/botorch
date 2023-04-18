@@ -66,7 +66,7 @@
 
 
 <span class="k">class</span> <span class="nc">RiskMeasureMCObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Objective transforming the posterior samples to samples of a risk measure.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Objective transforming the posterior samples to samples of a risk measure.</span>
 
 <span class="sd">    The risk measure is calculated over joint q-batch samples from the posterior.</span>
 <span class="sd">    If the q-batch includes samples corresponding to multiple inputs, it is assumed</span>
@@ -88,7 +88,7 @@
         <span class="n">preprocessing_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Transform the posterior samples to samples of a risk measure.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the posterior samples to samples of a risk measure.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            n_w: The size of the `w_set` to calculate the risk measure over.</span>
@@ -128,7 +128,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">preprocessing_function</span> <span class="o">=</span> <span class="n">preprocessing_function</span>
 
     <span class="k">def</span> <span class="nf">_prepare_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Prepare samples for risk measure calculations by scalarizing and</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Prepare samples for risk measure calculations by scalarizing and</span>
 <span class="sd">        separating out the q-batch dimension.</span>
 
 <span class="sd">        Args:</span>
@@ -151,7 +151,7 @@
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Calculate the risk measure corresponding to the given samples.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the risk measure corresponding to the given samples.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            samples: A `sample_shape x batch_shape x (q * n_w) x m`-dim tensor of</span>
@@ -166,7 +166,7 @@
 
 
 <div class="viewcode-block" id="CVaR"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.CVaR">[docs]</a><span class="k">class</span> <span class="nc">CVaR</span><span class="p">(</span><span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The Conditional Value-at-Risk risk measure.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The Conditional Value-at-Risk risk measure.</span>
 
 <span class="sd">    The Conditional Value-at-Risk measures the expectation of the worst outcomes</span>
 <span class="sd">    (small rewards or large losses) with a total probability of `1 - alpha`. It</span>
@@ -186,7 +186,7 @@
         <span class="n">preprocessing_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Transform the posterior samples to samples of a risk measure.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the posterior samples to samples of a risk measure.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            alpha: The risk level, float in `(0.0, 1.0]`.</span>
@@ -210,7 +210,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="n">n_w</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="CVaR.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.CVaR.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Calculate the CVaR corresponding to the given samples.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the CVaR corresponding to the given samples.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            samples: A `sample_shape x batch_shape x (q * n_w) x m`-dim tensor of</span>
@@ -231,7 +231,7 @@
 
 
 <div class="viewcode-block" id="VaR"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.VaR">[docs]</a><span class="k">class</span> <span class="nc">VaR</span><span class="p">(</span><span class="n">CVaR</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The Value-at-Risk risk measure.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The Value-at-Risk risk measure.</span>
 
 <span class="sd">    Value-at-Risk measures the smallest possible reward (or largest possible loss)</span>
 <span class="sd">    after excluding the worst outcomes with a total probability of `1 - alpha`. It</span>
@@ -246,7 +246,7 @@
         <span class="n">preprocessing_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Transform the posterior samples to samples of a risk measure.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the posterior samples to samples of a risk measure.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            alpha: The risk level, float in `(0.0, 1.0]`.</span>
@@ -270,7 +270,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_q</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_idx</span> <span class="o">/</span> <span class="n">n_w</span>
 
 <div class="viewcode-block" id="VaR.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.VaR.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Calculate the VaR corresponding to the given samples.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the VaR corresponding to the given samples.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            samples: A `sample_shape x batch_shape x (q * n_w) x m`-dim tensor of</span>
@@ -299,10 +299,10 @@
 
 
 <div class="viewcode-block" id="WorstCase"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.WorstCase">[docs]</a><span class="k">class</span> <span class="nc">WorstCase</span><span class="p">(</span><span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The worst-case risk measure."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The worst-case risk measure."""</span>
 
 <div class="viewcode-block" id="WorstCase.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.WorstCase.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Calculate the worst-case measure corresponding to the given samples.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the worst-case measure corresponding to the given samples.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            samples: A `sample_shape x batch_shape x (q * n_w) x m`-dim tensor of</span>
@@ -318,7 +318,7 @@
 
 
 <div class="viewcode-block" id="Expectation"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.Expectation">[docs]</a><span class="k">class</span> <span class="nc">Expectation</span><span class="p">(</span><span class="n">RiskMeasureMCObjective</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The expectation risk measure.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The expectation risk measure.</span>
 
 <span class="sd">    For unconstrained problems, we recommend using the `ExpectationPosteriorTransform`</span>
 <span class="sd">    instead. `ExpectationPosteriorTransform` directly transforms the posterior</span>
@@ -327,7 +327,7 @@
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="Expectation.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.risk_measures.Expectation.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Calculate the expectation corresponding to the given samples.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the expectation corresponding to the given samples.</span>
 <span class="sd">        This calculates the expectation / mean / average of each `n_w` samples</span>
 <span class="sd">        across the q-batch dimension. If `self.weights` is given, the samples</span>
 <span class="sd">        are scalarized across the output dimension before taking the expectation.</span>

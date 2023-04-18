@@ -47,7 +47,7 @@
 
 
 <div class="viewcode-block" id="extract_batch_covar"><a class="viewcode-back" href="../../../utils.html#botorch.utils.low_rank.extract_batch_covar">[docs]</a><span class="k">def</span> <span class="nf">extract_batch_covar</span><span class="p">(</span><span class="n">mt_mvn</span><span class="p">:</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearOperator</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Extract a batched independent covariance matrix from an MTMVN.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Extract a batched independent covariance matrix from an MTMVN.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        mt_mvn: A multi-task multivariate normal with a block diagonal</span>
@@ -69,7 +69,7 @@
 <span class="k">def</span> <span class="nf">_reshape_base_samples</span><span class="p">(</span>
     <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Manipulate shape of base_samples to match `MultivariateNormal.rsample`.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Manipulate shape of base_samples to match `MultivariateNormal.rsample`.</span>
 
 <span class="sd">    This ensure that base_samples are used in the same way as in</span>
 <span class="sd">    gpytorch.distributions.MultivariateNormal. For CBD, it is important to ensure</span>
@@ -116,7 +116,7 @@
     <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
     <span class="n">max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Get posterior samples at the `q` new points from the joint multi-output</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Get posterior samples at the `q` new points from the joint multi-output</span>
 <span class="sd">    posterior.</span>
 
 <span class="sd">    Args:</span>

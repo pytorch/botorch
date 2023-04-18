@@ -34,7 +34,7 @@
 <dd><p>Create outcome constraint callables from outcome constraint tensors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>outcome_constraints</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A tuple of <cite>(A, b)</cite>. For <cite>k</cite> outcome constraints
+<dd class="field-odd"><p><strong>outcome_constraints</strong> (<em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A tuple of <cite>(A, b)</cite>. For <cite>k</cite> outcome constraints
 and <cite>m</cite> outputs at <cite>f(x)`</cite>, <cite>A</cite> is <cite>k x m</cite> and <cite>b</cite> is <cite>k x 1</cite> such
 that <cite>A f(x) &lt;= b</cite>.</p>
 </dd>
@@ -45,7 +45,7 @@ Negative values imply feasibility. The callables support broadcasting
 (e.g. for calling on a tensor of shape <cite>mc_samples x b x q x m</cite>).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Optional</em>[<em>List</em>[<em>Callable</em>[[<em>Tensor</em>], <em>Tensor</em>]]]</p>
+<dd class="field-odd"><p><em>List</em>[<em>Callable</em>[[<em>Tensor</em>], <em>Tensor</em>]] | None</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -141,14 +141,14 @@ taken from the leading dimension of an n-dimensional source tensor.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.context_managers.TensorCheckpoint">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.context_managers.</span></span><span class="sig-name descname"><span class="pre">TensorCheckpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/context_managers.html#TensorCheckpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.context_managers.TensorCheckpoint" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <p>Create new instance of TensorCheckpoint(values, device, dtype)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>values</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>device</em><em>]</em>) – </p></li>
-<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>dtype</em><em>]</em>) – </p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -159,12 +159,12 @@ taken from the leading dimension of an n-dimensional source tensor.</p>
 </dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.utils.context_managers.TensorCheckpoint.device">
-<span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">device</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.context_managers.TensorCheckpoint.device" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.context_managers.TensorCheckpoint.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.utils.context_managers.TensorCheckpoint.dtype">
-<span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dtype</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.context_managers.TensorCheckpoint.dtype" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dtype</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.context_managers.TensorCheckpoint.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 2</p>
 </dd></dl>
 </dd></dl>
@@ -211,7 +211,7 @@ parameters.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>module</strong> – Module instance.</p></li>
 <li><p><strong>name_filter</strong> – Optional Boolean function used to filter items by name.</p></li>
-<li><p><strong>checkpoint</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.utils.context_managers.TensorCheckpoint" title="botorch.utils.context_managers.TensorCheckpoint"><em>TensorCheckpoint</em></a><em>]</em><em>]</em>) – Optional cache of values and tensor metadata specifying the rollback
+<li><p><strong>checkpoint</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.utils.context_managers.TensorCheckpoint" title="botorch.utils.context_managers.TensorCheckpoint"><em>TensorCheckpoint</em></a><em>] </em><em>| </em><em>None</em>) – Optional cache of values and tensor metadata specifying the rollback
 state for the module (or some subset thereof).</p></li>
 <li><p><strong>**tkwargs</strong> (<em>Any</em>) – Keyword arguments passed to <cite>torch.Tensor.to</cite> when copying data from
 each tensor in <cite>module.state_dict()</cite> to the internally created checkpoint.
@@ -237,8 +237,8 @@ is cleared, no rollback will occur.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>module</strong> (<em>Module</em>) – Module instance.</p></li>
-<li><p><strong>name_filter</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>bool</em><em>]</em><em>]</em>) – Optional Boolean function used to filter items by name.</p></li>
-<li><p><strong>checkpoint</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.utils.context_managers.TensorCheckpoint" title="botorch.utils.context_managers.TensorCheckpoint"><em>TensorCheckpoint</em></a><em>]</em><em>]</em>) – Optional cache of values and tensor metadata specifying the rollback
+<li><p><strong>name_filter</strong> (<em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>bool</em><em>] </em><em>| </em><em>None</em>) – Optional Boolean function used to filter items by name.</p></li>
+<li><p><strong>checkpoint</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.utils.context_managers.TensorCheckpoint" title="botorch.utils.context_managers.TensorCheckpoint"><em>TensorCheckpoint</em></a><em>] </em><em>| </em><em>None</em>) – Optional cache of values and tensor metadata specifying the rollback
 state for the module (or some subset thereof).</p></li>
 <li><p><strong>**tkwargs</strong> (<em>Any</em>) – Keyword arguments passed to <cite>torch.Tensor.to</cite> when copying data from
 each tensor in <cite>module.state_dict()</cite> to the internally created checkpoint.
@@ -261,7 +261,7 @@ is cleared, no rollback will occur.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>parameters</strong> (<em>Union</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><em>Iterable</em><em>[</em><em>Tensor</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>parameters</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>Iterable</em><em>[</em><em>Tensor</em><em>]</em>) – </p></li>
 <li><p><strong>zero_on_enter</strong> (<em>bool</em>) – </p></li>
 <li><p><strong>zero_on_exit</strong> (<em>bool</em>) – </p></li>
 </ul>
@@ -328,9 +328,9 @@ DenseContainers under the assumption that <cite>event_shape=src.shape[-1:]</cite
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>, </em><em>Iterable</em><em>[</em><em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>Y</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>, </em><em>Iterable</em><em>[</em><em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>keys</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><em>Hashable</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>X</strong> (<em>BotorchContainer</em><em> | </em><em>Tensor</em><em> | </em><em>Iterable</em><em>[</em><em>BotorchContainer</em><em> | </em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>Y</strong> (<em>BotorchContainer</em><em> | </em><em>Tensor</em><em> | </em><em>Iterable</em><em>[</em><em>BotorchContainer</em><em> | </em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>keys</strong> (<em>Iterable</em><em>[</em><em>Hashable</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -372,10 +372,10 @@ observations variances so that <cite>Y[i] ~ N(f(X[i]), Yvar[i])</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>, </em><em>Iterable</em><em>[</em><em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>Y</strong> (<em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>, </em><em>Iterable</em><em>[</em><em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>, </em><em>Iterable</em><em>[</em><em>Union</em><em>[</em><em>BotorchContainer</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>keys</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><em>Hashable</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>X</strong> (<em>BotorchContainer</em><em> | </em><em>Tensor</em><em> | </em><em>Iterable</em><em>[</em><em>BotorchContainer</em><em> | </em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>Y</strong> (<em>BotorchContainer</em><em> | </em><em>Tensor</em><em> | </em><em>Iterable</em><em>[</em><em>BotorchContainer</em><em> | </em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>Yvar</strong> (<em>BotorchContainer</em><em> | </em><em>Tensor</em><em> | </em><em>Iterable</em><em>[</em><em>BotorchContainer</em><em> | </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>keys</strong> (<em>Iterable</em><em>[</em><em>Hashable</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -521,7 +521,7 @@ of registered methods to determine compatibility.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.utils.dispatcher.Dispatcher.encoder">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">encoder</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Type</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.dispatcher.Dispatcher.encoder" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">encoder</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Type</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.dispatcher.Dispatcher.encoder" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.utils.dispatcher.Dispatcher.name">
@@ -605,14 +605,14 @@ This callable supports broadcasting (e.g. for calling on a tensor of shape
 determine the optimization direction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>weights</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – a 1-dimensional Tensor containing a weight for each task.
+<dd class="field-odd"><p><strong>weights</strong> (<em>Tensor</em><em> | </em><em>None</em>) – a 1-dimensional Tensor containing a weight for each task.
 If not provided, the identity mapping is used.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Transform function using the objective weights.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Callable</em>[[<em>Tensor</em>, <em>Optional</em>[<em>Tensor</em>]], <em>Tensor</em>]</p>
+<dd class="field-odd"><p><em>Callable</em>[[<em>Tensor</em>, <em>Tensor</em> | None], <em>Tensor</em>]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -636,7 +636,7 @@ to a Tensor of size <cite>b x q</cite>, where negative values imply feasibility.
 This callable must support broadcasting. Only relevant for multi-
 output models (<cite>m</cite> &gt; 1).</p></li>
 <li><p><strong>samples</strong> (<em>Tensor</em>) – A <cite>n_samples x b x q x m</cite> Tensor of samples drawn from the posterior.</p></li>
-<li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – The temperature parameter for the sigmoid function. Can be either a float
+<li><p><strong>eta</strong> (<em>Tensor</em><em> | </em><em>float</em>) – The temperature parameter for the sigmoid function. Can be either a float
 or a 1-dim tensor. In case of a float the same eta is used for every
 constraint in constraints. In case of a tensor the length of the tensor
 must match the number of provided constraints. The i-th constraint is
@@ -693,7 +693,7 @@ This callable must support broadcasting. Only relevant for multi-
 output models (<cite>m</cite> &gt; 1).</p></li>
 <li><p><strong>samples</strong> (<em>Tensor</em>) – A <cite>n_samples x b x q x m</cite> Tensor of samples drawn from the posterior.</p></li>
 <li><p><strong>infeasible_cost</strong> (<em>float</em>) – The infeasible value.</p></li>
-<li><p><strong>eta</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – The temperature parameter of the sigmoid function. Can be either a float
+<li><p><strong>eta</strong> (<em>Tensor</em><em> | </em><em>float</em>) – The temperature parameter of the sigmoid function. Can be either a float
 or a 1-dim tensor. In case of a float the same eta is used for every
 constraint in constraints. In case of a tensor the length of the tensor
 must match the number of provided constraints. The i-th constraint is
@@ -836,7 +836,7 @@ density n-polytopes. Technical report, Brown University, 2014.</p>
 <dd><p>Contextmanager for manual setting the torch.random seed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed to set the random number generator to.</p>
+<dd class="field-odd"><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The seed to set the random number generator to.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Generator</p>
@@ -895,9 +895,9 @@ of f(X) over X where each element of X is drawn N(0, 1).</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>d</strong> (<em>int</em>) – The dimension of the normal distribution.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – The number of samples to return. As a best practice, use powers of 2.</p></li>
-<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>device</em><em>]</em>) – The torch device.</p></li>
-<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>dtype</em><em>]</em>) – The torch dtype.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed used for initializing Owen scrambling. If None (default),
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – The torch device.</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – The torch dtype.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The seed used for initializing Owen scrambling. If None (default),
 use a random seed.</p></li>
 </ul>
 </dd>
@@ -924,9 +924,9 @@ and dtype specified by the input.</p>
 <li><p><strong>d</strong> (<em>int</em>) – The dimension of the hypersphere.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – The number of samples to return.</p></li>
 <li><p><strong>qmc</strong> (<em>bool</em>) – If True, use QMC Sobol sampling (instead of i.i.d. uniform).</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – If provided, use as a seed for the RNG.</p></li>
-<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>device</em><em>]</em>) – The torch device.</p></li>
-<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>dtype</em><em>]</em>) – The torch dtype.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – If provided, use as a seed for the RNG.</p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – The torch device.</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – The torch dtype.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -951,9 +951,9 @@ and dtype specified by the input.</p>
 <li><p><strong>d</strong> (<em>int</em>) – The dimension of the simplex.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – The number of samples to return.</p></li>
 <li><p><strong>qmc</strong> (<em>bool</em>) – If True, use QMC Sobol sampling (instead of i.i.d. uniform).</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – If provided, use as a seed for the RNG.</p></li>
-<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>device</em><em>]</em>) – The torch device.</p></li>
-<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>dtype</em><em>]</em>) – The torch dtype.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – If provided, use as a seed for the RNG.</p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – The torch device.</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – The torch dtype.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -985,7 +985,7 @@ satisfying the constraints.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – The number of resulting samples kept in the output.</p></li>
 <li><p><strong>n0</strong> (<em>int</em>) – The number of burn-in samples. The chain will produce
 n+n0 samples but the first n0 samples are not saved.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the sampler. If omitted, use a random seed.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The seed for the sampler. If omitted, use a random seed.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1010,8 +1010,8 @@ be non-negative, finite and have a non-zero sum.</p></li>
 <li><p><strong>num_samples</strong> (<em>int</em>) – The number of samples to draw for each batch index. Must be smaller
 than <cite>num_categories</cite> if <cite>replacement=False</cite>.</p></li>
 <li><p><strong>replacement</strong> (<em>bool</em>) – If True, samples are drawn with replacement.</p></li>
-<li><p><strong>generator</strong> (<em>Optional</em><em>[</em><em>Generator</em><em>]</em>) – A a pseudorandom number generator for sampling.</p></li>
-<li><p><strong>out</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – The output tensor (optional). If provided, must be of size
+<li><p><strong>generator</strong> (<em>Generator</em><em> | </em><em>None</em>) – A a pseudorandom number generator for sampling.</p></li>
+<li><p><strong>out</strong> (<em>Tensor</em><em> | </em><em>None</em>) – The output tensor (optional). If provided, must be of size
 <cite>batch_shape x num_samples</cite>.</p></li>
 </ul>
 </dd>
@@ -1043,9 +1043,9 @@ allows a single batch dimension). The calling signature is the same as for
 constraint inequalities.</p></li>
 <li><p><strong>b</strong> (<em>ndarray</em>) – A <cite>n_ineq x 1</cite>-dim numpy array containing the right hand sides of
 the constraint inequalities.</p></li>
-<li><p><strong>A_eq</strong> (<em>Optional</em><em>[</em><em>ndarray</em><em>]</em>) – A <cite>n_eq x d</cite>-dim numpy array containing the coefficients of the
+<li><p><strong>A_eq</strong> (<em>ndarray</em><em> | </em><em>None</em>) – A <cite>n_eq x d</cite>-dim numpy array containing the coefficients of the
 constraint equalities.</p></li>
-<li><p><strong>b_eq</strong> (<em>Optional</em><em>[</em><em>ndarray</em><em>]</em>) – A <cite>n_eq x 1</cite>-dim numpy array containing the right hand sides of
+<li><p><strong>b_eq</strong> (<em>ndarray</em><em> | </em><em>None</em>) – A <cite>n_eq x 1</cite>-dim numpy array containing the right hand sides of
 the constraint equalities.</p></li>
 </ul>
 </dd>
@@ -1097,7 +1097,7 @@ automatically by solving a Linear Program.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n</strong> (<em>int</em>) – The number of samples.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The random seed.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The random seed.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1159,7 +1159,7 @@ An alternative is the <cite>HitAndRunPolytopeSampler</cite>.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n</strong> (<em>int</em>) – The number of samples.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The random seed.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The random seed.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1209,11 +1209,11 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The random seed.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The random seed.</p></li>
 <li><p><strong>thinning</strong> (<em>int</em>) – The amount of thinning.</p></li>
 <li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn-in samples for the Markov chain sampler.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1529,7 +1529,7 @@ Relative difference: 0.8348668001940709 (up to 1e-05 allowed)</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>input</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>other</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – </p></li>
+<li><p><strong>other</strong> (<em>Tensor</em><em> | </em><em>float</em>) – </p></li>
 <li><p><strong>rtol</strong> (<em>float</em>) – </p></li>
 <li><p><strong>atol</strong> (<em>float</em>) – </p></li>
 <li><p><strong>equal_nan</strong> (<em>bool</em>) – </p></li>
@@ -1636,8 +1636,8 @@ do a shape check but return the same mock samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>sample_shape</strong> (<em>Optional</em><em>[</em><em>Size</em><em>]</em>) – </p></li>
-<li><p><strong>base_samples</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>sample_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>base_samples</strong> (<em>Tensor</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1697,13 +1697,13 @@ any <cite>model.forward</cite> or <cite>model.likelihood</cite> calls.</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>b x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
 feature space, <cite>q</cite> is the number of points considered jointly,
 and <cite>b</cite> is the batch dimension.</p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add observation noise to the posterior.</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1829,7 +1829,7 @@ exists in <a class="reference internal" href="#botorch.utils.testing.MockModel.s
 <span class="sig-name descname"><span class="pre">set_X_pending</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockAcquisitionFunction.set_X_pending"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockAcquisitionFunction.set_X_pending" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – </p>
+<dd class="field-odd"><p><strong>X_pending</strong> (<em>Tensor</em><em> | </em><em>None</em>) – </p>
 </dd>
 </dl>
 </dd></dl>
@@ -2101,7 +2101,7 @@ contained within <cite>bounds</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices (may contain negative indices for indexing
+<li><p><strong>indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices (may contain negative indices for indexing
 “from the back”).</p></li>
 <li><p><strong>d</strong> (<em>int</em>) – The dimension of the tensor to index.</p></li>
 </ul>
@@ -2111,7 +2111,7 @@ contained within <cite>bounds</cite>.</p>
 <cite>d-1</cite>, or None if indices is None.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Optional</em>[<em>List</em>[int]]</p>
+<dd class="field-odd"><p><em>List</em>[int] | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2249,7 +2249,7 @@ where d is a feature dimension.</p></li>
 <li><p><strong>constraints</strong> (<em>inequality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2279,7 +2279,7 @@ with each tuple encoding an inequality constraint of the form
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply feasibility.</p></li>
 <li><p><strong>threshold</strong> (<em>float</em>) – A lower limit for the probability of posterior samples feasibility.</p></li>
 <li><p><strong>nsample_outcome</strong> (<em>int</em>) – The number of samples from the model posterior.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the posterior sampler. If omitted, use a random seed.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The seed for the posterior sampler. If omitted, use a random seed.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2313,12 +2313,12 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>nsample_feature</strong> (<em>int</em>) – The number of feature samples satisfying the bounds.</p></li>
 <li><p><strong>nsample_outcome</strong> (<em>int</em>) – The number of outcome samples from the model posterior.</p></li>
 <li><p><strong>threshold</strong> (<em>float</em>) – A lower limit for the probability of outcome feasibility</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for both feature and outcome samplers. If omitted,
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The seed for both feature and outcome samplers. If omitted,
 use a random seed.</p></li>
 <li><p><strong>verbose</strong> (<em>bool</em>) – An indicator for whether to log the results.</p></li>
-<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>device</em><em>]</em>) – </p></li>
-<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>dtype</em><em>]</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2362,13 +2362,13 @@ the returned Tensors should not be modified in-place.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>values</strong> (<em>Union</em><em>[</em><em>Number</em><em>, </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>device</em><em>]</em>) – </p></li>
-<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>dtype</em><em>]</em>) – </p></li>
+<li><p><strong>values</strong> (<em>Number</em><em> | </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em>) – </p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Union</em>[<em>Tensor</em>, <em>Tuple</em>[<em>Tensor</em>, …]]</p>
+<dd class="field-even"><p><em>Tensor</em> | <em>Tuple</em>[<em>Tensor</em>, …]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2378,12 +2378,12 @@ the returned Tensors should not be modified in-place.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>values</strong> (<em>Union</em><em>[</em><em>Number</em><em>, </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>values</strong> (<em>Number</em><em> | </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em>) – </p></li>
 <li><p><strong>ref</strong> (<em>Tensor</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Union</em>[<em>Tensor</em>, <em>Iterator</em>[<em>Tensor</em>]]</p>
+<dd class="field-even"><p><em>Tensor</em> | <em>Iterator</em>[<em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2628,7 +2628,7 @@ Volume 79, 2017.</p>
 <dd><p>Update the partitioning.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>Y</strong> (<em>Union</em><em>[</em><em>List</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – A <cite>n_box_decompositions x n x num_outcomes</cite>-dim tensor or a list
+<dd class="field-odd"><p><strong>Y</strong> (<em>List</em><em>[</em><em>Tensor</em><em>] </em><em>| </em><em>Tensor</em>) – A <cite>n_box_decompositions x n x num_outcomes</cite>-dim tensor or a list
 where the ith  element contains the new points for
 box_decomposition <cite>i</cite>.</p>
 </dd>
@@ -2848,7 +2848,7 @@ nadir point.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pareto_Y</strong> (<em>Tensor</em>) – A <cite>n x m</cite>-dim tensor of Pareto-optimal points.</p></li>
-<li><p><strong>max_ref_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m</cite> dim tensor indicating the maximum reference point.
+<li><p><strong>max_ref_point</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>m</cite> dim tensor indicating the maximum reference point.
 Some elements can be NaN, except when <cite>pareto_Y</cite> is empty,
 in which case these dimensions will be treated as if no
 <cite>max_ref_point</cite> was provided and set to <cite>nadir - scale * range</cite>.</p></li>
@@ -3227,7 +3227,7 @@ default value comes from <a class="reference internal" href="#knowles2005" id="i
 <dd class="field-even"><p>Transform function using the objective weights.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Callable</em>[[<em>Tensor</em>, <em>Optional</em>[<em>Tensor</em>]], <em>Tensor</em>]</p>
+<dd class="field-odd"><p><em>Callable</em>[[<em>Tensor</em>, <em>Tensor</em> | None], <em>Tensor</em>]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -3265,8 +3265,8 @@ Applications. 1994.</p>
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.probability.mvnxpb.mvnxpbState">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.mvnxpb.</span></span><span class="sig-name descname"><span class="pre">mvnxpbState</span></span><a class="reference internal" href="_modules/botorch/utils/probability/mvnxpb.html#mvnxpbState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.mvnxpb.mvnxpbState" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TypedDict</span></code></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.probability.mvnxpb.</span></span><span class="sig-name descname"><span class="pre">mvnxpbState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/probability/mvnxpb.html#mvnxpbState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.probability.mvnxpb.mvnxpbState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.utils.probability.mvnxpb.mvnxpbState.step">
 <span class="sig-name descname"><span class="pre">step</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.utils.probability.mvnxpb.mvnxpbState.step" title="Permalink to this definition">¶</a></dt>
@@ -3293,7 +3293,7 @@ Applications. 1994.</p>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.utils.probability.mvnxpb.mvnxpbState.log_prob_extra">
-<span class="sig-name descname"><span class="pre">log_prob_extra</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.probability.mvnxpb.mvnxpbState.log_prob_extra" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">log_prob_extra</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.probability.mvnxpb.mvnxpbState.log_prob_extra" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -3326,7 +3326,7 @@ this methods does not preprocess or copy terms.</p>
 <li><p><strong>plug_ins</strong> (<em>Tensor</em>) – Tensor of plug-in estimators used to update lower and upper bounds
 on random variables that have yet to be integrated out.</p></li>
 <li><p><strong>log_prob</strong> (<em>Tensor</em>) – Tensor of log probabilities.</p></li>
-<li><p><strong>log_prob_extra</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Tensor of conditional log probabilities for the next random
+<li><p><strong>log_prob_extra</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Tensor of conditional log probabilities for the next random
 variable. Used when integrating over an odd number of random variables.</p></li>
 <li><p><strong>perm</strong> (<em>Tensor</em>) – </p></li>
 </ul>
@@ -3345,7 +3345,7 @@ X ~ N(0, Σ). For details, see [Genz2016numerical] or <a class="reference intern
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_steps</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
+<li><p><strong>num_steps</strong> (<em>int</em><em> | </em><em>None</em>) – </p></li>
 <li><p><strong>eps</strong> (<em>float</em>) – </p></li>
 </ul>
 </dd>
@@ -3367,7 +3367,7 @@ attaining the values of plug-in estimators <cite>y[:t - 1]</cite>. Equivalently,
 where <cite>t</cite> denotes the current step.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Optional</em>[<em>LongTensor</em>]</p>
+<dd class="field-odd"><p><em>LongTensor</em> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3423,8 +3423,8 @@ variables.</p>
 <li><p><strong>bounds</strong> (<em>Tensor</em>) – </p></li>
 <li><p><strong>cross_covariance_matrix</strong> (<em>Tensor</em>) – </p></li>
 <li><p><strong>disable_pivoting</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>jitter</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – </p></li>
-<li><p><strong>max_tries</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
+<li><p><strong>jitter</strong> (<em>float</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>max_tries</strong> (<em>int</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -3542,7 +3542,7 @@ this does not repeat any args checking or parameter broadcasting in
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – the desired expanded size.</p></li>
-<li><p><strong>_instance</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.utils.probability.truncated_multivariate_normal.TruncatedMultivariateNormal" title="botorch.utils.probability.truncated_multivariate_normal.TruncatedMultivariateNormal"><em>TruncatedMultivariateNormal</em></a><em>]</em>) – new instance provided by subclasses that
+<li><p><strong>_instance</strong> (<a class="reference internal" href="#botorch.utils.probability.truncated_multivariate_normal.TruncatedMultivariateNormal" title="botorch.utils.probability.truncated_multivariate_normal.TruncatedMultivariateNormal"><em>TruncatedMultivariateNormal</em></a><em> | </em><em>None</em>) – new instance provided by subclasses that
 need to override <cite>.expand</cite>.</p></li>
 </ul>
 </dd>
@@ -3628,7 +3628,7 @@ this does not repeat any args checking or parameter broadcasting in
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – the desired expanded size.</p></li>
-<li><p><strong>_instance</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal" title="botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal"><em>UnifiedSkewNormal</em></a><em>]</em>) – new instance provided by subclasses that
+<li><p><strong>_instance</strong> (<a class="reference internal" href="#botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal" title="botorch.utils.probability.unified_skew_normal.UnifiedSkewNormal"><em>UnifiedSkewNormal</em></a><em> | </em><em>None</em>) – new instance provided by subclasses that
 need to override <cite>.expand</cite>.</p></li>
 </ul>
 </dd>
@@ -3745,7 +3745,7 @@ correlation <cite>r</cite>. This function computes <cite>E([x,y] | [xl,yl] &lt; 
 <li><p><strong>xu</strong> (<em>Tensor</em>) – Tensor of upper bounds for <cite>x</cite>, same shape as <cite>r</cite>.</p></li>
 <li><p><strong>yl</strong> (<em>Tensor</em>) – Tensor of lower bounds for <cite>y</cite>, same shape as <cite>r</cite>.</p></li>
 <li><p><strong>yu</strong> (<em>Tensor</em>) – Tensor of upper bounds for <cite>y</cite>, same shape as <cite>r</cite>.</p></li>
-<li><p><strong>p</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Tensor of probabilities <cite>P(xl &lt; x &lt; xu, yl &lt; y &lt; yu)</cite>, same shape as <cite>r</cite>.</p></li>
+<li><p><strong>p</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Tensor of probabilities <cite>P(xl &lt; x &lt; xu, yl &lt; y &lt; yu)</cite>, same shape as <cite>r</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3866,9 +3866,9 @@ based on a precomputed Cholesky factor <cite>Kaa = Laa Laa^T</cite>.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Laa</strong> (<em>Tensor</em>) – Cholesky factor of K’s upper left block.</p></li>
 <li><p><strong>Kbb</strong> (<em>Tensor</em>) – Lower-right block of K.</p></li>
-<li><p><strong>Kba</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Lower-left block of K.</p></li>
-<li><p><strong>Lba</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Precomputed solve <cite>Kba Laa^{-T}</cite>.</p></li>
-<li><p><strong>jitter</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Optional nugget to be added to the diagonal of Kbb.</p></li>
+<li><p><strong>Kba</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Lower-left block of K.</p></li>
+<li><p><strong>Lba</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Precomputed solve <cite>Kba Laa^{-T}</cite>.</p></li>
+<li><p><strong>jitter</strong> (<em>float</em><em> | </em><em>None</em>) – Optional nugget to be added to the diagonal of Kbb.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -3905,7 +3905,7 @@ based on a precomputed Cholesky factor <cite>Kaa = Laa Laa^T</cite>.</p>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.utils.probability.linalg.PivotedCholesky.diag">
-<span class="sig-name descname"><span class="pre">diag</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.probability.linalg.PivotedCholesky.diag" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">diag</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.probability.linalg.PivotedCholesky.diag" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.utils.probability.linalg.PivotedCholesky.validate_init">
@@ -3996,7 +3996,7 @@ based on a precomputed Cholesky factor <cite>Kaa = Laa Laa^T</cite>.</p>
 <li><p><strong>cases</strong> (<em>Iterable</em><em>[</em><em>Tuple</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>BoolTensor</em><em>]</em><em>, </em><em>Callable</em><em>[</em><em>[</em><em>BoolTensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – Iterable of function pairs (pred, func), where <cite>mask=pred()</cite> specifies
 whether <cite>func</cite> is applicable for each entry in <cite>out</cite>. Note that cases are
 resolved first-come, first-serve.</p></li>
-<li><p><strong>default</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>BoolTensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Optional <cite>func</cite> to which all unclaimed entries of <cite>out</cite> are dispatched.</p></li>
+<li><p><strong>default</strong> (<em>Callable</em><em>[</em><em>[</em><em>BoolTensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – Optional <cite>func</cite> to which all unclaimed entries of <cite>out</cite> are dispatched.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4013,13 +4013,13 @@ the returned Tensors should not be modified in-place.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>values</strong> (<em>Union</em><em>[</em><em>Number</em><em>, </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>device</em><em>]</em>) – </p></li>
-<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>dtype</em><em>]</em>) – </p></li>
+<li><p><strong>values</strong> (<em>Number</em><em> | </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em>) – </p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Union</em>[<em>Tensor</em>, <em>Tuple</em>[<em>Tensor</em>, …]]</p>
+<dd class="field-even"><p><em>Tensor</em> | <em>Tuple</em>[<em>Tensor</em>, …]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -4029,12 +4029,12 @@ the returned Tensors should not be modified in-place.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>values</strong> (<em>Union</em><em>[</em><em>Number</em><em>, </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>values</strong> (<em>Number</em><em> | </em><em>Iterator</em><em>[</em><em>Number</em><em>]</em>) – </p></li>
 <li><p><strong>ref</strong> (<em>Tensor</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Union</em>[<em>Tensor</em>, <em>Iterator</em>[<em>Tensor</em>]]</p>
+<dd class="field-even"><p><em>Tensor</em> | <em>Iterator</em>[<em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -4046,7 +4046,7 @@ the returned Tensors should not be modified in-place.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>shape</strong> (<em>Size</em>) – </p></li>
 <li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>device</em><em>]</em>) – </p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4062,7 +4062,7 @@ the returned Tensors should not be modified in-place.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>shape</strong> (<em>Size</em>) – </p></li>
 <li><p><strong>dim</strong> (<em>int</em>) – </p></li>
-<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>device</em><em>]</em>) – </p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -4194,10 +4194,10 @@ when passed as a Tensor.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>values</strong> (<em>Tensor</em>) – Tensor whose values are to be swapped.</p></li>
-<li><p><strong>i</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>LongTensor</em><em>]</em>) – Indices for slices along dimension <cite>dim</cite>.</p></li>
-<li><p><strong>j</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>LongTensor</em><em>]</em>) – Indices for slices along dimension <cite>dim</cite>.</p></li>
+<li><p><strong>i</strong> (<em>int</em><em> | </em><em>LongTensor</em>) – Indices for slices along dimension <cite>dim</cite>.</p></li>
+<li><p><strong>j</strong> (<em>int</em><em> | </em><em>LongTensor</em>) – Indices for slices along dimension <cite>dim</cite>.</p></li>
 <li><p><strong>dim</strong> (<em>int</em>) – The dimension of <cite>values</cite> along which to swap slices.</p></li>
-<li><p><strong>buffer</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Optional buffer used internally to store copied values.</p></li>
+<li><p><strong>buffer</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Optional buffer used internally to store copied values.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

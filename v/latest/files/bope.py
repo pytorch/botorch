@@ -390,7 +390,7 @@ for i in range(n_reps):
 # Prepare PE data for plots
 within_df = pd.DataFrame(within_session_results)
 within_df["pe_strategy"] = within_df["pe_strategy"].str.replace(
-    "EUBO-zeta", r"$EUBO-\\zeta$"
+    "EUBO-zeta", r"$EUBO-\zeta$"
 )
 within_df = (
     within_df.groupby(["n_comps", "pe_strategy"])

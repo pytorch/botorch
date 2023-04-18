@@ -73,7 +73,7 @@
 
 
 <div class="viewcode-block" id="qMultiStepLookahead"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead">[docs]</a><span class="k">class</span> <span class="nc">qMultiStepLookahead</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""MC-based batch Multi-Step Look-Ahead (one-shot optimization)."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Multi-Step Look-Ahead (one-shot optimization)."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -89,7 +89,7 @@
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">collapse_fantasy_base_samples</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""q-Multi-Step Look-Ahead (one-shot optimization).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Multi-Step Look-Ahead (one-shot optimization).</span>
 
 <span class="sd">        Performs a `k`-step lookahead by means of repeated fantasizing.</span>
 
@@ -199,7 +199,7 @@
 
 <div class="viewcode-block" id="qMultiStepLookahead.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate qMultiStepLookahead on the candidate set X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qMultiStepLookahead on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q' x d`-dim Tensor with `q'` design points for each</span>
@@ -230,7 +230,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_num_auxiliary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Number of auxiliary variables in the q-batch dimension.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Number of auxiliary variables in the q-batch dimension.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">             `q_aux` s.t. `q + q_aux = augmented_q_batch_size`</span>
@@ -238,7 +238,7 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_sizes</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">cumprod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_fantasies</span><span class="p">))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_set_samplers_batch_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_shape</span><span class="p">:</span> <span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Set batch_range on samplers.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Set batch_range on samplers.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            batch_shape: The batch shape of the input tensor `X`.</span>
@@ -248,7 +248,7 @@
             <span class="n">s</span><span class="o">.</span><span class="n">batch_range_override</span> <span class="o">=</span> <span class="p">(</span><span class="n">tbatch_dim_start</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
 
 <div class="viewcode-block" id="qMultiStepLookahead.get_augmented_q_batch_size"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_augmented_q_batch_size">[docs]</a>    <span class="k">def</span> <span class="nf">get_augmented_q_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Get augmented q batch size for one-shot optimzation.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Get augmented q batch size for one-shot optimzation.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            q: The number of candidates to consider jointly.</span>
@@ -260,7 +260,7 @@
         <span class="k">return</span> <span class="n">q</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_auxiliary</span></div>
 
 <div class="viewcode-block" id="qMultiStepLookahead.get_split_shapes"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_split_shapes">[docs]</a>    <span class="k">def</span> <span class="nf">get_split_shapes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Size</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Size</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
-        <span class="sa">r</span><span class="sd">"""Get the split shapes from X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the split shapes from X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q_aug x d`-dim tensor including fantasy points.</span>
@@ -284,7 +284,7 @@
         <span class="k">return</span> <span class="n">batch_shape</span><span class="p">,</span> <span class="n">shapes</span><span class="p">,</span> <span class="n">sizes</span></div>
 
 <div class="viewcode-block" id="qMultiStepLookahead.get_multi_step_tree_input_representation"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_multi_step_tree_input_representation">[docs]</a>    <span class="k">def</span> <span class="nf">get_multi_step_tree_input_representation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Get the multi-step tree representation of X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the multi-step tree representation of X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q' x d`-dim Tensor with `q'` design points for each</span>
@@ -314,7 +314,7 @@
         <span class="k">return</span> <span class="p">[</span><span class="n">X0</span><span class="p">]</span> <span class="o">+</span> <span class="n">Xother</span></div>
 
 <div class="viewcode-block" id="qMultiStepLookahead.extract_candidates"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.extract_candidates">[docs]</a>    <span class="k">def</span> <span class="nf">extract_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_full</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""We only return X as the set of candidates post-optimization.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""We only return X as the set of candidates post-optimization.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X_full: A `batch_shape x q' x d`-dim Tensor with `q'` design points for</span>
@@ -326,7 +326,7 @@
         <span class="k">return</span> <span class="n">X_full</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_auxiliary</span><span class="p">,</span> <span class="p">:]</span></div>
 
 <div class="viewcode-block" id="qMultiStepLookahead.get_induced_fantasy_model"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_induced_fantasy_model">[docs]</a>    <span class="k">def</span> <span class="nf">get_induced_fantasy_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Fantasy model induced by X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Fantasy model induced by X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q' x d`-dim Tensor with `q'` design points for each</span>
@@ -361,7 +361,7 @@
     <span class="n">sample_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">step_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Recursive multi-step look-ahead computation.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Recursive multi-step look-ahead computation.</span>
 
 <span class="sd">    Helper function computing the "value-to-go" of a multi-step lookahead scheme.</span>
 
@@ -465,7 +465,7 @@
     <span class="n">inner_sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">arg_fac</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TAcqfArgConstructor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Compute the stage value of a multi-step look-ahead policy.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Compute the stage value of a multi-step look-ahead policy.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        model: A Model of appropriate batch size. Specifically, it must be possible to</span>
@@ -506,7 +506,7 @@
 <span class="k">def</span> <span class="nf">_construct_sample_weights</span><span class="p">(</span>
     <span class="n">prev_weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sampler</span><span class="p">:</span> <span class="n">MCSampler</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Iteratively construct tensor of sample weights for multi-step look-ahead.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Iteratively construct tensor of sample weights for multi-step look-ahead.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        prev_weights: A `f_i x .... x f_1 x batch_shape` tensor of previous sample</span>
@@ -540,7 +540,7 @@
     <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]]:</span>
-    <span class="sa">r</span><span class="sd">"""Check validity of inputs and construct inner samplers.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Check validity of inputs and construct inner samplers.</span>
 
 <span class="sd">    Helper function to be used internally for constructing inner samplers.</span>
 
@@ -600,7 +600,7 @@
 <span class="k">def</span> <span class="nf">_get_induced_fantasy_model</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">Xs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">samplers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Recursive computation of the fantasy model induced by an input tree.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Recursive computation of the fantasy model induced by an input tree.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        model: A Model of appropriate batch size. Specifically, it must be possible to</span>
@@ -637,7 +637,7 @@
     <span class="n">full_optimizer</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Warm-start initialization for multi-step look-ahead acquisition functions.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Warm-start initialization for multi-step look-ahead acquisition functions.</span>
 
 <span class="sd">    For now uses the same q' as in `full_optimizer`. TODO: allow different `q`.</span>
 
@@ -700,7 +700,7 @@
 
 
 <div class="viewcode-block" id="make_best_f"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.multi_step_lookahead.make_best_f">[docs]</a><span class="k">def</span> <span class="nf">make_best_f</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Extract the best observed training input from the model."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Extract the best observed training input from the model."""</span>
     <span class="k">return</span> <span class="p">{</span><span class="s2">"best_f"</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">train_targets</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">}</span></div>
 </pre></div>
 </div>

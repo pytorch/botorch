@@ -56,7 +56,7 @@
 
 
 <div class="viewcode-block" id="AnalyticExpectedUtilityOfBestOption"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption">[docs]</a><span class="k">class</span> <span class="nc">AnalyticExpectedUtilityOfBestOption</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Analytic Prefential Expected Utility of Best Options, i.e., Analytical EUBO"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Analytic Prefential Expected Utility of Best Options, i.e., Analytical EUBO"""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -64,7 +64,7 @@
         <span class="n">outcome_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DeterministicModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">previous_winner</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Analytic implementation of Expected Utility of the Best Option under the</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Analytic implementation of Expected Utility of the Best Option under the</span>
 <span class="sd">        Laplace model (assumes a PairwiseGP is used as the preference model) as</span>
 <span class="sd">        proposed in [Lin2022preference]_.</span>
 
@@ -96,7 +96,7 @@
 
 <div class="viewcode-block" id="AnalyticExpectedUtilityOfBestOption.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate analytical EUBO on the candidate set X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate analytical EUBO on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor, where `q = 2` if `previous_winner`</span>

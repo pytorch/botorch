@@ -66,7 +66,7 @@
 <div class="viewcode-block" id="gen_loo_cv_folds"><a class="viewcode-back" href="../../cross_validation.html#botorch.cross_validation.gen_loo_cv_folds">[docs]</a><span class="k">def</span> <span class="nf">gen_loo_cv_folds</span><span class="p">(</span>
     <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CVFolds</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Generate LOO CV folds w.r.t. to `n`.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate LOO CV folds w.r.t. to `n`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training</span>
@@ -138,7 +138,7 @@
     <span class="n">fit_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CVResults</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Perform cross validation by using gpytorch batch mode.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Perform cross validation by using gpytorch batch mode.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        model_cls: A GPyTorchModel class. This class must initialize the likelihood</span>
