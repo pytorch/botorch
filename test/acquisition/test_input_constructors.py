@@ -27,6 +27,9 @@ from botorch.acquisition.input_constructors import (
     get_best_f_analytic,
     get_best_f_mc,
 )
+from botorch.acquisition.joint_entropy_search import (
+    qJointEntropySearch,
+)
 from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
@@ -976,3 +979,29 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             inputs_mfmes = input_constructor(**constructor_args)
             inputs_test = {"foo": 0, "bar": 1, "current_value": current_value}
             self.assertEqual(inputs_mfmes, inputs_test)
+
+    def test_construct_inputs_jes(self):
+        func = get_acqf_input_constructor(qJointEntropySearch)
+        # we need to run optimize_posterior_samples, so we sort of need
+        # a real model as there is no other (apparent) option
+        model = SingleTaskGP(self.blockX_blockY[0].X(), self.blockX_blockY[0].Y())
+
+        kwargs = func(
+            model=model,
+            training_data=self.blockX_blockY,
+            objective=LinearMCObjective(torch.rand(2)),
+            bounds=self.bounds,
+            num_optima=17,
+            maximize=False,
+        )
+
+        self.assertFalse(kwargs["maximize"])
+        self.assertEqual(
+            self.blockX_blockY[0].X().dtype, kwargs["optimal_inputs"].dtype
+        )
+        self.assertEqual(len(kwargs["optimal_inputs"]), 17)
+        self.assertEqual(len(kwargs["optimal_outputs"]), 17)
+        # asserting that, for the non-batch case, the optimal inputs are
+        # of shape N x D and outputs are N x 1
+        self.assertEqual(len(kwargs["optimal_inputs"].shape), 2)
+        self.assertEqual(len(kwargs["optimal_outputs"].shape), 2)
