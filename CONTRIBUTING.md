@@ -18,44 +18,39 @@ pip install -e .[dev]
 
 #### Code Style
 
-BoTorch uses the [black](https://github.com/ambv/black) code formatter to
-enforce a common code style across the code base. black is installed easily via
-pip using `pip install black`, and run locally by calling
-```bash
-black .
-```
-from the repository root. No additional configuration should be needed (see the
-[black documentation](https://black.readthedocs.io/en/stable/installation_and_usage.html#usage)
-for advanced usage).
-
-Docstring formatting: We recommend [Google-style](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html) docstrings.
-To make sure documentation is rendered correctly, we require that every `__init__`
-function contains an "Args" block.
-We use `flake8-docstrings` to check this, as well as `flake8` to check code style. To use these tools, run
-`pip install flake8` and `pip install flake8-docstrings`, and then run
-```bash
-flake8 .
-```
-
-
-#### Import Sorting
-
-BoTorch uses [ufmt]https://github.com/omnilib/ufmt library for consistent
-sorting of imports across the codebase. Install via `pip install ufmt`, and
-auto-sort with
+BoTorch uses [ufmt]https://github.com/omnilib/ufmt to enforce consistent
+code formatting (based on [black](https://github.com/ambv/black)) and
+import sorting (based on [µsort](https://github.com/facebook/usort))
+across the code base. Install via `pip install ufmt`, and
+auto-format and auto-sort by running
 ```bash
 ufmt format .
 ```
 from the repository root.
 
-We feel strongly that having a consistent code style and imports is important,
-so CI will fail on your PR if it does not pass ufmt muster (note: under the
-hood ufmt also checks black code style).
+
+#### Flake8 linting
+
+BoTorch uses `flake8` for linting. To run the linter locally, install
+`flake8` via `pip install flake8`, and then run
+```bash
+flake8 .
+```
+from the repository root.
+
+
+#### Docstring formatting
+
+BoTorch uses [Google-style](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html) docstrings.
+To make sure documentation is rendered correctly, we require that every
+`__init__` function contains an `Args:` block. We use the `flake8-docstrings`
+plugin to check this - install via `pip install flake8-docstrings` and
+run `flake8` as above to check.
 
 
 #### Type Hints
 
-BoTorch is fully typed using python 3.7+
+BoTorch is fully typed using python 3.8+
 [type hints](https://www.python.org/dev/peps/pep-0484/).
 We expect any contributions to also use proper type annotations. While we
 currently do not enforce full consistency of these in our continuous integration
@@ -112,7 +107,7 @@ We actively welcome your pull requests.
 3. If you have changed APIs, update the documentation. Make sure the
    documentation builds.
 4. Ensure the test suite passes.
-5. Make sure your code passes both `black` and `flake8` formatting checks.
+5. Make sure your code passes both `ufmt` and `flake8` formatting checks.
 6. If you haven't already, complete the Contributor License Agreement ("CLA").
 
 
