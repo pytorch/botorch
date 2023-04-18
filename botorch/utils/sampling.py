@@ -25,10 +25,10 @@ import scipy
 import torch
 from botorch.exceptions.errors import BotorchError
 from botorch.sampling.qmc import NormalQMCEngine
+from botorch.utils.transforms import unnormalize
 from scipy.spatial import Delaunay, HalfspaceIntersection
 from torch import LongTensor, Tensor
 from torch.quasirandom import SobolEngine
-from botorch.utils.transforms import unnormalize
 
 
 @contextmanager
