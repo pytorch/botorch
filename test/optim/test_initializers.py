@@ -953,7 +953,7 @@ class TestSampleAroundBest(BotorchTestCase):
             )
             # test NEI with X_baseline
             acqf = qNoisyExpectedImprovement(
-                model, X_baseline=X_train, cache_root=False
+                model, X_baseline=X_train, prune_baseline=False, cache_root=False
             )
             with mock.patch(
                 "botorch.optim.initializers.sample_perturbed_subset_dims"
@@ -975,7 +975,7 @@ class TestSampleAroundBest(BotorchTestCase):
                 )
             )
             acqf = qNoisyExpectedImprovement(
-                model, X_baseline=X_train, cache_root=False
+                model, X_baseline=X_train, prune_baseline=False, cache_root=False
             )
             X_rnd = sample_points_around_best(
                 acq_function=acqf,
@@ -1100,7 +1100,7 @@ class TestSampleAroundBest(BotorchTestCase):
             bounds[1] = 2
             # test NEI with X_baseline
             acqf = qNoisyExpectedImprovement(
-                model, X_baseline=X_train, cache_root=False
+                model, X_baseline=X_train, prune_baseline=False, cache_root=False
             )
             with mock.patch(
                 "botorch.optim.initializers.sample_perturbed_subset_dims",

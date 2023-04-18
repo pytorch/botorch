@@ -510,7 +510,7 @@ def construct_inputs_qNEI(
     X_pending: Optional[Tensor] = None,
     sampler: Optional[MCSampler] = None,
     X_baseline: Optional[Tensor] = None,
-    prune_baseline: Optional[bool] = False,
+    prune_baseline: Optional[bool] = True,
     cache_root: Optional[bool] = True,
     **kwargs: Any,
 ) -> Dict[str, Any]:

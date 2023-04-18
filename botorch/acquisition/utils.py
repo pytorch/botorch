@@ -129,7 +129,7 @@ def get_acquisition_function(
             objective=objective,
             posterior_transform=posterior_transform,
             X_pending=X_pending,
-            prune_baseline=kwargs.get("prune_baseline", False),
+            prune_baseline=kwargs.get("prune_baseline", True),
             marginalize_dim=kwargs.get("marginalize_dim"),
             cache_root=kwargs.get("cache_root", True),
         )
