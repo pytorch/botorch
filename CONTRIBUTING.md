@@ -18,7 +18,7 @@ pip install -e .[dev]
 
 #### Code Style
 
-BoTorch uses [ufmt]https://github.com/omnilib/ufmt to enforce consistent
+BoTorch uses [ufmt](https://github.com/omnilib/ufmt) to enforce consistent
 code formatting (based on [black](https://github.com/ambv/black)) and
 import sorting (based on [µsort](https://github.com/facebook/usort))
 across the code base. Install via `pip install ufmt`, and
