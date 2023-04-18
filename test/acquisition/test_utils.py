@@ -22,6 +22,7 @@ from botorch.acquisition.utils import (
     expand_trace_observations,
     get_acquisition_function,
     get_infeasible_cost,
+    get_optimal_samples,
     project_to_sample_points,
     project_to_target_fidelity,
     prune_inferior_points,
@@ -778,8 +779,8 @@ class TestGetOptimalSamples(BotorchTestCase):
         num_optima = 7
         batch_shape = (3,)
 
-        bounds = torch.Tensor([[0, 1]] * dims).T.to(dtype)
-        X = torch.rand(*batch_shape, 4, dims).to(dtype)
+        bounds = torch.tensor([[0, 1]] * dims, dtype=dtype).T
+        X = torch.rand(*batch_shape, 4, dims, dtype=dtype)
         Y = torch.sin(X).sum(dim=-1, keepdim=True).to(dtype)
         model = SingleTaskGP(X, Y)
         X_opt, f_opt = get_optimal_samples(

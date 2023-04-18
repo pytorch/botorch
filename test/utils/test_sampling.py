@@ -15,6 +15,7 @@ import numpy as np
 import torch
 from botorch.exceptions.errors import BotorchError
 from botorch.models import FixedNoiseGP
+from botorch.sampling.pathwise import draw_matheron_paths
 from botorch.utils.sampling import (
     _convert_bounds_to_inequality_constraints,
     batched_multinomial,
@@ -25,6 +26,7 @@ from botorch.utils.sampling import (
     HitAndRunPolytopeSampler,
     manual_seed,
     normalize_linear_constraints,
+    optimize_posterior_samples,
     PolytopeSampler,
     sample_hypersphere,
     sample_simplex,
@@ -532,17 +534,16 @@ class TestDelaunayPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
 
 class TestOptimizePosteriorSamples(BotorchTestCase):
     def test_optimize_posterior_samples(self):
-        dtypes = (torch.float32, torch.float64)
         dims = 2
         dtype = torch.float64
         eps = 1e-6
-        for_testing_speed_kwargs = {"raw_samples": 250, "num_restarts": 3}
+        for_testing_speed_kwargs = {"raw_samples": 512, "num_restarts": 10}
         nums_optima = (1, 7)
         batch_shapes = ((), (3,), (5, 2))
         for num_optima, batch_shape in itertools.product(nums_optima, batch_shapes):
-            bounds = torch.Tensor([[0, 1]] * dims).T.to(dtype)
-            X = torch.rand(*batch_shape, 52, dims).to(dtype)
-            Y = torch.pow(X - 0.5, 2).sum(dim=-1, keepdim=True).to(dtype)
+            bounds = torch.tensor([[0, 1]] * dims, dtype=dtype).T
+            X = torch.rand(*batch_shape, 13, dims, dtype=dtype)
+            Y = torch.pow(X - 0.5, 2).sum(dim=-1, keepdim=True)
 
             # having a noiseless model all but guarantees that the found optima
             # will be better than the observations

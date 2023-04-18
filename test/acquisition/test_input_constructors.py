@@ -27,9 +27,7 @@ from botorch.acquisition.input_constructors import (
     get_best_f_analytic,
     get_best_f_mc,
 )
-from botorch.acquisition.joint_entropy_search import (
-    qJointEntropySearch,
-)
+from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,

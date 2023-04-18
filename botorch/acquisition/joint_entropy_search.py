@@ -7,9 +7,24 @@
 r"""
 Acquisition function for joint entropy search (JES).
 
+References
+.. [Hvarfner2022joint]
+    C. Hvarfner, F. Hutter, L. Nardi,
+    Joint Entropy Search for Maximally-informed Bayesian Optimization.
+    In Proceedings of the Annual Conference on Neural Information
+    Processing Systems (NeurIPS), 2022.
+
+.. [Tu2022joint]
+    B. Tu, A. Gandy, N. Kantas, B. Shafei,
+    Joint Entropy Search for Multi-objective Bayesian Optimization.
+    In Proceedings of the Annual Conference on Neural Information
+    Processing Systems (NeurIPS), 2022.
 """
 
 from __future__ import annotations
+
+import warnings
+from math import log, pi
 
 from typing import Any, Optional
 import warnings
@@ -17,15 +32,16 @@ from math import pi
 import torch.distributions as dist
 
 import torch
-from torch import Tensor
-
-from torch.distributions import Normal
-
-from botorch.models.utils import check_no_nans
 from botorch import settings
-from botorch.models.utils import fantasize as fantasize_flag
-from botorch.models.model import Model
+from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
+from botorch.acquisition.objective import PosteriorTransform
+
+from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
+from botorch.models.model import Model
+
+from botorch.models.utils import check_no_nans, fantasize as fantasize_flag
+from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
@@ -33,22 +49,20 @@ from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.transforms import is_fully_bayesian
 from botorch.exceptions.warnings import BotorchTensorDimensionWarning
 
+from torch.distributions import Normal
+
 MCMC_DIM = -3  # Only relevant if you do Fully Bayesian GPs.
 ESTIMATION_TYPES = ["MC", "LB"]
-"""
-References
-.. [Hvarfner2022joint]
-    C. Hvarfner, F. Hutter, L. Nardi,
-    Joint Entropy Search for Maximally-informed Bayesian Optimization. 
-    In Proceedings of the Annual Conference on Neural Information
-    Processing Systems (NeurIPS), 2022.
+MC_ADD_TERM = 0.5 * (1 + log(2 * pi))
 
-.. [Tu2022joint]
-    B. Tu, A. Gandy, N. Kantas, B. Shafei,
-    Joint Entropy Search for Multi-objective Bayesian Optimization. 
-    In Proceedings of the Annual Conference on Neural Information
-    Processing Systems (NeurIPS), 2022.
-"""
+# The CDF query cannot be strictly zero in the division
+# and this clamping helps assure that it is always positive.
+CLAMP_LB = torch.finfo(torch.float32).eps
+FULLY_BAYESIAN_ERROR_MSG = (
+    "JES is not yet available with Fully Bayesian GPs. Track the issue, "
+    "which regards conditioning on a number of optima on a collection "
+    "of models, in detail at https://github.com/pytorch/botorch/issues/1680"
+)
 
 
 class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
@@ -71,7 +85,7 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
         X_pending: Optional[Tensor] = None,
         estimation_type: str = "LB",
         maximize: bool = True,
-        num_samples: int = 256,
+        num_samples: int = 64,
         **kwargs: Any,
     ) -> None:
         r"""Joint entropy search acquisition function.
@@ -94,7 +108,7 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
                 of the MC estimator.
             maximize: If true, we consider a maximization problem.
             X_pending: A `m x d`-dim Tensor of `m` design points that have been
-                submitted for function evaluation, but have not yet been evaluated
+                submitted for function evaluation, but have not yet been evaluated.
             num_samples: The number of Monte Carlo samples used for the Monte Carlo
                 estimate.
         """
@@ -118,38 +132,47 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
         # want to consider MAX-values. As such, we need to flip them if
         # we want to minimize.
         if not self.maximize:
-            optimal_outputs = (-1) * optimal_outputs
+            optimal_outputs = -optimal_outputs
         self.num_samples = optimal_inputs.shape[0]
         self.condition_noiseless = condition_noiseless
         self.initial_model = model
-        tkwargs = {"dtype": optimal_outputs.dtype, "device": optimal_outputs.device}
 
         # Here, the optimal inputs have shapes num_optima x [num_models if FB] x 1 x D
         # and the optimal outputs have shapes num_optima x [num_models if FB] x 1 x 1
         # The third dimension equaling 1 is required to get one optimum per model,
         # which raises a BotorchTensorDimensionWarning.
+        if isinstance(model, SaasFullyBayesianSingleTaskGP):
+            raise NotImplementedError(FULLY_BAYESIAN_ERROR_MSG)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
             with fantasize_flag():
                 with settings.propagate_grads(False):
-                    post_ps = self.initial_model.posterior(
+                    # We must do a forward pass one before conditioning
+                    self.initial_model.posterior(
                         self.model.train_inputs[0], observation_noise=False
                     )
-                    sample_idx = 0
 
                 # This equates to the JES version proposed by Hvarfner et. al.
                 if self.condition_noiseless:
                     opt_noise = torch.full_like(
-                        self.optimal_outputs, MIN_INFERRED_NOISE_LEVEL)
-                    # conditional (batch) model of shape (num_models) x num_optima_per_model
+                        self.optimal_outputs, MIN_INFERRED_NOISE_LEVEL
+                    )
+                    # conditional (batch) model of shape (num_models)
+                    # x num_optima_per_model
+                    self.conditional_model = (
+                        self.initial_model.condition_on_observations(
+                            X=self.initial_model.transform_inputs(self.optimal_inputs),
+                            Y=self.optimal_outputs,
+                            noise=opt_noise,
+                        )
+                    )
                 else:
-                    opt_noise = None
-
-                self.conditional_model = self.initial_model.condition_on_observations(
-                    X=self.initial_model.transform_inputs(self.optimal_inputs),
-                    Y=self.optimal_outputs,
-                    noise=opt_noise,
-                )
+                    self.conditional_model = (
+                        self.initial_model.condition_on_observations(
+                            X=self.initial_model.transform_inputs(self.optimal_inputs),
+                            Y=self.optimal_outputs,
+                        )
+                    )
 
         self.estimation_type = estimation_type
         self.set_X_pending(X_pending)
@@ -157,7 +180,8 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
     @concatenate_pending_points
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
-        r"""Evaluates qLowerBoundJointEntropySearch at the design points `X`.
+        r"""Evaluates qJointEntropySearch at the design points `X`.
+
         Args:
             X: A `batch_shape x q x d`-dim Tensor of `batch_shape` t-batches with `q`
             `d`-dim design points each.
@@ -172,7 +196,7 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
             res = self._compute_monte_carlo_information_gain(X)
         else:
             raise ValueError(
-                f"Estimation type {self.estimation_type} is not valid."
+                f"Estimation type {self.estimation_type} is not valid. "
                 f"Please specify any of {ESTIMATION_TYPES}"
             )
         return res
@@ -190,25 +214,22 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
             A `batch_shape`-dim Tensor of acquisition values at the given design
             points `X`.
         """
-        tkwargs = {
-            "dtype": self.optimal_outputs.dtype,
-            "device": self.optimal_outputs.device,
-        }
         initial_posterior = self.initial_model.posterior(X, observation_noise=True)
         # need to check if there is a two-dimensional batch shape -
         # the sampled optima appear in the dimension right after
         batch_shape = X.shape[:-2]
         sample_dim = len(batch_shape)
         # We DISREGARD the additional constant term.
-        initial_entropy = 0.5 * torch.logdet(initial_posterior.mvn.covariance_matrix)
+        initial_entropy = 0.5 * torch.logdet(
+            initial_posterior.mvn.lazy_covariance_matrix
+        )
 
         # initial_entropy of shape batch_size or batch_size x num_models if FBGP
-        # first need to unsqueeze the sample dim (first after batch dim) and then the two last
+        # first need to unsqueeze the sample dim (after batch dim) and then the two last
         initial_entropy = (
             initial_entropy.unsqueeze(sample_dim).unsqueeze(-1).unsqueeze(-1)
         )
 
-        CLAMP_LB = torch.finfo(tkwargs["dtype"]).eps
         # Compute the mixture mean and variance
         posterior_m = self.conditional_model.posterior(
             X.unsqueeze(MCMC_DIM), observation_noise=True
@@ -226,7 +247,7 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
         # get stdv of noiseless variance
         stdv = noiseless_var.sqrt()
         # batch_shape x 1
-        normal = torch.distributions.Normal(
+        normal = Normal(
             torch.zeros(1, device=X.device, dtype=X.dtype),
             torch.ones(1, device=X.device, dtype=X.dtype),
         )
@@ -253,15 +274,17 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
         return entropy_reduction
 
     def _compute_monte_carlo_variables(self, posterior):
-        """Retrieved the monte carlo samples  and their log probabilities from the posterior.
+        """Retrieves monte carlo samples and their log probabilities from the posterior.
 
         Args:
             posterior: The posterior distribution.
 
         Returns:
             A two-element tuple containing:
-            - samples: a num_optima x batch_shape x num_mc_samples x q x 1 tensor of samples drawn from the posterior.
-            - samples_log_prob: a num_optima x batch_shape x num_mc_samples x q x 1 tensor of associated probabilities.
+            - samples: a num_optima x batch_shape x num_mc_samples x q x 1
+                tensor of samples drawn from the posterior.
+            - samples_log_prob: a num_optima x batch_shape x num_mc_samples x q x 1
+                tensor of associated probabilities.
         """
         samples = self.get_posterior_samples(posterior)
         samples_log_prob = (
@@ -282,26 +305,21 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
             A `batch_shape`-dim Tensor of acquisition values at the given design
             points `X`.
         """
-        tkwargs = {
-            "dtype": self.optimal_outputs.dtype,
-            "device": self.optimal_outputs.device,
-        }
-
         initial_posterior = self.initial_model.posterior(X, observation_noise=True)
 
-        add_term = 0.5 * (1 + torch.log(torch.ones(1, **tkwargs) * 2 * pi))
         batch_shape = X.shape[:-2]
         sample_dim = len(batch_shape)
         # We DISREGARD the additional constant term.
-        initial_entropy = 0.5 * torch.logdet(initial_posterior.mvn.covariance_matrix)
+        initial_entropy = MC_ADD_TERM + 0.5 * torch.logdet(
+            initial_posterior.mvn.lazy_covariance_matrix
+        )
 
         # initial_entropy of shape batch_size or batch_size x num_models if FBGP
-        # first need to unsqueeze the sample dim (first after batch dim) and then the two last
+        # first need to unsqueeze the sample dim (after batch dim), then the two last
         initial_entropy = (
             initial_entropy.unsqueeze(sample_dim).unsqueeze(-1).unsqueeze(-1)
         )
 
-        CLAMP_LB = torch.finfo(tkwargs["dtype"]).eps
         # Compute the mixture mean and variance
         posterior_m = self.conditional_model.posterior(
             X.unsqueeze(MCMC_DIM), observation_noise=True
@@ -322,7 +340,7 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
         # Correlation between noisy observations and noiseless values f
         rho = (noiseless_var / variance_m).sqrt()
 
-        normal = torch.distributions.Normal(
+        normal = Normal(
             torch.zeros(1, device=X.device, dtype=X.dtype),
             torch.ones(1, device=X.device, dtype=X.dtype),
         )

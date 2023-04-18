@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from typing import Generator, Iterable, List, Optional, Tuple
+from typing import Any, Generator, Iterable, List, Optional, Tuple, TYPE_CHECKING
 
 import numpy as np
 import scipy
@@ -29,6 +29,10 @@ from botorch.utils.transforms import unnormalize
 from scipy.spatial import Delaunay, HalfspaceIntersection
 from torch import LongTensor, Tensor
 from torch.quasirandom import SobolEngine
+
+
+if TYPE_CHECKING:
+    from botorch.sampling.pathwise.path import SamplePath
 
 
 @contextmanager
@@ -896,6 +900,7 @@ def optimize_posterior_samples(
         raw_samples: The number of samples with which to query the samples initially.
         num_restarts: The number of points selected for gradient-based optimization.
         maximize: Boolean indicating whether to maimize or minimize
+
     Returns:
         A two-element tuple containing:
             - X_opt: A `num_optima x [batch_size] x d`-dim tensor of optimal inputs x*.
@@ -922,9 +927,9 @@ def optimize_posterior_samples(
     X_top_k = candidate_set[argtop_k, :]
 
     # to avoid circular import, the import occurs here
-    from botorch.generation.gen import gen_candidates_scipy
+    from botorch.generation.gen import gen_candidates_torch
 
-    X_top_k, f_top_k = gen_candidates_scipy(
+    X_top_k, f_top_k = gen_candidates_torch(
         X_top_k, path_func, lower_bounds=bounds[0], upper_bounds=bounds[1], **kwargs
     )
     f_opt, arg_opt = f_top_k.max(dim=-1, keepdim=True)

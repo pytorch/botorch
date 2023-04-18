@@ -43,6 +43,7 @@ from botorch.acquisition.analytic import (
 )
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
+from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
@@ -83,6 +84,7 @@ from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
 from botorch.acquisition.risk_measures import RiskMeasureMCObjective
 from botorch.acquisition.utils import (
     expand_trace_observations,
+    get_optimal_samples,
     project_to_target_fidelity,
 )
 from botorch.acquisition.utils import get_optimal_samples
@@ -1243,7 +1245,6 @@ def optimize_objective(
     )
 
 
-# TODO make single-objective with pairwise and multi-objective with pareto
 @acqf_input_constructor(qJointEntropySearch)
 def construct_inputs_qJES(
     model: Model,
@@ -1259,7 +1260,10 @@ def construct_inputs_qJES(
 ):
     dtype = model.train_targets.dtype
     optimal_inputs, optimal_outputs = get_optimal_samples(
-        model, Tensor(bounds).to(dtype).T, num_optima=num_optima, maximize=maximize
+        model=model,
+        bounds=torch.as_tensor(bounds, dtype=dtype).T,
+        num_optima=num_optima,
+        maximize=maximize,
     )
 
     inputs = {
