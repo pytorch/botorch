@@ -217,6 +217,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 model=mm_noisy,
                 X_baseline=X_baseline,
                 sampler=sampler,
+                prune_baseline=False,
                 cache_root=False,
             )
             res = acqf(X)
@@ -228,6 +229,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 model=mm_noisy,
                 X_baseline=X_baseline,
                 sampler=sampler,
+                prune_baseline=False,
                 cache_root=False,
             )
             res = acqf(X)
@@ -243,6 +245,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 model=mm_noisy,
                 X_baseline=X_baseline,
                 sampler=sampler,
+                prune_baseline=False,
                 cache_root=False,
             )
             res = acqf(X)
@@ -263,6 +266,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 model=mm_noisy_pending,
                 X_baseline=X_baseline,
                 sampler=sampler,
+                prune_baseline=False,
                 cache_root=False,
             )
             acqf.set_X_pending()
@@ -298,6 +302,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 model=mm_noisy,
                 X_baseline=X_baseline,
                 sampler=sampler,
+                prune_baseline=False,
                 cache_root=False,
             )
             res = acqf(X)
@@ -310,6 +315,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 model=mm_noisy,
                 X_baseline=X_baseline,
                 sampler=sampler,
+                prune_baseline=False,
                 cache_root=False,
             )
             res = acqf(X)  # 1-dim batch
@@ -334,6 +340,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                 model=mm_noisy,
                 X_baseline=X_baseline,
                 sampler=sampler,
+                prune_baseline=False,
                 cache_root=False,
             )
             res = acqf(X)

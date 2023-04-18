@@ -397,7 +397,7 @@ class TestMCAcquisitionFunctionInputConstructors(
         self.assertIsNone(kwargs["objective"])
         self.assertIsNone(kwargs["X_pending"])
         self.assertIsNone(kwargs["sampler"])
-        self.assertFalse(kwargs["prune_baseline"])
+        self.assertTrue(kwargs["prune_baseline"])
         self.assertTrue(torch.equal(kwargs["X_baseline"], self.blockX_blockY[0].X()))
         with self.assertRaisesRegex(ValueError, "Field `X` must be shared"):
             c(model=mock_model, training_data=self.multiX_multiY)
@@ -406,13 +406,13 @@ class TestMCAcquisitionFunctionInputConstructors(
             model=mock_model,
             training_data=self.blockX_blockY,
             X_baseline=X_baseline,
-            prune_baseline=True,
+            prune_baseline=False,
         )
         self.assertEqual(kwargs["model"], mock_model)
         self.assertIsNone(kwargs["objective"])
         self.assertIsNone(kwargs["X_pending"])
         self.assertIsNone(kwargs["sampler"])
-        self.assertTrue(kwargs["prune_baseline"])
+        self.assertFalse(kwargs["prune_baseline"])
         self.assertTrue(torch.equal(kwargs["X_baseline"], X_baseline))
 
     def test_construct_inputs_qPI(self):
