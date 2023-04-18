@@ -59,7 +59,7 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
     This acquisition function computes the mutual information between the observation
     at a candidate point `X` and the optimal input-output pair.
 
-    See [Tu2022]_ for a discussion on the estimation procedure.
+    See [Tu2022joint]_ for a discussion on the estimation procedure.
     """
 
     def __init__(
