@@ -193,11 +193,9 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             if infer_noise:
                 self.assertIsNone(model.pyro_model.train_Yvar)
             else:
-                self.assertTrue(
-                    torch.allclose(
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
-                        model.pyro_model.train_Yvar,
-                    )
+                self.assertAllClose(
+                    train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
+                    model.pyro_model.train_Yvar,
                 )
 
             # Fit a model and check that the hyperparameters have the correct shape
@@ -225,13 +223,9 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 self.assertEqual(model.likelihood.noise.shape, torch.Size([3, 1]))
             else:
                 self.assertEqual(model.likelihood.noise.shape, torch.Size([3, n]))
-                self.assertTrue(
-                    torch.allclose(
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
-                        .squeeze(-1)
-                        .repeat(3, 1),
-                        model.likelihood.noise,
-                    )
+                self.assertAllClose(
+                    train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL).squeeze(-1).repeat(3, 1),
+                    model.likelihood.noise,
                 )
 
             # Predict on some test points
@@ -262,21 +256,21 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 self.assertEqual(quantile2.shape, torch.Size(batch_shape + [1]))
                 self.assertTrue((quantile2 > quantile1).all())
                 quantile12 = posterior.quantile(value=torch.tensor([0.01, 0.99]))
-                self.assertTrue(
-                    torch.allclose(
-                        quantile12, torch.stack([quantile1, quantile2], dim=0)
-                    )
+                self.assertAllClose(
+                    quantile12, torch.stack([quantile1, quantile2], dim=0)
                 )
                 dist = torch.distributions.Normal(
                     loc=posterior.mean, scale=posterior.variance.sqrt()
                 )
-                torch.allclose(
+                self.assertAllClose(
                     dist.cdf(quantile1.unsqueeze(MCMC_DIM)).mean(dim=MCMC_DIM),
-                    0.05 * torch.ones(batch_shape + [1], **tkwargs),
+                    torch.full(batch_shape + [1], 0.01, **tkwargs),
+                    atol=1e-6,
                 )
-                torch.allclose(
+                self.assertAllClose(
                     dist.cdf(quantile2.unsqueeze(MCMC_DIM)).mean(dim=MCMC_DIM),
-                    0.95 * torch.ones(batch_shape + [1], **tkwargs),
+                    torch.full(batch_shape + [1], 0.99, **tkwargs),
+                    atol=1e-6,
                 )
                 # Invalid quantile should raise
                 for q in [-1.0, 0.0, 1.0, 1.3333]:
@@ -503,38 +497,26 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             )
             model.load_mcmc_samples(mcmc_samples)
 
-            self.assertTrue(
-                torch.allclose(
-                    model.covar_module.base_kernel.lengthscale,
-                    mcmc_samples["lengthscale"],
-                )
+            self.assertAllClose(
+                model.covar_module.base_kernel.lengthscale,
+                mcmc_samples["lengthscale"],
             )
-            self.assertTrue(
-                torch.allclose(
-                    model.covar_module.outputscale,
-                    mcmc_samples["outputscale"],
-                )
+            self.assertAllClose(
+                model.covar_module.outputscale,
+                mcmc_samples["outputscale"],
             )
-            self.assertTrue(
-                torch.allclose(
-                    model.mean_module.raw_constant.data,
-                    mcmc_samples["mean"],
-                )
+            self.assertAllClose(
+                model.mean_module.raw_constant.data,
+                mcmc_samples["mean"],
             )
             if infer_noise:
-                self.assertTrue(
-                    torch.allclose(
-                        model.likelihood.noise_covar.noise, mcmc_samples["noise"]
-                    )
+                self.assertAllClose(
+                    model.likelihood.noise_covar.noise, mcmc_samples["noise"]
                 )
             else:
-                self.assertTrue(
-                    torch.allclose(
-                        model.likelihood.noise_covar.noise,
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
-                        .squeeze(-1)
-                        .repeat(3, 1),
-                    )
+                self.assertAllClose(
+                    model.likelihood.noise_covar.noise,
+                    train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL).squeeze(-1).repeat(3, 1),
                 )
 
     def test_construct_inputs(self):
@@ -582,11 +564,9 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             if infer_noise:
                 self.assertIsNone(model.pyro_model.train_Yvar)
             else:
-                self.assertTrue(
-                    torch.allclose(
-                        model.pyro_model.train_Yvar,
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
-                    )
+                self.assertAllClose(
+                    model.pyro_model.train_Yvar,
+                    train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
                 )
             # Use transforms
             model = SaasFullyBayesianSingleTaskGP(
@@ -599,20 +579,14 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             )
             self.assertIsInstance(model.pyro_model, CustomPyroModel)
             lb, ub = train_X.min(dim=0).values, train_X.max(dim=0).values
-            self.assertTrue(
-                torch.allclose(model.pyro_model.train_X, (train_X - lb) / (ub - lb))
-            )
+            self.assertAllClose(model.pyro_model.train_X, (train_X - lb) / (ub - lb))
             mu, sigma = train_Y.mean(dim=0), train_Y.std(dim=0)
-            self.assertTrue(
-                torch.allclose(model.pyro_model.train_Y, (train_Y - mu) / sigma)
-            )
+            self.assertAllClose(model.pyro_model.train_Y, (train_Y - mu) / sigma)
             if not infer_noise:
-                self.assertTrue(
-                    torch.allclose(
-                        model.pyro_model.train_Yvar,
-                        train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL) / (sigma**2),
-                        atol=1e-4,
-                    )
+                self.assertAllClose(
+                    model.pyro_model.train_Yvar,
+                    train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL) / (sigma**2),
+                    atol=5e-4,
                 )
 
     def test_bisect(self):
@@ -631,16 +605,12 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             )
             for target, tol in itertools.product([1.01, 1.5, 1.99], [1e-3, 1e-6]):
                 x = batched_bisect(f=f, target=target, bounds=bounds, tol=tol)
-                self.assertTrue(
-                    torch.allclose(
-                        f(x), target * torch.ones(batch_shape, **tkwargs), atol=tol
-                    )
+                self.assertAllClose(
+                    f(x), torch.full(batch_shape, target, **tkwargs), atol=tol
                 )
             # Do one step and make sure we didn't converge in this case
             x = batched_bisect(f=f, target=1.71, bounds=bounds, max_steps=1)
-            self.assertTrue(
-                torch.allclose(x, 0.75 * torch.ones(batch_shape, **tkwargs), atol=tol)
-            )
+            self.assertAllClose(x, torch.full(batch_shape, 0.75, **tkwargs), atol=tol)
             # Target outside the bounds should raise
             with self.assertRaisesRegex(
                 ValueError,
@@ -658,10 +628,8 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             )
             for q in [0.1, 0.5, 0.9]:
                 x = posterior.quantile(value=torch.tensor(q))
-                self.assertTrue(
-                    torch.allclose(
-                        dist.cdf(x), q * torch.ones(1, 5, **tkwargs), atol=1e-4
-                    )
+                self.assertAllClose(
+                    dist.cdf(x), q * torch.ones(1, 5, 1, **tkwargs), atol=1e-4
                 )
 
 
