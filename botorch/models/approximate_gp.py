@@ -426,6 +426,17 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
 
         self.to(train_X)
 
+    @property
+    def batch_shape(self) -> torch.Size:
+        r"""The batch shape of the model.
+
+        This is a batch shape from an I/O perspective. For a model with `m`
+        outputs, a `test_batch_shape x q x d`-shaped input `X` to the `posterior`
+        method returns a Posterior object over an output of shape
+        `broadcast(test_batch_shape, model.batch_shape) x q x m`.
+        """
+        return self._input_batch_shape
+
     def init_inducing_points(
         self,
         inputs: Tensor,
