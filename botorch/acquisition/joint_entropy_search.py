@@ -27,9 +27,6 @@ import warnings
 from math import log, pi
 
 from typing import Any, Optional
-import warnings
-from math import pi
-import torch.distributions as dist
 
 import torch
 from botorch import settings
@@ -43,11 +40,7 @@ from botorch.models.model import Model
 from botorch.models.utils import check_no_nans, fantasize as fantasize_flag
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
-from botorch.acquisition.monte_carlo import MCAcquisitionFunction
-from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
-from botorch.sampling.normal import SobolQMCNormalSampler
-from botorch.utils.transforms import is_fully_bayesian
-from botorch.exceptions.warnings import BotorchTensorDimensionWarning
+from torch import Tensor
 
 from torch.distributions import Normal
 

@@ -31,9 +31,7 @@ from botorch.utils.sampling import (
     sample_hypersphere,
     sample_simplex,
     sparse_to_dense_constraints,
-    optimize_posterior_samples,
 )
-from botorch.sampling.pathwise import draw_matheron_paths
 from botorch.utils.testing import BotorchTestCase
 
 

@@ -26,7 +26,6 @@ from botorch.acquisition.utils import (
     project_to_sample_points,
     project_to_target_fidelity,
     prune_inferior_points,
-    get_optimal_samples,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP
