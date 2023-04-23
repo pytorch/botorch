@@ -8,9 +8,9 @@ from itertools import product
 
 import torch
 from botorch.acquisition.joint_entropy_search import qJointEntropySearch
+from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 
 from botorch.models.gp_regression import SingleTaskGP
-from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.outcome import Standardize
 from botorch.sampling.normal import SobolQMCNormalSampler
@@ -124,9 +124,9 @@ class TestQJointEntropySearch(BotorchTestCase):
                 maximize=maximize,
             )
             acq_X = acq(test_Xs[j])
-        
+
         # Support with fully bayesian models is not yet implemented. Thus, we
-        #throw an error for now.
+        # throw an error for now.
         fully_bayesian_model = SaasFullyBayesianSingleTaskGP(train_X, train_Y)
         with self.assertRaises(NotImplementedError):
             acq = qJointEntropySearch(
@@ -135,4 +135,3 @@ class TestQJointEntropySearch(BotorchTestCase):
                 optimal_outputs=optimal_outputs,
                 estimation_type="LB",
             )
-            
