@@ -11,7 +11,7 @@ Utilities for acquisition functions.
 from __future__ import annotations
 
 import math
-from typing import Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import torch
 from botorch.acquisition import analytic, monte_carlo, multi_objective  # noqa F401
@@ -22,6 +22,7 @@ from botorch.acquisition.objective import (
     MCAcquisitionObjective,
     PosteriorTransform,
 )
+from botorch.acquisition.wrapper import AbstractAcquisitionFunctionWrapper
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.fully_bayesian import MCMC_DIM
 from botorch.models.model import Model
@@ -253,6 +254,18 @@ def get_infeasible_cost(
     return -(lb.clamp_max(0.0))
 
 
+def isinstance_af(
+    __obj: object,
+    __class_or_tuple: Union[type, tuple[Union[type, tuple[Any, ...]], ...]],
+) -> bool:
+    r"""A variant of isinstance first checks for the acq_func attribute on wrapped acquisition functions."""
+    if isinstance(__obj, AbstractAcquisitionFunctionWrapper):
+        isinstance_base_af = isinstance(__obj.acq_func, __class_or_tuple)
+    else:
+        isinstance_base_af = False
+    return isinstance_base_af or isinstance(__obj, __class_or_tuple)
+
+
 def is_nonnegative(acq_function: AcquisitionFunction) -> bool:
     r"""Determine whether a given acquisition function is non-negative.
 
@@ -267,7 +280,7 @@ def is_nonnegative(acq_function: AcquisitionFunction) -> bool:
         >>> qEI = qExpectedImprovement(model, best_f=0.1)
         >>> is_nonnegative(qEI)  # returns True
     """
-    return isinstance(
+    return isinstance_af(
         acq_function,
         (
             analytic.ExpectedImprovement,
