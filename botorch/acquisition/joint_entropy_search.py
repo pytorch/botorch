@@ -7,7 +7,6 @@
 r"""
 Acquisition function for joint entropy search (JES).
 
-References
 .. [Hvarfner2022joint]
     C. Hvarfner, F. Hutter, L. Nardi,
     Joint Entropy Search for Maximally-informed Bayesian Optimization.
@@ -91,10 +90,10 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
             optimal_outputs: A `num_samples x 1`-dim Tensor containing the optimal
                 set of objectives of dimension `1`.
             condition_noiseless: Whether to condition on noiseless optimal observations
-                f* [Hvarfner et. al.]or noisy optimal observations y* [Tu et. al,].
-                These are sampled identically, so this only controls the fashion in
-                which the GP is reshaped as a result of conditioning on the optimum.
-            posterior_transform: A PosteriorTransform (optional).
+                `f*` [Hvarfner2022joint]_ or noisy optimal observations `y*`
+                [Tu2022joint]_. These are sampled identically, so this only controls
+                the fashion in which the GP is reshaped as a result of conditioning
+                on the optimum.
             estimation_type: estimation_type: A string to determine which entropy
                 estimate is computed: Lower bound" ("LB") or "Monte Carlo" ("MC").
                 Lower Bound is recommended due to the relatively high variance

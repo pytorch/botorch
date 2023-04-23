@@ -32,7 +32,7 @@ from torch.quasirandom import SobolEngine
 
 
 if TYPE_CHECKING:
-    from botorch.sampling.pathwise.path import SamplePath
+    from botorch.sampling.pathwise.paths import SamplePath # pragma: no cover
 
 
 @contextmanager
