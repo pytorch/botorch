@@ -97,6 +97,8 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
                 model = SingleTaskVariationalGP(tx, ty, inducing_points=tx)
                 posterior = model.posterior(test)
                 self.assertIsInstance(posterior, GPyTorchPosterior)
+                # test batch_shape property
+                self.assertEqual(model.batch_shape, tx.shape[:-2])
 
     def test_variational_setUp(self):
         for dtype in [torch.float, torch.double]:

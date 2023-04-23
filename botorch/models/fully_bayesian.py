@@ -38,6 +38,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 import pyro
 import torch
 from botorch.acquisition.objective import PosteriorTransform
+from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
@@ -58,7 +59,6 @@ from gpytorch.models.exact_gp import ExactGP
 from pyro.ops.integrator import register_exception_handler
 from torch import Tensor
 
-MIN_INFERRED_NOISE_LEVEL = 1e-6
 
 _sqrt5 = math.sqrt(5)
 
