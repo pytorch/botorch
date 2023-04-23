@@ -21,6 +21,11 @@ Analytic Acquisition Function API
 .. autoclass:: AnalyticAcquisitionFunction
     :members:
 
+Acquisition Function Wrapper API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.wrapper
+    :members:
+
 Cached Cholesky Acquisition Function API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.cached_cholesky
@@ -65,7 +70,7 @@ Multi-Objective Analytic Acquisition Functions
 .. automodule:: botorch.acquisition.multi_objective.analytic
     :members:
     :exclude-members: MultiObjectiveAnalyticAcquisitionFunction
-	
+
 Multi-Objective Joint Entropy Search Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.multi_objective.joint_entropy_search
@@ -86,7 +91,7 @@ Multi-Objective Multi-Fidelity Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.multi_objective.multi_fidelity
     :members:
-	
+
 Multi-Objective Predictive Entropy Search Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.multi_objective.predictive_entropy_search
@@ -173,6 +178,11 @@ Constructors for Acquisition Function Input Arguments
 Penalized Acquisition Function Wrapper
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.penalized
+    :members:
+
+Probabilistic Reparameterization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.probabilistic_reparameterization
     :members:
 
 Proximal Acquisition Function Wrapper
