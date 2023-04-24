@@ -16,7 +16,7 @@ The release log for BoTorch.
 * Change batch range for `FullyBayesianPosterior` (1176a38352b69d01def0a466233e6633c17d6862, #1773).
 * Make `gen_batch_initial_conditions` more flexible (#1779).
 * Deprecate `objective` in favor of `posterior_transform` for `MultiObjectiveAnalyticAcquisitionFunction` (#1781).
-* Use `prune_baseline=True` as default for `qNoiseExpectedImprovement` (#1796).
+* Use `prune_baseline=True` as default for `qNoisyExpectedImprovement` (#1796).
 * Add `batch_shape` property to `SingleTaskVariationalGP` (#1799).
 * Change minimum inferred noise level for `SaasFullyBayesianSingleTaskGP` (#1800).
 
