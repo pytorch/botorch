@@ -4,7 +4,7 @@
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
               })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-              ga('create', 'UA-139570076-2', 'auto');
+              ga('create', 'G-CXN3PGE3CC', 'auto');
               ga('send', 'pageview');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -37,7 +37,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">analytic</span><span class="p">,</span> <span class="n">monte_carlo</span><span class="p">,</span> <span class="n">multi_objective</span>  <span class="c1"># noqa F401</span>
@@ -53,10 +53,12 @@
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.get_sampler</span> <span class="kn">import</span> <span class="n">get_sampler</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.pathwise</span> <span class="kn">import</span> <span class="n">draw_matheron_paths</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">FastNondominatedPartitioning</span><span class="p">,</span>
     <span class="n">NondominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">optimize_posterior_samples</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_fully_bayesian</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
@@ -155,7 +157,7 @@
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
-            <span class="n">prune_baseline</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prune_baseline"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="n">prune_baseline</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prune_baseline"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
             <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"marginalize_dim"</span><span class="p">),</span>
             <span class="n">cache_root</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cache_root"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
         <span class="p">)</span>
@@ -499,6 +501,42 @@
     <span class="n">X_new</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">batch_shape</span><span class="p">),</span> <span class="n">p</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># batch_shape x p x d</span>
     <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">d_prime</span><span class="p">:]</span> <span class="o">=</span> <span class="n">sample_points</span>
     <span class="k">return</span> <span class="n">X_new</span></div>
+
+
+<div class="viewcode-block" id="get_optimal_samples"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.get_optimal_samples">[docs]</a><span class="k">def</span> <span class="nf">get_optimal_samples</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">num_optima</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">raw_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span>
+    <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+    <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sd">"""Draws sample paths from the posterior and maximizes the samples using GD.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model (Model): The model from which samples are drawn.</span>
+<span class="sd">        bounds: (Tensor): Bounds of the search space. If the model inputs are</span>
+<span class="sd">            normalized, the bounds should be normalized as well.</span>
+<span class="sd">        num_optima (int): The number of paths to be drawn and optimized.</span>
+<span class="sd">        raw_samples (int, optional): The number of candidates randomly sample.</span>
+<span class="sd">            Defaults to 1024.</span>
+<span class="sd">        num_restarts (int, optional): The number of candidates to do gradient-based</span>
+<span class="sd">            optimization on. Defaults to 20.</span>
+<span class="sd">        maximize: Whether to maximize or minimize the samples.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple[Tensor, Tensor]: The optimal input locations and corresponding</span>
+<span class="sd">        outputs, x* and f*.</span>
+
+<span class="sd">    """</span>
+    <span class="n">paths</span> <span class="o">=</span> <span class="n">draw_matheron_paths</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_optima</span><span class="p">]))</span>
+    <span class="n">optimal_inputs</span><span class="p">,</span> <span class="n">optimal_outputs</span> <span class="o">=</span> <span class="n">optimize_posterior_samples</span><span class="p">(</span>
+        <span class="n">paths</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">raw_samples</span><span class="o">=</span><span class="n">raw_samples</span><span class="p">,</span>
+        <span class="n">num_restarts</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span>
+        <span class="n">maximize</span><span class="o">=</span><span class="n">maximize</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">optimal_inputs</span><span class="p">,</span> <span class="n">optimal_outputs</span></div>
 </pre></div>
 </div>
 </div>

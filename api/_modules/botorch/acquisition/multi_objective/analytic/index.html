@@ -4,7 +4,7 @@
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
               })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-              ga('create', 'UA-139570076-2', 'auto');
+              ga('create', 'G-CXN3PGE3CC', 'auto');
               ga('send', 'pageview');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -51,10 +51,7 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.objective</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">AnalyticMultiOutputObjective</span><span class="p">,</span>
-    <span class="n">IdentityAnalyticMultiOutputObjective</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
@@ -69,23 +66,31 @@
     <span class="sa">r</span><span class="sd">"""Abstract base class for Multi-Objective batch acquisition functions."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AnalyticMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Constructor for the MultiObjectiveAnalyticAcquisitionFunction base class.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
-<span class="sd">            objective: An AnalyticMultiOutputObjective (optional).</span>
+<span class="sd">            posterior_transform: A PosteriorTransform (optional).</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">objective</span> <span class="o">=</span> <span class="n">IdentityAnalyticMultiOutputObjective</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">AnalyticMultiOutputObjective</span><span class="p">):</span>
+        <span class="n">posterior_transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deprecate_acqf_objective</span><span class="p">(</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"objective"</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">posterior_transform</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">posterior_transform</span><span class="p">,</span> <span class="n">PosteriorTransform</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span> <span class="o">=</span> <span class="n">posterior_transform</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-                <span class="s2">"Only objectives of type AnalyticMultiOutputObjective are supported "</span>
-                <span class="s2">"for Multi-Objective analytic acquisition functions."</span>
+                <span class="s2">"Only a posterior_transform of type PosteriorTransform is "</span>
+                <span class="s2">"supported for Multi-Objective analytic acquisition functions."</span>
             <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">objective</span>
 
 <div class="viewcode-block" id="MultiObjectiveAnalyticAcquisitionFunction.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -107,7 +112,8 @@
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">ref_point</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
         <span class="n">partitioning</span><span class="p">:</span> <span class="n">NondominatedPartitioning</span><span class="p">,</span>
-        <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AnalyticMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</span>
 
@@ -144,7 +150,7 @@
 <span class="sd">            partitioning: A `NondominatedPartitioning` module that provides the non-</span>
 <span class="sd">                dominated front and a partitioning of the non-dominated space in hyper-</span>
 <span class="sd">                rectangles.</span>
-<span class="sd">            objective: An `AnalyticMultiOutputObjective`.</span>
+<span class="sd">            posterior_transform: A `PosteriorTransform`.</span>
 <span class="sd">        """</span>
         <span class="c1"># TODO: we could refactor this __init__ logic into a</span>
         <span class="c1"># HypervolumeAcquisitionFunction Mixin</span>
@@ -164,7 +170,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"At least one pareto point must be better than the reference point."</span>
             <span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"ref_point"</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">partitioning</span> <span class="o">=</span> <span class="n">partitioning</span>
         <span class="n">cell_bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">partitioning</span><span class="o">.</span><span class="n">get_hypercell_bounds</span><span class="p">()</span>
@@ -229,7 +235,9 @@
 
 <div class="viewcode-block" id="ExpectedHypervolumeImprovement.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
+        <span class="p">)</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span>
         <span class="n">sigma</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mf">1e-9</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
         <span class="c1"># clamp here, since upper_bounds will contain `inf`s, which</span>

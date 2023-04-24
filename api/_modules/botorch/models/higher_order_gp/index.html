@@ -4,7 +4,7 @@
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
               })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-              ga('create', 'UA-139570076-2', 'auto');
+              ga('create', 'G-CXN3PGE3CC', 'auto');
               ga('send', 'pageview');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -513,7 +513,7 @@
             <span class="c1"># we now compute the data covariances for the training data, the testing</span>
             <span class="c1"># data, the joint covariances, and the test train cross-covariance</span>
             <span class="n">train_train_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction_strategy</span><span class="o">.</span><span class="n">lik_train_train_covar</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
-            <span class="n">base_train_train_covar</span> <span class="o">=</span> <span class="n">train_train_covar</span><span class="o">.</span><span class="n">lazy_tensor</span>
+            <span class="n">base_train_train_covar</span> <span class="o">=</span> <span class="n">train_train_covar</span><span class="o">.</span><span class="n">linear_op</span>
 
             <span class="n">data_train_covar</span> <span class="o">=</span> <span class="n">base_train_train_covar</span><span class="o">.</span><span class="n">linear_ops</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">data_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_modules</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -597,7 +597,7 @@
         <span class="p">)</span>
         <span class="n">full_test_train_covar_tuple</span> <span class="o">=</span> <span class="p">(</span><span class="n">test_train_covar</span><span class="p">,)</span> <span class="o">+</span> <span class="n">jcm_linops</span>
 
-        <span class="n">train_evals</span><span class="p">,</span> <span class="n">train_evecs</span> <span class="o">=</span> <span class="n">full_train_train_covar</span><span class="o">.</span><span class="n">symeig</span><span class="p">(</span><span class="n">eigenvectors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">train_evals</span><span class="p">,</span> <span class="n">train_evecs</span> <span class="o">=</span> <span class="n">full_train_train_covar</span><span class="o">.</span><span class="n">eigh</span><span class="p">()</span>
         <span class="c1"># (\kron \Lambda_i + \sigma^2 I)^{-1}</span>
         <span class="n">train_inv_evals</span> <span class="o">=</span> <span class="n">DiagLinearOperator</span><span class="p">(</span>
             <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">train_evals</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span><span class="p">)</span>
@@ -615,7 +615,7 @@
         <span class="c1">#  (\kron K_i S_i * K_i S_i) \tilde{\Lambda}^{-1}</span>
         <span class="n">test_train_pred_covar</span> <span class="o">=</span> <span class="n">test_train_hadamard</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">train_inv_evals</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="n">pred_variances</span> <span class="o">=</span> <span class="n">full_test_test_covar</span><span class="o">.</span><span class="n">diag</span><span class="p">()</span> <span class="o">-</span> <span class="n">test_train_pred_covar</span>
+        <span class="n">pred_variances</span> <span class="o">=</span> <span class="n">full_test_test_covar</span><span class="o">.</span><span class="n">diagonal</span><span class="p">()</span> <span class="o">-</span> <span class="n">test_train_pred_covar</span>
         <span class="k">return</span> <span class="n">pred_variances</span></div></div>
 </pre></div>
 </div>

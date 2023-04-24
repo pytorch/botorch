@@ -4,7 +4,7 @@
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
               })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-              ga('create', 'UA-139570076-2', 'auto');
+              ga('create', 'G-CXN3PGE3CC', 'auto');
               ga('send', 'pageview');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -455,7 +455,7 @@ all candidates except candidate <cite>i</cite>.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.optimize.optimize_acqf_list">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf_list" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nonlinear_inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ic_generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ic_gen_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a list of candidates from a list of acquisition functions.</p>
 <p>The acquisition functions are optimized in sequence, with previous candidates
 set as <cite>X_pending</cite>. This is also known as sequential greedy optimization.</p>
@@ -477,6 +477,14 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>]</em><em>]</em>) – A list of callables with that represent
+non-linear inequality constraints of the form <cite>callable(x) &gt;= 0</cite>. Each
+callable is expected to take a <cite>(num_restarts) x q x d</cite>-dim tensor as an
+input and return a <cite>(num_restarts) x q</cite>-dim tensor with the constraint
+values. The constraints will later be passed to SLSQP. You need to pass in
+<cite>batch_initial_conditions</cite> in this case. Using non-linear inequality
+constraints also requires that <cite>batch_limit</cite> is set to 1, which will be
+done automatically if not specified in <cite>options</cite>.</p></li>
 <li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A map <cite>{feature_index: value}</cite> for features that
 should be fixed to a particular value during generation.</p></li>
 <li><p><strong>fixed_features_list</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – A list of maps <cite>{feature_index: value}</cite>. The i-th
@@ -485,6 +493,13 @@ item represents the fixed_feature for the i-th optimization. If
 <li><p><strong>post_processing_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
+<li><p><strong>ic_generator</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – Function for generating initial conditions. Not needed when
+<cite>batch_initial_conditions</cite> are provided. Defaults to
+<cite>gen_one_shot_kg_initial_conditions</cite> for <cite>qKnowledgeGradient</cite> acquisition
+functions and <cite>gen_batch_initial_conditions</cite> otherwise. Must be specified
+for nonlinear inequality constraints.</p></li>
+<li><p><strong>ic_gen_kwargs</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>]</em>) – Additional keyword arguments passed to function specified by
+<cite>ic_generator</cite></p></li>
 <li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 <li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 </ul>
@@ -509,7 +524,7 @@ all candidates except candidate <cite>i</cite>.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.optimize.optimize_acqf_mixed">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf_mixed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_initial_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf_mixed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf_mixed" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf_mixed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nonlinear_inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_initial_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ic_generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ic_gen_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf_mixed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf_mixed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Optimize over a list of fixed_features and returns the best solution.</p>
 <p>This is useful for optimizing over mixed continuous and discrete domains.
 For q &gt; 1 this function always performs sequential greedy optimization (with
@@ -535,11 +550,26 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>]</em><em>]</em>) – A list of callables with that represent
+non-linear inequality constraints of the form <cite>callable(x) &gt;= 0</cite>. Each
+callable is expected to take a <cite>(num_restarts) x q x d</cite>-dim tensor as an
+input and return a <cite>(num_restarts) x q</cite>-dim tensor with the constraint
+values. The constraints will later be passed to SLSQP. You need to pass in
+<cite>batch_initial_conditions</cite> in this case. Using non-linear inequality
+constraints also requires that <cite>batch_limit</cite> is set to 1, which will be
+done automatically if not specified in <cite>options</cite>.</p></li>
 <li><p><strong>post_processing_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
 <li><p><strong>batch_initial_conditions</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A tensor to specify the initial conditions. Set
 this if you do not want to use default initialization strategy.</p></li>
+<li><p><strong>ic_generator</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em>) – Function for generating initial conditions. Not needed when
+<cite>batch_initial_conditions</cite> are provided. Defaults to
+<cite>gen_one_shot_kg_initial_conditions</cite> for <cite>qKnowledgeGradient</cite> acquisition
+functions and <cite>gen_batch_initial_conditions</cite> otherwise. Must be specified
+for nonlinear inequality constraints.</p></li>
+<li><p><strong>ic_gen_kwargs</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>]</em>) – Additional keyword arguments passed to function specified by
+<cite>ic_generator</cite></p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – kwargs do nothing. This is provided so that the same arguments can
 be passed to different acquisition functions without raising an error.</p></li>
 <li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
@@ -816,8 +846,129 @@ expensive black-box optimization, Engineering Optimization, 2013.</p>
 </div>
 </div>
 <dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.initializers.transform_constraints">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">transform_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#transform_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.transform_constraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform constraints to sample from a d*q-dimensional space instead of a
+d-dimensional state.</p>
+<p>This function assumes that constraints are the same for each input batch,
+and broadcasts the constraints accordingly to the input batch shape.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – A list of tuples (indices, coefficients, rhs), with each tuple
+encoding an (in-)equality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) (&gt;)= rhs</cite>.
+If <cite>indices</cite> is a 2-d Tensor, this supports specifying constraints across
+the points in the <cite>q</cite>-batch (inter-point constraints). If <cite>None</cite>, this
+function is a nullop and simply returns <cite>None</cite>.</p></li>
+<li><p><strong>q</strong> (<em>int</em>) – Size of the <cite>q</cite>-batch.</p></li>
+<li><p><strong>d</strong> (<em>int</em>) – Dimensionality of the problem.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of transformed constraints.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Tuple[Tensor, Tensor, float]]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.initializers.transform_intra_point_constraint">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">transform_intra_point_constraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#transform_intra_point_constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.transform_intra_point_constraint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms an intra-point/pointwise constraint from
+d-dimensional space to a d*q-dimesional space.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs), with each tuple
+encoding an (in-)equality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) (&gt;)= rhs</cite>. Here <cite>indices</cite> must
+be one-dimensional, and the constraint is applied to all points within the
+<cite>q</cite>-batch.</p></li>
+<li><p><strong>d</strong> (<em>int</em>) – Dimensionality of the problem.</p></li>
+<li><p><strong>constraint</strong> (<em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – </p></li>
+<li><p><strong>q</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If indices in the constraints are larger than the
+    dimensionality d of the problem.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of transformed constraints.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[Tuple[Tensor, Tensor, float]]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.initializers.transform_inter_point_constraint">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">transform_inter_point_constraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#transform_inter_point_constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.transform_inter_point_constraint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms an inter-point constraint from
+d-dimensional space to a d*q dimesional space.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs), with each tuple
+encoding an (in-)equality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) (&gt;)= rhs</cite>. <cite>indices</cite> must be a
+2-d Tensor, where in each row <cite>indices[i] = (k_i, l_i)</cite> the first index
+<cite>k_i</cite> corresponds to the <cite>k_i</cite>-th element of the <cite>q</cite>-batch and the second
+index <cite>l_i</cite> corresponds to the <cite>l_i</cite>-th feature of that element.</p></li>
+<li><p><strong>constraint</strong> (<em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – </p></li>
+<li><p><strong>d</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If indices in the constraints are larger than the
+    dimensionality d of the problem.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Transformed constraint.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[Tuple[Tensor, Tensor, float]]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.initializers.sample_q_batches_from_polytope">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">sample_q_batches_from_polytope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_burnin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thinning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#sample_q_batches_from_polytope"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.sample_q_batches_from_polytope" title="Permalink to this definition">¶</a></dt>
+<dd><p>Samples <cite>n</cite> q-baches from a polytope of dimension <cite>d</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em>) – Number of q-batches to sample.</p></li>
+<li><p><strong>q</strong> (<em>int</em>) – Number of samples per q-batch</p></li>
+<li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn-in samples for the Markov chain sampler.
+thinning: The amount of thinning (number of steps to take between
+returning samples).</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – The random seed.</p></li>
+<li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an inequality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>.</p></li>
+<li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an inequality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
+<li><p><strong>thinning</strong> (<em>int</em>) – </p></li>
+<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>n x q x d</cite>-dim tensor of samples.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.initializers.gen_batch_initial_conditions">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">gen_batch_initial_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#gen_batch_initial_conditions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.gen_batch_initial_conditions" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">gen_batch_initial_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#gen_batch_initial_conditions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.gen_batch_initial_conditions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a batch of initial conditions for random-restart optimziation.</p>
 <p>TODO: Support t-batches of initial conditions.</p>
 <dl class="field-list simple">
@@ -847,6 +998,9 @@ with each tuple encoding an inequality constraint of the form
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
+<li><p><strong>generator</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Callable for generating samples that are then further
+processed. It receives <cite>n</cite>, <cite>q</cite> and <cite>seed</cite> as arguments and
+returns a tensor of shape <cite>n x q x d</cite>.</p></li>
 <li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 <li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 </ul>

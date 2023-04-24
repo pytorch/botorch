@@ -4,7 +4,7 @@
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
               })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-              ga('create', 'UA-139570076-2', 'auto');
+              ga('create', 'G-CXN3PGE3CC', 'auto');
               ga('send', 'pageview');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -289,8 +289,8 @@ I1116 175307.081 _utils_internal.py:188] NCCL_DEBUG is INFO from /etc/nccl.conf
 <h3 id="Perform-Bayesian-Optimization-loop-with-qNEI">Perform Bayesian Optimization loop with qNEI<a class="anchor-link" href="#Perform-Bayesian-Optimization-loop-with-qNEI">¶</a></h3><p>The Bayesian optimization "loop" for a batch size of $q$ simply iterates the following steps:</p>
 <ol>
 <li>given a surrogate model, choose a batch of points $\{x_1, x_2, \ldots x_q\}$</li>
-<li>observe $f(x)$ for each $x$ in the batch </li>
-<li>update the surrogate model. </li>
+<li>observe $f(x)$ for each $x$ in the batch</li>
+<li>update the surrogate model.</li>
 </ol>
 <p>Just for illustration purposes, we run three trials each of which do <code>N_BATCH=20</code> rounds of optimization. The acquisition function is approximated using <code>MC_SAMPLES=256</code> samples.</p>
 <p><em>Note</em>: Running this may take a little while.</p>

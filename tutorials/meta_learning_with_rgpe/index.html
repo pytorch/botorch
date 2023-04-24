@@ -4,7 +4,7 @@
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
               })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-              ga('create', 'UA-139570076-2', 'auto');
+              ga('create', 'G-CXN3PGE3CC', 'auto');
               ga('send', 'pageview');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -105,12 +105,12 @@
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Toy-Problem">Toy Problem<a class="anchor-link" href="#Toy-Problem">¶</a></h3><ul>
-<li><p>We consider optimizing the following 1-D synthetic function
-$$f(x, s_i) = \frac{1}{10}\bigg(x-1\bigg)\bigg(\sin(x+s_i)+\frac{1}{10}\bigg)$$
-where
+<li>We consider optimizing the following 1-D synthetic function</li>
+</ul>
+$$f(x, s_i) = \frac{1}{10}\bigg(x-1\bigg)\bigg(\sin(x+s_i)+\frac{1}{10}\bigg)$$<p>where
 $$s_i = \frac{(i+9)\pi}{8}$$
 is a task-dependent shift parameter and $i$ is the task index $i \in [1, t]$.</p>
-</li>
+<ul>
 <li><p>In this tutorial, we will consider the scenario where we have collected data from 5 prior tasks (referred to as base tasks), which with a different task dependent shift parameter $s_i$.</p>
 </li>
 <li><p>The goal now is use meta-learning to improve sample efficiency when optimizing a 6th task.</p>
@@ -710,6 +710,7 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
             <span class="n">model</span><span class="o">=</span><span class="n">rgpe_model</span><span class="p">,</span>
             <span class="n">X_baseline</span><span class="o">=</span><span class="n">train_x</span><span class="p">,</span>
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler_qnei</span><span class="p">,</span>
+            <span class="n">prune_baseline</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># optimize</span>

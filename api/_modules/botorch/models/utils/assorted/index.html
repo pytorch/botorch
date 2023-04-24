@@ -4,7 +4,7 @@
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
               })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-              ga('create', 'UA-139570076-2', 'auto');
+              ga('create', 'G-CXN3PGE3CC', 'auto');
               ga('send', 'pageview');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -36,7 +36,7 @@
 
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span><span class="p">,</span> <span class="n">ExitStack</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
@@ -306,6 +306,96 @@
             <span class="n">gpt_settings</span><span class="o">.</span><span class="n">detach_test_caches</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">propagate_grads</span><span class="o">.</span><span class="n">off</span><span class="p">())</span>
         <span class="p">)</span>
         <span class="k">yield</span></div>
+
+
+<div class="viewcode-block" id="detect_duplicates"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.detect_duplicates">[docs]</a><span class="k">def</span> <span class="nf">detect_duplicates</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+    <span class="sd">"""Returns an iterator over index pairs `(duplicate index, original index)` for all</span>
+<span class="sd">    duplicate entries of `X`. Supporting 2-d Tensor only.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: the datapoints tensor with potential duplicated entries</span>
+<span class="sd">        rtol: relative tolerance</span>
+<span class="sd">        atol: absolute tolerance</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"X must have 2 dimensions."</span><span class="p">)</span>
+
+    <span class="n">tols</span> <span class="o">=</span> <span class="n">atol</span>
+    <span class="k">if</span> <span class="n">rtol</span><span class="p">:</span>
+        <span class="n">rval</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">tols</span> <span class="o">=</span> <span class="n">tols</span> <span class="o">+</span> <span class="n">rtol</span> <span class="o">*</span> <span class="n">rval</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">rval</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">dist</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">triu_indices</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">unbind</span><span class="p">()]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">pdist</span><span class="p">(</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">j</span><span class="p">))</span>
+        <span class="c1"># pyre-fixme[19]: Expected 1 positional argument.</span>
+        <span class="k">for</span> <span class="n">diff</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">dist</span> <span class="o">-</span> <span class="n">tols</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">diff</span> <span class="o">&lt;</span> <span class="mi">0</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="consolidate_duplicates"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.consolidate_duplicates">[docs]</a><span class="k">def</span> <span class="nf">consolidate_duplicates</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sd">"""Drop duplicated Xs and update the indices tensor Y accordingly.</span>
+<span class="sd">    Supporting 2d Tensor only as in batch mode block design is not guaranteed.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: the datapoints tensor</span>
+<span class="sd">        Y: the index tensor to be updated (e.g., pairwise comparisons)</span>
+<span class="sd">        rtol: relative tolerance</span>
+<span class="sd">        atol: absolute tolerance</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        consolidated_X: the consolidated X</span>
+<span class="sd">        consolidated_Y: the consolidated Y (e.g., pairwise comparisons indices)</span>
+<span class="sd">        new_indices: new index of each original item in X, a tensor of size X.shape[-2]</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"X must have 2 dimensions."</span><span class="p">)</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">dup_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">detect_duplicates</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">))</span>
+
+    <span class="c1"># Handle edge cases conservatively</span>
+    <span class="c1"># If a item is in both dup set and kept set, do not remove it</span>
+    <span class="n">common_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">dup_map</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">dup_map</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">dup_map</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">common_set</span> <span class="ow">or</span> <span class="n">dup_map</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">in</span> <span class="n">common_set</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">dup_map</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">dup_map</span><span class="p">:</span>
+        <span class="n">dup_indices</span><span class="p">,</span> <span class="n">kept_indices</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">dup_map</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+        <span class="n">unique_indices</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">))</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">dup_indices</span><span class="p">))</span>
+
+        <span class="c1"># After dropping the duplicates,</span>
+        <span class="c1"># the kept ones' indices may also change by being shifted up</span>
+        <span class="n">new_idx_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">unique_indices</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">unique_indices</span><span class="p">))))</span>
+        <span class="n">new_indices_for_dup</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_idx_map</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">kept_indices</span><span class="p">)</span>
+        <span class="n">new_idx_map</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">dup_indices</span><span class="p">,</span> <span class="n">new_indices_for_dup</span><span class="p">)))</span>
+        <span class="n">consolidated_X</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">unique_indices</span><span class="p">),</span> <span class="p">:]</span>
+        <span class="n">consolidated_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="p">[[</span><span class="n">new_idx_map</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">item</span><span class="p">()]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">Y</span><span class="o">.</span><span class="n">unbind</span><span class="p">()],</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">new_indices</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">apply_</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">new_idx_map</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+            <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">consolidated_X</span><span class="p">,</span> <span class="n">consolidated_Y</span><span class="p">,</span> <span class="n">new_indices</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="fantasize"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.fantasize">[docs]</a><span class="k">class</span> <span class="nc">fantasize</span><span class="p">(</span><span class="n">_Flag</span><span class="p">):</span>

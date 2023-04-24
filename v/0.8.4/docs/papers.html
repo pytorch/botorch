@@ -1,0 +1,144 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Papers using BoTorch · BoTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="The main reference for BoTorch is"/><meta name="docsearch:version" content="0.8.4"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Papers using BoTorch · BoTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.8.4/"/><meta property="og:description" content="The main reference for BoTorch is"/><meta property="og:image" content="https://botorch.org/v/0.8.4/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.8.4/img/botorch.png"/><link rel="shortcut icon" href="/v/0.8.4/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'G-CXN3PGE3CC', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.8.4/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.8.4/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.8.4/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.8.4/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.8.4/css/main.css"/><script src="/v/0.8.4/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.8.4/"><img class="logo" src="/v/0.8.4/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.8.4/versions"><h3>0.8.4</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/v/0.8.4/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.8.4/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.8.4/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.8.4/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>About</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">About</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.4/docs/introduction">Introduction</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.4/docs/design_philosophy">Design Philosophy</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.4/docs/botorch_and_ax">Using BoTorch with Ax</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/v/0.8.4/docs/papers">Papers using BoTorch</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">General</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.4/docs/getting_started">Getting Started</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Basic Concepts</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.4/docs/overview">Overview</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.4/docs/models">Models</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.4/docs/posteriors">Posteriors</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.4/docs/acquisition">Acquisition Functions</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.4/docs/optimization">Optimization</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Advanced Topics</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.4/docs/constraints">Constraints</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.4/docs/objectives">Objectives</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.4/docs/batching">Batching</a></li><li class="navListItem"><a class="navItem" href="/v/0.8.4/docs/samplers">Monte Carlo Samplers</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Multi-Objective Optimization</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/0.8.4/docs/multi_objective">Multi-Objective Bayesian Optimization</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><a class="edit-page-link button" href="https://github.com/pytorch/botorch/edit/main/docs/papers.md" target="_blank" rel="noreferrer noopener">Edit</a><h1 id="__docusaurus" class="postHeaderTitle">Papers using BoTorch</h1></header><article><div><span><p>The main reference for BoTorch is</p>
+<p><a href="https://proceedings.neurips.cc/paper/2020/hash/f5b1b89d98b7286673128a5fb112cb9a-Abstract.html">BoTorch: A Framework for Efficient Monte-Carlo Bayesian Optimization</a>:</p>
+<pre><code class="hljs">@inproceedings{balandat2020botorch,
+    title = {{BoTorch: A Framework for Efficient Monte-Carlo Bayesian Optimization}},
+    author = {Balandat, Maximilian and Karrer, Brian and Jiang, Daniel R. and Daulton, Samuel and Letham, Benjamin and Wilson, Andrew Gordon and Bakshy, Eytan},
+    booktitle = {Advances in Neural Information Processing Systems 33},
+    year = 2020,
+    url = {https://proceedings.neurips.cc/paper/2020/hash/f5b1b89d98b7286673128a5fb112cb9a-Abstract.html}
+}
+</code></pre>
+<p>Here is an incomplete selection of peer-reviewed Bayesian optimization papers that build off of BoTorch:</p>
+<ul>
+<li><p><a href="https://arxiv.org/pdf/2203.01900.pdf">Sparse Bayesian Optimization</a>. Sulin Liu, Qing Feng, David Eriksson, Ben Letham, Eytan Bakshy. AISTATS 2023.</p></li>
+<li><p><a href="https://arxiv.org/abs/2303.01774">Bayesian Optimization over High-Dimensional Combinatorial Spaces via Dictionary-based Embeddings</a>. Aryan Deshwal, Sebastian Ament, Maximilian Balandat, Eytan Bakshy, Janardhan Rao Doppa, David Eriksson. AISTATS 2023.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2303.15746.pdf">qEUBO: A Decision-Theoretic Acquisition Function for Preferential Bayesian Optimization</a>. Raul Astudillo, Zhiyuan Jerry Lin, Eytan Bakshy, Peter I. Frazier. AISTATS 2023.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2210.10953.pdf">Discovering Many Diverse Solutions with Bayesian Optimization</a>. Natalie Maus, Kaiwen Wu, David Eriksson, Jacob Gardner. AISTATS 2023.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2210.13937.pdf">Multi-Fidelity Bayesian Optimization with Unreliable Information Sources</a>. Petrus Mikkola, Julien Martinelli, Louis Filstroff, Samuel Kaski. AISTATS 2023.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2210.12496.pdf">Bayesian Optimization with Conformal Coverage Guarantees</a>. Samuel Stanton, Wesley Maddox, Andrew Gordon Wilson. AISTATS 2023.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2301.10123.pdf">Inducing Point Allocation for Sparse Gaussian Processes in High-Throughput Bayesian Optimisation</a>. Henry B. Moss, Sebastian W. Ober, Victor Picheny. AISTATS 2023.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2203.01459.pdf">Scalable Bayesian Optimization Using Vecchia Approximations of Gaussian Processes</a>. Felix Jimenez, Matthias Katzfuss. AISTATS 2023.</p></li>
+<li><p><a href="https://proceedings.neurips.cc/paper_files/paper/2022/hash/675e371eeeea99551ce47797ed6ed33e-Abstract-Conference.html">Active Bayesian Causal Inference</a>. Christian Toth, Lars Lorch, Christian Knoll, Andreas Krause, Franz Pernkopf, Robert Peharz, Julius von Kügelgen. NeurIPS 2022.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2210.02905.pdf">Joint Entropy Search for Multi-objective Bayesian Optimization</a>. Ben Tu, Axel Gandy, Nikolas Kantas, Behrang Shafei. NeurIPS 2022.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2210.11662.pdf">Local Bayesian Optimization via Maximizing Probability of Descent</a>. Quan Nguyen, Kaiwen Wu, Jacob R. Gardner, Roman Garnett. NeurIPS 2022.</p></li>
+<li><p><a href="https://proceedings.neurips.cc/paper_files/paper/2022/hash/ded98d28f82342a39f371c013dfb3058-Abstract-Conference.html">Local Latent Space Bayesian Optimization over Structured Inputs</a>. Natalie Maus, Haydn Jones, Juston Moore, Matt J. Kusner, John Bradshaw, Jacob Gardner. NeurIPS 2022.</p></li>
+<li><p><a href="https://proceedings.neurips.cc/paper_files/paper/2022/hash/e4bab1843c8d5a69f5abfd0824593493-Abstract-Conference.html">SnAKe: Bayesian Optimization via Pathwise Exploration</a>. Jose Pablo Folch, Shiqiang Zhang, Robert Lee, Behrang Shafei, David Walz, Calvin Tsay, Mark van der Wilk, Ruth Misener. NeurIPS 2022.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2210.10199.pdf">Bayesian Optimization over Discrete and Mixed Spaces via Probabilistic Reparameterization</a>. Samuel Daulton, Xingchen Wan, David Eriksson, Maximilian Balandat, Michael A Osborne, Eytan Bakshy. NeurIPS 2022.</p></li>
+<li><p><a href="https://proceedings.mlr.press/v205/antonova23a.html">Rethinking Optimization with Differentiable Simulation from a Global Perspective</a>. Rika Antonova, Jingyun Yang, Krishna Murthy Jatavallabhula, Jeannette Bohg. CoRL 2022.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2202.07549.pdf">Robust Multi-Objective Bayesian Optimization Under Input Noise</a>. Samuel Daulton, Sait Cakmak, Maximilian Balandat, Michael A. Osborne, Enlu Zhou, Eytan Bakshy. ICML 2022.</p></li>
+<li><p><a href="https://proceedings.mlr.press/v162/stanton22a.html">Accelerating Bayesian Optimization for Biological Sequence Design with Denoising Autoencoders
+</a>. Samuel Stanton, Wesley Maddox, Nate Gruver, Phillip Maffettone, Emily Delaney, Peyton Greenside, Andrew Gordon Wilson. ICML 2022.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2109.10964.pdf">Multi-Objective Bayesian Optimization over High-Dimensional Search Spaces</a>.
+Samuel Daulton, David Eriksson, Maximilian Balandat, Eytan Bakshy. UAI 2022.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2203.11382.pdf">Preference Exploration for Efficient Bayesian Optimization with Multiple Outcomes</a>.
+Jerry Lin, Raul Astudillo, Peter Frazier, Eytan Bakshy. AISTATS 2022.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2203.09751.pdf">Look-Ahead Acquisition Functions for Bernoulli Level Set Estimation</a>.
+Benjamin Letham, Eytan Bakshy, Michael Shvartsman. AISTATS 2022.</p></li>
+<li><p><a href="https://jmlr.org/papers/volume22/21-0120/21-0120.pdf">GIBBON: General-purpose Information-Based Bayesian OptimisatioN</a>. Henry B. Moss, David S. Leslie, Javier Gonzalez, Paul Rayson. JMLR 2021.</p></li>
+<li><p><a href="https://proceedings.neurips.cc/paper/2021/hash/792c7b5aae4a79e78aaeda80516ae2ac-Abstract.html">Bayesian Optimization of Function Networks
+</a>. Raul Astudillo, Peter Frazier. NeurIPS 2021.</p></li>
+<li><p><a href="https://proceedings.neurips.cc/paper/2021/file/325eaeac5bef34937cfdc1bd73034d17-Paper.pdf">Conditioning Sparse Variational Gaussian Processes
+for Online Decision-making</a>. Wesley J. Maddox, Samuel Stanton, and Andrew G. Wilson. NeurIPS 2021.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2111.06537.pdf">Multi-Step Budgeted Bayesian Optimization with Unknown Evaluation Costs</a>.
+Raul Astudillo, Daniel Jiang, Maximilian Balandat, Eytan Bakshy, Peter Frazier. NeurIPS 2021.</p></li>
+<li><p><a href="https://arxiv.org/pdf/2105.08195.pdf">Parallel Bayesian Optimization of Multiple Noisy Objectives with Expected Hypervolume Improvement</a>.
+Samuel Daulton, Max Balandat, Eytan Bakshy. NeurIPS 2021.</p></li>
+<li><p><a href="https://papers.nips.cc/paper/2021/hash/a0d3973ad100ad83a64c304bb58677dd-Abstract.html">Bayesian Optimization with High-Dimensional Outputs</a>. Wesley J. Maddox, Maximilian Balandat, Andrew G. Wilson, Eytan Bakshy. NeurIPS 2021.</p></li>
+<li><p><a href="https://papers.nips.cc/paper/2021/hash/44e76e99b5e194377e955b13fb12f630-Abstract.html">Combining Latent Space and Structured Kernels for Bayesian Optimization over Combinatorial Spaces</a>. Aryan Deshwal, Jana Doppa. NeurIPS 2021.</p></li>
+<li><p><a href="https://papers.nips.cc/paper/2021/hash/06fe1c234519f6812fc4c1baae25d6af-Abstract.html">Improving Black-box Optimization in VAE Latent Space Using Decoder Uncertainty</a>. Pascal Notin, José Miguel Hernández-Lobato, Yarin Gal. NeurIPS 2021.</p></li>
+<li><p><a href="https://papers.nips.cc/paper_files/paper/2021/hash/ad0f7a25211abc3889cb0f420c85e671-Abstract.html">Local Policy Search with Bayesian Optimization</a>. Sarah Müller, Alexander von Rohr, Sebastian Trimpe. NeurIPS 2021.</p></li>
+<li><p><a href="https://papers.nips.cc/paper/2021/hash/8f97d1d7e02158a83ceb2c14ff5372cd-Abstract.html">Risk-averse Heteroscedastic Bayesian Optimization</a>. Anastasia Makarova, Ilnura Usmanova, Ilija Bogunovic, Andreas Krause. NeurIPS 2021.</p></li>
+<li><p><a href="https://proceedings.mlr.press/v161/eriksson21a.html">High-Dimensional Bayesian Optimization with Sparse Axis-Aligned Subspaces</a>. David Eriksson, Martin Jankowiak. UAI 2021.</p></li>
+<li><p><a href="https://arxiv.org/abs/2112.01049">Bayesian Optimization over Permutation Spaces</a>. Aryan Deshwal, Syrine Belakaria, Janardhan Rao Doppa, Dae Hyun Kim. AAAI 2021.</p></li>
+<li><p><a href="https://proceedings.neurips.cc/paper/2020/hash/e8f2779682fd11fa2067beffc27a9192-Abstract.html">Bayesian Optimization of Risk Measures</a>. Sait Cakmak, Raul Astudillo Marban, Peter Frazier, Enlu Zhou. NeurIPS 2020.</p></li>
+<li><p><a href="https://proceedings.neurips.cc/paper/2020/hash/6fec24eac8f18ed793f5eaad3dd7977c-Abstract.html">Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization</a>. Sam Daulton, Maximilian Balandat, Eytan Bakshy. NeurIPS 2020.</p></li>
+<li><p><a href="https://proceedings.neurips.cc/paper/2020/hash/d1d5923fc822531bbfd9d87d4760914b-Abstract.html">Efficient Nonmyopic Bayesian Optimization via One-Shot Multi-Step Trees</a>. Shali Jiang, Daniel Jiang, Maximilian Balandat, Brian Karrer, Jacob Gardner, Roman Garnett. NeurIPS 2020.</p></li>
+<li><p><a href="https://proceedings.neurips.cc/paper/2020/hash/f05da679342107f92111ad9d65959cd3-Abstract.html">High-Dimensional Bayesian Optimization via Nested Riemannian Manifolds</a>. Noémie Jaquier, Leonel Rozo. NeurIPS 2020.</p></li>
+<li><p><a href="https://proceedings.neurips.cc/paper/2020/hash/faff959d885ec0ecf70741a846c34d1d-Abstract.html">High-Dimensional Contextual Policy Search with Unknown Context Rewards using Bayesian Optimization</a>. Qing Feng, Benjamin Letham, Hongzi Mao, Eytan Bakshy. NeurIPS 2020.</p></li>
+<li><p><a href="https://proceedings.neurips.cc/paper/2020/hash/10fb6cfa4c990d2bad5ddef4f70e8ba2-Abstract.html">Re-Examining Linear Embeddings for High-Dimensional Bayesian Optimization</a>. Ben Letham, Roberto Calandra, Akshara Rai, Eytan Bakshy. NeurIPS 2020.</p></li>
+<li><p><a href="https://arxiv.org/abs/2007.11752">PareCO: Pareto-aware Channel Optimization for Slimmable Neural Networks
+</a>. Ting-Wu Chin, Ari S. Morcos, Diana Marculescu. ICML 2020 Workshop on Real World Experiment Design and Active Learning.</p></li>
+</ul>
+<p><em>Please feel free to add any other peer reviewed works that build off of botorch via a PR!</em></p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/v/0.8.4/docs/botorch_and_ax"><span class="arrow-prev">← </span><span class="function-name-prevnext">Using BoTorch with Ax</span></a><a class="docs-next button" href="/v/0.8.4/docs/getting_started"><span>Getting Started</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.8.4/" class="nav-home"><img src="/v/0.8.4/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.8.4/docs/introduction">Introduction</a><a href="/v/0.8.4/docs/getting_started">Getting Started</a><a href="/v/0.8.4/tutorials/">Tutorials</a><a href="/v/0.8.4/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.8.4/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.8.4/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

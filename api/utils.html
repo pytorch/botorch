@@ -4,7 +4,7 @@
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
               })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-              ga('create', 'UA-139570076-2', 'auto');
+              ga('create', 'G-CXN3PGE3CC', 'auto');
               ga('send', 'pageview');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -1244,6 +1244,36 @@ with each tuple encoding an (in)equality constraint of the form
 <dd class="field-even"><p><ul class="simple">
 <li><p>A: A <cite>n_constraints x d</cite>-dim tensor of coefficients.</p></li>
 <li><p>b: A <cite>n_constraints x 1</cite>-dim tensor of right hand sides.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A two-element tuple containing</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.sampling.optimize_posterior_samples">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">optimize_posterior_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1024</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#optimize_posterior_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.optimize_posterior_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cheaply maximizes posterior samples by random querying followed by vanilla
+gradient descent on the best num_restarts points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>paths</strong> (<a class="reference internal" href="sampling.html#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a>) – Random Fourier Feature-based sample paths from the GP</p></li>
+<li><p><strong>bounds</strong> (<em>Tensor</em>) – The bounds on the search space.</p></li>
+<li><p><strong>candidates</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A priori good candidates (typically previous design points)
+which acts as extra initial guesses for the optimization routine.</p></li>
+<li><p><strong>raw_samples</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The number of samples with which to query the samples initially.</p></li>
+<li><p><strong>num_restarts</strong> (<em>int</em>) – The number of points selected for gradient-based optimization.</p></li>
+<li><p><strong>maximize</strong> (<em>bool</em>) – Boolean indicating whether to maimize or minimize</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>X_opt: A <cite>num_optima x [batch_size] x d</cite>-dim tensor of optimal inputs x*.</p></li>
+<li><p>f_opt: A <cite>num_optima x [batch_size] x 1</cite>-dim tensor of optimal outputs f*.</p></li>
 </ul>
 </p>
 </dd>

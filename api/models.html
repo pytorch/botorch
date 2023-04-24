@@ -4,7 +4,7 @@
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
               })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-              ga('create', 'UA-139570076-2', 'auto');
+              ga('create', 'G-CXN3PGE3CC', 'auto');
               ga('send', 'pageview');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -1488,7 +1488,7 @@ registered hooks while the latter silently ignores them.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.multitask.MultiTaskGP.construct_inputs">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP.construct_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct <cite>Model</cite> keyword arguments from dictionary of <cite>SupervisedDataset</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1496,6 +1496,8 @@ registered hooks while the latter silently ignores them.</p>
 <li><p><strong>training_data</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dictionary of <cite>SupervisedDataset</cite>.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – Column index of embedded task indicator features. For details,
 see <cite>parse_training_data</cite>.</p></li>
+<li><p><strong>output_tasks</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of task indices for which to compute model
+outputs for. If omitted, return outputs for all task indices.</p></li>
 <li><p><strong>task_covar_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – A GPyTorch <cite>Prior</cite> object to use as prior on
 the cross-task covariance matrix,</p></li>
 <li><p><strong>prior_config</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Configuration for inter-task covariance prior.
@@ -2022,8 +2024,8 @@ elsewhere in BoTorch, we instead do not include <span class="math notranslate no
 (implicitly setting it to 1) and use ScaleKernel to scale the function.</p>
 <p>In the example below, the user/decision maker has stated that they prefer
 the first item over the second item and the third item over the second item,
-generating comparisons [0, 1] and [2, 1].</p>
-<p class="rubric">Example</p>
+generating comparisons [0, 1] and [2, 1].
+.. rubric:: Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">PairwiseGP</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">datapoints</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">]])</span>
@@ -2045,6 +2047,21 @@ forward pass.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.pairwise_gp.PairwiseGP.datapoints">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">datapoints</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.datapoints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for consolidated datapoints</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.pairwise_gp.PairwiseGP.comparisons">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">comparisons</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.comparisons" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for consolidated comparisons</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.pairwise_gp.PairwiseGP.unconsolidated_utility">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">unconsolidated_utility</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.unconsolidated_utility" title="Permalink to this definition">¶</a></dt>
+<dd><p>Utility of the unconsolidated datapoints</p>
+</dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.models.pairwise_gp.PairwiseGP.num_outputs">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_outputs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.num_outputs" title="Permalink to this definition">¶</a></dt>
@@ -2563,6 +2580,15 @@ uses <cite>GreedyVarianceReduction</cite>.</p></li>
 <dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP.batch_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Size</span></em><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP.batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The batch shape of the model.</p>
+<p>This is a batch shape from an I/O perspective. For a model with <cite>m</cite>
+outputs, a <cite>test_batch_shape x q x d</cite>-shaped input <cite>X</cite> to the <cite>posterior</cite>
+method returns a Posterior object over an output of shape
+<cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP.init_inducing_points">
 <span class="sig-name descname"><span class="pre">init_inducing_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#SingleTaskVariationalGP.init_inducing_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP.init_inducing_points" title="Permalink to this definition">¶</a></dt>
@@ -5563,6 +5589,48 @@ attribute.</p></li>
 <dt class="sig sig-object py" id="botorch.models.utils.assorted.gpt_posterior_settings">
 <span class="sig-prename descclassname"><span class="pre">botorch.models.utils.assorted.</span></span><span class="sig-name descname"><span class="pre">gpt_posterior_settings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/assorted.html#gpt_posterior_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.assorted.gpt_posterior_settings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Context manager for settings used for computing model posteriors.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.utils.assorted.detect_duplicates">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.utils.assorted.</span></span><span class="sig-name descname"><span class="pre">detect_duplicates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/assorted.html#detect_duplicates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.assorted.detect_duplicates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an iterator over index pairs <cite>(duplicate index, original index)</cite> for all
+duplicate entries of <cite>X</cite>. Supporting 2-d Tensor only.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – the datapoints tensor with potential duplicated entries</p></li>
+<li><p><strong>rtol</strong> (<em>float</em>) – relative tolerance</p></li>
+<li><p><strong>atol</strong> (<em>float</em>) – absolute tolerance</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Iterator</em>[<em>Tuple</em>[int, int]]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.utils.assorted.consolidate_duplicates">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.utils.assorted.</span></span><span class="sig-name descname"><span class="pre">consolidate_duplicates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/assorted.html#consolidate_duplicates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.assorted.consolidate_duplicates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop duplicated Xs and update the indices tensor Y accordingly.
+Supporting 2d Tensor only as in batch mode block design is not guaranteed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – the datapoints tensor</p></li>
+<li><p><strong>Y</strong> (<em>Tensor</em>) – the index tensor to be updated (e.g., pairwise comparisons)</p></li>
+<li><p><strong>rtol</strong> (<em>float</em>) – relative tolerance</p></li>
+<li><p><strong>atol</strong> (<em>float</em>) – absolute tolerance</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the consolidated X
+consolidated_Y: the consolidated Y (e.g., pairwise comparisons indices)
+new_indices: new index of each original item in X, a tensor of size X.shape[-2]</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>consolidated_X</p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.utils.assorted.fantasize">

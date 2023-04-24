@@ -4,7 +4,7 @@
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
               })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-              ga('create', 'UA-139570076-2', 'auto');
+              ga('create', 'G-CXN3PGE3CC', 'auto');
               ga('send', 'pageview');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -35,7 +35,6 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.base_samples</span> <span class="kn">import</span> <span class="n">_reshape_base_samples_non_interleaved</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.fully_bayesian</span> <span class="kn">import</span> <span class="n">FullyBayesianPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multitask_multivariate_normal</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span>
@@ -88,12 +87,9 @@
     <span class="n">mvn</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span>
     <span class="n">loc</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">loc</span>
     <span class="n">peshape</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">()</span>
-    <span class="n">is_fully_b</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">FullyBayesianPosterior</span><span class="p">))</span>
     <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
-        <span class="n">sample_shape</span>
-        <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">loc</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">is_fully_b</span><span class="p">)])</span>
-        <span class="o">+</span> <span class="n">peshape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span> <span class="o">-</span> <span class="n">is_fully_b</span> <span class="p">:]</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">loc</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span> <span class="o">-</span><span class="mi">1</span> <span class="o">-</span> <span class="n">is_fully_b</span><span class="p">]</span> <span class="o">+</span> <span class="n">peshape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span> <span class="o">-</span> <span class="n">is_fully_b</span> <span class="p">:])</span>
+        <span class="n">sample_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">loc</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="n">peshape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">loc</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">peshape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:])</span>
     <span class="k">if</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
         <span class="n">base_samples</span> <span class="o">=</span> <span class="n">_reshape_base_samples_non_interleaved</span><span class="p">(</span>
             <span class="n">mvn</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span>

@@ -1,0 +1,1431 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.8.4/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.8.4/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.8.4/img/botorch.png"/><link rel="shortcut icon" href="/v/0.8.4/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'G-CXN3PGE3CC', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.8.4/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.8.4/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.8.4/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.8.4/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.8.4/css/main.css"/><script src="/v/0.8.4/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.8.4/"><img class="logo" src="/v/0.8.4/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.8.4/versions"><h3>0.8.4</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.8.4/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.8.4/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.8.4/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.8.4/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<section id="module-botorch.sampling">
+<span id="botorch-sampling"></span><h1>botorch.sampling<a class="headerlink" href="#module-botorch.sampling" title="Permalink to this heading">¶</a></h1>
+<section id="module-botorch.sampling.base">
+<span id="monte-carlo-sampler-api"></span><h2>Monte-Carlo Sampler API<a class="headerlink" href="#module-botorch.sampling.base" title="Permalink to this heading">¶</a></h2>
+<p>The base class for sampler modules to be used with MC-evaluated acquisition functions.</p>
+</section>
+<section id="module-botorch.sampling.deterministic">
+<span id="deterministic-sampler"></span><h2>Deterministic Sampler<a class="headerlink" href="#module-botorch.sampling.deterministic" title="Permalink to this heading">¶</a></h2>
+<p>A dummy sampler for use with deterministic models.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.deterministic.DeterministicSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.deterministic.</span></span><span class="sig-name descname"><span class="pre">DeterministicSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/deterministic.html#DeterministicSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.deterministic.DeterministicSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.stochastic_samplers.StochasticSampler" title="botorch.sampling.stochastic_samplers.StochasticSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">StochasticSampler</span></code></a></p>
+<p>A sampler that simply calls <cite>posterior.rsample</cite>, intended to be used with
+<cite>DeterministicModel</cite> &amp; <cite>DeterministicPosterior</cite>.</p>
+<p>[DEPRECATED] - Use <cite>IndexSampler</cite> in conjunction with <cite>EnsemblePosterior</cite>
+instead of <cite>DeterministicSampler</cite> with <cite>DeterministicPosterior</cite>.</p>
+<p>This is effectively signals that <cite>StochasticSampler</cite> is safe to use with
+deterministic models since their output is deterministic by definition.</p>
+<p>Abstract base class for samplers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
+of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.deterministic.DeterministicSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.deterministic.DeterministicSampler.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
+<section id="module-botorch.sampling.index_sampler">
+<span id="index-sampler"></span><h2>Index Sampler<a class="headerlink" href="#module-botorch.sampling.index_sampler" title="Permalink to this heading">¶</a></h2>
+<p>Sampler to be used with <cite>EnsemblePosteriors</cite> to enable
+deterministic optimization of acquisition functions with ensemble models.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.index_sampler.IndexSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.index_sampler.</span></span><span class="sig-name descname"><span class="pre">IndexSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/index_sampler.html#IndexSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.index_sampler.IndexSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
+<p>A sampler that calls <cite>posterior.rsample_from_base_samples</cite> to
+generate the samples via index base samples.</p>
+<p>Abstract base class for samplers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
+of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.index_sampler.IndexSampler.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/index_sampler.html#IndexSampler.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.index_sampler.IndexSampler.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws MC samples from the posterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.ensemble.EnsemblePosterior" title="botorch.posteriors.ensemble.EnsemblePosterior"><em>EnsemblePosterior</em></a>) – The ensemble posterior to sample from.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The samples drawn from the posterior.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.index_sampler.IndexSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.index_sampler.IndexSampler.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
+<section id="module-botorch.sampling.get_sampler">
+<span id="get-sampler-helper"></span><h2>Get Sampler Helper<a class="headerlink" href="#module-botorch.sampling.get_sampler" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.sampling.get_sampler.get_sampler">
+<span class="sig-prename descclassname"><span class="pre">botorch.sampling.get_sampler.</span></span><span class="sig-name descname"><span class="pre">get_sampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/get_sampler.html#get_sampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.get_sampler.get_sampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the sampler for the given posterior.</p>
+<p>The sampler can be used as <cite>sampler(posterior)</cite> to produce samples
+suitable for use in acquisition function optimization via SAA.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.torch.TorchPosterior" title="botorch.posteriors.torch.TorchPosterior"><em>TorchPosterior</em></a>) – A <cite>Posterior</cite> to get the sampler for.</p></li>
+<li><p><strong>sample_shape</strong> (<em>Size</em>) – The sample shape of the samples produced by the
+given sampler. The full shape of the resulting samples is
+given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Optional kwargs, passed down to the samplers during construction.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The <cite>MCSampler</cite> object for the given posterior.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>MCSampler</em></p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+<section id="module-botorch.sampling.list_sampler">
+<span id="list-sampler"></span><h2>List Sampler<a class="headerlink" href="#module-botorch.sampling.list_sampler" title="Permalink to this heading">¶</a></h2>
+<p>A <cite>SamplerList</cite> for sampling from a <cite>PosteriorList</cite>.</p>
+</section>
+<section id="module-botorch.sampling.normal">
+<span id="gaussian-monte-carlo-samplers"></span><h2>Gaussian Monte-Carlo Samplers<a class="headerlink" href="#module-botorch.sampling.normal" title="Permalink to this heading">¶</a></h2>
+<p>Sampler modules producing N(0,1) samples, to be used with MC-evaluated
+acquisition functions and Gaussian posteriors.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.normal.NormalMCSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">NormalMCSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#NormalMCSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.NormalMCSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Base class for samplers producing (possibly QMC) N(0,1) samples.</p>
+<p>Subclasses must implement the <cite>_construct_base_samples</cite> method.</p>
+<p>Abstract base class for samplers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
+of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.normal.NormalMCSampler.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#NormalMCSampler.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.NormalMCSampler.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws MC samples from the posterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<em>Posterior</em>) – The posterior to sample from.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The samples drawn from the posterior.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.normal.NormalMCSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.normal.NormalMCSampler.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.normal.IIDNormalSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">IIDNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#IIDNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.IIDNormalSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.normal.NormalMCSampler" title="botorch.sampling.normal.NormalMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMCSampler</span></code></a></p>
+<p>Sampler for MC base samples using iid N(0,1) samples.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sampler</span> <span class="o">=</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1234</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Abstract base class for samplers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
+of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.normal.IIDNormalSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.normal.IIDNormalSampler.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.normal.SobolQMCNormalSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.normal.</span></span><span class="sig-name descname"><span class="pre">SobolQMCNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/normal.html#SobolQMCNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.normal.SobolQMCNormalSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.normal.NormalMCSampler" title="botorch.sampling.normal.NormalMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMCSampler</span></code></a></p>
+<p>Sampler for quasi-MC N(0,1) base samples using Sobol sequences.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1234</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Abstract base class for samplers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
+of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.normal.SobolQMCNormalSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.normal.SobolQMCNormalSampler.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
+<section id="module-botorch.sampling.pairwise_samplers">
+<span id="pairwise-monte-carlo-samplers"></span><h2>Pairwise Monte-Carlo Samplers<a class="headerlink" href="#module-botorch.sampling.pairwise_samplers" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pairwise_samplers.PairwiseMCSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pairwise_samplers.</span></span><span class="sig-name descname"><span class="pre">PairwiseMCSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_num_comparisons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseMCSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
+<p>Abstract class for Pairwise MC Sampler.</p>
+<p>This sampler will sample pairwise comparisons. It is to be used together
+with PairwiseGP and BoTorch acquisition functions (e.g., qKnowledgeGradient)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_num_comparisons</strong> (<em>int</em>) – Max number of comparisons drawn within samples.
+If None, use all possible pairwise comparisons</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – The seed for np.random.seed. If omitted, use a random seed.
+May be overwritten by sibling classes or subclasses.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pairwise_samplers.PairwiseMCSampler.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseMCSampler.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws MC samples from the posterior and make comparisons</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<em>Posterior</em>) – The Posterior to sample from.
+The returned samples are expected to have output dimension of 1.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Posterior sample pairwise comparisons.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pairwise_samplers.PairwiseMCSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pairwise_samplers.</span></span><span class="sig-name descname"><span class="pre">PairwiseIIDNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num_comparisons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseIIDNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler" title="botorch.sampling.pairwise_samplers.PairwiseMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">PairwiseMCSampler</span></code></a>, <a class="reference internal" href="#botorch.sampling.normal.IIDNormalSampler" title="botorch.sampling.normal.IIDNormalSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">IIDNormalSampler</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the RNG. If omitted, use a random seed.</p></li>
+<li><p><strong>max_num_comparisons</strong> (<em>int</em>) – Max number of comparisons drawn within samples.
+If None, use all possible pairwise comparisons.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Catch-all for deprecated arguments.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pairwise_samplers.</span></span><span class="sig-name descname"><span class="pre">PairwiseSobolQMCNormalSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num_comparisons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseSobolQMCNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler" title="botorch.sampling.pairwise_samplers.PairwiseMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">PairwiseMCSampler</span></code></a>, <a class="reference internal" href="#botorch.sampling.normal.SobolQMCNormalSampler" title="botorch.sampling.normal.SobolQMCNormalSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SobolQMCNormalSampler</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the RNG. If omitted, use a random seed.</p></li>
+<li><p><strong>max_num_comparisons</strong> (<em>int</em>) – Max number of comparisons drawn within samples.
+If None, use all possible pairwise comparisons.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Catch-all for deprecated arguments.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
+<section id="module-botorch.sampling.qmc">
+<span id="qmc-base-functionality"></span><h2>QMC Base Functionality<a class="headerlink" href="#module-botorch.sampling.qmc" title="Permalink to this heading">¶</a></h2>
+<p>Quasi Monte-Carlo sampling from Normal distributions.</p>
+<p>References:</p>
+<div class="citation-list" role="list">
+<div class="citation" id="pages2018numprob" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Pages2018numprob<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a href="#id1" role="doc-backlink">1</a>,<a href="#id2" role="doc-backlink">2</a>)</span>
+<p>G. Pages. Numerical Probability: An Introduction with Applications to
+Finance. Universitext. Springer International Publishing, 2018.</p>
+</div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.qmc.NormalQMCEngine">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.qmc.</span></span><span class="sig-name descname"><span class="pre">NormalQMCEngine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#NormalQMCEngine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.qmc.NormalQMCEngine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Engine for qMC sampling from a Multivariate Normal <cite>N(0, I_d)</cite>.</p>
+<p>By default, this implementation uses Box-Muller transformed Sobol samples
+following pg. 123 in <a class="reference internal" href="#pages2018numprob" id="id1"><span>[Pages2018numprob]</span></a>. To use the inverse transform
+instead, set <cite>inv_transform=True</cite>.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">engine</span> <span class="o">=</span> <span class="n">NormalQMCEngine</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Engine for drawing qMC samples from a multivariate normal <cite>N(0, I_d)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>d</strong> (<em>int</em>) – The dimension of the samples.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed with which to seed the random number generator of the
+underlying SobolEngine.</p></li>
+<li><p><strong>inv_transform</strong> (<em>bool</em>) – If True, use inverse transform instead of Box-Muller.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.qmc.NormalQMCEngine.draw">
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float32</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#NormalQMCEngine.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.qmc.NormalQMCEngine.draw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw <cite>n</cite> qMC samples from the standard Normal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em>) – The number of samples to draw. As a best practice, use powers of 2.</p></li>
+<li><p><strong>out</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An option output tensor. If provided, draws are put into this
+tensor, and the function returns None.</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em>) – The desired torch data type (ignored if <cite>out</cite> is provided).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>n x d</cite> tensor of samples if <cite>out=None</cite> and <cite>None</cite> otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Optional</em>[<em>Tensor</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.qmc.MultivariateNormalQMCEngine">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.qmc.</span></span><span class="sig-name descname"><span class="pre">MultivariateNormalQMCEngine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#MultivariateNormalQMCEngine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.qmc.MultivariateNormalQMCEngine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Engine for qMC sampling from a multivariate Normal <cite>N(mu, Sigma)</cite>.</p>
+<p>By default, this implementation uses Box-Muller transformed Sobol samples
+following pg. 123 in <a class="reference internal" href="#pages2018numprob" id="id2"><span>[Pages2018numprob]</span></a>. To use the inverse transform
+instead, set <cite>inv_transform=True</cite>.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cov</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">engine</span> <span class="o">=</span> <span class="n">MultivariateNormalQMCEngine</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">cov</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Engine for qMC sampling from a multivariate Normal <cite>N(mu, Sigma)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mean</strong> (<em>Tensor</em>) – The mean vector.</p></li>
+<li><p><strong>cov</strong> (<em>Tensor</em>) – The covariance matrix.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed with which to seed the random number generator of the
+underlying SobolEngine.</p></li>
+<li><p><strong>inv_transform</strong> (<em>bool</em>) – If True, use inverse transform instead of Box-Muller.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.qmc.MultivariateNormalQMCEngine.draw">
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#MultivariateNormalQMCEngine.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.qmc.MultivariateNormalQMCEngine.draw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw <cite>n</cite> qMC samples from the multivariate Normal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em>) – The number of samples to draw. As a best practice, use powers of 2.</p></li>
+<li><p><strong>out</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An option output tensor. If provided, draws are put into this
+tensor, and the function returns None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>n x d</cite> tensor of samples if <cite>out=None</cite> and <cite>None</cite> otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Optional</em>[<em>Tensor</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</section>
+<section id="module-botorch.sampling.stochastic_samplers">
+<span id="stochastic-samplers"></span><h2>Stochastic Samplers<a class="headerlink" href="#module-botorch.sampling.stochastic_samplers" title="Permalink to this heading">¶</a></h2>
+<p>Samplers to enable use cases that are not base sample driven, such as
+stochastic optimization of acquisition functions.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.ForkedRNGSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.stochastic_samplers.</span></span><span class="sig-name descname"><span class="pre">ForkedRNGSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#ForkedRNGSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.ForkedRNGSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
+<p>A sampler using <cite>torch.fork_rng</cite> to enable replicable sampling
+from a posterior that does not support base samples.</p>
+<p>NOTE: This approach is not a one-to-one replacement for base sample
+driven sampling. The main missing piece in this approach is that its
+outputs are not replicable across the batch dimensions. As a result,
+when an acquisition function is batch evaluated with repeated candidates,
+each candidate will produce a different acquisition value, which is not
+compatible with Sample Average Approximation.</p>
+<p>Abstract base class for samplers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
+of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.ForkedRNGSampler.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#ForkedRNGSampler.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.ForkedRNGSampler.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws MC samples from the posterior in a <cite>fork_rng</cite> context.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<em>Posterior</em>) – The posterior to sample from.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The samples drawn from the posterior.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.ForkedRNGSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.stochastic_samplers.ForkedRNGSampler.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.StochasticSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.stochastic_samplers.</span></span><span class="sig-name descname"><span class="pre">StochasticSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#StochasticSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.StochasticSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></p>
+<p>A sampler that simply calls <cite>posterior.rsample</cite> to generate the
+samples. This should only be used for stochastic optimization of the
+acquisition functions, e.g., via <cite>gen_candidates_torch</cite>. This should
+not be used with <cite>optimize_acqf</cite>, which uses deterministic optimizers
+under the hood.</p>
+<p>NOTE: This ignores the <cite>seed</cite> option.</p>
+<p>Abstract base class for samplers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
+of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Catch-all for deprecated kwargs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.StochasticSampler.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/stochastic_samplers.html#StochasticSampler.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.stochastic_samplers.StochasticSampler.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws MC samples from the posterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<em>Posterior</em>) – The posterior to sample from.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The samples drawn from the posterior.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.stochastic_samplers.StochasticSampler.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.stochastic_samplers.StochasticSampler.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<section id="pathwise-sampling">
+<h3>Pathwise Sampling<a class="headerlink" href="#pathwise-sampling" title="Permalink to this heading">¶</a></h3>
+</section>
+</section>
+<section id="module-botorch.sampling.pathwise.features.maps">
+<span id="feature-maps"></span><h2>Feature Maps<a class="headerlink" href="#module-botorch.sampling.pathwise.features.maps" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.FeatureMap">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.features.maps.</span></span><span class="sig-name descname"><span class="pre">FeatureMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/features/maps.html#FeatureMap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.FeatureMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pathwise.utils.TransformedModuleMixin" title="botorch.sampling.pathwise.utils.TransformedModuleMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedModuleMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.FeatureMap.num_outputs">
+<span class="sig-name descname"><span class="pre">num_outputs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.FeatureMap.num_outputs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.FeatureMap.batch_shape">
+<span class="sig-name descname"><span class="pre">batch_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Size</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.FeatureMap.batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.FeatureMap.input_transform">
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.FeatureMap.input_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.FeatureMap.output_transform">
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.FeatureMap.output_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.features.maps.</span></span><span class="sig-name descname"><span class="pre">KernelEvaluationMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/features/maps.html#KernelEvaluationMap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pathwise.features.maps.FeatureMap" title="botorch.sampling.pathwise.features.maps.FeatureMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">FeatureMap</span></code></a></p>
+<p>A feature map defined by centering a kernel at a set of points.</p>
+<p>Initializes a KernelEvaluationMap instance:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>feature_map(x) = output_transform(kernel(input_transform(x), points)).
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kernel</strong> (<em>Kernel</em>) – The kernel <span class="math notranslate nohighlight">\(k\)</span> used to define the feature map.</p></li>
+<li><p><strong>points</strong> (<em>Tensor</em>) – A tensor passed as the kernel’s second argument.</p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>TInputTransform</em><em>]</em>) – An optional input transform for the module.</p></li>
+<li><p><strong>output_transform</strong> (<em>Optional</em><em>[</em><em>TOutputTransform</em><em>]</em>) – An optional output transform for the module.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap.input_transform">
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.input_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap.output_transform">
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.output_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/features/maps.html#KernelEvaluationMap.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Union</em>[<em>Tensor</em>, <em>LinearOperator</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap.num_outputs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_outputs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.num_outputs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap.batch_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Size</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.features.maps.</span></span><span class="sig-name descname"><span class="pre">KernelFeatureMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/features/maps.html#KernelFeatureMap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pathwise.features.maps.FeatureMap" title="botorch.sampling.pathwise.features.maps.FeatureMap"><code class="xref py py-class docutils literal notranslate"><span class="pre">FeatureMap</span></code></a></p>
+<p>Representation of a kernel <span class="math notranslate nohighlight">\(k: \mathcal{X}^2 \to \mathbb{R}\)</span> as an
+n-dimensional feature map <span class="math notranslate nohighlight">\(\phi: \mathcal{X} \to \mathbb{R}^n\)</span> satisfying:
+<span class="math notranslate nohighlight">\(k(x, x') ≈ \phi(x)^\top \phi(x')\)</span>.</p>
+<p>Initializes a KernelFeatureMap instance:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>feature_map(x) = output_transform(input_transform(x)^{T} weight + bias).
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kernel</strong> (<em>Kernel</em>) – The kernel <span class="math notranslate nohighlight">\(k\)</span> used to define the feature map.</p></li>
+<li><p><strong>weight</strong> (<em>Tensor</em>) – A tensor of weights used to linearly combine the module’s inputs.</p></li>
+<li><p><strong>bias</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A tensor of biases to be added to the linearly combined inputs.</p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>TInputTransform</em><em>]</em>) – An optional input transform for the module.</p></li>
+<li><p><strong>output_transform</strong> (<em>Optional</em><em>[</em><em>TOutputTransform</em><em>]</em>) – An optional output transform for the module.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap.input_transform">
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.input_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap.output_transform">
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.output_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/features/maps.html#KernelFeatureMap.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap.num_outputs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_outputs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.num_outputs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap.batch_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Size</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
+<section id="module-botorch.sampling.pathwise.features.generators">
+<span id="feature-map-generators"></span><h2>Feature Map Generators<a class="headerlink" href="#module-botorch.sampling.pathwise.features.generators" title="Permalink to this heading">¶</a></h2>
+<div class="citation-list" role="list">
+<div class="citation" id="rahimi2007random" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a href="#id3" role="doc-backlink">rahimi2007random</a><span class="fn-bracket">]</span></span>
+<p>A. Rahimi and B. Recht. Random features for large-scale kernel machines.
+Advances in Neural Information Processing Systems 20 (2007).</p>
+</div>
+<div class="citation" id="sutherland2015error" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a href="#id4" role="doc-backlink">sutherland2015error</a><span class="fn-bracket">]</span></span>
+<p>D. J. Sutherland and J. Schneider. On the error of random Fourier features.
+arXiv preprint arXiv:1506.02785 (2015).</p>
+</div>
+</div>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.features.generators.gen_kernel_features">
+<span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.features.generators.</span></span><span class="sig-name descname"><span class="pre">gen_kernel_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_outputs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/features/generators.html#gen_kernel_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.features.generators.gen_kernel_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a feature map <span class="math notranslate nohighlight">\(\phi: \mathcal{X} \to \mathbb{R}^{n}\)</span> such that
+<span class="math notranslate nohighlight">\(k(x, x') ≈ \phi(x)^{T} \phi(x')\)</span>. For stationary kernels <span class="math notranslate nohighlight">\(k\)</span>, defaults
+to the method of random Fourier features. For more details, see <a class="reference internal" href="#rahimi2007random" id="id3"><span>[rahimi2007random]</span></a>
+and <a class="reference internal" href="#sutherland2015error" id="id4"><span>[sutherland2015error]</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kernel</strong> (<em>Kernel</em>) – The kernel <span class="math notranslate nohighlight">\(k\)</span> to be represented via a finite-dim basis.</p></li>
+<li><p><strong>num_inputs</strong> (<em>int</em>) – The number of input features.</p></li>
+<li><p><strong>num_outputs</strong> (<em>int</em>) – The number of kernel features.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap" title="botorch.sampling.pathwise.features.maps.KernelFeatureMap"><em>KernelFeatureMap</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+<section id="module-botorch.sampling.pathwise.paths">
+<span id="sample-paths"></span><h2>Sample Paths<a class="headerlink" href="#module-botorch.sampling.pathwise.paths" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.SamplePath">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.paths.</span></span><span class="sig-name descname"><span class="pre">SamplePath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/paths.html#SamplePath"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.paths.SamplePath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code>, <a class="reference internal" href="#botorch.sampling.pathwise.utils.TransformedModuleMixin" title="botorch.sampling.pathwise.utils.TransformedModuleMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedModuleMixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Abstract base class for Botorch sample paths.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.SamplePath.input_transform">
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.SamplePath.input_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.SamplePath.output_transform">
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.SamplePath.output_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.paths.</span></span><span class="sig-name descname"><span class="pre">PathDict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paths</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">join</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/paths.html#PathDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><code class="xref py py-class docutils literal notranslate"><span class="pre">SamplePath</span></code></a></p>
+<p>A dictionary of SamplePaths.</p>
+<p>Initializes a PathDict instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>paths</strong> (<em>Optional</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>]</em><em>]</em>) – An optional mapping of strings to sample paths.</p></li>
+<li><p><strong>join</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>List</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – An optional callable used to combine each path’s outputs.</p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>TInputTransform</em><em>]</em>) – An optional input transform for the module.</p></li>
+<li><p><strong>output_transform</strong> (<em>Optional</em><em>[</em><em>TOutputTransform</em><em>]</em>) – An optional output transform for the module.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict.input_transform">
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.input_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict.output_transform">
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.output_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/paths.html#PathDict.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Union</em>[<em>Tensor</em>, <em>Dict</em>[str, <em>Tensor</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict.items">
+<span class="sig-name descname"><span class="pre">items</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/paths.html#PathDict.items"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.items" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Iterable</em>[<em>Tuple</em>[str, <a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict.keys">
+<span class="sig-name descname"><span class="pre">keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/paths.html#PathDict.keys"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.keys" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Iterable</em>[str]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict.values">
+<span class="sig-name descname"><span class="pre">values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/paths.html#PathDict.values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.values" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Iterable</em>[<a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathList">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.paths.</span></span><span class="sig-name descname"><span class="pre">PathList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paths</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">join</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/paths.html#PathList"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><code class="xref py py-class docutils literal notranslate"><span class="pre">SamplePath</span></code></a></p>
+<p>A list of SamplePaths.</p>
+<p>Initializes a PathList instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>paths</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>]</em><em>]</em>) – An optional iterable of sample paths.</p></li>
+<li><p><strong>join</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>List</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – An optional callable used to combine each path’s outputs.</p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>TInputTransform</em><em>]</em>) – An optional input transform for the module.</p></li>
+<li><p><strong>output_transform</strong> (<em>Optional</em><em>[</em><em>TOutputTransform</em><em>]</em>) – An optional output transform for the module.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathList.input_transform">
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathList.input_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathList.output_transform">
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathList.output_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathList.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/paths.html#PathList.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathList.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Union</em>[<em>Tensor</em>, <em>List</em>[<em>Tensor</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathList.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathList.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.GeneralizedLinearPath">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.paths.</span></span><span class="sig-name descname"><span class="pre">GeneralizedLinearPath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/paths.html#GeneralizedLinearPath"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><code class="xref py py-class docutils literal notranslate"><span class="pre">SamplePath</span></code></a></p>
+<p>A sample path in the form of a generalized linear model.</p>
+<p>Initializes a GeneralizedLinearPath instance.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>path(x) = output_transform(bias_module(z) + feature_map(z)^T weight),
+where z = input_transform(x).
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>feature_map</strong> (<a class="reference internal" href="#botorch.sampling.pathwise.features.maps.FeatureMap" title="botorch.sampling.pathwise.features.maps.FeatureMap"><em>FeatureMap</em></a>) – A map used to featurize the module’s inputs.</p></li>
+<li><p><strong>weight</strong> (<em>Union</em><em>[</em><em>Parameter</em><em>, </em><em>Tensor</em><em>]</em>) – A tensor of weights used to combine input features.</p></li>
+<li><p><strong>bias_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – An optional module used to define additive offsets.</p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>TInputTransform</em><em>]</em>) – An optional input transform for the module.</p></li>
+<li><p><strong>output_transform</strong> (<em>Optional</em><em>[</em><em>TOutputTransform</em><em>]</em>) – An optional output transform for the module.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.GeneralizedLinearPath.input_transform">
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath.input_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.GeneralizedLinearPath.output_transform">
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath.output_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.GeneralizedLinearPath.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/paths.html#GeneralizedLinearPath.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.GeneralizedLinearPath.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
+<section id="module-botorch.sampling.pathwise.prior_samplers">
+<span id="pathwise-prior-samplers"></span><h2>Pathwise Prior Samplers<a class="headerlink" href="#module-botorch.sampling.pathwise.prior_samplers" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.prior_samplers.draw_kernel_feature_paths">
+<span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.prior_samplers.</span></span><span class="sig-name descname"><span class="pre">draw_kernel_feature_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/prior_samplers.html#draw_kernel_feature_paths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.prior_samplers.draw_kernel_feature_paths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws functions from a Bayesian-linear-model-based approximation to a GP prior.</p>
+<p>When evaluted, sample paths produced by this method return Tensors with dimensions
+<cite>sample_dims x batch_dims x [joint_dim]</cite>, where <cite>joint_dim</cite> denotes the penultimate
+dimension of the input tensor. For multioutput models, outputs are returned as the
+final batch dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>GP</em>) – The prior over functions.</p></li>
+<li><p><strong>sample_shape</strong> (<em>Size</em>) – The shape of the sample paths to be drawn.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath" title="botorch.sampling.pathwise.paths.GeneralizedLinearPath"><em>GeneralizedLinearPath</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+<section id="module-botorch.sampling.pathwise.posterior_samplers">
+<span id="pathwise-posterior-samplers"></span><h2>Pathwise Posterior Samplers<a class="headerlink" href="#module-botorch.sampling.pathwise.posterior_samplers" title="Permalink to this heading">¶</a></h2>
+<div class="citation-list" role="list">
+<div class="citation" id="wilson2020sampling" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>wilson2020sampling<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a href="#id5" role="doc-backlink">1</a>,<a href="#id7" role="doc-backlink">2</a>)</span>
+<p>J. Wilson, V. Borovitskiy, A. Terenin, P. Mostowsky, and M. Deisenroth. Efficiently
+sampling functions from Gaussian process posteriors. International Conference on
+Machine Learning (2020).</p>
+</div>
+<div class="citation" id="wilson2021pathwise" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>wilson2021pathwise<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a href="#id6" role="doc-backlink">1</a>,<a href="#id8" role="doc-backlink">2</a>)</span>
+<p>J. Wilson, V. Borovitskiy, A. Terenin, P. Mostowsky, and M. Deisenroth. Pathwise
+Conditioning of Gaussian Processes. Journal of Machine Learning Research (2021).</p>
+</div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.posterior_samplers.MatheronPath">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.posterior_samplers.</span></span><span class="sig-name descname"><span class="pre">MatheronPath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior_paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/posterior_samplers.html#MatheronPath"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.posterior_samplers.MatheronPath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pathwise.paths.PathDict" title="botorch.sampling.pathwise.paths.PathDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">PathDict</span></code></a></p>
+<p>Represents function draws from a GP posterior via Matheron’s rule:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>          "Prior path"
+               v
+(f | y)(·) = f(·) + Cov(f(·), y) Cov(y, y)^{-1} (y - f(X) - ε),
+                    \_______________________________________/
+                                        v
+                                  "Update path"
+</pre></div>
+</div>
+<p>where <cite>=</cite> denotes equality in distribution, <span class="math notranslate nohighlight">\(f \sim GP(0, k)\)</span>,
+<span class="math notranslate nohighlight">\(y \sim N(f(X), \Sigma)\)</span>, and <span class="math notranslate nohighlight">\(\epsilon \sim N(0, \Sigma)\)</span>.
+For more information, see <a class="reference internal" href="#wilson2020sampling" id="id5"><span>[wilson2020sampling]</span></a> and <a class="reference internal" href="#wilson2021pathwise" id="id6"><span>[wilson2021pathwise]</span></a>.</p>
+<p>Initializes a MatheronPath instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prior_paths</strong> (<a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a>) – Sample paths used to represent the prior.</p></li>
+<li><p><strong>update_paths</strong> (<a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a>) – Sample paths used to represent the data.</p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>TInputTransform</em><em>]</em>) – An optional input transform for the module.</p></li>
+<li><p><strong>output_transform</strong> (<em>Optional</em><em>[</em><em>TOutputTransform</em><em>]</em>) – An optional output transform for the module.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.posterior_samplers.MatheronPath.input_transform">
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.posterior_samplers.MatheronPath.input_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.posterior_samplers.MatheronPath.output_transform">
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.posterior_samplers.MatheronPath.output_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.posterior_samplers.MatheronPath.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.posterior_samplers.MatheronPath.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.posterior_samplers.draw_matheron_paths">
+<span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.posterior_samplers.</span></span><span class="sig-name descname"><span class="pre">draw_matheron_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_sampler=&lt;function</span> <span class="pre">draw_kernel_feature_paths&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_strategy=&lt;function</span> <span class="pre">gaussian_update&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/posterior_samplers.html#draw_matheron_paths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.posterior_samplers.draw_matheron_paths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates function draws from (an approximate) Gaussian process prior.</p>
+<p>When evaluted, sample paths produced by this method return Tensors with dimensions
+<cite>sample_dims x batch_dims x [joint_dim]</cite>, where <cite>joint_dim</cite> denotes the penultimate
+dimension of the input tensor. For multioutput models, outputs are returned as the
+final batch dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>GP</em>) – Gaussian process whose posterior is to be sampled.</p></li>
+<li><p><strong>sample_shape</strong> (<em>Size</em>) – Sizes of sample dimensions.</p></li>
+<li><p><strong>prior_sample</strong> – A callable that takes a model and a sample shape and returns
+a set of sample paths representing the prior.</p></li>
+<li><p><strong>update_strategy</strong> (<em>Callable</em><em>[</em><em>[</em><em>GP</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>]</em>) – A callable that takes a model and a tensor of prior process
+values and returns a set of sample paths representing the data.</p></li>
+<li><p><strong>prior_sampler</strong> (<em>Callable</em><em>[</em><em>[</em><em>GP</em><em>, </em><em>Size</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>]</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.sampling.pathwise.posterior_samplers.MatheronPath" title="botorch.sampling.pathwise.posterior_samplers.MatheronPath"><em>MatheronPath</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+<section id="module-botorch.sampling.pathwise.update_strategies">
+<span id="pathwise-update-strategies"></span><h2>Pathwise Update Strategies<a class="headerlink" href="#module-botorch.sampling.pathwise.update_strategies" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.update_strategies.gaussian_update">
+<span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.update_strategies.</span></span><span class="sig-name descname"><span class="pre">gaussian_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood=&lt;class</span> <span class="pre">'botorch.utils.types.DEFAULT'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/update_strategies.html#gaussian_update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.update_strategies.gaussian_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a Gaussian pathwise update in exact arithmetic:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>(f | y)(·) = f(·) + Cov(f(·), y) Cov(y, y)^{-1} (y - f(X) - ε),
+                    \_______________________________________/
+                                        V
+                            "Gaussian pathwise update"
+</pre></div>
+</div>
+<p>where <cite>=</cite> denotes equality in distribution, <span class="math notranslate nohighlight">\(f \sim GP(0, k)\)</span>,
+<span class="math notranslate nohighlight">\(y \sim N(f(X), \Sigma)\)</span>, and <span class="math notranslate nohighlight">\(\epsilon \sim N(0, \Sigma)\)</span>.
+For more information, see <a class="reference internal" href="#wilson2020sampling" id="id7"><span>[wilson2020sampling]</span></a> and <a class="reference internal" href="#wilson2021pathwise" id="id8"><span>[wilson2021pathwise]</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>GP</em>) – A Gaussian process prior together with a likelihood.</p></li>
+<li><p><strong>sample_values</strong> (<em>Tensor</em>) – Assumed values for <span class="math notranslate nohighlight">\(f(X)\)</span>.</p></li>
+<li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – An optional likelihood used to help define the desired
+update. Defaults to <cite>model.likelihood</cite> if it exists else None.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath" title="botorch.sampling.pathwise.paths.GeneralizedLinearPath"><em>GeneralizedLinearPath</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+<section id="module-botorch.sampling.pathwise.utils">
+<span id="utilities"></span><h2>Utilities<a class="headerlink" href="#module-botorch.sampling.pathwise.utils" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.TransformedModuleMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.utils.</span></span><span class="sig-name descname"><span class="pre">TransformedModuleMixin</span></span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#TransformedModuleMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.TransformedModuleMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Mixin that wraps a module’s __call__ method with optional transforms.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.TransformedModuleMixin.input_transform">
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">InputTransform</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.TransformedModuleMixin.input_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.TransformedModuleMixin.output_transform">
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">OutcomeTransform</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.TransformedModuleMixin.output_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.TensorTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.utils.</span></span><span class="sig-name descname"><span class="pre">TensorTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#TensorTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.TensorTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<p>Abstract base class for transforms that map tensor to tensor.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.TensorTransform.forward">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#TensorTransform.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.TensorTransform.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>values</strong> (<em>Tensor</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.TensorTransform.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.TensorTransform.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.ChainedTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.utils.</span></span><span class="sig-name descname"><span class="pre">ChainedTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">transforms</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#ChainedTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.ChainedTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pathwise.utils.TensorTransform" title="botorch.sampling.pathwise.utils.TensorTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">TensorTransform</span></code></a></p>
+<p>A composition of TensorTransforms.</p>
+<p>Initializes a ChainedTransform instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>transforms</strong> (<a class="reference internal" href="#botorch.sampling.pathwise.utils.TensorTransform" title="botorch.sampling.pathwise.utils.TensorTransform"><em>TensorTransform</em></a>) – A set of transforms to be applied from right to left.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.ChainedTransform.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#ChainedTransform.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.ChainedTransform.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.ChainedTransform.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.ChainedTransform.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.SineCosineTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.utils.</span></span><span class="sig-name descname"><span class="pre">SineCosineTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#SineCosineTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.SineCosineTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pathwise.utils.TensorTransform" title="botorch.sampling.pathwise.utils.TensorTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">TensorTransform</span></code></a></p>
+<p>A transform that returns concatenated sine and cosine features.</p>
+<p>Initializes a SineCosineTransform instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>scale</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An optional tensor used to rescale the module’s outputs.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.SineCosineTransform.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#SineCosineTransform.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.SineCosineTransform.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.SineCosineTransform.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.SineCosineTransform.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.InverseLengthscaleTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.utils.</span></span><span class="sig-name descname"><span class="pre">InverseLengthscaleTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#InverseLengthscaleTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.InverseLengthscaleTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pathwise.utils.TensorTransform" title="botorch.sampling.pathwise.utils.TensorTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">TensorTransform</span></code></a></p>
+<p>A transform that divides its inputs by a kernels lengthscales.</p>
+<p>Initializes an InverseLengthscaleTransform instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kernel</strong> (<em>Kernel</em>) – The kernel whose lengthscales are to be used.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.InverseLengthscaleTransform.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#InverseLengthscaleTransform.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.InverseLengthscaleTransform.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.InverseLengthscaleTransform.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.InverseLengthscaleTransform.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.OutputscaleTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.utils.</span></span><span class="sig-name descname"><span class="pre">OutputscaleTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#OutputscaleTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.OutputscaleTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pathwise.utils.TensorTransform" title="botorch.sampling.pathwise.utils.TensorTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">TensorTransform</span></code></a></p>
+<p>A transform that multiplies its inputs by the square root of a
+kernel’s outputscale.</p>
+<p>Initializes an OutputscaleTransform instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kernel</strong> (<em>ScaleKernel</em>) – A ScaleKernel whose <cite>outputscale</cite> is to be used.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.OutputscaleTransform.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#OutputscaleTransform.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.OutputscaleTransform.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.OutputscaleTransform.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.OutputscaleTransform.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.FeatureSelector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.utils.</span></span><span class="sig-name descname"><span class="pre">FeatureSelector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#FeatureSelector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.FeatureSelector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pathwise.utils.TensorTransform" title="botorch.sampling.pathwise.utils.TensorTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">TensorTransform</span></code></a></p>
+<p>A transform that returns a subset of its input’s features.
+along a given tensor dimension.</p>
+<p>Initializes a FeatureSelector instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>indices</strong> (<em>Iterable</em><em>[</em><em>int</em><em>]</em>) – A LongTensor of feature indices.</p></li>
+<li><p><strong>dim</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>LongTensor</em><em>]</em>) – The dimensional along which to index features.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.FeatureSelector.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#FeatureSelector.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.FeatureSelector.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.FeatureSelector.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.FeatureSelector.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.OutcomeUntransformer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.utils.</span></span><span class="sig-name descname"><span class="pre">OutcomeUntransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_outputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#OutcomeUntransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.OutcomeUntransformer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pathwise.utils.TensorTransform" title="botorch.sampling.pathwise.utils.TensorTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">TensorTransform</span></code></a></p>
+<p>Module acting as a bridge for <cite>OutcomeTransform.untransform</cite>.</p>
+<p>Initializes an OutcomeUntransformer instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>transform</strong> (<em>OutcomeTransform</em>) – The wrapped OutcomeTransform instance.</p></li>
+<li><p><strong>num_outputs</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>LongTensor</em><em>]</em>) – The number of outcome features that the
+OutcomeTransform transforms.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.OutcomeUntransformer.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#OutcomeUntransformer.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.OutcomeUntransformer.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.OutcomeUntransformer.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.OutcomeUntransformer.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.get_input_transform">
+<span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.utils.</span></span><span class="sig-name descname"><span class="pre">get_input_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#get_input_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.get_input_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a model’s input_transform or None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>GPyTorchModel</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Optional</em>[<em>InputTransform</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.get_output_transform">
+<span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.utils.</span></span><span class="sig-name descname"><span class="pre">get_output_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#get_output_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.get_output_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a wrapped version of a model’s outcome_transform or None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>GPyTorchModel</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Optional</em>[<a class="reference internal" href="#botorch.sampling.pathwise.utils.OutcomeUntransformer" title="botorch.sampling.pathwise.utils.OutcomeUntransformer"><em>OutcomeUntransformer</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.get_train_inputs">
+<span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.utils.</span></span><span class="sig-name descname"><span class="pre">get_train_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">transformed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#get_train_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.get_train_inputs" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.utils.</span></span><span class="sig-name descname"><span class="pre">get_train_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="models.html#botorch.models.model.ModelList" title="botorch.models.model.ModelList"><span class="pre">ModelList</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">transformed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd></dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.get_train_targets">
+<span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.utils.</span></span><span class="sig-name descname"><span class="pre">get_train_targets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">transformed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="_modules/botorch/sampling/pathwise/utils.html#get_train_targets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pathwise.utils.get_train_targets" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">botorch.sampling.pathwise.utils.</span></span><span class="sig-name descname"><span class="pre">get_train_targets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="models.html#botorch.models.model.ModelList" title="botorch.models.model.ModelList"><span class="pre">ModelList</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">transformed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd></dd></dl>
+</section>
+</section>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit.html">botorch.fit</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="index.html">Documentation overview</a><ul>
+<li>Previous: <a href="fit.html" title="previous chapter">botorch.fit</a></li>
+<li>Next: <a href="cross_validation.html" title="next chapter">botorch.cross_validation</a></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.8.4/" class="nav-home"><img src="/v/0.8.4/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.8.4/docs/introduction">Introduction</a><a href="/v/0.8.4/docs/getting_started">Getting Started</a><a href="/v/0.8.4/tutorials/">Tutorials</a><a href="/v/0.8.4/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.8.4/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2023 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.8.4/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

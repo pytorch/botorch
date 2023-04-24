@@ -4,7 +4,7 @@
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
               })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-              ga('create', 'UA-139570076-2', 'auto');
+              ga('create', 'G-CXN3PGE3CC', 'auto');
               ga('send', 'pageview');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -255,7 +255,7 @@
 
         <span class="c1"># K_{train, train}^{-1} (y - Y_x)</span>
         <span class="c1"># internally, this solve is done using Kronecker algebra and is fast.</span>
-        <span class="n">kinv_rhs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_train_covar</span><span class="o">.</span><span class="n">inv_matmul</span><span class="p">(</span><span class="n">train_rhs</span><span class="p">)</span>
+        <span class="n">kinv_rhs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_train_covar</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">train_rhs</span><span class="p">)</span>
         <span class="c1"># multiply by cross-covariance</span>
         <span class="n">test_updated_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_train_covar</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">kinv_rhs</span><span class="p">)</span>
 

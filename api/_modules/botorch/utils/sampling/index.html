@@ -4,7 +4,7 @@
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
               })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-              ga('create', 'UA-139570076-2', 'auto');
+              ga('create', 'G-CXN3PGE3CC', 'auto');
               ga('send', 'pageview');
             </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -44,16 +44,21 @@
 
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">scipy</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.qmc</span> <span class="kn">import</span> <span class="n">NormalQMCEngine</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">unnormalize</span>
 <span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">Delaunay</span><span class="p">,</span> <span class="n">HalfspaceIntersection</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">LongTensor</span><span class="p">,</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
+
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">botorch.sampling.pathwise.paths</span> <span class="kn">import</span> <span class="n">SamplePath</span>  <span class="c1"># pragma: no cover</span>
 
 
 <div class="viewcode-block" id="manual_seed"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.manual_seed">[docs]</a><span class="nd">@contextmanager</span>
@@ -899,6 +904,74 @@
         <span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">indices</span><span class="o">.</span><span class="n">long</span><span class="p">()]</span> <span class="o">=</span> <span class="n">coefficients</span>
         <span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rhs</span>
     <span class="k">return</span> <span class="n">A</span><span class="p">,</span> <span class="n">b</span></div>
+
+
+<div class="viewcode-block" id="optimize_posterior_samples"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.optimize_posterior_samples">[docs]</a><span class="k">def</span> <span class="nf">optimize_posterior_samples</span><span class="p">(</span>
+    <span class="n">paths</span><span class="p">:</span> <span class="n">SamplePath</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">candidates</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">raw_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span>
+    <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+    <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Cheaply maximizes posterior samples by random querying followed by vanilla</span>
+<span class="sd">    gradient descent on the best num_restarts points.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        paths: Random Fourier Feature-based sample paths from the GP</span>
+<span class="sd">        bounds: The bounds on the search space.</span>
+<span class="sd">        candidates: A priori good candidates (typically previous design points)</span>
+<span class="sd">            which acts as extra initial guesses for the optimization routine.</span>
+<span class="sd">        raw_samples: The number of samples with which to query the samples initially.</span>
+<span class="sd">        num_restarts: The number of points selected for gradient-based optimization.</span>
+<span class="sd">        maximize: Boolean indicating whether to maimize or minimize</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A two-element tuple containing:</span>
+<span class="sd">            - X_opt: A `num_optima x [batch_size] x d`-dim tensor of optimal inputs x*.</span>
+<span class="sd">            - f_opt: A `num_optima x [batch_size] x 1`-dim tensor of optimal outputs f*.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">maximize</span><span class="p">:</span>
+
+        <span class="k">def</span> <span class="nf">path_func</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">paths</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+
+        <span class="k">def</span> <span class="nf">path_func</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">paths</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="n">candidate_set</span> <span class="o">=</span> <span class="n">unnormalize</span><span class="p">(</span>
+        <span class="n">SobolEngine</span><span class="p">(</span><span class="n">dimension</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">scramble</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">raw_samples</span><span class="p">),</span> <span class="n">bounds</span>
+    <span class="p">)</span>
+
+    <span class="c1"># queries all samples on all candidates - output shape</span>
+    <span class="c1"># raw_samples * num_optima * num_models</span>
+    <span class="n">candidate_queries</span> <span class="o">=</span> <span class="n">path_func</span><span class="p">(</span><span class="n">candidate_set</span><span class="p">)</span>
+    <span class="n">argtop_k</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="n">candidate_queries</span><span class="p">,</span> <span class="n">num_restarts</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">indices</span>
+    <span class="n">X_top_k</span> <span class="o">=</span> <span class="n">candidate_set</span><span class="p">[</span><span class="n">argtop_k</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="c1"># to avoid circular import, the import occurs here</span>
+    <span class="kn">from</span> <span class="nn">botorch.generation.gen</span> <span class="kn">import</span> <span class="n">gen_candidates_torch</span>
+
+    <span class="n">X_top_k</span><span class="p">,</span> <span class="n">f_top_k</span> <span class="o">=</span> <span class="n">gen_candidates_torch</span><span class="p">(</span>
+        <span class="n">X_top_k</span><span class="p">,</span> <span class="n">path_func</span><span class="p">,</span> <span class="n">lower_bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">upper_bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span>
+    <span class="n">f_opt</span><span class="p">,</span> <span class="n">arg_opt</span> <span class="o">=</span> <span class="n">f_top_k</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># For each sample (and possibly for every model in the batch of models), this</span>
+    <span class="c1"># retrieves the argmax. We flatten, pick out the indices and then reshape to</span>
+    <span class="c1"># the original batch shapes (so instead of pickig out the argmax of a</span>
+    <span class="c1"># (3, 7, num_restarts, D)) along the num_restarts dim, we pick it out of a</span>
+    <span class="c1"># (21  , num_restarts, D)</span>
+    <span class="n">final_shape</span> <span class="o">=</span> <span class="n">candidate_queries</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">X_opt</span> <span class="o">=</span> <span class="n">X_top_k</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">final_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">(),</span> <span class="n">num_restarts</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)[</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">final_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()),</span> <span class="n">arg_opt</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">final_shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">maximize</span><span class="p">:</span>
+        <span class="n">f_opt</span> <span class="o">=</span> <span class="o">-</span><span class="n">f_opt</span>
+    <span class="k">return</span> <span class="n">X_opt</span><span class="p">,</span> <span class="n">f_opt</span></div>
 </pre></div>
 </div>
 </div>
