@@ -2,6 +2,31 @@
 
 The release log for BoTorch.
 
+## [0.8.4] - Apr 24, 2023
+
+#### Compatibility
+* Require GPyTorch == 1.10 and linear_operator == 0.4.0 (#1803).
+
+#### New Features
+* Polytope sampling for linear constraints along the q-dimension (#1757).
+* Single-objective joint entropy search with additional conditioning, various improvements to entropy-based acquisition functions (#1738).
+
+#### Other changes
+* Various updates to improve numerical stability of `PairwiseGP` (#1754, #1755).
+* Change batch range for `FullyBayesianPosterior` (1176a38352b69d01def0a466233e6633c17d6862, #1773).
+* Make `gen_batch_initial_conditions` more flexible (#1779).
+* Deprecate `objective` in favor of `posterior_transform` for `MultiObjectiveAnalyticAcquisitionFunction` (#1781).
+* Use `prune_baseline=True` as default for `qNoiseExpectedImprovement` (#1796).
+* Add `batch_shape` property to `SingleTaskVariationalGP` (#1799).
+* Change minimum inferred noise level for `SaasFullyBayesianSingleTaskGP` (#1800).
+
+#### Bug fixes
+* Add `output_task` to `MultiTaskGP.construct_inputs` (#1753).
+* Fix custom bounds handling in test problems (#1760).
+* Remove incorrect `BotorchTensorDimensionWarning` (#1790).
+* Fix handling of non-Container-typed positional arguments in `SupervisedDatasetMeta` (#1663).
+
+
 ## [0.8.3] - Mar 15, 2023
 
 #### New Features
