@@ -22,11 +22,13 @@ from botorch.acquisition.utils import (
     expand_trace_observations,
     get_acquisition_function,
     get_infeasible_cost,
+    get_optimal_samples,
     project_to_sample_points,
     project_to_target_fidelity,
     prune_inferior_points,
 )
 from botorch.exceptions.errors import UnsupportedError
+from botorch.models import SingleTaskGP
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
     NondominatedPartitioning,
@@ -766,3 +768,35 @@ class TestFidelityUtils(BotorchTestCase):
                 self.assertAllClose(X_augmented[0, :, -d_prime:], sample_points)
             else:
                 self.assertAllClose(X_augmented[:, -d_prime:], sample_points)
+
+
+class TestGetOptimalSamples(BotorchTestCase):
+    def test_get_optimal_samples(self):
+        dims = 3
+        dtype = torch.float64
+        for_testing_speed_kwargs = {"raw_samples": 50, "num_restarts": 3}
+        num_optima = 7
+        batch_shape = (3,)
+
+        bounds = torch.tensor([[0, 1]] * dims, dtype=dtype).T
+        X = torch.rand(*batch_shape, 4, dims, dtype=dtype)
+        Y = torch.sin(X).sum(dim=-1, keepdim=True).to(dtype)
+        model = SingleTaskGP(X, Y)
+        X_opt, f_opt = get_optimal_samples(
+            model, bounds, num_optima=num_optima, **for_testing_speed_kwargs
+        )
+        X_opt, f_opt_min = get_optimal_samples(
+            model,
+            bounds,
+            num_optima=num_optima,
+            maximize=False,
+            **for_testing_speed_kwargs,
+        )
+
+        correct_X_shape = (num_optima,) + batch_shape + (dims,)
+        correct_f_shape = (num_optima,) + batch_shape + (1,)
+        self.assertEqual(X_opt.shape, correct_X_shape)
+        self.assertEqual(f_opt.shape, correct_f_shape)
+        # asserting that the solutions found by minimization the samples are smaller
+        # than those found by maximization
+        self.assertTrue(torch.all(f_opt_min < f_opt))

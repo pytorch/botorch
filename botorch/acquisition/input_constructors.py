@@ -43,6 +43,7 @@ from botorch.acquisition.analytic import (
 )
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
+from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
@@ -82,6 +83,7 @@ from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
 from botorch.acquisition.risk_measures import RiskMeasureMCObjective
 from botorch.acquisition.utils import (
     expand_trace_observations,
+    get_optimal_samples,
     project_to_target_fidelity,
 )
 from botorch.exceptions.errors import UnsupportedError
@@ -1239,3 +1241,38 @@ def optimize_objective(
         return_best_only=True,
         sequential=sequential,
     )
+
+
+@acqf_input_constructor(qJointEntropySearch)
+def construct_inputs_qJES(
+    model: Model,
+    training_data: MaybeDict[SupervisedDataset],
+    bounds: Tensor,
+    num_optima: int = 64,
+    maximize: bool = True,
+    condition_noiseless: bool = True,
+    X_pending: Optional[Tensor] = None,
+    estimation_type: str = "LB",
+    num_samples: int = 64,
+    **kwargs: Any,
+):
+    dtype = model.train_targets.dtype
+    optimal_inputs, optimal_outputs = get_optimal_samples(
+        model=model,
+        bounds=torch.as_tensor(bounds, dtype=dtype).T,
+        num_optima=num_optima,
+        maximize=maximize,
+    )
+
+    inputs = {
+        "model": model,
+        "optimal_inputs": optimal_inputs,
+        "optimal_outputs": optimal_outputs,
+        "condition_noiseless": condition_noiseless,
+        "maximize": maximize,
+        "X_pending": X_pending,
+        "estimation_type": estimation_type,
+        "num_samples": num_samples,
+        **kwargs,
+    }
+    return inputs
