@@ -217,6 +217,7 @@ def gen_candidates_scipy(
             nonlinear_inequality_constraints=nonlinear_inequality_constraints,
             f_np_wrapper=f_np_wrapper,
             x0=x0,
+            shapeX=shapeX,
         )
     x0 = _arrayify(x0)
 
