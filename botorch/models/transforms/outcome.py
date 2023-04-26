@@ -275,7 +275,11 @@ class Standardize(OutcomeTransform):
         """
         if self.training:
             if Y.shape[:-2] != self._batch_shape:
-                raise RuntimeError("wrong batch shape")
+                raise RuntimeError(
+                    f"Expected Y.shape[:-2] to be {self._batch_shape}, matching "
+                    "the `batch_shape` argument to `Standardize`, but got "
+                    f"Y.shape[:-2]={Y.shape[:-2]}."
+                )
             if Y.size(-1) != self._m:
                 raise RuntimeError(
                     f"Wrong output dimension. Y.size(-1) is {Y.size(-1)}; expected "
