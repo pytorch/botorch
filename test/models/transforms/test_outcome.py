@@ -118,12 +118,17 @@ class TestOutcomeTransforms(BotorchTestCase):
     def test_standardize(self):
         # test error on incompatible dim
         tf = Standardize(m=1)
-        with self.assertRaises(
-            RuntimeError, msg="Wrong output dimension. Y.size(-1) is 2; expected 1."
+        with self.assertRaisesRegex(
+            RuntimeError, r"Wrong output dimension. Y.size\(-1\) is 2; expected 1."
         ):
             tf(torch.zeros(3, 2, device=self.device), None)
         # test error on incompatible batch shape
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"Expected Y.shape\[:-2\] to be torch.Size\(\[\]\), matching the "
+            "`batch_shape` argument to `Standardize`, but got "
+            r"Y.shape\[:-2\]=torch.Size\(\[2\]\).",
+        ):
             tf(torch.zeros(2, 3, 1, device=self.device), None)
 
         ms = (1, 2)
@@ -265,10 +270,10 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf_big = Standardize(m=4)
             Y = torch.arange(4, device=self.device, dtype=dtype).reshape((1, 4))
             tf_big(Y)
-            with self.assertRaises(
+            with self.assertRaisesRegex(
                 RuntimeError,
-                msg="Incompatible output dimensions encountered. Transform has output "
-                f"dimension {tf._m} and posterior has "
+                "Incompatible output dimensions encountered. Transform has output "
+                f"dimension {tf_big._m} and posterior has "
                 f"{posterior._extended_shape()[-1]}.",
             ):
                 tf_big.untransform_posterior(posterior2)
