@@ -97,33 +97,6 @@ class OptimizeAcqfInputs:
                 "bounds should be a `2 x d` tensor, current shape: "
                 f"{list(self.bounds.shape)}."
             )
-        # validate that linear constraints across the q-dim and
-        # self.sequential are not present together
-        if self.inequality_constraints is not None and self.sequential is True:
-            for constraint in self.inequality_constraints:
-                if len(constraint[0].shape) > 1:
-                    raise UnsupportedError(
-                        "Linear inequality constraints across the q-dimension are not "
-                        "supported for sequential optimization."
-                    )
-        if self.equality_constraints is not None and self.sequential is True:
-            for constraint in self.equality_constraints:
-                if len(constraint[0].shape) > 1:
-                    raise UnsupportedError(
-                        "Linear equality constraints across the q-dimension are not "
-                        "supported for sequential optimization."
-                    )
-
-        # TODO: Validate constraints if provided:
-        # https://github.com/pytorch/botorch/pull/1231
-        if self.batch_initial_conditions is not None and self.sequential:
-            raise UnsupportedError(
-                "`batch_initial_conditions` is not supported for sequential "
-                "optimization. Either avoid specifying "
-                "`batch_initial_conditions` to use the custom initializer or "
-                "use the `ic_generator` kwarg to generate initial conditions "
-                "for the case of nonlinear inequality constraints."
-            )
 
         d = self.bounds.shape[1]
         if self.batch_initial_conditions is not None:
@@ -150,17 +123,6 @@ class OptimizeAcqfInputs:
                 raise ValueError(
                     "Must specify `raw_samples` when "
                     "`batch_initial_conditions` is None`."
-                )
-
-        if self.sequential and self.q > 1:
-            if not self.return_best_only:
-                raise NotImplementedError(
-                    "`return_best_only=False` only supported for joint optimization."
-                )
-            if isinstance(self.acq_function, OneShotAcquisitionFunction):
-                raise NotImplementedError(
-                    "sequential optimization currently not supported for one-shot "
-                    "acquisition functions. Must have `sequential=False`."
                 )
 
     def get_ic_generator(self) -> TGenInitialConditions:
@@ -211,12 +173,53 @@ def _optimize_acqf_all_features_fixed(
     return X, acq_value
 
 
+def _validate_sequential_inputs(opt_inputs: OptimizeAcqfInputs) -> None:
+    # validate that linear constraints across the q-dim and
+    # self.sequential are not present together
+    if opt_inputs.inequality_constraints is not None:
+        for constraint in opt_inputs.inequality_constraints:
+            if len(constraint[0].shape) > 1:
+                raise UnsupportedError(
+                    "Linear inequality constraints across the q-dimension are not "
+                    "supported for sequential optimization."
+                )
+    if opt_inputs.equality_constraints is not None:
+        for constraint in opt_inputs.equality_constraints:
+            if len(constraint[0].shape) > 1:
+                raise UnsupportedError(
+                    "Linear equality constraints across the q-dimension are not "
+                    "supported for sequential optimization."
+                )
+
+    # TODO: Validate constraints if provided:
+    # https://github.com/pytorch/botorch/pull/1231
+    if opt_inputs.batch_initial_conditions is not None:
+        raise UnsupportedError(
+            "`batch_initial_conditions` is not supported for sequential "
+            "optimization. Either avoid specifying "
+            "`batch_initial_conditions` to use the custom initializer or "
+            "use the `ic_generator` kwarg to generate initial conditions "
+            "for the case of nonlinear inequality constraints."
+        )
+
+    if not opt_inputs.return_best_only:
+        raise NotImplementedError(
+            "`return_best_only=False` only supported for joint optimization."
+        )
+    if isinstance(opt_inputs.acq_function, OneShotAcquisitionFunction):
+        raise NotImplementedError(
+            "sequential optimization currently not supported for one-shot "
+            "acquisition functions. Must have `sequential=False`."
+        )
+
+
 def _optimize_acqf_sequential_q(
     opt_inputs: OptimizeAcqfInputs, timeout_sec: Optional[float], start_time: float
 ) -> Tuple[Tensor, Tensor]:
     """
     Helper function for `optimize_acqf` when sequential=True and q > 1.
     """
+    _validate_sequential_inputs(opt_inputs)
     if timeout_sec is not None:
         # When using sequential optimization, we allocate the total timeout
         # evenly across the individual acquisition optimizations.

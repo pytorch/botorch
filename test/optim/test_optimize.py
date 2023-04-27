@@ -358,7 +358,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                     q=q,
                     num_restarts=num_restarts,
                     raw_samples=raw_samples,
-                    batch_initial_conditions=mock_gen_batch_initial_conditions,
+                    batch_initial_conditions=torch.zeros((1, 1, 3)),
                     sequential=True,
                 )
 
