@@ -180,6 +180,24 @@ class TestPairwiseGP(BotorchTestCase):
             with self.assertRaises(RuntimeError):
                 model.set_train_data(train_X, changed_train_comp, strict=True)
 
+    def test_consolidation(self):
+        for batch_shape, dtype, likelihood_cls in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (torch.float, torch.double),
+            (PairwiseLogitLikelihood, PairwiseProbitLikelihood),
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            X_dim = 2
+
+            _, model_kwargs = self._get_model_and_data(
+                batch_shape=batch_shape,
+                X_dim=X_dim,
+                likelihood_cls=likelihood_cls,
+                **tkwargs,
+            )
+            train_X = model_kwargs["datapoints"]
+            train_comp = model_kwargs["comparisons"]
+
             # Test consolidation
             i1, i2 = train_X.shape[-2], train_X.shape[-2] + 1
             dup_comp = torch.cat(
@@ -205,6 +223,22 @@ class TestPairwiseGP(BotorchTestCase):
                 self.assertFalse(
                     torch.equal(model.utility, model.unconsolidated_utility)
                 )
+
+            # calling forward with duplicated datapoints should work after consolidation
+            mll = PairwiseLaplaceMarginalLogLikelihood(model.likelihood, model)
+            # make sure model is in training mode
+            self.assertTrue(model.training)
+            pred = model(dup_X)
+            # posterior shape in training should match the consolidated utility
+            self.assertEqual(pred.shape(), model.utility.shape)
+            if batch_shape:
+                # do not perform consolidation in batch mode
+                # because the block structure cannot be guaranteed
+                self.assertEqual(pred.shape(), dup_X.shape[:-1])
+            else:
+                self.assertEqual(pred.shape(), train_X.shape[:-1])
+            # Pass the original comparisons through mll should work
+            mll(pred, dup_comp)
 
     def test_condition_on_observations(self):
         for batch_shape, dtype, likelihood_cls in itertools.product(

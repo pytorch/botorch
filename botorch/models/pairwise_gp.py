@@ -914,7 +914,11 @@ class PairwiseGP(Model, GP, FantasizeMixin):
             # We pass in the untransformed datapoints into set_train_data
             # as we will be setting self.datapoints as the untransformed datapoints
             # self.transform_inputs will be called inside before calling _update()
-            self.set_train_data(datapoints, self.comparisons, update_model=True)
+            self.set_train_data(
+                datapoints=datapoints,
+                comparisons=self.unconsolidated_comparisons,
+                update_model=True,
+            )
 
             transformed_dp = self.transform_inputs(self.datapoints)
 
@@ -1099,9 +1103,13 @@ class PairwiseLaplaceMarginalLogLikelihood(MarginalLogLikelihood):
     def forward(self, post: Posterior, comp: Tensor) -> Tensor:
         r"""Calculate approximated log evidence, i.e., log(P(D|theta))
 
+        Note that post will be based on the consolidated/deduped datapoints for
+        numerical stability, but comp will still be the unconsolidated comparisons
+        so that it's still compatible with fit_gpytorch_*.
+
         Args:
-            post: training posterior distribution from self.model
-            comp: Comparisons pairs, see PairwiseGP.__init__ for more details
+            post: training posterior distribution from self.model (after consolidation)
+            comp: Comparisons pairs (before consolidation)
 
         Returns:
             The approximated evidence, i.e., the marginal log likelihood
