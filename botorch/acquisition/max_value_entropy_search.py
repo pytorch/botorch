@@ -647,11 +647,19 @@ class qLowerBoundMaxValueEntropy(DiscreteMaxValueBase):
         # 1 x m x m
 
         # use determinant of block matrix formula
-        V_determinant = variance_m - inv_quad(B, A.transpose(1, 2)).unsqueeze(1)
+        inv_quad_term = inv_quad(B, A.transpose(1, 2)).unsqueeze(1)
+        # NOTE: Even when using Cholesky to compute inv_quad, `V_determinant` can be
+        # negative due to numerical issues. To avoid this, we clamp the variance
+        # so that `V_determinant` > 0, while still allowing gradients to be
+        # propagated through `inv_quad_term`, as well as through `variance_m`
+        # in the expression for `r` below.
+        # choosing eps to be small while avoiding numerical underflow
+        eps = 1e-6 if inv_quad_term.dtype == torch.float32 else 1e-12
+        V_determinant = variance_m.clamp(inv_quad_term * (1 + eps)) - inv_quad_term
         # batch_shape x 1
 
         # Take logs and convert covariances to correlations.
-        r = V_determinant.log() - variance_m.log()
+        r = V_determinant.log() - variance_m.log()  # = log(1 - inv_quad / var)
         r = 0.5 * r.transpose(0, 1)
         return acq + r
 
