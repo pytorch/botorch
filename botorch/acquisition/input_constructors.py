@@ -1247,7 +1247,7 @@ def optimize_objective(
 def construct_inputs_qJES(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
-    bounds: Tensor,
+    bounds: List[Tuple[float, float]],
     num_optima: int = 64,
     maximize: bool = True,
     condition_noiseless: bool = True,
