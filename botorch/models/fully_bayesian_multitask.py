@@ -47,7 +47,7 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Yvar: Tensor,
+        train_Yvar: Optional[Tensor],
         task_feature: int,
         task_rank: Optional[int] = None,
     ):
@@ -56,16 +56,12 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         Args:
             train_X: Training inputs (n x (d + 1))
             train_Y: Training targets (n x 1)
-            train_Yvar: Observed noise variance (n x 1).
+            train_Yvar: Observed noise variance (n x 1). If None, we infer the noise.
+                Note that the inferred noise is common across all tasks.
             task_feature: The index of the task feature (`-d <= task_feature <= d`).
             task_rank: The num of learned task embeddings to be used in the task kernel.
                 If omitted, set it to be 1.
         """
-        if (train_Yvar is None) or (torch.isnan(train_Yvar).all()):
-            # TODO: revisit inferred noise for batched MTGP
-            raise NotImplementedError(
-                "Currently do not support inferred noise for multitask GP with MCMC!"
-            )
         super().set_inputs(train_X, train_Y, train_Yvar)
         # obtain a list of task indicies
         all_tasks = train_X[:, task_feature].unique().to(dtype=torch.long).tolist()
@@ -197,7 +193,7 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Yvar: Tensor,
+        train_Yvar: Optional[Tensor],
         task_feature: int,
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
@@ -210,7 +206,8 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         Args:
             train_X: Training inputs (n x (d + 1))
             train_Y: Training targets (n x 1)
-            train_Yvar: Observed noise variance (n x 1).
+            train_Yvar: Observed noise variance (n x 1). If None, we infer the noise.
+                Note that the inferred noise is common across all tasks.
             task_feature: The index of the task feature (`-d <= task_feature <= d`).
             rank: The num of learned task embeddings to be used in the task kernel.
                 If omitted, set it to be 1.
@@ -223,28 +220,24 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
             raise ValueError(
                 "Expected train_X to have shape n x d and train_Y to have shape n x 1"
             )
-        if train_Yvar is None:
-            raise NotImplementedError(
-                "Inferred Noise is not supported in multitask SAAS GP."
+        if train_Yvar is not None and train_Y.shape != train_Yvar.shape:
+            raise ValueError(
+                "Expected train_Yvar to be None or have the same shape as train_Y"
             )
-        else:
-            if train_Y.shape != train_Yvar.shape:
-                raise ValueError(
-                    "Expected train_Yvar to be None or have the same shape as train_Y"
-                )
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
             train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
-
-        train_Yvar = train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
+        if train_Yvar is not None:  # Clamp after transforming
+            train_Yvar = train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
 
         super().__init__(
             train_X=train_X,
             train_Y=train_Y,
-            train_Yvar=train_Yvar,
+            # Using train_Y as a dummy input here when train_Yvar is None.
+            train_Yvar=train_Yvar if train_Yvar is not None else train_Y,
             task_feature=task_feature,
             output_tasks=output_tasks,
         )
@@ -295,7 +288,8 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
     def batch_shape(self) -> torch.Size:
         r"""Batch shape of the model, equal to the number of MCMC samples.
         Note that `SaasFullyBayesianMultiTaskGP` does not support batching
-        over input data at this point."""
+        over input data at this point.
+        """
         self._check_if_fitted()
         return torch.Size([self.num_mcmc_samples])
 
@@ -314,7 +308,7 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         r"""Load the MCMC hyperparameter samples into the model.
 
         This method will be called by `fit_fully_bayesian_model_nuts` when the model
-        has been fitted in order to create a batched SingleTaskGP model.
+        has been fitted in order to create a batched MultiTaskGP model.
         """
         (
             self.mean_module,
@@ -324,8 +318,6 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
             self.latent_features,
         ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
 
-    # pyre-fixme[14]: Inconsistent override of
-    # BatchedMultiOutputGPyTorchModel.posterior
     def posterior(
         self,
         X: Tensor,
@@ -350,7 +342,6 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         posterior = FullyBayesianPosterior(distribution=posterior.distribution)
         return posterior
 
-    # pyre-fixme[14]: Inconsistent override
     def forward(self, X: Tensor) -> MultivariateNormal:
         self._check_if_fitted()
         X = X.unsqueeze(MCMC_DIM)
@@ -379,7 +370,6 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         return MultivariateNormal(mean_x, covar)
 
     @classmethod
-    # pyre-fixme[14]: Inconsistent override of `MultiTaskGP.construct_inputs`
     def construct_inputs(
         cls,
         training_data: Dict[str, SupervisedDataset],
@@ -395,9 +385,10 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
                 see `parse_training_data`.
             rank: The rank of the cross-task covariance matrix.
         """
-
         inputs = super().construct_inputs(
             training_data=training_data, task_feature=task_feature, rank=rank, **kwargs
         )
         inputs.pop("task_covar_prior")
+        if "train_Yvar" not in inputs:
+            inputs["train_Yvar"] = None
         return inputs
