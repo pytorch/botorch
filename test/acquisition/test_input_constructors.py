@@ -316,11 +316,14 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
         mock_model.num_outputs = 3
         mock_model.train_inputs = [None]
         mock_pref_model = mock.Mock()
+
+        # test basic construction
         kwargs = c(model=mock_model, pref_model=mock_pref_model)
         self.assertTrue(isinstance(kwargs["outcome_model"], FixedSingleSampleModel))
         self.assertTrue(kwargs["pref_model"] is mock_pref_model)
         self.assertTrue(kwargs["previous_winner"] is None)
 
+        # test previous_winner
         previous_winner = torch.randn(3)
         kwargs = c(
             model=mock_model,
@@ -328,6 +331,16 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
             previous_winner=previous_winner,
         )
         self.assertTrue(torch.equal(kwargs["previous_winner"], previous_winner))
+
+        # test sample_multiplier
+        torch.manual_seed(123)
+        kwargs = c(
+            model=mock_model,
+            pref_model=mock_pref_model,
+            sample_multiplier=1e6,
+        )
+        # w by default is drawn from std normal and very unlikely to be > 10.0
+        self.assertTrue((kwargs["outcome_model"].w.abs() > 10.0).all())
 
 
 class TestMCAcquisitionFunctionInputConstructors(

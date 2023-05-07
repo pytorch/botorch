@@ -1041,13 +1041,16 @@ def construct_inputs_analytic_eubo(
     model: Model,
     pref_model: Model,
     previous_winner: Optional[Tensor] = None,
+    sample_multiplier: Optional[float] = 1.0,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the `AnalyticExpectedUtilityOfBestOption` constructor.
 
     Args:
         model: The outcome model to be used in the acquisition function.
-        pref_model: The preference model to be used in preference exploration
+        pref_model: The preference model to be used in preference exploration.
+        previous_winner: The previous winner of the best option.
+        sample_multiplier: The scale factor for the single-sample model.
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
@@ -1055,7 +1058,8 @@ def construct_inputs_analytic_eubo(
     # construct a deterministic fixed single sample model from `model`
     # i.e., performing EUBO-zeta by default as described
     # in https://arxiv.org/abs/2203.11382
-    one_sample_outcome_model = FixedSingleSampleModel(model=model)
+    w = torch.randn(model.num_outputs) * sample_multiplier
+    one_sample_outcome_model = FixedSingleSampleModel(model=model, w=w)
 
     return {
         "pref_model": pref_model,
