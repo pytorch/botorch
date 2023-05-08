@@ -83,13 +83,18 @@ def _gen_model_single_output(**tkwargs):
 
 
 def _gen_fixed_noise_model_and_data(
-    task_feature: int = 0, input_transform=None, outcome_transform=None, **tkwargs
+    task_feature: int = 0,
+    input_transform=None,
+    outcome_transform=None,
+    use_fixed_noise_model_class: bool = False,
+    **tkwargs
 ):
     datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(yvar=0.05, **tkwargs)
-    model = FixedNoiseMultiTaskGP(
+    model_class = FixedNoiseMultiTaskGP if use_fixed_noise_model_class else MultiTaskGP
+    model = model_class(
         train_X,
         train_Y,
-        train_Yvar,
+        train_Yvar=train_Yvar,
         task_feature=task_feature,
         input_transform=input_transform,
         outcome_transform=outcome_transform,
@@ -348,6 +353,11 @@ class TestMultiTaskGP(BotorchTestCase):
 
 
 class TestFixedNoiseMultiTaskGP(BotorchTestCase):
+    def test_deprecation_warning(self):
+        tkwargs = {"device": self.device, "dtype": torch.float}
+        with self.assertWarnsRegex(DeprecationWarning, "FixedNoise"):
+            _gen_fixed_noise_model_and_data(use_fixed_noise_model_class=True, **tkwargs)
+
     def test_FixedNoiseMultiTaskGP(self):
         bounds = torch.tensor([[-1.0, 0.0], [1.0, 1.0]])
         for dtype, use_intf, use_octf in itertools.product(
@@ -363,7 +373,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             model, _, (train_X, _, _) = _gen_fixed_noise_model_and_data(
                 input_transform=intf, outcome_transform=octf, **tkwargs
             )
-            self.assertIsInstance(model, FixedNoiseMultiTaskGP)
+            self.assertIsInstance(model, MultiTaskGP)
             self.assertEqual(model.num_outputs, 2)
             self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
             self.assertIsInstance(model.mean_module, ConstantMean)

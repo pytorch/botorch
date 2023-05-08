@@ -20,7 +20,7 @@ from botorch.models.fully_bayesian import (
     reshape_and_detach,
     SaasPyroModel,
 )
-from botorch.models.multitask import FixedNoiseMultiTaskGP
+from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
@@ -163,7 +163,7 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         return mean_module, covar_module, likelihood, task_covar_module, latent_features
 
 
-class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
+class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
     r"""A fully Bayesian multi-task GP model with the SAAS prior.
 
     This model assumes that the inputs have been normalized to [0, 1]^d and that the
@@ -236,8 +236,7 @@ class SaasFullyBayesianMultiTaskGP(FixedNoiseMultiTaskGP):
         super().__init__(
             train_X=train_X,
             train_Y=train_Y,
-            # Using train_Y as a dummy input here when train_Yvar is None.
-            train_Yvar=train_Yvar if train_Yvar is not None else train_Y,
+            train_Yvar=train_Yvar,
             task_feature=task_feature,
             output_tasks=output_tasks,
         )
