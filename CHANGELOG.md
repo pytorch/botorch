@@ -2,6 +2,21 @@
 
 The release log for BoTorch.
 
+## [0.8.5] - May 8, 2023
+
+#### New Features
+* Support inferred noise in `SaasFullyBayesianMultiTaskGP` (#1809).
+
+#### Other Changes
+* More informative error message when `Standardize` has wrong batch shape (#1807).
+* Make GIBBON robust to numerical instability (#1814).
+* Add `sample_multiplier` in EUBO's `acqf_input_constructor` (#1816).
+
+#### Bug Fixes
+* Only do checks for `_optimize_acqf_sequential_q` when it will be used (#1808).
+* Fix an issue where `PairwiseGP` comparisons might be implicitly modified (#1811).
+
+
 ## [0.8.4] - Apr 24, 2023
 
 #### Compatibility
