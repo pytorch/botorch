@@ -46,7 +46,7 @@
 
 
 <div class="viewcode-block" id="LCEMGP"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.LCEMGP">[docs]</a><span class="k">class</span> <span class="nc">LCEMGP</span><span class="p">(</span><span class="n">MultiTaskGP</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The Multi-Task GP with the latent context embedding multioutput</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The Multi-Task GP with the latent context embedding multioutput</span>
 <span class="sd">    (LCE-M) kernel.</span>
 <span class="sd">    """</span>
 
@@ -62,7 +62,7 @@
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: (n x d) X training data.</span>
 <span class="sd">            train_Y: (n x 1) Y training data.</span>
@@ -123,12 +123,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_eval_context_covar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearOperator</span><span class="p">:</span>
-        <span class="sd">"""obtain context covariance matrix (num_contexts x num_contexts)"""</span>
+<span class="w">        </span><span class="sd">"""obtain context covariance matrix (num_contexts x num_contexts)"""</span>
         <span class="n">all_embs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_embeddings</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module</span><span class="p">(</span><span class="n">all_embs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_task_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""generate embedding features for all contexts."""</span>
+<span class="w">        </span><span class="sd">"""generate embedding features for all contexts."""</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">emb_layer</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">context_cat_feature</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
@@ -148,7 +148,7 @@
         <span class="k">return</span> <span class="n">embeddings</span>
 
 <div class="viewcode-block" id="LCEMGP.task_covar_matrix"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.LCEMGP.task_covar_matrix">[docs]</a>    <span class="k">def</span> <span class="nf">task_covar_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_idcs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""compute covariance matrix of a list of given context</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""compute covariance matrix of a list of given context</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            task_idcs: (n x 1) or (b x n x 1) task indices tensor</span>
@@ -174,7 +174,7 @@
 
 
 <div class="viewcode-block" id="FixedNoiseLCEMGP"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual_multioutput.FixedNoiseLCEMGP">[docs]</a><span class="k">class</span> <span class="nc">FixedNoiseLCEMGP</span><span class="p">(</span><span class="n">LCEMGP</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The Multi-Task GP the latent context embedding multioutput</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The Multi-Task GP the latent context embedding multioutput</span>
 <span class="sd">    (LCE-M) kernel, with known observation noise.</span>
 <span class="sd">    """</span>
 
@@ -189,7 +189,7 @@
         <span class="n">embs_dim_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: (n x d) X training data.</span>
 <span class="sd">            train_Y: (n x 1) Y training data.</span>

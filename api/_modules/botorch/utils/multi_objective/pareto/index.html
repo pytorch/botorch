@@ -40,7 +40,7 @@
 
 
 <div class="viewcode-block" id="is_non_dominated"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.pareto.is_non_dominated">[docs]</a><span class="k">def</span> <span class="nf">is_non_dominated</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">deduplicate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Computes the non-dominated front.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the non-dominated front.</span>
 
 <span class="sd">    Note: this assumes maximization.</span>
 
@@ -81,7 +81,7 @@
 
 
 <span class="k">def</span> <span class="nf">_is_non_dominated_loop</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Determine which points are non-dominated.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Determine which points are non-dominated.</span>
 
 <span class="sd">    Compared to `is_non_dominated`, this method is significantly</span>
 <span class="sd">    faster for large `n` on a CPU and will significant reduce memory</span>

@@ -47,14 +47,14 @@
 
 
 <div class="viewcode-block" id="PosteriorList"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.posterior_list.PosteriorList">[docs]</a><span class="k">class</span> <span class="nc">PosteriorList</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A Posterior represented by a list of independent Posteriors.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A Posterior represented by a list of independent Posteriors.</span>
 
 <span class="sd">    When at least one of the posteriors is a `FullyBayesianPosterior`, the other</span>
 <span class="sd">    posteriors are expanded to match the size of the `FullyBayesianPosterior`.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">posteriors</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""A Posterior represented by a list of independent Posteriors.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""A Posterior represented by a list of independent Posteriors.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            *posteriors: A variable number of single-outcome posteriors.</span>
@@ -71,11 +71,11 @@
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">_is_fully_bayesian</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Check if any of the posteriors is a `FullyBayesianPosterior`."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Check if any of the posteriors is a `FullyBayesianPosterior`."""</span>
         <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">FullyBayesianPosterior</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_get_mcmc_batch_dimension</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sd">"""Return the number of MCMC samples in the corresponding batch dimension."""</span>
+<span class="w">        </span><span class="sd">"""Return the number of MCMC samples in the corresponding batch dimension."""</span>
         <span class="n">mcmc_samples</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">p</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">MCMC_DIM</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span>
@@ -90,12 +90,12 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_reshape_tensor</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""Reshape a tensor without an MCMC batch dimension to match the shape."""</span>
+<span class="w">        </span><span class="sd">"""Reshape a tensor without an MCMC batch dimension to match the shape."""</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="n">MCMC_DIM</span><span class="p">],</span> <span class="n">mcmc_samples</span><span class="p">,</span> <span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">MCMC_DIM</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:])</span>
 
     <span class="k">def</span> <span class="nf">_reshape_and_cat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]):</span>
-        <span class="sa">r</span><span class="sd">"""Reshape, if needed, and concatenate (across dim=-1) a list of tensors."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Reshape, if needed, and concatenate (across dim=-1) a list of tensors."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_fully_bayesian</span><span class="p">:</span>
             <span class="n">mcmc_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mcmc_batch_dimension</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
@@ -112,7 +112,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The torch device of the posterior."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The torch device of the posterior."""</span>
         <span class="n">devices</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">device</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">}</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">devices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>  <span class="c1"># pragma: no cover</span>
@@ -123,7 +123,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The torch dtype of the posterior."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The torch dtype of the posterior."""</span>
         <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">dtype</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">}</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dtypes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
@@ -135,7 +135,7 @@
     <span class="k">def</span> <span class="nf">_extended_shape</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>  <span class="c1"># noqa: B008</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Returns the shape of the samples produced by the posterior with</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns the shape of the samples produced by the posterior with</span>
 <span class="sd">        the given `sample_shape`.</span>
 
 <span class="sd">        If there's at least one `FullyBayesianPosterior`, the MCMC dimension</span>
@@ -163,7 +163,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The mean of the posterior as a `(b) x n x m`-dim Tensor.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The mean of the posterior as a `(b) x n x m`-dim Tensor.</span>
 
 <span class="sd">        This is only supported if all posteriors provide a mean.</span>
 <span class="sd">        """</span>
@@ -171,7 +171,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">variance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The variance of the posterior as a `(b) x n x m`-dim Tensor.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The variance of the posterior as a `(b) x n x m`-dim Tensor.</span>
 
 <span class="sd">        This is only supported if all posteriors provide a variance.</span>
 <span class="sd">        """</span>
@@ -181,7 +181,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            sample_shape: A `torch.Size` object specifying the sample shape. To</span>
@@ -199,7 +199,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reshape_and_cat</span><span class="p">(</span><span class="n">tensors</span><span class="o">=</span><span class="n">samples</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""A catch-all for attributes not defined on the posterior level.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""A catch-all for attributes not defined on the posterior level.</span>
 
 <span class="sd">        Raises an attribute error.</span>
 <span class="sd">        """</span>

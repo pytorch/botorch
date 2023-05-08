@@ -164,7 +164,7 @@ observations passed in via kwargs).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>training_data</strong> (<em>Union</em><em>[</em><a class="reference internal" href="utils.html#botorch.utils.datasets.BotorchDataset" title="botorch.utils.datasets.BotorchDataset"><em>BotorchDataset</em></a><em>, </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.BotorchDataset" title="botorch.utils.datasets.BotorchDataset"><em>BotorchDataset</em></a><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.BotorchDataset" title="botorch.utils.datasets.BotorchDataset"><em>BotorchDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.BotorchDataset" title="botorch.utils.datasets.BotorchDataset"><em>BotorchDataset</em></a><em>]</em>) – </p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -181,7 +181,7 @@ observations passed in via kwargs).</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – A tensor of inputs</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – A Module that performs the input transformation.</p></li>
+<li><p><strong>input_transform</strong> (<em>Module</em><em> | </em><em>None</em>) – A Module that performs the input transformation.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -284,7 +284,7 @@ a <cite>transform_inputs</cite> method.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – </p></li>
+<li><p><strong>input_transform</strong> (<em>Module</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -362,13 +362,13 @@ any <cite>model.forward</cite> or <cite>model.likelihood</cite> calls.</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>b x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
 feature space, <cite>q</cite> is the number of points considered jointly,
 and <cite>b</cite> is the batch dimension.</p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add observation noise to the posterior.</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior_list.PosteriorList" title="botorch.posteriors.posterior_list.PosteriorList"><em>PosteriorList</em></a><em>]</em><em>, </em><em>Posterior</em><em>]</em><em>]</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior_list.PosteriorList" title="botorch.posteriors.posterior_list.PosteriorList"><em>PosteriorList</em></a><em>]</em><em>, </em><em>Posterior</em><em>] </em><em>| </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -897,7 +897,7 @@ the feature space, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
 <li><p><strong>sampler</strong> (<em>MCSampler</em>) – The sampler used for sampling from the posterior at <cite>X</cite>.</p></li>
-<li><p><strong>observation_noise</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>Tensor</em><em>]</em>) – If True, include the mean across the observation
+<li><p><strong>observation_noise</strong> (<em>bool</em><em> | </em><em>Tensor</em>) – If True, include the mean across the observation
 noise in the training data as observation noise in the posterior
 from which the samples are drawn. If a Tensor, use it directly
 as the specified measurement noise.</p></li>
@@ -1284,7 +1284,7 @@ and pass in the already transformed input.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a>) – A <cite>SupervisedDataset</cite> containing the training data.</p></li>
 <li><p><strong>categorical_features</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – Column indices of categorical features.</p></li>
-<li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – Optional likelihood used to constuct the model.</p></li>
+<li><p><strong>likelihood</strong> (<em>Likelihood</em><em> | </em><em>None</em>) – Optional likelihood used to constuct the model.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -1478,7 +1478,7 @@ registered hooks while the latter silently ignores them.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – </p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – </p></li>
-<li><p><strong>output_tasks</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1496,14 +1496,14 @@ registered hooks while the latter silently ignores them.</p>
 <li><p><strong>training_data</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dictionary of <cite>SupervisedDataset</cite>.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – Column index of embedded task indicator features. For details,
 see <cite>parse_training_data</cite>.</p></li>
-<li><p><strong>output_tasks</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of task indices for which to compute model
+<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
-<li><p><strong>task_covar_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – A GPyTorch <cite>Prior</cite> object to use as prior on
+<li><p><strong>task_covar_prior</strong> (<em>Prior</em><em> | </em><em>None</em>) – A GPyTorch <cite>Prior</cite> object to use as prior on
 the cross-task covariance matrix,</p></li>
-<li><p><strong>prior_config</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Configuration for inter-task covariance prior.
+<li><p><strong>prior_config</strong> (<em>dict</em><em> | </em><em>None</em>) – Configuration for inter-task covariance prior.
 Should only be used if <cite>task_covar_prior</cite> is not passed directly. Must
 contain <cite>use_LKJ_prior</cite> indicator and should contain float value <cite>eta</cite>.</p></li>
-<li><p><strong>rank</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The rank of the cross-task covariance matrix.</p></li>
+<li><p><strong>rank</strong> (<em>int</em><em> | </em><em>None</em>) – The rank of the cross-task covariance matrix.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1673,11 +1673,11 @@ registered hooks while the latter silently ignores them.</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
 of the feature space and <cite>q</cite> is the number of points considered
 jointly.</p></li>
-<li><p><strong>observation_noise</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>Tensor</em><em>]</em>) – If True, add the observation noise from the
+<li><p><strong>observation_noise</strong> (<em>bool</em><em> | </em><em>Tensor</em>) – If True, add the observation noise from the
 likelihood to the posterior. If a Tensor, use it directly as the
 observation noise (must be of shape <cite>(batch_shape) x q</cite>).</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – An optional PosteriorTransform.</p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -1748,7 +1748,7 @@ applies the normalization using the module state.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
+<li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
 associated with the training targets (if applicable).</p></li>
 </ul>
 </dd>
@@ -1772,7 +1772,7 @@ associated with the training targets (if applicable).</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized targets.</p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized observation
+<li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized observation
 noises associated with the targets (if applicable).</p></li>
 </ul>
 </dd>
@@ -1950,15 +1950,15 @@ observations passed in via kwargs).</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
 of the feature space and <cite>q</cite> is the number of points considered
 jointly.</p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>Tensor</em><em>]</em>) – If True, add the observation noise from the
+<li><p><strong>observation_noise</strong> (<em>bool</em><em> | </em><em>Tensor</em>) – If True, add the observation noise from the
 likelihood to the posterior. If a Tensor, use it directly as the
 observation noise (must be of shape <cite>(batch_shape) x q x m</cite>).</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -2084,9 +2084,9 @@ shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>datapoints</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x n x d</cite> dimension tensor X. If there are input
+<li><p><strong>datapoints</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite> dimension tensor X. If there are input
 transformations, assume the datapoints are not transformed</p></li>
-<li><p><strong>comparisons</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A tensor of size <cite>batch_shape x m x 2</cite>. (i, j) means
+<li><p><strong>comparisons</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A tensor of size <cite>batch_shape x m x 2</cite>. (i, j) means
 f_i is preferred over f_j.</p></li>
 <li><p><strong>strict</strong> (<em>bool</em>) – <cite>strict</cite> argument as in gpytorch.models.exact_gp for compatibility
 when using fit_gpytorch_model with input_transform.</p></li>
@@ -2158,10 +2158,10 @@ should be the same as self.datapoints during training</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
 of the feature space and <cite>q</cite> is the number of points considered jointly.</p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – As defined in parent Model class, not used for this model.</p></li>
+<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – As defined in parent Model class, not used for this model.</p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em>) – Ignored (since noise is not identifiable from scale
 in probit models).</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -2220,11 +2220,14 @@ original model conditioned on the new observations <cite>(X, Y)</cite>.</p>
 <dt class="sig sig-object py" id="botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">post</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseLaplaceMarginalLogLikelihood.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate approximated log evidence, i.e., log(P(D|theta))</p>
+<p>Note that post will be based on the consolidated/deduped datapoints for
+numerical stability, but comp will still be the unconsolidated comparisons
+so that it’s still compatible with fit_gpytorch_*.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>post</strong> (<em>Posterior</em>) – training posterior distribution from self.model</p></li>
-<li><p><strong>comp</strong> (<em>Tensor</em>) – Comparisons pairs, see PairwiseGP.__init__ for more details</p></li>
+<li><p><strong>post</strong> (<em>Posterior</em>) – training posterior distribution from self.model (after consolidation)</p></li>
+<li><p><strong>comp</strong> (<em>Tensor</em>) – Comparisons pairs (before consolidation)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2277,16 +2280,16 @@ data sets should have dim = 2.</p>
 <li><p><strong>decomposition</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Keys are context names. Values are the indexes of
 parameters belong to the context. The parameter indexes are in the
 same order across contexts.</p></li>
-<li><p><strong>cat_feature_dict</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>]</em>) – Keys are context names and values are list of categorical
+<li><p><strong>cat_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Keys are context names and values are list of categorical
 features i.e. {“context_name” : [cat_0, …, cat_k]}, where k is the
 number of categorical variables. If None, we use context names in the
 decomposition as the only categorical feature, i.e., k = 1.</p></li>
-<li><p><strong>embs_feature_dict</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>]</em>) – Pre-trained continuous embedding features of each
+<li><p><strong>embs_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Pre-trained continuous embedding features of each
 context.</p></li>
-<li><p><strong>embs_dim_list</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Embedding dimension for each categorical variable. The length
+<li><p><strong>embs_dim_list</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable. The length
 equals the number of categorical features k. If None, the embedding
 dimension is set to 1 for each categorical variable.</p></li>
-<li><p><strong>context_weight_dict</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>]</em>) – Known population weights of each context.</p></li>
+<li><p><strong>context_weight_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Known population weights of each context.</p></li>
 <li><p><strong>train_embedding</strong> (<em>bool</em>) – </p></li>
 </ul>
 </dd>
@@ -2307,19 +2310,19 @@ dimension is set to 1 for each categorical variable.</p></li>
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – (n x d) X training data.</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – (n x 1) Y training data.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – Column index of train_X to get context indices.</p></li>
-<li><p><strong>context_cat_feature</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – (n_contexts x k) one-hot encoded context
+<li><p><strong>context_cat_feature</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n_contexts x k) one-hot encoded context
 features. Rows are ordered by context indices, where k is the
 number of categorical variables. If None, task indices will
 be used and k = 1.</p></li>
-<li><p><strong>context_emb_feature</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – (n_contexts x m) pre-given continuous
+<li><p><strong>context_emb_feature</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n_contexts x m) pre-given continuous
 embedding features. Rows are ordered by context indices.</p></li>
-<li><p><strong>embs_dim_list</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Embedding dimension for each categorical variable.
+<li><p><strong>embs_dim_list</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable.
 The length equals k. If None, the embedding dimension is set to 1
 for each categorical variable.</p></li>
-<li><p><strong>output_tasks</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of task indices for which to compute model
+<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – </p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>) – </p></li>
+<li><p><strong>input_transform</strong> (<em>InputTransform</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>outcome_transform</strong> (<em>OutcomeTransform</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -2379,16 +2382,16 @@ registered hooks while the latter silently ignores them.</p>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – (n x 1) Y training data.</p></li>
 <li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – (n x 1) Noise variances of each training Y.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – Column index of train_X to get context indices.</p></li>
-<li><p><strong>context_cat_feature</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – (n_contexts x k) one-hot encoded context
+<li><p><strong>context_cat_feature</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n_contexts x k) one-hot encoded context
 features. Rows are ordered by context indices, where k is the
 number of categorical variables. If None, task indices will
 be used and k = 1.</p></li>
-<li><p><strong>context_emb_feature</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – (n_contexts x m) pre-given continuous
+<li><p><strong>context_emb_feature</strong> (<em>Tensor</em><em> | </em><em>None</em>) – (n_contexts x m) pre-given continuous
 embedding features. Rows are ordered by context indices.</p></li>
-<li><p><strong>embs_dim_list</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Embedding dimension for each categorical variable.
+<li><p><strong>embs_dim_list</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable.
 The length equals to k. If None, the embedding dimension is set to
 1 for each categorical variable.</p></li>
-<li><p><strong>output_tasks</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of task indices for which to compute model
+<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
 </ul>
 </dd>
@@ -2535,7 +2538,7 @@ the exact marginal log likelihood.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskVariationalGP</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">VariationalELBO</span>
-<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskVariationalGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">VariationalELBO</span><span class="p">(</span>
@@ -2706,7 +2709,7 @@ argument, and end users are not likely to need to instantiate or modify a
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – Training inputs (n x d)</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – Training targets (n x 1)</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Observed noise variance (n x 1). Inferred if None.</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Observed noise variance (n x 1). Inferred if None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -2836,14 +2839,14 @@ isn’t compatible with <cite>fit_gpytorch_model</cite>.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – Training inputs (n x d)</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – Training targets (n x 1)</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Observed noise variance (n x 1). Inferred if None.</p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>) – An outcome transform that is applied to the
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Observed noise variance (n x 1). Inferred if None.</p></li>
+<li><p><strong>outcome_transform</strong> (<em>OutcomeTransform</em><em> | </em><em>None</em>) – An outcome transform that is applied to the
 training data during instantiation and to the posterior during
 inference (that is, the <cite>Posterior</cite> obtained by calling
 <cite>.posterior</cite> on the model will be on the original scale).</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – An input transform that is applied in the model’s
+<li><p><strong>input_transform</strong> (<em>InputTransform</em><em> | </em><em>None</em>) – An input transform that is applied in the model’s
 forward pass.</p></li>
-<li><p><strong>pyro_model</strong> (<em>Optional</em><em>[</em><em>PyroModel</em><em>]</em>) – Optional <cite>PyroModel</cite>, defaults to <cite>SaasPyroModel</cite>.</p></li>
+<li><p><strong>pyro_model</strong> (<em>PyroModel</em><em> | </em><em>None</em>) – Optional <cite>PyroModel</cite>, defaults to <cite>SaasPyroModel</cite>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -2939,7 +2942,7 @@ rest of this method will not run.</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
 of the feature space and <cite>q</cite> is the number of points considered
 jointly.</p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
@@ -2947,7 +2950,7 @@ computes the posterior over all model outputs.</p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add the observation noise from the
 likelihood to the posterior. If a Tensor, use it directly as the
 observation noise (must be of shape <cite>(batch_shape) x q x m</cite>).</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -2981,9 +2984,10 @@ is a Matern-5/2 kernel using learned task embeddings as the input.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – Training inputs (n x (d + 1))</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – Training targets (n x 1)</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – Observed noise variance (n x 1).</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Observed noise variance (n x 1). If None, we infer the noise.
+Note that the inferred noise is common across all tasks.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – The index of the task feature (<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
-<li><p><strong>task_rank</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The num of learned task embeddings to be used in the task kernel.
+<li><p><strong>task_rank</strong> (<em>int</em><em> | </em><em>None</em>) – The num of learned task embeddings to be used in the task kernel.
 If omitted, set it to be 1.</p></li>
 </ul>
 </dd>
@@ -3069,14 +3073,15 @@ isn’t compatible with <cite>fit_gpytorch_model</cite>.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – Training inputs (n x (d + 1))</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – Training targets (n x 1)</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – Observed noise variance (n x 1).</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Observed noise variance (n x 1). If None, we infer the noise.
+Note that the inferred noise is common across all tasks.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – The index of the task feature (<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
-<li><p><strong>rank</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The num of learned task embeddings to be used in the task kernel.
+<li><p><strong>rank</strong> (<em>int</em><em> | </em><em>None</em>) – The num of learned task embeddings to be used in the task kernel.
 If omitted, set it to be 1.</p></li>
-<li><p><strong>output_tasks</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>OutcomeTransform</em><em>]</em>) – </p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>InputTransform</em><em>]</em>) – </p></li>
-<li><p><strong>pyro_model</strong> (<em>Optional</em><em>[</em><em>PyroModel</em><em>]</em>) – </p></li>
+<li><p><strong>output_tasks</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>outcome_transform</strong> (<em>OutcomeTransform</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>input_transform</strong> (<em>InputTransform</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>pyro_model</strong> (<em>PyroModel</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -3149,7 +3154,7 @@ batch shape of the model).</p></li>
 <span class="sig-name descname"><span class="pre">load_mcmc_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcmc_samples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fully_bayesian_multitask.html#SaasFullyBayesianMultiTaskGP.load_mcmc_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.load_mcmc_samples" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load the MCMC hyperparameter samples into the model.</p>
 <p>This method will be called by <cite>fit_fully_bayesian_model_nuts</cite> when the model
-has been fitted in order to create a batched SingleTaskGP model.</p>
+has been fitted in order to create a batched MultiTaskGP model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>mcmc_samples</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – </p>
@@ -3170,9 +3175,9 @@ has been fitted in order to create a batched SingleTaskGP model.</p>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – </p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>output_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 <li><p><strong>observation_noise</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – </p></li>
+<li><p><strong>posterior_transform</strong> (<em>PosteriorTransform</em><em> | </em><em>None</em>) – </p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -3212,7 +3217,7 @@ registered hooks while the latter silently ignores them.</p>
 <li><p><strong>training_data</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – Dictionary of <cite>SupervisedDataset</cite>.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – Column index of embedded task indicator features. For details,
 see <cite>parse_training_data</cite>.</p></li>
-<li><p><strong>rank</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The rank of the cross-task covariance matrix.</p></li>
+<li><p><strong>rank</strong> (<em>int</em><em> | </em><em>None</em>) – The rank of the cross-task covariance matrix.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -3356,7 +3361,7 @@ and a polynomial kernel. Here <cite>f_1</cite> is the first fidelity dimension a
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Non-batch: Simple option</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">LinearTruncatedFidelityKernel</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">covar</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># Output: LinearOperator of size (10 x 10)</span>
-<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">batch_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Batch: Simple option</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">LinearTruncatedFidelityKernel</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">2</span><span class="p">]))</span>
@@ -3418,17 +3423,17 @@ order across contexts.</p></li>
 support batch training. When batch_shape is non-empty, it is used for
 loading hyper-parameter values generated from MCMC sampling.</p></li>
 <li><p><strong>train_embedding</strong> (<em>bool</em>) – A boolean indictor of whether to learn context embeddings.</p></li>
-<li><p><strong>cat_feature_dict</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>]</em>) – Keys are context names and values are list of categorical
+<li><p><strong>cat_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Keys are context names and values are list of categorical
 features i.e. {“context_name” : [cat_0, …, cat_k]}. k equals the
 number of categorical variables. If None, uses context names in the
 decomposition as the only categorical feature, i.e., k = 1.</p></li>
-<li><p><strong>embs_feature_dict</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>]</em>) – Pre-trained continuous embedding features of each
+<li><p><strong>embs_feature_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Pre-trained continuous embedding features of each
 context.</p></li>
-<li><p><strong>embs_dim_list</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Embedding dimension for each categorical variable. The length
+<li><p><strong>embs_dim_list</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Embedding dimension for each categorical variable. The length
 equals to num of categorical features k. If None, the embedding
 dimension is set to 1 for each categorical variable.</p></li>
-<li><p><strong>context_weight_dict</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>]</em>) – Known population weights of each context.</p></li>
-<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>device</em><em>]</em>) – </p></li>
+<li><p><strong>context_weight_dict</strong> (<em>Dict</em><em> | </em><em>None</em>) – Known population weights of each context.</p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -3461,7 +3466,7 @@ with same lengthscales but different outputscales.</p>
 belong to the context. The parameter indexes are in the same order
 across contexts.</p></li>
 <li><p><strong>batch_shape</strong> (<em>Size</em>) – Batch shape as usual for gpytorch kernels.</p></li>
-<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>device</em><em>]</em>) – The torch device.</p></li>
+<li><p><strong>device</strong> (<em>device</em><em> | </em><em>None</em>) – The torch device.</p></li>
 </ul>
 </dd>
 </dl>
@@ -3702,7 +3707,7 @@ transforms on the module.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
+<li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
 associated with the training targets (if applicable).</p></li>
 </ul>
 </dd>
@@ -3742,7 +3747,7 @@ associated with the training targets (if applicable).</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of transfomred training targets.</p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of transformed observation
+<li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of transformed observation
 noises associated with the training targets (if applicable).</p></li>
 </ul>
 </dd>
@@ -3809,7 +3814,7 @@ applies the normalization using the module state.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
+<li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
 associated with the training targets (if applicable).</p></li>
 </ul>
 </dd>
@@ -3849,7 +3854,7 @@ associated with the training targets (if applicable).</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized targets.</p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized observation
+<li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized observation
 noises associated with the targets (if applicable).</p></li>
 </ul>
 </dd>
@@ -3879,7 +3884,7 @@ noises associated with the targets (if applicable).</p></li>
 <cite>TransformedPosterior</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Union</em>[<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>GPyTorchPosterior</em></a>, <a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior"><em>TransformedPosterior</em></a>]</p>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>GPyTorchPosterior</em></a> | <a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior"><em>TransformedPosterior</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3927,7 +3932,7 @@ outputs will be standardized.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
+<li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
 associated with the training targets (if applicable).</p></li>
 </ul>
 </dd>
@@ -3951,7 +3956,7 @@ associated with the training targets (if applicable).</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of log-transfomred targets.</p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of log- transformed
+<li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of log- transformed
 observation noises associated with the training targets
 (if applicable).</p></li>
 </ul>
@@ -4031,7 +4036,7 @@ outputs will be standardized.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
+<li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
 associated with the training targets (if applicable).</p></li>
 </ul>
 </dd>
@@ -4055,7 +4060,7 @@ associated with the training targets (if applicable).</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of power-transfomred targets.</p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of power-transformed
+<li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of power-transformed
 observation noises associated with the training targets
 (if applicable).</p></li>
 </ul>
@@ -4131,7 +4136,7 @@ outputs will be transformed.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
+<li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
 associated with the training targets (if applicable).</p></li>
 </ul>
 </dd>
@@ -4155,7 +4160,7 @@ associated with the training targets (if applicable).</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of bilog-transfomred targets.</p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of bilog-transformed
+<li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of bilog-transformed
 observation noises associated with the training targets
 (if applicable).</p></li>
 </ul>
@@ -4974,8 +4979,8 @@ the rounding function.</p>
 <li><p><strong>one_hot_bounds</strong> (<em>Tensor</em>) – The raw search space bounds where categoricals are
 encoded in one-hot representation and the integer parameters
 are not normalized.</p></li>
-<li><p><strong>integer_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – The indices of the integer parameters.</p></li>
-<li><p><strong>categorical_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – A dictionary mapping indices to cardinalities
+<li><p><strong>integer_indices</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – The indices of the integer parameters.</p></li>
+<li><p><strong>categorical_features</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>] </em><em>| </em><em>None</em>) – A dictionary mapping indices to cardinalities
 for the categorical features.</p></li>
 <li><p><strong>initialization</strong> (<em>bool</em>) – A boolean indicating whether this exact rounding
 function is for initialization. For initialization, the bounds
@@ -5143,7 +5148,7 @@ is <cite>input_batch_shape</cite> against <cite>batch_shape</cite>.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>training_datas</strong> – A BoTorchDataset or dictionary thereof.</p></li>
 <li><p><strong>consumer</strong> (<em>Any</em>) – The object that will consume the parsed data, or type thereof.</p></li>
-<li><p><strong>training_data</strong> (<em>Union</em><em>[</em><a class="reference internal" href="utils.html#botorch.utils.datasets.BotorchDataset" title="botorch.utils.datasets.BotorchDataset"><em>BotorchDataset</em></a><em>, </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.BotorchDataset" title="botorch.utils.datasets.BotorchDataset"><em>BotorchDataset</em></a><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.BotorchDataset" title="botorch.utils.datasets.BotorchDataset"><em>BotorchDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.BotorchDataset" title="botorch.utils.datasets.BotorchDataset"><em>BotorchDataset</em></a><em>]</em>) – </p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -5392,7 +5397,7 @@ and have high quality (according to the provided quality_scores).</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_inputs</strong> (<em>Tensor</em>) – training inputs (of shape n x d)</p></li>
-<li><p><strong>kernel_matrix</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>LinearOperator</em><em>]</em>) – kernel matrix on the training inputs</p></li>
+<li><p><strong>kernel_matrix</strong> (<em>Tensor</em><em> | </em><em>LinearOperator</em>) – kernel matrix on the training inputs</p></li>
 <li><p><strong>max_length</strong> (<em>int</em>) – number of inducing points to initialize</p></li>
 <li><p><strong>quality_scores</strong> (<em>Tensor</em>) – scores representing the quality of each candidate
 input (of shape [n])</p></li>
@@ -5427,7 +5432,7 @@ training features.</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>n x m</cite> or <cite>target_batch_shape x n x m</cite> (batch mode) tensor of
 training observations.</p></li>
 <li><p><strong>num_outputs</strong> (<em>int</em>) – number of outputs</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>n x m</cite> or <cite>target_batch_shape x n x m</cite> tensor of observed
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>n x m</cite> or <cite>target_batch_shape x n x m</cite> tensor of observed
 measurement noise.</p></li>
 </ul>
 </dd>
@@ -5441,7 +5446,7 @@ measurement noise.</p></li>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>, <em>Optional</em>[<em>Tensor</em>]]</p>
+<dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>, <em>Tensor</em> | None]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -5503,7 +5508,7 @@ of a model.</p></li>
 just to be contained within the unit cube).</p></li>
 <li><p><strong>atol</strong> (<em>float</em>) – The tolerance for the boundary check. Only used if <cite>strict=True</cite>.</p></li>
 <li><p><strong>raise_on_fail</strong> (<em>bool</em>) – If True, raise an exception instead of a warning.</p></li>
-<li><p><strong>ignore_dims</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Subset of dimensions where the min-max scaling check is omitted.</p></li>
+<li><p><strong>ignore_dims</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Subset of dimensions where the min-max scaling check is omitted.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -5542,12 +5547,12 @@ train targets of a model. Standardization is checked across the
 training features.</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>n x m</cite> or <cite>batch_shape x n x m</cite> (batch mode) tensor of
 training observations.</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite> or <cite>batch_shape x n x m</cite> (batch mode)
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite> or <cite>batch_shape x n x m</cite> (batch mode)
 tensor of observed measurement noise.</p></li>
 <li><p><strong>raise_on_fail</strong> (<em>bool</em>) – If True, raise an error instead of emitting a warning
 (only for normalization/standardization checks, an error is always
 raised if NaN values are present).</p></li>
-<li><p><strong>ignore_X_dims</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – For this subset of dimensions from <cite>{1, …, d}</cite>, ignore the
+<li><p><strong>ignore_X_dims</strong> (<em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – For this subset of dimensions from <cite>{1, …, d}</cite>, ignore the
 min-max scaling check.</p></li>
 </ul>
 </dd>

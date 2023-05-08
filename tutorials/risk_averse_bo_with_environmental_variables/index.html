@@ -189,7 +189,7 @@ In doing so, we will also pass in the <code>AppendFeatures</code>. We will re-in
 
 
 <span class="k">def</span> <span class="nf">train_model</span><span class="p">(</span><span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SingleTaskGP</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Returns a `SingleTaskGP` model trained on the inputs"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Returns a `SingleTaskGP` model trained on the inputs"""</span>
     <span class="n">w_set</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">draw_sobol_samples</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">N_W</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">:])</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
     <span class="p">)</span>
@@ -227,12 +227,12 @@ We use <code>qMultiFidelityKnowledgeGradient</code> instead of <code>qKnowledgeG
 
 
 <span class="k">def</span> <span class="nf">ignore_w</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Remove `w` from the input."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Remove `w` from the input."""</span>
     <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
 
 <span class="k">def</span> <span class="nf">optimize_rho_kg_and_get_observation</span><span class="p">():</span>
-    <span class="sa">r</span><span class="sd">"""Optimizes the rhoKG acquisition function, and returns a new candidate and observation."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Optimizes the rhoKG acquisition function, and returns a new candidate and observation."""</span>
     <span class="n">acqf</span> <span class="o">=</span> <span class="n">qMultiFidelityKnowledgeGradient</span><span class="p">(</span>
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="n">num_fantasies</span><span class="o">=</span><span class="n">NUM_FANTASIES</span><span class="p">,</span>
@@ -276,7 +276,7 @@ We use <code>qMultiFidelityKnowledgeGradient</code> instead of <code>qKnowledgeG
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
 
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_ITERATIONS</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Starting iteration </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">, total time: </span><span class="si">{</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> seconds."</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Starting iteration </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">, total time: </span><span class="si">{</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> seconds."</span><span class="p">)</span>
     <span class="c1"># optimize the acquisition function and get the observations</span>
     <span class="n">candidate</span><span class="p">,</span> <span class="n">observations</span> <span class="o">=</span> <span class="n">optimize_rho_kg_and_get_observation</span><span class="p">()</span>
 

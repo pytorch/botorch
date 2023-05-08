@@ -52,7 +52,7 @@
 
 
 <span class="k">class</span> <span class="nc">CostAwareUtility</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Abstract base class for cost-aware utilities.</span>
 
 <span class="sd">    :meta private:</span>
@@ -60,7 +60,7 @@
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">deltas</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate the cost-aware utility on the candidates and improvements.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the cost-aware utility on the candidates and improvements.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of with `q` `d`-dim design</span>
@@ -76,10 +76,10 @@
 
 
 <div class="viewcode-block" id="GenericCostAwareUtility"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.GenericCostAwareUtility">[docs]</a><span class="k">class</span> <span class="nc">GenericCostAwareUtility</span><span class="p">(</span><span class="n">CostAwareUtility</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Generic cost-aware utility wrapping a callable."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Generic cost-aware utility wrapping a callable."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cost</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Generic cost-aware utility wrapping a callable.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Generic cost-aware utility wrapping a callable.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            cost: A callable mapping a `batch_shape x q x d'`-dim candidate set</span>
@@ -89,7 +89,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_cost_callable</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="n">cost</span>
 
 <div class="viewcode-block" id="GenericCostAwareUtility.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.GenericCostAwareUtility.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">deltas</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate the cost function on the candidates and improvements.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the cost function on the candidates and improvements.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d'`-dim Tensor of with `q` `d`-dim design</span>
@@ -105,7 +105,7 @@
 
 
 <div class="viewcode-block" id="InverseCostWeightedUtility"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cost_aware.InverseCostWeightedUtility">[docs]</a><span class="k">class</span> <span class="nc">InverseCostWeightedUtility</span><span class="p">(</span><span class="n">CostAwareUtility</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A cost-aware utility using inverse cost weighting based on a model.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A cost-aware utility using inverse cost weighting based on a model.</span>
 
 <span class="sd">    Computes the cost-aware utility by inverse-weighting samples</span>
 <span class="sd">    `U = (u_1, ..., u_N)` of the increase in utility. If `use_mean=True`, this</span>
@@ -125,7 +125,7 @@
         <span class="n">cost_objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">min_cost</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Cost-aware utility that weights increase in utiltiy by inverse cost.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Cost-aware utility that weights increase in utiltiy by inverse cost.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            cost_model: A Model modeling the cost of evaluating a candidate</span>
@@ -158,7 +158,7 @@
         <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate the cost function on the candidates and improvements.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the cost function on the candidates and improvements.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of with `q` `d`-dim design</span>

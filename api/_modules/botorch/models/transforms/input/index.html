@@ -62,7 +62,7 @@
 
 
 <span class="k">class</span> <span class="nc">InputTransform</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for input transforms.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for input transforms.</span>
 
 <span class="sd">    Note: Input transforms must inherit from `torch.nn.Module`. This</span>
 <span class="sd">        is deferred to the subclasses to avoid any potential conflict</span>
@@ -87,7 +87,7 @@
     <span class="n">transform_on_fantasize</span><span class="p">:</span> <span class="nb">bool</span>
 
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Transform the inputs to a model.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the inputs to a model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
@@ -105,7 +105,7 @@
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Transform the inputs to a model.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the inputs to a model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
@@ -116,7 +116,7 @@
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
     <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Un-transform the inputs to a model.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform the inputs to a model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of transformed inputs.</span>
@@ -129,7 +129,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
 
 <span class="sd">        Note: The reason that a custom equals method is defined rather than</span>
 <span class="sd">        defining an __eq__ method is because defining an __eq__ method sets</span>
@@ -155,7 +155,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">preprocess_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Apply transforms for preprocessing inputs.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Apply transforms for preprocessing inputs.</span>
 
 <span class="sd">        The main use cases for this method are 1) to preprocess training data</span>
 <span class="sd">        before calling `set_train_data` and 2) preprocess `X_baseline` for noisy</span>
@@ -183,10 +183,10 @@
 
 
 <div class="viewcode-block" id="ChainedInputTransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ChainedInputTransform">[docs]</a><span class="k">class</span> <span class="nc">ChainedInputTransform</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">ModuleDict</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""An input transform representing the chaining of individual transforms."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""An input transform representing the chaining of individual transforms."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">transforms</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Chaining of input transforms.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Chaining of input transforms.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            transforms: The transforms to chain. Internally, the names of the</span>
@@ -214,7 +214,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_fantasize</span> <span class="o">|=</span> <span class="n">tf</span><span class="o">.</span><span class="n">transform_on_fantasize</span>
 
 <div class="viewcode-block" id="ChainedInputTransform.transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ChainedInputTransform.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Transform the inputs to a model.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the inputs to a model.</span>
 
 <span class="sd">        Individual transforms are applied in sequence.</span>
 
@@ -229,7 +229,7 @@
         <span class="k">return</span> <span class="n">X</span></div>
 
 <div class="viewcode-block" id="ChainedInputTransform.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ChainedInputTransform.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Un-transform the inputs to a model.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform the inputs to a model.</span>
 
 <span class="sd">        Un-transforms of the individual transforms are applied in reverse sequence.</span>
 
@@ -244,7 +244,7 @@
         <span class="k">return</span> <span class="n">X</span></div>
 
 <div class="viewcode-block" id="ChainedInputTransform.equals"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ChainedInputTransform.equals">[docs]</a>    <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            other: Another input transform.</span>
@@ -257,7 +257,7 @@
         <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ChainedInputTransform.preprocess_transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ChainedInputTransform.preprocess_transform">[docs]</a>    <span class="k">def</span> <span class="nf">preprocess_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Apply transforms for preprocessing inputs.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Apply transforms for preprocessing inputs.</span>
 
 <span class="sd">        The main use cases for this method are 1) to preprocess training data</span>
 <span class="sd">        before calling `set_train_data` and 2) preprocess `X_baseline` for noisy</span>
@@ -276,7 +276,7 @@
 
 
 <span class="k">class</span> <span class="nc">ReversibleInputTransform</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""An abstract class for a reversible input transform.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""An abstract class for a reversible input transform.</span>
 
 <span class="sd">    Properties:</span>
 <span class="sd">        reverse: A boolean indicating if the functionality of transform</span>
@@ -287,7 +287,7 @@
     <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span>
 
     <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Transform the inputs.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the inputs.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
@@ -298,7 +298,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_untransform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Un-transform the inputs.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform the inputs.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
@@ -310,7 +310,7 @@
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Forward transform the inputs.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Forward transform the inputs.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
@@ -322,7 +322,7 @@
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">_untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Reverse transform the inputs.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Reverse transform the inputs.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
@@ -333,7 +333,7 @@
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
     <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            other: Another input transform.</span>
@@ -357,7 +357,7 @@
         <span class="n">transform_on_fantasize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Apply affine transformation to input:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Apply affine transformation to input:</span>
 
 <span class="sd">            `output = (input - offset) / coefficient`</span>
 
@@ -406,13 +406,13 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">coefficient</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The tensor of linear coefficients."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The tensor of linear coefficients."""</span>
         <span class="n">coeff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coefficient</span>
         <span class="k">return</span> <span class="n">coeff</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">learn_coefficients</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="k">else</span> <span class="n">coeff</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">offset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The tensor of offset coefficients."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The tensor of offset coefficients."""</span>
         <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span>
         <span class="k">return</span> <span class="n">offset</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">learn_coefficients</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="k">else</span> <span class="n">offset</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
 
@@ -422,14 +422,14 @@
 
     <span class="nd">@learn_coefficients</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">learn_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""A boolean denoting whether to learn the coefficients</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""A boolean denoting whether to learn the coefficients</span>
 <span class="sd">        from inputs during model training.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_learn_coefficients</span> <span class="o">=</span> <span class="n">value</span>
 
     <span class="nd">@subset_transform</span>
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Apply affine transformation to input.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Apply affine transformation to input.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
@@ -445,7 +445,7 @@
 
     <span class="nd">@subset_transform</span>
     <span class="k">def</span> <span class="nf">_untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Apply inverse of affine transformation.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Apply inverse of affine transformation.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of transformed inputs.</span>
@@ -457,7 +457,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span> <span class="o">*</span> <span class="n">X</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span>
 
     <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            other: Another input transform.</span>
@@ -479,7 +479,7 @@
         <span class="k">return</span> <span class="n">isequal</span>
 
     <span class="k">def</span> <span class="nf">_check_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">"""Checking input dimensions, included to increase code sharing</span>
+<span class="w">        </span><span class="sd">"""Checking input dimensions, included to increase code sharing</span>
 <span class="sd">        among the derived classes Normalize and InputStandardize.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
@@ -491,19 +491,19 @@
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
         <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"`X` must have at least </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> dimensions, </span><span class="si">{</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="si">}</span><span class="s2"> batch and 2 innate"</span>
+                <span class="sa">f</span><span class="s2">"`X` must have at least </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> dimensions, </span><span class="si">{</span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="si">}</span><span class="s2"> batch and 2 innate"</span>
                 <span class="sa">f</span><span class="s2">" , but has </span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
 
         <span class="n">torch</span><span class="o">.</span><span class="n">broadcast_shapes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Makes coefficient and offset have same device and dtype as X."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Makes coefficient and offset have same device and dtype as X."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_coefficient</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_update_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Updates affine coefficients. Implemented by subclasses,</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Updates affine coefficients. Implemented by subclasses,</span>
 <span class="sd">        e.g. Normalize and InputStandardize.</span>
 <span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
@@ -513,7 +513,7 @@
 
 
 <div class="viewcode-block" id="Normalize"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Normalize">[docs]</a><span class="k">class</span> <span class="nc">Normalize</span><span class="p">(</span><span class="n">AffineInputTransform</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Normalize the inputs to the unit cube.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Normalize the inputs to the unit cube.</span>
 
 <span class="sd">    If no explicit bounds are provided this module is stateful: If in train mode,</span>
 <span class="sd">    calling `forward` updates the module state (i.e. the normalizing bounds). If</span>
@@ -534,7 +534,7 @@
         <span class="n">min_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
         <span class="n">learn_bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Normalize the inputs to the unit cube.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Normalize the inputs to the unit cube.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            d: The dimension of the input space.</span>
@@ -607,7 +607,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The bounds used for normalizing the inputs."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The bounds used for normalizing the inputs."""</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -615,7 +615,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">learn_coefficients</span>
 
     <span class="k">def</span> <span class="nf">_update_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">"""Computes the normalization bounds and updates the affine</span>
+<span class="w">        </span><span class="sd">"""Computes the normalization bounds and updates the affine</span>
 <span class="sd">        coefficients, which determine the base class's behavior.</span>
 <span class="sd">        """</span>
         <span class="c1"># Aggregate mins and ranges over extra batch and marginal dims</span>
@@ -626,7 +626,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_coefficient</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_range</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Normalize.get_init_args"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Normalize.get_init_args">[docs]</a>    <span class="k">def</span> <span class="nf">get_init_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Get the arguments necessary to construct an exact copy of the transform."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the arguments necessary to construct an exact copy of the transform."""</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">"d"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d</span><span class="p">,</span>
             <span class="s2">"indices"</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
@@ -642,7 +642,7 @@
 
 
 <div class="viewcode-block" id="InputStandardize"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.InputStandardize">[docs]</a><span class="k">class</span> <span class="nc">InputStandardize</span><span class="p">(</span><span class="n">AffineInputTransform</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Standardize inputs (zero mean, unit variance).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Standardize inputs (zero mean, unit variance).</span>
 
 <span class="sd">    In train mode, calling `forward` updates the module state</span>
 <span class="sd">    (i.e. the mean/std normalizing constants). If in eval mode, calling `forward`</span>
@@ -660,7 +660,7 @@
         <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">min_std</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Standardize inputs (zero mean, unit variance).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Standardize inputs (zero mean, unit variance).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            d: The dimension of the input space.</span>
@@ -702,7 +702,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span>
 
     <span class="k">def</span> <span class="nf">_update_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">"""Computes the normalization bounds and updates the affine</span>
+<span class="w">        </span><span class="sd">"""Computes the normalization bounds and updates the affine</span>
 <span class="sd">        coefficients, which determine the base class's behavior.</span>
 <span class="sd">        """</span>
         <span class="c1"># Aggregate means and standard deviations over extra batch and marginal dims</span>
@@ -716,7 +716,7 @@
 
 
 <div class="viewcode-block" id="Round"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Round">[docs]</a><span class="k">class</span> <span class="nc">Round</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A discretization transformation for discrete inputs.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A discretization transformation for discrete inputs.</span>
 
 <span class="sd">    For integers, this will typically be used in conjunction</span>
 <span class="sd">    with normalization as follows:</span>
@@ -771,7 +771,7 @@
         <span class="n">tau</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initialize transform.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize transform.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            integer_indices: The indices of the integer inputs.</span>
@@ -810,7 +810,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">tau</span> <span class="o">=</span> <span class="n">tau</span>
 
 <div class="viewcode-block" id="Round.transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Round.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Discretize the inputs.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Discretize the inputs.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
@@ -834,7 +834,7 @@
         <span class="k">return</span> <span class="n">X_rounded</span></div>
 
 <div class="viewcode-block" id="Round.equals"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Round.equals">[docs]</a>    <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            other: Another input transform.</span>
@@ -851,7 +851,7 @@
         <span class="p">)</span></div>
 
 <div class="viewcode-block" id="Round.get_init_args"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Round.get_init_args">[docs]</a>    <span class="k">def</span> <span class="nf">get_init_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Get the arguments necessary to construct an exact copy of the transform."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the arguments necessary to construct an exact copy of the transform."""</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">"integer_indices"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">integer_indices</span><span class="p">,</span>
             <span class="s2">"categorical_features"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_features</span><span class="p">,</span>
@@ -864,7 +864,7 @@
 
 
 <div class="viewcode-block" id="Log10"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Log10">[docs]</a><span class="k">class</span> <span class="nc">Log10</span><span class="p">(</span><span class="n">ReversibleInputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A base-10 log transformation."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A base-10 log transformation."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -874,7 +874,7 @@
         <span class="n">transform_on_fantasize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initialize transform.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize transform.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            indices: The indices of the inputs to log transform.</span>
@@ -896,7 +896,7 @@
 
     <span class="nd">@subset_transform</span>
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Log transform the inputs.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Log transform the inputs.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
@@ -908,7 +908,7 @@
 
     <span class="nd">@subset_transform</span>
     <span class="k">def</span> <span class="nf">_untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Reverse the log transformation.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Reverse the log transformation.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of normalized inputs.</span>
@@ -920,7 +920,7 @@
 
 
 <div class="viewcode-block" id="Warp"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Warp">[docs]</a><span class="k">class</span> <span class="nc">Warp</span><span class="p">(</span><span class="n">ReversibleInputTransform</span><span class="p">,</span> <span class="n">GPyTorchModule</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A transform that uses learned input warping functions.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that uses learned input warping functions.</span>
 
 <span class="sd">    Each specified input dimension is warped using the CDF of a</span>
 <span class="sd">    Kumaraswamy distribution. Typically, MAP estimates of the</span>
@@ -949,7 +949,7 @@
         <span class="n">concentration0_prior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Prior</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">batch_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initialize transform.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize transform.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            indices: The indices of the inputs to warp.</span>
@@ -1022,7 +1022,7 @@
 
     <span class="nd">@subset_transform</span>
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Warp the inputs through the Kumaraswamy CDF.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Warp the inputs through the Kumaraswamy CDF.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `input_batch_shape x (batch_shape) x n x d`-dim tensor of inputs.</span>
@@ -1044,7 +1044,7 @@
 
     <span class="nd">@subset_transform</span>
     <span class="k">def</span> <span class="nf">_untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Warp the inputs through the Kumaraswamy inverse CDF.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Warp the inputs through the Kumaraswamy inverse CDF.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `input_batch_shape x batch_shape x n x d`-dim tensor of inputs.</span>
@@ -1064,7 +1064,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_k</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kumaraswamy</span><span class="p">:</span>
-        <span class="sd">"""Returns a Kumaraswamy distribution with the concentration parameters."""</span>
+<span class="w">        </span><span class="sd">"""Returns a Kumaraswamy distribution with the concentration parameters."""</span>
         <span class="k">return</span> <span class="n">Kumaraswamy</span><span class="p">(</span>
             <span class="n">concentration1</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">concentration1</span><span class="p">,</span>
             <span class="n">concentration0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">concentration0</span><span class="p">,</span>
@@ -1072,7 +1072,7 @@
 
 
 <div class="viewcode-block" id="AppendFeatures"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.AppendFeatures">[docs]</a><span class="k">class</span> <span class="nc">AppendFeatures</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A transform that appends the input with a given set of features either</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that appends the input with a given set of features either</span>
 <span class="sd">    provided beforehand or generated on the fly via a callable.</span>
 
 <span class="sd">    As an example, the predefined set of features can be used with</span>
@@ -1136,7 +1136,7 @@
         <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">transform_on_fantasize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Append `feature_set` to each input or generate a set of features to</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Append `feature_set` to each input or generate a set of features to</span>
 <span class="sd">        append on the fly via a callable.</span>
 
 <span class="sd">        Args:</span>
@@ -1199,7 +1199,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_fantasize</span> <span class="o">=</span> <span class="n">transform_on_fantasize</span>
 
 <div class="viewcode-block" id="AppendFeatures.transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.AppendFeatures.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Transform the inputs by appending `feature_set` to each input or</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the inputs by appending `feature_set` to each input or</span>
 <span class="sd">        by generating a set of features to be appended on the fly via a callable.</span>
 
 <span class="sd">        For each `1 x d`-dim element in the input tensor, this will produce</span>
@@ -1241,7 +1241,7 @@
 
 <div class="viewcode-block" id="FilterFeatures"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.FilterFeatures">[docs]</a><span class="k">class</span> <span class="nc">FilterFeatures</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
 
-    <span class="sa">r</span><span class="sd">"""A transform that filters the input with a given set of features indices.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that filters the input with a given set of features indices.</span>
 
 <span class="sd">    As an example, this can be used in a multiobjective optimization with `ModelListGP`</span>
 <span class="sd">    in which the specific models only share subsets of features (feature selection).</span>
@@ -1256,7 +1256,7 @@
         <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">transform_on_fantasize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Filter features from a model.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Filter features from a model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            feature_set: An one-dim tensor denoting the indices of the features to be</span>
@@ -1285,7 +1285,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"feature_indices"</span><span class="p">,</span> <span class="n">feature_indices</span><span class="p">)</span>
 
 <div class="viewcode-block" id="FilterFeatures.transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.FilterFeatures.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Transform the inputs by keeping only the in `feature_indices` specified</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the inputs by keeping only the in `feature_indices` specified</span>
 <span class="sd">        feature indices and filtering out the others.</span>
 
 <span class="sd">        Args:</span>
@@ -1298,7 +1298,7 @@
         <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_indices</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="FilterFeatures.equals"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.FilterFeatures.equals">[docs]</a>    <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            other: Another input transform</span>
@@ -1312,7 +1312,7 @@
 
 
 <div class="viewcode-block" id="InputPerturbation"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.InputPerturbation">[docs]</a><span class="k">class</span> <span class="nc">InputPerturbation</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A transform that adds the set of perturbations to the given input.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that adds the set of perturbations to the given input.</span>
 
 <span class="sd">    Similar to `AppendFeatures`, this can be used with `RiskMeasureMCObjective`</span>
 <span class="sd">    to optimize risk measures. See `AppendFeatures` for additional discussion</span>
@@ -1334,7 +1334,7 @@
         <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">transform_on_fantasize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Add `perturbation_set` to each input.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Add `perturbation_set` to each input.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            perturbation_set: An `n_p x d`-dim tensor denoting the perturbations</span>
@@ -1386,7 +1386,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_fantasize</span> <span class="o">=</span> <span class="n">transform_on_fantasize</span>
 
 <div class="viewcode-block" id="InputPerturbation.transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.InputPerturbation.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Transform the inputs by adding `perturbation_set` to each input.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the inputs by adding `perturbation_set` to each input.</span>
 
 <span class="sd">        For each `1 x d`-dim element in the input tensor, this will produce</span>
 <span class="sd">        an `n_p x d`-dim tensor with the `perturbation_set` added to the input.</span>
@@ -1422,7 +1422,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">"""Returns a shape tuple such that `subset_transform` pre-allocates</span>
+<span class="w">        </span><span class="sd">"""Returns a shape tuple such that `subset_transform` pre-allocates</span>
 <span class="sd">        a (b x n_p x n x d) - dim tensor, where `b` is the batch shape of the</span>
 <span class="sd">        input `X` of the transform and `n_p` is the number of perturbations.</span>
 <span class="sd">        NOTE: this function is dependent on calling `_expanded_perturbations(X)`</span>
@@ -1440,7 +1440,7 @@
 
 
 <div class="viewcode-block" id="OneHotToNumeric"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.OneHotToNumeric">[docs]</a><span class="k">class</span> <span class="nc">OneHotToNumeric</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Transform categorical parameters from a one-hot to a numeric representation.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Transform categorical parameters from a one-hot to a numeric representation.</span>
 
 <span class="sd">    This assumes that the categoricals are the trailing dimensions.</span>
 <span class="sd">    """</span>
@@ -1453,7 +1453,7 @@
         <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">transform_on_fantasize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initialize.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The dimension of the one-hot-encoded input.</span>
@@ -1504,7 +1504,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">numeric_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_start_idx</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">categorical_features</span><span class="p">)</span>
 
 <div class="viewcode-block" id="OneHotToNumeric.transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.OneHotToNumeric.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Transform the categorical inputs into integer representation.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the categorical inputs into integer representation.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
@@ -1523,7 +1523,7 @@
         <span class="k">return</span> <span class="n">X</span></div>
 
 <div class="viewcode-block" id="OneHotToNumeric.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.OneHotToNumeric.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Transform the categoricals from integer representation to one-hot.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the categoricals from integer representation to one-hot.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d'`-dim tensor of transformed inputs, where</span>
@@ -1554,7 +1554,7 @@
         <span class="k">return</span> <span class="n">X</span></div>
 
 <div class="viewcode-block" id="OneHotToNumeric.equals"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.OneHotToNumeric.equals">[docs]</a>    <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            other: Another input transform.</span>

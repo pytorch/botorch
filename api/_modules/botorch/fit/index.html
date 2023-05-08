@@ -106,7 +106,7 @@
     <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MarginalLogLikelihood</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Clearing house for fitting models passed as GPyTorch MarginalLogLikelihoods.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Clearing house for fitting models passed as GPyTorch MarginalLogLikelihoods.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        mll: A GPyTorch MarginalLogLikelihood instance.</span>
@@ -147,7 +147,7 @@
     <span class="n">max_retries</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MarginalLogLikelihood</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Convenience method for fitting GPyTorch models using legacy API. For more</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Convenience method for fitting GPyTorch models using legacy API. For more</span>
 <span class="sd">    details, see `fit_gpytorch_mll`.</span>
 
 <span class="sd">    Args:</span>
@@ -214,7 +214,7 @@
     <span class="n">caught_exception_types</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">NotPSDError</span><span class="p">,),</span>
     <span class="o">**</span><span class="n">ignore</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MarginalLogLikelihood</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Generic fallback method for fitting Gaussian processes.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Generic fallback method for fitting Gaussian processes.</span>
 
 <span class="sd">    Attempts to fit a model using the provided optimizer, then determines whether or</span>
 <span class="sd">    not to retry by evaluating a given policy on emitted warning messages. The first</span>
@@ -292,7 +292,7 @@
                 <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
                     <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
                     <span class="sa">f</span><span class="s2">"Fit attempt #</span><span class="si">{</span><span class="n">attempt</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">max_attempts</span><span class="si">}</span><span class="s2"> triggered retry policy"</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'.'</span> <span class="k">if</span> <span class="n">attempt</span> <span class="o">==</span> <span class="n">max_attempts</span> <span class="k">else</span> <span class="s1">'; retrying...'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'.'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">attempt</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">max_attempts</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'; retrying...'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                 <span class="p">)</span>
 
             <span class="k">except</span> <span class="n">caught_exception_types</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
@@ -316,7 +316,7 @@
     <span class="n">__</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">ModelListGP</span><span class="p">],</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SumMarginalLogLikelihood</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Fitting routine for lists of independent Gaussian processes.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Fitting routine for lists of independent Gaussian processes.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        **kwargs: Passed to each of `mll.mlls`.</span>
@@ -345,7 +345,7 @@
     <span class="n">full_batch_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ApproximateMarginalLogLikelihood</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Fallback method for fitting approximate Gaussian processes.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Fallback method for fitting approximate Gaussian processes.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        closure: Forward-backward closure for obtaining objective values and gradients.</span>
@@ -391,7 +391,7 @@
     <span class="n">disable_progbar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">jit_compile</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Fit a fully Bayesian model using the No-U-Turn-Sampler (NUTS)</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Fit a fully Bayesian model using the No-U-Turn-Sampler (NUTS)</span>
 
 
 <span class="sd">    Args:</span>

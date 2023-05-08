@@ -99,7 +99,7 @@
 
 
 <div class="viewcode-block" id="MultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">MultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">MultiTaskGPyTorchModel</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel, inferring observation noise.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel, inferring observation noise.</span>
 
 <span class="sd">    Multi-task exact GP that uses a simple ICM kernel. Can be single-output or</span>
 <span class="sd">    multi-output. This model uses relatively strong priors on the base Kernel</span>
@@ -123,7 +123,7 @@
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel, inferring observation noise.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel, inferring observation noise.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: A `n x (d + 1)` or `b x n x (d + 1)` (batch mode) tensor</span>
@@ -210,7 +210,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_split_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Extracts base features and task indices from input data.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Extracts base features and task indices from input data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x: The full input tensor with trailing dimension of size `d + 1`.</span>
@@ -277,7 +277,7 @@
         <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from dictionary of `SupervisedDataset`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from dictionary of `SupervisedDataset`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            training_data: Dictionary of `SupervisedDataset`.</span>
@@ -322,7 +322,7 @@
 
 
 <div class="viewcode-block" id="FixedNoiseMultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.FixedNoiseMultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">FixedNoiseMultiTaskGP</span><span class="p">(</span><span class="n">MultiTaskGP</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel, with known observation noise.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel, with known observation noise.</span>
 
 <span class="sd">    This is the fixed-noise version of `MultiTaskGP` -– that is,</span>
 <span class="sd">    `FixedNoiseMultiTaskGP` is to `MultiTaskGP` as `FixedNoiseGP` is to</span>
@@ -347,7 +347,7 @@
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: A `n x (d + 1)` or `b x n x (d + 1)` (batch mode) tensor</span>
 <span class="sd">                of training data. One of the columns should contain the task</span>
@@ -409,7 +409,7 @@
 
 
 <div class="viewcode-block" id="KroneckerMultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">KroneckerMultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
-    <span class="sd">"""Multi-task GP with Kronecker structure, using an ICM kernel.</span>
+<span class="w">    </span><span class="sd">"""Multi-task GP with Kronecker structure, using an ICM kernel.</span>
 
 <span class="sd">    This model assumes the "block design" case, i.e., it requires that all tasks</span>
 <span class="sd">    are observed at all data points.</span>
@@ -451,7 +451,7 @@
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: A `batch_shape x n x d` tensor of training features.</span>
 <span class="sd">            train_Y: A `batch_shape x n x m` tensor of training observations.</span>

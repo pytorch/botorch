@@ -60,7 +60,7 @@
     <span class="n">cases</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">CaseNd</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
     <span class="n">default</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">BoolTensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Basic implementation of a tensorized switching case statement.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Basic implementation of a tensorized switching case statement.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        out: Tensor to which case outcomes are written.</span>
@@ -107,7 +107,7 @@
     <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">dtype</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
-    <span class="sa">r</span><span class="sd">"""Returns scalar-valued Tensors containing each of the given constants.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Returns scalar-valued Tensors containing each of the given constants.</span>
 <span class="sd">    Used to expedite tensor operations involving scalar arithmetic. Note that</span>
 <span class="sd">    the returned Tensors should not be modified in-place."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
@@ -154,25 +154,25 @@
 
 
 <div class="viewcode-block" id="ndtr"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.utils.ndtr">[docs]</a><span class="k">def</span> <span class="nf">ndtr</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Standard normal CDF."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Standard normal CDF."""</span>
     <span class="n">half</span><span class="p">,</span> <span class="n">neg_inv_sqrt_2</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">((</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">_neg_inv_sqrt_2</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">half</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">erfc</span><span class="p">(</span><span class="n">neg_inv_sqrt_2</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="phi"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.utils.phi">[docs]</a><span class="k">def</span> <span class="nf">phi</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Standard normal PDF."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Standard normal PDF."""</span>
     <span class="n">inv_sqrt_2pi</span><span class="p">,</span> <span class="n">neg_half</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">((</span><span class="n">_inv_sqrt_2pi</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">inv_sqrt_2pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">neg_half</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">square</span><span class="p">())</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="log_phi"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.utils.log_phi">[docs]</a><span class="k">def</span> <span class="nf">log_phi</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Logarithm of standard normal pdf"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Logarithm of standard normal pdf"""</span>
     <span class="n">log_sqrt_2pi</span><span class="p">,</span> <span class="n">neg_half</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">((</span><span class="n">_log_sqrt_2pi</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">neg_half</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">square</span><span class="p">()</span> <span class="o">-</span> <span class="n">log_sqrt_2pi</span></div>
 
 
 <div class="viewcode-block" id="log_ndtr"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.utils.log_ndtr">[docs]</a><span class="k">def</span> <span class="nf">log_ndtr</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">"""Implementation of log_ndtr that remedies problems of torch.special's version</span>
+<span class="w">    </span><span class="sd">"""Implementation of log_ndtr that remedies problems of torch.special's version</span>
 <span class="sd">    for large negative x, where the torch implementation yields Inf or NaN gradients.</span>
 
 <span class="sd">    Args:</span>
@@ -184,14 +184,14 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"log_Phi only supports torch.float32 and torch.float64 "</span>
-            <span class="sa">f</span><span class="s2">"dtypes, but received </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="si">= }</span><span class="s2">."</span>
+            <span class="sa">f</span><span class="s2">"dtypes, but received </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="w"> </span><span class="si">= }</span><span class="s2">."</span>
         <span class="p">)</span>
     <span class="n">neg_inv_sqrt_2</span><span class="p">,</span> <span class="n">log_2</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">((</span><span class="n">_neg_inv_sqrt_2</span><span class="p">,</span> <span class="n">_log_2</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">log_erfc</span><span class="p">(</span><span class="n">neg_inv_sqrt_2</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">log_2</span></div>
 
 
 <div class="viewcode-block" id="log_erfc"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.utils.log_erfc">[docs]</a><span class="k">def</span> <span class="nf">log_erfc</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">"""Computes the logarithm of the complementary error function in a numerically</span>
+<span class="w">    </span><span class="sd">"""Computes the logarithm of the complementary error function in a numerically</span>
 <span class="sd">    stable manner. The GitHub issue https://github.com/pytorch/pytorch/issues/31945</span>
 <span class="sd">    tracks progress toward moving this feature into PyTorch in C++.</span>
 
@@ -204,7 +204,7 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"log_erfc only supports torch.float32 and torch.float64 "</span>
-            <span class="sa">f</span><span class="s2">"dtypes, but received </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="si">= }</span><span class="s2">."</span>
+            <span class="sa">f</span><span class="s2">"dtypes, but received </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="w"> </span><span class="si">= }</span><span class="s2">."</span>
         <span class="p">)</span>
     <span class="n">is_pos</span> <span class="o">=</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span>
     <span class="n">x_pos</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">masked_fill</span><span class="p">(</span><span class="o">~</span><span class="n">is_pos</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
@@ -217,7 +217,7 @@
 
 
 <div class="viewcode-block" id="log_prob_normal_in"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.utils.log_prob_normal_in">[docs]</a><span class="k">def</span> <span class="nf">log_prob_normal_in</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Computes the probability that a standard normal random variable takes a value</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the probability that a standard normal random variable takes a value</span>
 <span class="sd">    in \[a, b\], i.e. log(Phi(b) - Phi(a)), where Phi is the standard normal CDF.</span>
 <span class="sd">    Returns accurate values and permits numerically stable backward passes for inputs</span>
 <span class="sd">    in [-1e100, 1e100] for double precision and [-1e20, 1e20] for single precision.</span>
@@ -250,7 +250,7 @@
     <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">buffer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Swaps Tensor slices in-place along dimension `dim`.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Swaps Tensor slices in-place along dimension `dim`.</span>
 
 <span class="sd">    When passed as Tensors, `i` (and `j`) should be `dim`-dimensional tensors</span>
 <span class="sd">    with the same shape as `values.shape[:dim]`. The xception to this rule occurs</span>

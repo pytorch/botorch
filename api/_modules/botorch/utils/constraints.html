@@ -46,7 +46,7 @@
 <div class="viewcode-block" id="get_outcome_constraint_transforms"><a class="viewcode-back" href="../../../utils.html#botorch.utils.constraints.get_outcome_constraint_transforms">[docs]</a><span class="k">def</span> <span class="nf">get_outcome_constraint_transforms</span><span class="p">(</span>
     <span class="n">outcome_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]:</span>
-    <span class="sa">r</span><span class="sd">"""Create outcome constraint callables from outcome constraint tensors.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Create outcome constraint callables from outcome constraint tensors.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        outcome_constraints: A tuple of `(A, b)`. For `k` outcome constraints</span>
@@ -70,7 +70,7 @@
     <span class="n">A</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">outcome_constraints</span>
 
     <span class="k">def</span> <span class="nf">_oc</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate constraints.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate constraints.</span>
 
 <span class="sd">        Note: einsum multiples Y by a and sums over the `m`-dimension. Einsum</span>
 <span class="sd">            is ~2x faster than using `(Y * a.view(1, 1, -1)).sum(dim-1)`.</span>

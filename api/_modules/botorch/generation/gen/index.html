@@ -78,7 +78,7 @@
     <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">timeout_sec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Generate a set of candidates using `scipy.optimize.minimize`.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate a set of candidates using `scipy.optimize.minimize`.</span>
 
 <span class="sd">    Optimizes an acquisition function starting from a set of initial candidates</span>
 <span class="sd">    using `scipy.optimize.minimize` via a numpy converter.</span>
@@ -199,7 +199,7 @@
     <span class="k">if</span> <span class="n">with_grad</span><span class="p">:</span>
 
         <span class="k">def</span> <span class="nf">f_np_wrapper</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
-            <span class="sd">"""Given a torch callable, compute value + grad given a numpy array."""</span>
+<span class="w">            </span><span class="sd">"""Given a torch callable, compute value + grad given a numpy array."""</span>
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> elements of the </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> element array "</span>
@@ -310,7 +310,7 @@
     <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">timeout_sec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Generate a set of candidates using a `torch.optim` optimizer.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate a set of candidates using a `torch.optim` optimizer.</span>
 
 <span class="sd">    Optimizes an acquisition function starting from a set of initial candidates</span>
 <span class="sd">    using an optimizer from `torch.optim`.</span>
@@ -427,7 +427,7 @@
 
 
 <div class="viewcode-block" id="get_best_candidates"><a class="viewcode-back" href="../../../generation.html#botorch.generation.gen.get_best_candidates">[docs]</a><span class="k">def</span> <span class="nf">get_best_candidates</span><span class="p">(</span><span class="n">batch_candidates</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">batch_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Extract best (q-batch) candidate from batch of candidates</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Extract best (q-batch) candidate from batch of candidates</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        batch_candidates: A `b x q x d` tensor of `b` q-batch candidates, or a</span>
@@ -458,7 +458,7 @@
 
 
 <span class="k">def</span> <span class="nf">_process_scipy_result</span><span class="p">(</span><span class="n">res</span><span class="p">:</span> <span class="n">OptimizeResult</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Process scipy optimization result to produce relevant logs and warnings."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Process scipy optimization result to produce relevant logs and warnings."""</span>
     <span class="k">if</span> <span class="s2">"success"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">"status"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
         <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"always"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">OptimizationWarning</span><span class="p">)</span>
@@ -494,7 +494,7 @@
 
 
 <div class="viewcode-block" id="minimize"><a class="viewcode-back" href="../../../generation.html#botorch.generation.gen.minimize">[docs]</a><span class="k">def</span> <span class="nf">minimize</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">"""Deprecated, use `botorch.generation.gen.minimize_with_timeout`."""</span>
+<span class="w">    </span><span class="sd">"""Deprecated, use `botorch.generation.gen.minimize_with_timeout`."""</span>
     <span class="c1"># TODO: Reap this after the next stable Ax release.</span>
     <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
         <span class="s2">"`botorch.generation.gen.minimize` is an alias for "</span>

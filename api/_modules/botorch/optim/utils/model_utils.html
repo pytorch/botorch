@@ -68,7 +68,7 @@
 <span class="k">def</span> <span class="nf">_get_extra_mll_args</span><span class="p">(</span>
     <span class="n">mll</span><span class="p">:</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]]:</span>
-    <span class="sa">r</span><span class="sd">"""Obtain extra arguments for MarginalLogLikelihood objects.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Obtain extra arguments for MarginalLogLikelihood objects.</span>
 
 <span class="sd">    Get extra arguments (beyond the model output and training targets) required</span>
 <span class="sd">    for the particular type of MarginalLogLikelihood for a forward pass.</span>
@@ -102,7 +102,7 @@
     <span class="n">requires_grad</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">name_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Helper method for obtaining a module's parameters and their respective ranges.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Helper method for obtaining a module's parameters and their respective ranges.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        module: The target module from which parameters are to be extracted.</span>
@@ -132,7 +132,7 @@
     <span class="n">name_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">default_bounds</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]]:</span>
-    <span class="sa">r</span><span class="sd">"""Helper method for obtaining a module's parameters and their respective ranges.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Helper method for obtaining a module's parameters and their respective ranges.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        module: The target module from which parameters are to be extracted.</span>
@@ -172,7 +172,7 @@
 <div class="viewcode-block" id="get_name_filter"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.model_utils.get_name_filter">[docs]</a><span class="k">def</span> <span class="nf">get_name_filter</span><span class="p">(</span>
     <span class="n">patterns</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Pattern</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]]],</span> <span class="nb">bool</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Returns a binary function that filters strings (or iterables whose first</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Returns a binary function that filters strings (or iterables whose first</span>
 <span class="sd">    element is a string) according to a bank of excluded patterns. Typically, used</span>
 <span class="sd">    in conjunction with generators such as `module.named_parameters()`.</span>
 
@@ -211,7 +211,7 @@
 
 
 <div class="viewcode-block" id="sample_all_priors"><a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.model_utils.sample_all_priors">[docs]</a><span class="k">def</span> <span class="nf">sample_all_priors</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Sample from hyperparameter priors (in-place).</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample from hyperparameter priors (in-place).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        model: A GPyTorchModel.</span>

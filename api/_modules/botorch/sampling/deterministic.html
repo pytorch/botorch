@@ -41,7 +41,7 @@
 
 
 <div class="viewcode-block" id="DeterministicSampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.deterministic.DeterministicSampler">[docs]</a><span class="k">class</span> <span class="nc">DeterministicSampler</span><span class="p">(</span><span class="n">StochasticSampler</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A sampler that simply calls `posterior.rsample`, intended to be used with</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A sampler that simply calls `posterior.rsample`, intended to be used with</span>
 <span class="sd">    `DeterministicModel` &amp; `DeterministicPosterior`.</span>
 
 <span class="sd">    [DEPRECATED] - Use `IndexSampler` in conjunction with `EnsemblePosterior`</span>
@@ -54,7 +54,7 @@
     <span class="k">def</span> <span class="nf">_update_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">DeterministicPosterior</span><span class="p">,</span> <span class="n">base_sampler</span><span class="p">:</span> <span class="n">DeterministicSampler</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""This is a no-op since there are no base samples to update.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""This is a no-op since there are no base samples to update.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: The posterior for which the base samples are constructed.</span>

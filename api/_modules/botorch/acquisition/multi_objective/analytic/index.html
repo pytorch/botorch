@@ -63,7 +63,7 @@
 
 
 <div class="viewcode-block" id="MultiObjectiveAnalyticAcquisitionFunction"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">MultiObjectiveAnalyticAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for Multi-Objective batch acquisition functions."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for Multi-Objective batch acquisition functions."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -71,7 +71,7 @@
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Constructor for the MultiObjectiveAnalyticAcquisitionFunction base class.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Constructor for the MultiObjectiveAnalyticAcquisitionFunction base class.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
@@ -94,7 +94,7 @@
 
 <div class="viewcode-block" id="MultiObjectiveAnalyticAcquisitionFunction.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Takes in a `batch_shape x 1 x d` X Tensor of t-batches with `1` `d`-dim</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Takes in a `batch_shape x 1 x d` X Tensor of t-batches with `1` `d`-dim</span>
 <span class="sd">        design point each, and returns a Tensor with shape `batch_shape'`, where</span>
 <span class="sd">        `batch_shape'` is the broadcasted batch shape of model and input `X`.</span>
 <span class="sd">        """</span>
@@ -115,7 +115,7 @@
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</span>
 
 <span class="sd">        This implements the computes EHVI using the algorithm from [Yang2019]_, but</span>
 <span class="sd">        additionally computes gradients via auto-differentiation as proposed by</span>
@@ -185,7 +185,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">normal</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ExpectedHypervolumeImprovement.psi"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.psi">[docs]</a>    <span class="k">def</span> <span class="nf">psi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">upper</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute Psi function.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute Psi function.</span>
 
 <span class="sd">        For each cell i and outcome k:</span>
 
@@ -212,7 +212,7 @@
         <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ExpectedHypervolumeImprovement.nu"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.nu">[docs]</a>    <span class="k">def</span> <span class="nf">nu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">upper</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute Nu function.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute Nu function.</span>
 
 <span class="sd">        For each cell i and outcome k:</span>
 

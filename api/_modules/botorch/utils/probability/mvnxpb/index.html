@@ -86,12 +86,12 @@
 
 
 <div class="viewcode-block" id="MVNXPB"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB">[docs]</a><span class="k">class</span> <span class="nc">MVNXPB</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""An algorithm for approximating Gaussian probabilities `P(X \in bounds)`, where</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""An algorithm for approximating Gaussian probabilities `P(X \in bounds)`, where</span>
 <span class="sd">    `X ~ N(0, covariance_matrix)`.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">covariance_matrix</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initializes an MVNXPB instance.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes an MVNXPB instance.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            covariance_matrix: Covariance matrices of shape `batch_shape x [n, n]`.</span>
@@ -140,7 +140,7 @@
         <span class="n">log_prob</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">log_prob_extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MVNXPB</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Creates an MVNXPB instance from raw arguments. Unlike MVNXPB.__init__,</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Creates an MVNXPB instance from raw arguments. Unlike MVNXPB.__init__,</span>
 <span class="sd">        this methods does not preprocess or copy terms.</span>
 
 <span class="sd">        Args:</span>
@@ -164,7 +164,7 @@
         <span class="k">return</span> <span class="n">new</span></div>
 
 <div class="viewcode-block" id="MVNXPB.solve"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.solve">[docs]</a>    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Runs the MVNXPB solver instance for a fixed number of steps.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Runs the MVNXPB solver instance for a fixed number of steps.</span>
 
 <span class="sd">        Calculates a bivariate conditional approximation to P(X \in bounds), where</span>
 <span class="sd">        X ~ N(0, Σ). For details, see [Genz2016numerical] or [Trinh2015bivariate]_.</span>
@@ -267,7 +267,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span></div>
 
 <div class="viewcode-block" id="MVNXPB.select_pivot"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.select_pivot">[docs]</a>    <span class="k">def</span> <span class="nf">select_pivot</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">LongTensor</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""GGE variable prioritization strategy from [Gibson1994monte]_.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""GGE variable prioritization strategy from [Gibson1994monte]_.</span>
 
 <span class="sd">        Returns the index of the random variable least likely to satisfy its bounds</span>
 <span class="sd">        when conditioning on the previously integrated random variables `X[:t - 1]`</span>
@@ -287,7 +287,7 @@
         <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">probs_1d</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="MVNXPB.pivot_"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.pivot_">[docs]</a>    <span class="k">def</span> <span class="nf">pivot_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pivot</span><span class="p">:</span> <span class="n">LongTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Swap random variables at `pivot` and `step` positions."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Swap random variables at `pivot` and `step` positions."""</span>
         <span class="n">step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="o">.</span><span class="n">step</span> <span class="o">==</span> <span class="n">step</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">piv_chol</span><span class="o">.</span><span class="n">pivot_</span><span class="p">(</span><span class="n">pivot</span><span class="p">)</span>
@@ -369,7 +369,7 @@
         <span class="n">jitter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">max_tries</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MVNXPB</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Augment an `n`-dimensional MVNXPB instance to include `m` additional random</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Augment an `n`-dimensional MVNXPB instance to include `m` additional random</span>
 <span class="sd">        variables.</span>
 <span class="sd">        """</span>
         <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">perm</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>

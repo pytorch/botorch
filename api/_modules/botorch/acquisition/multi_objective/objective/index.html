@@ -53,7 +53,7 @@
 
 
 <div class="viewcode-block" id="MCMultiOutputObjective"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective">[docs]</a><span class="k">class</span> <span class="nc">MCMultiOutputObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for MC multi-output objectives.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for MC multi-output objectives.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        _is_mo: A boolean denoting whether the objectives are multi-output.</span>
@@ -63,7 +63,7 @@
 
 <div class="viewcode-block" id="MCMultiOutputObjective.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate the multi-output objective on the samples.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the multi-output objective on the samples.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            samples: A `sample_shape x batch_shape x q x m`-dim Tensors of samples from</span>
@@ -86,7 +86,7 @@
 
 
 <div class="viewcode-block" id="GenericMCMultiOutputObjective"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.GenericMCMultiOutputObjective">[docs]</a><span class="k">class</span> <span class="nc">GenericMCMultiOutputObjective</span><span class="p">(</span><span class="n">GenericMCObjective</span><span class="p">,</span> <span class="n">MCMultiOutputObjective</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Multi-output objective generated from a generic callable.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Multi-output objective generated from a generic callable.</span>
 
 <span class="sd">    Allows to construct arbitrary MC-objective functions from a generic</span>
 <span class="sd">    callable. In order to be able to use gradient-based acquisition function</span>
@@ -96,7 +96,7 @@
 
 
 <div class="viewcode-block" id="IdentityMCMultiOutputObjective"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective">[docs]</a><span class="k">class</span> <span class="nc">IdentityMCMultiOutputObjective</span><span class="p">(</span><span class="n">MCMultiOutputObjective</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Trivial objective that returns the unaltered samples.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Trivial objective that returns the unaltered samples.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; identity_objective = IdentityMCMultiOutputObjective()</span>
@@ -107,7 +107,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">outcomes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">num_outcomes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initialize Objective.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize Objective.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            outcomes: A list of the `m'` indices that the weights should be</span>
@@ -135,7 +135,7 @@
 
 
 <div class="viewcode-block" id="WeightedMCMultiOutputObjective"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective">[docs]</a><span class="k">class</span> <span class="nc">WeightedMCMultiOutputObjective</span><span class="p">(</span><span class="n">IdentityMCMultiOutputObjective</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Objective that reweights samples by given weights vector.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Objective that reweights samples by given weights vector.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; weights = torch.tensor([1.0, -1.0])</span>
@@ -150,7 +150,7 @@
         <span class="n">outcomes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">num_outcomes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initialize Objective.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize Objective.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            weights: `m'`-dim tensor of outcome weights.</span>
@@ -183,7 +183,7 @@
         <span class="n">constraint_idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
         <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCMultiOutputObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Construct a feasibility weighted objective.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct a feasibility weighted objective.</span>
 
 <span class="sd">        This applies feasibility weighting before calculating the objective value.</span>
 <span class="sd">        Defaults to identity if no constraints or objective is present.</span>
@@ -243,7 +243,7 @@
 
 
 <div class="viewcode-block" id="UnstandardizeMCMultiOutputObjective"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective">[docs]</a><span class="k">class</span> <span class="nc">UnstandardizeMCMultiOutputObjective</span><span class="p">(</span><span class="n">IdentityMCMultiOutputObjective</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Objective that unstandardizes the samples.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Objective that unstandardizes the samples.</span>
 
 <span class="sd">    TODO: remove this when MultiTask models support outcome transforms.</span>
 
@@ -256,7 +256,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y_std</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">outcomes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initialize objective.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize objective.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            Y_mean: `m`-dim tensor of outcome means.</span>
@@ -289,7 +289,7 @@
 
 
 <div class="viewcode-block" id="AnalyticMultiOutputObjective"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective">[docs]</a><span class="k">class</span> <span class="nc">AnalyticMultiOutputObjective</span><span class="p">(</span><span class="n">AcquisitionObjective</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for multi-output analyic objectives.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for multi-output analyic objectives.</span>
 
 <span class="sd">    DEPRECATED - This will be removed in the next version.</span>
 
@@ -298,10 +298,10 @@
 
 
 <div class="viewcode-block" id="IdentityAnalyticMultiOutputObjective"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective">[docs]</a><span class="k">class</span> <span class="nc">IdentityAnalyticMultiOutputObjective</span><span class="p">(</span><span class="n">AnalyticMultiOutputObjective</span><span class="p">):</span>
-    <span class="sd">"""DEPRECATED - This will be removed in the next version."""</span>
+<span class="w">    </span><span class="sd">"""DEPRECATED - This will be removed in the next version."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">"""Initialize objective."""</span>
+<span class="w">        </span><span class="sd">"""Initialize objective."""</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">"IdentityAnalyticMultiOutputObjective is deprecated. "</span>
             <span class="s2">"Use IdentityPosteriorTransform instead."</span><span class="p">,</span>
@@ -316,13 +316,13 @@
 <div class="viewcode-block" id="UnstandardizeAnalyticMultiOutputObjective"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.UnstandardizeAnalyticMultiOutputObjective">[docs]</a><span class="k">class</span> <span class="nc">UnstandardizeAnalyticMultiOutputObjective</span><span class="p">(</span>
     <span class="n">UnstandardizePosteriorTransform</span><span class="p">,</span> <span class="n">AnalyticMultiOutputObjective</span>
 <span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Objective that unstandardizes the posterior.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Objective that unstandardizes the posterior.</span>
 
 <span class="sd">    DEPRECATED - This will be removed in the next version.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y_std</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initialize objective.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize objective.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            Y_mean: `m`-dim tensor of outcome means</span>

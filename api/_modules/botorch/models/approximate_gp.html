@@ -96,7 +96,7 @@
 
 
 <div class="viewcode-block" id="ApproximateGPyTorchModel"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel">[docs]</a><span class="k">class</span> <span class="nc">ApproximateGPyTorchModel</span><span class="p">(</span><span class="n">GPyTorchModel</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Botorch wrapper class for various (variational) approximate GP models in</span>
 <span class="sd">    GPyTorch.</span>
 
@@ -112,7 +112,7 @@
         <span class="o">*</span><span class="n">args</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            model: Instance of gpytorch.approximate GP models. If omitted,</span>
 <span class="sd">                constructs a `_SingleTaskVariationalGP`.</span>
@@ -176,7 +176,7 @@
 
 
 <span class="k">class</span> <span class="nc">_SingleTaskVariationalGP</span><span class="p">(</span><span class="n">ApproximateGP</span><span class="p">):</span>
-    <span class="sd">"""</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Base class wrapper for a stochastic variational Gaussian Process (SVGP)</span>
 <span class="sd">    model [hensman2013svgp]_.</span>
 
@@ -197,7 +197,7 @@
         <span class="n">inducing_points</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">inducing_point_allocator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InducingPointAllocator</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: Training inputs (due to the ability of the SVGP to sub-sample</span>
 <span class="sd">                this does not have to be all of the training inputs).</span>
@@ -298,7 +298,7 @@
 
 
 <div class="viewcode-block" id="SingleTaskVariationalGP"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.SingleTaskVariationalGP">[docs]</a><span class="k">class</span> <span class="nc">SingleTaskVariationalGP</span><span class="p">(</span><span class="n">ApproximateGPyTorchModel</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A single-task variational GP model following [hensman2013svgp]_.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A single-task variational GP model following [hensman2013svgp]_.</span>
 
 <span class="sd">    By default, the inducing points are initialized though the</span>
 <span class="sd">    `GreedyVarianceReduction` of [burt2020svgp]_, which is known to be</span>
@@ -350,7 +350,7 @@
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">inducing_point_allocator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InducingPointAllocator</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: Training inputs (due to the ability of the SVGP to sub-sample</span>
 <span class="sd">                this does not have to be all of the training inputs).</span>
@@ -454,7 +454,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The batch shape of the model.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The batch shape of the model.</span>
 
 <span class="sd">        This is a batch shape from an I/O perspective. For a model with `m`</span>
 <span class="sd">        outputs, a `test_batch_shape x q x d`-shaped input `X` to the `posterior`</span>
@@ -467,7 +467,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Reinitialize the inducing point locations in-place with the current kernel</span>
 <span class="sd">        applied to `inputs` through the model's inducing point allocation strategy.</span>
 <span class="sd">        The variational distribution and variational strategy caches are reset.</span>

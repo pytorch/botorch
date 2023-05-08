@@ -58,11 +58,11 @@
 
 
 <div class="viewcode-block" id="SamplePath"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.paths.SamplePath">[docs]</a><span class="k">class</span> <span class="nc">SamplePath</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">TransformedModuleMixin</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for Botorch sample paths."""</span></div>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for Botorch sample paths."""</span></div>
 
 
 <div class="viewcode-block" id="PathDict"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.paths.PathDict">[docs]</a><span class="k">class</span> <span class="nc">PathDict</span><span class="p">(</span><span class="n">SamplePath</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A dictionary of SamplePaths."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A dictionary of SamplePaths."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -71,7 +71,7 @@
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TInputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TOutputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initializes a PathDict instance.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes a PathDict instance.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            paths: An optional mapping of strings to sample paths.</span>
@@ -122,7 +122,7 @@
 
 
 <div class="viewcode-block" id="PathList"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.paths.PathList">[docs]</a><span class="k">class</span> <span class="nc">PathList</span><span class="p">(</span><span class="n">SamplePath</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A list of SamplePaths."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A list of SamplePaths."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -131,7 +131,7 @@
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TInputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TOutputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initializes a PathList instance.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes a PathList instance.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            paths: An optional iterable of sample paths.</span>
@@ -174,7 +174,7 @@
 
 
 <div class="viewcode-block" id="GeneralizedLinearPath"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.paths.GeneralizedLinearPath">[docs]</a><span class="k">class</span> <span class="nc">GeneralizedLinearPath</span><span class="p">(</span><span class="n">SamplePath</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A sample path in the form of a generalized linear model."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A sample path in the form of a generalized linear model."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -184,7 +184,7 @@
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TInputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TOutputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Initializes a GeneralizedLinearPath instance.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes a GeneralizedLinearPath instance.</span>
 
 <span class="sd">        .. code-block:: text</span>
 

@@ -356,7 +356,7 @@ underlying SobolEngine.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n</strong> (<em>int</em>) – The number of samples to draw. As a best practice, use powers of 2.</p></li>
-<li><p><strong>out</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An option output tensor. If provided, draws are put into this
+<li><p><strong>out</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An option output tensor. If provided, draws are put into this
 tensor, and the function returns None.</p></li>
 <li><p><strong>dtype</strong> (<em>dtype</em>) – The desired torch data type (ignored if <cite>out</cite> is provided).</p></li>
 </ul>
@@ -365,7 +365,7 @@ tensor, and the function returns None.</p></li>
 <dd class="field-even"><p>A <cite>n x d</cite> tensor of samples if <cite>out=None</cite> and <cite>None</cite> otherwise.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Optional</em>[<em>Tensor</em>]</p>
+<dd class="field-odd"><p><em>Tensor</em> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -405,7 +405,7 @@ underlying SobolEngine.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n</strong> (<em>int</em>) – The number of samples to draw. As a best practice, use powers of 2.</p></li>
-<li><p><strong>out</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An option output tensor. If provided, draws are put into this
+<li><p><strong>out</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An option output tensor. If provided, draws are put into this
 tensor, and the function returns None.</p></li>
 </ul>
 </dd>
@@ -413,7 +413,7 @@ tensor, and the function returns None.</p></li>
 <dd class="field-even"><p>A <cite>n x d</cite> tensor of samples if <cite>out=None</cite> and <cite>None</cite> otherwise.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Optional</em>[<em>Tensor</em>]</p>
+<dd class="field-odd"><p><em>Tensor</em> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -532,11 +532,11 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.FeatureMap.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.FeatureMap.input_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.FeatureMap.input_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.FeatureMap.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.FeatureMap.output_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.FeatureMap.output_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -560,11 +560,11 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.input_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.input_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.output_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.output_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelEvaluationMap.forward">
@@ -583,7 +583,7 @@ registered hooks while the latter silently ignores them.</p>
 <dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – </p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Union</em>[<em>Tensor</em>, <em>LinearOperator</em>]</p>
+<dd class="field-even"><p><em>Tensor</em> | <em>LinearOperator</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -624,11 +624,11 @@ n-dimensional feature map <span class="math notranslate nohighlight">\(\phi: \ma
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.input_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.input_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.output_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.features.maps.KernelFeatureMap.output_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.features.maps.KernelFeatureMap.forward">
@@ -713,11 +713,11 @@ and <a class="reference internal" href="#sutherland2015error" id="id4"><span>[su
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.SamplePath.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.SamplePath.input_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.SamplePath.input_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.SamplePath.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.SamplePath.output_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.SamplePath.output_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -738,11 +738,11 @@ and <a class="reference internal" href="#sutherland2015error" id="id4"><span>[su
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.input_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.input_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.output_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathDict.output_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathDict.forward">
@@ -764,7 +764,7 @@ registered hooks while the latter silently ignores them.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Union</em>[<em>Tensor</em>, <em>Dict</em>[str, <em>Tensor</em>]]</p>
+<dd class="field-even"><p><em>Tensor</em> | <em>Dict</em>[str, <em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -818,11 +818,11 @@ registered hooks while the latter silently ignores them.</p>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathList.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathList.input_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathList.input_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathList.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathList.output_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.PathList.output_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.PathList.forward">
@@ -844,7 +844,7 @@ registered hooks while the latter silently ignores them.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Union</em>[<em>Tensor</em>, <em>List</em>[<em>Tensor</em>]]</p>
+<dd class="field-even"><p><em>Tensor</em> | <em>List</em>[<em>Tensor</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -876,11 +876,11 @@ where z = input_transform(x).
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.GeneralizedLinearPath.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath.input_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath.input_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.GeneralizedLinearPath.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath.output_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.paths.GeneralizedLinearPath.output_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.paths.GeneralizedLinearPath.forward">
@@ -979,11 +979,11 @@ For more information, see <a class="reference internal" href="#wilson2020samplin
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.posterior_samplers.MatheronPath.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TInputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.posterior_samplers.MatheronPath.input_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TInputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.posterior_samplers.MatheronPath.input_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.posterior_samplers.MatheronPath.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">TOutputTransform</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.posterior_samplers.MatheronPath.output_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TOutputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.posterior_samplers.MatheronPath.output_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.posterior_samplers.MatheronPath.training">
@@ -1037,7 +1037,7 @@ For more information, see <a class="reference internal" href="#wilson2020samplin
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>GP</em>) – A Gaussian process prior together with a likelihood.</p></li>
 <li><p><strong>sample_values</strong> (<em>Tensor</em>) – Assumed values for <span class="math notranslate nohighlight">\(f(X)\)</span>.</p></li>
-<li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – An optional likelihood used to help define the desired
+<li><p><strong>likelihood</strong> (<em>Likelihood</em><em> | </em><em>None</em>) – An optional likelihood used to help define the desired
 update. Defaults to <cite>model.likelihood</cite> if it exists else None.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
@@ -1057,11 +1057,11 @@ update. Defaults to <cite>model.likelihood</cite> if it exists else None.</p></l
 <p>Mixin that wraps a module’s __call__ method with optional transforms.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.TransformedModuleMixin.input_transform">
-<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">InputTransform</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.TransformedModuleMixin.input_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">input_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">InputTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.TransformedModuleMixin.input_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.sampling.pathwise.utils.TransformedModuleMixin.output_transform">
-<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">OutcomeTransform</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.TransformedModuleMixin.output_transform" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">output_transform</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">OutcomeTransform</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.sampling.pathwise.utils.TransformedModuleMixin.output_transform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -1341,7 +1341,7 @@ registered hooks while the latter silently ignores them.</p>
 <dd class="field-odd"><p><strong>model</strong> (<em>GPyTorchModel</em>) – </p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Optional</em>[<em>InputTransform</em>]</p>
+<dd class="field-even"><p><em>InputTransform</em> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1354,7 +1354,7 @@ registered hooks while the latter silently ignores them.</p>
 <dd class="field-odd"><p><strong>model</strong> (<em>GPyTorchModel</em>) – </p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Optional</em>[<a class="reference internal" href="#botorch.sampling.pathwise.utils.OutcomeUntransformer" title="botorch.sampling.pathwise.utils.OutcomeUntransformer"><em>OutcomeUntransformer</em></a>]</p>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.sampling.pathwise.utils.OutcomeUntransformer" title="botorch.sampling.pathwise.utils.OutcomeUntransformer"><em>OutcomeUntransformer</em></a> | None</p>
 </dd>
 </dl>
 </dd></dl>

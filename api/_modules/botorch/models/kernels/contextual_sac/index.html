@@ -43,7 +43,7 @@
 
 
 <div class="viewcode-block" id="SACKernel"><a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.contextual_sac.SACKernel">[docs]</a><span class="k">class</span> <span class="nc">SACKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The structural additive contextual(SAC) kernel.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The structural additive contextual(SAC) kernel.</span>
 
 <span class="sd">    The kernel is used for contextual BO without oberseving context breakdowns.</span>
 <span class="sd">    There are d parameters and M contexts. In total, the dimension of parameter space</span>
@@ -72,7 +72,7 @@
         <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
         <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            decomposition: Keys are context names. Values are the indexes of parameters</span>
 <span class="sd">                belong to the context. The parameter indexes are in the same order</span>
@@ -124,7 +124,7 @@
         <span class="n">last_dim_is_batch</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">params</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        iterate across each partition of parameter space and sum the</span>
 <span class="sd">        covariance matrices together</span>
 <span class="sd">        """</span>

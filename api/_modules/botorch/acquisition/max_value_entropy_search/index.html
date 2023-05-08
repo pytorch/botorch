@@ -84,7 +84,7 @@
 
 
 <span class="k">class</span> <span class="nc">MaxValueBase</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for acquisition functions based on Max-value Entropy Search.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for acquisition functions based on Max-value Entropy Search.</span>
 
 <span class="sd">    This class provides the basic building blocks for constructing max-value</span>
 <span class="sd">    entropy-based acquisition functions along the lines of [Wang2017mves]_.</span>
@@ -103,7 +103,7 @@
         <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Single-outcome max-value entropy search-based acquisition functions.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Single-outcome max-value entropy search-based acquisition functions.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
@@ -140,7 +140,7 @@
 
     <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute max-value entropy at the design points `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute max-value entropy at the design points `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x 1 x d`-dim Tensor of `batch_shape` t-batches</span>
@@ -164,7 +164,7 @@
         <span class="k">return</span> <span class="n">ig</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># average over fantasies</span>
 
     <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Set pending design points.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Set pending design points.</span>
 
 <span class="sd">        Set "pending points" to inform the acquisition function of the candidate</span>
 <span class="sd">        points that have been generated but are pending evaluation.</span>
@@ -182,7 +182,7 @@
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">_compute_information_gain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute the information gain at the design points `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the information gain at the design points `X`.</span>
 
 <span class="sd">        `num_fantasies = 1` for non-fantasized models.</span>
 
@@ -201,7 +201,7 @@
     <span class="k">def</span> <span class="nf">_sample_max_values</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Draw samples from the posterior over maximum values.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw samples from the posterior over maximum values.</span>
 
 <span class="sd">        These samples are used to compute Monte Carlo approximations of expecations</span>
 <span class="sd">        over the posterior over the function maximum.</span>
@@ -219,7 +219,7 @@
 
 
 <div class="viewcode-block" id="DiscreteMaxValueBase"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.max_value_entropy_search.DiscreteMaxValueBase">[docs]</a><span class="k">class</span> <span class="nc">DiscreteMaxValueBase</span><span class="p">(</span><span class="n">MaxValueBase</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for MES-like methods using discrete max posterior sampling.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for MES-like methods using discrete max posterior sampling.</span>
 
 <span class="sd">    This class provides basic functionality for sampling posterior maximum values from</span>
 <span class="sd">    a surrogate Gaussian process model using a discrete set of candidates. It supports</span>
@@ -237,7 +237,7 @@
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">train_inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Single-outcome MES-like acquisition functions based on discrete MV sampling.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Single-outcome MES-like acquisition functions based on discrete MV sampling.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
@@ -281,7 +281,7 @@
     <span class="k">def</span> <span class="nf">_sample_max_values</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Draw samples from the posterior over maximum values on a discrete set.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw samples from the posterior over maximum values on a discrete set.</span>
 
 <span class="sd">        These samples are used to compute Monte Carlo approximations of expecations</span>
 <span class="sd">        over the posterior over the function maximum.</span>
@@ -324,7 +324,7 @@
 
 
 <div class="viewcode-block" id="qMaxValueEntropy"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy">[docs]</a><span class="k">class</span> <span class="nc">qMaxValueEntropy</span><span class="p">(</span><span class="n">DiscreteMaxValueBase</span><span class="p">,</span> <span class="n">MCSamplerMixin</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The acquisition function for Max-value Entropy Search.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The acquisition function for Max-value Entropy Search.</span>
 
 <span class="sd">    This acquisition function computes the mutual information of max values and</span>
 <span class="sd">    a candidate point X. See [Wang2017mves]_ for a detailed discussion.</span>
@@ -354,7 +354,7 @@
         <span class="n">train_inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Single-outcome max-value entropy search acquisition function.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Single-outcome max-value entropy search acquisition function.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
@@ -398,7 +398,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">X_pending</span><span class="p">)</span>  <span class="c1"># this did not happen in the super constructor</span>
 
 <div class="viewcode-block" id="qMaxValueEntropy.set_X_pending"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy.set_X_pending">[docs]</a>    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Set pending points.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Set pending points.</span>
 
 <span class="sd">        Informs the acquisition function about pending design points,</span>
 <span class="sd">        fantasizes the model on the pending points and draws max-value samples</span>
@@ -425,7 +425,7 @@
     <span class="k">def</span> <span class="nf">_compute_information_gain</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">mean_M</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">variance_M</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">covar_mM</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Computes the information gain at the design points `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Computes the information gain at the design points `X`.</span>
 
 <span class="sd">        Approximately computes the information gain at the design points `X`,</span>
 <span class="sd">        for both MES with noisy observations and multi-fidelity MES with noisy</span>
@@ -542,7 +542,7 @@
 
 
 <div class="viewcode-block" id="qLowerBoundMaxValueEntropy"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.max_value_entropy_search.qLowerBoundMaxValueEntropy">[docs]</a><span class="k">class</span> <span class="nc">qLowerBoundMaxValueEntropy</span><span class="p">(</span><span class="n">DiscreteMaxValueBase</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The acquisition function for General-purpose Information-Based</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The acquisition function for General-purpose Information-Based</span>
 <span class="sd">    Bayesian Optimisation (GIBBON).</span>
 
 <span class="sd">    This acquisition function provides a computationally cheap approximation of</span>
@@ -563,7 +563,7 @@
     <span class="k">def</span> <span class="nf">_compute_information_gain</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">mean_M</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">variance_M</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">covar_mM</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute GIBBON's approximation of information gain at the design points `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute GIBBON's approximation of information gain at the design points `X`.</span>
 
 <span class="sd">        When using GIBBON for batch optimization (i.e `q &gt; 1`), we calculate the</span>
 <span class="sd">        additional information provided by adding a new candidate point to the current</span>
@@ -673,17 +673,25 @@
         <span class="c1"># 1 x m x m</span>
 
         <span class="c1"># use determinant of block matrix formula</span>
-        <span class="n">V_determinant</span> <span class="o">=</span> <span class="n">variance_m</span> <span class="o">-</span> <span class="n">inv_quad</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">A</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">inv_quad_term</span> <span class="o">=</span> <span class="n">inv_quad</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">A</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># NOTE: Even when using Cholesky to compute inv_quad, `V_determinant` can be</span>
+        <span class="c1"># negative due to numerical issues. To avoid this, we clamp the variance</span>
+        <span class="c1"># so that `V_determinant` &gt; 0, while still allowing gradients to be</span>
+        <span class="c1"># propagated through `inv_quad_term`, as well as through `variance_m`</span>
+        <span class="c1"># in the expression for `r` below.</span>
+        <span class="c1"># choosing eps to be small while avoiding numerical underflow</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-6</span> <span class="k">if</span> <span class="n">inv_quad_term</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span> <span class="k">else</span> <span class="mf">1e-12</span>
+        <span class="n">V_determinant</span> <span class="o">=</span> <span class="n">variance_m</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">inv_quad_term</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">eps</span><span class="p">))</span> <span class="o">-</span> <span class="n">inv_quad_term</span>
         <span class="c1"># batch_shape x 1</span>
 
         <span class="c1"># Take logs and convert covariances to correlations.</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="n">V_determinant</span><span class="o">.</span><span class="n">log</span><span class="p">()</span> <span class="o">-</span> <span class="n">variance_m</span><span class="o">.</span><span class="n">log</span><span class="p">()</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">V_determinant</span><span class="o">.</span><span class="n">log</span><span class="p">()</span> <span class="o">-</span> <span class="n">variance_m</span><span class="o">.</span><span class="n">log</span><span class="p">()</span>  <span class="c1"># = log(1 - inv_quad / var)</span>
         <span class="n">r</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">r</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">acq</span> <span class="o">+</span> <span class="n">r</span></div>
 
 
 <div class="viewcode-block" id="qMultiFidelityMaxValueEntropy"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.max_value_entropy_search.qMultiFidelityMaxValueEntropy">[docs]</a><span class="k">class</span> <span class="nc">qMultiFidelityMaxValueEntropy</span><span class="p">(</span><span class="n">qMaxValueEntropy</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Multi-fidelity max-value entropy.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Multi-fidelity max-value entropy.</span>
 
 <span class="sd">    The acquisition function for multi-fidelity max-value entropy search</span>
 <span class="sd">    with support for trace observations. See [Takeno2020mfmves]_</span>
@@ -717,7 +725,7 @@
         <span class="n">expand</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">X</span><span class="p">:</span> <span class="n">X</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Single-outcome max-value entropy search acquisition function.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Single-outcome max-value entropy search acquisition function.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
@@ -794,7 +802,7 @@
 
 <div class="viewcode-block" id="qMultiFidelityMaxValueEntropy.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.max_value_entropy_search.qMultiFidelityMaxValueEntropy.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluates `qMultifidelityMaxValueEntropy` at the design points `X`</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluates `qMultifidelityMaxValueEntropy` at the design points `X`</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x 1 x d`-dim Tensor of `batch_shape` t-batches</span>
@@ -832,7 +840,7 @@
 
 
 <div class="viewcode-block" id="qMultiFidelityLowerBoundMaxValueEntropy"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.max_value_entropy_search.qMultiFidelityLowerBoundMaxValueEntropy">[docs]</a><span class="k">class</span> <span class="nc">qMultiFidelityLowerBoundMaxValueEntropy</span><span class="p">(</span><span class="n">qMultiFidelityMaxValueEntropy</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Multi-fidelity acquisition function for General-purpose Information-Based</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Multi-fidelity acquisition function for General-purpose Information-Based</span>
 <span class="sd">    Bayesian optimization (GIBBON).</span>
 
 <span class="sd">    The acquisition function for multi-fidelity max-value entropy search</span>
@@ -856,7 +864,7 @@
     <span class="k">def</span> <span class="nf">_compute_information_gain</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">mean_M</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">variance_M</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">covar_mM</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute GIBBON's approximation of information gain at the design points `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute GIBBON's approximation of information gain at the design points `X`.</span>
 
 <span class="sd">        When using GIBBON for batch optimization (i.e `q &gt; 1`), we calculate the</span>
 <span class="sd">        additional information provided by adding a new candidate point to the current</span>
@@ -888,7 +896,7 @@
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">"""Samples the max values by discrete Thompson sampling.</span>
+<span class="w">    </span><span class="sd">"""Samples the max values by discrete Thompson sampling.</span>
 
 <span class="sd">    Should generally be called within a `with torch.no_grad()` context.</span>
 
@@ -923,7 +931,7 @@
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">"""Samples the max values by Gumbel approximation.</span>
+<span class="w">    </span><span class="sd">"""Samples the max values by Gumbel approximation.</span>
 
 <span class="sd">    Should generally be called within a `with torch.no_grad()` context.</span>
 

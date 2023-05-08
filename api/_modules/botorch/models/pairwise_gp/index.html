@@ -106,7 +106,7 @@
 <span class="k">def</span> <span class="nf">_scaled_psd_safe_cholesky</span><span class="p">(</span>
     <span class="n">matrix</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">jitter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""scale matrix by 1/outputscale before cholesky for better numerical stability"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""scale matrix by 1/outputscale before cholesky for better numerical stability"""</span>
     <span class="n">matrix</span> <span class="o">=</span> <span class="n">matrix</span> <span class="o">/</span> <span class="n">scale</span>
     <span class="n">chol</span> <span class="o">=</span> <span class="n">psd_safe_cholesky</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">jitter</span><span class="o">=</span><span class="n">jitter</span><span class="p">)</span>
     <span class="n">chol</span> <span class="o">=</span> <span class="n">chol</span> <span class="o">*</span> <span class="n">scale</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
@@ -138,7 +138,7 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">psd</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">NotPSDError</span><span class="p">(</span>
             <span class="s2">"Matrix not positive definite after repeatedly adding jitter "</span>
-            <span class="sa">f</span><span class="s2">"up to </span><span class="si">{</span><span class="n">jitter</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="n">i</span><span class="p">)</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">."</span>
+            <span class="sa">f</span><span class="s2">"up to </span><span class="si">{</span><span class="n">jitter</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="n">i</span><span class="p">)</span><span class="si">:</span><span class="s2">.1e</span><span class="si">}</span><span class="s2">."</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">scaled_matrix</span> <span class="o">*</span> <span class="n">scale</span>
 
@@ -149,7 +149,7 @@
 <span class="c1"># a model. If you are using a more complicated model involving a GP, pass the</span>
 <span class="c1"># underlying GP object as the model, not a full PyTorch module."</span>
 <div class="viewcode-block" id="PairwiseGP"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP">[docs]</a><span class="k">class</span> <span class="nc">PairwiseGP</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">GP</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Probit GP for preference learning with Laplace approximation</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Probit GP for preference learning with Laplace approximation</span>
 
 <span class="sd">    A probit-likelihood GP that learns via pairwise comparison data, using a</span>
 <span class="sd">    Laplace approximation of the posterior of the estimated utility values. By</span>
@@ -200,7 +200,7 @@
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            datapoints: A `batch_shape x n x d` tensor of training features.</span>
 <span class="sd">            comparisons: A `batch_shape x m x 2` training comparisons;</span>
@@ -344,7 +344,7 @@
             <span class="k">return</span> <span class="n">new_model</span>
 
     <span class="k">def</span> <span class="nf">_has_no_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Return true if the model does not have both datapoints and comparisons"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Return true if the model does not have both datapoints and comparisons"""</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">size</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span>
@@ -352,7 +352,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_calc_covar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Calculate the covariance matrix given two sets of datapoints"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the covariance matrix given two sets of datapoints"""</span>
         <span class="n">covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">)</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
         <span class="c1"># making sure covar is PSD when it's a covariance matrix</span>
         <span class="k">if</span> <span class="n">X1</span> <span class="ow">is</span> <span class="n">X2</span><span class="p">:</span>
@@ -365,7 +365,7 @@
         <span class="k">return</span> <span class="n">covar</span>
 
     <span class="k">def</span> <span class="nf">_update_covar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Update values derived from the data and hyperparameters</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Update values derived from the data and hyperparameters</span>
 
 <span class="sd">        covar, covar_chol, and covar_inv will be of shape batch_shape x n x n</span>
 
@@ -382,7 +382,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">covar_inv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cholesky_inverse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_prior_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Return point prediction using prior only</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Return point prediction using prior only</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_size x n' x d`-dim Tensor at which to evaluate prior</span>
@@ -393,7 +393,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_prior_predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Predict utility based on prior info only</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Predict utility based on prior info only</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_size x n' x d`-dim Tensor at which to evaluate prior</span>
@@ -416,7 +416,7 @@
         <span class="n">covar_inv</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">ret_np</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Compute the gradient of S loss wrt to f/utility in [Chu2005preference]_.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the gradient of S loss wrt to f/utility in [Chu2005preference]_.</span>
 
 <span class="sd">        For finding f_map, which is negative of the log posterior, i.e., -log(p(f|D))</span>
 <span class="sd">        Derivative of (10) in [Chu2005preference]_.</span>
@@ -459,7 +459,7 @@
         <span class="n">covar_inv</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">ret_np</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Compute the hessian of S loss wrt utility for finding f_map.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the hessian of S loss wrt utility for finding f_map.</span>
 
 <span class="sd">        which is negative of the log posterior, i.e., -log(p(f|D))</span>
 <span class="sd">        Following [Chu2005preference]_ section 2.2.1.</span>
@@ -482,7 +482,7 @@
         <span class="k">return</span> <span class="n">hess</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="k">if</span> <span class="n">ret_np</span> <span class="k">else</span> <span class="n">hess</span>
 
     <span class="k">def</span> <span class="nf">_update_utility_derived_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Calculate utility-derived values not needed during optimization</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate utility-derived values not needed during optimization</span>
 
 <span class="sd">        Using subsitution method for better numerical stability</span>
 <span class="sd">        Let `pred_cov_fac = (covar + hl^-1)`, which is needed for calculate</span>
@@ -503,7 +503,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">pred_cov_fac_need_update</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="nf">_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Update the model by updating the covar matrix and MAP utility values</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Update the model by updating the covar matrix and MAP utility values</span>
 
 <span class="sd">        Update the model by</span>
 <span class="sd">        1. Re-evaluating the covar matrix as the data or hyperparams may have changed</span>
@@ -624,7 +624,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_transform_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X_new</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Transform X and X_new into the same shape</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform X and X_new into the same shape</span>
 
 <span class="sd">        Transform the batch shape of X to be compatible</span>
 <span class="sd">        with `X_new` to calculate the posterior.</span>
@@ -655,7 +655,7 @@
             <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">X_new_bs</span> <span class="o">+</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]),</span> <span class="n">X_new</span>
 
     <span class="k">def</span> <span class="nf">_util_newton_updates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dp</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">xtol</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Make `max_iter` newton updates on utility.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Make `max_iter` newton updates on utility.</span>
 
 <span class="sd">        This is used in `forward` to calculate and fill in gradient into tensors.</span>
 <span class="sd">        Instead of doing utility -= H^-1 @ g, use substition method.</span>
@@ -705,7 +705,7 @@
     <span class="k">def</span> <span class="nf">_consolidate_duplicates</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">comparisons</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sd">"""Consolidate and cache datapoints and comparisons"""</span>
+<span class="w">        </span><span class="sd">"""Consolidate and cache datapoints and comparisons"""</span>
         <span class="c1"># check if consolidated datapoints/comparisons are cached</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="p">(</span><span class="n">datapoints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">unconsolidated_datapoints</span><span class="p">)</span>
@@ -741,17 +741,17 @@
     <span class="c1"># ============== public APIs ==============</span>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">datapoints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Alias for consolidated datapoints"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Alias for consolidated datapoints"""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">consolidated_datapoints</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">comparisons</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Alias for consolidated comparisons"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Alias for consolidated comparisons"""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">consolidated_comparisons</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">unconsolidated_utility</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Utility of the unconsolidated datapoints"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Utility of the unconsolidated datapoints"""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">consolidated_indices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># self.consolidated_indices is None in batch mode</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">utility</span>
@@ -760,12 +760,12 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The number of outputs of the model."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The number of outputs of the model."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The batch shape of the model.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The batch shape of the model.</span>
 
 <span class="sd">        This is a batch shape from an I/O perspective, independent of the internal</span>
 <span class="sd">        representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).</span>
@@ -786,7 +786,7 @@
         <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">update_model</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Set datapoints and comparisons and update model properties if needed</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Set datapoints and comparisons and update model properties if needed</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            datapoints: A `batch_shape x n x d` dimension tensor X. If there are input</span>
@@ -866,7 +866,7 @@
 <div class="viewcode-block" id="PairwiseGP.load_state_dict"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP.load_state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_IncompatibleKeys</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Removes data related buffers from the `state_dict` and calls</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Removes data related buffers from the `state_dict` and calls</span>
 <span class="sd">        `super().load_state_dict` with `strict=False`.</span>
 
 <span class="sd">        Args:</span>
@@ -908,7 +908,7 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="PairwiseGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Calculate a posterior or prior prediction.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate a posterior or prior prediction.</span>
 
 <span class="sd">        During training mode, forward implemented solely for gradient-based</span>
 <span class="sd">        hyperparam opt. Essentially what it does is to re-calculate the utility</span>
@@ -940,7 +940,11 @@
             <span class="c1"># We pass in the untransformed datapoints into set_train_data</span>
             <span class="c1"># as we will be setting self.datapoints as the untransformed datapoints</span>
             <span class="c1"># self.transform_inputs will be called inside before calling _update()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="n">datapoints</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span><span class="p">,</span> <span class="n">update_model</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span>
+                <span class="n">datapoints</span><span class="o">=</span><span class="n">datapoints</span><span class="p">,</span>
+                <span class="n">comparisons</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">unconsolidated_comparisons</span><span class="p">,</span>
+                <span class="n">update_model</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
 
             <span class="n">transformed_dp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">)</span>
 
@@ -1028,7 +1032,7 @@
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Computes the posterior over model outputs at the provided points.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Computes the posterior over model outputs at the provided points.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor, where `d` is the dimension</span>
@@ -1058,7 +1062,7 @@
             <span class="k">return</span> <span class="n">posterior</span></div>
 
 <div class="viewcode-block" id="PairwiseGP.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
 
 <span class="sd">        Note that unlike other BoTorch models, PairwiseGP requires Y to be</span>
 <span class="sd">        pairwise comparisons</span>
@@ -1109,13 +1113,13 @@
 
 
 <div class="viewcode-block" id="PairwiseLaplaceMarginalLogLikelihood"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood">[docs]</a><span class="k">class</span> <span class="nc">PairwiseLaplaceMarginalLogLikelihood</span><span class="p">(</span><span class="n">MarginalLogLikelihood</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Laplace-approximated marginal log likelihood/evidence for PairwiseGP</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Laplace-approximated marginal log likelihood/evidence for PairwiseGP</span>
 
 <span class="sd">    See (12) from [Chu2005preference]_.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">GP</span><span class="p">):</span>
-        <span class="sd">"""</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            likelihood: Used as in args to GPyTorch MarginalLogLikelihood</span>
 <span class="sd">            model: Used as in args to GPyTorch MarginalLogLikelihood</span>
@@ -1123,11 +1127,15 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PairwiseLaplaceMarginalLogLikelihood.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">post</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">comp</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Calculate approximated log evidence, i.e., log(P(D|theta))</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate approximated log evidence, i.e., log(P(D|theta))</span>
+
+<span class="sd">        Note that post will be based on the consolidated/deduped datapoints for</span>
+<span class="sd">        numerical stability, but comp will still be the unconsolidated comparisons</span>
+<span class="sd">        so that it's still compatible with fit_gpytorch_*.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            post: training posterior distribution from self.model</span>
-<span class="sd">            comp: Comparisons pairs, see PairwiseGP.__init__ for more details</span>
+<span class="sd">            post: training posterior distribution from self.model (after consolidation)</span>
+<span class="sd">            comp: Comparisons pairs (before consolidation)</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The approximated evidence, i.e., the marginal log likelihood</span>

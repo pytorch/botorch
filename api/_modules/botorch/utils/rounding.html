@@ -51,7 +51,7 @@
 
 
 <div class="viewcode-block" id="approximate_round"><a class="viewcode-back" href="../../../utils.html#botorch.utils.rounding.approximate_round">[docs]</a><span class="k">def</span> <span class="nf">approximate_round</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Diffentiable approximate rounding function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Diffentiable approximate rounding function.</span>
 
 <span class="sd">    This method is a piecewise approximation of a rounding function where</span>
 <span class="sd">    each piece is a hyperbolic tangent function.</span>
@@ -70,14 +70,14 @@
 
 
 <div class="viewcode-block" id="IdentitySTEFunction"><a class="viewcode-back" href="../../../utils.html#botorch.utils.rounding.IdentitySTEFunction">[docs]</a><span class="k">class</span> <span class="nc">IdentitySTEFunction</span><span class="p">(</span><span class="n">Function</span><span class="p">):</span>
-    <span class="sd">"""Base class for functions using straight through gradient estimators.</span>
+<span class="w">    </span><span class="sd">"""Base class for functions using straight through gradient estimators.</span>
 
 <span class="sd">    This class approximates the gradient with the identity function.</span>
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="IdentitySTEFunction.backward"><a class="viewcode-back" href="../../../utils.html#botorch.utils.rounding.IdentitySTEFunction.backward">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">backward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Use a straight-through estimator the gradient.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Use a straight-through estimator the gradient.</span>
 
 <span class="sd">        This uses the identity function.</span>
 
@@ -91,14 +91,14 @@
 
 
 <div class="viewcode-block" id="RoundSTE"><a class="viewcode-back" href="../../../utils.html#botorch.utils.rounding.RoundSTE">[docs]</a><span class="k">class</span> <span class="nc">RoundSTE</span><span class="p">(</span><span class="n">IdentitySTEFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Round the input tensor and use a straight-through gradient estimator.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Round the input tensor and use a straight-through gradient estimator.</span>
 
 <span class="sd">    [Daulton2022bopr]_ proposes using this in acquisition optimization.</span>
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="RoundSTE.forward"><a class="viewcode-back" href="../../../utils.html#botorch.utils.rounding.RoundSTE.forward">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Round the input tensor element-wise.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Round the input tensor element-wise.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: The tensor to be rounded.</span>
@@ -110,7 +110,7 @@
 
 
 <div class="viewcode-block" id="OneHotArgmaxSTE"><a class="viewcode-back" href="../../../utils.html#botorch.utils.rounding.OneHotArgmaxSTE">[docs]</a><span class="k">class</span> <span class="nc">OneHotArgmaxSTE</span><span class="p">(</span><span class="n">IdentitySTEFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Discretize a continuous relaxation of a one-hot encoded categorical.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Discretize a continuous relaxation of a one-hot encoded categorical.</span>
 
 <span class="sd">    This returns a one-hot encoded categorical and use a straight-through</span>
 <span class="sd">    gradient estimator via an identity function.</span>
@@ -120,7 +120,7 @@
 
 <div class="viewcode-block" id="OneHotArgmaxSTE.forward"><a class="viewcode-back" href="../../../utils.html#botorch.utils.rounding.OneHotArgmaxSTE.forward">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Discretize the input tensor.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Discretize the input tensor.</span>
 
 <span class="sd">        This applies a argmax along the last dimensions of the input tensor</span>
 <span class="sd">        and one-hot encodes the result.</span>

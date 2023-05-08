@@ -60,7 +60,7 @@
 
 <div class="viewcode-block" id="SupervisedDatasetMeta"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.SupervisedDatasetMeta">[docs]</a><span class="k">class</span> <span class="nc">SupervisedDatasetMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Converts Tensor-valued fields to DenseContainer under the assumption</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Converts Tensor-valued fields to DenseContainer under the assumption</span>
 <span class="sd">        that said fields house collections of feature vectors."""</span>
         <span class="n">hints</span> <span class="o">=</span> <span class="n">get_type_hints</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
         <span class="n">f_iter</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="n">fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span>
@@ -91,7 +91,7 @@
 
 <div class="viewcode-block" id="SupervisedDataset"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.SupervisedDataset">[docs]</a><span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">SupervisedDataset</span><span class="p">(</span><span class="n">BotorchDataset</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">SupervisedDatasetMeta</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Base class for datasets consisting of labelled pairs `(x, y)`.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for datasets consisting of labelled pairs `(x, y)`.</span>
 
 <span class="sd">    This class object's `__call__` method converts Tensors `src` to</span>
 <span class="sd">    DenseContainers under the assumption that `event_shape=src.shape[-1:]`.</span>
@@ -129,7 +129,7 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Returns a dictionary of `SupervisedDataset` from iterables."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns a dictionary of `SupervisedDataset` from iterables."""</span>
         <span class="n">single_X</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">))</span>
         <span class="n">single_Y</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">single_X</span><span class="p">:</span>
@@ -141,7 +141,7 @@
 
 <div class="viewcode-block" id="FixedNoiseDataset"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.FixedNoiseDataset">[docs]</a><span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">FixedNoiseDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A SupervisedDataset with an additional field `Yvar` that stipulates</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A SupervisedDataset with an additional field `Yvar` that stipulates</span>
 <span class="sd">    observations variances so that `Y[i] ~ N(f(X[i]), Yvar[i])`."""</span>
 
     <span class="n">X</span><span class="p">:</span> <span class="n">BotorchContainer</span>
@@ -157,7 +157,7 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Returns a dictionary of `FixedNoiseDataset` from iterables."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns a dictionary of `FixedNoiseDataset` from iterables."""</span>
         <span class="n">single_X</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">))</span>
         <span class="n">single_Y</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">single_X</span><span class="p">:</span>
@@ -171,7 +171,7 @@
 
 <div class="viewcode-block" id="RankingDataset"><a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.RankingDataset">[docs]</a><span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">RankingDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A SupervisedDataset whose labelled pairs `(x, y)` consist of m-ary combinations</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A SupervisedDataset whose labelled pairs `(x, y)` consist of m-ary combinations</span>
 <span class="sd">    `x ∈ Z^{m}` of elements from a ground set `Z = (z_1, ...)` and ranking vectors</span>
 <span class="sd">    `y {0, ..., m - 1}^{m}` with properties:</span>
 

@@ -37,7 +37,7 @@
            <span class="s2">"tril_matrix_to_vec"</span><span class="p">,</span> <span class="s2">"vec_to_tril_matrix"</span><span class="p">]</span>
 
 <span class="k">def</span> <span class="nf">broadcast_all</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Given a list of values (possibly containing numbers), returns a list where each</span>
 <span class="sd">    value is broadcasted based on the following rules:</span>
 <span class="sd">      - `torch.*Tensor` instances are broadcasted as per :ref:`_broadcasting-semantics`.</span>
@@ -77,7 +77,7 @@
 
 
 <span class="k">def</span> <span class="nf">_sum_rightmost</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Sum out ``dim`` many rightmost dimensions of a given tensor.</span>
 
 <span class="sd">    Args:</span>
@@ -91,7 +91,7 @@
 
 
 <span class="k">def</span> <span class="nf">logits_to_probs</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">is_binary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Converts a tensor of logits into probabilities. Note that for the</span>
 <span class="sd">    binary case, each value denotes log odds, whereas for the</span>
 <span class="sd">    multi-dimensional case, the values along the last dimension denote</span>
@@ -108,7 +108,7 @@
 
 
 <span class="k">def</span> <span class="nf">probs_to_logits</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">is_binary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Converts a tensor of probabilities into logits. For the binary case,</span>
 <span class="sd">    this denotes the probability of occurrence of the event indexed by `1`.</span>
 <span class="sd">    For the multi-dimensional case, the values along the last dimension</span>
@@ -121,7 +121,7 @@
 
 
 <span class="k">class</span> <span class="nc">lazy_property</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Used as a decorator for lazy loading of class attributes. This uses a</span>
 <span class="sd">    non-data descriptor that calls the wrapped method to compute the property on</span>
 <span class="sd">    first call; thereafter replacing the wrapped method into an instance</span>
@@ -141,7 +141,7 @@
 
 
 <span class="k">class</span> <span class="nc">_lazy_property_and_property</span><span class="p">(</span><span class="n">lazy_property</span><span class="p">,</span> <span class="nb">property</span><span class="p">):</span>
-    <span class="sd">"""We want lazy properties to look like multiple things.</span>
+<span class="w">    </span><span class="sd">"""We want lazy properties to look like multiple things.</span>
 
 <span class="sd">    * property when Sphinx autodoc looks</span>
 <span class="sd">    * lazy_property when Distribution validate_args looks</span>
@@ -151,7 +151,7 @@
 
 
 <span class="k">def</span> <span class="nf">tril_matrix_to_vec</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">diag</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Convert a `D x D` matrix or a batch of matrices into a (batched) vector</span>
 <span class="sd">    which comprises of lower triangular elements from the matrix in row order.</span>
 <span class="sd">    """</span>
@@ -165,7 +165,7 @@
 
 
 <span class="k">def</span> <span class="nf">vec_to_tril_matrix</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">diag</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Convert a vector or a batch of vectors into a batched `D x D`</span>
 <span class="sd">    lower triangular matrix containing elements from the vector in row order.</span>
 <span class="sd">    """</span>

@@ -46,7 +46,7 @@
 <div class="viewcode-block" id="batched_bisect"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.fully_bayesian.batched_bisect">[docs]</a><span class="k">def</span> <span class="nf">batched_bisect</span><span class="p">(</span>
     <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">TOL</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span>
 <span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Batched bisection with a fixed number of steps.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Batched bisection with a fixed number of steps.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        f: Target function that takes a `(b1 x ... x bk)`-dim tensor and returns a</span>
@@ -81,7 +81,7 @@
 
 
 <div class="viewcode-block" id="FullyBayesianPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior">[docs]</a><span class="k">class</span> <span class="nc">FullyBayesianPosterior</span><span class="p">(</span><span class="n">GPyTorchPosterior</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A posterior for a fully Bayesian model.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A posterior for a fully Bayesian model.</span>
 
 <span class="sd">    The MCMC batch dimension that corresponds to the models in the mixture is located</span>
 <span class="sd">    at `MCMC_DIM` (defined at the top of this file). Note that while each MCMC sample</span>
@@ -90,7 +90,7 @@
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distribution</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""A posterior for a fully Bayesian model.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""A posterior for a fully Bayesian model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            distribution: A GPyTorch MultivariateNormal (single-output case)</span>
@@ -112,7 +112,7 @@
         <span class="c1"># So we define a function here instead, to be called by self.quantile</span>
         <span class="nd">@lru_cache</span>
         <span class="k">def</span> <span class="nf">_quantile</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-            <span class="sa">r</span><span class="sd">"""Compute the posterior quantiles for the mixture of models."""</span>
+<span class="w">            </span><span class="sa">r</span><span class="sd">"""Compute the posterior quantiles for the mixture of models."""</span>
             <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
@@ -134,14 +134,14 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">mixture_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The posterior mean for the mixture of models."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The posterior mean for the mixture of models."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_mean</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">MCMC_DIM</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_mean</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">mixture_variance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The posterior variance for the mixture of models."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The posterior variance for the mixture of models."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_variance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">num_mcmc_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">MCMC_DIM</span><span class="p">]</span>
             <span class="n">t1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variance</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">MCMC_DIM</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_mcmc_samples</span>
@@ -151,12 +151,12 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mixture_variance</span>
 
 <div class="viewcode-block" id="FullyBayesianPosterior.quantile"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.fully_bayesian.FullyBayesianPosterior.quantile">[docs]</a>    <span class="k">def</span> <span class="nf">quantile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute the posterior quantiles for the mixture of models."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the posterior quantiles for the mixture of models."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quantile</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">batch_range</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""The t-batch range.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The t-batch range.</span>
 
 <span class="sd">        This is used in samplers to identify the t-batch component of the</span>
 <span class="sd">        `base_sample_shape`. The base samples are expanded over the t-batches to</span>

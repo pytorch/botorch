@@ -44,11 +44,11 @@
 
 
 <div class="viewcode-block" id="IndexSampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.index_sampler.IndexSampler">[docs]</a><span class="k">class</span> <span class="nc">IndexSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A sampler that calls `posterior.rsample_from_base_samples` to</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A sampler that calls `posterior.rsample_from_base_samples` to</span>
 <span class="sd">    generate the samples via index base samples."""</span>
 
 <div class="viewcode-block" id="IndexSampler.forward"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.index_sampler.IndexSampler.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">EnsemblePosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: The ensemble posterior to sample from.</span>
@@ -63,7 +63,7 @@
         <span class="k">return</span> <span class="n">samples</span></div>
 
     <span class="k">def</span> <span class="nf">_construct_base_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">EnsemblePosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Constructs base samples as indices to sample with them from</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Constructs base samples as indices to sample with them from</span>
 <span class="sd">        the Posterior.</span>
 
 <span class="sd">        Args:</span>
@@ -85,7 +85,7 @@
     <span class="k">def</span> <span class="nf">_update_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">EnsemblePosterior</span><span class="p">,</span> <span class="n">base_sampler</span><span class="p">:</span> <span class="n">IndexSampler</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Null operation just needed for compatibility with</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Null operation just needed for compatibility with</span>
 <span class="sd">        `CachedCholeskyAcquisitionFunction`."""</span>
         <span class="k">pass</span></div>
 </pre></div>

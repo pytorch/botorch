@@ -45,7 +45,7 @@
 
 
 <div class="viewcode-block" id="TorchPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.torch.TorchPosterior">[docs]</a><span class="k">class</span> <span class="nc">TorchPosterior</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A posterior based on a PyTorch Distribution.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A posterior based on a PyTorch Distribution.</span>
 
 <span class="sd">    NOTE: For any attribute that is not explicitly defined on the Posterior level, this</span>
 <span class="sd">    returns the corresponding attribute of the distribution. This allows easy access</span>
@@ -53,7 +53,7 @@
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distribution</span><span class="p">:</span> <span class="n">Distribution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""A posterior based on a PyTorch Distribution.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""A posterior based on a PyTorch Distribution.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            distribution: A PyTorch Distribution object.</span>
@@ -70,7 +70,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients).</span>
 
 <span class="sd">        This is generally used with a sampler that produces the base samples.</span>
 
@@ -89,23 +89,23 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The torch device of the distribution."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The torch device of the distribution."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The torch dtype of the distribution."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The torch dtype of the distribution."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span>
 
     <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""A catch-all for attributes not defined on the posterior level.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""A catch-all for attributes not defined on the posterior level.</span>
 
 <span class="sd">        Returns the attributes of the distribution instead.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""A minimal utility to support pickle protocol.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""A minimal utility to support pickle protocol.</span>
 
 <span class="sd">        Pickle uses `__get/setstate__` to serialize / deserialize the objects.</span>
 <span class="sd">        Since we define `__getattr__` above, it takes precedence over these</span>
@@ -115,11 +115,11 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span>
 
     <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""A minimal utility to support pickle protocol."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""A minimal utility to support pickle protocol."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span> <span class="o">=</span> <span class="n">d</span>
 
 <div class="viewcode-block" id="TorchPosterior.quantile"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.torch.TorchPosterior.quantile">[docs]</a>    <span class="k">def</span> <span class="nf">quantile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute quantiles of the distribution.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute quantiles of the distribution.</span>
 
 <span class="sd">        For multi-variate distributions, this may return the quantiles of</span>
 <span class="sd">        the marginal distributions.</span>
@@ -129,7 +129,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">icdf</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="TorchPosterior.density"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.torch.TorchPosterior.density">[docs]</a>    <span class="k">def</span> <span class="nf">density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The probability density (or mass if discrete) of the distribution.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The probability density (or mass if discrete) of the distribution.</span>
 
 <span class="sd">        For multi-variate distributions, this may return the density of</span>
 <span class="sd">        the marginal distributions.</span>
@@ -141,7 +141,7 @@
     <span class="k">def</span> <span class="nf">_extended_shape</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>  <span class="c1"># noqa: B008</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Returns the shape of the samples produced by the distribution with</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns the shape of the samples produced by the distribution with</span>
 <span class="sd">        the given `sample_shape`.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">)</span></div>

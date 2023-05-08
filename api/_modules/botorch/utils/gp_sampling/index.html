@@ -52,7 +52,7 @@
 
 
 <div class="viewcode-block" id="GPDraw"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.GPDraw">[docs]</a><span class="k">class</span> <span class="nc">GPDraw</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Convenience wrapper for sampling a function from a GP prior.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Convenience wrapper for sampling a function from a GP prior.</span>
 
 <span class="sd">    This wrapper implicitly defines the GP sample as a self-updating function by keeping</span>
 <span class="sd">    track of the evaluated points and respective base samples used during the</span>
@@ -62,7 +62,7 @@
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Construct a GP function sampler.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct a GP function sampler.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: The Model defining the GP prior.</span>
@@ -77,7 +77,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">Xs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""A `(batch_shape) x n_eval x d`-dim tensor of locations at which the GP was</span>
+<span class="w">        </span><span class="sd">"""A `(batch_shape) x n_eval x d`-dim tensor of locations at which the GP was</span>
 <span class="sd">        evaluated (or `None` if the sample has never been evaluated).</span>
 <span class="sd">        """</span>
         <span class="k">try</span><span class="p">:</span>
@@ -87,7 +87,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">Ys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""A `(batch_shape) x n_eval x d`-dim tensor of associated function values (or</span>
+<span class="w">        </span><span class="sd">"""A `(batch_shape) x n_eval x d`-dim tensor of associated function values (or</span>
 <span class="sd">        `None` if the sample has never been evaluated).</span>
 <span class="sd">        """</span>
         <span class="k">try</span><span class="p">:</span>
@@ -96,7 +96,7 @@
             <span class="k">return</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="GPDraw.forward"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.GPDraw.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate the GP sample function at a set of points X.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the GP sample function at a set of points X.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of points</span>
@@ -140,7 +140,7 @@
 
 
 <div class="viewcode-block" id="RandomFourierFeatures"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.RandomFourierFeatures">[docs]</a><span class="k">class</span> <span class="nc">RandomFourierFeatures</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sd">"""A class that represents Random Fourier Features."""</span>
+<span class="w">    </span><span class="sd">"""A class that represents Random Fourier Features."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -149,7 +149,7 @@
         <span class="n">num_rff_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initialize RandomFourierFeatures.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize RandomFourierFeatures.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            kernel: The GP kernel.</span>
@@ -206,7 +206,7 @@
         <span class="n">num_rff_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample weights for RFF.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample weights for RFF.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            kernel: The GP base kernel.</span>
@@ -235,7 +235,7 @@
         <span class="k">return</span> <span class="n">weights</span>
 
 <div class="viewcode-block" id="RandomFourierFeatures.forward"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.RandomFourierFeatures.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""Get Fourier basis features for the provided inputs.</span>
+<span class="w">        </span><span class="sd">"""Get Fourier basis features for the provided inputs.</span>
 
 <span class="sd">        Note that the right-most subset of the batch shape of `X` should</span>
 <span class="sd">        be `(sample_shape) x (kernel_batch_shape)` if using either the</span>
@@ -287,7 +287,7 @@
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">outputscale</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">outputs</span></div>
 
     <span class="k">def</span> <span class="nf">_check_forward_X_shape_compatibility</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Check that the `batch_shape` of X, if any, is compatible with the</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Check that the `batch_shape` of X, if any, is compatible with the</span>
 <span class="sd">        `sample_shape` &amp; `kernel_batch_shape`.</span>
 <span class="sd">        """</span>
         <span class="n">full_batch_shape_X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
@@ -313,7 +313,7 @@
     <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
     <span class="n">bases</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenericDeterministicModel</span><span class="p">:</span>
-    <span class="sd">"""</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Get a batched deterministic model that batch evaluates `n_samples` function</span>
 <span class="sd">    samples. This supports multi-output models as well.</span>
 
@@ -354,7 +354,7 @@
 <div class="viewcode-block" id="get_deterministic_model"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_deterministic_model">[docs]</a><span class="k">def</span> <span class="nf">get_deterministic_model</span><span class="p">(</span>
     <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">bases</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenericDeterministicModel</span><span class="p">:</span>
-    <span class="sd">"""Get a deterministic model using the provided weights and bases for each output.</span>
+<span class="w">    </span><span class="sd">"""Get a deterministic model using the provided weights and bases for each output.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        weights: A list of weights with `m` elements.</span>
@@ -378,7 +378,7 @@
     <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
     <span class="n">bases</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">RandomFourierFeatures</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelList</span><span class="p">:</span>
-    <span class="sd">"""Get a deterministic model list using the provided weights and bases</span>
+<span class="w">    </span><span class="sd">"""Get a deterministic model list using the provided weights and bases</span>
 <span class="sd">    for each output.</span>
 
 <span class="sd">    Args:</span>
@@ -399,7 +399,7 @@
 
 
 <div class="viewcode-block" id="get_weights_posterior"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_weights_posterior">[docs]</a><span class="k">def</span> <span class="nf">get_weights_posterior</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma_sq</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Sample bayesian linear regression weights.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample bayesian linear regression weights.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: A tensor of inputs with shape `(*batch_shape, n num_rff_features)`.</span>
@@ -434,7 +434,7 @@
 <div class="viewcode-block" id="get_gp_samples"><a class="viewcode-back" href="../../../utils.html#botorch.utils.gp_sampling.get_gp_samples">[docs]</a><span class="k">def</span> <span class="nf">get_gp_samples</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">num_rff_features</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenericDeterministicModel</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Sample functions from GP posterior using RFFs. The returned</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample functions from GP posterior using RFFs. The returned</span>
 <span class="sd">    `GenericDeterministicModel` effectively wraps `num_outputs` models,</span>
 <span class="sd">    each of which has a batch shape of `n_samples`. Refer</span>
 <span class="sd">    `get_deterministic_model_multi_samples` for more details.</span>

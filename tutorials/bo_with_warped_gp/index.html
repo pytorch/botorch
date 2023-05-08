@@ -277,7 +277,7 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
 
 
 <span class="k">def</span> <span class="nf">optimize_acqf_and_get_observation</span><span class="p">(</span><span class="n">acq_func</span><span class="p">):</span>
-    <span class="sd">"""Optimizes the acquisition function, and returns a new candidate and a noisy observation."""</span>
+<span class="w">    </span><span class="sd">"""Optimizes the acquisition function, and returns a new candidate and a noisy observation."""</span>
     <span class="c1"># optimize</span>
     <span class="n">candidates</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
         <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_func</span><span class="p">,</span>
@@ -295,7 +295,7 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
 
 
 <span class="k">def</span> <span class="nf">update_random_observations</span><span class="p">(</span><span class="n">best_random</span><span class="p">):</span>
-    <span class="sd">"""Simulates a quasi-random policy by taking a the current list of best values observed randomly,</span>
+<span class="w">    </span><span class="sd">"""Simulates a quasi-random policy by taking a the current list of best values observed randomly,</span>
 <span class="sd">    drawing a new random point, observing its value, and updating the list.</span>
 <span class="sd">    """</span>
     <span class="n">rand_x</span> <span class="o">=</span> <span class="n">draw_sobol_samples</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>

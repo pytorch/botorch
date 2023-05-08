@@ -47,7 +47,7 @@
 
 
 <div class="viewcode-block" id="ModelListGP"><a class="viewcode-back" href="../../../models.html#botorch.models.model_list_gp_regression.ModelListGP">[docs]</a><span class="k">class</span> <span class="nc">ModelListGP</span><span class="p">(</span><span class="n">IndependentModelList</span><span class="p">,</span> <span class="n">ModelListGPyTorchModel</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A multi-output GP model with independent GPs for the outputs.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A multi-output GP model with independent GPs for the outputs.</span>
 
 <span class="sd">    This model supports different-shaped training inputs for each of its</span>
 <span class="sd">    sub-models. It can be used with any number of single-output</span>
@@ -65,7 +65,7 @@
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">gp_models</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            *gp_models: A number of single-output `GPyTorchModel`\s.</span>
 <span class="sd">                If models have input/output transforms, these are honored</span>
@@ -83,7 +83,7 @@
 <div class="viewcode-block" id="ModelListGP.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.model_list_gp_regression.ModelListGP.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelListGP</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `m`-list of `batch_shape x n' x d`-dim Tensors, where `d` is the</span>
@@ -134,7 +134,7 @@
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_fantasy_model</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs_</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ModelListGP.subset_output"><a class="viewcode-back" href="../../../models.html#botorch.models.model_list_gp_regression.ModelListGP.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ModelListGP</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Subset the model along the output dimension.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Subset the model along the output dimension.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            idcs: The output indices to subset the model to.</span>
@@ -145,12 +145,12 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idcs</span><span class="p">])</span></div>
 
     <span class="k">def</span> <span class="nf">_set_transformed_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Update training inputs with transformed inputs."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Update training inputs with transformed inputs."""</span>
         <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
             <span class="n">m</span><span class="o">.</span><span class="n">_set_transformed_inputs</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_revert_to_original_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Revert training inputs back to original."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Revert training inputs back to original."""</span>
         <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
             <span class="n">m</span><span class="o">.</span><span class="n">_revert_to_original_inputs</span><span class="p">()</span></div>
 </pre></div>

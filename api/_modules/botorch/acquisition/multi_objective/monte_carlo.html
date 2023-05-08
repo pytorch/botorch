@@ -95,7 +95,7 @@
 
 
 <div class="viewcode-block" id="MultiObjectiveMCAcquisitionFunction"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">MultiObjectiveMCAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for Multi-Objective batch acquisition functions.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for Multi-Objective batch acquisition functions.</span>
 
 <span class="sd">    NOTE: This does not inherit from `MCAcquisitionFunction` to avoid circular imports.</span>
 
@@ -114,7 +114,7 @@
         <span class="n">eta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Constructor for the MCAcquisitionFunction base class.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Constructor for the MCAcquisitionFunction base class.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
@@ -171,7 +171,7 @@
 
 <div class="viewcode-block" id="MultiObjectiveMCAcquisitionFunction.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Takes in a `batch_shape x q x d` X Tensor of t-batches with `q` `d`-dim</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Takes in a `batch_shape x q x d` X Tensor of t-batches with `q` `d`-dim</span>
 <span class="sd">        design points each, and returns a Tensor with shape `batch_shape'`, where</span>
 <span class="sd">        `batch_shape'` is the broadcasted batch shape of model and input `X`. Should</span>
 <span class="sd">        utilize the result of `set_X_pending` as needed to account for pending function</span>
@@ -192,7 +192,7 @@
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">eta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""q-Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</span>
 
 <span class="sd">        See [Daulton2020qehvi]_ for details.</span>
 
@@ -259,7 +259,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span> <span class="o">=</span> <span class="n">BufferDict</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_cache_q_subset_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_out</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Cache indices corresponding to all subsets of `q_out`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Cache indices corresponding to all subsets of `q_out`.</span>
 
 <span class="sd">        This means that consecutive calls to `forward` with the same</span>
 <span class="sd">        `q_out` will not recompute the indices for all (2^q_out - 1) subsets.</span>
@@ -290,7 +290,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span> <span class="o">=</span> <span class="n">q_out</span>
 
     <span class="k">def</span> <span class="nf">_compute_qehvi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute the expected (feasible) hypervolume improvement given MC samples.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the expected (feasible) hypervolume improvement given MC samples.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            samples: A `n_samples x batch_shape x q' x m`-dim tensor of samples.</span>
@@ -407,7 +407,7 @@
         <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""q-Noisy Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Noisy Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</span>
 
 <span class="sd">        See [Daulton2021nehvi]_ for details.</span>
 
@@ -544,11 +544,11 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">X_baseline</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Return X_baseline augmented with pending points cached using CBD."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Return X_baseline augmented with pending points cached using CBD."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_baseline_and_pending</span>
 
     <span class="k">def</span> <span class="nf">_compute_initial_hvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">feas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute hypervolume dominated by f(X_baseline) under each sample.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute hypervolume dominated by f(X_baseline) under each sample.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            obj: A `sample_shape x batch_shape x n x m`-dim tensor of samples</span>
@@ -574,7 +574,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_set_cell_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_new_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute the box decomposition under each posterior sample.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the box decomposition under each posterior sample.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_new_points: The number of new points (beyond the points</span>
@@ -666,7 +666,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"cell_upper_bounds"</span><span class="p">,</span> <span class="n">cell_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
 <div class="viewcode-block" id="qNoisyExpectedHypervolumeImprovement.set_X_pending"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.set_X_pending">[docs]</a>    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Informs the acquisition function about pending design points.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Informs the acquisition function about pending design points.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X_pending: `n x d` Tensor with `n` `d`-dim design points that have</span>
@@ -713,7 +713,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_hypervolumes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute hypervolume over X_baseline under each posterior sample.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute hypervolume over X_baseline under each posterior sample.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A `n_samples`-dim tensor of hypervolumes.</span>

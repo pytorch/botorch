@@ -39,7 +39,7 @@
 
 
 <div class="viewcode-block" id="SACGP"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual.SACGP">[docs]</a><span class="k">class</span> <span class="nc">SACGP</span><span class="p">(</span><span class="n">FixedNoiseGP</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A GP using a Structural Additive Contextual(SAC) kernel."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A GP using a Structural Additive Contextual(SAC) kernel."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -48,7 +48,7 @@
         <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">decomposition</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: (n x d) X training data.</span>
 <span class="sd">            train_Y: (n x 1) Y training data.</span>
@@ -68,7 +68,7 @@
 
 
 <div class="viewcode-block" id="LCEAGP"><a class="viewcode-back" href="../../../models.html#botorch.models.contextual.LCEAGP">[docs]</a><span class="k">class</span> <span class="nc">LCEAGP</span><span class="p">(</span><span class="n">FixedNoiseGP</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A GP using a Latent Context Embedding Additive (LCE-A) Kernel.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A GP using a Latent Context Embedding Additive (LCE-A) Kernel.</span>
 
 <span class="sd">    Note that the model does not support batch training. Input training</span>
 <span class="sd">    data sets should have dim = 2.</span>
@@ -86,7 +86,7 @@
         <span class="n">embs_dim_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">context_weight_dict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: (n x d) X training data.</span>
 <span class="sd">            train_Y: (n x 1) Y training data.</span>

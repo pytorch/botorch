@@ -54,7 +54,7 @@
 
 
 <div class="viewcode-block" id="TransformedModuleMixin"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.TransformedModuleMixin">[docs]</a><span class="k">class</span> <span class="nc">TransformedModuleMixin</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Mixin that wraps a module's __call__ method with optional transforms."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Mixin that wraps a module's __call__ method with optional transforms."""</span>
     <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TInputTransform</span><span class="p">]</span>
     <span class="n">output_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TOutputTransform</span><span class="p">]</span>
 
@@ -80,7 +80,7 @@
 
 
 <div class="viewcode-block" id="TensorTransform"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.TensorTransform">[docs]</a><span class="k">class</span> <span class="nc">TensorTransform</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for transforms that map tensor to tensor."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for transforms that map tensor to tensor."""</span>
 
 <div class="viewcode-block" id="TensorTransform.forward"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.TensorTransform.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -88,10 +88,10 @@
 
 
 <div class="viewcode-block" id="ChainedTransform"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.ChainedTransform">[docs]</a><span class="k">class</span> <span class="nc">ChainedTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A composition of TensorTransforms."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A composition of TensorTransforms."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">transforms</span><span class="p">:</span> <span class="n">TensorTransform</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Initializes a ChainedTransform instance.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes a ChainedTransform instance.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            transforms: A set of transforms to be applied from right to left.</span>
@@ -106,10 +106,10 @@
 
 
 <div class="viewcode-block" id="SineCosineTransform"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.SineCosineTransform">[docs]</a><span class="k">class</span> <span class="nc">SineCosineTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A transform that returns concatenated sine and cosine features."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that returns concatenated sine and cosine features."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Initializes a SineCosineTransform instance.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes a SineCosineTransform instance.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            scale: An optional tensor used to rescale the module's outputs.</span>
@@ -123,10 +123,10 @@
 
 
 <div class="viewcode-block" id="InverseLengthscaleTransform"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.InverseLengthscaleTransform">[docs]</a><span class="k">class</span> <span class="nc">InverseLengthscaleTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A transform that divides its inputs by a kernels lengthscales."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that divides its inputs by a kernels lengthscales."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Initializes an InverseLengthscaleTransform instance.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes an InverseLengthscaleTransform instance.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            kernel: The kernel whose lengthscales are to be used.</span>
@@ -142,11 +142,11 @@
 
 
 <div class="viewcode-block" id="OutputscaleTransform"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.OutputscaleTransform">[docs]</a><span class="k">class</span> <span class="nc">OutputscaleTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A transform that multiplies its inputs by the square root of a</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that multiplies its inputs by the square root of a</span>
 <span class="sd">    kernel's outputscale."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kernel</span><span class="p">:</span> <span class="n">ScaleKernel</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Initializes an OutputscaleTransform instance.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes an OutputscaleTransform instance.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            kernel: A ScaleKernel whose `outputscale` is to be used.</span>
@@ -164,11 +164,11 @@
 
 
 <div class="viewcode-block" id="FeatureSelector"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.FeatureSelector">[docs]</a><span class="k">class</span> <span class="nc">FeatureSelector</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A transform that returns a subset of its input's features.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that returns a subset of its input's features.</span>
 <span class="sd">    along a given tensor dimension."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indices</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">dim</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">LongTensor</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Initializes a FeatureSelector instance.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes a FeatureSelector instance.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            indices: A LongTensor of feature indices.</span>
@@ -185,14 +185,14 @@
 
 
 <div class="viewcode-block" id="OutcomeUntransformer"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.OutcomeUntransformer">[docs]</a><span class="k">class</span> <span class="nc">OutcomeUntransformer</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Module acting as a bridge for `OutcomeTransform.untransform`."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Module acting as a bridge for `OutcomeTransform.untransform`."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">OutcomeTransform</span><span class="p">,</span>
         <span class="n">num_outputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">LongTensor</span><span class="p">],</span>
     <span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Initializes an OutcomeUntransformer instance.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes an OutcomeUntransformer instance.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            transform: The wrapped OutcomeTransform instance.</span>
@@ -218,12 +218,12 @@
 
 
 <div class="viewcode-block" id="get_input_transform"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.get_input_transform">[docs]</a><span class="k">def</span> <span class="nf">get_input_transform</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Returns a model's input_transform or None."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Returns a model's input_transform or None."""</span>
     <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="get_output_transform"><a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.get_output_transform">[docs]</a><span class="k">def</span> <span class="nf">get_output_transform</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeUntransformer</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Returns a wrapped version of a model's outcome_transform or None."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Returns a wrapped version of a model's outcome_transform or None."""</span>
     <span class="n">transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>

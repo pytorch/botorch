@@ -61,7 +61,7 @@
 
 
 <div class="viewcode-block" id="InducingPointAllocator"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.InducingPointAllocator">[docs]</a><span class="k">class</span> <span class="nc">InducingPointAllocator</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    This class provides functionality to initialize the inducing point locations</span>
 <span class="sd">    of an inducing point-based model, e.g. a `SingleTaskVariationalGP`.</span>
 <span class="sd">    """</span>
@@ -70,7 +70,7 @@
     <span class="k">def</span> <span class="nf">_get_quality_function</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QualityFunction</span><span class="p">:</span>
-        <span class="sd">"""</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Build the quality function required for this inducing point allocation strategy.</span>
 
 <span class="sd">        Returns:</span>
@@ -84,7 +84,7 @@
         <span class="n">num_inducing</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">input_batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Initialize the `num_inducing` inducing point locations according to a</span>
 <span class="sd">        specific initialization strategy. todo say something about quality</span>
 
@@ -158,12 +158,12 @@
 
 
 <div class="viewcode-block" id="QualityFunction"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.QualityFunction">[docs]</a><span class="k">class</span> <span class="nc">QualityFunction</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-    <span class="sd">"""A function that scores inputs with respect</span>
+<span class="w">    </span><span class="sd">"""A function that scores inputs with respect</span>
 <span class="sd">    to a specific criterion."""</span>
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># [n, d] -&gt; [n]</span>
-        <span class="sd">"""</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            inputs: inputs (of shape n x d)</span>
 
@@ -173,7 +173,7 @@
 
 
 <div class="viewcode-block" id="UnitQualityFunction"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.UnitQualityFunction">[docs]</a><span class="k">class</span> <span class="nc">UnitQualityFunction</span><span class="p">(</span><span class="n">QualityFunction</span><span class="p">):</span>
-    <span class="sd">"""</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    A function returning ones for each element. Using this quality function</span>
 <span class="sd">    for inducing point allocation corresponds to allocating inducing points</span>
 <span class="sd">    with the sole aim of minimizing predictive variance, i.e. the approach</span>
@@ -182,7 +182,7 @@
 
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># [n, d]-&gt; [n]</span>
-        <span class="sd">"""</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            inputs: inputs (of shape n x d)</span>
 
@@ -193,7 +193,7 @@
 
 
 <div class="viewcode-block" id="ExpectedImprovementQualityFunction"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.ExpectedImprovementQualityFunction">[docs]</a><span class="k">class</span> <span class="nc">ExpectedImprovementQualityFunction</span><span class="p">(</span><span class="n">QualityFunction</span><span class="p">):</span>
-    <span class="sd">"""</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    A function measuring the quality of input points as their expected</span>
 <span class="sd">    improvement with respect to a conservative baseline. Expectations</span>
 <span class="sd">    are according to the model from the previous BO step. See [moss2023ipa]_</span>
@@ -201,7 +201,7 @@
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            model: The model fitted during the previous BO step. For now, this</span>
 <span class="sd">                must be a single task model (i.e. num_outputs=1).</span>
@@ -217,7 +217,7 @@
 
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># [n, d] -&gt; [n]</span>
-        <span class="sd">"""</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            inputs: inputs (of shape n x d)</span>
 
@@ -235,7 +235,7 @@
 
 
 <div class="viewcode-block" id="GreedyVarianceReduction"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.GreedyVarianceReduction">[docs]</a><span class="k">class</span> <span class="nc">GreedyVarianceReduction</span><span class="p">(</span><span class="n">InducingPointAllocator</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    The inducing point allocator proposed by [burt2020svgp]_, that</span>
 <span class="sd">    greedily chooses inducing point locations with maximal (conditional)</span>
 <span class="sd">    predictive variance.</span>
@@ -244,7 +244,7 @@
     <span class="k">def</span> <span class="nf">_get_quality_function</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QualityFunction</span><span class="p">:</span>
-        <span class="sd">"""</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Build the unit quality function required for the greedy variance</span>
 <span class="sd">        reduction inducing point allocation strategy.</span>
 
@@ -256,14 +256,14 @@
 
 
 <div class="viewcode-block" id="GreedyImprovementReduction"><a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.GreedyImprovementReduction">[docs]</a><span class="k">class</span> <span class="nc">GreedyImprovementReduction</span><span class="p">(</span><span class="n">InducingPointAllocator</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    An inducing point allocator that greedily chooses inducing points with large</span>
 <span class="sd">    predictive variance and that are in promising regions of the search</span>
 <span class="sd">    space (according to the model form the previous BO step), see [moss2023ipa]_.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: The model fitted during the previous BO step.</span>
@@ -276,7 +276,7 @@
     <span class="k">def</span> <span class="nf">_get_quality_function</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QualityFunction</span><span class="p">:</span>
-        <span class="sd">"""</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Build the improvement-based quality function required for the greedy</span>
 <span class="sd">        improvement reduction inducing point allocation strategy.</span>
 
@@ -294,7 +294,7 @@
     <span class="n">quality_scores</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">epsilon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    A pivoted Cholesky initialization method for the inducing points,</span>
 <span class="sd">    originally proposed in [burt2020svgp]_ with the algorithm itself coming from</span>
 <span class="sd">    [chen2018dpp]_. Code is a PyTorch version from [chen2018dpp]_, based on</span>

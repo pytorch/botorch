@@ -44,7 +44,7 @@
 
 
 <div class="viewcode-block" id="PairwiseMCSampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.pairwise_samplers.PairwiseMCSampler">[docs]</a><span class="k">class</span> <span class="nc">PairwiseMCSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Abstract class for Pairwise MC Sampler.</span>
 
 <span class="sd">    This sampler will sample pairwise comparisons. It is to be used together</span>
@@ -53,7 +53,7 @@
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_num_comparisons</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            max_num_comparisons: Max number of comparisons drawn within samples.</span>
 <span class="sd">                If None, use all possible pairwise comparisons</span>
@@ -64,7 +64,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span> <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1000000</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
 
 <div class="viewcode-block" id="PairwiseMCSampler.forward"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.pairwise_samplers.PairwiseMCSampler.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior and make comparisons</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior and make comparisons</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: The Posterior to sample from.</span>
@@ -111,7 +111,7 @@
         <span class="n">max_num_comparisons</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            sample_shape: The `sample_shape` of the samples to generate.</span>
 <span class="sd">            seed: The seed for the RNG. If omitted, use a random seed.</span>
@@ -133,7 +133,7 @@
         <span class="n">max_num_comparisons</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            sample_shape: The `sample_shape` of the samples to generate.</span>
 <span class="sd">            seed: The seed for the RNG. If omitted, use a random seed.</span>

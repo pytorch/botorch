@@ -119,7 +119,7 @@
 
 
 <div class="viewcode-block" id="BraninCurrin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.BraninCurrin">[docs]</a><span class="k">class</span> <span class="nc">BraninCurrin</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Two objective problem composed of the Branin and Currin functions.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Two objective problem composed of the Branin and Currin functions.</span>
 
 <span class="sd">    Branin (rescaled):</span>
 
@@ -143,7 +143,7 @@
     <span class="n">_max_hv</span> <span class="o">=</span> <span class="mf">59.36011874867746</span>  <span class="c1"># this is approximated using NSGA-II</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
 <span class="sd">            negate: If True, negate the objectives.</span>
@@ -174,7 +174,7 @@
 
 
 <div class="viewcode-block" id="DH"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH">[docs]</a><span class="k">class</span> <span class="nc">DH</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Base class for DH problems for robust multi-objective optimization.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for DH problems for robust multi-objective optimization.</span>
 
 <span class="sd">    In their paper, [Deb2005robust]_ consider these problems under a mean-robustness</span>
 <span class="sd">    setting, and use uniformly distributed input perturbations from the box with</span>
@@ -203,7 +203,7 @@
         <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -233,7 +233,7 @@
 
 
 <div class="viewcode-block" id="DH1"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH1">[docs]</a><span class="k">class</span> <span class="nc">DH1</span><span class="p">(</span><span class="n">DH</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""DH1 test problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""DH1 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1] x [-1, 1]^{d-1}`:</span>
 
@@ -277,7 +277,7 @@
 
 
 <div class="viewcode-block" id="DH2"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH2">[docs]</a><span class="k">class</span> <span class="nc">DH2</span><span class="p">(</span><span class="n">DH1</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""DH2 test problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""DH2 test problem.</span>
 
 <span class="sd">    This is identical to DH1 except for having `beta = 10.0`.</span>
 <span class="sd">    """</span>
@@ -286,7 +286,7 @@
 
 
 <div class="viewcode-block" id="DH3"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH3">[docs]</a><span class="k">class</span> <span class="nc">DH3</span><span class="p">(</span><span class="n">DH</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""DH3 test problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""DH3 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^2 x [-1, 1]^{d-2}`:</span>
 
@@ -330,7 +330,7 @@
 
 
 <div class="viewcode-block" id="DH4"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH4">[docs]</a><span class="k">class</span> <span class="nc">DH4</span><span class="p">(</span><span class="n">DH3</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""DH4 test problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""DH4 test problem.</span>
 
 <span class="sd">    This is similar to DH3 except that it is evaluated on</span>
 <span class="sd">    `[0, 1] x [-0.15, 1] x [-1, 1]^{d-2}` and:</span>
@@ -351,7 +351,7 @@
 
 
 <div class="viewcode-block" id="DTLZ"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ">[docs]</a><span class="k">class</span> <span class="nc">DTLZ</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Base class for DTLZ problems.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for DTLZ problems.</span>
 
 <span class="sd">    See [Deb2005dtlz]_ for more details on DTLZ.</span>
 <span class="sd">    """</span>
@@ -363,7 +363,7 @@
         <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension of the function.</span>
 <span class="sd">            num_objectives: Must be less than dim.</span>
@@ -383,7 +383,7 @@
 
 
 <div class="viewcode-block" id="DTLZ1"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ1">[docs]</a><span class="k">class</span> <span class="nc">DTLZ1</span><span class="p">(</span><span class="n">DTLZ</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""DLTZ1 test problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""DLTZ1 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
 
@@ -423,7 +423,7 @@
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DTLZ1.gen_pareto_front"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ1.gen_pareto_front">[docs]</a>    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Generate `n` pareto optimal points.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Generate `n` pareto optimal points.</span>
 
 <span class="sd">        The pareto points randomly sampled from the hyperplane sum_i f(x_i) = 0.5.</span>
 <span class="sd">        """</span>
@@ -440,7 +440,7 @@
 
 
 <div class="viewcode-block" id="DTLZ2"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ2">[docs]</a><span class="k">class</span> <span class="nc">DTLZ2</span><span class="p">(</span><span class="n">DTLZ</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""DLTZ2 test problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""DLTZ2 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
 
@@ -483,7 +483,7 @@
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DTLZ2.gen_pareto_front"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ2.gen_pareto_front">[docs]</a>    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Generate `n` pareto optimal points.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Generate `n` pareto optimal points.</span>
 
 <span class="sd">        The pareto points are randomly sampled from the hypersphere's</span>
 <span class="sd">        positive section.</span>
@@ -501,7 +501,7 @@
 
 
 <div class="viewcode-block" id="DTLZ3"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ3">[docs]</a><span class="k">class</span> <span class="nc">DTLZ3</span><span class="p">(</span><span class="n">DTLZ2</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""DTLZ3 test problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""DTLZ3 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
 
@@ -537,7 +537,7 @@
 
 
 <div class="viewcode-block" id="DTLZ4"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ4">[docs]</a><span class="k">class</span> <span class="nc">DTLZ4</span><span class="p">(</span><span class="n">DTLZ2</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""DTLZ4 test problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""DTLZ4 test problem.</span>
 
 <span class="sd">    This is the same as DTLZ2, but with alpha=100 as the exponent,</span>
 <span class="sd">    resulting in dense solutions near the f_M-f_1 plane.</span>
@@ -548,7 +548,7 @@
 
 
 <div class="viewcode-block" id="DTLZ5"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ5">[docs]</a><span class="k">class</span> <span class="nc">DTLZ5</span><span class="p">(</span><span class="n">DTLZ</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""DTLZ5 test problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""DTLZ5 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
 
@@ -581,7 +581,7 @@
 
 
 <div class="viewcode-block" id="DTLZ7"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ7">[docs]</a><span class="k">class</span> <span class="nc">DTLZ7</span><span class="p">(</span><span class="n">DTLZ</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""DTLZ7 test problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""DTLZ7 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
 <span class="sd">        f_0(x) = x_0</span>
@@ -612,7 +612,7 @@
 
 
 <div class="viewcode-block" id="GMM"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.GMM">[docs]</a><span class="k">class</span> <span class="nc">GMM</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A test problem where each objective is a Gaussian mixture model.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A test problem where each objective is a Gaussian mixture model.</span>
 
 <span class="sd">    This implementation is adapted from the single objective version (proposed by</span>
 <span class="sd">    [Frohlich2020]_) at</span>
@@ -630,7 +630,7 @@
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">num_objectives</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
 <span class="sd">            negate: If True, negate the objectives.</span>
@@ -691,7 +691,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"gmm_norm"</span><span class="p">,</span> <span class="n">gmm_norm</span><span class="p">)</span>
 
 <div class="viewcode-block" id="GMM.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.GMM.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Evaluate the GMMs."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the GMMs."""</span>
         <span class="c1"># This needs to be reinstantiated because MVN apparently does not</span>
         <span class="c1"># have a `to` method to make it device/dtype agnostic.</span>
         <span class="n">mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gmm_pos</span><span class="p">,</span> <span class="n">covariance_matrix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gmm_covar</span><span class="p">)</span>
@@ -707,7 +707,7 @@
 
 
 <div class="viewcode-block" id="Penicillin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.Penicillin">[docs]</a><span class="k">class</span> <span class="nc">Penicillin</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A penicillin production simulator from [Liang2021]_.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A penicillin production simulator from [Liang2021]_.</span>
 
 <span class="sd">    This implementation is adapted from</span>
 <span class="sd">    https://github.com/HarryQL/TuRBO-Penicillin.</span>
@@ -759,7 +759,7 @@
 
 <div class="viewcode-block" id="Penicillin.penicillin_vectorized"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.Penicillin.penicillin_vectorized">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">penicillin_vectorized</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X_input</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Penicillin simulator, simplified and vectorized.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Penicillin simulator, simplified and vectorized.</span>
 
 <span class="sd">        The 7 input parameters are (in order): culture volume, biomass</span>
 <span class="sd">        concentration, temperature, glucose concentration, substrate feed</span>
@@ -840,7 +840,7 @@
 
 
 <div class="viewcode-block" id="ToyRobust"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ToyRobust">[docs]</a><span class="k">class</span> <span class="nc">ToyRobust</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A 1D problem where the Pareto frontier is sensitive to input noise.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A 1D problem where the Pareto frontier is sensitive to input noise.</span>
 
 <span class="sd">    Specifically, the pareto frontier over the nominal objectives is</span>
 <span class="sd">    sensitive to input noise. The first objective is a mixture of a linear</span>
@@ -883,7 +883,7 @@
 
 
 <div class="viewcode-block" id="VehicleSafety"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.VehicleSafety">[docs]</a><span class="k">class</span> <span class="nc">VehicleSafety</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Optimize Vehicle crash-worthiness.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Optimize Vehicle crash-worthiness.</span>
 
 <span class="sd">    See [Tanabe2020]_ for details.</span>
 
@@ -941,7 +941,7 @@
 
 
 <div class="viewcode-block" id="ZDT"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT">[docs]</a><span class="k">class</span> <span class="nc">ZDT</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Base class for ZDT problems.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for ZDT problems.</span>
 
 <span class="sd">    See [Zitzler2000]_ for more details on ZDT.</span>
 <span class="sd">    """</span>
@@ -955,7 +955,7 @@
         <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension of the function.</span>
 <span class="sd">            num_objectives: Number of objectives. Must not be larger than dim.</span>
@@ -981,7 +981,7 @@
 
 
 <div class="viewcode-block" id="ZDT1"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT1">[docs]</a><span class="k">class</span> <span class="nc">ZDT1</span><span class="p">(</span><span class="n">ZDT</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""ZDT1 test problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""ZDT1 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
 
@@ -1014,7 +1014,7 @@
 
 
 <div class="viewcode-block" id="ZDT2"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT2">[docs]</a><span class="k">class</span> <span class="nc">ZDT2</span><span class="p">(</span><span class="n">ZDT</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""ZDT2 test problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""ZDT2 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
 
@@ -1047,7 +1047,7 @@
 
 
 <div class="viewcode-block" id="ZDT3"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ZDT3">[docs]</a><span class="k">class</span> <span class="nc">ZDT3</span><span class="p">(</span><span class="n">ZDT</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""ZDT3 test problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""ZDT3 test problem.</span>
 
 <span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
 
@@ -1110,7 +1110,7 @@
 
 
 <div class="viewcode-block" id="CarSideImpact"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CarSideImpact">[docs]</a><span class="k">class</span> <span class="nc">CarSideImpact</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Car side impact problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Car side impact problem.</span>
 
 <span class="sd">    See [Tanabe2020]_ for details.</span>
 
@@ -1199,7 +1199,7 @@
 
 
 <div class="viewcode-block" id="BNH"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.BNH">[docs]</a><span class="k">class</span> <span class="nc">BNH</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The constrained BNH problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The constrained BNH problem.</span>
 
 <span class="sd">    See [GarridoMerchan2020]_ for more details on this problem. Note that this is a</span>
 <span class="sd">    minimization problem.</span>
@@ -1223,7 +1223,7 @@
 
 
 <div class="viewcode-block" id="CONSTR"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CONSTR">[docs]</a><span class="k">class</span> <span class="nc">CONSTR</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The constrained CONSTR problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The constrained CONSTR problem.</span>
 
 <span class="sd">    See [GarridoMerchan2020]_ for more details on this problem. Note that this is a</span>
 <span class="sd">    minimization problem.</span>
@@ -1247,7 +1247,7 @@
 
 
 <div class="viewcode-block" id="ConstrainedBraninCurrin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ConstrainedBraninCurrin">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedBraninCurrin</span><span class="p">(</span><span class="n">BraninCurrin</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Constrained Branin Currin Function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Constrained Branin Currin Function.</span>
 
 <span class="sd">    This uses the disk constraint from [Gelbart2014]_.</span>
 <span class="sd">    """</span>
@@ -1261,7 +1261,7 @@
     <span class="n">_max_hv</span> <span class="o">=</span> <span class="mf">608.4004237022673</span>  <span class="c1"># from NSGA-II with 90k evaluations</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
 <span class="sd">            negate: If True, negate the function.</span>
@@ -1302,7 +1302,7 @@
 
 
 <div class="viewcode-block" id="DiscBrake"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DiscBrake">[docs]</a><span class="k">class</span> <span class="nc">DiscBrake</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The Disc Brake problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The Disc Brake problem.</span>
 
 <span class="sd">    There are 2 objectives and 4 constraints.</span>
 
@@ -1348,7 +1348,7 @@
 
 
 <div class="viewcode-block" id="MW7"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.MW7">[docs]</a><span class="k">class</span> <span class="nc">MW7</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The MW7 problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The MW7 problem.</span>
 
 <span class="sd">    This problem has 2 objectives, 2 constraints, and a disconnected Pareto</span>
 <span class="sd">    frontier. It supports arbitrary input dimension &gt; 1. See [Ma2019]_ for details.</span>
@@ -1366,7 +1366,7 @@
         <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: The (input) dimension of the function. Must be at least 2.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -1403,7 +1403,7 @@
 
 
 <div class="viewcode-block" id="OSY"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.OSY">[docs]</a><span class="k">class</span> <span class="nc">OSY</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    The OSY test problem from [Oszycka1995]_.</span>
 <span class="sd">    Implementation from</span>
 <span class="sd">    https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/osy.py</span>
@@ -1445,7 +1445,7 @@
 
 
 <div class="viewcode-block" id="SRN"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.SRN">[docs]</a><span class="k">class</span> <span class="nc">SRN</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""The constrained SRN problem.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The constrained SRN problem.</span>
 
 <span class="sd">    See [GarridoMerchan2020]_ for more details on this problem. Note that this is a</span>
 <span class="sd">    minimization problem.</span>
@@ -1469,7 +1469,7 @@
 
 
 <div class="viewcode-block" id="WeldedBeam"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.WeldedBeam">[docs]</a><span class="k">class</span> <span class="nc">WeldedBeam</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    The Welded Beam test problem.</span>
 <span class="sd">    Implementation from</span>
 <span class="sd">    https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/welded_beam.py</span>

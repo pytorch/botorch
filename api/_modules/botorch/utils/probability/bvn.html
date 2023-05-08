@@ -73,7 +73,7 @@
 
 
 <div class="viewcode-block" id="bvn"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.bvn.bvn">[docs]</a><span class="k">def</span> <span class="nf">bvn</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">xl</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">yl</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">xu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">yu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""A function for computing bivariate normal probabilities.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A function for computing bivariate normal probabilities.</span>
 
 <span class="sd">    Calculates `P(xl &lt; x &lt; xu, yl &lt; y &lt; yu)` where `x` and `y` are bivariate normal with</span>
 <span class="sd">    unit variance and correlation coefficient `r`. See Section 2.4 of [Genz2004bvnt]_.</span>
@@ -116,7 +116,7 @@
 
 
 <div class="viewcode-block" id="bvnu"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.bvn.bvnu">[docs]</a><span class="k">def</span> <span class="nf">bvnu</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Solves for `P(x &gt; h, y &gt; k)` where `x` and `y` are standard bivariate normal</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Solves for `P(x &gt; h, y &gt; k)` where `x` and `y` are standard bivariate normal</span>
 <span class="sd">    random variables with correlation coefficient `r`. In [Genz2004bvnt]_, this is (1)</span>
 
 <span class="sd">        `L(h, k, r) = P(x &lt; -h, y &lt; -k) \</span>
@@ -162,7 +162,7 @@
 <span class="k">def</span> <span class="nf">_bvnu_polar</span><span class="p">(</span>
     <span class="n">r</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_points</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Solves for `P(x &gt; h, y &gt; k)` by integrating in polar coordinates as</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Solves for `P(x &gt; h, y &gt; k)` by integrating in polar coordinates as</span>
 
 <span class="sd">        `L(h, k, r) = \Phi(-h)\Phi(-k) + 1/(2\pi) \int_{0}^{sin^{-1}(r)} f(t) dt \</span>
 <span class="sd">        f(t) = e^{-0.5 cos(t)^{-2} (h^2 + k^2 - 2hk sin(t))}`</span>
@@ -191,7 +191,7 @@
 
 
 <span class="k">def</span> <span class="nf">_bvnu_taylor</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Solves for `P(x &gt; h, y &gt; k)` via Taylor expansion.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Solves for `P(x &gt; h, y &gt; k)` via Taylor expansion.</span>
 
 <span class="sd">    Per Section 2.3 of [Genz2004bvnt]_, the bvnu equation (1) may be rewritten as</span>
 
@@ -270,7 +270,7 @@
     <span class="n">yu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">p</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Computes the expected values of truncated, bivariate normal random variables.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the expected values of truncated, bivariate normal random variables.</span>
 
 <span class="sd">    Let `x` and `y` be a pair of standard bivariate normal random variables having</span>
 <span class="sd">    correlation `r`. This function computes `E([x,y] \| [xl,yl] &lt; [x,y] &lt; [xu,yu])`.</span>

@@ -331,7 +331,7 @@ before evaluating the function.</p>
 
 
 <span class="k">def</span> <span class="nf">branin_emb</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="sd">"""x is assumed to be in [0, 1]^d"""</span>
+<span class="w">    </span><span class="sd">"""x is assumed to be in [0, 1]^d"""</span>
     <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">branin</span><span class="o">.</span><span class="n">bounds</span>
     <span class="k">return</span> <span class="n">branin</span><span class="p">(</span><span class="n">lb</span> <span class="o">+</span> <span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">2</span><span class="p">])</span>
 </pre></div>
@@ -350,7 +350,7 @@ before evaluating the function.</p>
 <span class="n">N_INIT</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="n">N_ITERATIONS</span> <span class="o">=</span> <span class="mi">8</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">1</span>
 <span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">5</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">1</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using a total of </span><span class="si">{</span><span class="n">N_INIT</span> <span class="o">+</span> <span class="n">BATCH_SIZE</span> <span class="o">*</span> <span class="n">N_ITERATIONS</span><span class="si">}</span><span class="s2"> function evaluations"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using a total of </span><span class="si">{</span><span class="n">N_INIT</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">BATCH_SIZE</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N_ITERATIONS</span><span class="si">}</span><span class="s2"> function evaluations"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -416,7 +416,7 @@ functions assume maximization.</p>
         <span class="n">ind_best</span> <span class="o">=</span> <span class="n">Y_next</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
         <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="n">ind_best</span><span class="p">,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="nb">print</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s2">) New best: </span><span class="si">{</span><span class="n">Y_next</span><span class="p">[</span><span class="n">ind_best</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> @ "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">) New best: </span><span class="si">{</span><span class="n">Y_next</span><span class="p">[</span><span class="n">ind_best</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> @ "</span>
             <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">x0</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">x1</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">]"</span>
         <span class="p">)</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">X</span><span class="p">,</span> <span class="n">candidates</span><span class="p">))</span>

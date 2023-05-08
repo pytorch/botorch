@@ -52,7 +52,7 @@
 
 
 <div class="viewcode-block" id="MixedSingleTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP">[docs]</a><span class="k">class</span> <span class="nc">MixedSingleTaskGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A single-task exact GP model for mixed search spaces.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A single-task exact GP model for mixed search spaces.</span>
 
 <span class="sd">    This model is similar to `SingleTaskGP`, but supports mixed search spaces,</span>
 <span class="sd">    which combine discrete and continuous features, as well as solely discrete</span>
@@ -95,7 +95,7 @@
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># TODO</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># TODO</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""A single-task exact GP model supporting categorical parameters.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""A single-task exact GP model supporting categorical parameters.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: A `batch_shape x n x d` tensor of training features.</span>
@@ -211,7 +211,7 @@
         <span class="n">likelihood</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Likelihood</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dict of `BotorchDataset`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dict of `BotorchDataset`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            training_data: A `SupervisedDataset` containing the training data.</span>

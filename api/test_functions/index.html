@@ -3167,7 +3167,7 @@ nonlinearity and nonmonotonicity and a peculiar dependence on x_3.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>b</strong> (<em>float</em>) – the b constant, should be 0.1 or 0.05.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>float</em><em> | </em><em>None</em>) – Standard deviation of the observation noise.</p></li>
 <li><p><strong>negative</strong> – If True, negative the objective.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – </p></li>
 </ul>
@@ -3238,7 +3238,7 @@ V= Prod_{i=1}^{d} (1+V_i) - 1</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – Dimensionality of the problem. If 6, 8, or 15, will use standard a.</p></li>
 <li><p><strong>a</strong> (<em>List</em>) – a parameter, unless dim is 6, 8, or 15.</p></li>
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>float</em><em> | </em><em>None</em>) – Standard deviation of observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – Return negatie of function.</p></li>
 </ul>
 </dd>
@@ -3283,7 +3283,7 @@ V= Prod_{i=1}^{d} (1+V_i) - 1</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of observation noise.</p></li>
+<li><p><strong>noise_std</strong> (<em>float</em><em> | </em><em>None</em>) – Standard deviation of observation noise.</p></li>
 <li><p><strong>negate</strong> (<em>bool</em>) – Return negative of function.</p></li>
 </ul>
 </dd>

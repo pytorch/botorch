@@ -39,7 +39,7 @@
 
 
 <div class="viewcode-block" id="Ishigami"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami">[docs]</a><span class="k">class</span> <span class="nc">Ishigami</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Ishigami test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Ishigami test function.</span>
 
 <span class="sd">    three-dimensional function (usually evaluated on `[-pi, pi]^3`):</span>
 
@@ -53,7 +53,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            b: the b constant, should be 0.1 or 0.05.</span>
 <span class="sd">            noise_std: Standard deviation of the observation noise.</span>
@@ -86,7 +86,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 <div class="viewcode-block" id="Ishigami.compute_dgsm"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami.compute_dgsm">[docs]</a>    <span class="k">def</span> <span class="nf">compute_dgsm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
-        <span class="sa">r</span><span class="sd">"""Compute derivative global sensitivity measures.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute derivative global sensitivity measures.</span>
 
 <span class="sd">        This function can be called separately to estimate the dgsm measure</span>
 <span class="sd">        The exact global integrals of these values are already added under</span>
@@ -128,7 +128,7 @@
 
 
 <div class="viewcode-block" id="Gsobol"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Gsobol">[docs]</a><span class="k">class</span> <span class="nc">Gsobol</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Gsobol test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Gsobol test function.</span>
 
 <span class="sd">    d-dimensional function (usually evaluated on `[0, 1]^d`):</span>
 
@@ -155,7 +155,7 @@
         <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dim: Dimensionality of the problem. If 6, 8, or 15, will use standard a.</span>
 <span class="sd">            a: a parameter, unless dim is 6, 8, or 15.</span>
@@ -224,7 +224,7 @@
 
 
 <div class="viewcode-block" id="Morris"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.sensitivity_analysis.Morris">[docs]</a><span class="k">class</span> <span class="nc">Morris</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Morris test function.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Morris test function.</span>
 
 <span class="sd">    20-dimensional function (usually evaluated on `[0, 1]^20`):</span>
 
@@ -235,7 +235,7 @@
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            noise_std: Standard deviation of observation noise.</span>
 <span class="sd">            negate: Return negative of function.</span>

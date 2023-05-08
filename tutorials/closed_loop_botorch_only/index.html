@@ -132,12 +132,12 @@ I1116 175307.081 _utils_internal.py:188] NCCL_DEBUG is INFO from /etc/nccl.conf
 
 
 <span class="k">def</span> <span class="nf">outcome_constraint</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
-    <span class="sd">"""L1 constraint; feasible if less than or equal to zero."""</span>
+<span class="w">    </span><span class="sd">"""L1 constraint; feasible if less than or equal to zero."""</span>
     <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span>
 
 
 <span class="k">def</span> <span class="nf">weighted_obj</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
-    <span class="sd">"""Feasibility weighted objective; zero if not feasible."""</span>
+<span class="w">    </span><span class="sd">"""Feasibility weighted objective; zero if not feasible."""</span>
     <span class="k">return</span> <span class="n">neg_hartmann6</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">outcome_constraint</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">type_as</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -251,7 +251,7 @@ I1116 175307.081 _utils_internal.py:188] NCCL_DEBUG is INFO from /etc/nccl.conf
 
 
 <span class="k">def</span> <span class="nf">optimize_acqf_and_get_observation</span><span class="p">(</span><span class="n">acq_func</span><span class="p">):</span>
-    <span class="sd">"""Optimizes the acquisition function, and returns a new candidate and a noisy observation."""</span>
+<span class="w">    </span><span class="sd">"""Optimizes the acquisition function, and returns a new candidate and a noisy observation."""</span>
     <span class="c1"># optimize</span>
     <span class="n">candidates</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
         <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_func</span><span class="p">,</span>
@@ -271,7 +271,7 @@ I1116 175307.081 _utils_internal.py:188] NCCL_DEBUG is INFO from /etc/nccl.conf
 
 
 <span class="k">def</span> <span class="nf">update_random_observations</span><span class="p">(</span><span class="n">best_random</span><span class="p">):</span>
-    <span class="sd">"""Simulates a random policy by taking a the current list of best values observed randomly,</span>
+<span class="w">    </span><span class="sd">"""Simulates a random policy by taking a the current list of best values observed randomly,</span>
 <span class="sd">    drawing a new random point, observing its value, and updating the list.</span>
 <span class="sd">    """</span>
     <span class="n">rand_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>

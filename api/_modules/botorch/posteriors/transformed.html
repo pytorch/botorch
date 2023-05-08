@@ -40,7 +40,7 @@
 
 
 <div class="viewcode-block" id="TransformedPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.transformed.TransformedPosterior">[docs]</a><span class="k">class</span> <span class="nc">TransformedPosterior</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A generic transformation of a posterior (implicitly represented)."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A generic transformation of a posterior (implicitly represented)."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -49,7 +49,7 @@
         <span class="n">mean_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">variance_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""An implicitly represented transformed posterior.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""An implicitly represented transformed posterior.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: The posterior object to be transformed.</span>
@@ -71,12 +71,12 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">base_sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The shape of a base sample used for constructing posterior samples."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The shape of a base sample used for constructing posterior samples."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">base_sample_shape</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">batch_range</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""The t-batch range.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The t-batch range.</span>
 
 <span class="sd">        This is used in samplers to identify the t-batch component of the</span>
 <span class="sd">        `base_sample_shape`. The base samples are expanded over the t-batches to</span>
@@ -87,18 +87,18 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The torch device of the posterior."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The torch device of the posterior."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">device</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The torch dtype of the posterior."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The torch dtype of the posterior."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">dtype</span>
 
     <span class="k">def</span> <span class="nf">_extended_shape</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>  <span class="c1"># noqa: B008</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Returns the shape of the samples produced by the posterior with</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns the shape of the samples produced by the posterior with</span>
 <span class="sd">        the given `sample_shape`.</span>
 
 <span class="sd">        NOTE: This assumes that the `sample_transform` does not change the</span>
@@ -108,7 +108,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The mean of the posterior as a `batch_shape x n x m`-dim Tensor."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The mean of the posterior as a `batch_shape x n x m`-dim Tensor."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean_transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"No mean transform provided."</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
@@ -119,7 +119,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">variance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The variance of the posterior as a `batch_shape x n x m`-dim Tensor."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The variance of the posterior as a `batch_shape x n x m`-dim Tensor."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variance_transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"No variance transform provided."</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variance_transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">variance</span><span class="p">)</span>
@@ -129,7 +129,7 @@
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
         <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients) using base samples.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients) using base samples.</span>
 
 <span class="sd">        This is intended to be used with a sampler that produces the corresponding base</span>
 <span class="sd">        samples, and enables acquisition optimization via Sample Average Approximation.</span>
@@ -154,7 +154,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients).</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            sample_shape: A `torch.Size` object specifying the sample shape. To</span>

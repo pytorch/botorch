@@ -40,7 +40,7 @@
 
 
 <span class="k">class</span> <span class="nc">_Flag</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Base class for context managers for a binary setting."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for context managers for a binary setting."""</span>
 
     <span class="n">_state</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
@@ -68,7 +68,7 @@
 
 
 <div class="viewcode-block" id="propagate_grads"><a class="viewcode-back" href="../../settings.html#botorch.settings.propagate_grads">[docs]</a><span class="k">class</span> <span class="nc">propagate_grads</span><span class="p">(</span><span class="n">_Flag</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Flag for propagating gradients to model training inputs / training data.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Flag for propagating gradients to model training inputs / training data.</span>
 
 <span class="sd">    When set to `True`, gradients will be propagated to the training inputs.</span>
 <span class="sd">    This is useful in particular for propating gradients through fantasy models.</span>
@@ -78,7 +78,7 @@
 
 
 <div class="viewcode-block" id="debug"><a class="viewcode-back" href="../../settings.html#botorch.settings.debug">[docs]</a><span class="k">class</span> <span class="nc">debug</span><span class="p">(</span><span class="n">_Flag</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Flag for printing verbose warnings.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Flag for printing verbose warnings.</span>
 
 <span class="sd">    To make sure a warning is only raised in debug mode:</span>
 <span class="sd">        &gt;&gt;&gt; if debug.on():</span>
@@ -93,7 +93,7 @@
 
 
 <div class="viewcode-block" id="validate_input_scaling"><a class="viewcode-back" href="../../settings.html#botorch.settings.validate_input_scaling">[docs]</a><span class="k">class</span> <span class="nc">validate_input_scaling</span><span class="p">(</span><span class="n">_Flag</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Flag for validating input normalization/standardization.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Flag for validating input normalization/standardization.</span>
 
 <span class="sd">    When set to `True`, standard botorch models will validate (up to reasonable</span>
 <span class="sd">    tolerance) that</span>
@@ -108,7 +108,7 @@
 
 
 <div class="viewcode-block" id="log_level"><a class="viewcode-back" href="../../settings.html#botorch.settings.log_level">[docs]</a><span class="k">class</span> <span class="nc">log_level</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Flag for printing verbose logging statements.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Flag for printing verbose logging statements.</span>
 
 <span class="sd">    Applies the given level to logging.getLogger('botorch') calls. For</span>
 <span class="sd">    instance, when set to logging.INFO, all logger calls of level INFO or</span>
@@ -123,7 +123,7 @@
         <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">LOG_LEVEL_DEFAULT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            level: The log level. Defaults to LOG_LEVEL_DEFAULT.</span>
 <span class="sd">        """</span>

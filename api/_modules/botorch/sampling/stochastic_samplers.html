@@ -44,7 +44,7 @@
 
 
 <div class="viewcode-block" id="ForkedRNGSampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.stochastic_samplers.ForkedRNGSampler">[docs]</a><span class="k">class</span> <span class="nc">ForkedRNGSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A sampler using `torch.fork_rng` to enable replicable sampling</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A sampler using `torch.fork_rng` to enable replicable sampling</span>
 <span class="sd">    from a posterior that does not support base samples.</span>
 
 <span class="sd">    NOTE: This approach is not a one-to-one replacement for base sample</span>
@@ -56,7 +56,7 @@
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="ForkedRNGSampler.forward"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.stochastic_samplers.ForkedRNGSampler.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior in a `fork_rng` context.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior in a `fork_rng` context.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: The posterior to sample from.</span>
@@ -70,7 +70,7 @@
 
 
 <div class="viewcode-block" id="StochasticSampler"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.stochastic_samplers.StochasticSampler">[docs]</a><span class="k">class</span> <span class="nc">StochasticSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A sampler that simply calls `posterior.rsample` to generate the</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A sampler that simply calls `posterior.rsample` to generate the</span>
 <span class="sd">    samples. This should only be used for stochastic optimization of the</span>
 <span class="sd">    acquisition functions, e.g., via `gen_candidates_torch`. This should</span>
 <span class="sd">    not be used with `optimize_acqf`, which uses deterministic optimizers</span>
@@ -80,7 +80,7 @@
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="StochasticSampler.forward"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.stochastic_samplers.StochasticSampler.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: The posterior to sample from.</span>

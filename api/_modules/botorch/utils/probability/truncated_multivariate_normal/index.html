@@ -54,7 +54,7 @@
         <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">LinearEllipticalSliceSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">validate_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sa">r</span><span class="sd">"""Initializes an instance of a TruncatedMultivariateNormal distribution.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes an instance of a TruncatedMultivariateNormal distribution.</span>
 
 <span class="sd">        Let `x ~ N(0, K)` be an `n`-dimensional Gaussian random vector. This class</span>
 <span class="sd">        represents the distribution of the truncated Multivariate normal random vector</span>
@@ -93,7 +93,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_sampler</span> <span class="o">=</span> <span class="n">sampler</span>
 
 <div class="viewcode-block" id="TruncatedMultivariateNormal.log_prob"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.truncated_multivariate_normal.TruncatedMultivariateNormal.log_prob">[docs]</a>    <span class="k">def</span> <span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Approximates the true log probability."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Approximates the true log probability."""</span>
         <span class="n">neg_inf</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">(</span><span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">),</span> <span class="n">value</span><span class="p">)</span>
         <span class="n">inbounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
             <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
@@ -108,7 +108,7 @@
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">event_shape</span><span class="p">)],</span> <span class="n">neg_inf</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="TruncatedMultivariateNormal.rsample"><a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.truncated_multivariate_normal.TruncatedMultivariateNormal.rsample">[docs]</a>    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># noqa: B008</span>
-        <span class="sa">r</span><span class="sd">"""Draw samples from the Truncated Multivariate Normal.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw samples from the Truncated Multivariate Normal.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            sample_shape: The shape of the samples.</span>

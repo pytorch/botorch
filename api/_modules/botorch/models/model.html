@@ -74,7 +74,7 @@
 
 
 <div class="viewcode-block" id="Model"><a class="viewcode-back" href="../../../models.html#botorch.models.model.Model">[docs]</a><span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for BoTorch models.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for BoTorch models.</span>
 
 <span class="sd">    The `Model` base class cannot be used directly; it only defines an API for other</span>
 <span class="sd">    BoTorch models.</span>
@@ -110,7 +110,7 @@
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Computes the posterior over model outputs at the provided points.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Computes the posterior over model outputs at the provided points.</span>
 
 <span class="sd">        Note: The input transforms should be applied here using</span>
 <span class="sd">            `self.transform_inputs(X)` after the `self.eval()` call and before</span>
@@ -136,7 +136,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The batch shape of the model.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The batch shape of the model.</span>
 
 <span class="sd">        This is a batch shape from an I/O perspective, independent of the internal</span>
 <span class="sd">        representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).</span>
@@ -149,12 +149,12 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The number of outputs of the model."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The number of outputs of the model."""</span>
         <span class="n">cls_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cls_name</span><span class="si">}</span><span class="s2"> does not define num_outputs property"</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Model.subset_output"><a class="viewcode-back" href="../../../models.html#botorch.models.model.Model.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Subset the model along the output dimension.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Subset the model along the output dimension.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            idcs: The output indices to subset the model to.</span>
@@ -166,7 +166,7 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
 <div class="viewcode-block" id="Model.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.model.Model.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of</span>
@@ -196,7 +196,7 @@
         <span class="n">training_data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BotorchDataset</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">BotorchDataset</span><span class="p">]],</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dict of `BotorchDataset`."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct `Model` keyword arguments from a dict of `BotorchDataset`."""</span>
         <span class="kn">from</span> <span class="nn">botorch.models.utils.parse_training_data</span> <span class="kn">import</span> <span class="n">parse_training_data</span>
 
         <span class="k">return</span> <span class="n">parse_training_data</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">training_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
@@ -206,7 +206,7 @@
         <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Transform inputs.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform inputs.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A tensor of inputs</span>
@@ -224,7 +224,7 @@
             <span class="k">return</span> <span class="n">X</span></div>
 
     <span class="k">def</span> <span class="nf">_set_transformed_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Update training inputs with transformed inputs."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Update training inputs with transformed inputs."""</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_transformed_inputs</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"train_inputs"</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_original_train_inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -244,18 +244,18 @@
                 <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_revert_to_original_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Revert training inputs back to original."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Revert training inputs back to original."""</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_transformed_inputs</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_original_train_inputs</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_has_transformed_inputs</span> <span class="o">=</span> <span class="kc">False</span>
 
 <div class="viewcode-block" id="Model.eval"><a class="viewcode-back" href="../../../models.html#botorch.models.model.Model.eval">[docs]</a>    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Puts the model in `eval` mode and sets the transformed inputs."""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Puts the model in `eval` mode and sets the transformed inputs."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_transformed_inputs</span><span class="p">()</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="Model.train"><a class="viewcode-back" href="../../../models.html#botorch.models.model.Model.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Put the model in `train` mode. Reverts to the original inputs if in `train`</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Put the model in `train` mode. Reverts to the original inputs if in `train`</span>
 <span class="sd">        mode (`mode=True`) or sets transformed inputs if in `eval` mode (`mode=False`).</span>
 
 <span class="sd">        Args:</span>
@@ -270,7 +270,7 @@
 
 
 <div class="viewcode-block" id="FantasizeMixin"><a class="viewcode-back" href="../../../models.html#botorch.models.model.FantasizeMixin">[docs]</a><span class="k">class</span> <span class="nc">FantasizeMixin</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-    <span class="sd">"""</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Mixin to add a `fantasize` method to a `Model`.</span>
 
 <span class="sd">    Example:</span>
@@ -292,7 +292,7 @@
     <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">:</span> <span class="n">TFantasizeMixin</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TFantasizeMixin</span><span class="p">:</span>
-        <span class="sd">"""</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Classes that inherit from `FantasizeMixin` must implement</span>
 <span class="sd">        a `condition_on_observations` method.</span>
 <span class="sd">        """</span></div>
@@ -305,7 +305,7 @@
         <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
-        <span class="sd">"""</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Classes that inherit from `FantasizeMixin` must implement</span>
 <span class="sd">        a `posterior` method.</span>
 <span class="sd">        """</span></div>
@@ -316,7 +316,7 @@
         <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sd">"""</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Classes that inherit from `FantasizeMixin` must implement</span>
 <span class="sd">        a `transform_inputs` method.</span>
 <span class="sd">        """</span></div>
@@ -332,7 +332,7 @@
         <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TFantasizeMixin</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Construct a fantasy model.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct a fantasy model.</span>
 
 <span class="sd">        Constructs a fantasy model in the following fashion:</span>
 <span class="sd">        (1) compute the model posterior at `X` (including observation noise if</span>
@@ -364,7 +364,7 @@
 
 
 <div class="viewcode-block" id="ModelList"><a class="viewcode-back" href="../../../models.html#botorch.models.model.ModelList">[docs]</a><span class="k">class</span> <span class="nc">ModelList</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A multi-output Model represented by a list of independent models.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A multi-output Model represented by a list of independent models.</span>
 
 <span class="sd">    All BoTorch models are acceptable as inputs. The cost of this flexibility is</span>
 <span class="sd">    that `ModelList` does not support all methods that may be implemented by its</span>
@@ -375,7 +375,7 @@
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">models</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            *models: A variable number of models.</span>
 
@@ -391,7 +391,7 @@
     <span class="k">def</span> <span class="nf">_get_group_subset_indices</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
-        <span class="sa">r</span><span class="sd">"""Convert global subset indices to indices for the individual models.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Convert global subset indices to indices for the individual models.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            idcs: A list of inidices to which the `ModelList` model is to be</span>
@@ -421,7 +421,7 @@
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">PosteriorList</span><span class="p">],</span> <span class="n">Posterior</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Computes the posterior over model outputs at the provided points.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Computes the posterior over model outputs at the provided points.</span>
 
 <span class="sd">        Note: The input transforms should be applied here using</span>
 <span class="sd">            `self.transform_inputs(X)` after the `self.eval()` call and before</span>
@@ -457,7 +457,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The batch shape of the model.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The batch shape of the model.</span>
 
 <span class="sd">        This is a batch shape from an I/O perspective, independent of the internal</span>
 <span class="sd">        representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).</span>
@@ -476,7 +476,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The number of outputs of the model.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The number of outputs of the model.</span>
 
 <span class="sd">        Equal to the sum of the number of outputs of the individual models</span>
 <span class="sd">        in the ModelList.</span>
@@ -484,7 +484,7 @@
         <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span> <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ModelList.subset_output"><a class="viewcode-back" href="../../../models.html#botorch.models.model.ModelList.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Subset the model along the output dimension.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Subset the model along the output dimension.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            idcs: The output indices to subset the model to. Relative to the</span>
@@ -512,7 +512,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="o">*</span><span class="n">subset_models</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ModelList.transform_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.model.ModelList.transform_inputs">[docs]</a>    <span class="k">def</span> <span class="nf">transform_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Individually transform the inputs for each model.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Individually transform the inputs for each model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A tensor of inputs.</span>
@@ -531,7 +531,7 @@
 <div class="viewcode-block" id="ModelList.load_state_dict"><a class="viewcode-back" href="../../../models.html#botorch.models.model.ModelList.load_state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">"""Initialize the fully Bayesian models before loading the state dict."""</span>
+<span class="w">        </span><span class="sd">"""Initialize the fully Bayesian models before loading the state dict."""</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">is_fully_bayesian</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
                 <span class="n">filtered_dict</span> <span class="o">=</span> <span class="p">{</span>
@@ -544,10 +544,10 @@
 
 
 <div class="viewcode-block" id="ModelDict"><a class="viewcode-back" href="../../../models.html#botorch.models.model.ModelDict">[docs]</a><span class="k">class</span> <span class="nc">ModelDict</span><span class="p">(</span><span class="n">ModuleDict</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""A lightweight container mapping model names to models."""</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A lightweight container mapping model names to models."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">models</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Initialize a `ModelDict`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize a `ModelDict`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            models: An arbitrary number of models. Each model can be any type</span>
