@@ -107,3 +107,4 @@ jobs:
     with:
       publish_versioned_website: true
       release_tag: ${{ github.event.release.tag_name }}
+    secrets: inherit
