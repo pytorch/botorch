@@ -171,8 +171,10 @@
 <li><a href="utils.html#botorch.utils.testing.MockPosterior.batch_range">(botorch.utils.testing.MockPosterior property)</a>
 </li>
 </ul></li>
-<li><a href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.batch_shape">batch_shape (botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP property)</a>
+<li><a href="models.html#botorch.models.approximate_gp.SingleTaskVariationalGP.batch_shape">batch_shape (botorch.models.approximate_gp.SingleTaskVariationalGP property)</a>
 <ul>
+<li><a href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.batch_shape">(botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP property)</a>
+</li>
 <li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.batch_shape">(botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP property)</a>
 </li>
 <li><a href="models.html#botorch.models.model.Model.batch_shape">(botorch.models.model.Model property)</a>
@@ -1441,10 +1443,10 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem">ConstrainedBaseTestProblem (class in botorch.test_functions.base)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.ConstrainedBraninCurrin">ConstrainedBraninCurrin (class in botorch.test_functions.multi_objective)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="acquisition.html#botorch.acquisition.analytic.ConstrainedExpectedImprovement">ConstrainedExpectedImprovement (class in botorch.acquisition.analytic)</a>
 </li>
 <li><a href="generation.html#botorch.generation.sampling.ConstrainedMaxPosteriorSampling">ConstrainedMaxPosteriorSampling (class in botorch.generation.sampling)</a>
@@ -1485,6 +1487,8 @@
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qEHVI">construct_inputs_qEHVI() (in module botorch.acquisition.input_constructors)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qEI">construct_inputs_qEI() (in module botorch.acquisition.input_constructors)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qJES">construct_inputs_qJES() (in module botorch.acquisition.input_constructors)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qKG">construct_inputs_qKG() (in module botorch.acquisition.input_constructors)</a>
 </li>
@@ -2124,7 +2128,7 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction.forward">(botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction method)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.forward">(botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch method)</a>
+<li><a href="acquisition.html#botorch.acquisition.joint_entropy_search.qJointEntropySearch.forward">(botorch.acquisition.joint_entropy_search.qJointEntropySearch method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.ProjectedAcquisitionFunction.forward">(botorch.acquisition.knowledge_gradient.ProjectedAcquisitionFunction method)</a>
 </li>
@@ -2488,6 +2492,8 @@
 <li><a href="optim.html#botorch.optim.utils.model_utils.get_name_filter">get_name_filter() (in module botorch.optim.utils.model_utils)</a>
 </li>
 <li><a href="utils.html#botorch.utils.objective.get_objective_weights_transform">get_objective_weights_transform() (in module botorch.utils.objective)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.utils.get_optimal_samples">get_optimal_samples() (in module botorch.acquisition.utils)</a>
 </li>
 <li><a href="utils.html#botorch.utils.constraints.get_outcome_constraint_transforms">get_outcome_constraint_transforms() (in module botorch.utils.constraints)</a>
 </li>
@@ -2925,8 +2931,6 @@
 <li><a href="acquisition.html#botorch.acquisition.analytic.ScalarizedPosteriorMean.model">(botorch.acquisition.analytic.ScalarizedPosteriorMean attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.UpperConfidenceBound.model">(botorch.acquisition.analytic.UpperConfidenceBound attribute)</a>
-</li>
-<li><a href="acquisition.html#botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.model">(botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.model">(botorch.acquisition.knowledge_gradient.qKnowledgeGradient attribute)</a>
 </li>
@@ -3568,10 +3572,10 @@
 </li>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf">optimize_acqf() (in module botorch.optim.optimize)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_cyclic">optimize_acqf_cyclic() (in module botorch.optim.optimize)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_discrete">optimize_acqf_discrete() (in module botorch.optim.optimize)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_discrete_local_search">optimize_acqf_discrete_local_search() (in module botorch.optim.optimize)</a>
@@ -3581,6 +3585,8 @@
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_mixed">optimize_acqf_mixed() (in module botorch.optim.optimize)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.optimize_objective">optimize_objective() (in module botorch.acquisition.input_constructors)</a>
+</li>
+<li><a href="utils.html#botorch.utils.sampling.optimize_posterior_samples">optimize_posterior_samples() (in module botorch.utils.sampling)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs">OptimizeAcqfInputs (class in botorch.optim.optimize)</a>
 </li>
@@ -3754,9 +3760,9 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.monte_carlo.qExpectedImprovement">qExpectedImprovement (class in botorch.acquisition.monte_carlo)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient">qKnowledgeGradient (class in botorch.acquisition.knowledge_gradient)</a>
+<li><a href="acquisition.html#botorch.acquisition.joint_entropy_search.qJointEntropySearch">qJointEntropySearch (class in botorch.acquisition.joint_entropy_search)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch">qLowerBoundJointEntropySearch (class in botorch.acquisition.joint_entropy_search)</a>
+<li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient">qKnowledgeGradient (class in botorch.acquisition.knowledge_gradient)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qLowerBoundMaxValueEntropy">qLowerBoundMaxValueEntropy (class in botorch.acquisition.max_value_entropy_search)</a>
 </li>
@@ -4223,7 +4229,7 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction.training">(botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction attribute)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.training">(botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch attribute)</a>
+<li><a href="acquisition.html#botorch.acquisition.joint_entropy_search.qJointEntropySearch.training">(botorch.acquisition.joint_entropy_search.qJointEntropySearch attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.ProjectedAcquisitionFunction.training">(botorch.acquisition.knowledge_gradient.ProjectedAcquisitionFunction attribute)</a>
 </li>

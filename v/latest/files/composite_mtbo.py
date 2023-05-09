@@ -161,7 +161,7 @@ if SMOKE_TEST:
     n_steps = 1
     batch_size = 2
     num_samples = 4
-    n_trials = 4
+    n_trials = 2
     verbose = False
 else:
     n_init = 10

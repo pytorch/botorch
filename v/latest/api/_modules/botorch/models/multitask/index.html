@@ -35,6 +35,14 @@
 
 <span class="sd">References</span>
 
+<span class="sd">.. [Bonilla2007MTGP]</span>
+<span class="sd">    E. Bonilla, K. Chai and C. Williams. Multi-task Gaussian Process Prediction.</span>
+<span class="sd">    Advances in Neural Information Processing Systems 20, NeurIPS 2007.</span>
+
+<span class="sd">.. [Swersky2013MTBO]</span>
+<span class="sd">    K. Swersky, J. Snoek and R. Adams. Multi-Task Bayesian Optimization.</span>
+<span class="sd">    Advances in Neural Information Processing Systems 26, NeurIPS 2013.</span>
+
 <span class="sd">.. [Doucet2010sampl]</span>
 <span class="sd">    A. Doucet. A Note on Efficient Conditional Simulation of Gaussian Distributions.</span>
 <span class="sd">    http://www.stats.ox.ac.uk/~doucet/doucet_simulationconditionalgaussian.pdf,</span>
@@ -48,6 +56,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -99,16 +108,20 @@
 
 
 <div class="viewcode-block" id="MultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">MultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">MultiTaskGPyTorchModel</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel, inferring observation noise.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Multi-Task exact GP model using an ICM (intrinsic co-regionalization model)</span>
+<span class="sd">    kernel. See [Bonilla2007MTGP]_ and [Swersky2013MTBO]_ for a reference on the</span>
+<span class="sd">    model and its use in Bayesian optimization.</span>
 
-<span class="sd">    Multi-task exact GP that uses a simple ICM kernel. Can be single-output or</span>
-<span class="sd">    multi-output. This model uses relatively strong priors on the base Kernel</span>
-<span class="sd">    hyperparameters, which work best when covariates are normalized to the unit</span>
-<span class="sd">    cube and outcomes are standardized (zero mean, unit variance).</span>
 
-<span class="sd">    This model infers the noise level. WARNING: It currently does not support</span>
-<span class="sd">    different noise levels for the different tasks. If you have known observation</span>
-<span class="sd">    noise, please use `FixedNoiseMultiTaskGP` instead.</span>
+<span class="sd">    The model can be single-output or multi-output, determined by the `output_tasks`.</span>
+<span class="sd">    This model uses relatively strong priors on the base Kernel hyperparameters, which</span>
+<span class="sd">    work best when covariates are normalized to the unit cube and outcomes are</span>
+<span class="sd">    standardized (zero mean, unit variance).</span>
+
+<span class="sd">    If the `train_Yvar` is None, this model infers the noise level. If you have</span>
+<span class="sd">    known observation noise, you can set `train_Yvar` to a tensor containing</span>
+<span class="sd">    the noise variance measurements. WARNING: This currently does not support</span>
+<span class="sd">    different noise levels for the different tasks.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -116,6 +129,7 @@
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">covar_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">task_covar_prior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Prior</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -123,7 +137,7 @@
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel, inferring observation noise.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: A `n x (d + 1)` or `b x n x (d + 1)` (batch mode) tensor</span>
@@ -131,6 +145,9 @@
 <span class="sd">                features (see `task_feature` argument).</span>
 <span class="sd">            train_Y: A `n x 1` or `b x n x 1` (batch mode) tensor of training</span>
 <span class="sd">                observations.</span>
+<span class="sd">            train_Yvar: An optional `n` or `b x n` (batch mode) tensor of observed</span>
+<span class="sd">                measurement noise. If None, we infer the noise.</span>
+<span class="sd">                Note that the inferred noise is common across all tasks.</span>
 <span class="sd">            task_feature: The index of the task feature (`-d &lt;= task_feature &lt;= d`).</span>
 <span class="sd">            output_tasks: A list of task indices for which to compute model</span>
 <span class="sd">                outputs for. If omitted, return outputs for all task indices.</span>
@@ -158,12 +175,12 @@
             <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span>
                 <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
             <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
         <span class="n">all_tasks</span><span class="p">,</span> <span class="n">task_feature</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all_tasks</span><span class="p">(</span>
             <span class="n">transformed_X</span><span class="p">,</span> <span class="n">task_feature</span><span class="p">,</span> <span class="n">output_tasks</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">train_Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span>
+            <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
 
         <span class="c1"># squeeze output dim</span>
         <span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
@@ -176,7 +193,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_tasks</span><span class="p">)</span>
 
         <span class="c1"># TODO (T41270962): Support task-specific noise levels in likelihood</span>
-        <span class="n">likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">(</span><span class="n">noise_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">train_Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">(</span><span class="n">noise_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">likelihood</span> <span class="o">=</span> <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">(</span><span class="n">noise</span><span class="o">=</span><span class="n">train_Yvar</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
 
         <span class="c1"># construct indexer to be used in forward</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_task_feature</span> <span class="o">=</span> <span class="n">task_feature</span>
@@ -324,14 +344,7 @@
 <div class="viewcode-block" id="FixedNoiseMultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.FixedNoiseMultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">FixedNoiseMultiTaskGP</span><span class="p">(</span><span class="n">MultiTaskGP</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel, with known observation noise.</span>
 
-<span class="sd">    This is the fixed-noise version of `MultiTaskGP` -– that is,</span>
-<span class="sd">    `FixedNoiseMultiTaskGP` is to `MultiTaskGP` as `FixedNoiseGP` is to</span>
-<span class="sd">    `SingleTaskGP`. It can be single-output or</span>
-<span class="sd">    multi-output. This model uses relatively strong priors on the base Kernel</span>
-<span class="sd">    hyperparameters, which work best when covariates are normalized to the unit</span>
-<span class="sd">    cube and outcomes are standardized (zero mean, unit variance).</span>
-
-<span class="sd">    This model requires observation noise data (specified in `train_Yvar`).</span>
+<span class="sd">    DEPRECATED: Please use `MultiTaskGP` with `train_Yvar` instead.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -354,8 +367,8 @@
 <span class="sd">                features (see `task_feature` argument).</span>
 <span class="sd">            train_Y: A `n x 1` or `b x n x 1` (batch mode) tensor of training</span>
 <span class="sd">                observations.</span>
-<span class="sd">            train_Yvar: A `n` or `b x n` (batch mode) tensor of observation</span>
-<span class="sd">                noise standard errors.</span>
+<span class="sd">            train_Yvar: A `n` or `b x n` (batch mode) tensor of observed measurement</span>
+<span class="sd">                noise.</span>
 <span class="sd">            task_feature: The index of the task feature (`-d &lt;= task_feature &lt;= d`).</span>
 <span class="sd">            task_covar_prior : A Prior on the task covariance matrix. Must operate</span>
 <span class="sd">                on p.s.d. matrices. A common prior for this is the `LKJ` prior.</span>
@@ -380,32 +393,25 @@
 <span class="sd">            &gt;&gt;&gt; train_Yvar = 0.1 + 0.1 * torch.rand_like(train_Y)</span>
 <span class="sd">            &gt;&gt;&gt; model = FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, -1)</span>
 <span class="sd">        """</span>
-        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-            <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span>
-                <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
-
-        <span class="c1"># We'll instatiate a MultiTaskGP and simply override the likelihood</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">"`FixedNoiseMultiTaskGP` has been deprecated and will be removed in a "</span>
+            <span class="s2">"future release. Please use the `MultiTaskGP` model instead. "</span>
+            <span class="s2">"When `train_Yvar` is specified, `MultiTaskGP` behaves the same "</span>
+            <span class="s2">"as the `FixedNoiseMultiTaskGP`."</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
             <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
+            <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
             <span class="n">covar_module</span><span class="o">=</span><span class="n">covar_module</span><span class="p">,</span>
             <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span>
             <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
             <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span>
             <span class="n">task_covar_prior</span><span class="o">=</span><span class="n">task_covar_prior</span><span class="p">,</span>
             <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
-            <span class="n">outcome_transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># outcome_transform is applied already</span>
-        <span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">(</span><span class="n">noise</span><span class="o">=</span><span class="n">train_Yvar</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span></div>
+            <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="KroneckerMultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">KroneckerMultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>

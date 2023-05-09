@@ -72,7 +72,7 @@
             <span class="n">Z</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_Z</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_U</span><span class="p">,</span> <span class="n">ref_point</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_neg_ref_point</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="n">cell_bounds</span> <span class="o">=</span> <span class="o">-</span><span class="n">minimization_cell_bounds</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"hypercell_bounds"</span><span class="p">,</span> <span class="n">cell_bounds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hypercell_bounds</span> <span class="o">=</span> <span class="n">cell_bounds</span>
 
     <span class="k">def</span> <span class="nf">_compute_hypervolume_if_y_has_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute hypervolume that is dominated by the Pareto Frontier.</span>

@@ -63,30 +63,27 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Converts Tensor-valued fields to DenseContainer under the assumption</span>
 <span class="sd">        that said fields house collections of feature vectors."""</span>
         <span class="n">hints</span> <span class="o">=</span> <span class="n">get_type_hints</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-        <span class="n">f_iter</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">init</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">hints</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">],</span> <span class="n">BotorchContainer</span><span class="p">),</span>
-            <span class="n">fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">),</span>
-        <span class="p">)</span>
+        <span class="n">f_iter</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="n">fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span>
         <span class="n">f_dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">obj</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">(</span>
             <span class="nb">zip</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">f_iter</span><span class="p">),</span> <span class="p">((</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">MISSING</span><span class="p">),</span> <span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">f_iter</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="n">MISSING</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">MISSING</span><span class="p">:</span>
-
                     <span class="n">obj</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">default</span>
                 <span class="k">elif</span> <span class="n">f</span><span class="o">.</span><span class="n">default_factory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">MISSING</span><span class="p">:</span>
                     <span class="n">obj</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">default_factory</span><span class="p">()</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Missing required field `</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">`."</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
-                <span class="n">obj</span> <span class="o">=</span> <span class="n">DenseContainer</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">event_shape</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span>
-            <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Expected &lt;BotorchContainer | Tensor&gt; for field `</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">` "</span>
-                    <span class="sa">f</span><span class="s2">"but was </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
-                <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">hints</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">],</span> <span class="n">BotorchContainer</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
+                    <span class="n">obj</span> <span class="o">=</span> <span class="n">DenseContainer</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">event_shape</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Expected &lt;BotorchContainer | Tensor&gt; for field `</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">` "</span>
+                        <span class="sa">f</span><span class="s2">"but was </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+                    <span class="p">)</span>
             <span class="n">f_dict</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span>
 
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="o">**</span><span class="n">f_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>

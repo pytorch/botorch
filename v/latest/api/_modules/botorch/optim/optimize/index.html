@@ -123,33 +123,6 @@
                 <span class="s2">"bounds should be a `2 x d` tensor, current shape: "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
-        <span class="c1"># validate that linear constraints across the q-dim and</span>
-        <span class="c1"># self.sequential are not present together</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inequality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequential</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inequality_constraints</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraint</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-                        <span class="s2">"Linear inequality constraints across the q-dimension are not "</span>
-                        <span class="s2">"supported for sequential optimization."</span>
-                    <span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">equality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequential</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">equality_constraints</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraint</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-                        <span class="s2">"Linear equality constraints across the q-dimension are not "</span>
-                        <span class="s2">"supported for sequential optimization."</span>
-                    <span class="p">)</span>
-
-        <span class="c1"># TODO: Validate constraints if provided:</span>
-        <span class="c1"># https://github.com/pytorch/botorch/pull/1231</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_initial_conditions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequential</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-                <span class="s2">"`batch_initial_conditions` is not supported for sequential "</span>
-                <span class="s2">"optimization. Either avoid specifying "</span>
-                <span class="s2">"`batch_initial_conditions` to use the custom initializer or "</span>
-                <span class="s2">"use the `ic_generator` kwarg to generate initial conditions "</span>
-                <span class="s2">"for the case of nonlinear inequality constraints."</span>
-            <span class="p">)</span>
 
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_initial_conditions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -176,17 +149,6 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s2">"Must specify `raw_samples` when "</span>
                     <span class="s2">"`batch_initial_conditions` is None`."</span>
-                <span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequential</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_best_only</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                    <span class="s2">"`return_best_only=False` only supported for joint optimization."</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                    <span class="s2">"sequential optimization currently not supported for one-shot "</span>
-                    <span class="s2">"acquisition functions. Must have `sequential=False`."</span>
                 <span class="p">)</span>
 
 <div class="viewcode-block" id="OptimizeAcqfInputs.get_ic_generator"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.OptimizeAcqfInputs.get_ic_generator">[docs]</a>    <span class="k">def</span> <span class="nf">get_ic_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TGenInitialConditions</span><span class="p">:</span>
@@ -237,12 +199,53 @@
     <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">acq_value</span>
 
 
+<span class="k">def</span> <span class="nf">_validate_sequential_inputs</span><span class="p">(</span><span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># validate that linear constraints across the q-dim and</span>
+    <span class="c1"># self.sequential are not present together</span>
+    <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">inequality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">inequality_constraints</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraint</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                    <span class="s2">"Linear inequality constraints across the q-dimension are not "</span>
+                    <span class="s2">"supported for sequential optimization."</span>
+                <span class="p">)</span>
+    <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">equality_constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">equality_constraints</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraint</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                    <span class="s2">"Linear equality constraints across the q-dimension are not "</span>
+                    <span class="s2">"supported for sequential optimization."</span>
+                <span class="p">)</span>
+
+    <span class="c1"># TODO: Validate constraints if provided:</span>
+    <span class="c1"># https://github.com/pytorch/botorch/pull/1231</span>
+    <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">batch_initial_conditions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="s2">"`batch_initial_conditions` is not supported for sequential "</span>
+            <span class="s2">"optimization. Either avoid specifying "</span>
+            <span class="s2">"`batch_initial_conditions` to use the custom initializer or "</span>
+            <span class="s2">"use the `ic_generator` kwarg to generate initial conditions "</span>
+            <span class="s2">"for the case of nonlinear inequality constraints."</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">return_best_only</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"`return_best_only=False` only supported for joint optimization."</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">opt_inputs</span><span class="o">.</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"sequential optimization currently not supported for one-shot "</span>
+            <span class="s2">"acquisition functions. Must have `sequential=False`."</span>
+        <span class="p">)</span>
+
+
 <span class="k">def</span> <span class="nf">_optimize_acqf_sequential_q</span><span class="p">(</span>
     <span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">,</span> <span class="n">timeout_sec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">start_time</span><span class="p">:</span> <span class="nb">float</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Helper function for `optimize_acqf` when sequential=True and q &gt; 1.</span>
 <span class="sd">    """</span>
+    <span class="n">_validate_sequential_inputs</span><span class="p">(</span><span class="n">opt_inputs</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">timeout_sec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># When using sequential optimization, we allocate the total timeout</span>
         <span class="c1"># evenly across the individual acquisition optimizations.</span>

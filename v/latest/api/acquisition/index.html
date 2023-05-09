@@ -1503,7 +1503,7 @@ design point each, and returns a Tensor with shape <cite>batch_shape’</cite>, 
 <div class="citation-list" role="list">
 <div class="citation" id="tu2022" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Tu2022<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id11" role="doc-backlink">1</a>,<a href="#id14" role="doc-backlink">2</a>,<a href="#id27" role="doc-backlink">3</a>)</span>
+<span class="backrefs">(<a href="#id11" role="doc-backlink">1</a>,<a href="#id14" role="doc-backlink">2</a>)</span>
 <p>B. Tu, A. Gandy, N. Kantas and B.Shafei. Joint Entropy Search for Multi-Objective
 Bayesian Optimization. Advances in Neural Information Processing Systems, 35.
 2022.</p>
@@ -3173,23 +3173,33 @@ additional (“trace”) observations.</p></li>
 </section>
 <section id="module-botorch.acquisition.joint_entropy_search">
 <span id="joint-entropy-search-acquisition-functions"></span><h3>Joint Entropy Search Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.joint_entropy_search" title="Permalink to this heading">¶</a></h3>
-<p>Acquisition function for joint entropy search (JES). The code utilizes the
-implementation designed for the multi-objective batch setting.</p>
+<p>Acquisition function for joint entropy search (JES).</p>
+<div class="citation-list" role="list">
+<div class="citation" id="hvarfner2022joint" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a href="#id28" role="doc-backlink">Hvarfner2022joint</a><span class="fn-bracket">]</span></span>
+<p>C. Hvarfner, F. Hutter, L. Nardi,
+Joint Entropy Search for Maximally-informed Bayesian Optimization.
+In Proceedings of the Annual Conference on Neural Information
+Processing Systems (NeurIPS), 2022.</p>
+</div>
+<div class="citation" id="tu2022joint" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Tu2022joint<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a href="#id27" role="doc-backlink">1</a>,<a href="#id29" role="doc-backlink">2</a>)</span>
+<p>B. Tu, A. Gandy, N. Kantas, B. Shafei,
+Joint Entropy Search for Multi-objective Bayesian Optimization.
+In Proceedings of the Annual Conference on Neural Information
+Processing Systems (NeurIPS), 2022.</p>
+</div>
+</div>
 <dl class="py class">
-<dt class="sig sig-object py" id="botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.joint_entropy_search.</span></span><span class="sig-name descname"><span class="pre">qLowerBoundJointEntropySearch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimal_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimal_outputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hypercell_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimation_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/joint_entropy_search.html#qLowerBoundJointEntropySearch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch" title="botorch.acquisition.multi_objective.joint_entropy_search.qLowerBoundMultiObjectiveJointEntropySearch"><code class="xref py py-class docutils literal notranslate"><span class="pre">qLowerBoundMultiObjectiveJointEntropySearch</span></code></a></p>
+<dt class="sig sig-object py" id="botorch.acquisition.joint_entropy_search.qJointEntropySearch">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.joint_entropy_search.</span></span><span class="sig-name descname"><span class="pre">qJointEntropySearch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimal_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimal_outputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition_noiseless</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">posterior_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimation_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/joint_entropy_search.html#qJointEntropySearch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.joint_entropy_search.qJointEntropySearch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MCSamplerMixin</span></code></p>
 <p>The acquisition function for the Joint Entropy Search, where the batches
 <cite>q &gt; 1</cite> are supported through the lower bound formulation.</p>
 <p>This acquisition function computes the mutual information between the observation
 at a candidate point <cite>X</cite> and the optimal input-output pair.</p>
-<p>See <a class="reference internal" href="#tu2022" id="id27"><span>[Tu2022]</span></a> for a discussion on the estimation procedure.</p>
-<p>NOTES:
-(i) The estimated acquisition value could be negative.</p>
-<p>(ii) The lower bound batch acquisition function might not be monotone in the
-sense that adding more elements to the batch does not necessarily increase the
-acquisition value. Specifically, the acquisition value can become smaller when
-more inputs are added.</p>
+<p>See <a class="reference internal" href="#tu2022joint" id="id27"><span>[Tu2022joint]</span></a> for a discussion on the estimation procedure.</p>
 <p>Joint entropy search acquisition function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3200,30 +3210,29 @@ optimal inputs of dimension <cite>d</cite>. We assume for simplicity that each
 sample only contains one optimal set of inputs.</p></li>
 <li><p><strong>optimal_outputs</strong> (<em>Tensor</em>) – A <cite>num_samples x 1</cite>-dim Tensor containing the optimal
 set of objectives of dimension <cite>1</cite>.</p></li>
+<li><p><strong>condition_noiseless</strong> (<em>bool</em>) – Whether to condition on noiseless optimal observations
+<cite>f*</cite> <a class="reference internal" href="#hvarfner2022joint" id="id28"><span>[Hvarfner2022joint]</span></a> or noisy optimal observations <cite>y*</cite>
+<a class="reference internal" href="#tu2022joint" id="id29"><span>[Tu2022joint]</span></a>. These are sampled identically, so this only controls
+the fashion in which the GP is reshaped as a result of conditioning
+on the optimum.</p></li>
+<li><p><strong>estimation_type</strong> (<em>str</em>) – estimation_type: A string to determine which entropy
+estimate is computed: Lower bound” (“LB”) or “Monte Carlo” (“MC”).
+Lower Bound is recommended due to the relatively high variance
+of the MC estimator.</p></li>
 <li><p><strong>maximize</strong> (<em>bool</em>) – If true, we consider a maximization problem.</p></li>
-<li><p><strong>hypercell_bounds</strong> (<em>Tensor</em>) – A <cite>num_samples x 2 x J x 1</cite>-dim Tensor containing the
-hyper-rectangle bounds for integration, where <cite>J</cite> is the number of
-hyper-rectangles. By default, the problem is assumed to be
-unconstrained and therefore the region of integration for a sample
-<cite>(x*, y*)</cite> is a <cite>J=1</cite> hyper-rectangle of the form  <cite>(-infty, y^*]</cite>
-for a maximization problem and <cite>[y^*, +infty)</cite> for a minimization
-problem. In the constrained setting, the region of integration also
-includes the infeasible space.</p></li>
 <li><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have been
 submitted for function evaluation, but have not yet been evaluated.</p></li>
-<li><p><strong>estimation_type</strong> (<em>str</em>) – A string to determine which entropy estimate is
-computed: “0”, “LB”, “LB2”, or “MC”. In the single-objective
-setting, “LB” is equivalent to “LB2”.</p></li>
 <li><p><strong>num_samples</strong> (<em>int</em>) – The number of Monte Carlo samples used for the Monte Carlo
 estimate.</p></li>
+<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><em>PosteriorTransform</em><em>]</em>) – </p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/joint_entropy_search.html#qLowerBoundJointEntropySearch.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evaluates qLowerBoundJointEntropySearch at the design points <cite>X</cite>.</p>
+<dt class="sig sig-object py" id="botorch.acquisition.joint_entropy_search.qJointEntropySearch.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/joint_entropy_search.html#qJointEntropySearch.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.joint_entropy_search.qJointEntropySearch.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates qJointEntropySearch at the design points <cite>X</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -3241,12 +3250,8 @@ points <cite>X</cite>.</p>
 </dl>
 </dd></dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.model">
-<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.model" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.acquisition.joint_entropy_search.qJointEntropySearch.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.joint_entropy_search.qJointEntropySearch.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 </section>
@@ -3333,17 +3338,17 @@ given design points <cite>X</cite>.</p>
 <p>Active learning acquisition functions.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="seo2014activedata" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id28" role="doc-backlink">Seo2014activedata</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id30" role="doc-backlink">Seo2014activedata</a><span class="fn-bracket">]</span></span>
 <p>S. Seo, M. Wallat, T. Graepel, and K. Obermayer. Gaussian process regression:
 Active data selection and test point rejection. IJCNN 2000.</p>
 </div>
 <div class="citation" id="chen2014seqexpdesign" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id29" role="doc-backlink">Chen2014seqexpdesign</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id31" role="doc-backlink">Chen2014seqexpdesign</a><span class="fn-bracket">]</span></span>
 <p>X. Chen and Q. Zhou. Sequential experimental designs for stochastic kriging.
 Winter Simulation Conference 2014.</p>
 </div>
 <div class="citation" id="binois2017repexp" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id30" role="doc-backlink">Binois2017repexp</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id32" role="doc-backlink">Binois2017repexp</a><span class="fn-bracket">]</span></span>
 <p>M. Binois, J. Huang, R. B. Gramacy, and M. Ludkovski. Replication or
 exploration? Sequential design for stochastic simulation experiments.
 ArXiv 2017.</p>
@@ -3359,7 +3364,7 @@ ArXiv 2017.</p>
 In that, it is a proxy for global model uncertainty, and thus purely focused on
 “exploration”, rather the “exploitation” of many of the classic Bayesian
 Optimization acquisition functions.</p>
-<p>See <a class="reference internal" href="#seo2014activedata" id="id28"><span>[Seo2014activedata]</span></a>, <a class="reference internal" href="#chen2014seqexpdesign" id="id29"><span>[Chen2014seqexpdesign]</span></a>, and <a class="reference internal" href="#binois2017repexp" id="id30"><span>[Binois2017repexp]</span></a>.</p>
+<p>See <a class="reference internal" href="#seo2014activedata" id="id30"><span>[Seo2014activedata]</span></a>, <a class="reference internal" href="#chen2014seqexpdesign" id="id31"><span>[Chen2014seqexpdesign]</span></a>, and <a class="reference internal" href="#binois2017repexp" id="id32"><span>[Binois2017repexp]</span></a>.</p>
 <p>q-Integrated Negative Posterior Variance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3464,11 +3469,11 @@ of link function at X that active learning hopes to maximize</p>
 <section id="module-botorch.acquisition.preference">
 <span id="preference-acquisition-functions"></span><h3>Preference Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.preference" title="Permalink to this heading">¶</a></h3>
 <p>Preference acquisition functions. This includes:
-Analytical EUBO acquisition function as introduced in <a class="reference internal" href="#lin2022preference" id="id31"><span>[Lin2022preference]</span></a>.</p>
+Analytical EUBO acquisition function as introduced in <a class="reference internal" href="#lin2022preference" id="id33"><span>[Lin2022preference]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="lin2022preference" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Lin2022preference<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id31" role="doc-backlink">1</a>,<a href="#id32" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id33" role="doc-backlink">1</a>,<a href="#id34" role="doc-backlink">2</a>)</span>
 <p>Lin, Z.J., Astudillo, R., Frazier, P.I. and Bakshy, E. Preference Exploration
 for Efficient Bayesian Optimization with Multiple Outcomes. International
 Conference on Artificial Intelligence and Statistics (AISTATS), 2022.</p>
@@ -3481,7 +3486,7 @@ Conference on Artificial Intelligence and Statistics (AISTATS), 2022.</p>
 <p>Analytic Prefential Expected Utility of Best Options, i.e., Analytical EUBO</p>
 <p>Analytic implementation of Expected Utility of the Best Option under the
 Laplace model (assumes a PairwiseGP is used as the preference model) as
-proposed in <a class="reference internal" href="#lin2022preference" id="id32"><span>[Lin2022preference]</span></a>.</p>
+proposed in <a class="reference internal" href="#lin2022preference" id="id34"><span>[Lin2022preference]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -4442,17 +4447,17 @@ model (required if <cite>use_mean=False</cite>, ignored if <cite>use_mean=True</
 <section id="module-botorch.acquisition.risk_measures">
 <span id="risk-measures"></span><h3>Risk Measures<a class="headerlink" href="#module-botorch.acquisition.risk_measures" title="Permalink to this heading">¶</a></h3>
 <p>Risk Measures implemented as Monte-Carlo objectives, based on Bayesian
-optimization of risk measures as introduced in <a class="reference internal" href="#cakmak2020risk" id="id33"><span>[Cakmak2020risk]</span></a>. For a
+optimization of risk measures as introduced in <a class="reference internal" href="#cakmak2020risk" id="id35"><span>[Cakmak2020risk]</span></a>. For a
 broader discussion of Monte-Carlo methods for VaR and CVaR risk measures,
-see also <a class="reference internal" href="#hong2014review" id="id34"><span>[Hong2014review]</span></a>.</p>
+see also <a class="reference internal" href="#hong2014review" id="id36"><span>[Hong2014review]</span></a>.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="cakmak2020risk" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id33" role="doc-backlink">Cakmak2020risk</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id35" role="doc-backlink">Cakmak2020risk</a><span class="fn-bracket">]</span></span>
 <p>S. Cakmak, R. Astudillo, P. Frazier, and E. Zhou. Bayesian Optimization of
 Risk Measures. Advances in Neural Information Processing Systems 33, 2020.</p>
 </div>
 <div class="citation" id="hong2014review" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id34" role="doc-backlink">Hong2014review</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id36" role="doc-backlink">Hong2014review</a><span class="fn-bracket">]</span></span>
 <p>L. J. Hong, Z. Hu, and G. Liu. Monte carlo methods for value-at-risk and
 conditional value-at-risk: a review. ACM Transactions on Modeling and
 Computer Simulation, 2014.</p>
@@ -4668,18 +4673,18 @@ joint distribution of the outputs, and provides more accurate risk estimates.</p
 <div class="citation-list" role="list">
 <div class="citation" id="prekopa2012mvar" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Prekopa2012MVaR<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id35" role="doc-backlink">1</a>,<a href="#id38" role="doc-backlink">2</a>,<a href="#id39" role="doc-backlink">3</a>,<a href="#id40" role="doc-backlink">4</a>)</span>
+<span class="backrefs">(<a href="#id37" role="doc-backlink">1</a>,<a href="#id40" role="doc-backlink">2</a>,<a href="#id41" role="doc-backlink">3</a>,<a href="#id42" role="doc-backlink">4</a>)</span>
 <p>A. Prekopa. Multivariate value at risk and related topics.
 Annals of Operations Research, 2012.</p>
 </div>
 <div class="citation" id="cousin2013mvar" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Cousin2013MVaR<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id36" role="doc-backlink">1</a>,<a href="#id37" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id38" role="doc-backlink">1</a>,<a href="#id39" role="doc-backlink">2</a>)</span>
 <p>A. Cousin and E. Di Bernardino. On multivariate extensions of Value-at-Risk.
 Journal of Multivariate Analysis, 2013.</p>
 </div>
 <div class="citation" id="daulton2022mars" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id41" role="doc-backlink">Daulton2022MARS</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id43" role="doc-backlink">Daulton2022MARS</a><span class="fn-bracket">]</span></span>
 <p>S. Daulton, S, Cakmak, M. Balandat, M. Osborne, E. Zhou, and E. Bakshy.
 Robust multi-objective Bayesian optimization under input noise.
 Proceedings of the 39th International Conference on Machine Learning, 2022.</p>
@@ -4892,11 +4897,11 @@ posterior samples. The q-batches should be ordered so that each
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">MVaR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expectation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocessing_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad_to_n_w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_dominated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MultiOutputRiskMeasureMCObjective</span></code></p>
-<p>The multivariate Value-at-Risk as introduced in <a class="reference internal" href="#prekopa2012mvar" id="id35"><span>[Prekopa2012MVaR]</span></a>.</p>
+<p>The multivariate Value-at-Risk as introduced in <a class="reference internal" href="#prekopa2012mvar" id="id37"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>MVaR is defined as the non-dominated set of points in the extended domain
 of the random variable that have multivariate CDF greater than or equal to
 <cite>alpha</cite>. Note that MVaR is set valued and the size of the set depends on the
-particular realizations of the random variable. <a class="reference internal" href="#cousin2013mvar" id="id36"><span>[Cousin2013MVaR]</span></a> instead
+particular realizations of the random variable. <a class="reference internal" href="#cousin2013mvar" id="id38"><span>[Cousin2013MVaR]</span></a> instead
 propose to use the expectation of the set-valued MVaR as the multivariate
 VaR. We support this alternative with an <cite>expectation</cite> flag.</p>
 <p>The multivariate Value-at-Risk.</p>
@@ -4907,7 +4912,7 @@ VaR. We support this alternative with an <cite>expectation</cite> flag.</p>
 <li><p><strong>alpha</strong> (<em>float</em>) – The risk level of MVaR, float in <cite>(0.0, 1.0]</cite>. Each MVaR value
 dominates <cite>alpha</cite> fraction of all observations.</p></li>
 <li><p><strong>expectation</strong> (<em>bool</em>) – If True, returns the expectation of the MVaR set as is
-done in <a class="reference internal" href="#cousin2013mvar" id="id37"><span>[Cousin2013MVaR]</span></a>. Otherwise, it returns the union of all
+done in <a class="reference internal" href="#cousin2013mvar" id="id39"><span>[Cousin2013MVaR]</span></a>. Otherwise, it returns the union of all
 values in the MVaR set. Default: False.</p></li>
 <li><p><strong>preprocessing_function</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A preprocessing function to apply to the
 samples before computing the risk measure. This can be used to
@@ -4925,7 +4930,7 @@ in general be much larger than the alternative. See <cite>forward</cite> for
 more details on the return shape.
 NOTE: this is only relevant if <cite>expectation=False</cite>.</p></li>
 <li><p><strong>filter_dominated</strong> (<em>bool</em>) – If True, returns the non-dominated subset of
-alpha level points (this is MVaR as defined by <a class="reference internal" href="#prekopa2012mvar" id="id38"><span>[Prekopa2012MVaR]</span></a>).
+alpha level points (this is MVaR as defined by <a class="reference internal" href="#prekopa2012mvar" id="id40"><span>[Prekopa2012MVaR]</span></a>).
 Disabling this will make it faster, and may be preferable if
 the dominated points will be filtered out later, e.g., while
 calculating the hypervolume. Disabling this is not recommended
@@ -4936,7 +4941,7 @@ if <cite>expectation=True</cite>.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_cpu">
 <span class="sig-name descname"><span class="pre">get_mvar_set_cpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR.get_mvar_set_cpu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_cpu" title="Permalink to this definition">¶</a></dt>
-<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id39"><span>[Prekopa2012MVaR]</span></a>.</p>
+<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id41"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>NOTE: This is much faster on CPU for large <cite>n_w</cite> than the alternative but it
 is significantly slower on GPU. Based on empirical evidence, this is recommended
 when running on CPU with <cite>n_w &gt; 64</cite>.</p>
@@ -4963,7 +4968,7 @@ are not in-sample points.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_gpu">
 <span class="sig-name descname"><span class="pre">get_mvar_set_gpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR.get_mvar_set_gpu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_gpu" title="Permalink to this definition">¶</a></dt>
-<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id40"><span>[Prekopa2012MVaR]</span></a>.</p>
+<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id42"><span>[Prekopa2012MVaR]</span></a>.</p>
 <p>NOTE: This is much faster on GPU than the alternative but it scales very poorly
 on CPU as <cite>n_w</cite> increases. This should be preferred if a GPU is available or
 when <cite>n_w &lt;= 64</cite>. In addition, this supports <cite>m &gt;= 2</cite> outcomes (vs <cite>m = 2</cite> for
@@ -5020,7 +5025,7 @@ a deterministic return shape.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">MARS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chebyshev_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_Y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocessing_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MARS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MARS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.risk_measures.VaR" title="botorch.acquisition.risk_measures.VaR"><code class="xref py py-class docutils literal notranslate"><span class="pre">VaR</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">MultiOutputRiskMeasureMCObjective</span></code></p>
 <p>MVaR Approximation based on Random Scalarizations as introduced
-in <a class="reference internal" href="#daulton2022mars" id="id41"><span>[Daulton2022MARS]</span></a>.</p>
+in <a class="reference internal" href="#daulton2022mars" id="id43"><span>[Daulton2022MARS]</span></a>.</p>
 <p>This approximates MVaR via VaR of Chebyshev scalarizations, where each
 scalarization corresponds to a point in the MVaR set. As implemented,
 this uses one set of scalarization weights to approximate a single MVaR value.
@@ -5633,14 +5638,15 @@ the acquisition functions’s default sampler.</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.input_constructors.construct_inputs_analytic_eubo">
-<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_analytic_eubo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pref_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_winner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_analytic_eubo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_analytic_eubo" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_analytic_eubo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pref_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_winner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_multiplier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_analytic_eubo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_analytic_eubo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct kwargs for the <cite>AnalyticExpectedUtilityOfBestOption</cite> constructor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The outcome model to be used in the acquisition function.</p></li>
-<li><p><strong>pref_model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The preference model to be used in preference exploration</p></li>
-<li><p><strong>previous_winner</strong> (<em>Tensor</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>pref_model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The preference model to be used in preference exploration.</p></li>
+<li><p><strong>previous_winner</strong> (<em>Tensor</em><em> | </em><em>None</em>) – The previous winner of the best option.</p></li>
+<li><p><strong>sample_multiplier</strong> (<em>float</em><em> | </em><em>None</em>) – The scale factor for the single-sample model.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -5719,6 +5725,26 @@ optimization.</p></li>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tuple</em>[<em>Tensor</em>, <em>Tensor</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.acquisition.input_constructors.construct_inputs_qJES">
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_qJES</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_optima</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition_noiseless</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimation_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_qJES"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_qJES" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – </p></li>
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em> | </em><em>Dict</em><em>[</em><em>Hashable</em><em>, </em><a class="reference internal" href="utils.html#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a><em>]</em>) – </p></li>
+<li><p><strong>bounds</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>num_optima</strong> (<em>int</em>) – </p></li>
+<li><p><strong>maximize</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>condition_noiseless</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>X_pending</strong> (<em>Tensor</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>estimation_type</strong> (<em>str</em>) – </p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – </p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -6338,6 +6364,33 @@ columns of X.</p></li>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.acquisition.utils.get_optimal_samples">
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.utils.</span></span><span class="sig-name descname"><span class="pre">get_optimal_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_optima</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1024</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#get_optimal_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.utils.get_optimal_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws sample paths from the posterior and maximizes the samples using GD.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The model from which samples are drawn.</p></li>
+<li><p><strong>bounds</strong> (<em>Tensor</em>) – (Tensor): Bounds of the search space. If the model inputs are
+normalized, the bounds should be normalized as well.</p></li>
+<li><p><strong>num_optima</strong> (<em>int</em>) – The number of paths to be drawn and optimized.</p></li>
+<li><p><strong>raw_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of candidates randomly sample.
+Defaults to 1024.</p></li>
+<li><p><strong>num_restarts</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of candidates to do gradient-based
+optimization on. Defaults to 20.</p></li>
+<li><p><strong>maximize</strong> (<em>bool</em>) – Whether to maximize or minimize the samples.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The optimal input locations and corresponding
+outputs, x* and f*.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[Tensor, Tensor]</p>
 </dd>
 </dl>
 </dd></dl>

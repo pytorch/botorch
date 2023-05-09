@@ -46,7 +46,7 @@
     <span class="n">reshape_and_detach</span><span class="p">,</span>
     <span class="n">SaasPyroModel</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">FixedNoiseMultiTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">MultiTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.fully_bayesian</span> <span class="kn">import</span> <span class="n">FullyBayesianPosterior</span><span class="p">,</span> <span class="n">MCMC_DIM</span>
@@ -73,7 +73,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
         <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">task_rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
@@ -82,16 +82,12 @@
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: Training inputs (n x (d + 1))</span>
 <span class="sd">            train_Y: Training targets (n x 1)</span>
-<span class="sd">            train_Yvar: Observed noise variance (n x 1).</span>
+<span class="sd">            train_Yvar: Observed noise variance (n x 1). If None, we infer the noise.</span>
+<span class="sd">                Note that the inferred noise is common across all tasks.</span>
 <span class="sd">            task_feature: The index of the task feature (`-d &lt;= task_feature &lt;= d`).</span>
 <span class="sd">            task_rank: The num of learned task embeddings to be used in the task kernel.</span>
 <span class="sd">                If omitted, set it to be 1.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">train_Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">train_Yvar</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()):</span>
-            <span class="c1"># TODO: revisit inferred noise for batched MTGP</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="s2">"Currently do not support inferred noise for multitask GP with MCMC!"</span>
-            <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_inputs</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
         <span class="c1"># obtain a list of task indicies</span>
         <span class="n">all_tasks</span> <span class="o">=</span> <span class="n">train_X</span><span class="p">[:,</span> <span class="n">task_feature</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
@@ -193,7 +189,7 @@
         <span class="k">return</span> <span class="n">mean_module</span><span class="p">,</span> <span class="n">covar_module</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">,</span> <span class="n">task_covar_module</span><span class="p">,</span> <span class="n">latent_features</span></div></div>
 
 
-<div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">SaasFullyBayesianMultiTaskGP</span><span class="p">(</span><span class="n">FixedNoiseMultiTaskGP</span><span class="p">):</span>
+<div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">SaasFullyBayesianMultiTaskGP</span><span class="p">(</span><span class="n">MultiTaskGP</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A fully Bayesian multi-task GP model with the SAAS prior.</span>
 
 <span class="sd">    This model assumes that the inputs have been normalized to [0, 1]^d and that the</span>
@@ -223,7 +219,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
         <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -236,7 +232,8 @@
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: Training inputs (n x (d + 1))</span>
 <span class="sd">            train_Y: Training targets (n x 1)</span>
-<span class="sd">            train_Yvar: Observed noise variance (n x 1).</span>
+<span class="sd">            train_Yvar: Observed noise variance (n x 1). If None, we infer the noise.</span>
+<span class="sd">                Note that the inferred noise is common across all tasks.</span>
 <span class="sd">            task_feature: The index of the task feature (`-d &lt;= task_feature &lt;= d`).</span>
 <span class="sd">            rank: The num of learned task embeddings to be used in the task kernel.</span>
 <span class="sd">                If omitted, set it to be 1.</span>
@@ -249,23 +246,18 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"Expected train_X to have shape n x d and train_Y to have shape n x 1"</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="n">train_Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="s2">"Inferred Noise is not supported in multitask SAAS GP."</span>
+        <span class="k">if</span> <span class="n">train_Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">train_Yvar</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Expected train_Yvar to be None or have the same shape as train_Y"</span>
             <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">train_Yvar</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">"Expected train_Yvar to be None or have the same shape as train_Y"</span>
-                <span class="p">)</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span>
                 <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
-
-        <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">train_Yvar</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">train_Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Clamp after transforming</span>
+            <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">train_Yvar</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">)</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
@@ -321,7 +313,8 @@
     <span class="k">def</span> <span class="nf">batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Batch shape of the model, equal to the number of MCMC samples.</span>
 <span class="sd">        Note that `SaasFullyBayesianMultiTaskGP` does not support batching</span>
-<span class="sd">        over input data at this point."""</span>
+<span class="sd">        over input data at this point.</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">num_mcmc_samples</span><span class="p">])</span>
 
@@ -340,7 +333,7 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Load the MCMC hyperparameter samples into the model.</span>
 
 <span class="sd">        This method will be called by `fit_fully_bayesian_model_nuts` when the model</span>
-<span class="sd">        has been fitted in order to create a batched SingleTaskGP model.</span>
+<span class="sd">        has been fitted in order to create a batched MultiTaskGP model.</span>
 <span class="sd">        """</span>
         <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">,</span>
@@ -350,8 +343,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">latent_features</span><span class="p">,</span>
         <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">load_mcmc_samples</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">)</span></div>
 
-    <span class="c1"># pyre-fixme[14]: Inconsistent override of</span>
-    <span class="c1"># BatchedMultiOutputGPyTorchModel.posterior</span>
 <div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -376,7 +367,6 @@
         <span class="n">posterior</span> <span class="o">=</span> <span class="n">FullyBayesianPosterior</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">posterior</span></div>
 
-    <span class="c1"># pyre-fixme[14]: Inconsistent override</span>
 <div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">)</span>
@@ -405,7 +395,6 @@
         <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="c1"># pyre-fixme[14]: Inconsistent override of `MultiTaskGP.construct_inputs`</span>
     <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">training_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">],</span>
@@ -421,11 +410,12 @@
 <span class="sd">                see `parse_training_data`.</span>
 <span class="sd">            rank: The rank of the cross-task covariance matrix.</span>
 <span class="sd">        """</span>
-
         <span class="n">inputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span>
             <span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span>
         <span class="n">inputs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"task_covar_prior"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"train_Yvar"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
+            <span class="n">inputs</span><span class="p">[</span><span class="s2">"train_Yvar"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">inputs</span></div></div>
 </pre></div>
 </div>

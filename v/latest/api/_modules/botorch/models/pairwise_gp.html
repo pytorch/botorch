@@ -940,7 +940,11 @@
             <span class="c1"># We pass in the untransformed datapoints into set_train_data</span>
             <span class="c1"># as we will be setting self.datapoints as the untransformed datapoints</span>
             <span class="c1"># self.transform_inputs will be called inside before calling _update()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="n">datapoints</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span><span class="p">,</span> <span class="n">update_model</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span>
+                <span class="n">datapoints</span><span class="o">=</span><span class="n">datapoints</span><span class="p">,</span>
+                <span class="n">comparisons</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">unconsolidated_comparisons</span><span class="p">,</span>
+                <span class="n">update_model</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
 
             <span class="n">transformed_dp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">)</span>
 
@@ -1125,9 +1129,13 @@
 <div class="viewcode-block" id="PairwiseLaplaceMarginalLogLikelihood.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">post</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">comp</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate approximated log evidence, i.e., log(P(D|theta))</span>
 
+<span class="sd">        Note that post will be based on the consolidated/deduped datapoints for</span>
+<span class="sd">        numerical stability, but comp will still be the unconsolidated comparisons</span>
+<span class="sd">        so that it's still compatible with fit_gpytorch_*.</span>
+
 <span class="sd">        Args:</span>
-<span class="sd">            post: training posterior distribution from self.model</span>
-<span class="sd">            comp: Comparisons pairs, see PairwiseGP.__init__ for more details</span>
+<span class="sd">            post: training posterior distribution from self.model (after consolidation)</span>
+<span class="sd">            comp: Comparisons pairs (before consolidation)</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The approximated evidence, i.e., the marginal log likelihood</span>

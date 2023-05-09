@@ -444,7 +444,7 @@ all candidates except candidate <cite>i</cite>.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># generate `q=3` candidates cyclically using 15 random restarts</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># 256 raw samples, and 4 cycles</span>
-<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">]])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">candidates</span><span class="p">,</span> <span class="n">acq_value_list</span> <span class="o">=</span> <span class="n">optimize_acqf_cyclic</span><span class="p">(</span>

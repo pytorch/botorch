@@ -31,40 +31,66 @@
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
 <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">Acquisition function for joint entropy search (JES). The code utilizes the</span>
-<span class="sd">implementation designed for the multi-objective batch setting.</span>
+<span class="sd">Acquisition function for joint entropy search (JES).</span>
 
+<span class="sd">.. [Hvarfner2022joint]</span>
+<span class="sd">    C. Hvarfner, F. Hutter, L. Nardi,</span>
+<span class="sd">    Joint Entropy Search for Maximally-informed Bayesian Optimization.</span>
+<span class="sd">    In Proceedings of the Annual Conference on Neural Information</span>
+<span class="sd">    Processing Systems (NeurIPS), 2022.</span>
+
+<span class="sd">.. [Tu2022joint]</span>
+<span class="sd">    B. Tu, A. Gandy, N. Kantas, B. Shafei,</span>
+<span class="sd">    Joint Entropy Search for Multi-objective Bayesian Optimization.</span>
+<span class="sd">    In Proceedings of the Annual Conference on Neural Information</span>
+<span class="sd">    Processing Systems (NeurIPS), 2022.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">log</span><span class="p">,</span> <span class="n">pi</span>
+
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.joint_entropy_search</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">qLowerBoundMultiObjectiveJointEntropySearch</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.utils</span> <span class="kn">import</span> <span class="n">compute_sample_box_decomposition</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
+
+<span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">SaasFullyBayesianSingleTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">MIN_INFERRED_NOISE_LEVEL</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+
+<span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">check_no_nans</span><span class="p">,</span> <span class="n">fantasize</span> <span class="k">as</span> <span class="n">fantasize_flag</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">concatenate_pending_points</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
+<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Normal</span>
 
-<div class="viewcode-block" id="qLowerBoundJointEntropySearch"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch">[docs]</a><span class="k">class</span> <span class="nc">qLowerBoundJointEntropySearch</span><span class="p">(</span><span class="n">qLowerBoundMultiObjectiveJointEntropySearch</span><span class="p">):</span>
+<span class="n">MCMC_DIM</span> <span class="o">=</span> <span class="o">-</span><span class="mi">3</span>  <span class="c1"># Only relevant if you do Fully Bayesian GPs.</span>
+<span class="n">ESTIMATION_TYPES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"MC"</span><span class="p">,</span> <span class="s2">"LB"</span><span class="p">]</span>
+<span class="n">MC_ADD_TERM</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">))</span>
+
+<span class="c1"># The CDF query cannot be strictly zero in the division</span>
+<span class="c1"># and this clamping helps assure that it is always positive.</span>
+<span class="n">CLAMP_LB</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span>
+<span class="n">FULLY_BAYESIAN_ERROR_MSG</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"JES is not yet available with Fully Bayesian GPs. Track the issue, "</span>
+    <span class="s2">"which regards conditioning on a number of optima on a collection "</span>
+    <span class="s2">"of models, in detail at https://github.com/pytorch/botorch/issues/1680"</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="qJointEntropySearch"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.joint_entropy_search.qJointEntropySearch">[docs]</a><span class="k">class</span> <span class="nc">qJointEntropySearch</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The acquisition function for the Joint Entropy Search, where the batches</span>
 <span class="sd">    `q &gt; 1` are supported through the lower bound formulation.</span>
 
 <span class="sd">    This acquisition function computes the mutual information between the observation</span>
 <span class="sd">    at a candidate point `X` and the optimal input-output pair.</span>
 
-<span class="sd">    See [Tu2022]_ for a discussion on the estimation procedure.</span>
-
-<span class="sd">    NOTES:</span>
-<span class="sd">    (i) The estimated acquisition value could be negative.</span>
-
-<span class="sd">    (ii) The lower bound batch acquisition function might not be monotone in the</span>
-<span class="sd">    sense that adding more elements to the batch does not necessarily increase the</span>
-<span class="sd">    acquisition value. Specifically, the acquisition value can become smaller when</span>
-<span class="sd">    more inputs are added.</span>
+<span class="sd">    See [Tu2022joint]_ for a discussion on the estimation procedure.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -72,10 +98,11 @@
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">optimal_inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">optimal_outputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">hypercell_bounds</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">condition_noiseless</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">estimation_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"LB"</span><span class="p">,</span>
+        <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -88,42 +115,90 @@
 <span class="sd">                sample only contains one optimal set of inputs.</span>
 <span class="sd">            optimal_outputs: A `num_samples x 1`-dim Tensor containing the optimal</span>
 <span class="sd">                set of objectives of dimension `1`.</span>
+<span class="sd">            condition_noiseless: Whether to condition on noiseless optimal observations</span>
+<span class="sd">                `f*` [Hvarfner2022joint]_ or noisy optimal observations `y*`</span>
+<span class="sd">                [Tu2022joint]_. These are sampled identically, so this only controls</span>
+<span class="sd">                the fashion in which the GP is reshaped as a result of conditioning</span>
+<span class="sd">                on the optimum.</span>
+<span class="sd">            estimation_type: estimation_type: A string to determine which entropy</span>
+<span class="sd">                estimate is computed: Lower bound" ("LB") or "Monte Carlo" ("MC").</span>
+<span class="sd">                Lower Bound is recommended due to the relatively high variance</span>
+<span class="sd">                of the MC estimator.</span>
 <span class="sd">            maximize: If true, we consider a maximization problem.</span>
-<span class="sd">            hypercell_bounds:  A `num_samples x 2 x J x 1`-dim Tensor containing the</span>
-<span class="sd">                hyper-rectangle bounds for integration, where `J` is the number of</span>
-<span class="sd">                hyper-rectangles. By default, the problem is assumed to be</span>
-<span class="sd">                unconstrained and therefore the region of integration for a sample</span>
-<span class="sd">                `(x*, y*)` is a `J=1` hyper-rectangle of the form  `(-infty, y^*]`</span>
-<span class="sd">                for a maximization problem and `[y^*, +infty)` for a minimization</span>
-<span class="sd">                problem. In the constrained setting, the region of integration also</span>
-<span class="sd">                includes the infeasible space.</span>
 <span class="sd">            X_pending: A `m x d`-dim Tensor of `m` design points that have been</span>
 <span class="sd">                submitted for function evaluation, but have not yet been evaluated.</span>
-<span class="sd">            estimation_type: A string to determine which entropy estimate is</span>
-<span class="sd">                computed: "0", "LB", "LB2", or "MC". In the single-objective</span>
-<span class="sd">                setting, "LB" is equivalent to "LB2".</span>
 <span class="sd">            num_samples: The number of Monte Carlo samples used for the Monte Carlo</span>
 <span class="sd">                estimate.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">hypercell_bounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">hypercell_bounds</span> <span class="o">=</span> <span class="n">compute_sample_box_decomposition</span><span class="p">(</span>
-                <span class="n">pareto_fronts</span><span class="o">=</span><span class="n">optimal_outputs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">),</span> <span class="n">maximize</span><span class="o">=</span><span class="n">maximize</span>
-            <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_samples</span><span class="p">]))</span>
+        <span class="n">MCSamplerMixin</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">)</span>
+        <span class="c1"># To enable fully bayesian GP conditioning, we need to unsqueeze</span>
+        <span class="c1"># to get num_optima x num_gps unique GPs</span>
 
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-            <span class="n">pareto_sets</span><span class="o">=</span><span class="n">optimal_inputs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">),</span>
-            <span class="n">pareto_fronts</span><span class="o">=</span><span class="n">optimal_outputs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">),</span>
-            <span class="n">hypercell_bounds</span><span class="o">=</span><span class="n">hypercell_bounds</span><span class="p">,</span>
-            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
-            <span class="n">estimation_type</span><span class="o">=</span><span class="n">estimation_type</span><span class="p">,</span>
-            <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="c1"># inputs come as num_optima_per_model x (num_models) x d</span>
+        <span class="c1"># but we want it four-dimensional in the Fully bayesian case,</span>
+        <span class="c1"># and three-dimensional otherwise.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimal_inputs</span> <span class="o">=</span> <span class="n">optimal_inputs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimal_outputs</span> <span class="o">=</span> <span class="n">optimal_outputs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span> <span class="o">=</span> <span class="n">posterior_transform</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="o">=</span> <span class="n">maximize</span>
 
-<div class="viewcode-block" id="qLowerBoundJointEntropySearch.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.joint_entropy_search.qLowerBoundJointEntropySearch.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
+        <span class="c1"># The optima (can be maxima, can be minima) come in as the largest</span>
+        <span class="c1"># values if we optimize, or the smallest (likely substantially negative)</span>
+        <span class="c1"># if we minimize. Inside the acquisition function, however, we always</span>
+        <span class="c1"># want to consider MAX-values. As such, we need to flip them if</span>
+        <span class="c1"># we want to minimize.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">:</span>
+            <span class="n">optimal_outputs</span> <span class="o">=</span> <span class="o">-</span><span class="n">optimal_outputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span> <span class="o">=</span> <span class="n">optimal_inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">condition_noiseless</span> <span class="o">=</span> <span class="n">condition_noiseless</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span> <span class="o">=</span> <span class="n">model</span>
+
+        <span class="c1"># Here, the optimal inputs have shapes num_optima x [num_models if FB] x 1 x D</span>
+        <span class="c1"># and the optimal outputs have shapes num_optima x [num_models if FB] x 1 x 1</span>
+        <span class="c1"># The third dimension equaling 1 is required to get one optimum per model,</span>
+        <span class="c1"># which raises a BotorchTensorDimensionWarning.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">SaasFullyBayesianSingleTaskGP</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">FULLY_BAYESIAN_ERROR_MSG</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">fantasize_flag</span><span class="p">():</span>
+                <span class="k">with</span> <span class="n">settings</span><span class="o">.</span><span class="n">propagate_grads</span><span class="p">(</span><span class="kc">False</span><span class="p">):</span>
+                    <span class="c1"># We must do a forward pass one before conditioning</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">False</span>
+                    <span class="p">)</span>
+
+                <span class="c1"># This equates to the JES version proposed by Hvarfner et. al.</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_noiseless</span><span class="p">:</span>
+                    <span class="n">opt_noise</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">optimal_outputs</span><span class="p">,</span> <span class="n">MIN_INFERRED_NOISE_LEVEL</span>
+                    <span class="p">)</span>
+                    <span class="c1"># conditional (batch) model of shape (num_models)</span>
+                    <span class="c1"># x num_optima_per_model</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">conditional_model</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span>
+                            <span class="n">X</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_inputs</span><span class="p">),</span>
+                            <span class="n">Y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_outputs</span><span class="p">,</span>
+                            <span class="n">noise</span><span class="o">=</span><span class="n">opt_noise</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">conditional_model</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span>
+                            <span class="n">X</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_inputs</span><span class="p">),</span>
+                            <span class="n">Y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_outputs</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">estimation_type</span> <span class="o">=</span> <span class="n">estimation_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">X_pending</span><span class="p">)</span>
+
+<div class="viewcode-block" id="qJointEntropySearch.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.joint_entropy_search.qJointEntropySearch.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluates qLowerBoundJointEntropySearch at the design points `X`.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluates qJointEntropySearch at the design points `X`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor of `batch_shape` t-batches with `q`</span>
@@ -133,8 +208,177 @@
 <span class="sd">            A `batch_shape`-dim Tensor of acquisition values at the given design</span>
 <span class="sd">            points `X`.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimation_type</span> <span class="o">==</span> <span class="s2">"LB"</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_lower_bound_information_gain</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimation_type</span> <span class="o">==</span> <span class="s2">"MC"</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_monte_carlo_information_gain</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Estimation type </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">estimation_type</span><span class="si">}</span><span class="s2"> is not valid. "</span>
+                <span class="sa">f</span><span class="s2">"Please specify any of </span><span class="si">{</span><span class="n">ESTIMATION_TYPES</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_lower_bound_information_gain</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div></div>
+    <span class="k">def</span> <span class="nf">_compute_lower_bound_information_gain</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">return_parts</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluates the lower bound information gain at the design points `X`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim Tensor of `batch_shape` t-batches with `q`</span>
+<span class="sd">            `d`-dim design points each.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape`-dim Tensor of acquisition values at the given design</span>
+<span class="sd">            points `X`.</span>
+<span class="sd">        """</span>
+        <span class="n">initial_posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># need to check if there is a two-dimensional batch shape -</span>
+        <span class="c1"># the sampled optima appear in the dimension right after</span>
+        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">sample_dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span>
+        <span class="c1"># We DISREGARD the additional constant term.</span>
+        <span class="n">initial_entropy</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">logdet</span><span class="p">(</span>
+            <span class="n">initial_posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span>
+        <span class="p">)</span>
+
+        <span class="c1"># initial_entropy of shape batch_size or batch_size x num_models if FBGP</span>
+        <span class="c1"># first need to unsqueeze the sample dim (after batch dim) and then the two last</span>
+        <span class="n">initial_entropy</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">initial_entropy</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">sample_dim</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Compute the mixture mean and variance</span>
+        <span class="n">posterior_m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">),</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="n">noiseless_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">),</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">variance</span>
+
+        <span class="n">mean_m</span> <span class="o">=</span> <span class="n">posterior_m</span><span class="o">.</span><span class="n">mean</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">:</span>
+            <span class="n">mean_m</span> <span class="o">=</span> <span class="o">-</span><span class="n">mean_m</span>
+        <span class="n">variance_m</span> <span class="o">=</span> <span class="n">posterior_m</span><span class="o">.</span><span class="n">variance</span>
+
+        <span class="n">check_no_nans</span><span class="p">(</span><span class="n">variance_m</span><span class="p">)</span>
+        <span class="c1"># get stdv of noiseless variance</span>
+        <span class="n">stdv</span> <span class="o">=</span> <span class="n">noiseless_var</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+        <span class="c1"># batch_shape x 1</span>
+        <span class="n">normal</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">normalized_mvs</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_outputs</span> <span class="o">-</span> <span class="n">mean_m</span><span class="p">)</span> <span class="o">/</span> <span class="n">stdv</span>
+        <span class="n">cdf_mvs</span> <span class="o">=</span> <span class="n">normal</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">normalized_mvs</span><span class="p">)</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">CLAMP_LB</span><span class="p">)</span>
+        <span class="n">pdf_mvs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">normal</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">normalized_mvs</span><span class="p">))</span>
+
+        <span class="n">ratio</span> <span class="o">=</span> <span class="n">pdf_mvs</span> <span class="o">/</span> <span class="n">cdf_mvs</span>
+        <span class="n">var_truncated</span> <span class="o">=</span> <span class="n">noiseless_var</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">normalized_mvs</span> <span class="o">+</span> <span class="n">ratio</span><span class="p">)</span> <span class="o">*</span> <span class="n">ratio</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">CLAMP_LB</span><span class="p">)</span>
+
+        <span class="n">var_truncated</span> <span class="o">=</span> <span class="n">var_truncated</span> <span class="o">+</span> <span class="p">(</span><span class="n">variance_m</span> <span class="o">-</span> <span class="n">noiseless_var</span><span class="p">)</span>
+        <span class="n">conditional_entropy</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">var_truncated</span><span class="p">)</span>
+
+        <span class="c1"># Shape batch_size x num_optima x [num_models if FB] x q x num_outputs</span>
+        <span class="c1"># squeeze the num_outputs dim (since it's 1)</span>
+        <span class="n">entropy_reduction</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">initial_entropy</span> <span class="o">-</span> <span class="n">conditional_entropy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># average over the number of optima and squeeze the q-batch</span>
+
+        <span class="n">entropy_reduction</span> <span class="o">=</span> <span class="n">entropy_reduction</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">sample_dim</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">entropy_reduction</span>
+
+    <span class="k">def</span> <span class="nf">_compute_monte_carlo_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Retrieves monte carlo samples and their log probabilities from the posterior.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            posterior: The posterior distribution.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A two-element tuple containing:</span>
+<span class="sd">            - samples: a num_optima x batch_shape x num_mc_samples x q x 1</span>
+<span class="sd">                tensor of samples drawn from the posterior.</span>
+<span class="sd">            - samples_log_prob: a num_optima x batch_shape x num_mc_samples x q x 1</span>
+<span class="sd">                tensor of associated probabilities.</span>
+<span class="sd">        """</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+        <span class="n">samples_log_prob</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">samples</span><span class="p">,</span> <span class="n">samples_log_prob</span>
+
+    <span class="k">def</span> <span class="nf">_compute_monte_carlo_information_gain</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">return_parts</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluates the lower bound information gain at the design points `X`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim Tensor of `batch_shape` t-batches with `q`</span>
+<span class="sd">            `d`-dim design points each.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape`-dim Tensor of acquisition values at the given design</span>
+<span class="sd">            points `X`.</span>
+<span class="sd">        """</span>
+        <span class="n">initial_posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">sample_dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span>
+        <span class="c1"># We DISREGARD the additional constant term.</span>
+        <span class="n">initial_entropy</span> <span class="o">=</span> <span class="n">MC_ADD_TERM</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">logdet</span><span class="p">(</span>
+            <span class="n">initial_posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span>
+        <span class="p">)</span>
+
+        <span class="c1"># initial_entropy of shape batch_size or batch_size x num_models if FBGP</span>
+        <span class="c1"># first need to unsqueeze the sample dim (after batch dim), then the two last</span>
+        <span class="n">initial_entropy</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">initial_entropy</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">sample_dim</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Compute the mixture mean and variance</span>
+        <span class="n">posterior_m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">),</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="n">noiseless_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">),</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">variance</span>
+
+        <span class="n">mean_m</span> <span class="o">=</span> <span class="n">posterior_m</span><span class="o">.</span><span class="n">mean</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">:</span>
+            <span class="n">mean_m</span> <span class="o">=</span> <span class="o">-</span><span class="n">mean_m</span>
+        <span class="n">variance_m</span> <span class="o">=</span> <span class="n">posterior_m</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">CLAMP_LB</span><span class="p">)</span>
+        <span class="n">conditional_samples</span><span class="p">,</span> <span class="n">conditional_logprobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_monte_carlo_variables</span><span class="p">(</span>
+            <span class="n">posterior_m</span>
+        <span class="p">)</span>
+
+        <span class="n">normalized_samples</span> <span class="o">=</span> <span class="p">(</span><span class="n">conditional_samples</span> <span class="o">-</span> <span class="n">mean_m</span><span class="p">)</span> <span class="o">/</span> <span class="n">variance_m</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+        <span class="c1"># Correlation between noisy observations and noiseless values f</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="p">(</span><span class="n">noiseless_var</span> <span class="o">/</span> <span class="n">variance_m</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+
+        <span class="n">normal</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="c1"># prepare max value quantities and re-scale as required</span>
+        <span class="n">normalized_mvs</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_outputs</span> <span class="o">-</span> <span class="n">mean_m</span><span class="p">)</span> <span class="o">/</span> <span class="n">noiseless_var</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+        <span class="n">mvs_rescaled_mc</span> <span class="o">=</span> <span class="p">(</span><span class="n">normalized_mvs</span> <span class="o">-</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">normalized_samples</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">rho</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">cdf_mvs</span> <span class="o">=</span> <span class="n">normal</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">normalized_mvs</span><span class="p">)</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">CLAMP_LB</span><span class="p">)</span>
+        <span class="n">cdf_rescaled_mvs</span> <span class="o">=</span> <span class="n">normal</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">mvs_rescaled_mc</span><span class="p">)</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">CLAMP_LB</span><span class="p">)</span>
+        <span class="n">mv_ratio</span> <span class="o">=</span> <span class="n">cdf_rescaled_mvs</span> <span class="o">/</span> <span class="n">cdf_mvs</span>
+
+        <span class="n">log_term</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">mv_ratio</span><span class="p">)</span> <span class="o">+</span> <span class="n">conditional_logprobs</span>
+        <span class="n">conditional_entropy</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">mv_ratio</span> <span class="o">*</span> <span class="n">log_term</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">entropy_reduction</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">initial_entropy</span> <span class="o">-</span> <span class="n">conditional_entropy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># average over the number of optima and squeeze the q-batch</span>
+        <span class="n">entropy_reduction</span> <span class="o">=</span> <span class="n">entropy_reduction</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">sample_dim</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">entropy_reduction</span></div>
 </pre></div>
 </div>
 </div>

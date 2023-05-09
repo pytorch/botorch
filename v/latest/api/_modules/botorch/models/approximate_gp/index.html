@@ -452,6 +452,17 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""The batch shape of the model.</span>
+
+<span class="sd">        This is a batch shape from an I/O perspective. For a model with `m`</span>
+<span class="sd">        outputs, a `test_batch_shape x q x d`-shaped input `X` to the `posterior`</span>
+<span class="sd">        method returns a Posterior object over an output of shape</span>
+<span class="sd">        `broadcast(test_batch_shape, model.batch_shape) x q x m`.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span>
+
 <div class="viewcode-block" id="SingleTaskVariationalGP.init_inducing_points"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.SingleTaskVariationalGP.init_inducing_points">[docs]</a>    <span class="k">def</span> <span class="nf">init_inducing_points</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>

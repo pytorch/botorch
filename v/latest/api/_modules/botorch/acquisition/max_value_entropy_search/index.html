@@ -673,11 +673,19 @@
         <span class="c1"># 1 x m x m</span>
 
         <span class="c1"># use determinant of block matrix formula</span>
-        <span class="n">V_determinant</span> <span class="o">=</span> <span class="n">variance_m</span> <span class="o">-</span> <span class="n">inv_quad</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">A</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">inv_quad_term</span> <span class="o">=</span> <span class="n">inv_quad</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">A</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># NOTE: Even when using Cholesky to compute inv_quad, `V_determinant` can be</span>
+        <span class="c1"># negative due to numerical issues. To avoid this, we clamp the variance</span>
+        <span class="c1"># so that `V_determinant` &gt; 0, while still allowing gradients to be</span>
+        <span class="c1"># propagated through `inv_quad_term`, as well as through `variance_m`</span>
+        <span class="c1"># in the expression for `r` below.</span>
+        <span class="c1"># choosing eps to be small while avoiding numerical underflow</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-6</span> <span class="k">if</span> <span class="n">inv_quad_term</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span> <span class="k">else</span> <span class="mf">1e-12</span>
+        <span class="n">V_determinant</span> <span class="o">=</span> <span class="n">variance_m</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">inv_quad_term</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">eps</span><span class="p">))</span> <span class="o">-</span> <span class="n">inv_quad_term</span>
         <span class="c1"># batch_shape x 1</span>
 
         <span class="c1"># Take logs and convert covariances to correlations.</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="n">V_determinant</span><span class="o">.</span><span class="n">log</span><span class="p">()</span> <span class="o">-</span> <span class="n">variance_m</span><span class="o">.</span><span class="n">log</span><span class="p">()</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">V_determinant</span><span class="o">.</span><span class="n">log</span><span class="p">()</span> <span class="o">-</span> <span class="n">variance_m</span><span class="o">.</span><span class="n">log</span><span class="p">()</span>  <span class="c1"># = log(1 - inv_quad / var)</span>
         <span class="n">r</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">r</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">acq</span> <span class="o">+</span> <span class="n">r</span></div>
 
