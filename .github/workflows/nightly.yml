@@ -119,7 +119,7 @@ jobs:
 
   publish-latest-website:
     name: Publish latest website
-    needs: [tests-and-coverage-nightly, package-test-deploy-pypi, package-conda]
+#     needs: [tests-and-coverage-nightly, package-test-deploy-pypi, package-conda]
     uses: ./.github/workflows/reusable_website.yml
     with:
       publish_versioned_website: false
