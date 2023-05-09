@@ -46,7 +46,7 @@ class DominatedPartitioning(FastPartitioning):
             Z=self._Z, U=self._U, ref_point=self._neg_ref_point.view(-1)
         )
         cell_bounds = -minimization_cell_bounds.flip(0)
-        self.register_buffer("hypercell_bounds", cell_bounds)
+        self.hypercell_bounds = cell_bounds
 
     def _compute_hypervolume_if_y_has_data(self) -> Tensor:
         r"""Compute hypervolume that is dominated by the Pareto Frontier.

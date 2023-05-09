@@ -54,6 +54,7 @@ class BoxDecomposition(Module, ABC):
         self._neg_ref_point = -ref_point
         self.sort = torch.tensor(sort, dtype=torch.bool)
         self.num_outcomes = ref_point.shape[-1]
+        self.register_buffer("hypercell_bounds", None)
 
         if Y is not None:
             if Y.isnan().any():
