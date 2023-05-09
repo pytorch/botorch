@@ -123,6 +123,7 @@ jobs:
     uses: ./.github/workflows/reusable_website.yml
     with:
       publish_versioned_website: false
+    secrets: inherit
 
   run_tutorials:
     name: Run tutorials without smoke test on latest PyTorch / GPyTorch / Ax
