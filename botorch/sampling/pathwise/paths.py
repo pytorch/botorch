@@ -174,6 +174,8 @@ class GeneralizedLinearPath(SamplePath):
         """
         super().__init__()
         self.feature_map = feature_map
+        if not isinstance(weight, Parameter):
+            self.register_buffer("weight", weight)
         self.weight = weight
         self.bias_module = bias_module
         self.input_transform = input_transform
