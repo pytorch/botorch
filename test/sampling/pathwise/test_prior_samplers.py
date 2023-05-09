@@ -138,16 +138,19 @@ class TestPriorSamplers(BotorchTestCase):
         with self.subTest("test_initialization"):
             model = self.models[SingleTaskGP][0]
             sample_shape = torch.Size([16])
-            weight_generator = MagicMock()
+            expected_weight_shape = (
+                sample_shape + model.covar_module.batch_shape + (self.num_features,)
+            )
+            weight_generator = MagicMock(
+                side_effect=lambda _: torch.rand(expected_weight_shape)
+            )
             draw_kernel_feature_paths(
                 model=model,
                 sample_shape=sample_shape,
                 num_features=self.num_features,
                 weight_generator=weight_generator,
             )
-            weight_generator.assert_called_once_with(
-                sample_shape + model.covar_module.batch_shape + (self.num_features,)
-            )
+            weight_generator.assert_called_once_with(expected_weight_shape)
 
     def _test_draw_kernel_feature_paths(self, model, paths, sample_shape, atol=3):
         (train_X,) = get_train_inputs(model, transformed=False)
