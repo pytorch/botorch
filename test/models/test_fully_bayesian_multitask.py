@@ -50,6 +50,25 @@ from gpytorch.means import ConstantMean
 
 from .test_multitask import _gen_datasets
 
+EXPECTED_KEYS = [
+    "latent_features",
+    "mean_module.raw_constant",
+    "covar_module.raw_outputscale",
+    "covar_module.base_kernel.raw_lengthscale",
+    "covar_module.base_kernel.raw_lengthscale_constraint.lower_bound",
+    "covar_module.base_kernel.raw_lengthscale_constraint.upper_bound",
+    "covar_module.raw_outputscale_constraint.lower_bound",
+    "covar_module.raw_outputscale_constraint.upper_bound",
+    "task_covar_module.raw_lengthscale",
+    "task_covar_module.raw_lengthscale_constraint.lower_bound",
+    "task_covar_module.raw_lengthscale_constraint.upper_bound",
+]
+EXPECTED_KEYS_NOISE = EXPECTED_KEYS + [
+    "likelihood.noise_covar.raw_noise",
+    "likelihood.noise_covar.raw_noise_constraint.lower_bound",
+    "likelihood.noise_covar.raw_noise_constraint.upper_bound",
+]
+
 
 class TestFullyBayesianMultiTaskGP(BotorchTestCase):
     def _get_data_and_model(
@@ -169,15 +188,17 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
             model.posterior(torch.rand(1, 4, **tkwargs))
 
     def test_fit_model(
-        self, dtype: torch.dtype = torch.double, infer_noise: bool = False
+        self,
+        dtype: torch.dtype = torch.double,
+        infer_noise: bool = False,
+        task_rank: int = 1,
     ):
         tkwargs = {"device": self.device, "dtype": dtype}
         train_X, train_Y, train_Yvar, model = self._get_data_and_model(
-            infer_noise=infer_noise, **tkwargs
+            infer_noise=infer_noise, task_rank=task_rank, **tkwargs
         )
         n = train_X.shape[0]
         d = train_X.shape[1] - 1
-        task_rank = 1
 
         # Test init
         self.assertIsNone(model.mean_module)
@@ -309,6 +330,25 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         self.assertEqual(median_lengthscale.shape, torch.Size([d]))
         self.assertEqual(model.num_mcmc_samples, 3)
 
+        # Check the keys in the state dict
+        true_keys = EXPECTED_KEYS_NOISE if infer_noise else EXPECTED_KEYS
+        self.assertEqual(set(model.state_dict().keys()), set(true_keys))
+
+        # Check that we can load the state dict.
+        state_dict = model.state_dict()
+        _, _, _, m_new = self._get_data_and_model(
+            infer_noise=infer_noise, task_rank=task_rank, **tkwargs
+        )
+        self.assertEqual(m_new.state_dict(), {})
+        m_new.load_state_dict(state_dict)
+        self.assertEqual(model.state_dict().keys(), m_new.state_dict().keys())
+        for k in model.state_dict().keys():
+            self.assertTrue((model.state_dict()[k] == m_new.state_dict()[k]).all())
+        test_X = test_X[..., :-1]
+        preds1, preds2 = model.posterior(test_X), m_new.posterior(test_X)
+        self.assertTrue(torch.equal(preds1.mean, preds2.mean))
+        self.assertTrue(torch.equal(preds1.variance, preds2.variance))
+
         # Make sure the model shapes are set correctly
         self.assertEqual(model.pyro_model.train_X.shape, torch.Size([n, d + 1]))
         self.assertAllClose(model.pyro_model.train_X, train_X)
@@ -323,7 +363,7 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         self.test_fit_model(dtype=torch.float)
 
     def test_fit_model_infer_noise(self):
-        self.test_fit_model(infer_noise=True)
+        self.test_fit_model(infer_noise=True, task_rank=4)
 
     def test_transforms(self, infer_noise: bool = False):
         tkwargs = {"device": self.device, "dtype": torch.double}
