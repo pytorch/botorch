@@ -34,7 +34,7 @@
 <span class="sd">"""</span>
 
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NoReturn</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">NoReturn</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">pyro</span>
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -272,6 +272,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"latent_features"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">pyro_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">pyro_model</span> <span class="o">=</span> <span class="n">MultitaskSaasPyroModel</span><span class="p">()</span>
         <span class="n">pyro_model</span><span class="o">.</span><span class="n">set_inputs</span><span class="p">(</span>
@@ -416,7 +417,53 @@
         <span class="n">inputs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"task_covar_prior"</span><span class="p">)</span>
         <span class="k">if</span> <span class="s2">"train_Yvar"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
             <span class="n">inputs</span><span class="p">[</span><span class="s2">"train_Yvar"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">return</span> <span class="n">inputs</span></div></div>
+        <span class="k">return</span> <span class="n">inputs</span></div>
+
+<div class="viewcode-block" id="SaasFullyBayesianMultiTaskGP.load_state_dict"><a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.load_state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Custom logic for loading the state dict.</span>
+
+<span class="sd">        The standard approach of calling `load_state_dict` currently doesn't play well</span>
+<span class="sd">        with the `SaasFullyBayesianMultiTaskGP` since the `mean_module`, `covar_module`</span>
+<span class="sd">        and `likelihood` aren't initialized until the model has been fitted. The reason</span>
+<span class="sd">        for this is that we don't know the number of MCMC samples until NUTS is called.</span>
+<span class="sd">        Given the state dict, we can initialize a new model with some dummy samples and</span>
+<span class="sd">        then load the state dict into this model. This currently only works for a</span>
+<span class="sd">        `MultitaskSaasPyroModel` and supporting more Pyro models likely requires moving</span>
+<span class="sd">        the model construction logic into the Pyro model itself.</span>
+
+<span class="sd">        TODO: If this were to inherif from `SaasFullyBayesianSingleTaskGP`, we could</span>
+<span class="sd">        simplify this method and eliminate some others.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="p">,</span> <span class="n">MultitaskSaasPyroModel</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>  <span class="c1"># pragma: no cover</span>
+                <span class="s2">"load_state_dict only works for MultitaskSaasPyroModel"</span>
+            <span class="p">)</span>
+        <span class="n">raw_mean</span> <span class="o">=</span> <span class="n">state_dict</span><span class="p">[</span><span class="s2">"mean_module.raw_constant"</span><span class="p">]</span>
+        <span class="n">num_mcmc_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw_mean</span><span class="p">)</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># Removing 1 for the task feature.</span>
+        <span class="n">task_rank</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">task_rank</span>
+        <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"device"</span><span class="p">:</span> <span class="n">raw_mean</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">:</span> <span class="n">raw_mean</span><span class="o">.</span><span class="n">dtype</span><span class="p">}</span>
+        <span class="c1"># Load some dummy samples</span>
+        <span class="n">mcmc_samples</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"mean"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+            <span class="s2">"lengthscale"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+            <span class="s2">"outputscale"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+            <span class="s2">"task_lengthscale"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="n">task_rank</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+            <span class="s2">"latent_features"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+                <span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rank</span><span class="p">,</span> <span class="n">task_rank</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span>
+            <span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"noise"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">latent_features</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">load_mcmc_samples</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">)</span>
+        <span class="c1"># Load the actual samples from the state dict</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="o">=</span><span class="n">state_dict</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>
