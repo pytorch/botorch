@@ -209,11 +209,12 @@ class Model(Module, ABC):
                 self.set_train_data(X_tf, strict=False)
                 self._has_transformed_inputs = True
             else:
-                raise RuntimeError(
+                warnings.warn(
                     "Could not update `train_inputs` with transformed inputs "
                     f"since {self.__class__.__name__} does not have a `train_inputs` "
                     "attribute. Make sure that the `input_transform` is applied to "
                     "both the train inputs and test inputs.",
+                    RuntimeWarning,
                 )
 
     def _revert_to_original_inputs(self) -> None:
