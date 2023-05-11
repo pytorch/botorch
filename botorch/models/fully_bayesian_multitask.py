@@ -8,7 +8,7 @@ r"""Multi-task Gaussian Process Regression models with fully Bayesian inference.
 """
 
 
-from typing import Any, Dict, List, NoReturn, Optional, Tuple
+from typing import Any, Dict, List, Mapping, NoReturn, Optional, Tuple
 
 import pyro
 import torch
@@ -246,6 +246,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         self.covar_module = None
         self.likelihood = None
         self.task_covar_module = None
+        self.register_buffer("latent_features", None)
         if pyro_model is None:
             pyro_model = MultitaskSaasPyroModel()
         pyro_model.set_inputs(
@@ -391,3 +392,49 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         if "train_Yvar" not in inputs:
             inputs["train_Yvar"] = None
         return inputs
+
+    def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True):
+        r"""Custom logic for loading the state dict.
+
+        The standard approach of calling `load_state_dict` currently doesn't play well
+        with the `SaasFullyBayesianMultiTaskGP` since the `mean_module`, `covar_module`
+        and `likelihood` aren't initialized until the model has been fitted. The reason
+        for this is that we don't know the number of MCMC samples until NUTS is called.
+        Given the state dict, we can initialize a new model with some dummy samples and
+        then load the state dict into this model. This currently only works for a
+        `MultitaskSaasPyroModel` and supporting more Pyro models likely requires moving
+        the model construction logic into the Pyro model itself.
+
+        TODO: If this were to inherif from `SaasFullyBayesianSingleTaskGP`, we could
+        simplify this method and eliminate some others.
+        """
+        if not isinstance(self.pyro_model, MultitaskSaasPyroModel):
+            raise NotImplementedError(  # pragma: no cover
+                "load_state_dict only works for MultitaskSaasPyroModel"
+            )
+        raw_mean = state_dict["mean_module.raw_constant"]
+        num_mcmc_samples = len(raw_mean)
+        dim = self.pyro_model.train_X.shape[-1] - 1  # Removing 1 for the task feature.
+        task_rank = self.pyro_model.task_rank
+        tkwargs = {"device": raw_mean.device, "dtype": raw_mean.dtype}
+        # Load some dummy samples
+        mcmc_samples = {
+            "mean": torch.ones(num_mcmc_samples, **tkwargs),
+            "lengthscale": torch.ones(num_mcmc_samples, dim, **tkwargs),
+            "outputscale": torch.ones(num_mcmc_samples, **tkwargs),
+            "task_lengthscale": torch.ones(num_mcmc_samples, task_rank, **tkwargs),
+            "latent_features": torch.ones(
+                num_mcmc_samples, self._rank, task_rank, **tkwargs
+            ),
+        }
+        if self.pyro_model.train_Yvar is None:
+            mcmc_samples["noise"] = torch.ones(num_mcmc_samples, **tkwargs)
+        (
+            self.mean_module,
+            self.covar_module,
+            self.likelihood,
+            self.task_covar_module,
+            self.latent_features,
+        ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
+        # Load the actual samples from the state dict
+        super().load_state_dict(state_dict=state_dict, strict=strict)
