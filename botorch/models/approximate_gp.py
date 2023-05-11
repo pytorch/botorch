@@ -32,7 +32,7 @@ from __future__ import annotations
 import copy
 import warnings
 
-from typing import Optional, Type, Union
+from typing import Optional, Type, TypeVar, Union
 
 import torch
 from botorch.models.gpytorch import GPyTorchModel
@@ -64,9 +64,13 @@ from gpytorch.variational import (
     VariationalStrategy,
 )
 from torch import Tensor
+from torch.nn import Module
 
 
 MIN_INFERRED_NOISE_LEVEL = 1e-4
+
+
+TApproxModel = TypeVar("TApproxModel", bound="ApproximateGPyTorchModel")
 
 
 class ApproximateGPyTorchModel(GPyTorchModel):
@@ -119,6 +123,19 @@ class ApproximateGPyTorchModel(GPyTorchModel):
     @property
     def num_outputs(self):
         return self._desired_num_outputs
+
+    def eval(self: TApproxModel) -> TApproxModel:
+        r"""Puts the model in `eval` mode."""
+        return Module.eval(self)
+
+    def train(self: TApproxModel, mode: bool = True) -> TApproxModel:
+        r"""Put the model in `train` mode.
+
+        Args:
+            mode: A boolean denoting whether to put in `train` or `eval` mode.
+                If `False`, model is put in `eval` mode.
+        """
+        return Module.train(self, mode=mode)
 
     def posterior(
         self, X, output_indices=None, observation_noise=False, *args, **kwargs
