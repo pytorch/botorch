@@ -7,6 +7,7 @@
 import itertools
 
 import torch
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.approximate_gp import (
     _SingleTaskVariationalGP,
     ApproximateGPyTorchModel,
@@ -307,3 +308,19 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
         self.assertEqual(model_2_inducing.shape, (5, 1))
         self.assertAllClose(model_1_inducing, model_2_inducing)
         self.assertFalse(model_1_inducing[0, 0] == model_3_inducing[0, 0])
+
+    def test_input_transform(self) -> None:
+        train_X = torch.linspace(1, 3, 10, dtype=torch.double)[:, None]
+        y = -3 * train_X + 5
+
+        for input_transform in [None, Normalize(1)]:
+            with self.subTest(input_transform=input_transform):
+                model = SingleTaskVariationalGP(
+                    train_X=train_X, train_Y=y, input_transform=input_transform
+                )
+                mll = VariationalELBO(
+                    model.likelihood, model.model, num_data=train_X.shape[-2]
+                )
+                fit_gpytorch_mll(mll)
+                post = model.posterior(torch.tensor([train_X.mean()]))
+                self.assertAllClose(post.mean[0][0], y.mean(), atol=1e-4)
