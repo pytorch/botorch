@@ -58,7 +58,7 @@
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
@@ -90,9 +90,13 @@
     <span class="n">VariationalStrategy</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
 
 <span class="n">MIN_INFERRED_NOISE_LEVEL</span> <span class="o">=</span> <span class="mf">1e-4</span>
+
+
+<span class="n">TApproxModel</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"TApproxModel"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">"ApproximateGPyTorchModel"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ApproximateGPyTorchModel"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel">[docs]</a><span class="k">class</span> <span class="nc">ApproximateGPyTorchModel</span><span class="p">(</span><span class="n">GPyTorchModel</span><span class="p">):</span>
@@ -145,6 +149,19 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_desired_num_outputs</span>
+
+<div class="viewcode-block" id="ApproximateGPyTorchModel.eval"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.eval">[docs]</a>    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">TApproxModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TApproxModel</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Puts the model in `eval` mode."""</span>
+        <span class="k">return</span> <span class="n">Module</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ApproximateGPyTorchModel.train"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">TApproxModel</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TApproxModel</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Put the model in `train` mode.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mode: A boolean denoting whether to put in `train` or `eval` mode.</span>
+<span class="sd">                If `False`, model is put in `eval` mode.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">Module</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ApproximateGPyTorchModel.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">output_indices</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>

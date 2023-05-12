@@ -2478,6 +2478,36 @@ either a <cite>GaussianLikelihood</cite> (if <cite>num_outputs=1</cite>) or a
 <dd><p>The number of outputs of the model.</p>
 </dd></dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.eval">
+<span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#ApproximateGPyTorchModel.eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.eval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Puts the model in <cite>eval</cite> mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>self</strong> (<em>TApproxModel</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>TApproxModel</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.train">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#ApproximateGPyTorchModel.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Put the model in <cite>train</cite> mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mode</strong> (<em>bool</em>) – A boolean denoting whether to put in <cite>train</cite> or <cite>eval</cite> mode.
+If <cite>False</cite>, model is put in <cite>eval</cite> mode.</p></li>
+<li><p><strong>self</strong> (<em>TApproxModel</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>TApproxModel</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior">
 <span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#ApproximateGPyTorchModel.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
