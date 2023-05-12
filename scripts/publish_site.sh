@@ -144,7 +144,7 @@ if [[ $VERSION == false ]]; then
   cd botorch-gh-pages || exit
   git add .
   # Exit gracefully if there's nothing to commit.
-  [[ -z $(git diff --cached --exit-code) ]] && exit 0
+  [[ -z $(git diff --cached --exit-code) ]] && echo "Nothing to commit"; exit 0
   # Commit & push if there's something to commit.
   git commit -m 'Update latest version of site'
   git push
@@ -224,7 +224,7 @@ else
   cd botorch-gh-pages || exit
   git add --all
   # Exit gracefully if there's nothing to commit.
-  [[ -z $(git diff --cached --exit-code) ]] && exit 0
+  [[ -z $(git diff --cached --exit-code) ]] && echo "Nothing to commit"; exit 0
   # Commit & push if there's something to commit.
   git commit -m "Publish version ${VERSION} of site"
   git push
