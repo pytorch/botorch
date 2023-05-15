@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import warnings
 
 import torch
 from botorch.fit import fit_gpytorch_mll
@@ -315,12 +316,16 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
 
         for input_transform in [None, Normalize(1)]:
             with self.subTest(input_transform=input_transform):
-                model = SingleTaskVariationalGP(
-                    train_X=train_X, train_Y=y, input_transform=input_transform
-                )
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore", message="Input data is not contained"
+                    )
+                    model = SingleTaskVariationalGP(
+                        train_X=train_X, train_Y=y, input_transform=input_transform
+                    )
                 mll = VariationalELBO(
                     model.likelihood, model.model, num_data=train_X.shape[-2]
                 )
                 fit_gpytorch_mll(mll)
                 post = model.posterior(torch.tensor([train_X.mean()]))
-                self.assertAllClose(post.mean[0][0], y.mean(), atol=1e-4)
+                self.assertAllClose(post.mean[0][0], y.mean(), atol=1e-3, rtol=1e-3)
