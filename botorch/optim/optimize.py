@@ -398,6 +398,12 @@ def _optimize_acqf_batch(
 
     if opt_inputs.post_processing_func is not None:
         batch_candidates = opt_inputs.post_processing_func(batch_candidates)
+        with torch.no_grad():
+            acq_values_list = [
+                opt_inputs.acq_function(cand)
+                for cand in batch_candidates.split(batch_limit, dim=0)
+            ]
+            batch_acq_values = torch.cat(acq_values_list, dim=0)
 
     if opt_inputs.return_best_only:
         best = torch.argmax(batch_acq_values.view(-1), dim=0)
