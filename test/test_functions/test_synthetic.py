@@ -21,17 +21,22 @@ from botorch.test_functions.synthetic import (
     Levy,
     Michalewicz,
     Powell,
+    PressureVessel,
     Rastrigin,
     Rosenbrock,
     Shekel,
     SixHumpCamel,
+    SpeedReducer,
     StyblinskiTang,
     SyntheticTestFunction,
+    TensionCompressionString,
     ThreeHumpCamel,
+    WeldedBeamSO,
 )
 from botorch.utils.testing import (
     BaseTestProblemTestCaseMixIn,
     BotorchTestCase,
+    ConstrainedTestProblemTestCaseMixin,
     SyntheticTestFunctionTestCaseMixin,
 )
 from torch import Tensor
@@ -308,3 +313,42 @@ class TestThreeHumpCamel(
         ThreeHumpCamel(negate=True),
         ThreeHumpCamel(noise_std=0.1),
     ]
+
+
+# ------------------ Constrained synthetic test problems ------------------ #
+
+
+class TestPressureVessel(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    ConstrainedTestProblemTestCaseMixin,
+):
+
+    functions = [PressureVessel()]
+
+
+class TestSpeedReducer(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    ConstrainedTestProblemTestCaseMixin,
+):
+
+    functions = [SpeedReducer()]
+
+
+class TestTensionCompressionString(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    ConstrainedTestProblemTestCaseMixin,
+):
+
+    functions = [TensionCompressionString()]
+
+
+class TestWeldedBeamSO(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    ConstrainedTestProblemTestCaseMixin,
+):
+
+    functions = [WeldedBeamSO()]
