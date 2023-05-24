@@ -159,10 +159,10 @@ def get_bounds_as_ndarray(
             lower, upper = bounds[name]
             lower = -inf if lower is None else lower
             upper = inf if upper is None else upper
-            if isinstance(lower, Tensor) and lower.device.type == "cuda":
-                lower = lower.cpu()  # pragma: no cover
-            if isinstance(upper, Tensor) and upper.device.type == "cuda":
-                upper = upper.cpu()  # pragma: no cover
+            if isinstance(lower, Tensor):
+                lower = lower.cpu()
+            if isinstance(upper, Tensor):
+                upper = upper.cpu()
             out[index : index + size, 0] = lower
             out[index : index + size, 1] = upper
         index = index + size
