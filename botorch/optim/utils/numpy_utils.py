@@ -9,7 +9,6 @@ r"""Utilities for interfacing Numpy and Torch."""
 from __future__ import annotations
 
 from itertools import tee
-from math import prod
 from typing import Callable, Dict, Iterator, Optional, Tuple, Union
 
 import numpy as np
@@ -151,18 +150,23 @@ def get_bounds_as_ndarray(
         An ndarray of bounds.
     """
     inf = float("inf")
-    out = None
+    full_size = sum(param.numel() for param in parameters.values())
+    out = np.full((full_size, 2), (-inf, inf))
     index = 0
     for name, param in parameters.items():
-        size = prod(param.shape)
+        size = param.numel()
         if name in bounds:
             lower, upper = bounds[name]
-            lower = -inf if lower is None else float(lower)
-            upper = inf if upper is None else float(upper)
-            if lower != -inf or upper != inf:
-                if out is None:
-                    full_size = sum(prod(param.shape) for param in parameters.values())
-                    out = np.full((full_size, 2), (-inf, inf))
-                out[index : index + size] = (lower, upper)
+            lower = -inf if lower is None else lower
+            upper = inf if upper is None else upper
+            if isinstance(lower, Tensor) and lower.device.type == "cuda":
+                lower = lower.cpu()
+            if isinstance(upper, Tensor) and upper.device.type == "cuda":
+                upper = upper.cpu()
+            out[index : index + size, 0] = lower
+            out[index : index + size, 1] = upper
         index = index + size
+    # If all bounds are +/- inf, return None.
+    if np.isinf(out).all():
+        out = None
     return out
