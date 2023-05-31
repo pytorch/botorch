@@ -325,3 +325,11 @@ class TestIsFullyBayesian(BotorchTestCase):
         self.assertTrue(is_fully_bayesian(model=ModelList(saas, saas)))
         self.assertTrue(is_fully_bayesian(model=ModelList(saas, deterministic)))
         self.assertFalse(is_fully_bayesian(model=ModelList(vanilla_gp, deterministic)))
+        # Nested ModelList
+        self.assertTrue(is_fully_bayesian(model=ModelList(ModelList(saas), saas)))
+        self.assertTrue(
+            is_fully_bayesian(model=ModelList(ModelList(saas), deterministic))
+        )
+        self.assertFalse(
+            is_fully_bayesian(model=ModelList(ModelList(vanilla_gp), deterministic))
+        )
