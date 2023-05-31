@@ -222,64 +222,6 @@ class TestSampleUtils(BotorchTestCase):
         x = find_interior_point(A=A, b=b)
         self.assertAlmostEqual(x.item(), 5.0, places=4)
 
-    def test_get_polytope_samples_wrong_inequality_constraints_dtype(self):
-        for dtype in (torch.float, torch.double):
-            with self.subTest(dtype=dtype):
-                tkwargs = {"device": self.device, "dtype": dtype}
-                bounds = torch.zeros(2, 4, **tkwargs)
-                inequality_constraints = [
-                    (
-                        torch.tensor([3], dtype=torch.float, device=self.device),
-                        torch.tensor([-4], **tkwargs),
-                        -3,
-                    )
-                ]
-
-                msg = (
-                    "Normalizing `inequality_constraints` failed. Check that the first "
-                    "element of `inequality_constraints` is the correct dtype following"
-                    " the previous IndexError."
-                )
-                msg_orig = "tensors used as indices must be long, byte or bool tensors"
-
-                with self.assertRaisesRegex(ValueError, msg), self.assertRaisesRegex(
-                    IndexError, msg_orig
-                ):
-                    get_polytope_samples(
-                        n=5,
-                        bounds=bounds,
-                        inequality_constraints=inequality_constraints,
-                    )
-
-    def test_get_polytope_samples_wrong_equality_constraints_dtype(self):
-        for dtype in (torch.float, torch.double):
-            with self.subTest(dtype=dtype):
-                tkwargs = {"device": self.device, "dtype": dtype}
-                bounds = torch.zeros(2, 4, **tkwargs)
-
-                equality_constraints = [
-                    (
-                        torch.tensor([0], dtype=torch.float, device=self.device),
-                        torch.tensor([1], **tkwargs),
-                        0.5,
-                    )
-                ]
-                msg = (
-                    "Normalizing `equality_constraints` failed. Check that the first "
-                    "element of `equality_constraints` is the correct dtype following "
-                    "the previous IndexError."
-                )
-                msg_orig = "tensors used as indices must be long, byte or bool tensors"
-
-                with self.assertRaisesRegex(ValueError, msg), self.assertRaisesRegex(
-                    IndexError, msg_orig
-                ):
-                    get_polytope_samples(
-                        n=5,
-                        bounds=bounds,
-                        equality_constraints=equality_constraints,
-                    )
-
     def test_get_polytope_samples(self):
         tkwargs = {"device": self.device}
         for dtype in (torch.float, torch.double):

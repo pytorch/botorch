@@ -793,24 +793,10 @@ def get_polytope_samples(
     """
     # create tensors representing linear inequality constraints
     # of the form Ax >= b.
-    # TODO: remove this error handling functionality in a few releases.
-    # Context: BoTorch inadvertently supported indices with unusual dtypes.
-    # This is now not supported.
-    index_dtype_error = (
-        "Normalizing {var_name} failed. Check that the first "
-        "element of {var_name} is the correct dtype following "
-        "the previous IndexError."
-    )
     if inequality_constraints:
         # normalize_linear_constraints is called to solve this issue:
         # https://github.com/pytorch/botorch/issues/1225
-        try:
-            # non-standard dtypes used to be supported for indices in constraints;
-            # this is no longer true
-            constraints = normalize_linear_constraints(bounds, inequality_constraints)
-        except IndexError as e:
-            msg = index_dtype_error.format(var_name="`inequality_constraints`")
-            raise ValueError(msg) from e
+        constraints = normalize_linear_constraints(bounds, inequality_constraints)
 
         A, b = sparse_to_dense_constraints(
             d=bounds.shape[-1],
@@ -823,16 +809,7 @@ def get_polytope_samples(
     else:
         dense_inequality_constraints = None
     if equality_constraints:
-        try:
-            # non-standard dtypes used to be supported for indices in constraints;
-            # this is no longer true
-            constraints = normalize_linear_constraints(bounds, equality_constraints)
-        except IndexError as e:
-            msg = index_dtype_error.format(var_name="`equality_constraints`")
-            raise ValueError(msg) from e
-
-        # normalize_linear_constraints is called to solve this issue:
-        # https://github.com/pytorch/botorch/issues/1225
+        constraints = normalize_linear_constraints(bounds, equality_constraints)
         dense_equality_constraints = sparse_to_dense_constraints(
             d=bounds.shape[-1], constraints=constraints
         )
