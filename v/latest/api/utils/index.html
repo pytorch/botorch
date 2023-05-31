@@ -1572,33 +1572,59 @@ Relative difference: 0.8348668001940709 (up to 1e-05 allowed)</p>
 </dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="botorch.utils.testing.BaseTestProblemBaseTestCase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.testing.</span></span><span class="sig-name descname"><span class="pre">BaseTestProblemBaseTestCase</span></span><a class="reference internal" href="_modules/botorch/utils/testing.html#BaseTestProblemBaseTestCase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.BaseTestProblemBaseTestCase" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.utils.testing.BaseTestProblemTestCaseMixIn">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.testing.</span></span><span class="sig-name descname"><span class="pre">BaseTestProblemTestCaseMixIn</span></span><a class="reference internal" href="_modules/botorch/utils/testing.html#BaseTestProblemTestCaseMixIn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.BaseTestProblemTestCaseMixIn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.testing.BaseTestProblemBaseTestCase.functions">
-<span class="sig-name descname"><span class="pre">functions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="test_functions.html#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><span class="pre">BaseTestProblem</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.testing.BaseTestProblemBaseTestCase.functions" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.testing.BaseTestProblemBaseTestCase.test_forward">
-<span class="sig-name descname"><span class="pre">test_forward</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#BaseTestProblemBaseTestCase.test_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.BaseTestProblemBaseTestCase.test_forward" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.utils.testing.BaseTestProblemTestCaseMixIn.test_forward">
+<span class="sig-name descname"><span class="pre">test_forward</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#BaseTestProblemTestCaseMixIn.test_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.BaseTestProblemTestCaseMixIn.test_forward" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.testing.BaseTestProblemTestCaseMixIn.functions">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">functions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="test_functions.html#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><span class="pre">BaseTestProblem</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.testing.BaseTestProblemTestCaseMixIn.functions" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="botorch.utils.testing.SyntheticTestFunctionBaseTestCase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.testing.</span></span><span class="sig-name descname"><span class="pre">SyntheticTestFunctionBaseTestCase</span></span><a class="reference internal" href="_modules/botorch/utils/testing.html#SyntheticTestFunctionBaseTestCase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.SyntheticTestFunctionBaseTestCase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.utils.testing.BaseTestProblemBaseTestCase" title="botorch.utils.testing.BaseTestProblemBaseTestCase"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseTestProblemBaseTestCase</span></code></a></p>
+<dt class="sig sig-object py" id="botorch.utils.testing.SyntheticTestFunctionTestCaseMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.testing.</span></span><span class="sig-name descname"><span class="pre">SyntheticTestFunctionTestCaseMixin</span></span><a class="reference internal" href="_modules/botorch/utils/testing.html#SyntheticTestFunctionTestCaseMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.SyntheticTestFunctionTestCaseMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.testing.SyntheticTestFunctionBaseTestCase.test_optimal_value">
-<span class="sig-name descname"><span class="pre">test_optimal_value</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#SyntheticTestFunctionBaseTestCase.test_optimal_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.test_optimal_value" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.utils.testing.SyntheticTestFunctionTestCaseMixin.test_optimal_value">
+<span class="sig-name descname"><span class="pre">test_optimal_value</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#SyntheticTestFunctionTestCaseMixin.test_optimal_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.SyntheticTestFunctionTestCaseMixin.test_optimal_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.testing.SyntheticTestFunctionBaseTestCase.test_optimizer">
-<span class="sig-name descname"><span class="pre">test_optimizer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#SyntheticTestFunctionBaseTestCase.test_optimizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.test_optimizer" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.utils.testing.SyntheticTestFunctionTestCaseMixin.test_optimizer">
+<span class="sig-name descname"><span class="pre">test_optimizer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#SyntheticTestFunctionTestCaseMixin.test_optimizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.SyntheticTestFunctionTestCaseMixin.test_optimizer" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.testing.SyntheticTestFunctionBaseTestCase.functions">
-<span class="sig-name descname"><span class="pre">functions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="test_functions.html#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><span class="pre">BaseTestProblem</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.functions" title="Permalink to this definition">¶</a></dt>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.testing.</span></span><span class="sig-name descname"><span class="pre">MultiObjectiveTestProblemTestCaseMixin</span></span><a class="reference internal" href="_modules/botorch/utils/testing.html#MultiObjectiveTestProblemTestCaseMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_attributes">
+<span class="sig-name descname"><span class="pre">test_attributes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MultiObjectiveTestProblemTestCaseMixin.test_attributes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_attributes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_max_hv">
+<span class="sig-name descname"><span class="pre">test_max_hv</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MultiObjectiveTestProblemTestCaseMixin.test_max_hv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_max_hv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_ref_point">
+<span class="sig-name descname"><span class="pre">test_ref_point</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MultiObjectiveTestProblemTestCaseMixin.test_ref_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_ref_point" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.testing.ConstrainedTestProblemTestCaseMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.testing.</span></span><span class="sig-name descname"><span class="pre">ConstrainedTestProblemTestCaseMixin</span></span><a class="reference internal" href="_modules/botorch/utils/testing.html#ConstrainedTestProblemTestCaseMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_num_constraints">
+<span class="sig-name descname"><span class="pre">test_num_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#ConstrainedTestProblemTestCaseMixin.test_num_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_num_constraints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_evaluate_slack_true">
+<span class="sig-name descname"><span class="pre">test_evaluate_slack_true</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#ConstrainedTestProblemTestCaseMixin.test_evaluate_slack_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_evaluate_slack_true" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -1863,44 +1889,6 @@ exists in <a class="reference internal" href="#botorch.utils.testing.MockModel.s
 </dd>
 </dl>
 </dd></dl>
-</dd></dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.testing.</span></span><span class="sig-name descname"><span class="pre">MultiObjectiveTestProblemBaseTestCase</span></span><a class="reference internal" href="_modules/botorch/utils/testing.html#MultiObjectiveTestProblemBaseTestCase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.utils.testing.BaseTestProblemBaseTestCase" title="botorch.utils.testing.BaseTestProblemBaseTestCase"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseTestProblemBaseTestCase</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_attributes">
-<span class="sig-name descname"><span class="pre">test_attributes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MultiObjectiveTestProblemBaseTestCase.test_attributes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_attributes" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_max_hv">
-<span class="sig-name descname"><span class="pre">test_max_hv</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MultiObjectiveTestProblemBaseTestCase.test_max_hv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_max_hv" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_ref_point">
-<span class="sig-name descname"><span class="pre">test_ref_point</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MultiObjectiveTestProblemBaseTestCase.test_ref_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_ref_point" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.functions">
-<span class="sig-name descname"><span class="pre">functions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="test_functions.html#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><span class="pre">BaseTestProblem</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.functions" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-</dd></dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.testing.</span></span><span class="sig-name descname"><span class="pre">ConstrainedMultiObjectiveTestProblemBaseTestCase</span></span><a class="reference internal" href="_modules/botorch/utils/testing.html#ConstrainedMultiObjectiveTestProblemBaseTestCase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase" title="botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiObjectiveTestProblemBaseTestCase</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.test_num_constraints">
-<span class="sig-name descname"><span class="pre">test_num_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#ConstrainedMultiObjectiveTestProblemBaseTestCase.test_num_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.test_num_constraints" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.test_evaluate_slack_true">
-<span class="sig-name descname"><span class="pre">test_evaluate_slack_true</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#ConstrainedMultiObjectiveTestProblemBaseTestCase.test_evaluate_slack_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.test_evaluate_slack_true" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.functions">
-<span class="sig-name descname"><span class="pre">functions</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="test_functions.html#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><span class="pre">BaseTestProblem</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.functions" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.torch">

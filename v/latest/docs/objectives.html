@@ -102,7 +102,7 @@ objective values.</p>
 <p>For instance, say you have a multi-output model with $o=2$ outputs, and you want
 to optimize a $obj(y) = 1 - \|y - y_0\|_2$, where $y_0 \in \mathbb{R}^2$.
 For this you would use the following custom objective (here we can ignore the
-ninputs $X$ as the objective does not depend on it):</p>
+inputs $X$ as the objective does not depend on it):</p>
 <pre><code class="hljs css language-python">obj = <span class="hljs-keyword">lambda</span> xi, X: <span class="hljs-number">1</span> - torch.norm(xi - y_0, dim=<span class="hljs-number">-1</span>)
 mc_objective = GenericMCObjective(obj)
 </code></pre>

@@ -424,6 +424,12 @@
 
     <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">post_processing_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">batch_candidates</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">post_processing_func</span><span class="p">(</span><span class="n">batch_candidates</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">acq_values_list</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">opt_inputs</span><span class="o">.</span><span class="n">acq_function</span><span class="p">(</span><span class="n">cand</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">cand</span> <span class="ow">in</span> <span class="n">batch_candidates</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">batch_limit</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">batch_acq_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">acq_values_list</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">return_best_only</span><span class="p">:</span>
         <span class="n">best</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">batch_acq_values</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>

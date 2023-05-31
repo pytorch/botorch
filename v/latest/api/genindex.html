@@ -152,7 +152,7 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.base.BaseTestProblem">BaseTestProblem (class in botorch.test_functions.base)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.BaseTestProblemBaseTestCase">BaseTestProblemBaseTestCase (class in botorch.utils.testing)</a>
+<li><a href="utils.html#botorch.utils.testing.BaseTestProblemTestCaseMixIn">BaseTestProblemTestCaseMixIn (class in botorch.utils.testing)</a>
 </li>
 <li><a href="cross_validation.html#botorch.cross_validation.batch_cross_validation">batch_cross_validation() (in module botorch.cross_validation)</a>
 </li>
@@ -730,8 +730,6 @@
 <li><a href="optim.html#module-botorch.optim">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.optim.closures.core
 
@@ -739,6 +737,8 @@
 <li><a href="optim.html#module-botorch.optim.closures.core">module</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.optim.closures.model_closures
 
@@ -1087,6 +1087,13 @@
 
       <ul>
 <li><a href="test_functions.html#module-botorch.test_functions.synthetic">module</a>
+</li>
+</ul></li>
+<li>
+    botorch.test_functions.utils
+
+      <ul>
+<li><a href="test_functions.html#module-botorch.test_functions.utils">module</a>
 </li>
 </ul></li>
 <li>
@@ -1453,7 +1460,7 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.ConstrainedMCObjective">ConstrainedMCObjective (class in botorch.acquisition.objective)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase">ConstrainedMultiObjectiveTestProblemBaseTestCase (class in botorch.utils.testing)</a>
+<li><a href="utils.html#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin">ConstrainedTestProblemTestCaseMixin (class in botorch.utils.testing)</a>
 </li>
 <li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.construct_inputs">construct_inputs() (botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP class method)</a>
 <ul>
@@ -1704,6 +1711,8 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Powell.dim">(botorch.test_functions.synthetic.Powell attribute)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.PressureVessel.dim">(botorch.test_functions.synthetic.PressureVessel attribute)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Rastrigin.dim">(botorch.test_functions.synthetic.Rastrigin attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Rosenbrock.dim">(botorch.test_functions.synthetic.Rosenbrock attribute)</a>
@@ -1712,9 +1721,15 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SixHumpCamel.dim">(botorch.test_functions.synthetic.SixHumpCamel attribute)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.SpeedReducer.dim">(botorch.test_functions.synthetic.SpeedReducer attribute)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.StyblinskiTang.dim">(botorch.test_functions.synthetic.StyblinskiTang attribute)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.TensionCompressionString.dim">(botorch.test_functions.synthetic.TensionCompressionString attribute)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.ThreeHumpCamel.dim">(botorch.test_functions.synthetic.ThreeHumpCamel attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.WeldedBeamSO.dim">(botorch.test_functions.synthetic.WeldedBeamSO attribute)</a>
 </li>
 </ul></li>
 </ul></td>
@@ -1874,6 +1889,14 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.WeldedBeam.evaluate_slack_true">(botorch.test_functions.multi_objective.WeldedBeam method)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.PressureVessel.evaluate_slack_true">(botorch.test_functions.synthetic.PressureVessel method)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.SpeedReducer.evaluate_slack_true">(botorch.test_functions.synthetic.SpeedReducer method)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.TensionCompressionString.evaluate_slack_true">(botorch.test_functions.synthetic.TensionCompressionString method)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.WeldedBeamSO.evaluate_slack_true">(botorch.test_functions.synthetic.WeldedBeamSO method)</a>
+</li>
 </ul></li>
 <li><a href="test_functions.html#botorch.test_functions.base.BaseTestProblem.evaluate_true">evaluate_true() (botorch.test_functions.base.BaseTestProblem method)</a>
 <ul>
@@ -1967,6 +1990,8 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Powell.evaluate_true">(botorch.test_functions.synthetic.Powell method)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.PressureVessel.evaluate_true">(botorch.test_functions.synthetic.PressureVessel method)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Rastrigin.evaluate_true">(botorch.test_functions.synthetic.Rastrigin method)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Rosenbrock.evaluate_true">(botorch.test_functions.synthetic.Rosenbrock method)</a>
@@ -1975,9 +2000,15 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SixHumpCamel.evaluate_true">(botorch.test_functions.synthetic.SixHumpCamel method)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.SpeedReducer.evaluate_true">(botorch.test_functions.synthetic.SpeedReducer method)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.StyblinskiTang.evaluate_true">(botorch.test_functions.synthetic.StyblinskiTang method)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.TensionCompressionString.evaluate_true">(botorch.test_functions.synthetic.TensionCompressionString method)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.ThreeHumpCamel.evaluate_true">(botorch.test_functions.synthetic.ThreeHumpCamel method)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.WeldedBeamSO.evaluate_true">(botorch.test_functions.synthetic.WeldedBeamSO method)</a>
 </li>
 </ul></li>
 </ul></td>
@@ -2350,15 +2381,8 @@
 </li>
 <li><a href="utils.html#botorch.utils.dispatcher.Dispatcher.funcs">funcs (botorch.utils.dispatcher.Dispatcher attribute)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.BaseTestProblemBaseTestCase.functions">functions (botorch.utils.testing.BaseTestProblemBaseTestCase attribute)</a>
-<ul>
-<li><a href="utils.html#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.functions">(botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase attribute)</a>
+<li><a href="utils.html#botorch.utils.testing.BaseTestProblemTestCaseMixIn.functions">functions (botorch.utils.testing.BaseTestProblemTestCaseMixIn property)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.functions">(botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase attribute)</a>
-</li>
-<li><a href="utils.html#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.functions">(botorch.utils.testing.SyntheticTestFunctionBaseTestCase attribute)</a>
-</li>
-</ul></li>
 <li><a href="optim.html#botorch.optim.core.OptimizationResult.fval">fval (botorch.optim.core.OptimizationResult attribute)</a>
 </li>
 </ul></td>
@@ -3246,6 +3270,8 @@
 </li>
 <li><a href="test_functions.html#module-botorch.test_functions.synthetic">botorch.test_functions.synthetic</a>
 </li>
+<li><a href="test_functions.html#module-botorch.test_functions.utils">botorch.test_functions.utils</a>
+</li>
 <li><a href="utils.html#module-botorch.utils">botorch.utils</a>
 </li>
 <li><a href="utils.html#module-botorch.utils.constants">botorch.utils.constants</a>
@@ -3341,7 +3367,7 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.base.MultiObjectiveTestProblem">MultiObjectiveTestProblem (class in botorch.test_functions.base)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase">MultiObjectiveTestProblemBaseTestCase (class in botorch.utils.testing)</a>
+<li><a href="utils.html#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin">MultiObjectiveTestProblemTestCaseMixin (class in botorch.utils.testing)</a>
 </li>
 <li><a href="models.html#botorch.models.utils.assorted.multioutput_to_batch_mode_transform">multioutput_to_batch_mode_transform() (in module botorch.models.utils.assorted)</a>
 </li>
@@ -3435,6 +3461,14 @@
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.SRN.num_constraints">(botorch.test_functions.multi_objective.SRN attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.WeldedBeam.num_constraints">(botorch.test_functions.multi_objective.WeldedBeam attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.PressureVessel.num_constraints">(botorch.test_functions.synthetic.PressureVessel attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.SpeedReducer.num_constraints">(botorch.test_functions.synthetic.SpeedReducer attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.TensionCompressionString.num_constraints">(botorch.test_functions.synthetic.TensionCompressionString attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.WeldedBeamSO.num_constraints">(botorch.test_functions.synthetic.WeldedBeamSO attribute)</a>
 </li>
 </ul></li>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient.num_fantasies">num_fantasies (botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient attribute)</a>
@@ -3691,10 +3725,10 @@
 </li>
 <li><a href="utils.html#botorch.utils.torch.BufferDict.pop">pop() (botorch.utils.torch.BufferDict method)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.post_processing_func">post_processing_func (botorch.optim.optimize.OptimizeAcqfInputs attribute)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="cross_validation.html#botorch.cross_validation.CVResults.posterior">posterior (botorch.cross_validation.CVResults attribute)</a>
 </li>
 <li><a href="models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior">posterior() (botorch.models.approximate_gp.ApproximateGPyTorchModel method)</a>
@@ -3733,6 +3767,8 @@
 <li><a href="models.html#botorch.models.multitask.KroneckerMultiTaskGP.predictive_mean_cache">predictive_mean_cache (botorch.models.multitask.KroneckerMultiTaskGP property)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.preprocess_transform">preprocess_transform() (botorch.models.transforms.input.ChainedInputTransform method)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.PressureVessel">PressureVessel (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.ProbabilityOfImprovement">ProbabilityOfImprovement (class in botorch.acquisition.analytic)</a>
 </li>
@@ -3866,6 +3902,8 @@
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="models.html#botorch.models.transforms.input.Round">Round (class in botorch.models.transforms.input)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.utils.round_nearest">round_nearest() (in module botorch.test_functions.utils)</a>
 </li>
 <li><a href="utils.html#botorch.utils.rounding.RoundSTE">RoundSTE (class in botorch.utils.rounding)</a>
 </li>
@@ -4056,6 +4094,8 @@
 </li>
 <li><a href="utils.html#botorch.utils.sampling.sparse_to_dense_constraints">sparse_to_dense_constraints() (in module botorch.utils.sampling)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.SpeedReducer">SpeedReducer (class in botorch.test_functions.synthetic)</a>
+</li>
 <li><a href="utils.html#botorch.utils.transforms.squeeze_last_dim">squeeze_last_dim() (in module botorch.utils.transforms)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.SRN">SRN (class in botorch.test_functions.multi_objective)</a>
@@ -4128,7 +4168,7 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SyntheticTestFunction">SyntheticTestFunction (class in botorch.test_functions.synthetic)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.SyntheticTestFunctionBaseTestCase">SyntheticTestFunctionBaseTestCase (class in botorch.utils.testing)</a>
+<li><a href="utils.html#botorch.utils.testing.SyntheticTestFunctionTestCaseMixin">SyntheticTestFunctionTestCaseMixin (class in botorch.utils.testing)</a>
 </li>
 </ul></td>
 </tr></table>
@@ -4143,25 +4183,27 @@
 </li>
 <li><a href="models.html#botorch.models.contextual_multioutput.LCEMGP.task_covar_matrix">task_covar_matrix() (botorch.models.contextual_multioutput.LCEMGP method)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.TensionCompressionString">TensionCompressionString (class in botorch.test_functions.synthetic)</a>
+</li>
 <li><a href="utils.html#botorch.utils.context_managers.TensorCheckpoint">TensorCheckpoint (class in botorch.utils.context_managers)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.pathwise.utils.TensorTransform">TensorTransform (class in botorch.sampling.pathwise.utils)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_attributes">test_attributes() (botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase method)</a>
+<li><a href="utils.html#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_attributes">test_attributes() (botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin method)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.test_evaluate_slack_true">test_evaluate_slack_true() (botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase method)</a>
+<li><a href="utils.html#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_evaluate_slack_true">test_evaluate_slack_true() (botorch.utils.testing.ConstrainedTestProblemTestCaseMixin method)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.BaseTestProblemBaseTestCase.test_forward">test_forward() (botorch.utils.testing.BaseTestProblemBaseTestCase method)</a>
+<li><a href="utils.html#botorch.utils.testing.BaseTestProblemTestCaseMixIn.test_forward">test_forward() (botorch.utils.testing.BaseTestProblemTestCaseMixIn method)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_max_hv">test_max_hv() (botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase method)</a>
+<li><a href="utils.html#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_max_hv">test_max_hv() (botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin method)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.test_num_constraints">test_num_constraints() (botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase method)</a>
+<li><a href="utils.html#botorch.utils.testing.ConstrainedTestProblemTestCaseMixin.test_num_constraints">test_num_constraints() (botorch.utils.testing.ConstrainedTestProblemTestCaseMixin method)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.test_optimal_value">test_optimal_value() (botorch.utils.testing.SyntheticTestFunctionBaseTestCase method)</a>
+<li><a href="utils.html#botorch.utils.testing.SyntheticTestFunctionTestCaseMixin.test_optimal_value">test_optimal_value() (botorch.utils.testing.SyntheticTestFunctionTestCaseMixin method)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.test_optimizer">test_optimizer() (botorch.utils.testing.SyntheticTestFunctionBaseTestCase method)</a>
+<li><a href="utils.html#botorch.utils.testing.SyntheticTestFunctionTestCaseMixin.test_optimizer">test_optimizer() (botorch.utils.testing.SyntheticTestFunctionTestCaseMixin method)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_ref_point">test_ref_point() (botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase method)</a>
+<li><a href="utils.html#botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin.test_ref_point">test_ref_point() (botorch.utils.testing.MultiObjectiveTestProblemTestCaseMixin method)</a>
 </li>
 <li><a href="cross_validation.html#botorch.cross_validation.CVFolds.test_X">test_X (botorch.cross_validation.CVFolds attribute)</a>
 </li>
@@ -4490,6 +4532,8 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Powell.training">(botorch.test_functions.synthetic.Powell attribute)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.PressureVessel.training">(botorch.test_functions.synthetic.PressureVessel attribute)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Rastrigin.training">(botorch.test_functions.synthetic.Rastrigin attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Rosenbrock.training">(botorch.test_functions.synthetic.Rosenbrock attribute)</a>
@@ -4498,9 +4542,15 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SixHumpCamel.training">(botorch.test_functions.synthetic.SixHumpCamel attribute)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.SpeedReducer.training">(botorch.test_functions.synthetic.SpeedReducer attribute)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.StyblinskiTang.training">(botorch.test_functions.synthetic.StyblinskiTang attribute)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.TensionCompressionString.training">(botorch.test_functions.synthetic.TensionCompressionString attribute)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.ThreeHumpCamel.training">(botorch.test_functions.synthetic.ThreeHumpCamel attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.WeldedBeamSO.training">(botorch.test_functions.synthetic.WeldedBeamSO attribute)</a>
 </li>
 <li><a href="utils.html#botorch.utils.gp_sampling.GPDraw.training">(botorch.utils.gp_sampling.GPDraw attribute)</a>
 </li>
@@ -4708,6 +4758,8 @@
 <li><a href="posteriors.html#botorch.posteriors.ensemble.EnsemblePosterior.weights">weights (botorch.posteriors.ensemble.EnsemblePosterior property)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.WeldedBeam">WeldedBeam (class in botorch.test_functions.multi_objective)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.WeldedBeamSO">WeldedBeamSO (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.risk_measures.WorstCase">WorstCase (class in botorch.acquisition.risk_measures)</a>
 </li>

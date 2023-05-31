@@ -248,6 +248,7 @@ def generate_batch(
     batch_size,
     n_candidates,  # Number of candidates for Thompson sampling
     constraint_model,
+    sobol: SobolEngine,
 ):
     assert X.min() >= 0.0 and X.max() <= 1.0 and torch.all(torch.isfinite(Y))
 
@@ -258,7 +259,6 @@ def generate_batch(
 
     # Thompson Sampling w/ Constraints (SCBO)
     dim = X.shape[-1]
-    sobol = SobolEngine(dim, scramble=True)
     pert = sobol.draw(n_candidates).to(dtype=dtype, device=device)
     pert = tr_lb + (tr_ub - tr_lb) * pert
 
@@ -313,6 +313,7 @@ state = ScboState(dim, batch_size=batch_size)
 # Note: We use 2000 candidates here to make the tutorial run faster. 
 # SCBO actually uses min(5000, max(2000, 200 * dim)) candidate points by default.
 N_CANDIDATES = 2000 if not SMOKE_TEST else 4
+sobol = SobolEngine(dim, scramble=True, seed=1)
 
 
 def get_fitted_model(X, Y):
@@ -353,6 +354,7 @@ while not state.restart_triggered:  # Run until TuRBO converges
             batch_size=batch_size,
             n_candidates=N_CANDIDATES,
             constraint_model=ModelListGP(c1_model, c2_model),
+            sobol=sobol,
         )
 
     # Evaluate both the objective and constraints for the selected candidaates
