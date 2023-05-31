@@ -236,5 +236,6 @@ else
 fi
 
 # Clean up
+echo "Cleaning up temporary directories."
 cd "${SCRIPT_DIR}" || exit
 rm -rf "${WORK_DIR}"
